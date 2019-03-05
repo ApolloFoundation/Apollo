@@ -21,8 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -31,7 +33,7 @@ import org.json.simple.JSONStreamAware;
  * Get the transactions
  */
 public class GetTransactions extends PeerServlet.PeerRequestHandler {
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static class GetTransactionsHolder {
         private static final GetTransactions INSTANCE = new GetTransactions();
     }
@@ -44,7 +46,7 @@ public class GetTransactions extends PeerServlet.PeerRequestHandler {
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        if (!Constants.INCLUDE_EXPIRED_PRUNABLE) {
+        if (!propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             return PeerServlet.UNSUPPORTED_REQUEST_TYPE;
         }
         JSONObject response = new JSONObject();

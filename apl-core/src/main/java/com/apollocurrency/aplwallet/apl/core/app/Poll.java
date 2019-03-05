@@ -19,27 +19,35 @@
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
@@ -50,6 +58,7 @@ public final class Poll extends AbstractPoll {
     private static final boolean isPollsProcessing = propertiesLoader.getBooleanProperty("apl.processPolls");
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager;
 
     public static final class OptionResult {
 
@@ -76,7 +85,7 @@ public final class Poll extends AbstractPoll {
 
     }
 
-    private static final DbKey.LongKeyFactory<Poll> pollDbKeyFactory = new DbKey.LongKeyFactory<Poll>("id") {
+    private static final LongKeyFactory<Poll> pollDbKeyFactory = new LongKeyFactory<Poll>("id") {
         @Override
         public DbKey newKey(Poll poll) {
             return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
@@ -96,7 +105,7 @@ public final class Poll extends AbstractPoll {
         }
     };
 
-    private static final DbKey.LongKeyFactory<Poll> pollResultsDbKeyFactory = new DbKey.LongKeyFactory<Poll>("poll_id") {
+    private static final LongKeyFactory<Poll> pollResultsDbKeyFactory = new LongKeyFactory<Poll>("poll_id") {
         @Override
         public DbKey newKey(Poll poll) {
             return poll.dbKey;
@@ -156,22 +165,46 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(dbClause, from, to);
     }
 
-    public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) {
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
+
+    public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) throws AplException.NotValidException {
         Connection connection = null;
         try {
-            connection = Db.getDb().getConnection();
-            PreparedStatement pollStatement = connection.prepareStatement(
-                    "SELECT * FROM poll WHERE id IN" +
-                            " (SELECT bytes_to_long(attachment_bytes, 1) FROM transaction WHERE " +
-                            "sender_id = ? AND type = ? AND subtype = ? " +
-                            "ORDER BY block_timestamp DESC, transaction_index DESC"
-                            + DbUtils.limitsClause(from, to) + ")");
-            int i = 0;
-            pollStatement.setLong(++i, accountId);
-            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getType());
-            pollStatement.setByte(++i, TransactionType.Messaging.VOTE_CASTING.getSubtype());
-            DbUtils.setLimits(++i, pollStatement, from, to);
-            return pollTable.getManyBy(connection, pollStatement, false);
+            connection = lookupDataSource().getConnection();
+
+//            extract voted poll ids from attachment
+            try (PreparedStatement pstmt = connection.prepareStatement(
+                    "(SELECT attachment_bytes FROM transaction " +
+                    "WHERE sender_id = ? AND type = ? AND subtype = ? " +
+                    "ORDER BY block_timestamp DESC, transaction_index DESC"
+                    + DbUtils.limitsClause(from, to))) {
+                int i = 0;
+                pstmt.setLong(++i, accountId);
+                pstmt.setByte(++i, Messaging.VOTE_CASTING.getType());
+                pstmt.setByte(++i, Messaging.VOTE_CASTING.getSubtype());
+                DbUtils.setLimits(++i, pstmt, from, to);
+                List<Long> ids = new ArrayList<>();
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        byte[] bytes = rs.getBytes("attachment_bytes");
+                        ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+                        buffer.order(ByteOrder.LITTLE_ENDIAN);
+                        buffer.put(bytes);
+                        long pollId = new MessagingVoteCasting(buffer).getPollId();
+                        ids.add(pollId);
+                    }
+                }
+                PreparedStatement pollStatement = connection.prepareStatement(
+                        "SELECT * FROM poll WHERE id IN (SELECT * FROM table(x bigint = ? ))");
+                pollStatement.setObject(1, ids.toArray());
+                return pollTable.getManyBy(connection, pollStatement, false);
+            }
+
         }
         catch (SQLException e) {
             DbUtils.close(connection);
@@ -193,12 +226,12 @@ public final class Poll extends AbstractPoll {
         return pollTable.getCount();
     }
 
-    static void addPoll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
+    public static void addPoll(Transaction transaction, MessagingPollCreation attachment) {
         Poll poll = new Poll(transaction, attachment);
         pollTable.insert(poll);
     }
 
-    static void init() {
+    public static void init() {
         if (Poll.isPollsProcessing) {
             blockchainProcessor.addListener(block -> {
                 int height = block.getHeight();
@@ -231,7 +264,7 @@ public final class Poll extends AbstractPoll {
     private final byte maxRangeValue;
     private final int timestamp;
 
-    private Poll(Transaction transaction, Attachment.MessagingPollCreation attachment) {
+    private Poll(Transaction transaction, MessagingPollCreation attachment) {
         super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
         this.dbKey = pollDbKeyFactory.newKey(this.id);
         this.name = attachment.getPollName();

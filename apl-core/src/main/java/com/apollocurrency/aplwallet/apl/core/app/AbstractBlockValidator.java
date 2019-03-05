@@ -5,23 +5,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import org.slf4j.Logger;
 
+import java.util.Objects;
+import javax.inject.Inject;
+
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
-    private BlockDb blockDb;
+    private BlockDao blockDao;
     protected BlockchainConfig blockchainConfig;
-
-    public AbstractBlockValidator(BlockDb blockDb, BlockchainConfig blockchainConfig) {
-        Objects.requireNonNull(blockDb, "BlockDb is null");
+    
+    @Inject
+    public AbstractBlockValidator(BlockDao blockDao, BlockchainConfig blockchainConfig) {
+        Objects.requireNonNull(blockDao, "BlockDao is null");
         Objects.requireNonNull(blockchainConfig, "Blockchain config is null");
-
-        this.blockDb = blockDb;
+        this.blockDao = blockDao;
         this.blockchainConfig = blockchainConfig;
     }
 
@@ -42,10 +45,10 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
-        if (block.getId() == 0L || blockDb.hasBlock(block.getId(), previousLastBlock.getHeight())) {
+        if (block.getId() == 0L || blockDao.hasBlock(block.getId(), previousLastBlock.getHeight())) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
-        if (!block.verifyGenerationSignature() && !Generator.allowsFakeForging(block.getGeneratorPublicKey())) {
+        if (!block.verifyGenerationSignature()) {
             Account generatorAccount = Account.getAccount(block.getGeneratorId());
             long generatorBalance = generatorAccount == null ? 0 : generatorAccount.getEffectiveBalanceAPL();
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);

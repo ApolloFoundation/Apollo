@@ -42,14 +42,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Db;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -61,11 +59,12 @@ public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
-    private static final boolean enforcePost = propertiesLoader.getBooleanProperty("apl.apiServerEnforcePOST");
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private static final boolean enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     static {
 
@@ -112,8 +111,6 @@ public final class APIServlet extends HttpServlet {
         return apiRequestHandlers.get(requestType);
     }
 
-    static void initClass() {}
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         process(req, resp);
@@ -157,7 +154,7 @@ public final class APIServlet extends HttpServlet {
                 return;
             }
 
-            if (Constants.isLightClient && apiRequestHandler.requireFullClient()) {
+            if (propertiesHolder.isLightClient() && apiRequestHandler.requireFullClient()) {
                 response = LIGHT_CLIENT_DISABLED_API;
                 return;
             }
@@ -172,7 +169,7 @@ public final class APIServlet extends HttpServlet {
             }
             String accountName2FA = apiRequestHandler.vaultAccountName();
             if (apiRequestHandler.is2FAProtected()) {
-                Account.verify2FA(req, accountName2FA);
+                Helper2FA.verify2FA(req, accountName2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                     ParameterParser.getUnsignedLong(req, "requireBlock", false) : 0;
@@ -182,9 +179,10 @@ public final class APIServlet extends HttpServlet {
                 blockchain.readLock();
             }
             try {
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
                 try {
                     if (apiRequestHandler.startDbTransaction()) {
-                        Db.getDb().beginTransaction();
+                        dataSource.begin();
                     }
                     if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
@@ -201,7 +199,7 @@ public final class APIServlet extends HttpServlet {
                     }
                 } finally {
                     if (apiRequestHandler.startDbTransaction()) {
-                        Db.getDb().endTransaction();
+                        dataSource.commit(true);
                     }
                 }
             } finally {

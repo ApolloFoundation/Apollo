@@ -33,10 +33,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
@@ -52,17 +53,18 @@ public class APIProxy {
         private static final APIProxy INSTANCE = new APIProxy();
     }
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
     }
 
-    static final boolean enableAPIProxy = Constants.isLightClient ||
-            (propertiesLoader.getBooleanProperty("apl.enableAPIProxy") && ! API.isOpenAPI);
-    private static final int blacklistingPeriod = propertiesLoader.getIntProperty("apl.apiProxyBlacklistingPeriod") / 1000;
-    static final String forcedServerURL = propertiesLoader.getStringProperty("apl.forceAPIProxyServerURL", "");
+    static final boolean enableAPIProxy = propertiesHolder.isLightClient() ||
+            (propertiesHolder.getBooleanProperty("apl.enableAPIProxy") && ! API.isOpenAPI);
+    private static final int blacklistingPeriod = propertiesHolder.getIntProperty("apl.apiProxyBlacklistingPeriod") / 1000;
+    static final String forcedServerURL = propertiesHolder.getStringProperty("apl.forceAPIProxyServerURL", "");
 
     private volatile String forcedPeerHost;
     private volatile List<String> peersHosts = Collections.emptyList();
@@ -88,7 +90,7 @@ public class APIProxy {
     }
 
     private static final Runnable peersUpdateThread = () -> {
-        int curTime = AplCore.getEpochTime();
+        int curTime = timeService.getEpochTime();
         getInstance().blacklistedPeers.entrySet().removeIf((entry) -> {
             if (entry.getValue() < curTime) {
                 LOG.debug("Unblacklisting API peer " + entry.getKey());
@@ -108,7 +110,7 @@ public class APIProxy {
     };
 
     static {
-        if (!Constants.isOffline && enableAPIProxy) {
+        if (!propertiesHolder.isOffline() && enableAPIProxy) {
             ThreadPool.scheduleThread("APIProxyPeersUpdate", peersUpdateThread, 60);
         }
     }
@@ -197,7 +199,7 @@ public class APIProxy {
     }
 
     public static boolean isActivated() {
-        return Constants.isLightClient || (enableAPIProxy && blockchainProcessor.isDownloading());
+        return propertiesHolder.isLightClient() || (enableAPIProxy && blockchainProcessor.isDownloading());
     }
 
     public boolean blacklistHost(String host) {
@@ -205,7 +207,7 @@ public class APIProxy {
             LOG.info("Too many blacklisted peers");
             return false;
         }
-        blacklistedPeers.put(host, AplCore.getEpochTime() + blacklistingPeriod);
+        blacklistedPeers.put(host, timeService.getEpochTime() + blacklistingPeriod);
         if (peersHosts.contains(host)) {
             peersHosts = Collections.emptyList();
             getServingPeer(null);

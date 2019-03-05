@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 
 public class WalletRunner {
 
-    private static final String PROPERTIES_FILENAME = "apl.properties";
+    private static final String PROPERTIES_FILENAME = "apl-blockchain.properties";
     private static final String DEFAULT_PROPERTIES_FILENAME = "apl-default.properties";
     private static final String DEFAULT_PROPERTIES_DIR = "conf";
     private static final Logger LOG = getLogger(WalletRunner.class);

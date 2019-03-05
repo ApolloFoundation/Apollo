@@ -33,17 +33,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -58,7 +59,8 @@ import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    
     abstract static class PeerRequestHandler {
 
         abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
@@ -70,6 +72,7 @@ public final class PeerServlet extends WebSocketServlet {
         private Blockchain blockchain;
         private BlockchainProcessor blockchainProcessor;
         private TransactionProcessor transactionProcessor;
+        private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
         protected Blockchain lookupBlockchain() {
             if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -167,6 +170,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     private static BlockchainProcessor blockchainProcessor;
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     protected BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         return blockchainProcessor;
@@ -347,12 +351,12 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
-            peer.setLastInboundRequest(AplCore.getEpochTime());
+            peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
                     return DOWNLOADING;
                 }
-                if (Constants.isLightClient) {
+                if (propertiesHolder.isLightClient()) {
                     return LIGHT_CLIENT;
                 }
             }

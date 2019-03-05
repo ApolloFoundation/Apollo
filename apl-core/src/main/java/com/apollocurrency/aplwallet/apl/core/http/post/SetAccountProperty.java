@@ -20,9 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -67,7 +68,7 @@ public final class SetAccountProperty extends CreateTransaction {
             return INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
         }
 
-        Attachment attachment = new Attachment.MessagingAccountProperty(property, value);
+        Attachment attachment = new MessagingAccountProperty(property, value);
         return createTransaction(req, senderAccount, recipientId, 0, attachment);
 
     }

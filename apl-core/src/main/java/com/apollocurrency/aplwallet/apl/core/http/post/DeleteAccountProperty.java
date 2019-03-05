@@ -20,12 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -61,14 +64,14 @@ public final class DeleteAccountProperty extends CreateTransaction {
         if (property.isEmpty()) {
             return JSONResponses.MISSING_PROPERTY;
         }
-        Account.AccountProperty accountProperty = Account.getProperty(recipientId, property, setterId);
+        AccountProperty accountProperty = AccountPropertyTable.getProperty(recipientId, property, setterId);
         if (accountProperty == null) {
             return JSONResponses.UNKNOWN_PROPERTY;
         }
         if (accountProperty.getRecipientId() != senderAccount.getId() && accountProperty.getSetterId() != senderAccount.getId()) {
             return JSONResponses.INCORRECT_PROPERTY;
         }
-        Attachment attachment = new Attachment.MessagingAccountPropertyDelete(accountProperty.getId());
+        Attachment attachment = new MessagingAccountPropertyDelete(accountProperty.getId());
         return createTransaction(req, senderAccount, recipientId, 0, attachment);
 
     }

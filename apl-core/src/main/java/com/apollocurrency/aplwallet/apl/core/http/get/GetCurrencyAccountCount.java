@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -51,7 +51,7 @@ public final class GetCurrencyAccountCount extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfAccounts", Account.getCurrencyAccountCount(currencyId, height));
+        response.put("numberOfAccounts", AccountCurrencyTable.getCurrencyAccountCount(currencyId, height));
         return response;
 
     }

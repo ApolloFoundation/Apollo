@@ -20,18 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Asset;
-import com.apollocurrency.aplwallet.apl.core.app.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.app.Exchange;
-import com.apollocurrency.aplwallet.apl.core.app.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -45,14 +47,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
+import javax.enterprise.inject.spi.CDI;
 
 public final class GetState extends AbstractAPIRequestHandler {
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static class GetStateHolder {
         private static final GetState INSTANCE = new GetState();
     }
@@ -95,11 +99,11 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfPrunableMessages", PrunableMessage.getCount());
             response.put("numberOfTaggedData", TaggedData.getCount());
             response.put("numberOfDataTags", TaggedData.Tag.getTagCount());
-            response.put("numberOfAccountLeases", Account.getAccountLeaseCount());
+            response.put("numberOfAccountLeases", AccountLeaseTable.getAccountLeaseCount());
             response.put("numberOfActiveAccountLeases", Account.getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
-            response.put("numberOfPhasingOnlyAccounts", AccountRestrictions.PhasingOnly.getCount());
+            response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
         }
         response.put("numberOfPeers", Peers.getAllPeers().size());
         response.put("numberOfActivePeers", Peers.getActivePeers().size());
@@ -109,9 +113,9 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
         response.put("peerPort", Peers.getDefaultPeerPort());
-        response.put("isOffline", Constants.isOffline);
+        response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !API.disableAdminPassword);
-        response.put("customLoginWarning", Constants.customLoginWarning);
+        response.put("customLoginWarning", propertiesHolder.customLoginWarning());
         InetAddress externalAddress = UPnP.getInstance().getExternalAddress();
         if (externalAddress != null) {
             response.put("upnpExternalAddress", externalAddress.getHostAddress());

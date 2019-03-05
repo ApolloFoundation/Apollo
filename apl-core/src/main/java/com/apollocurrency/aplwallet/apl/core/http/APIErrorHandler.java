@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,7 +25,8 @@ public class APIErrorHandler extends ErrorPageErrorHandler {
     @Override
     public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if(response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND){
-            String apiResourceBase = propertiesLoader.getStringProperty("apl.apiResourceBase");
+            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+//propertiesLoader.getStringProperty("apl.apiResourceBase");
             String apiWelcomePage = propertiesLoader.getStringProperty("apl.apiWelcomeFile");
 
             response.setContentType("text/html");

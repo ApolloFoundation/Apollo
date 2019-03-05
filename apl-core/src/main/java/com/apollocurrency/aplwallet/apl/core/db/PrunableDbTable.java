@@ -22,33 +22,37 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
 
 public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory) {
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    
+    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
     }
 
-    protected PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
-    PrunableDbTable(String table, DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
-    protected PrunableDbTable(DbKey.Factory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+    protected PrunableDbTable(KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super("", dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
@@ -60,17 +64,18 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
 
     protected void prune() {
         if (blockchainConfig.isEnablePruning()) {
-            try (Connection con = db.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + Constants.BATCH_COMMIT_SIZE)) {
-                pstmt.setInt(1, AplCore.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            try (Connection con = dataSource.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
+                pstmt.setInt(1, timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
                 int deleted;
                 do {
                     deleted = pstmt.executeUpdate();
                     if (deleted > 0) {
                         LOG.debug("Deleted " + deleted + " expired prunable data from " + table);
                     }
-                    db.commitTransaction();
-                } while (deleted >= Constants.BATCH_COMMIT_SIZE);
+                    dataSource.commit(false);
+                } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }

@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -32,7 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -46,9 +48,9 @@ public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
-    private static TransactionDb transactionDb = CDI.current().select(TransactionDb.class).get();
+    private static TransactionDao transactionDb = CDI.current().select(TransactionDaoImpl.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static BlockDb blockDb = CDI.current().select(BlockDb.class).get();
+    private static BlockDao blockDao = CDI.current().select(BlockDaoImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private final int version;
@@ -436,7 +438,7 @@ public final class BlockImpl implements Block {
                     break;
                 }
                 totalBackFees += backFees[i];
-                Account previousGeneratorAccount = Account.getAccount(blockDb.findBlockAtHeight(this.height - i - 1).getGeneratorId());
+                Account previousGeneratorAccount = Account.getAccount(blockDao.findBlockAtHeight(this.height - i - 1).getGeneratorId());
                 LOG.debug("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                         this.height - i - 1);
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
@@ -508,15 +510,16 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        BlockImpl lastBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 2);
+        Block lastBlockForTimeAverage = blockDao.findBlockAtHeight(blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            BlockImpl intermediateBlockForTimeAverage = blockDb.findBlockAtHeight(blockchainHeight - 1);
+            Block intermediateBlockForTimeAverage = blockDao.findBlockAtHeight(blockchainHeight - 1);
             int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
-            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateBlockForTimeAverage.timestamp;
-            int secondAvgBlockTime = intermediateBlockForTimeAverage.timestamp - intermediateBlockForTimeAverage.timeout - lastBlockForTimeAverage.timestamp;
+            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateBlockForTimeAverage.getTimestamp();
+            int secondAvgBlockTime = intermediateBlockForTimeAverage.getTimestamp()
+                    - intermediateBlockForTimeAverage.getTimeout() - lastBlockForTimeAverage.getTimestamp();
             return  (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
         } else {
-            return (this.timestamp - lastBlockForTimeAverage.timestamp) / 3;
+            return (this.timestamp - lastBlockForTimeAverage.getTimestamp()) / 3;
         }
     }
 

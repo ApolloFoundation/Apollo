@@ -23,10 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_FORGING;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -38,6 +35,8 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.servlet.http.HttpServletRequest;
 
 
 public final class GetForging extends AbstractAPIRequestHandler {
@@ -51,14 +50,14 @@ public final class GetForging extends AbstractAPIRequestHandler {
     }
 
     private GetForging() {
-        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey", "passphrase", "account");
+        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long id = ParameterParser.getAccountId(req, "account", false);
+        long id = ParameterParser.getAccountId(req, vaultAccountName(), false);
         byte[] publicKey = ParameterParser.getPublicKey(req, null, id, false);
-        int elapsedTime = AplCore.getEpochTime() - lookupBlockchain().getLastBlock().getTimestamp();
+        int elapsedTime = timeService.getEpochTime() - lookupBlockchain().getLastBlock().getTimestamp();
         if (publicKey != null) {
             Account account = Account.getAccount(publicKey);
             if (account == null) {
@@ -89,4 +88,8 @@ public final class GetForging extends AbstractAPIRequestHandler {
         return true;
     }
 
+    @Override
+    protected String vaultAccountName() {
+        return "account";
+    }
 }

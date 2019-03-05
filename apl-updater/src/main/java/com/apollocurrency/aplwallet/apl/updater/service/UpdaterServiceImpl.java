@@ -4,11 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater.service;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.AuthorityChecker;
@@ -25,6 +20,11 @@ import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 public class UpdaterServiceImpl implements UpdaterService {
     private static final UrlExtractor defaultUrlExtractor = new SimpleUrlExtractor(new RSADoubleDecryptor());
@@ -54,6 +54,10 @@ public class UpdaterServiceImpl implements UpdaterService {
     @Inject
     public UpdaterServiceImpl(UpdaterRepository repository) {
         this(defaultDownloader, repository);
+    }
+
+    public DownloadInfo getDownloadInfo() {
+        return downloader.getDownloadInfo();
     }
 
     @Override

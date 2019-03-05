@@ -21,94 +21,85 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_PEER_PORT;
+
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainIdService;
-import com.apollocurrency.aplwallet.apl.core.db.migrator.DbMigratorTask;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
 
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+import javax.enterprise.inject.spi.CDI;
+
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
-
-    private static ChainIdService chainIdService;
-
+    
+//those vars needed to just pull CDI to crerate it befor we gonna use it in threads
+    private AbstractBlockValidator bcValidator;
+    
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(Time.EpochTime.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final BlockchainConfig blockchainConfig;
+    private static volatile Time time = CDI.current().select(EpochTime.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
+    private DatabaseManager databaseManager;
+    private FullTextSearchService fullTextSearchService;
+    private static BlockchainConfig blockchainConfig;
 
-    @Inject
-    public AplCore(BlockchainConfig config) {
-        this.blockchainConfig = config;
+    public AplCore() {
     }
     
     public static boolean isShutdown() {
         return shutdown;
     }
  
-/*
-    public static Blockchain getBlockchain() {
-        return blockchain;
-    }
 
-    public static BlockchainProcessor getBlockchainProcessor() {
-        return blockchainProcessor;
-    }
-
-    public static TransactionProcessor getTransactionProcessor() {
-        return TransactionProcessorImpl.getInstance();
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (Attachment.AbstractAttachment)attachment);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
-    }
-
-    public static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-    }
-*/
-
-    public static int getEpochTime() {
+    public static int getEpochTime() { // left for awhile
         return time.getTime();
     }
 
-    static void setTime(Time time) {
+    static void setTime(Time time) { // left for awhile
         AplCore.time = time;
     }
 
@@ -116,9 +107,8 @@ public final class AplCore {
     public void init() {
 
         System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
-        // dirProvider = RuntimeEnvironment.getDirProvider();
         LOG = getLogger(AplCore.class);
-        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppHomeDir());
+        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppBaseDir());
 //TODO: Do we really need this check?        
 //        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
@@ -133,9 +123,19 @@ public final class AplCore {
         API.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
-        blockchainProcessor.shutdown();
+        if (blockchainProcessor != null) {
+            blockchainProcessor.shutdown();
+            LOG.info("blockchainProcessor Shutdown...");
+        }
         Peers.shutdown();
-        Db.shutdown();
+        if (fullTextSearchService != null) {
+            fullTextSearchService.shutdown();
+            LOG.info("blockchainProcessor Shutdown...");
+        }
+        if (databaseManager != null) {
+            databaseManager.shutdown();
+            LOG.info("blockchainProcessor Shutdown...");
+        }
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         AplCore.shutdown = true;
     }
@@ -146,7 +146,7 @@ public final class AplCore {
 
     private static volatile boolean initialized = false;
 
-//    private static class Init {
+
     private void startUp() {
 
         if (initialized) {
@@ -154,49 +154,52 @@ public final class AplCore {
         }
         initialized = true;
 
-//        static {
+
             try {
                 long startTime = System.currentTimeMillis();
-                chainIdService = CDI.current().select(ChainIdService.class).get();
-                CDI.current().select(NtpTime.class).get().start();
-
-
-//                blockchainConfig.init();
-//                blockchainConfig.updateToLatestConstants();
-
-                AplCoreRuntime.logSystemProperties();
-                Thread secureRandomInitThread = initSecureRandom();
-                AppStatus.getInstance().update("Database initialization...");
-
-                checkPorts();
-                setServerStatus(ServerStatus.BEFORE_DATABASE, null);
-
-                Db.init();
-//TODO: check: no such file
-  //              ChainIdDbMigration.migrate();
-
-                DbMigratorTask.getInstance().migrateDb();
-
-                setServerStatus(ServerStatus.AFTER_DATABASE, null);
-
-                blockchainConfig.init(); // create inside Apollo and passed into AplCore constructor
-                blockchainConfig.updateToBlock();
+                checkPorts();  
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
                 if(enableAPIUPnP || enablePeerUPnP){
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP.getInstance();
-                }
+                }                
+                //try to start API as early as possible
+                API.init();
+                
+                CDI.current().select(NtpTime.class).get().start();
+                                
+                AplCoreRuntime.logSystemProperties();
+                Thread secureRandomInitThread = initSecureRandom();
+                AppStatus.getInstance().update("Database initialization...");
+                setServerStatus(ServerStatus.BEFORE_DATABASE, null);
+
+                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
+                databaseManager = CDI.current().select(DatabaseManager.class).get();
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
+
+                CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
+                fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+                fullTextSearchService.init(); // first time BEFORE migration
+
+                ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
+                migrationManager.executeDataMigration();
+                dataSource = databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
+                setServerStatus(ServerStatus.AFTER_DATABASE, null);
+
+
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
+                bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 transactionProcessor.init();
-
-                Account.init();
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain);
+                GenesisAccounts.init();
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");
-                AccountLedger.init();
+                AccountLedger.init(databaseManager);
                 Alias.init();
                 Asset.init();
                 DigitalGoodsStore.init();
@@ -204,7 +207,7 @@ public final class AplCore {
                 Poll.init();
                 PhasingPoll.init();
                 Trade.init();
-                AssetTransfer.init();
+                AssetTransfer.init(databaseManager);
                 AssetDelete.init();
                 AssetDividend.init();
                 Vote.init();
@@ -229,15 +232,13 @@ public final class AplCore {
                 Generator.init();
                 AddOns.init();
                 AppStatus.getInstance().update("API initialization...");
-                API.init();
-                DebugTrace.init();
-                int timeMultiplier = (blockchainConfig.isTestnet() && Constants.isOffline) ? Math.max(propertiesHolder.getIntProperty("apl" +
-                        ".timeMultiplier"), 1) : 1;
-                ThreadPool.start(timeMultiplier);
-                if (timeMultiplier > 1) {
-                    setTime(new Time.FasterTime(Math.max(getEpochTime(), blockchain.getLastBlock().getTimestamp()), timeMultiplier));
-                    LOG.info("TIME WILL FLOW " + timeMultiplier + " TIMES FASTER!");
-                }
+                Helper2FA.init(databaseManager);
+//signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
+                ApiSplitFilter.isCoreReady = true;
+
+
+                ThreadPool.start();
+
                 try {
                     secureRandomInitThread.join(10000);
                 }
@@ -250,16 +251,13 @@ public final class AplCore {
                 AppStatus.getInstance().update(message);
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
                 LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
-                LOG.info("Copyright © 2017-2018 Apollo Foundation.");
+                LOG.info("Copyright © 2017-2019 Apollo Foundation.");
                 LOG.info("See LICENSE.txt for more information");
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
 
-                if (blockchainConfig.isTestnet()) {
-                    LOG.info("RUNNING ON TESTNET - DO NOT USE REAL ACCOUNTS!");
-                }
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
@@ -294,9 +292,8 @@ public final class AplCore {
         }
 
         private Set<Integer> collectWorkingPorts() {
-            boolean testnet = blockchainConfig.isTestnet();
-            final int port = testnet ?  Constants.TESTNET_API_PORT: propertiesHolder.getIntProperty("apl.apiServerPort");
-            final int sslPort = testnet ? TESTNET_API_SSLPORT : propertiesHolder.getIntProperty("apl.apiServerSSLPort");
+            final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
+            final int sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
             boolean enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
             int peerPort = -1;
 
@@ -313,9 +310,9 @@ public final class AplCore {
                 }
             }
             if (peerPort == -1) {
-                peerPort = testnet ? TESTNET_PEER_PORT : DEFAULT_PEER_PORT;
+                peerPort = propertiesHolder.getIntProperty("apl.networkPeerServerPort", DEFAULT_PEER_PORT);
             }
-            int peerServerPort = propertiesHolder.getIntProperty("apl.peerServerPort");
+            int peerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
 
             Set<Integer> ports = new HashSet<>();
             ports.add(port);
@@ -323,7 +320,7 @@ public final class AplCore {
                 ports.add(sslPort);
             }
             ports.add(peerPort);
-            ports.add(testnet ? TESTNET_PEER_PORT : peerServerPort);
+            ports.add(peerServerPort);
             return ports;
         }
 

@@ -1,11 +1,17 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -13,10 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
-
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
     private static final Logger LOG = getLogger(AbstractPlatformDependentUpdater.class);
@@ -53,26 +55,25 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             }
             updaterMediator.shutdownApplication();
 
-        }, "Updater Apollo shutdown thread").start();
+        }, "UpdaterShutdownThread").start();
     }
 
     abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException;
 
     private void shutdownAndRunScript(Path updateDirectory) {
         Thread scriptRunner = new Thread(() -> {
-            LOG.debug("Waiting apl shutdown...");
+            LOG.debug("Waiting application shutdown...");
             while (!updaterMediator.isShutdown()) {
                 try {
-                    LOG.trace("WAITING...");
                     TimeUnit.MILLISECONDS.sleep(100);
                 }
                 catch (InterruptedException e) {
                     LOG.debug(e.toString(), e);
                 }
             }
-            LOG.debug("Apl was shutdown");
+            LOG.debug("Application was shutdown");
             runScript(updateDirectory);
-        }, "Platform dependent update thread");
+        }, "PlatformDependentUpdateThread");
         scriptRunner.start();
     }
 
@@ -83,7 +84,8 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }
         try {
             LOG.debug("Starting platform dependent script");
-            runCommand(updateDir, Paths.get("").toAbsolutePath(), Paths.get("").toAbsolutePath(), RuntimeEnvironment.isDesktopApplicationEnabled());
+            runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
+                    RuntimeEnvironment.getInstance().isDesktopApplicationEnabled());
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {

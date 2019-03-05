@@ -6,15 +6,13 @@ package com.apollocurrency.aplwallet.apl.updater.core;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -30,7 +28,17 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
     private UpdaterService updaterService;
@@ -57,7 +65,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     }
 
     @Inject
-    public UpdaterCoreImpl(UpdaterMediator updaterMediator) {
+    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator) {
         this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator);
     }
 
@@ -106,12 +114,12 @@ public class UpdaterCoreImpl implements UpdaterCore {
                     }
                 }
             } else {
-                Attachment.UpdateAttachment attachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+                UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
                 Version expectedVersion = attachment.getAppVersion();
                 if (expectedVersion.greaterThan(updaterMediator.getWalletVersion())) {
                     LOG.error("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + updaterMediator.getWalletVersion() +
                             " " + " updateVersion: " + expectedVersion);
-                    if (transaction.getType() == TransactionType.Update.CRITICAL) {
+                    if (transaction.getType() == Update.CRITICAL) {
                         updaterMediator.suspendBlockchain();
                         UpdateInfo currentUpdateInfo = transactionToUpdateInfo(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
                         setUpdateInfo(currentUpdateInfo);
@@ -132,7 +140,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     public void startUpdate(UpdateData updateData) {
         new Thread(() ->
                 performUpdate(updateData),
-                "Updater thread").start();
+                "UpdateExecutor").start();
     }
 
     @Override
@@ -155,6 +163,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
         setUpdateInfo(updater.getUpdateInfo());
+        getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }
@@ -178,7 +187,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
             transactions.forEach(transaction -> {
                 UpdateData updateData = verifier.process(transaction);
                 if (updateData != null) {
-                    if (((TransactionType.Update) updateData.getTransaction().getType()).getLevel() != Level.MINOR) {
+                    if (((Update) updateData.getTransaction().getType()).getLevel() != Level.MINOR) {
                         updaterMediator.removeUpdateListener(this);
                     }
                     LOG.debug("Found appropriate update transaction: " + updateData.getTransaction().getJSONObject().get("attachment"));
@@ -204,7 +213,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     }
 
     private UpdateInfo transactionToUpdateInfo(Transaction transaction, UpdateInfo.UpdateState state) {;
-        Attachment.UpdateAttachment updateAttachment = (Attachment.UpdateAttachment) transaction.getAttachment();
+        UpdateAttachment updateAttachment = (UpdateAttachment) transaction.getAttachment();
         return new UpdateInfo(true,
                 transaction.getId(),
                 0,
@@ -220,11 +229,11 @@ public class UpdaterCoreImpl implements UpdaterCore {
 
     private Level from(TransactionType type) {
 
-        if (type == TransactionType.Update.CRITICAL) {
+        if (type == Update.CRITICAL) {
             return Level.CRITICAL;
-        } else if (type == TransactionType.Update.IMPORTANT) {
+        } else if (type == Update.IMPORTANT) {
             return Level.IMPORTANT;
-        } else if (type == TransactionType.Update.MINOR) {
+        } else if (type == Update.MINOR) {
             return Level.MINOR;
         }
         return null;

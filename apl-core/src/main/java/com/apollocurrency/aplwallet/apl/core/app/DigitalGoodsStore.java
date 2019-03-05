@@ -21,18 +21,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.AccountLedger.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -108,7 +114,7 @@ public final class DigitalGoodsStore {
 
     public static final class Tag {
 
-        private static final DbKey.StringKeyFactory<Tag> tagDbKeyFactory = new DbKey.StringKeyFactory<Tag>("tag") {
+        private static final StringKeyFactory<Tag> tagDbKeyFactory = new StringKeyFactory<Tag>("tag") {
             @Override
             public DbKey newKey(Tag tag) {
                 return tag.dbKey;
@@ -235,7 +241,7 @@ public final class DigitalGoodsStore {
 
     public static final class Goods {
 
-        private static final DbKey.LongKeyFactory<Goods> goodsDbKeyFactory = new DbKey.LongKeyFactory<Goods>("id") {
+        private static final LongKeyFactory<Goods> goodsDbKeyFactory = new LongKeyFactory<Goods>("id") {
 
             @Override
             public DbKey newKey(Goods goods) {
@@ -320,7 +326,7 @@ public final class DigitalGoodsStore {
         private long priceATM;
         private boolean delisted;
 
-        private Goods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
+        private Goods(Transaction transaction, DigitalGoodsListing attachment) {
             this.id = transaction.getId();
             this.dbKey = goodsDbKeyFactory.newKey(this.id);
             this.sellerId = transaction.getSenderId();
@@ -448,7 +454,7 @@ public final class DigitalGoodsStore {
 
     public static final class Purchase {
 
-        private static final DbKey.LongKeyFactory<Purchase> purchaseDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+        private static final LongKeyFactory<Purchase> purchaseDbKeyFactory = new LongKeyFactory<Purchase>("id") {
 
             @Override
             public DbKey newKey(Purchase purchase) {
@@ -476,7 +482,7 @@ public final class DigitalGoodsStore {
 
         };
 
-        private static final DbKey.LongKeyFactory<Purchase> feedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+        private static final LongKeyFactory<Purchase> feedbackDbKeyFactory = new LongKeyFactory<Purchase>("id") {
 
             @Override
             public DbKey newKey(Purchase purchase) {
@@ -508,7 +514,7 @@ public final class DigitalGoodsStore {
 
         };
 
-        private static final DbKey.LongKeyFactory<Purchase> publicFeedbackDbKeyFactory = new DbKey.LongKeyFactory<Purchase>("id") {
+        private static final LongKeyFactory<Purchase> publicFeedbackDbKeyFactory = new LongKeyFactory<Purchase>("id") {
 
             @Override
             public DbKey newKey(Purchase purchase) {
@@ -659,7 +665,7 @@ public final class DigitalGoodsStore {
             return purchaseTable.getManyBy(dbClause, from, to);
         }
 
-        static Purchase getPendingPurchase(long purchaseId) {
+        public static Purchase getPendingPurchase(long purchaseId) {
             Purchase purchase = getPurchase(purchaseId);
             return purchase == null || ! purchase.isPending() ? null : purchase;
         }
@@ -702,7 +708,7 @@ public final class DigitalGoodsStore {
         private long discountATM;
         private long refundATM;
 
-        private Purchase(Transaction transaction, Attachment.DigitalGoodsPurchase attachment, long sellerId) {
+        private Purchase(Transaction transaction, DigitalGoodsPurchase attachment, long sellerId) {
             this.id = transaction.getId();
             this.dbKey = purchaseDbKeyFactory.newKey(this.id);
             this.buyerId = transaction.getSenderId();
@@ -916,14 +922,14 @@ public final class DigitalGoodsStore {
 
     }
 
-    static void listGoods(Transaction transaction, Attachment.DigitalGoodsListing attachment) {
+    public static void listGoods(Transaction transaction, DigitalGoodsListing attachment) {
         Goods goods = new Goods(transaction, attachment);
         Tag.add(goods);
         Goods.goodsTable.insert(goods);
         goodsListeners.notify(goods, Event.GOODS_LISTED);
     }
 
-    static void delistGoods(long goodsId) {
+    public static void delistGoods(long goodsId) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.setDelisted(true);
@@ -933,7 +939,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void changePrice(long goodsId, long priceATM) {
+    public static void changePrice(long goodsId, long priceATM) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.changePrice(priceATM);
@@ -943,7 +949,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void changeQuantity(long goodsId, int deltaQuantity) {
+    public static void changeQuantity(long goodsId, int deltaQuantity) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(goodsId));
         if (! goods.isDelisted()) {
             goods.changeQuantity(deltaQuantity);
@@ -953,7 +959,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void purchase(Transaction transaction,  Attachment.DigitalGoodsPurchase attachment) {
+    public static void purchase(Transaction transaction,  DigitalGoodsPurchase attachment) {
         Goods goods = Goods.goodsTable.get(Goods.goodsDbKeyFactory.newKey(attachment.getGoodsId()));
         if (! goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
@@ -970,7 +976,7 @@ public final class DigitalGoodsStore {
         }
     }
 
-    static void deliver(Transaction transaction, Attachment.DigitalGoodsDelivery attachment) {
+    public static void deliver(Transaction transaction, DigitalGoodsDelivery attachment) {
         Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
         purchase.setPending(false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
@@ -987,7 +993,7 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.DELIVERY);
     }
 
-    static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
+    public static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
                        EncryptedMessageAppendix encryptedMessage) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
@@ -1001,7 +1007,7 @@ public final class DigitalGoodsStore {
         purchaseListeners.notify(purchase, Event.REFUND);
     }
 
-    static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
+    public static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         if (encryptedMessage != null) {
             purchase.addFeedbackNote(encryptedMessage.getEncryptedData());

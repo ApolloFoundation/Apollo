@@ -25,23 +25,23 @@ import java.net.URI;
 
 public interface RuntimeMode {
 
-    public void init();
+    void init();
 
-    public void setServerStatus(ServerStatus status, URI wallet, File logFileDir);
+    void setServerStatus(ServerStatus status, URI wallet, File logFileDir);
 
 
-    public void shutdown();
+    void shutdown();
 
-    public void alert(String message);
+    void alert(String message);
 //
 //    default void recoverDb() {
 //        alert("Db Failed! Try to manually remove it.");
 //    }
 
-    public default void updateAppStatus(String newStatus) {}
+    default void updateAppStatus(String newStatus) {}
 
-    public void displayError(String errorMessage);
+    void displayError(String errorMessage);
     
-    public default void launchDesktopApplication(){      
+    default void launchDesktopApplication(){
     }   
 }

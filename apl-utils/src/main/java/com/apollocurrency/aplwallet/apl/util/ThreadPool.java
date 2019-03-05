@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-//import com.apollocurrency.aplwallet.apl.core.app.AplGlobalObjects;
-
 import static org.slf4j.LoggerFactory.getLogger;
+
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,13 +34,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-
 public final class ThreadPool {
     private static final Logger LOG = getLogger(ThreadPool.class);
-
-    // TODO: YL remove static instance later
-//    private static AplGlobalObjects aplGlobalObjects;// = CDI.current().select(AplGlobalObjects.class).get();
 
     private static volatile ScheduledExecutorService scheduledThreadPool;
     private static Map<Runnable, Long> backgroundJobs = new HashMap<>();
@@ -87,7 +82,7 @@ public final class ThreadPool {
 */
     }
 
-    public static synchronized void start(int timeMultiplier) {
+    public static synchronized void start() {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started");
         }
@@ -103,7 +98,7 @@ public final class ThreadPool {
         LOG.debug("Starting " + backgroundJobs.size() + " background jobs");
         scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("scheduled background pool"));
         for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
-            scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, Math.max(entry.getValue() / timeMultiplier, 1), TimeUnit.MILLISECONDS);
+            scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, entry.getValue(), TimeUnit.MILLISECONDS);
         }
         backgroundJobs = null;
 
@@ -119,7 +114,7 @@ public final class ThreadPool {
     public static void shutdown() {
         if (scheduledThreadPool != null) {
 	        LOG.info("Stopping background jobs...");
-            shutdownExecutor("scheduledThreadPool", scheduledThreadPool, 10);
+            shutdownExecutor("ScheduledBackgroundPool", scheduledThreadPool, 10);
             scheduledThreadPool = null;
         	LOG.info("...Done");
         }

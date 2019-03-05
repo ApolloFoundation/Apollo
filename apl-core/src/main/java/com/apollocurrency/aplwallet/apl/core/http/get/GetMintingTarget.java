@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -66,7 +66,7 @@ public final class GetMintingTarget extends AbstractAPIRequestHandler {
         BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
         json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
-        json.put("counter", com.apollocurrency.aplwallet.apl.core.app.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));
+        json.put("counter", com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));
         return json;
     }
 

@@ -12,22 +12,28 @@
         <fileSet>
             <directory>${project.basedir}/../bin</directory>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../sbin</directory>
+            <outputDirectory>sbin</outputDirectory>
             <fileMode>0755</fileMode>          
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/../conf</directory>
-            <outputDirectory>conf</outputDirectory>
+            <directory>${project.basedir}/../updater</directory>
+            <outputDirectory>updater</outputDirectory>
             <fileMode>0755</fileMode>          
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/../release-notes/</directory>
             <outputDirectory>doc</outputDirectory>
-            <fileMode>0644</fileMode>          
-        </fileSet>     
+            <fileMode>0644</fileMode>
+        </fileSet>
         <fileSet>
-            <directory>${project.basedir}/../html/</directory>
-            <outputDirectory>html</outputDirectory>
-        </fileSet>     
+            <directory>${project.basedir}/../doc/</directory>
+            <outputDirectory>doc</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
         <fileSet>
             <directory>${project.basedir}/../</directory>
             <outputDirectory>/</outputDirectory>
@@ -35,12 +41,30 @@
                 <include>README*</include>
                 <include>LICENSE*</include>
                 <include>CHANGELOG*</include>
+                <include>VERSION</include>
+                <include>Wallet.url</include>
+                <include>favicon.ico</include>
+                <include>3RD-PARTY-LICENSES.txt</include>
             </includes>
-        </fileSet>        
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/webui/</directory>
+            <outputDirectory>webui</outputDirectory>
+            <fileMode>0644</fileMode>          
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/conf/</directory>
+            <outputDirectory>doc</outputDirectory>
+            <includes>
+                <include>apl-blockchain.properties</include>
+                <include>chains.json</include>
+            </includes>
+        </fileSet>
+
     </fileSets> 
      <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
         <file>
-            <source> ${project.build.directory}/Apollo.jar</source>
+            <source> ${project.build.directory}/apl-exec-${project.version}.jar</source>
             <outputDirectory>/</outputDirectory>
         </file>
      </files>     
@@ -48,7 +72,7 @@
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
              <excludes>
-                <exclude>${project.groupId}:${project.artifactId}:jar:*</exclude>
+                <exclude>${project.groupId}:*:zip:*</exclude>
             </excludes>           
         </dependencySet>
     </dependencySets>

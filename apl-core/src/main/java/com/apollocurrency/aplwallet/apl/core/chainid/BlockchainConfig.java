@@ -6,191 +6,89 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockDb;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-@ApplicationScoped
+import java.util.Map;
+import java.util.Objects;
+import javax.inject.Singleton;
+
+/**
+ * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
+ */
+
+@Singleton
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
-
-    private boolean testnet;
-    private String projectName;
-    private String accountPrefix;
-    private String coinSymbol;
     private int leasingDelay;
     private int minPrunableLifetime;
     private boolean enablePruning;
     private int maxPrunableLifetime;
-    private short shufflingProcessingDeadline;
     // lastKnownBlock must also be set in html/www/js/ars.constants.js
+    private short shufflingProcessingDeadline;
     private long lastKnownBlock;
     private long unconfirmedPoolDepositAtm;
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
-    private static BlockchainProcessor blockchainProcessor;
-    private static BlockDb blockDb;
-
     private volatile HeightConfig currentConfig;
     private Chain chain;
 
-    @Inject
-    public BlockchainConfig(PropertiesHolder holder, ChainIdService chainIdService) {
-        this(chainIdService,
-             holder.getIntProperty("apl.testnetLeasingDelay", -1),
-             holder.getIntProperty("apl.testnetGuaranteedBalanceConfirmations", -1),
-             holder.getIntProperty("apl.maxPrunableLifetime")
-                );
-    }
-    public BlockchainConfig(ChainIdService chainIdService, int testnetLeasingDelay, int testnetGuaranteedBalanceConfirmations,
-                            int maxPrunableLifetime) {
+    public BlockchainConfig() {}
 
-        try {
-            this.chain = chainIdService.getActiveChain();
+    void updateChain(Chain chain, int maxPrunableLifetime) {
+
+        Objects.requireNonNull(chain, "Chain cannot be null");
+        setFields(chain, maxPrunableLifetime);
+        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
+        if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
+            throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
-        catch (IOException e) {
-            throw new RuntimeException("Cannot get active chain");
-        }
-        this.testnet                        = chain.isTestnet();
-        this.projectName                    = chain.getProject();
-        this.accountPrefix                  = chain.getPrefix();
-        this.coinSymbol                     = chain.getSymbol();
-        this.leasingDelay                   = testnet ? testnetLeasingDelay == -1 ? 1440 : testnetLeasingDelay : 1440;
-        this.minPrunableLifetime            = testnet ? 1440 * 60 : 14 * 1440 * 60;
-        this.shufflingProcessingDeadline    = (short)(testnet ? 10 : 100);
-        this.lastKnownBlock                 = testnet ? 0 : 0;
-        this.unconfirmedPoolDepositAtm      = (testnet ? 50 : 100) * Constants.ONE_APL;
-        this.shufflingDepositAtm            = (testnet ? 7 : 1000) * Constants.ONE_APL;
-        this.guaranteedBalanceConfirmations = testnet ? testnetGuaranteedBalanceConfirmations == -1 ? 1440 : testnetGuaranteedBalanceConfirmations : 1440;
+        currentConfig = new HeightConfig(blockchainProperties.get(0));
+        LOG.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+    }
+
+    private void setFields(Chain chain, int maxPrunableLifetime) {
+        this.chain = chain;
+        // These fields could be static constants but some fields should be scaled by blockTime
+        // Block time scaling should be implemented in future
+        this.leasingDelay = 1440;
+        this.minPrunableLifetime = 14 * 1440 * 60; // two weeks in seconds
+        this.shufflingProcessingDeadline = (short) 100;
+        this.lastKnownBlock = 0;
+        this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
+        this.shufflingDepositAtm = 1000 * Constants.ONE_APL;
+        this.guaranteedBalanceConfirmations = 1440;
+
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
     }
 
-    public void init() {
-
-        currentConfig = new HeightConfig(chain.getBlockchainProperties().get(0), testnet);
-        ConfigChangeListener configChangeListener = new ConfigChangeListener(chain.getBlockchainProperties());
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_PUSHED);
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_POPPED);
-        lookupBlockchainProcessor().addListener(configChangeListener,
-                BlockchainProcessor.Event.BLOCK_SCANNED);
-        LOG.debug("Connected to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
+        updateChain(chain, holder);
     }
 
-    private BlockchainProcessor lookupBlockchainProcessor() {
-        if (blockchainProcessor == null) {
-            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        }
-        return blockchainProcessor;
+    void updateChain(Chain chain, PropertiesHolder holder) {
+        int maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
+        updateChain(chain, maxPrunableLifetime);
     }
 
-    private BlockDb lookupBlockDb() {
-        if (blockDb == null) {
-            blockDb = CDI.current().select(BlockDb.class).get();
-        }
-        return blockDb;
-    }
-
-    public void updateToBlock() {
-        Block lastBlock = lookupBlockDb().findLastBlock();
-        if (lastBlock == null) {
-            LOG.debug("Nothing to update. No blocks");
-            return;
-        }
-        updateToHeight(lastBlock.getHeight(), true);
-    }
-    private void updateToHeight(int height, boolean inclusive) {
-        Objects.requireNonNull(chain);
-
-        HeightConfig latestConfig = getConfigAtHeight(height, inclusive);
-        if (currentConfig != null) {
-            currentConfig = latestConfig;
-        } else {
-            LOG.error("No configs at all!");
-        }
-    }
-
-    public void rollback(int height) {
-        updateToHeight(height, true);
-    }
-
-    private HeightConfig getConfigAtHeight(int targetHeight, boolean inclusive) {
-        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        if (targetHeight == 0) {
-            return new HeightConfig(blockchainProperties.get(0), testnet);
-        }
-        Optional<Integer> maxHeight =
-                blockchainProperties
-                        .keySet()
-                        .stream()
-                        .filter(height -> inclusive ? targetHeight >= height : targetHeight > height)
-                        .max(Comparator.naturalOrder());
-        return maxHeight
-                .map(height -> new HeightConfig(blockchainProperties.get(height), testnet))
-                .orElse(null);
-    }
-
-
-
-    private class ConfigChangeListener implements Listener<Block> {
-        private final Map<Integer, BlockchainProperties> propertiesMap;
-        private final Set<Integer> targetHeights;
-
-        public ConfigChangeListener(Map<Integer, BlockchainProperties> propertiesMap) {
-            this.propertiesMap = new ConcurrentHashMap<>(propertiesMap);
-            this.targetHeights = Collections.unmodifiableSet(propertiesMap.keySet());
-            String stringConstantsChangeHeights =
-                    targetHeights.stream().map(Object::toString).collect(Collectors.joining(
-                            ","));
-            LOG.debug("Constants updates at heights: {}",
-                    stringConstantsChangeHeights.isEmpty() ? "none" : stringConstantsChangeHeights);
-        }
-
-        @Override
-        public void notify(Block block) {
-            int currentHeight = block.getHeight();
-            if (targetHeights.contains(currentHeight)) {
-                LOG.info("Updating constants at height {}", currentHeight);
-                currentConfig = new HeightConfig(propertiesMap.get(currentHeight), testnet);
-                LOG.info("New constants applied: {}", currentConfig);
-            }
-        }
-    }
-
-    public boolean isTestnet() {
-        return testnet;
+    void updateChain(Chain chain) {
+        updateChain(chain, 0);
     }
 
     public String getProjectName() {
-        return projectName;
+        return chain.getProject();
     }
 
     public String getAccountPrefix() {
-        return accountPrefix;
+        return chain.getPrefix();
     }
 
     public String getCoinSymbol() {
-        return coinSymbol;
+        return chain.getSymbol();
     }
 
     public int getLeasingDelay() {
@@ -235,5 +133,9 @@ public class BlockchainConfig {
 
     public Chain getChain() {
         return chain;
+    }
+
+    void setCurrentConfig(HeightConfig currentConfig) {
+        this.currentConfig = currentConfig;
     }
 }

@@ -22,15 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
@@ -40,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -74,10 +74,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
+import javax.enterprise.inject.spi.CDI;
 
 final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
-
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    
     private final String host;
     private final PeerWebSocket webSocket;
     private volatile PeerWebSocket inboundSocket;
@@ -111,6 +113,7 @@ final class PeerImpl implements Peer {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
 
     PeerImpl(String host, String announcedAddress) {
@@ -380,6 +383,7 @@ final class PeerImpl implements Peer {
             return;
         }
         if (! isBlacklisted()) {
+            LOG.error("Connect error", cause);
             if (cause instanceof IOException || cause instanceof ParseException || cause instanceof IllegalArgumentException) {
                 LOG.debug("Blacklisting " + host + " because of: " + cause.toString());
             } else {
@@ -391,7 +395,7 @@ final class PeerImpl implements Peer {
 
     @Override
     public void blacklist(String cause) {
-        blacklistingTime = AplCore.getEpochTime();
+        blacklistingTime = timeService.getEpochTime();
         blacklistingCause = cause;
         setState(State.NON_CONNECTED);
         lastInboundRequest = 0;
@@ -669,7 +673,7 @@ final class PeerImpl implements Peer {
 
 
     void connect(UUID targetChainId) {
-        lastConnectAttempt = AplCore.getEpochTime();
+        lastConnectAttempt = timeService.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && announcedAddress != null) {
                 try {
@@ -714,7 +718,7 @@ final class PeerImpl implements Peer {
                 analyzeHallmark((String) response.get("hallmark"));
                 Object chainIdObject = response.get("chainId");
                 if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(targetChainId)) {
-                    Peers.removePeer(this);
+                    remove();
                     return;
                 }
                 chainId.set(UUID.fromString(chainIdObject.toString()));
@@ -801,7 +805,7 @@ final class PeerImpl implements Peer {
     }
 
     boolean analyzeHallmark(final String hallmarkString) {
-        if (Constants.isLightClient) {
+        if (propertiesHolder.isLightClient()) {
             return true;
         }
 

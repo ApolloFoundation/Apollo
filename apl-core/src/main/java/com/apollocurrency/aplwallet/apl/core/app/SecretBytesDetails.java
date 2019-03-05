@@ -9,14 +9,11 @@ import java.util.Objects;
 
 public class SecretBytesDetails {
     private byte[] secretBytes;
-    private KeyStore.Status extractStatus;
+    private VaultKeyStore.Status extractStatus;
 
-    public SecretBytesDetails(byte[] secretBytes, KeyStore.Status extractStatus) {
+    public SecretBytesDetails(byte[] secretBytes, VaultKeyStore.Status extractStatus) {
         this.secretBytes = secretBytes;
         this.extractStatus = extractStatus;
-    }
-
-    public SecretBytesDetails() {
     }
 
     @Override
@@ -32,7 +29,7 @@ public class SecretBytesDetails {
         return secretBytes;
     }
 
-    public KeyStore.Status getExtractStatus() {
+    public VaultKeyStore.Status getExtractStatus() {
         return extractStatus;
     }
 

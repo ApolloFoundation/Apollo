@@ -20,54 +20,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_PORT;
-import static com.apollocurrency.aplwallet.apl.core.app.Constants.TESTNET_API_SSLPORT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.env.ResourcePaths;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+
+import java.security.KeyPair;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -90,51 +66,95 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 
 public final class API {
     private static final Logger LOG = getLogger(API.class);
 
     // TODO: YL remove static instance later
-   // private static AplGlobalObjects propertiesLoader = CDI.current().select(AplGlobalObjects.class).get();
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
-    public static final int openAPIPort;
-    public static final int openAPISSLPort;
-    public static final boolean isOpenAPI;
-    public static final List<String> disabledAPIs;
-    public static final List<APITag> disabledAPITags;
+    private static FBElGamalKeyPair elGamalKeyPair;    
+    public static int openAPIPort;
+    public static int openAPISSLPort;
+    public static boolean isOpenAPI;
+    public static List<String> disabledAPIs;
+    public static List<APITag> disabledAPITags;
 
-    private static final Set<String> allowedBotHosts;
-    private static final List<NetworkAddress> allowedBotNets;
+    private static Set<String> allowedBotHosts;
+    private static List<NetworkAddress> allowedBotNets;
     private static final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
-    public static final String adminPassword = propertiesLoader.getStringProperty("apl.adminPassword", "", true);
-    public static final boolean disableAdminPassword;
-    public static final int maxRecords = propertiesLoader.getIntProperty("apl.maxAPIRecords");
-    static final boolean enableAPIUPnP = propertiesLoader.getBooleanProperty("apl.enableAPIUPnP");
-    public static final int apiServerIdleTimeout = propertiesLoader.getIntProperty("apl.apiServerIdleTimeout");
-    public static final boolean apiServerCORS = propertiesLoader.getBooleanProperty("apl.apiServerCORS");
-    private static final String forwardedForHeader = propertiesLoader.getStringProperty("apl.forwardedForHeader");
+    public static final String adminPassword = propertiesHolder.getStringProperty("apl.adminPassword", "", true);
+    public static boolean disableAdminPassword;
+    public static final int maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
+    static final boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
+    public static final int apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
+    public static final boolean apiServerCORS = propertiesHolder.getBooleanProperty("apl.apiServerCORS");
+    private static final String forwardedForHeader = propertiesHolder.getStringProperty("apl.forwardedForHeader");
 
-    private static final Server apiServer;
+    private static Server apiServer;
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
     //TODO: remove static context
-    private static final UPnP upnp = UPnP.getInstance();    
-    private static Thread serverKeysGenerator = new Thread(() -> {
+    private static final UPnP upnp = UPnP.getInstance(); 
 
+//TODO: remove this as soon as Al Gamal is ready!    
+    private static Thread serverKeysGenerator = new Thread(() -> {
         while (!Thread.currentThread().isInterrupted()) {
             synchronized (API.class) {
-                byte[] seed = Crypto.getSecureRandom().generateSeed(32);
-                privateKey = Crypto.getPrivateKey(seed);
-                publicKey = Crypto.getPublicKey(seed);
+                byte[] keyBytes = new byte[32];
+                Crypto.getSecureRandom().nextBytes(keyBytes);
+                byte[] keySeed = Crypto.getKeySeed(keyBytes);
+                privateKey = Crypto.getPrivateKey(keySeed);
+                publicKey = Crypto.getPublicKey(keySeed);
+                
+                elGamalKeyPair = Crypto.getElGamalKeyPair();
+                
             }
             try {
-                TimeUnit.MINUTES.sleep(10);
+                TimeUnit.MINUTES.sleep(15);
             }
             catch (InterruptedException e) {
                 return;
@@ -149,17 +169,29 @@ public final class API {
         return privateKey;
     }
 
-    static {
+    public static synchronized FBElGamalKeyPair getServerElGamalPublicKey() {
+        
+        return elGamalKeyPair;
+        
+    }
+    
+    public static String elGamalDecrypt(String cryptogramm)
+    {
+        return Crypto.elGamalDecrypt(cryptogramm, elGamalKeyPair);
+    }
+    
+    public static void init() {
+//    static {
         serverKeysGenerator.setDaemon(true);
-        List<String> disabled = new ArrayList<>(propertiesLoader.getStringListProperty("apl.disabledAPIs"));
+        List<String> disabled = new ArrayList<>(propertiesHolder.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
         disabledAPIs = Collections.unmodifiableList(disabled);
-        disabled = propertiesLoader.getStringListProperty("apl.disabledAPITags");
+        disabled = propertiesHolder.getStringListProperty("apl.disabledAPITags");
         Collections.sort(disabled);
         List<APITag> apiTags = new ArrayList<>(disabled.size());
         disabled.forEach(tagName -> apiTags.add(APITag.fromDisplayName(tagName)));
         disabledAPITags = Collections.unmodifiableList(apiTags);
-        List<String> allowedBotHostsList = propertiesLoader.getStringListProperty("apl.allowedBotHosts");
+        List<String> allowedBotHostsList = propertiesHolder.getStringListProperty("apl.allowedBotHosts");
         if (! allowedBotHostsList.contains("*")) {
             Set<String> hosts = new HashSet<>();
             List<NetworkAddress> nets = new ArrayList<>();
@@ -182,25 +214,26 @@ public final class API {
             allowedBotNets = null;
         }
 
-        boolean enableAPIServer = propertiesLoader.getBooleanProperty("apl.enableAPIServer");
+        boolean enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (enableAPIServer) {
-            final int port = blockchainConfig.isTestnet() ? TESTNET_API_PORT : propertiesLoader.getIntProperty("apl.apiServerPort");
-            final int sslPort = blockchainConfig.isTestnet() ? TESTNET_API_SSLPORT : propertiesLoader.getIntProperty("apl.apiServerSSLPort");
-            final String host = propertiesLoader.getStringProperty("apl.apiServerHost");
-            disableAdminPassword = propertiesLoader.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
-            int maxThreadPoolSize = propertiesLoader.getIntProperty("apl.threadPoolMaxSize");
-            int minThreadPoolSize = propertiesLoader.getIntProperty("apl.threadPoolMinSize");
+
+            final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
+            final int sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
+            final String host = propertiesHolder.getStringProperty("apl.apiServerHost");
+            disableAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
+            int maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");
+            int minThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMinSize");
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
-            threadPool.setName("API thread pool");
+            threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
             ServerConnector connector;
-            boolean enableSSL = propertiesLoader.getBooleanProperty("apl.apiSSL");
+            boolean enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
             //
             // Create the HTTP connector
             //
-
             if (!enableSSL || port != sslPort) {
                 HttpConfiguration configuration = new HttpConfiguration();
                 configuration.setSendDateHeader(false);
@@ -226,16 +259,16 @@ public final class API {
                 https_config.setSecurePort(sslPort);
                 https_config.addCustomizer(new SecureRequestCustomizer());
                 sslContextFactory = new SslContextFactory();
-                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(propertiesLoader.getStringProperty("apl.keyStorePath"))).toString();
+                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath"))).toString();
                 LOG.info("Using keystore: " + keyStorePath);
                 sslContextFactory.setKeyStorePath(keyStorePath);
-                sslContextFactory.setKeyStorePassword(propertiesLoader.getStringProperty("apl.keyStorePassword", null, true));
+                sslContextFactory.setKeyStorePassword(propertiesHolder.getStringProperty("apl.keyStorePassword", null, true));
                 sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
                         "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5", "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
                         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA");
                 sslContextFactory.addExcludeProtocols("SSLv3");
-                sslContextFactory.setKeyStoreType(propertiesLoader.getStringProperty("apl.keyStoreType"));
-                List<String> ciphers = propertiesLoader.getStringListProperty("apl.apiSSLCiphers");
+                sslContextFactory.setKeyStoreType(propertiesHolder.getStringProperty("apl.keyStoreType"));
+                List<String> ciphers = propertiesHolder.getStringListProperty("apl.apiSSLCiphers");
                 if (!ciphers.isEmpty()) {
                     sslContextFactory.setIncludeCipherSuites(ciphers.toArray(new String[ciphers.size()]));
                 }
@@ -257,14 +290,14 @@ public final class API {
             } catch (URISyntaxException e) {
                 LOG.info("Cannot resolve browser URI", e);
             }
-            openAPIPort = !Constants.isLightClient && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
-            openAPISSLPort = !Constants.isLightClient && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
+            openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
+            openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
             isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
 
             HandlerList apiHandlers = new HandlerList();
 
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = ResourcePaths.find(propertiesLoader.getStringProperty("apl.apiResourceBase"));
+            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
             if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
                 ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
                 defaultServletHolder.setInitParameter("dirAllowed", "false");
@@ -274,32 +307,22 @@ public final class API {
                 defaultServletHolder.setInitParameter("gzip", "true");
                 defaultServletHolder.setInitParameter("etags", "true");
                 apiHandler.addServlet(defaultServletHolder, "/*");
-                apiHandler.setWelcomeFiles(new String[]{propertiesLoader.getStringProperty("apl.apiWelcomeFile")});
-            }
-
-            String javadocResourceBase = propertiesLoader.getStringProperty("apl.javadocResourceBase");
-            if (javadocResourceBase != null) {
-                ContextHandler contextHandler = new ContextHandler("/doc");
-                ResourceHandler docFileHandler = new ResourceHandler();
-                docFileHandler.setDirectoriesListed(false);
-                docFileHandler.setWelcomeFiles(new String[]{"index.html"});
-                docFileHandler.setResourceBase(javadocResourceBase);
-                contextHandler.setHandler(docFileHandler);
-                apiHandlers.addHandler(contextHandler);
+                String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
+                apiHandler.setWelcomeFiles(wellcome);
             }
 
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesLoader.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
                     "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesLoader.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             GzipHandler gzipHandler = new GzipHandler();
-            if (!propertiesLoader.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
+            if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
                 gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
@@ -312,19 +335,67 @@ public final class API {
 
             apiHandler.addServlet(BlockEventSourceServlet.class, "/blocks").setAsyncSupported(true);
 
+//TODO: do we need it at all?
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
+
             apiHandler.addEventListener(new ApiContextListener());
+            // Filter to forward requests to new API
+            {
+              FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
+              filterHolder.setAsyncSupported(true);
+              filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
+              filterHolder.setAsyncSupported(true);
+            }
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
                 filterHolder.setInitParameter("allowedHeaders", "*");
                 filterHolder.setAsyncSupported(true);
             }
 
-            if (propertiesLoader.getBooleanProperty("apl.apiFrameOptionsSameOrigin")) {
+            if (propertiesHolder.getBooleanProperty("apl.apiFrameOptionsSameOrigin")) {
                 FilterHolder filterHolder = apiHandler.addFilter(XFrameOptionsFilter.class, "/*", null);
                 filterHolder.setAsyncSupported(true);
             }
             disableHttpMethods(apiHandler);
+
+            // --------- ADD REST support servlet (RESTEasy)
+            ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
+            restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
+            restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+
+            restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
+                    new StringJoiner(",")
+                            .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ParameterExceptionMapper.class.getName())
+                            .add(RestParameterExceptionMapper.class.getName())
+                            .toString()
+            );
+
+            String restEasyAppClassName = RestEasyApplication.class.getName();
+            restEasyServletHolder.setInitParameter("javax.ws.rs.Application", restEasyAppClassName);
+            apiHandler.addServlet(restEasyServletHolder, "/rest/*");
+            // init Weld here
+            apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
+            //need this listener to support scopes properly
+            apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
+
+            //--------- ADD swagger generated docs and API test page
+            // Set the path to our static (Swagger UI) resources
+
+            URL su =  API.class.getResource("/swaggerui");
+            if(su!=null){
+                String resourceBasePath = su.toExternalForm();
+                ContextHandler contextHandler = new ContextHandler("/swagger");
+                ResourceHandler swFileHandler = new ResourceHandler();
+                swFileHandler.setDirectoriesListed(false);
+                swFileHandler.setWelcomeFiles(new String[]{"index.html"});
+                swFileHandler.setResourceBase(resourceBasePath);
+                contextHandler.setHandler(swFileHandler);
+                apiHandlers.addHandler(contextHandler);
+            }else{
+                LOG.warn("Swagger html/js resources not found, swagger UI is off.");
+            }
+
 
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
@@ -332,8 +403,9 @@ public final class API {
             apiServer.setHandler(apiHandlers);
             apiServer.addBean(new APIErrorHandler());
             apiServer.setStopAtShutdown(true);
+//            Log.getRootLogger().setDebugEnabled(true);
 
-            ThreadPool.runBeforeStart("UPnP ports init", () -> {
+//            ThreadPool.runBeforeStart("APIInitThread", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {
@@ -343,9 +415,7 @@ public final class API {
                                 upnp.addPort(((ServerConnector)apiConnector).getPort());
                         }
                     }
-                    APIServlet.initClass();
-                    APIProxyServlet.initClass();
-                    APITestServlet.initClass();
+
                     apiServer.start();
                     if (sslContextFactory != null) {
                         LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
@@ -357,7 +427,7 @@ public final class API {
                     throw new RuntimeException(e.toString(), e);
                 }
 
-            }, true);
+          //  }, true);
 
         } else {
             apiServer = null;
@@ -370,7 +440,7 @@ public final class API {
 
     }
 
-    public static void init() {}
+//    public static void init() {}
 
     public static void shutdown() {
         if (apiServer != null) {
@@ -424,7 +494,7 @@ public final class API {
     }
 
     private static void checkOrLockPassword(HttpServletRequest req) throws ParameterException {
-        int now = AplCore.getEpochTime();
+        int now = timeService.getEpochTime();
         String remoteHost = null;
         if (forwardedForHeader != null) {
             remoteHost = req.getHeader(forwardedForHeader);

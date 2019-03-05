@@ -21,10 +21,11 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.app.Account;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -86,7 +87,7 @@ public class ApproveTransaction extends CreateTransaction {
             }
         }
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.MessagingPhasingVoteCasting(phasedTransactionFullHashes, secret);
+        Attachment attachment = new MessagingPhasingVoteCasting(phasedTransactionFullHashes, secret);
         return createTransaction(req, account, attachment);
     }
 }

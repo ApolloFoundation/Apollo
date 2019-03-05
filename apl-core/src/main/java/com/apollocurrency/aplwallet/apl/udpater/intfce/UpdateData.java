@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 
 public class UpdateData {
     private Transaction transaction;
@@ -33,6 +34,6 @@ public class UpdateData {
     }
 
     public boolean isAutomaticUpdate() {
-        return transaction.getType() != TransactionType.Update.MINOR;
+        return transaction.getType() != Update.MINOR;
     }
 }

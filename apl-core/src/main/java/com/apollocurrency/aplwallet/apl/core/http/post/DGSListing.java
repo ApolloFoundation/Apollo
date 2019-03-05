@@ -20,10 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -93,7 +94,7 @@ public final class DGSListing extends CreateTransaction {
         }
 
         Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new Attachment.DigitalGoodsListing(name, description, tags, quantity, priceATM);
+        Attachment attachment = new DigitalGoodsListing(name, description, tags, quantity, priceATM);
         return createTransaction(req, account, attachment);
 
     }

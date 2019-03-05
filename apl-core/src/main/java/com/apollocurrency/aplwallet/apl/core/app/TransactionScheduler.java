@@ -39,6 +39,7 @@ public class TransactionScheduler {
 
     private static final Map<Transaction, TransactionScheduler> transactionSchedulers = new ConcurrentHashMap<>();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     public static void schedule(Filter<Transaction> filter, Transaction transaction) {
         if (transactionSchedulers.size() >= 100) {
@@ -99,7 +100,7 @@ public class TransactionScheduler {
     }
 
     private boolean processEvent(Transaction unconfirmedTransaction) {
-        if (transaction.getExpiration() < AplCore.getEpochTime()) {
+        if (transaction.getExpiration() < timeService.getEpochTime()) {
             LOG.info("Expired transaction in transaction scheduler " + transaction.getSenderId());
             return true;
         }
