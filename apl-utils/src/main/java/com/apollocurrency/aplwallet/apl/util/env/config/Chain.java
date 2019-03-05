@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -160,6 +161,40 @@ public class Chain {
     public String getGenesisLocation() {
         return genesisLocation;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Chain)) return false;
+        Chain chain = (Chain) o;
+        return active == chain.active &&
+                Objects.equals(chainId, chain.chainId) &&
+                Objects.equals(defaultPeers, chain.defaultPeers) &&
+                Objects.equals(wellKnownPeers, chain.wellKnownPeers) &&
+                Objects.equals(blacklistedPeers, chain.blacklistedPeers) &&
+                Objects.equals(name, chain.name) &&
+                Objects.equals(description, chain.description) &&
+                Objects.equals(symbol, chain.symbol) &&
+                Objects.equals(prefix, chain.prefix) &&
+                Objects.equals(project, chain.project) &&
+                Objects.equals(genesisLocation, chain.genesisLocation) &&
+                Objects.equals(blockchainProperties, chain.blockchainProperties);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties);
+    }
+
+    public Chain copy() {
+        List<String> defaultPeersCopy = new ArrayList<>(defaultPeers);
+        List<String> wellKnownPeersCopy = new ArrayList<>(wellKnownPeers);
+        List<String> blacklistedPeersCopy = new ArrayList<>(blacklistedPeers);
+        List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
+        return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy, name, description, symbol, prefix, project,
+                genesisLocation, blockchainPropertiesCopy);
+    }
+
 
     @JsonGetter("blockchainProperties")
     public List<BlockchainProperties> getBlockchainPropertiesList() {
