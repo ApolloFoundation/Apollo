@@ -23,6 +23,6 @@ public interface ShardManagement {
      */
     TransactionalDataSource createAndAddShard(Long shardId);
 
-    TransactionalDataSource getShardDataSourceById(Long shardId);
+    TransactionalDataSource getOrCreateShardDataSourceById(Long shardId);
 
 }
