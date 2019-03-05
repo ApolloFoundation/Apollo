@@ -128,6 +128,7 @@ import com.apollocurrency.aplwallet.apl.core.http.get.GetDataTagCount;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetDataTags;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetDataTagsLike;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetECBlock;
+import com.apollocurrency.aplwallet.apl.core.http.get.GetElGamalPublicKey;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchangesByExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchangesByOffer;
@@ -432,6 +433,7 @@ public enum APIEnum {
     GET_ASSET_DELETES("getAssetDeletes", GetAssetDeletes.getInstance()),
     GET_EXPECTED_ASSET_TRANSFERS("getExpectedAssetTransfers", GetExpectedAssetTransfers.getInstance()),
     GET_EXPECTED_ASSET_DELETES("getExpectedAssetDeletes", GetExpectedAssetDeletes.getInstance()),
+    GET_EL_GAMAL_PUBLIC_KEY("getElGamalPublicKey", GetElGamalPublicKey.getInstance()),
     GET_CURRENCY_TRANSFERS("getCurrencyTransfers", GetCurrencyTransfers.getInstance()),
     GET_EXPECTED_CURRENCY_TRANSFERS("getExpectedCurrencyTransfers", GetExpectedCurrencyTransfers.getInstance()),
     GET_TRANSACTION("getTransaction", GetTransaction.getInstance()),
