@@ -34,7 +34,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +44,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -51,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -59,7 +62,7 @@ public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static final boolean enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
@@ -140,7 +143,7 @@ public final class APIServlet extends HttpServlet {
 
             String requestType = req.getParameter("requestType");
             if (requestType == null) {
-                response = ERROR_INCORRECT_REQUEST;
+                forwardingToHomePage(resp);
                 return;
             }
 
@@ -149,7 +152,7 @@ public final class APIServlet extends HttpServlet {
                 if (disabledRequestHandlers.containsKey(requestType)) {
                     response = ERROR_DISABLED;
                 } else {
-                    response = ERROR_INCORRECT_REQUEST;
+                    forwardingToHomePage(resp);
                 }
                 return;
             }
@@ -236,6 +239,18 @@ public final class APIServlet extends HttpServlet {
             }
         }
 
+    }
+
+    private void forwardingToHomePage(HttpServletResponse response) throws IOException{
+        String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+        String apiWelcomePage = propertiesHolder.getStringProperty("apl.apiWelcomeFile");
+
+        response.setContentType("text/html");
+        response.setHeader("X-FRAME-OPTIONS", "SAMEORIGIN");
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        PrintWriter out = response.getWriter();
+        out.print(IOUtils.toString(new FileReader(apiResourceBase + "/" + apiWelcomePage)));
     }
 
 }
