@@ -192,9 +192,9 @@
                         </configuration>
                     </execution>
                 </executions>
-                
+
             </plugin>
-            <plugin>   
+            <plugin>
                 <!-- Build an executable JAR -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -206,21 +206,6 @@
                       <mainClass>com.apollocurrency.aplwallet.apldesktop.DesktopMode</mainClass>
                     </manifest>
                   </archive>
-                </configuration>
-              </plugin> 
-<plugin>   
-     <groupId>org.apache.maven.plugins</groupId>            
-              <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>./</classpathPrefix>
-                            
-                        </manifest>
-                    </archive>
-                    <finalName>Apollo</finalName>
                 </configuration>
             </plugin>
         </plugins>
