@@ -20,17 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 import io.firstbridge.cryptolib.exception.CryptoNotValidException;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
+import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -43,21 +37,13 @@ import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
 
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.logging.Level;
-import org.bouncycastle.asn1.sec.SECNamedCurves;
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.math.ec.ECFieldElement;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
