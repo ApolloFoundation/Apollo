@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 public class SqlSelectAndInsertHelper {
     private static final Logger log = getLogger(SqlSelectAndInsertHelper.class);
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+//    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
     private String currentTableName;
     private ResultSetMetaData rsmd;
@@ -33,8 +35,11 @@ public class SqlSelectAndInsertHelper {
     private StringBuilder columnValues = new StringBuilder();
 
     private Long totalRowCount = 0L;
-    private String BASE_COLUMN_NAME = "DB_ID";
-//    private String BASE_COLUMN_NAME = "HEIGHT";
+    private Long insertedCount = 0L;
+//    private String BASE_COLUMN_NAME = "DB_ID";
+    private String BASE_COLUMN_NAME = "HEIGHT";
+    private PreparedStatement preparedInsertStatement = null;
+
 
     public SqlSelectAndInsertHelper() {
     }
@@ -49,9 +54,12 @@ public class SqlSelectAndInsertHelper {
         this.columnNames = new StringBuilder();
         this.columnQuestionMarks = new StringBuilder();
         this.columnValues = new StringBuilder();
+        this.totalRowCount = 0L;
+        this.insertedCount = 0L;
+        this.preparedInsertStatement = null;
     }
 
-    private boolean handleResultSet(PreparedStatement ps, final long pageSize, Long upperIndex)
+    private boolean handleResultSet(PreparedStatement ps, final long pageSize, Long upperIndex, Connection targetConnect)
             throws SQLException {
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -71,22 +79,34 @@ public class SqlSelectAndInsertHelper {
                         }
                         String columnName = rsmd.getColumnName(i + 1);
                         columnNames.append(columnName);
-//                        if (columnName.equalsIgnoreCase("HEIGHT")) {
-//                            targetDbIdColumnIndex = i + 1;
-//                        }
                     }
                     columnQuestionMarks.append("?");
                     sqlInsertString.append("INSERT INTO ").append(currentTableName)
                             .append("(").append(columnNames).append(")").append(" values (").append(columnQuestionMarks).append(")");
+                    // precompile sql
+                    if (preparedInsertStatement == null) {
+                        preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
+                    }
                 }
                 upperIndex = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
-//                upperIndex = rs.getLong("DB_ID"); // assign latest value for usage outside method
+
+                try {
+                    for (int i = 0; i < numColumns; i++) {
+                        preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
+                    }
+                    insertedCount += preparedInsertStatement.executeUpdate();
+                    log.error("Inserting " + currentTableName);
+                } catch (Exception e) {
+                    log.error("Failed inserting " + currentTableName, e);
+                }
                 rows++;
             }
         }
         totalRowCount += rows;
-        log.trace("Total Records = {}, rows = {}, last {} = {}", totalRowCount, rows, BASE_COLUMN_NAME, upperIndex);
-//        return rows == pageSize;
+        log.debug("Total Records: selected = {}, inserted = {}, rows = {}, last {} = {}", totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, upperIndex);
+
+        targetConnect.commit(); // commit latest records if any
+
         return rows != 0;
     }
 
@@ -104,10 +124,15 @@ public class SqlSelectAndInsertHelper {
         String unFormattedSql;
         String sqlToExecuteWithPaging;
 
-        if (tableName.equalsIgnoreCase("block") /*|| tableName.equalsIgnoreCase("transaction")*/) {
+        if (tableName.equalsIgnoreCase("block")) {
             unFormattedSql = "SELECT * FROM %s WHERE %s BETWEEN ? AND ? limit ?";
 //            unFormattedSql = "SELECT * FROM %s WHERE DB_ID BETWEEN ? AND ? limit ?";
             sqlToExecuteWithPaging = String.format(unFormattedSql, tableName, BASE_COLUMN_NAME);
+        } else if (tableName.equalsIgnoreCase("transaction")) {
+            sqlToExecuteWithPaging =
+                    String.format(
+                            "SELECT tr.* FROM %s as tr where tr.BLOCK_ID in (SELECT ID from BLOCK where HEIGHT <= 1357553 AND %s BETWEEN ? AND ?)",
+                            tableName, BASE_COLUMN_NAME);
         } else {
 //            unFormattedSql = "SELECT * FROM %s where HEIGHT BETWEEN %d AND %d limit %d";
             unFormattedSql = "SELECT * FROM %s";
@@ -121,10 +146,18 @@ public class SqlSelectAndInsertHelper {
             do {
                 ps.setLong(1, lowerIndex);
                 ps.setLong(2, upperIndex);
-                ps.setLong(3, batchCommitSize);
+                if (currentTableName.equalsIgnoreCase("block")) {
+                    ps.setLong(3, batchCommitSize);
+                }
                 lowerIndex = upperIndex;
                 upperIndex += batchCommitSize;
-            } while (handleResultSet(ps, batchCommitSize, upperIndex));
+            } while (handleResultSet(ps, batchCommitSize, upperIndex, targetConnect));
+        } catch (Exception e) {
+            log.error("Table fail " + currentTableName, e);
+        } finally {
+            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
+                this.preparedInsertStatement.close();
+            }
         }
         log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
 /*
