@@ -14,7 +14,7 @@ public class ShardNameHelper {
     private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%07d";
 
     public static String getShardNameByShardId(Long shardId) {
-        if (shardId < 0) {
+        if (shardId == null || shardId < 0) {
             throw new RuntimeException("'shardId' should have positive value, but " + shardId + " was supplied");
         }
         String result = String.format(SHARD_NAME_PATTERN, shardId);

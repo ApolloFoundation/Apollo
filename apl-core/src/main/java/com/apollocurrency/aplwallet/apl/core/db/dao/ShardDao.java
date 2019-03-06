@@ -30,6 +30,10 @@ public interface ShardDao {
     @SqlQuery("SELECT count(*) FROM shard")
     long countShard();
 
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT IFNULL(max(SHARD_ID) + 1, 1) FROM shard")
+    long getMaxShardId();
+
     @Transactional
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash) VALUES (:shardId, :shardHash)")
     @RegisterRowMapper(ShardRowMapper.class)

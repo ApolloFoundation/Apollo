@@ -20,9 +20,11 @@ public interface DataTransferManagementReceiver {
 
     MigrateState getCurrentState();
 
-    MigrateState createTempDb(DatabaseMetaInfo source);
+    MigrateState addOrCreateShard(DatabaseMetaInfo source);
 
-    MigrateState addSnapshotBlock(DatabaseMetaInfo targetDataSource);
+//    MigrateState createTempDb(DatabaseMetaInfo source);
+
+//    MigrateState addSnapshotBlock(DatabaseMetaInfo targetDataSource);
 
     MigrateState moveDataBlockLinkedData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
 

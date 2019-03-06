@@ -88,6 +88,8 @@ class ShardDaoTest {
 
     @Test
     void insertDelete() {
+        long maxId = dao.getMaxShardId();
+        assertEquals(1, maxId);
 
         Shard shard = new Shard(1L, "0000001");
         dao.saveShard(shard);
@@ -99,9 +101,14 @@ class ShardDaoTest {
 
         long count = dao.countShard();
         assertEquals(1, count);
+        maxId = dao.getMaxShardId();
+        assertEquals(2, maxId);
 
         Shard shard2 = new Shard(2L, "0000002");
         dao.saveShard(shard2);
+
+        maxId = dao.getMaxShardId();
+        assertEquals(3, maxId);
 
         Shard found1 = dao.getShardById(1L);
         assertNotNull(found1);

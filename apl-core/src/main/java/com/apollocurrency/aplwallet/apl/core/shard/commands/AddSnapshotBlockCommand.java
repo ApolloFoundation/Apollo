@@ -1,11 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.TEMP_DB_CREATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.DatabaseMetaInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.DatabaseMetaInfoImpl;
@@ -35,6 +33,7 @@ public class AddSnapshotBlockCommand implements DataMigrateOperation {
                 null, TEMPORARY_MIGRATION_FILE_NAME,
                 -1, MigrateState.SNAPSHOT_BLOCK_CREATED, this.snapshotBlock);
 
-        return dataTransferManagement.addSnapshotBlock(databaseMetaInfo);
+//        return dataTransferManagement.addSnapshotBlock(databaseMetaInfo);
+        return MigrateState.SNAPSHOT_BLOCK_CREATED;
     }
 }

@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.TEMP_DB_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_DB_CREATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
@@ -30,8 +30,9 @@ public class CreateTempDbCommand implements DataMigrateOperation {
 //        }
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, TEMP_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null);
 
-        return dataTransferManagement.createTempDb(databaseMetaInfo);
+//        return dataTransferManagement.createTempDb(databaseMetaInfo);
+        return SHARD_DB_CREATED;
     }
 }

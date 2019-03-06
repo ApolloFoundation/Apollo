@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.TEMP_DB_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_DB_CREATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Statement;
@@ -46,10 +46,10 @@ public class DbFilesRenameCommand implements DataMigrateOperation {
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, TEMP_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, TEMP_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null);
 
         return dataTransferManagement.renameDataFiles(sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

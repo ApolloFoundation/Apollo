@@ -24,6 +24,9 @@ class ShardNameHelperTest {
     @Test
     void getShardNameIncorrectValue() {
         assertThrows(RuntimeException.class, () ->
+                ShardNameHelper.getShardNameByShardId(null)
+        );
+        assertThrows(RuntimeException.class, () ->
                 ShardNameHelper.getShardNameByShardId(-100L)
         );
     }

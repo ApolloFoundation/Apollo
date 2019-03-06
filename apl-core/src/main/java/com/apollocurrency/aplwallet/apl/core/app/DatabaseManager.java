@@ -156,7 +156,19 @@ public class DatabaseManager implements ShardManagement {
      */
     @Override
     public TransactionalDataSource createAndAddShard(Long shardId) {
-        Objects.requireNonNull(shardId, "shardId is NULL");
+        if (shardId == null) {
+            try (Connection con = getDataSource().getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID) + 1, 1) as shard_id FROM shard")) {
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        shardId = rs.getLong("shard_id");
+                    }
+                }
+            } catch (SQLException e) {
+                log.error("Error retrieve shards...", e);
+            }
+            log.debug("Selected SHARD_ID = {} from DB", shardId);
+        }
         String shardName = ShardNameHelper.getShardNameByShardId(shardId); // convert shard Id into shard name
         log.debug("Create new SHARD '{}'", shardName);
         DbProperties shardDbProperties = null;
@@ -197,8 +209,7 @@ public class DatabaseManager implements ShardManagement {
 
     @Override
     public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId) {
-        Objects.requireNonNull(shardId, "shardId is NULL");
-        if (connectedShardDataSourceMap.containsKey(shardId)) {
+        if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);
         } else {
             return createAndAddShard(shardId);

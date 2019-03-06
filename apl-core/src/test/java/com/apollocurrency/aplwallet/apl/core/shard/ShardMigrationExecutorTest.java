@@ -109,7 +109,7 @@ class ShardMigrationExecutorTest {
         CreateTempDbCommand tempDbCommand = new CreateTempDbCommand(transferManagementReceiver);
         MigrateState state = shardMigrationExecutor.executeOperation(tempDbCommand);
         assertNotNull(state);
-        assertEquals(MigrateState.TEMP_DB_CREATED, state);
+        assertEquals(MigrateState.SHARD_DB_CREATED, state);
     }
 
     @Test
@@ -118,7 +118,7 @@ class ShardMigrationExecutorTest {
         CreateTempDbCommand tempDbCommand = new CreateTempDbCommand(transferManagementReceiver);
         MigrateState state = shardMigrationExecutor.executeOperation(tempDbCommand);
         assertNotNull(state);
-        assertEquals(MigrateState.TEMP_DB_CREATED, state);
+        assertEquals(MigrateState.SHARD_DB_CREATED, state);
 
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(0);
         tableNameCountMap.put("ACCOUNT", -1L);

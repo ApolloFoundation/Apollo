@@ -43,13 +43,6 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         this.optionDAO = new OptionDAO(this.databaseManager); // actually we want to use TEMP=TARGET data source in OptionDAO
     }
 
-/*
-    @Override
-    public Map<String, Long> getTableNameWithCountMap() {
-        return tableNameCountMap;
-    }
-*/
-
     @Override
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
@@ -64,6 +57,26 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     }
 
     @Override
+    public MigrateState addOrCreateShard(DatabaseMetaInfo source) {
+        log.debug("Creating shard db file...");
+        Objects.requireNonNull(source, "source meta-info is NULL");
+        Objects.requireNonNull(source.getNewFileName(), "new DB file is NULL");
+        try {
+            // add info about state
+            TransactionalDataSource shardDb = databaseManager.createAndAddShard(null);
+            if (optionDAO.get(PREVIOUS_MIGRATION_KEY, shardDb) != null) {
+                return MigrateState.SHARD_DB_CREATED; // continue to next state
+            }
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name(), shardDb);
+            return MigrateState.SHARD_DB_CREATED;
+        } catch (Exception e) {
+            log.error("Error creation Temp Db", e);
+            return MigrateState.FAILED;
+        }
+    }
+
+/*
+    @Override
     public MigrateState createTempDb(DatabaseMetaInfo source) {
         log.debug("Creating TEMP db file...");
         Objects.requireNonNull(source, "source meta-info is NULL");
@@ -73,10 +86,10 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(source.getNewFileName());
 //            databaseManager.shutdown(temporaryDb); // temp db is in Database manager
             if (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb) != null) {
-                return MigrateState.TEMP_DB_CREATED; // continue to next state
+                return MigrateState.SHARD_DB_CREATED; // continue to next state
             }
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.TEMP_DB_CREATED.name(), temporaryDb);
-            return MigrateState.TEMP_DB_CREATED;
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name(), temporaryDb);
+            return MigrateState.SHARD_DB_CREATED;
         } catch (Exception e) {
             log.error("Error creation Temp Db", e);
             return MigrateState.FAILED;
@@ -106,7 +119,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             return MigrateState.FAILED;
         }
     }
-
+/*
     /**
      * {@inheritDoc}
      */
@@ -166,10 +179,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     }
                     currentTable = tableName;
                     optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName, targetDataSource);
-                    int totalCount = sqlSelectAndInsertHelper.generateInsertStatements(
+                    long totalCount = sqlSelectAndInsertHelper.generateInsertStatementsWithPaging(
                             sourceConnect, targetConnect, tableName, target.getCommitBatchSize(), target.getSnapshotBlock());
                     targetDataSource.commit(false);
                     log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+                    sqlSelectAndInsertHelper.reset();
                 }
             } catch (Exception e) {
                 log.error("Error processing table = '" + currentTable + "'", e);
@@ -193,7 +207,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         }
         TransactionalDataSource targetDataSource = target.getDataSource();
         if (targetDataSource == null) {
-            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(-1L));
+            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(null));
             targetDataSource = target.getDataSource();
         }
         return targetDataSource;

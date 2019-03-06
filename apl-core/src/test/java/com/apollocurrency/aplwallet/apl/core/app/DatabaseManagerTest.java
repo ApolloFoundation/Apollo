@@ -128,6 +128,19 @@ class DatabaseManagerTest {
     }
 
     @Test
+    void createAndAddShardWithoutId() throws Exception {
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null);
+        assertNotNull(newShardDb);
+        assertNotNull(newShardDb.getConnection());
+        databaseManager.shutdown(newShardDb);
+//        newShardDb.shutdown(); // not needed
+    }
+
+    @Test
     void createTemporaryDb() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
