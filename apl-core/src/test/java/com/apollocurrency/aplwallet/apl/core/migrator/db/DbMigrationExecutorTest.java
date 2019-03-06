@@ -4,18 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
+import com.apollocurrency.aplwallet.apl.FileUtils;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -24,10 +25,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,18 +37,18 @@ import java.util.Properties;
 import javax.inject.Inject;
 
 @EnableWeld
-@ExtendWith(MockitoExtension.class)
 public class DbMigrationExecutorTest {
 
     private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
 
-    @Mock
-    private FullTextSearchService fullTextSearchProvider;
+    private FullTextSearchService fullTextSearchProvider = Mockito.mock(FullTextSearchService.class);
     private PropertiesHolder propertiesHolder = mockPropertiesHolder();
+    private TemporaryFolder temporaryFolder = FileUtils.initTempFolder();
+
 
     private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
-    private DbProperties targetDbProperties = createDbProperties(targetDbPath);
+    private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
             TransactionalDataSource.class, DatabaseManager.class)
@@ -60,18 +59,20 @@ public class DbMigrationExecutorTest {
             .build();
     @Inject
     private H2DbInfoExtractor h2DbInfoExtractor;
-
     private Path pathToDbForMigration;
     private DbManipulator manipulator;
+    @Inject
     private DatabaseManager databaseManager;
+
 
     @BeforeEach
     void setUp() throws IOException {
-        this.pathToDbForMigration = Files.createTempFile(Files.createTempDirectory("migrationDbDir"), "migrationDb-1", ".h2");
+        this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(
+            "migrationDb-1");
         manipulator = new DbManipulator(pathToDbForMigration, "sa", "sa");
         manipulator.init();
         manipulator.populate();
-        databaseManager = new DatabaseManager(targetDbProperties, propertiesHolder);
+        manipulator.shutdown();
     }
 
     PropertiesHolder mockPropertiesHolder() {
@@ -86,30 +87,15 @@ public class DbMigrationExecutorTest {
         return ph;
     }
 
-    private DbProperties createDbProperties(Path p) {
-        DbProperties dbProperties = new DbProperties()
-                .dbDir(p.getParent().toAbsolutePath().toString())
-                .dbFileName(p.getFileName().toString())
-                .dbPassword("sa")
-                .dbUsername("sa")
-                .dbType("h2")
-                .loginTimeout(1000 * 30)
-                .maxMemoryRows(100000)
-                .dbParams("")
-                .maxConnections(100)
-                .maxCacheSize(0);
-
-        return dbProperties;
-    }
 
 
     @AfterEach
     void tearDown() throws Exception {
+//        TimeUnit.SECONDS.sleep(5);
         databaseManager.shutdown();
-        Files.deleteIfExists(pathToDbForMigration);
-        manipulator.shutdown();
-        FileUtils.deleteDirectory(targetDbDir.toFile());
+        temporaryFolder.delete();
     }
+
 
 
     @Test
@@ -121,8 +107,9 @@ public class DbMigrationExecutorTest {
         String dbMigrated = optionDAO.get("dbMigrationRequired-0");
         Assertions.assertNotNull(dbMigrated);
         Assertions.assertEquals("false", dbMigrated);
-        Assertions.assertTrue(Files.exists(pathToDbForMigration));
-        int migratedHeight = new H2DbInfoExtractor("sa", "sa")
+        Assertions.assertTrue(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
+        databaseManager.shutdown();
+        int migratedHeight = h2DbInfoExtractor
                 .getHeight(targetDbPath.toAbsolutePath().toString());
         Assertions.assertEquals(0, migratedHeight);
     }
@@ -136,14 +123,15 @@ public class DbMigrationExecutorTest {
         String dbMigrated = optionDAO.get("dbMigrationRequired-0");
         Assertions.assertNotNull(dbMigrated);
         Assertions.assertEquals("false", dbMigrated);
-        Assertions.assertFalse(Files.exists(pathToDbForMigration));
-        int migratedHeight = new H2DbInfoExtractor("sa", "sa").getHeight(targetDbPath.toAbsolutePath().toString());
+        Assertions.assertFalse(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
+        databaseManager.shutdown();
+        int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
         Assertions.assertEquals(104671, migratedHeight);
     }
 
     private Path createTempDir() {
         try {
-            return Files.createTempDirectory("targetDbDir");
+            return temporaryFolder.newFolder("target").toPath();
         }
         catch (IOException e) {
             throw new RuntimeException("Unable to create temp dir");

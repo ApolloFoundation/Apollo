@@ -23,8 +23,8 @@ public interface ShardManagement {
      */
     TransactionalDataSource createAndAddShard(Long shardId);
 
-    TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
-
     TransactionalDataSource getOrCreateShardDataSourceById(Long shardId);
+
+    TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
 
 }

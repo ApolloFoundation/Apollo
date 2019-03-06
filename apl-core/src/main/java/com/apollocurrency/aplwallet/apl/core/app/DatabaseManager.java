@@ -62,7 +62,7 @@ public class DatabaseManager implements ShardManagement {
     private DbProperties baseDbProperties; // main database properties
     private PropertiesHolder propertiesHolder;
     private static TransactionalDataSource currentTransactionalDataSource; // main/shard database
-    private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(3); // secondary shards
+    private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
 
     /**
@@ -124,6 +124,10 @@ public class DatabaseManager implements ShardManagement {
 
     @Produces
     public Jdbi getJdbi() {
+        if (jdbi == null) {
+            // should never happen, but happens sometimes in unit tests because of CDI
+            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+        }
         return jdbi;
     }
 
@@ -131,7 +135,7 @@ public class DatabaseManager implements ShardManagement {
     public List<Long> findAllShards(TransactionalDataSource transactionalDataSource) {
         Objects.requireNonNull(transactionalDataSource, "DataSource cannot be null");
         String shardSelect = "SELECT shard_id from shard";
-        List<Long> result = new ArrayList<>(3);
+        List<Long> result = new ArrayList<>();
         try (Connection con = transactionalDataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(shardSelect)) {
             try (ResultSet rs = pstmt.executeQuery()) {
