@@ -62,9 +62,9 @@ class BlockIndexDaoTest {
     static void setup() {
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                configDirProvider,
+                null,
                 false,
-                "./unit-test-db",
+                null,
                 Constants.APPLICATION_DIR_NAME + ".properties",
                 Collections.emptyList());
         propertiesHolder = new PropertiesHolder();

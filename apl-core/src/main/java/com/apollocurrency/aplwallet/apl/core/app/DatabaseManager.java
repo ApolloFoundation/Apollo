@@ -124,6 +124,10 @@ public class DatabaseManager implements ShardManagement {
 
     @Produces
     public Jdbi getJdbi() {
+        if (jdbi == null) {
+            // should never happen, but happens sometimes in unit tests because of CDI
+            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+        }
         return jdbi;
     }
 
