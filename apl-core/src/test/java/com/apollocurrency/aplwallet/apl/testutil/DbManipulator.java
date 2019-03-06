@@ -4,29 +4,25 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import javax.sql.DataSource;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import javax.sql.DataSource;
 
 public class DbManipulator {
-    protected final Path tempDbFile;
+    protected Path tempDbFile;
     protected final DataSourceWrapper dataSourceWrapper;
 
     private DbPopulator populator;
 
-    public DbManipulator(Path dbFile, String user, String password) throws IOException {
+    public DbManipulator(Path dbFile, String user, String password) {
         tempDbFile = dbFile;
         dataSourceWrapper =
                 new DataSourceWrapper(new DbProperties()
-                        .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
+                        .dbUrl(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0", tempDbFile.toAbsolutePath().toString()))
                         .dbPassword(password)
                         .dbUsername(user)
                         .maxConnections(10)
@@ -38,9 +34,8 @@ public class DbManipulator {
 
 
     public DbManipulator()  {
-        tempDbFile = createTempFile();
         dataSourceWrapper = new DataSourceWrapper(new DbProperties()
-                        .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
+                        .dbUrl("jdbc:h2:mem:testdb")
                         .dbPassword("sa")
                         .dbUsername("sa")
                         .maxConnections(10)
@@ -48,15 +43,6 @@ public class DbManipulator {
                         .maxMemoryRows(100000)
                         .defaultLockTimeout(10 * 1000));
         populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
-    }
-
-    private Path createTempFile() {
-        try {
-            return Files.createTempFile("testdb", "h2");
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     public void init() {
@@ -67,7 +53,10 @@ public class DbManipulator {
 
     public void shutdown() throws IOException {
         dataSourceWrapper.shutdown();
-        Files.deleteIfExists(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
+    }
+
+    public Path getTempDbFile() {
+        return tempDbFile;
     }
 
     public void populate() {

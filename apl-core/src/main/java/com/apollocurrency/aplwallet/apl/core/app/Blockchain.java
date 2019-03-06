@@ -62,11 +62,11 @@ public interface Blockchain {
 
     boolean hasBlock(long blockId);
 
-    DbIterator<? extends Block> getAllBlocks();
+//    DbIterator<? extends Block> getAllBlocks();
 
     DbIterator<Block> getBlocks(int from, int to);
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp);
+//    DbIterator<Block> getBlocks(long accountId, int timestamp);
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
@@ -80,7 +80,7 @@ public interface Blockchain {
 
     int getBlockCount(long accountId);
 
-    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
+//    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
@@ -114,7 +114,7 @@ public interface Blockchain {
 
     boolean hasTransaction(long transactionId, int height);
 
-    boolean hasTransactionByFullHash(String fullHash);
+//    boolean hasTransactionByFullHash(String fullHash);
 
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
 
@@ -124,10 +124,10 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    DbIterator<Transaction> getAllTransactions();
+//    DbIterator<Transaction> getAllTransactions();
 
-    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-                                                      boolean includeExpiredPrunable);
+//    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
+//                                                      boolean includeExpiredPrunable);
 
     DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,

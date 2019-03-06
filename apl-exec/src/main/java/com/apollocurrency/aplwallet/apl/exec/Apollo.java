@@ -2,6 +2,8 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
@@ -208,6 +210,8 @@ public class Apollo {
                 .recursiveScanPackages(Account.class)
                 .recursiveScanPackages(TransactionType.class)
                 .recursiveScanPackages(DatabaseManager.class)
+                .interceptors(JdbiTransactionalInterceptor.class)
+                .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode().build();
 
         // init config holders

@@ -150,10 +150,12 @@ public class BlockchainImpl implements Blockchain {
         return lastBlock.get().getId() == blockId || lookupBlockDao().hasBlock(blockId);
     }
 
+/*
     @Override
     public DbIterator<Block> getAllBlocks() {
         return lookupBlockDao().getAllBlocks();
     }
+*/
 
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
@@ -163,10 +165,12 @@ public class BlockchainImpl implements Blockchain {
         return lookupBlockDao().getBlocks(calculatedFrom, calculatedTo);
     }
 
+/*
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp) {
         return getBlocks(accountId, timestamp, 0, -1);
     }
+*/
 
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
@@ -198,10 +202,12 @@ public class BlockchainImpl implements Blockchain {
         return lookupBlockDao().getBlockCount(accountId);
     }
 
+/*
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
         return lookupBlockDao().getBlocks(con, pstmt);
     }
+*/
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
@@ -361,10 +367,12 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.hasTransaction(transactionId, height);
     }
 
+/*
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
         return transactionDao.hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
+*/
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
@@ -386,11 +394,14 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.getTransactionCount();
     }
 
+/*
     @Override
     public DbIterator<Transaction> getAllTransactions() {
         return transactionDao.getAllTransactions();
     }
+*/
 
+/*
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
@@ -399,6 +410,7 @@ public class BlockchainImpl implements Blockchain {
                 blockTimestamp, false, false, false,
                 0, -1, includeExpiredPrunable, false, true);
     }
+*/
 
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
