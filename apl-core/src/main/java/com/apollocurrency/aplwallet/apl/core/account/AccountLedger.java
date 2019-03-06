@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.SynchronizationService;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -80,7 +80,7 @@ public class AccountLedger {
 
    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    public static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
 
     /** Number of blocks to keep when trimming */
     public static final int trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
@@ -354,7 +354,7 @@ public class AccountLedger {
         // Get the ledger entries
         //
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        synchronizationService.readLock();
+        globalSync.readLock();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
@@ -388,7 +388,7 @@ public class AccountLedger {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return entryList;
     }

@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.SynchronizationService;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -65,7 +65,7 @@ public final class APIServlet extends HttpServlet {
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
 
     static {
 
@@ -177,7 +177,7 @@ public final class APIServlet extends HttpServlet {
             final long requireLastBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                     ParameterParser.getUnsignedLong(req, "requireLastBlock", false) : 0;
             if (requireBlockId != 0 || requireLastBlockId != 0) {
-                synchronizationService.readLock();
+                globalSync.readLock();
             }
             try {
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -205,7 +205,7 @@ public final class APIServlet extends HttpServlet {
                 }
             } finally {
                 if (requireBlockId != 0 || requireLastBlockId != 0) {
-                    synchronizationService.readUnlock();
+                    globalSync.readUnlock();
                 }
             }
         } catch (ParameterException e) {

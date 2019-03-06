@@ -57,7 +57,7 @@ public final class Generator implements Comparable<Generator> {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
@@ -85,7 +85,7 @@ public final class Generator implements Comparable<Generator> {
             }
             try {
                 try {
-                    synchronizationService.updateLock();
+                    globalSync.updateLock();
                     try {
                         Block lastBlock = blockchain.getLastBlock();
                         if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
@@ -137,7 +137,7 @@ public final class Generator implements Comparable<Generator> {
                             }
                         }
                     } finally {
-                        synchronizationService.updateUnlock();
+                        globalSync.updateUnlock();
                     }
                 } catch (Exception e) {
                     LOG.info("Error in block generation thread", e);
@@ -184,11 +184,11 @@ public final class Generator implements Comparable<Generator> {
     public static Generator stopForging(byte[] keySeed) {
         Generator generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null) {
-            synchronizationService.updateLock();
+            globalSync.updateLock();
             try {
                 sortedForgers = null;
             } finally {
-                synchronizationService.updateUnlock();
+                globalSync.updateUnlock();
             }
             LOG.debug(generator + " stopped");
             listeners.notify(generator, Event.STOP_FORGING);
@@ -205,11 +205,11 @@ public final class Generator implements Comparable<Generator> {
             LOG.debug(generator + " stopped");
             listeners.notify(generator, Event.STOP_FORGING);
         }
-        synchronizationService.updateLock();
+        globalSync.updateLock();
         try {
             sortedForgers = null;
         } finally {
-            synchronizationService.updateUnlock();
+            globalSync.updateUnlock();
         }
         return count;
     }
@@ -232,7 +232,7 @@ public final class Generator implements Comparable<Generator> {
     }
 
     public static long getNextHitTime(long lastBlockId, int curTime) {
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             if (lastBlockId == Generator.lastBlockId && sortedForgers != null) {
                 for (Generator generator : sortedForgers) {
@@ -243,7 +243,7 @@ public final class Generator implements Comparable<Generator> {
             }
             return 0;
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
     }
 
@@ -296,14 +296,14 @@ public final class Generator implements Comparable<Generator> {
         this.keySeed = keySeed;
         this.publicKey = Crypto.getPublicKey(keySeed);
         this.accountId = Account.getId(publicKey);
-        synchronizationService.updateLock();
+        globalSync.updateLock();
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 setLastBlock(blockchain.getLastBlock());
             }
             sortedForgers = null;
         } finally {
-            synchronizationService.updateUnlock();
+            globalSync.updateUnlock();
         }
     }
 

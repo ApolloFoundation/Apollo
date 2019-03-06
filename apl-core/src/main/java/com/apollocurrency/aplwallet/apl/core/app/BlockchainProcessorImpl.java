@@ -123,7 +123,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
-    private final SynchronizationService synchronizationService;
+    private final GlobalSync globalSync;
     private final DerivedDbTablesRegistry dbTables;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
@@ -282,7 +282,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     isDownloading = true;
                 }
 
-                synchronizationService.updateLock();
+                globalSync.updateLock();
                 try {
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                         return;
@@ -339,7 +339,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         log.debug("Did not accept peer's blocks, back to our own fork");
                     }
                 } finally {
-                    synchronizationService.updateUnlock();
+                    globalSync.updateUnlock();
                 }
 
             } catch (AplException.StopException e) {
@@ -564,7 +564,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // a missing block (this will happen if an invalid block is encountered
             // when downloading the blocks)
             //
-            synchronizationService.writeLock();
+            globalSync.writeLock();
             try {
                 List<Block> forkBlocks = new ArrayList<>();
                 for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < 720; index++) {
@@ -592,7 +592,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
             } finally {
-                synchronizationService.writeUnlock();
+                globalSync.writeUnlock();
             }
 
         }
@@ -748,10 +748,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     private BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
-                                    SynchronizationService synchronizationService, DerivedDbTablesRegistry dbTables) {
+                                    GlobalSync globalSync, DerivedDbTablesRegistry dbTables) {
         this.validator = validator;
         this.blockEvent = blockEvent;
-        this.synchronizationService = synchronizationService;
+        this.globalSync = globalSync;
         this.dbTables = dbTables;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
@@ -833,7 +833,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void processPeerBlock(JSONObject request) throws AplException {
-        synchronizationService.updateLock();
+        globalSync.updateLock();
         try {
             Block lastBlock = lookupBlockhain().getLastBlock();
             long peerBlockPreviousBlockId = Convert.parseUnsignedLong((String) request.get("previousBlock"));
@@ -879,7 +879,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }// else ignore the block
         }
         finally {
-            synchronizationService.updateUnlock();
+            globalSync.updateUnlock();
         }
     }
 
@@ -895,7 +895,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void fullReset() {
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         try {
             try {
                 setGetMoreBlocks(false);
@@ -905,7 +905,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 setGetMoreBlocks(true);
             }
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -1059,7 +1059,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         int curTime = timeService.getEpochTime();
 
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         try {
             Block previousLastBlock = null;
             TransactionalDataSource dataSource = lookupDataSource();
@@ -1101,7 +1101,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
 
         if (block.getTimestamp() >= curTime - 600) {
@@ -1307,7 +1307,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingLong(Transaction::getId);
 
     public List<Block> popOffTo(Block commonBlock) {
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         TransactionalDataSource dataSource = lookupDataSource();
         try {
             if (!dataSource.isInTransaction()) {
@@ -1355,7 +1355,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             return poppedOffBlocks;
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -1372,7 +1372,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void popOffWithRescan(int height) {
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         try {
             try {
                 scheduleScan(0, false);
@@ -1386,7 +1386,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 scan(0, false);
             }
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -1510,11 +1510,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             lookupTransactionProcessor().processWaitingTransactions();
             Transaction transaction = e.getTransaction();
             log.debug("Removing invalid transaction: " + transaction.getStringId());
-            synchronizationService.writeLock();
+            globalSync.writeLock();
             try {
                 lookupTransactionProcessor().removeUnconfirmedTransaction(transaction);
             } finally {
-                synchronizationService.writeUnlock();
+                globalSync.writeUnlock();
             }
             throw e;
         } catch (BlockNotAcceptedException e) {
@@ -1557,7 +1557,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void scan(int height, boolean validate, boolean shutdown) {
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         TransactionalDataSource dataSource = lookupDataSource();
         try {
             if (!dataSource.isInTransaction()) {
@@ -1718,7 +1718,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 isScanning = false;
             }
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 

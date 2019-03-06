@@ -194,7 +194,7 @@ public final class AplCore {
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
-                SynchronizationService sync = CDI.current().select(SynchronizationService.class).get();
+                GlobalSync sync = CDI.current().select(GlobalSync.class).get();
                 transactionProcessor.init();
                 Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync);
                 GenesisAccounts.init();

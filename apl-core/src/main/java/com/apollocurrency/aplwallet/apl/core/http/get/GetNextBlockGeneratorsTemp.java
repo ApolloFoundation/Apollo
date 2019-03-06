@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerator;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.SynchronizationService;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerators;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -84,14 +84,14 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
         super(new APITag[] {APITag.FORGING}, "limit");
     }
 
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static ActiveGenerators activeGenerators = CDI.current().select(ActiveGenerators.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject response = new JSONObject();
         int limit = Math.max(1, ParameterParser.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
         Blockchain blockchain = lookupBlockchain();
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             Block lastBlock = blockchain.getLastBlock();
             response.put("timestamp", lastBlock.getTimestamp());
@@ -116,7 +116,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
             }
             response.put("generators", generators);
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return response;
     }

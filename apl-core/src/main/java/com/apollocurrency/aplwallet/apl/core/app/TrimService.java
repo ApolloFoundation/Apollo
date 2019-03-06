@@ -26,7 +26,7 @@ public class TrimService {
     private final int maxRollback;
     private final DatabaseManager dbManager;
     private final DerivedDbTablesRegistry dbTablesRegistry;
-    private final SynchronizationService synchronizationService;
+    private final GlobalSync globalSync;
     private volatile boolean isTrimming;
     private volatile int lastTrimHeight;
 
@@ -37,14 +37,14 @@ public class TrimService {
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback,
                        DatabaseManager databaseManager,
                        DerivedDbTablesRegistry derivedDbTablesRegistry,
-                       SynchronizationService synchronizationService
+                       GlobalSync globalSync
     ) {
         this.trimDerivedTables = trimDerivedTables;
         this.trimFrequency = trimFrequency;
         this.maxRollback = maxRollback;
         this.dbManager = Objects.requireNonNull(databaseManager, "Database manager cannot be null");
         this.dbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "Db tables registry cannot be null");
-        this.synchronizationService = Objects.requireNonNull(synchronizationService, "Synchronization service cannot be null");
+        this.globalSync = Objects.requireNonNull(globalSync, "Synchronization service cannot be null");
     }
 
     private BlockchainProcessor blockchainProcessor;
@@ -96,7 +96,7 @@ public class TrimService {
         long onlyTrimTime = 0;
         if (lastTrimHeight > 0) {
             for (DerivedDbTable table : dbTablesRegistry.getDerivedTables()) {
-                synchronizationService.readLock();
+                globalSync.readLock();
                 try {
                     TransactionalDataSource dataSource = dbManager.getDataSource();
                     long startTime = System.currentTimeMillis();
@@ -105,7 +105,7 @@ public class TrimService {
                     onlyTrimTime += (System.currentTimeMillis() - startTime);
                 }
                 finally {
-                    synchronizationService.readUnlock();
+                    globalSync.readUnlock();
                 }
             }
         }

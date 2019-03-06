@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import javax.inject.Singleton;
 
 @Singleton
-public class SynchronizationServiceImpl implements SynchronizationService {
+public class GlobalSyncImpl implements GlobalSync {
     private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
 
     @Override

@@ -158,7 +158,7 @@ public final class Shuffling {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
@@ -487,7 +487,7 @@ public final class Shuffling {
         byte[] shufflingStateHash = null;
         int participantIndex = 0;
         List<ShufflingParticipant> shufflingParticipants = new ArrayList<>();
-        synchronizationService.readLock();
+        globalSync.readLock();
         // Read the participant list for the shuffling
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             for (ShufflingParticipant participant : participants) {
@@ -502,7 +502,7 @@ public final class Shuffling {
                 shufflingStateHash = getParticipantsHash(shufflingParticipants);
             }
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         boolean isLast = participantIndex == participantCount - 1;
         // decrypt the tokens bundled in the current data
@@ -562,7 +562,7 @@ public final class Shuffling {
     }
 
     public ShufflingCancellationAttachment revealKeySeeds(final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
-        synchronizationService.readLock();
+        globalSync.readLock();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             if (cancellingAccountId != this.assigneeAccountId) {
                 throw new RuntimeException(String.format("Current shuffling cancellingAccountId %s does not match %s",
@@ -617,7 +617,7 @@ public final class Shuffling {
             return new ShufflingCancellationAttachment(this.id, data, keySeeds.toArray(new byte[keySeeds.size()][]),
                     shufflingStateHash, cancellingAccountId);
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
     }
 

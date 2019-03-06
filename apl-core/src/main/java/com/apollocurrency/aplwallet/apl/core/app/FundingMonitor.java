@@ -86,7 +86,7 @@ public class FundingMonitor {
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -287,7 +287,7 @@ public class FundingMonitor {
         //
         FundingMonitor monitor = new FundingMonitor(holdingType, holdingId, property,
                 amount, threshold, interval, accountId, keySeed);
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             //
             // Locate monitored accounts based on the account property and the setter identifier
@@ -332,7 +332,7 @@ public class FundingMonitor {
                         holdingType.name(), monitor.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId)));
             }
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return true;
     }

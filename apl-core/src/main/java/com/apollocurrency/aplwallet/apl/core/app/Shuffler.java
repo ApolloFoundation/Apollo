@@ -60,7 +60,7 @@ public final class Shuffler {
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static BlockchainProcessor blockchainProcessor;
 
     private static BlockchainProcessor lookupBlockchainProcessor() {
@@ -73,7 +73,7 @@ public final class Shuffler {
     public static Shuffler addOrGetShuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
         String hash = Convert.toHexString(shufflingFullHash);
         long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         try {
             Map<Long, Shuffler> map = shufflingsMap.get(hash);
             if (map == null) {
@@ -120,38 +120,38 @@ public final class Shuffler {
             }
             return shuffler;
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     public static List<Shuffler> getAllShufflers() {
         List<Shuffler> shufflers = new ArrayList<>();
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             shufflingsMap.values().forEach(shufflerMap -> shufflers.addAll(shufflerMap.values()));
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return shufflers;
     }
 
     public static List<Shuffler> getShufflingShufflers(byte[] shufflingFullHash) {
         List<Shuffler> shufflers = new ArrayList<>();
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 shufflers.addAll(shufflerMap.values());
             }
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return shufflers;
     }
 
     public static List<Shuffler> getAccountShufflers(long accountId) {
         List<Shuffler> shufflers = new ArrayList<>();
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             shufflingsMap.values().forEach(shufflerMap -> {
                 Shuffler shuffler = shufflerMap.get(accountId);
@@ -160,48 +160,48 @@ public final class Shuffler {
                 }
             });
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return shufflers;
     }
 
     public static Shuffler getShuffler(long accountId, byte[] shufflingFullHash) {
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 return shufflerMap.get(accountId);
             }
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return null;
     }
 
     public static Shuffler stopShuffler(long accountId, byte[] shufflingFullHash) {
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 return shufflerMap.remove(accountId);
             }
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
         return null;
     }
 
     public static void stopAllShufflers() {
-        synchronizationService.writeLock();
+        globalSync.writeLock();
         try {
             shufflingsMap.clear();
         } finally {
-            synchronizationService.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     private static Shuffler getRecipientShuffler(long recipientId) {
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             for (Map<Long,Shuffler> shufflerMap : shufflingsMap.values()) {
                 for (Shuffler shuffler : shufflerMap.values()) {
@@ -212,7 +212,7 @@ public final class Shuffler {
             }
             return null;
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
     }
 

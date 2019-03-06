@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.SynchronizationService;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -91,7 +91,7 @@ public final class Account {
     static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static DatabaseManager databaseManager;
-    private static SynchronizationService sync;
+    private static GlobalSync sync;
 
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
            
@@ -116,13 +116,13 @@ public final class Account {
                             BlockchainProcessor blockchainProcessorParam,
                             BlockchainConfig blockchainConfigParam,
                             Blockchain blockchainParam,
-                            SynchronizationService synchronizationService
+                            GlobalSync globalSync
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
         blockchainConfig = blockchainConfigParam;
         blockchain = blockchainParam;
-        sync = synchronizationService;
+        sync = globalSync;
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();

@@ -52,20 +52,20 @@ public class BlockchainImpl implements Blockchain {
     private BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
     private EpochTime timeService; // = CDI.current().select(EpochTime.class).get();
     private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
-    private SynchronizationService synchronizationService;
+    private GlobalSync globalSync;
 
     public BlockchainImpl() {        
     }
     
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
-                          PropertiesHolder propertiesHolder, SynchronizationService synchronizationService) {
+                          PropertiesHolder propertiesHolder, GlobalSync globalSync) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
-        this.synchronizationService = synchronizationService;
+        this.globalSync = globalSync;
     }
 
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
@@ -427,7 +427,7 @@ public class BlockchainImpl implements Blockchain {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         List<Transaction> result = new ArrayList<>();
-        synchronizationService.readLock();
+        globalSync.readLock();
         try {
             try (DbIterator<Transaction> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
                 for (Transaction phasedTransaction : phasedTransactions) {
@@ -450,7 +450,7 @@ public class BlockchainImpl implements Blockchain {
                     }
             );
         } finally {
-            synchronizationService.readUnlock();
+            globalSync.readUnlock();
         }
         return result;
     }

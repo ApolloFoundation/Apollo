@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-public interface SynchronizationService {
+public interface GlobalSync {
     void readLock();
 
     void readUnlock();

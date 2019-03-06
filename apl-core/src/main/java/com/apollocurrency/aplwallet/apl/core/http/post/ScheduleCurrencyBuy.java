@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.SynchronizationService;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionScheduler;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -61,7 +61,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         return ScheduleCurrencyBuyHolder.INSTANCE;
     }
 
-    private static SynchronizationService synchronizationService = CDI.current().select(SynchronizationService.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
 
     private ScheduleCurrencyBuy() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
@@ -112,7 +112,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment)transaction.getAttachment();
             Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
-            synchronizationService.updateLock();
+            globalSync.updateLock();
             try {
                 transaction.validate();
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
@@ -141,7 +141,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                             "(To schedule a buy order even in the absence of a sell offer, on a node protected by admin password, please first specify the admin password in the account settings.)");
                 }
             } finally {
-                synchronizationService.updateUnlock();
+                globalSync.updateUnlock();
             }
             return response;
 

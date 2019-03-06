@@ -49,7 +49,7 @@ class DatabaseManagerTest {
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class, SynchronizationServiceImpl.class, DerivedDbTablesRegistry.class)
+            TransactionalDataSource.class, DatabaseManager.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class)
             .build();
 
     @BeforeEach
