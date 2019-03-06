@@ -82,10 +82,10 @@ public final class BlockImpl implements Block {
         this.height = 0;
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
-              byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout,
-              List<TransactionImpl> transactions,
-              byte[] keySeed) {
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
+                     byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout,
+                     List<TransactionImpl> transactions,
+                     byte[] keySeed) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions);
         blockSignature = Crypto.sign(bytes(), keySeed);

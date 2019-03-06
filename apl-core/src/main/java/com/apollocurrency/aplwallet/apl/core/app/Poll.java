@@ -19,6 +19,8 @@
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -47,7 +49,9 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
@@ -232,11 +236,15 @@ public final class Poll extends AbstractPoll {
     }
 
     public static void init() {
-        if (Poll.isPollsProcessing) {
-            blockchainProcessor.addListener(block -> {
+
+    }
+    @Singleton
+    private static class PollObserver {
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            if (Poll.isPollsProcessing) {
                 int height = block.getHeight();
                 Poll.checkPolls(height);
-            }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+            }
         }
     }
 

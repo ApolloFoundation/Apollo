@@ -20,10 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,16 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class BlockchainImpl implements Blockchain {
@@ -54,21 +52,22 @@ public class BlockchainImpl implements Blockchain {
     private BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
     private EpochTime timeService; // = CDI.current().select(EpochTime.class).get();
     private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
+    private GlobalSync globalSync;
 
     public BlockchainImpl() {        
     }
     
     @Inject
-    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService, PropertiesHolder propertiesHolder) {
+    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
+                          PropertiesHolder propertiesHolder, GlobalSync globalSync) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
+        this.globalSync = globalSync;
     }
-    
 
-    private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
 
     private BlockDao lookupBlockDao() {
@@ -78,33 +77,7 @@ public class BlockchainImpl implements Blockchain {
         return blockDao;
     }
 
-    @Override
-    public void readLock() {
-        lock.readLock().lock();
-    }
 
-    @Override
-    public void readUnlock() {
-        lock.readLock().unlock();
-    }
-
-    @Override
-    public void updateLock() {
-        lock.updateLock().lock();
-    }
-
-    @Override
-    public void updateUnlock() {
-        lock.updateLock().unlock();
-    }
-
-    public void writeLock() {
-        lock.writeLock().lock();
-    }
-
-    public void writeUnlock() {
-        lock.writeLock().unlock();
-    }
 
     @Override
     public Block getLastBlock() {
@@ -454,7 +427,7 @@ public class BlockchainImpl implements Blockchain {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         List<Transaction> result = new ArrayList<>();
-        readLock();
+        globalSync.readLock();
         try {
             try (DbIterator<Transaction> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
                 for (Transaction phasedTransaction : phasedTransactions) {
@@ -477,7 +450,7 @@ public class BlockchainImpl implements Blockchain {
                     }
             );
         } finally {
-            readUnlock();
+            globalSync.readUnlock();
         }
         return result;
     }

@@ -20,9 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerator;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerators;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -31,8 +33,10 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-import javax.servlet.http.HttpServletRequest;
+
 import java.util.List;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>
@@ -80,21 +84,23 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
         super(new APITag[] {APITag.FORGING}, "limit");
     }
 
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private static ActiveGenerators activeGenerators = CDI.current().select(ActiveGenerators.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject response = new JSONObject();
         int limit = Math.max(1, ParameterParser.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
         Blockchain blockchain = lookupBlockchain();
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             Block lastBlock = blockchain.getLastBlock();
             response.put("timestamp", lastBlock.getTimestamp());
             response.put("height", lastBlock.getHeight());
             response.put("lastBlock", Long.toUnsignedString(lastBlock.getId()));
-            List<Generator.ActiveGenerator> activeGenerators = Generator.getNextGenerators();
-            response.put("activeCount", activeGenerators.size());
+            List<ActiveGenerator> activeGeneratorsList = activeGenerators.getNextGenerators();
+            response.put("activeCount", activeGeneratorsList.size());
             JSONArray generators = new JSONArray();
-            for (Generator.ActiveGenerator generator : activeGenerators) {
+            for (ActiveGenerator generator : activeGeneratorsList) {
                 if (generator.getHitTime() > Integer.MAX_VALUE) {
                     break;
                 }
@@ -110,7 +116,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
             }
             response.put("generators", generators);
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return response;
     }
