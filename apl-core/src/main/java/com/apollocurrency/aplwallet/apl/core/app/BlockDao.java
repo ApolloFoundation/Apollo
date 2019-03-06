@@ -36,7 +36,7 @@ public interface BlockDao {
 
     Block findLastBlock();
 
-    DbIterator<Block> getAllBlocks();
+//    DbIterator<Block> getAllBlocks();
 
     DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 

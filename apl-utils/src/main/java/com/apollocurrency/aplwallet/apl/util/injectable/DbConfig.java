@@ -28,7 +28,7 @@ public class DbConfig {
                 .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
                 .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
                 .dbType(propertiesHolder.getStringProperty("apl.dbType"))
-                .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "emptyDirProvider") // for unit tests
+                .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
                 .dbFileName(Constants.APPLICATION_DIR_NAME)
                 .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
                 .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))

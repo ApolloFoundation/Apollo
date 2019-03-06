@@ -8,10 +8,10 @@
         <version>1.27.0</version>
     </parent>
 
-    <groupId>com.apollocurrency</groupId>
     <artifactId>apl-exec</artifactId>
     <name>apl-exec</name>
     <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.apollocurrency</groupId>
@@ -96,10 +96,9 @@
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>./</classpathPrefix>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass> com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
+                            <mainClass>com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>Apollo</finalName>
                 </configuration>
             </plugin>
             <plugin>

@@ -159,6 +159,7 @@
   },
   {
     "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1",
+    "active": true,
     "wellKnownPeers": [
       "51.15.235.41",
       "51.15.69.39",
@@ -239,7 +240,6 @@
   },
   {
     "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
-    "active": true,
     "wellKnownPeers": [
       "51.15.250.32",
       "51.15.253.171",

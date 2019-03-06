@@ -8,6 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
@@ -40,6 +42,7 @@ public class BlockchainConfigUpdater {
     private BlockDao blockDao;
     private BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
+    private DatabaseManager databaseManager;
     private Chain chain;
     
     @Inject
@@ -79,7 +82,14 @@ public class BlockchainConfigUpdater {
         return blockchainProcessor;
     }
 
+    private void lookupDatabaseManager() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+    }
+
     private BlockDao lookupBlockDao() {
+        lookupDatabaseManager();
         if (blockDao == null) {
             blockDao = CDI.current().select(BlockDaoImpl.class).get();
         }

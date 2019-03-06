@@ -2,6 +2,8 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
@@ -32,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apldesktop.DesktopMode;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,20 +187,18 @@ public class Apollo {
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
 
         log = LoggerFactory.getLogger(Apollo.class);
+        
 //check webUI
         System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
 /* at the moment we do it in build time
+
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);
         ExecutorService execService = Executors.newFixedThreadPool(1);
         unzipRes = execService.submit(we);
 */
-//TODO: remove this plumb, desktop UI should be separated and should not use Core directly but via API
-        if (RuntimeEnvironment.getInstance().isDesktopApplicationEnabled()) {
-            runtimeMode = new DesktopMode();
-        } else {
-            runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
-        }
+
+        runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init();
         //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
@@ -211,6 +210,8 @@ public class Apollo {
                 .recursiveScanPackages(Account.class)
                 .recursiveScanPackages(TransactionType.class)
                 .recursiveScanPackages(DatabaseManager.class)
+                .interceptors(JdbiTransactionalInterceptor.class)
+                .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode().build();
 
         // init config holders

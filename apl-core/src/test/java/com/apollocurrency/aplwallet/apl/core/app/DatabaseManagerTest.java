@@ -16,7 +16,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -89,7 +88,7 @@ class DatabaseManagerTest {
                 .dbType("h2")
                 .loginTimeout(1000 * 30)
                 .maxMemoryRows(100000)
-                .dbParams("")
+                .dbParams("DB_CLOSE_ON_EXIT=FALSE;MVCC=TRUE;MV_STORE=FALSE;")
                 .maxConnections(100)
                 .maxCacheSize(0);
 
@@ -103,7 +102,7 @@ class DatabaseManagerTest {
 
     @AfterAll
     static void stopAll() {
-        databaseManager.shutdown();
+//        databaseManager.shutdown();
     }
 
     @Test
@@ -115,18 +114,16 @@ class DatabaseManagerTest {
 //        databaseManager.shutdown();
     }
 
-    @Disabled
     @Test
     void createAndAddShard() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard("apl-shard-000001");
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L);
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
 //        newShardDb.shutdown(); // not needed
-//        databaseManager.shutdown();
     }
 
 }

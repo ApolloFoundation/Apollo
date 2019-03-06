@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import javax.inject.Singleton;
 
+import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import org.slf4j.Logger;
 
 @Singleton
@@ -62,6 +63,7 @@ public class BlockDaoImpl implements BlockDao {
     private final DerivedDbTablesRegistry tablesRegistry;
     private DatabaseManager databaseManager;
     private TransactionDao transactionDao;
+    private BlockIndexDao blockIndexDao;
 
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
@@ -85,6 +87,20 @@ public class BlockDaoImpl implements BlockDao {
         return databaseManager.getDataSource();
     }
 
+    private TransactionDao lookupTransactionDao() {
+        if (transactionDao == null) {
+            this.transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
+        }
+        return transactionDao;
+    }
+
+    private BlockIndexDao lookupBlockIndexDao() {
+        if (blockIndexDao == null) {
+            this.blockIndexDao = CDI.current().select(BlockIndexDao.class).get();
+        }
+        return blockIndexDao;
+    }
+
     private void clearBlockCache() {
         synchronized (blockCache) {
             blockCache.clear();
@@ -103,7 +119,7 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")) {
             pstmt.setLong(1, blockId);
@@ -117,6 +133,34 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    private TransactionalDataSource getDataSourceWithSharding(long blockId) {
+//        lookupDataSource();
+        TransactionalDataSource dataSource;
+        Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
+        if (shardId != null) {
+            // shard data source
+            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
+        } else {
+            // default data source
+            dataSource = lookupDataSource();
+        }
+        return dataSource;
+    }
+
+    private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
+//        lookupDataSource();
+        TransactionalDataSource dataSource;
+        Long shardId = lookupBlockIndexDao().getShardIdByBlockHeight(blockHeight);
+        if (shardId != null) {
+            // shard data source
+            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
+        } else {
+            // default data source
+            dataSource = lookupDataSource();
+        }
+        return dataSource;
     }
 
     @Override
@@ -134,7 +178,7 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
                      "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
@@ -157,7 +201,7 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
@@ -192,7 +236,7 @@ public class BlockDaoImpl implements BlockDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
@@ -238,6 +282,7 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+/*
     @Override
     public DbIterator<Block> getAllBlocks() {
         Connection con = null;
@@ -251,6 +296,7 @@ public class BlockDaoImpl implements BlockDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
+*/
 
 
     @Override
@@ -283,7 +329,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
         Connection con = null;
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = lookupDataSource(); // TODO: YL implement partial fetch from main + shard db
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
@@ -507,11 +553,6 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    private TransactionDao lookupTransactionDao() {
-        if (transactionDao == null) this.transactionDao = CDI.current().select(TransactionDaoImpl.class).get();
-        return transactionDao;
     }
 
     @Override

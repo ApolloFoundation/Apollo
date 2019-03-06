@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,18 +44,20 @@ public abstract class AbstractMigrationExecutorTest {
     private static PropertiesHolder propertiesHolder  = new PropertiesHolder();
     private static Properties properties = new Properties();
     private DatabaseManager databaseManager;
-    @Rule
-    private TemporaryFolder folder = new TemporaryFolder();
+
+    private static TemporaryFolder folder;
 
     @BeforeEach
     public void setUp() throws IOException {
-        folder.create();
         databaseManager = new DatabaseManager(DbTestData.DB_MEM_PROPS, propertiesHolder);
+        folder = new TemporaryFolder();
+        folder.create();
     }
 
     @AfterEach
     public void tearDown() {
         databaseManager.shutdown();
+        folder.delete();
     }
 
     public abstract MigrationExecutor getExecutor(DatabaseManager databaseManager, PropertiesHolder propertiesHolder);
