@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

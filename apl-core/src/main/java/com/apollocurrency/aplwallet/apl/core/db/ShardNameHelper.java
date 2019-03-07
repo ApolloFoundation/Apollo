@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.db;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
 import static org.slf4j.LoggerFactory.getLogger;

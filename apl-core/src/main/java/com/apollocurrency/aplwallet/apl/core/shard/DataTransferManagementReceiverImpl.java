@@ -8,12 +8,15 @@ import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedSelectInsert;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.slf4j.Logger;
 
@@ -23,7 +26,6 @@ import org.slf4j.Logger;
 @Singleton
 public class DataTransferManagementReceiverImpl implements DataTransferManagementReceiver {
     private static final Logger log = getLogger(DataTransferManagementReceiverImpl.class);
-    private final SqlSelectAndInsertHelper sqlSelectAndInsertHelper = new SqlSelectAndInsertHelper();
 
     private MigrateState state = MigrateState.INIT;
     private DbProperties dbProperties;
@@ -31,6 +33,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private Blockchain blockchain;
     private OptionDAO optionDAO;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private HelperFactory<BatchedSelectInsert> helperFactory = new HelperFactoryImpl();
 
     public DataTransferManagementReceiverImpl() {
     }
@@ -179,15 +182,21 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     }
                     currentTable = tableName;
                     optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName, targetDataSource);
-                    long totalCount = sqlSelectAndInsertHelper.generateInsertStatementsWithPaging(
-                            sourceConnect, targetConnect, tableName, target.getCommitBatchSize(), target.getSnapshotBlock());
-                    targetDataSource.commit(false);
-                    log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
-                    sqlSelectAndInsertHelper.reset();
+                    Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createHelper(tableName);
+                    if (sqlSelectAndInsertHelper.isPresent()) {
+                        long totalCount = sqlSelectAndInsertHelper.get().generateInsertStatementsWithPaging(
+                                sourceConnect, targetConnect, tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight());
+                        targetDataSource.commit(false);
+                        log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+//                        sqlSelectAndInsertHelper.get().reset();
+                    } else {
+                        log.warn("NO processing HELPER class for table '{}'", tableName);
+                    }
                 }
             } catch (Exception e) {
                 log.error("Error processing table = '" + currentTable + "'", e);
                 targetDataSource.rollback(false);
+                return MigrateState.FAILED;
             } finally {
                 if (targetConnect != null) {
                     targetDataSource.commit();

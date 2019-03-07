@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
 /**
  * Interface + Implementation for transferring data between main database and shard database.

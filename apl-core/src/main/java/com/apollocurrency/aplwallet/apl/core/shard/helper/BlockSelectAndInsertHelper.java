@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -7,20 +7,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import org.slf4j.Logger;
 
 /**
  * Helper class for selecting Table data from one Db and inserting those data into another DB.
  */
-public class SqlSelectAndInsertHelper {
-    private static final Logger log = getLogger(SqlSelectAndInsertHelper.class);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
+    private static final Logger log = getLogger(BlockSelectAndInsertHelper.class);
+//    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 //    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
     private String currentTableName;
@@ -36,14 +32,15 @@ public class SqlSelectAndInsertHelper {
 
     private Long totalRowCount = 0L;
     private Long insertedCount = 0L;
-//    private String BASE_COLUMN_NAME = "DB_ID";
-    private String BASE_COLUMN_NAME = "HEIGHT";
+    private String BASE_COLUMN_NAME = "DB_ID";
+//    private String BASE_COLUMN_NAME = "HEIGHT";
     private PreparedStatement preparedInsertStatement = null;
 
 
-    public SqlSelectAndInsertHelper() {
+    public BlockSelectAndInsertHelper() {
     }
 
+    @Override
     public void reset() {
         this.currentTableName = null;
         this.rsmd = null;
@@ -59,7 +56,68 @@ public class SqlSelectAndInsertHelper {
         this.preparedInsertStatement = null;
     }
 
-    private boolean handleResultSet(PreparedStatement ps, final long pageSize, Long upperIndex, Connection targetConnect)
+    @Override
+    public long generateInsertStatementsWithPaging(Connection sourceConnect, Connection targetConnect, String tableName,
+                                                   long batchCommitSize, Long snapshotBlockHeight)
+            throws Exception {
+        log.debug("Processing: '{}'", tableName);
+        Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
+        currentTableName = tableName;
+
+        String sqlToExecuteWithPaging;
+
+
+        if (tableName.equalsIgnoreCase("block")) {
+            sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID <= ? limit ?"; // 1357553
+            log.trace(sqlToExecuteWithPaging);
+        } else {
+            throw new IllegalAccessException("Unsupported table. Block is expected. Pls use another Helper class");
+        }
+        // select DB_ID for target HEIGHT
+        String selectDbId = "SELECT DB_ID from BLOCK where HEIGHT = ?";
+        Long DbIdTargetHeight = null;
+        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectDbId)) {
+            selectStatement.setInt(1, snapshotBlockHeight.intValue());
+            ResultSet rs = selectStatement.executeQuery();
+            if (rs.next()) {
+                DbIdTargetHeight = rs.getLong("DB_ID");
+                log.trace("FOUND Block DB_ID value = {}", DbIdTargetHeight);
+            }
+        } catch (Exception e) {
+            log.error("Error finding target DB_ID at snapshot block height = " + snapshotBlockHeight, e);
+            throw e;
+        }
+        if (DbIdTargetHeight == null) {
+            String error = String.format("Not Found target DB_ID at snapshot Block height = %s", snapshotBlockHeight);
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+
+        long lowerIndex = 0;
+        Long upperIndex = batchCommitSize;
+        long startSelect = System.currentTimeMillis();
+
+        try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
+            do {
+                ps.setLong(1, lowerIndex);
+                ps.setLong(2, DbIdTargetHeight);
+                ps.setLong(3, batchCommitSize);
+                lowerIndex = upperIndex;
+                upperIndex += batchCommitSize;
+            } while (handleResultSet(ps, upperIndex, targetConnect));
+        } catch (Exception e) {
+            log.error("Processing failed, Table " + currentTableName, e);
+            throw e;
+        } finally {
+            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
+                this.preparedInsertStatement.close();
+            }
+        }
+        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        return totalRowCount;
+    }
+
+    private boolean handleResultSet(PreparedStatement ps, Long upperIndex, Connection targetConnect)
             throws SQLException {
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -86,6 +144,7 @@ public class SqlSelectAndInsertHelper {
                     // precompile sql
                     if (preparedInsertStatement == null) {
                         preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
+                        log.trace("Precompiled insert = {}", sqlInsertString);
                     }
                 }
                 upperIndex = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
@@ -94,72 +153,21 @@ public class SqlSelectAndInsertHelper {
                     for (int i = 0; i < numColumns; i++) {
                         preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
                     }
-                    insertedCount += preparedInsertStatement.executeUpdate();
-                    log.error("Inserting " + currentTableName);
+//                    insertedCount += preparedInsertStatement.executeUpdate();
+                    log.trace("Inserting '{}' into {}", rows, currentTableName);
                 } catch (Exception e) {
                     log.error("Failed inserting " + currentTableName, e);
                 }
                 rows++;
             }
+            totalRowCount += rows;
         }
-        totalRowCount += rows;
-        log.debug("Total Records: selected = {}, inserted = {}, rows = {}, last {} = {}", totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, upperIndex);
+        log.trace("Total Records: selected = {}, inserted = {}, rows = {}, last {} = {}", totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, upperIndex);
 
         targetConnect.commit(); // commit latest records if any
 
         return rows != 0;
     }
-
-    public long generateInsertStatementsWithPaging(Connection sourceConnect, Connection targetConnect, String tableName,
-                                 long batchCommitSize, Block snapshotBlock)
-            throws Exception {
-        log.debug("Processing: '{}'", tableName);
-        currentTableName = tableName;
-
-        Statement selectStmt = sourceConnect.createStatement();
-        long lowerIndex = 0; Long upperIndex = batchCommitSize;
-
-        int insertedBeforeBatchCount = 0;
-        int totalInsertedCount = 0;
-        String unFormattedSql;
-        String sqlToExecuteWithPaging;
-
-        if (tableName.equalsIgnoreCase("block")) {
-            unFormattedSql = "SELECT * FROM %s WHERE %s BETWEEN ? AND ? limit ?";
-//            unFormattedSql = "SELECT * FROM %s WHERE DB_ID BETWEEN ? AND ? limit ?";
-            sqlToExecuteWithPaging = String.format(unFormattedSql, tableName, BASE_COLUMN_NAME);
-        } else if (tableName.equalsIgnoreCase("transaction")) {
-            sqlToExecuteWithPaging =
-                    String.format(
-                            "SELECT tr.* FROM %s as tr where tr.BLOCK_ID in (SELECT ID from BLOCK where HEIGHT <= 1357553 AND %s BETWEEN ? AND ?)",
-                            tableName, BASE_COLUMN_NAME);
-        } else {
-//            unFormattedSql = "SELECT * FROM %s where HEIGHT BETWEEN %d AND %d limit %d";
-            unFormattedSql = "SELECT * FROM %s";
-            sqlToExecuteWithPaging = String.format(unFormattedSql, tableName);
-        }
-
-        long startSelect = System.currentTimeMillis();
-//        final long pageSize = batchCommitSize;
-
-        try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
-            do {
-                ps.setLong(1, lowerIndex);
-                ps.setLong(2, upperIndex);
-                if (currentTableName.equalsIgnoreCase("block")) {
-                    ps.setLong(3, batchCommitSize);
-                }
-                lowerIndex = upperIndex;
-                upperIndex += batchCommitSize;
-            } while (handleResultSet(ps, batchCommitSize, upperIndex, targetConnect));
-        } catch (Exception e) {
-            log.error("Table fail " + currentTableName, e);
-        } finally {
-            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
-                this.preparedInsertStatement.close();
-            }
-        }
-        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
 /*
 
         ResultSet rs = null;
@@ -267,12 +275,12 @@ public class SqlSelectAndInsertHelper {
 
                     if (targetBlockIdColumnIndex == i + 1) {
                         // BLOCK_ID should be assigned
-                        preparedStatement.setObject(i + 1, snapshotBlock.getId());
+                        preparedStatement.setObject(i + 1, snapshotBlockHeight.getId());
                         continue;
                     }
                     if (targetDbIdColumnIndex == i + 1) {
                         // HEIGHT should be assigned
-                        preparedStatement.setObject(i + 1, snapshotBlock.getHeight());
+                        preparedStatement.setObject(i + 1, snapshotBlockHeight.getHeight());
                         continue;
                     }
                     preparedStatement.setObject(i + 1, rs.getObject(i + 1));
@@ -302,10 +310,9 @@ public class SqlSelectAndInsertHelper {
      } while (continueSelect); // do ()
 */
 
-//        return totalInsertedCount;
-        return totalRowCount;
-    }
+//------------------------------------------------------------------------------
 
+/*
     public int generateInsertStatements(Connection sourceConnect, Connection targetConnect, String tableName,
                                  long batchCommitSize, Block snapshotBlock)
             throws Exception {
@@ -461,4 +468,5 @@ public class SqlSelectAndInsertHelper {
         }
         return totalInsertedCount;
     }
+*/
 }

@@ -17,10 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -128,7 +128,7 @@ class DataTransferManagementReceiverTest {
 
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null, null);
 
         state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo);
         assertEquals(SHARD_DB_CREATED, state);
@@ -143,25 +143,28 @@ class DataTransferManagementReceiverTest {
 
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null, null);
         state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo);
         assertEquals(SHARD_DB_CREATED, state);
 
         DatabaseMetaInfo tempDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, 100, MigrateState.DATA_MOVING_STARTED, null);
+                null, TEMPORARY_MIGRATION_FILE_NAME, 100,
+                MigrateState.DATA_MOVING_STARTED, null, 1350000L);
 
         DatabaseMetaInfo mainDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, "apl-blockchain", 100, MigrateState.DATA_MOVING_STARTED, null);
+                null, "apl-blockchain", 100,
+                MigrateState.DATA_MOVING_STARTED, null, null);
 
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
         // next not linked tables
         tableNameCountMap.clear();
-        tableNameCountMap.put("BLOCK", -1L);
-//        tableNameCountMap.put("TRANSACTION", -1L);
+//        tableNameCountMap.put("BLOCK", -1L);
+        tableNameCountMap.put("TRANSACTION", -1L);
 
         tempDbMetaInfo.setSnapshotBlock(null); // remove snapshot block
         state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, tempDbMetaInfo);
-        assertEquals(MigrateState.DATA_MOVING_STARTED, state);
+//        assertEquals(MigrateState.DATA_MOVING_STARTED, state);
+        assertEquals(MigrateState.FAILED, state);
 
 //        state = transferManagementReceiver.createTempDb(tempDbMetaInfo);
 //        assertEquals(SHARD_DB_CREATED, state);

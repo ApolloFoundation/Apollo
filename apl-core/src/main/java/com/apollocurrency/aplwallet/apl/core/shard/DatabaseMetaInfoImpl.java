@@ -16,17 +16,20 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
     private int commitBatchSize;
     private Block snapshotBlock;
     private MigrateState migrateState;
+    private Long snapshotBlockHeight;
 
     public DatabaseMetaInfoImpl(TransactionalDataSource dataSource,
                                 String newFileName, /*List<String> statementList,*/
                                 int commitBatchSize, MigrateState migrateState,
-                                Block snapshotBlock) {
+                                Block snapshotBlock,
+                                Long snapshotBlockHeight) {
         this.dataSource = dataSource;
         this.newFileName = newFileName;
 //        this.statementList = statementList;
         this.commitBatchSize = commitBatchSize;
         this.migrateState = migrateState;
         this.snapshotBlock = snapshotBlock;
+        this.snapshotBlockHeight = snapshotBlockHeight;
     }
 
     public TransactionalDataSource getDataSource() {
@@ -77,5 +80,13 @@ public class DatabaseMetaInfoImpl implements DatabaseMetaInfo {
 
     public void setSnapshotBlock(Block snapshotBlock) {
         this.snapshotBlock = snapshotBlock;
+    }
+
+    public Long getSnapshotBlockHeight() {
+        return snapshotBlockHeight;
+    }
+
+    public void setSnapshotBlockHeight(Long snapshotBlockHeight) {
+        this.snapshotBlockHeight = snapshotBlockHeight;
     }
 }

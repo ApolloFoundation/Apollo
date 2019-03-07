@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 

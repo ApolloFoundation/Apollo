@@ -52,10 +52,10 @@ public class MoveDataCommand implements DataMigrateOperation {
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, MigrateState.DATA_MOVING_STARTED, null);
+                -1, MigrateState.DATA_MOVING_STARTED, null, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, MigrateState.DATA_MOVING_STARTED, null);
+                -1, MigrateState.DATA_MOVING_STARTED, null, null);
 
         return dataTransferManagement.moveData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

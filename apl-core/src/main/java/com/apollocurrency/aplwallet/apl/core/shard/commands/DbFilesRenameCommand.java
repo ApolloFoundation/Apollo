@@ -46,10 +46,10 @@ public class DbFilesRenameCommand implements DataMigrateOperation {
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null, null);
 
         return dataTransferManagement.renameDataFiles(sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

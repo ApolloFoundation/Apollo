@@ -33,4 +33,9 @@ public interface DatabaseMetaInfo {
     Block getSnapshotBlock();
 
     void setSnapshotBlock(Block snapshotBlock);
+
+    Long getSnapshotBlockHeight();
+
+    void setSnapshotBlockHeight(Long snapshotBlockHeight);
+
 }

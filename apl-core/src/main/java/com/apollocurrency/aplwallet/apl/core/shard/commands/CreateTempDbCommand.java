@@ -30,7 +30,7 @@ public class CreateTempDbCommand implements DataMigrateOperation {
 //        }
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null);
+                -1, SHARD_DB_CREATED, null, null);
 
 //        return dataTransferManagement.createTempDb(databaseMetaInfo);
         return SHARD_DB_CREATED;
