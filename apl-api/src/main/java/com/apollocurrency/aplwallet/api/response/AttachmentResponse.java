@@ -2,24 +2,23 @@ package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel
+
+//@ApiModel
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AttachmentResponse extends ResponseBase {
-    @ApiModelProperty(value = "Transaction entity")
+    //@ApiModelProperty(value = "Transaction entity")
     public TransactionDTO transactionJSON;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String unsignedTransactionBytes;
-    @ApiModelProperty(value = "Transaction id")
+    //@ApiModelProperty(value = "Transaction id")
     public String transaction;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String fullHash;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String transactionBytes;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String signatureHash;
-    @ApiModelProperty
+    //@ApiModelProperty
     public Boolean broadcasted;
 }

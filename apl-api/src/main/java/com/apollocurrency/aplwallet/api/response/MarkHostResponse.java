@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.api.response;
 
-import io.swagger.annotations.ApiModel;
 
-@ApiModel
+
+//@ApiModel
 public class MarkHostResponse extends ResponseBase {
 
     public String hallmark;

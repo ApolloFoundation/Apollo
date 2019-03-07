@@ -2,21 +2,20 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
 
 /**
  * Response EC block info
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel(description = "Block's info with three fields")
-@ApiModel
+//@ApiModel
 public class BlockEcResponse extends ResponseBase {
-    @ApiModelProperty("EC block id")
+   // @ApiModelProperty("EC block id")
     public String ecBlockId;
-    @ApiModelProperty("EC block height")
+    //@ApiModelProperty("EC block height")
     public Integer ecBlockHeight;
-    @ApiModelProperty("Block timestamp")
+   // @ApiModelProperty("Block timestamp")
     public String timestamp;
 
     @Override

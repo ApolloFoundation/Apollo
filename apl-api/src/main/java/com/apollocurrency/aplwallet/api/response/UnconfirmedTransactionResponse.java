@@ -2,8 +2,7 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
 
 import java.util.List;
 
@@ -12,11 +11,11 @@ import java.util.List;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel(description = "List of unconfirmed transaction Ids (OR data with optional attachment data)")
-@ApiModel
+//@ApiModel
 public class UnconfirmedTransactionResponse extends ResponseBase{
-    @ApiModelProperty(value = "Id List of unconfirmed transactions", allowEmptyValue = true)
+    //@ApiModelProperty(value = "Id List of unconfirmed transactions", allowEmptyValue = true)
     public List<Long> unconfirmedTransactionIds;
-    @ApiModelProperty(value = "List of unconfirmed transactions (three fields are missing comparing to confirmed Tr)", allowEmptyValue = true)
+    //@ApiModelProperty(value = "List of unconfirmed transactions (three fields are missing comparing to confirmed Tr)", allowEmptyValue = true)
     public List<TransactionInfo> unconfirmedTransactions;
 
     @Override

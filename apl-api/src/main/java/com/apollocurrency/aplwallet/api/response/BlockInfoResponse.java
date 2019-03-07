@@ -2,8 +2,6 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 import java.util.List;
 
@@ -13,41 +11,41 @@ import java.util.List;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel(description = "Blocks info representation")
-@ApiModel
+//@ApiModel
 public class BlockInfoResponse extends ResponseBase {
-    @ApiModelProperty(value = "Hash value of previous block in HEX representation", allowEmptyValue = true)
+    //@ApiModelProperty(value = "Hash value of previous block in HEX representation", allowEmptyValue = true)
     public String previousBlockHash;
-    @ApiModelProperty("Payload length)")
+    //@ApiModelProperty("Payload length)")
     public Long payloadLength;
     public String totalFeeATM;
-    @ApiModelProperty(value = "Hash value of generator in HEX representation")
+    //@ApiModelProperty(value = "Hash value of generator in HEX representation")
     public String generationSignature;
-    @ApiModelProperty(value = "Generator id value")
+    //@ApiModelProperty(value = "Generator id value")
     public String generator;
-    @ApiModelProperty(value = "Generator Public Key value in HEX representation")
+    //@ApiModelProperty(value = "Generator Public Key value in HEX representation")
     public String generatorPublicKey;
     public String baseTarget;
     public String payloadHash;
-    @ApiModelProperty(value = "Generator value in Reed-Solomon representation")
+    //@ApiModelProperty(value = "Generator value in Reed-Solomon representation")
     public String generatorRS;
-    @ApiModelProperty(value = "Number of transactions inside block")
+    //@ApiModelProperty(value = "Number of transactions inside block")
     public Long numberOfTransactions;
     public String blockSignature;
     public Long version;
     public String totalFeeNQT;
     public String previousBlock;
     public String cumulativeDifficulty;
-    @ApiModelProperty(value = "Unique block id value")
+    //@ApiModelProperty(value = "Unique block id value")
     public String block;
-    @ApiModelProperty("Block length)")
+    //@ApiModelProperty("Block length)")
     public Long height;
-    @ApiModelProperty(value = "Block's timestamp")
+    //@ApiModelProperty(value = "Block's timestamp")
     public Long timestamp;
     public String nextBlock;
     public long totalAmountATM;
-    @ApiModelProperty(value = "Transaction List", allowEmptyValue = true)
+    //@ApiModelProperty(value = "Transaction List", allowEmptyValue = true)
     public List<Object> transactions;
-    @ApiModelProperty(value = "Executed Phased Transaction List", allowEmptyValue = true)
+    //@ApiModelProperty(value = "Executed Phased Transaction List", allowEmptyValue = true)
     public List<Object> executedPhasedTransactions;
     public long timeout;
 

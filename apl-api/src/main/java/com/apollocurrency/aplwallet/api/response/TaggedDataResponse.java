@@ -1,45 +1,44 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel
+
+//@ApiModel
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TaggedDataResponse extends ResponseBase {
-    @ApiModelProperty
+    // @ApiModelProperty
     public Long id;
-    @ApiModelProperty(value = "Transaction Id")
+    //@ApiModelProperty(value = "Transaction Id")
     public String transaction;
-    @ApiModelProperty
+    // @ApiModelProperty
     public Long accountId;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String name;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String description;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String tags;
-    @ApiModelProperty
+    // @ApiModelProperty
     public String[] parsedTags;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String data;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String type;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String channel;
-    @ApiModelProperty
+    //@ApiModelProperty
     public Boolean isText;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String filename;
-    @ApiModelProperty
+    //@ApiModelProperty
     public Integer transactionTimestamp;
-    @ApiModelProperty
+    //@ApiModelProperty
     public Integer blockTimestamp;
-    @ApiModelProperty
+    //@ApiModelProperty
     public Integer height;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String account;
-    @ApiModelProperty
+    //@ApiModelProperty
     public String accountRS;
 
 }

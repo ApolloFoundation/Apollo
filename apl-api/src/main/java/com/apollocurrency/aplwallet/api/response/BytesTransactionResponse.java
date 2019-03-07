@@ -3,23 +3,22 @@ package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
 
 /**
  * List of unconfirmed transactions (OR they Ids)
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel(description = "Transaction bytes data)")
-@ApiModel
+//@ApiModel
 public class BytesTransactionResponse extends ResponseBase{
-    @ApiModelProperty("Confirmation number. It's difference between transaction height and current blockhchain height")
+    //@ApiModelProperty("Confirmation number. It's difference between transaction height and current blockhchain height")
     public Integer confirmations;
-    @ApiModelProperty("Transaction's bytes representation")
+    //@ApiModelProperty("Transaction's bytes representation")
     public String transactionBytes;
-    @ApiModelProperty("Transaction's unsigned bytes representation")
+    //@ApiModelProperty("Transaction's unsigned bytes representation")
     public String unsignedTransactionBytes;
-    @ApiModelProperty(value = "Optional Prunable attachment data as Json", allowEmptyValue = true)
+    //@ApiModelProperty(value = "Optional Prunable attachment data as Json", allowEmptyValue = true)
     public JsonNode prunableAttachmentJSON;
 
     @Override

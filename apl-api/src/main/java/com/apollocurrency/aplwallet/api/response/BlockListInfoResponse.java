@@ -2,8 +2,6 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +11,10 @@ import java.util.List;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel(description = "List of Block with optional transaction/attachment data included")
-@ApiModel
+//@ApiModel
 public class BlockListInfoResponse extends ResponseBase {
 
-    @ApiModelProperty(value = "Block list", allowEmptyValue = true)
+    //@ApiModelProperty(value = "Block list", allowEmptyValue = true)
     public List<BlockInfoResponse> blocks = new ArrayList<>(0);
 
     @Override

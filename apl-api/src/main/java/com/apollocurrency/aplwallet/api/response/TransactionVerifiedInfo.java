@@ -2,8 +2,7 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+
 
 /**
  *
@@ -11,12 +10,12 @@ import io.swagger.annotations.ApiModelProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel(description = "Single transaction data optional attachment data included")
-@ApiModel
+//@ApiModel
 public class TransactionVerifiedInfo extends TransactionInfo {
     // additional fields
-    @ApiModelProperty(value = "True if Transaction is verified, empty otherwise", allowEmptyValue = true)
+    //@ApiModelProperty(value = "True if Transaction is verified, empty otherwise", allowEmptyValue = true)
     public Boolean verify;
-    @ApiModelProperty(value = "False if Transaction is not valid, empty otherwise", allowEmptyValue = true)
+    //@ApiModelProperty(value = "False if Transaction is not valid, empty otherwise", allowEmptyValue = true)
     public Boolean validate;
 
     public TransactionVerifiedInfo() {

@@ -2,11 +2,10 @@ package com.apollocurrency.aplwallet.api.response;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
+
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 //@ApiModel("List of scheduled transaction with optional attachment data")
-@ApiModel
 public class GetAccountResponse extends ResponseBase {
     public String balanceATM;
     public String forgedBalanceATM;
