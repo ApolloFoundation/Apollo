@@ -1,56 +1,56 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
-import java.util.Properties;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import java.io.FileReader;
 
 public class TestConfiguration {
-    private static TestConfiguration testConfiguration;
-
-    private Properties properties;
-    private final String propertyFilePath= "TestConfiguration.properties";
-    private final String propertyTestEnvironmentKey = "TestEnvironment";
-    private final String propertyPublicKey = "PublicKey";
-    private final String propertySecretPhraseKey = "SecretPhrase";
-    private final String propertyTestUser = "TestUser";
-    private final String propertyPort= "Port";
+    private JSONParser parser;
+    private static TestConfiguration testConfig;
+    private String host;
+    private String port;
+    private String user;
+    private String pass;
+    private String publicKey;
 
     private TestConfiguration(){
-        ConfigFileReader();
+        try {
+            parser = new JSONParser();
+            Object obj = parser.parse(new FileReader("src\\test\\resources\\config.json"));
+            JSONObject jsonObject = (JSONObject) obj;
+            host = (String) jsonObject.get("host");
+            port = (String) jsonObject.get("port");
+            user = (String) jsonObject.get("user");
+            pass = (String) jsonObject.get("pass");
+            publicKey = (String) jsonObject.get("publicKey");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public static TestConfiguration getTestConfiguration() {
-        if (testConfiguration == null){
-            testConfiguration = new TestConfiguration();
+        if (testConfig == null){
+            testConfig = new TestConfiguration();
         }
-        return testConfiguration;
-    }
-
-    public void ConfigFileReader(){
-	//Get file from resources folder
-	ClassLoader classLoader = getClass().getClassLoader();
-        try {
-            properties = new Properties();
-            properties.load(classLoader.getResourceAsStream(propertyFilePath));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Configuration.properties not found at " + propertyFilePath);
-        }
+        return testConfig;
     }
 
     public String getBaseURL() {
-        return properties.getProperty(propertyTestEnvironmentKey);
-    }
-    public String getPublicKey() {
-        return properties.getProperty(propertyPublicKey);
-    }
-    public String getSecretPhrase() {
-        return properties.getProperty(propertySecretPhraseKey);
-    }
-    public String getTestUser() {
-        return properties.getProperty(propertyTestUser);
+        return host;
     }
     public String getPort() {
-        return properties.getProperty(propertyPort);
+        return port;
     }
-
-
+    public String getTestUser() {
+            return user;
+    }
+    public String getSecretPhrase() {
+        return pass;
+    }
+    public String getPublicKey() {
+        return publicKey;
+    }
 }

@@ -48,4 +48,6 @@ public class ResponseBase {
      * Old error code. Should be gone in new API
      */
     public Long errorCode;
+
+    public String description;
 }

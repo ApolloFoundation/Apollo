@@ -19,7 +19,7 @@ public class BlockInfoResponse extends ResponseBase {
     public String previousBlockHash;
     @ApiModelProperty("Payload length)")
     public Long payloadLength;
-    public String totalAmountNQT;
+    public String totalFeeATM;
     @ApiModelProperty(value = "Hash value of generator in HEX representation")
     public String generationSignature;
     @ApiModelProperty(value = "Generator id value")
@@ -44,10 +44,12 @@ public class BlockInfoResponse extends ResponseBase {
     @ApiModelProperty(value = "Block's timestamp")
     public Long timestamp;
     public String nextBlock;
+    public long totalAmountATM;
     @ApiModelProperty(value = "Transaction List", allowEmptyValue = true)
     public List<Object> transactions;
     @ApiModelProperty(value = "Executed Phased Transaction List", allowEmptyValue = true)
     public List<Object> executedPhasedTransactions;
+    public long timeout;
 
     public BlockInfoResponse() {
     }

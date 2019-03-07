@@ -112,7 +112,8 @@ public class TestAccounts {
         //Before set Account info Test1
         SearchAccountsResponse searchAccountsResponse = searchAccounts("Test1");
         assertNotNull(searchAccountsResponse, "Response - null");
-        assertTrue(searchAccountsResponse.accountDTOS.length>0);
+        assertNotNull(searchAccountsResponse.accountDTOS, "Response accountDTOS - null");
+        assertTrue(searchAccountsResponse.accountDTOS.length >0);
     }
 
     @Test
@@ -204,6 +205,7 @@ public class TestAccounts {
         addParameters(Parameters.account, account);
         Response response = httpCallPost();
         assertEquals(200, response.code());
+      //  System.out.println(response.body().string());
         return   mapper.readValue(response.body().string().toString(), AccountLedgerResponse.class);
     }
 
