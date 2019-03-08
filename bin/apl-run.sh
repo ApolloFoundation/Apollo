@@ -10,4 +10,4 @@ DIR=`dirname $SCRIPT`
 
  . ${DIR}/apl-common.sh 
 
-${JAVA_CMD} -jar ${MAIN_JAR}
+${JAVA_CMD} -jar ${MAIN_JAR} $@
