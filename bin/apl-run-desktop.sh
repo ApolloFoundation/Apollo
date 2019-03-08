@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # (C) 2019 Apollo Foundation 
 # Starts Apollo GUI  in foreground
 
