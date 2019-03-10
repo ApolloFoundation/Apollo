@@ -1079,8 +1079,12 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
+            UUID chainId = AplGlobalObjects.getChainConfig().getChain().getChainId();
             for (final Peer peer : peers.values()) {
-
+                if (!chainId.equals(peer.getChainId())) {
+                    Peers.removePeer(peer);
+                    continue;
+                }
                 if (Peers.enableHallmarkProtection && peer.getWeight() < Peers.pushThreshold) {
                     continue;
                 }
