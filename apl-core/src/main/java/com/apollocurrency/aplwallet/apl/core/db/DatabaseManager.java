@@ -149,40 +149,49 @@ public class DatabaseManager implements ShardManagement {
     }
 
     /**
-     * Method gives ability to create new 'shard database', open existing shard and add it into shard list.
-     * @param shardId shard name to be added
-     * @return shard database connection pool instance
+     * {@inheritDoc}
      */
     @Override
     public TransactionalDataSource createAndAddShard(Long shardId) {
-        if (shardId == null) {
-            try (Connection con = getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID) + 1, 1) as shard_id FROM shard")) {
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        shardId = rs.getLong("shard_id");
-                    }
-                }
-            } catch (SQLException e) {
-                log.error("Error retrieve shards...", e);
-            }
-            log.debug("Selected SHARD_ID = {} from DB", shardId);
-        }
-        String shardName = ShardNameHelper.getShardNameByShardId(shardId); // convert shard Id into shard name
-        log.debug("Create new SHARD '{}'", shardName);
-        DbProperties shardDbProperties = null;
-        try {
-            shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName).dbUrl(null); // nullify dbUrl intentionally!;
-        } catch (CloneNotSupportedException e) {
-            log.error("DbProperties cloning error", e);
-        }
-        TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
+        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
+                new ShardDataSourceCreateHelper(this, shardId).createUnitializedDataSource();
+        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
         shardDb.init(new AplDbVersion());
-        connectedShardDataSourceMap.put(shardId, shardDb);
-        log.debug("new SHARD '{}' is CREATED", shardName);
+        connectedShardDataSourceMap.put(shardDataSourceCreateHelper.getShardId(), shardDb);
+        log.debug("new SHARD '{}' is CREATED", shardDataSourceCreateHelper.getShardName());
         return shardDb;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
+        Objects.requireNonNull(dbVersion, "dbVersion is null");
+        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
+                new ShardDataSourceCreateHelper(this, shardId).createUnitializedDataSource();
+//        shardId = shardDataSourceCreateHelper.getShardId();
+//        String shardName = shardDataSourceCreateHelper.getShardName();
+        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
+        shardId = shardDataSourceCreateHelper.getShardId();
+        if (connectedShardDataSourceMap.containsKey(shardId)) {
+            TransactionalDataSource dataSource = connectedShardDataSourceMap.get(shardId);
+            if (dataSource != null && !dataSource.isShutdown()) {
+                shutdown(dataSource);
+                shardDb.init(dbVersion);
+            }
+            connectedShardDataSourceMap.replace(shardId, shardDb);
+        } else {
+            shardDb.init(dbVersion);
+            connectedShardDataSourceMap.put(shardId, shardDb);
+        }
+        log.debug("new SHARD '{}' is CREATED", shardDataSourceCreateHelper.getShardName());
+        return shardDb;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
         Objects.requireNonNull(temporaryDatabaseName, "temporary Database Name is NULL");
@@ -206,6 +215,9 @@ public class DatabaseManager implements ShardManagement {
         return temporaryDataSource;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId) {
         if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
@@ -215,8 +227,25 @@ public class DatabaseManager implements ShardManagement {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion) {
+        Objects.requireNonNull(dbVersion, "dbVersion is null");
+        if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
+            return connectedShardDataSourceMap.get(shardId);
+        } else {
+            return createAndAddShard(shardId, dbVersion);
+        }
+    }
+
     public DbProperties getBaseDbProperties() {
         return baseDbProperties;
+    }
+
+    public PropertiesHolder getPropertiesHolder() {
+        return propertiesHolder;
     }
 
     /**
@@ -288,4 +317,5 @@ public class DatabaseManager implements ShardManagement {
         sb.append('}');
         return sb.toString();
     }
+
 }

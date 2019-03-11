@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 
 /**
  * Interface + Implementation for transferring data between main database and shard database.
@@ -20,7 +21,7 @@ public interface DataTransferManagementReceiver {
 
     MigrateState getCurrentState();
 
-    MigrateState addOrCreateShard(DatabaseMetaInfo source);
+    MigrateState addOrCreateShard(DatabaseMetaInfo source, DbVersion dbVersion);
 
 //    MigrateState createTempDb(DatabaseMetaInfo source);
 

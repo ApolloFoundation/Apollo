@@ -26,6 +26,8 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -38,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
@@ -50,6 +53,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 
+@Disabled
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class DataTransferManagementReceiverTest {
@@ -116,10 +120,9 @@ class DataTransferManagementReceiverTest {
 
     @AfterEach
     void tearDown() {
-//        FileUtils.deleteQuietly(pathToDb.toFile());
+        FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
-    @Disabled
     @Test
     void createShardDb() throws IOException {
         MigrateState state = transferManagementReceiver.getCurrentState();
@@ -130,12 +133,12 @@ class DataTransferManagementReceiverTest {
                 null, TEMPORARY_MIGRATION_FILE_NAME,
                 -1, SHARD_DB_CREATED, null, null);
 
-        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo);
+        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_DB_CREATED, state);
     }
 
     @Test
-    void createTemporaryDbAndMoveDataFromMain() throws IOException {
+    void createShardDbAndMoveDataFromMain() throws IOException {
         long start = System.currentTimeMillis();
         MigrateState state = transferManagementReceiver.getCurrentState();
         assertNotNull(state);
@@ -144,8 +147,9 @@ class DataTransferManagementReceiverTest {
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
                 -1, SHARD_DB_CREATED, null, null);
-        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo);
-        assertEquals(SHARD_DB_CREATED, state);
+
+//        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardInitTableSchemaVersion());
+//        assertEquals(SHARD_DB_CREATED, state);
 
         DatabaseMetaInfo tempDbMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME, 100,
@@ -158,13 +162,16 @@ class DataTransferManagementReceiverTest {
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
         // next not linked tables
         tableNameCountMap.clear();
-//        tableNameCountMap.put("BLOCK", -1L);
+        tableNameCountMap.put("BLOCK", -1L);
         tableNameCountMap.put("TRANSACTION", -1L);
 
         tempDbMetaInfo.setSnapshotBlock(null); // remove snapshot block
         state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, tempDbMetaInfo);
 //        assertEquals(MigrateState.DATA_MOVING_STARTED, state);
         assertEquals(MigrateState.FAILED, state);
+
+        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardAddConstraintsSchemaVersion());
+        assertEquals(SHARD_DB_CREATED, state);
 
 //        state = transferManagementReceiver.createTempDb(tempDbMetaInfo);
 //        assertEquals(SHARD_DB_CREATED, state);

@@ -32,9 +32,8 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
 
     private Long totalRowCount = 0L;
     private Long insertedCount = 0L;
-    private String BASE_COLUMN_NAME = "TIMESTAMP";
+    private String BASE_COLUMN_NAME = "DB_ID";
     private PreparedStatement preparedInsertStatement = null;
-
 
     public TransactionSelectAndInsertHelper() {
     }
@@ -54,7 +53,53 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         this.preparedInsertStatement = null;
     }
 
-    private boolean handleResultSet(PreparedStatement ps, Long upperIndex, Connection targetConnect)
+    public long generateInsertStatementsWithPaging(Connection sourceConnect, Connection targetConnect, String tableName,
+                                 long batchCommitSize, Long snapshotBlockHeight)
+            throws Exception {
+        log.debug("Processing: '{}'", tableName);
+        currentTableName = tableName;
+
+        String sqlToExecuteWithPaging;
+
+        if (tableName.equalsIgnoreCase("transaction")) {
+            sqlToExecuteWithPaging =
+                    "select * from transaction where DB_ID > ? AND DB_ID <= ? limit ?";
+        } else {
+            throw new IllegalAccessException("Unsupported table. 'Transaction' is expected. Pls use another Helper class");
+        }
+
+        // select DB_ID for target HEIGHT
+        Long transactionTargetDbID = selectLimitedRangeDbId(sourceConnect, snapshotBlockHeight);;
+        if (transactionTargetDbID == null) {
+            String error = String.format("Not Found Tr DB_ID at snapshot Block height = %s", snapshotBlockHeight);
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+        Long lowerIndex = selectLimitedRangeDbId(sourceConnect);
+
+        ResultWrapper resultWrapper = new ResultWrapper();
+        resultWrapper.limitValue = lowerIndex;
+
+        long startSelect = System.currentTimeMillis();
+
+        try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
+            do {
+                ps.setLong(1, resultWrapper.limitValue);
+                ps.setLong(2, transactionTargetDbID);
+                ps.setLong(3, batchCommitSize);
+            } while (handleResultSet(ps, resultWrapper, targetConnect));
+        } catch (Exception e) {
+            log.error("Table fail " + currentTableName, e);
+        } finally {
+            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
+                this.preparedInsertStatement.close();
+            }
+        }
+        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        return totalRowCount;
+    }
+
+    private boolean handleResultSet(PreparedStatement ps, ResultWrapper resultWrapper, Connection targetConnect)
             throws SQLException {
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -81,87 +126,67 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
                     // precompile sql
                     if (preparedInsertStatement == null) {
                         preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
+                        log.trace("Precompiled insert = {}", sqlInsertString);
                     }
                 }
-                upperIndex = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                resultWrapper.limitValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
                     }
-//                    insertedCount += preparedInsertStatement.executeUpdate();
-                    log.debug("Inserting '{}' into {}", rows, currentTableName);
+                    insertedCount += preparedInsertStatement.executeUpdate();
+                    log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, resultWrapper.limitValue);
                 } catch (Exception e) {
+                    log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, resultWrapper.limitValue);
                     log.error("Failed inserting " + currentTableName, e);
                 }
                 rows++;
             }
             totalRowCount += rows;
         }
-        log.debug("Total Records: selected = {}, inserted = {}, rows = {}, last {} = {}", totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, upperIndex);
+        log.trace("Total Records: selected = {}, inserted = {}, rows, Table = {}, {}={}",
+                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, resultWrapper.limitValue);
 
         targetConnect.commit(); // commit latest records if any
-
         return rows != 0;
     }
 
-    public long generateInsertStatementsWithPaging(Connection sourceConnect, Connection targetConnect, String tableName,
-                                 long batchCommitSize, Long snapshotBlockHeight)
-            throws Exception {
-        log.debug("Processing: '{}'", tableName);
-        currentTableName = tableName;
-
-        String sqlToExecuteWithPaging;
-
-        if (tableName.equalsIgnoreCase("transaction")) {
-            sqlToExecuteWithPaging =
-                    "select * from transaction where block_timestamp <= ? order by block_timestamp desc limit ?";
-        } else {
-            throw new IllegalAccessException("Unsupported table. 'Transaction' is expected. Pls use another Helper class");
-        }
-
-        // select DB_ID for target HEIGHT
+    private Long selectLimitedRangeDbId(Connection sourceConnect, Long snapshotBlockHeight) throws SQLException {
         String selectTransactionTimestamp =
-                "select TIMESTAMP from transaction where block_timestamp <= (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
-        Long transactionTargetTimestamp = null;
+                "select DB_ID from transaction where block_timestamp <= (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+       Long highDbIdValue = null;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectTransactionTimestamp)) {
             selectStatement.setInt(1, snapshotBlockHeight.intValue());
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
-                transactionTargetTimestamp = rs.getLong(BASE_COLUMN_NAME);
-                log.trace("FOUND Transaction {} value = {}", BASE_COLUMN_NAME, transactionTargetTimestamp);
+                highDbIdValue = rs.getLong("DB_ID");
+                log.trace("FOUND Transaction's DB_ID value = {}", highDbIdValue);
             }
         } catch (Exception e) {
-            log.error("Error finding target transaction's TIMESTAMP at snapshot block height = " + snapshotBlockHeight, e);
+            log.error("Error finding Transaction's DB_ID by snapshot block height = " + snapshotBlockHeight, e);
             throw e;
         }
-        if (transactionTargetTimestamp == null) {
-            String error = String.format("Not Found TIMESTAMP at snapshot Block height = %s", snapshotBlockHeight);
-            log.error(error);
-            throw new RuntimeException(error);
-        }
+        return highDbIdValue;
+    }
 
-        Long lowerIndex = transactionTargetTimestamp;
-        Long upperIndex = batchCommitSize;
-
-        long startSelect = System.currentTimeMillis();
-
-        try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
-            do {
-                ps.setLong(1, lowerIndex);
-                ps.setLong(2, batchCommitSize);
-                lowerIndex = upperIndex;
-//                upperIndex -= batchCommitSize;
-            } while (handleResultSet(ps, upperIndex, targetConnect));
-        } catch (Exception e) {
-            log.error("Table fail " + currentTableName, e);
-        } finally {
-            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
-                this.preparedInsertStatement.close();
+    private Long selectLimitedRangeDbId(Connection sourceConnect) throws SQLException {
+        // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
+        String selectDbId = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+        Long bottomDbIdValue = 0L;
+        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectDbId)) {
+            ResultSet rs = selectStatement.executeQuery();
+            if (rs.next()) {
+                bottomDbIdValue = rs.getLong("DB_ID");
+                log.trace("FOUND Minimal Transaction DB_ID value = {}", bottomDbIdValue);
             }
+        } catch (Exception e) {
+            log.error("Error finding LOW LIMIT Transaction target DB_ID", e);
+            throw e;
         }
-        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-        return totalRowCount;
+        return bottomDbIdValue;
+    }
+
 /*
 
         ResultSet rs = null;
@@ -303,7 +328,6 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
       } // rs.next()
      } while (continueSelect); // do ()
 */
-    }
 
 /*
     public int generateInsertStatements(Connection sourceConnect, Connection targetConnect, String tableName,

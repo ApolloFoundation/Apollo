@@ -25,12 +25,14 @@ public class MoveDataCommand implements DataMigrateOperation {
     private String newFileName;
 //    private List<Statement> statementList;
     private int commitBatchSize;
+    private long snapshotBlockHeight;
 
     public MoveDataCommand(
             DataTransferManagementReceiver dataTransferManagement,
 //            DatabaseMetaInfo source, DatabaseMetaInfo target,
             Map<String, Long> tableNameCountMap,
-            String newFileName, /*List<Statement> statementList, */int commitBatchSize) {
+            String newFileName, /*List<Statement> statementList, */int commitBatchSize,
+            Long snapshotBlockHeight) {
         this.dataTransferManagement = dataTransferManagement;
         if (dataTransferManagement != null) {
             this.tableNameCountMap = tableNameCountMap;
@@ -44,6 +46,7 @@ public class MoveDataCommand implements DataMigrateOperation {
         }
 //        this.statementList = statementList;
         this.commitBatchSize = commitBatchSize;
+        this.snapshotBlockHeight = snapshotBlockHeight;
     }
 
     @Override
@@ -55,7 +58,7 @@ public class MoveDataCommand implements DataMigrateOperation {
                 -1, MigrateState.DATA_MOVING_STARTED, null, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, MigrateState.DATA_MOVING_STARTED, null, null);
+                -1, MigrateState.DATA_MOVING_STARTED, null, this.snapshotBlockHeight);
 
         return dataTransferManagement.moveData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

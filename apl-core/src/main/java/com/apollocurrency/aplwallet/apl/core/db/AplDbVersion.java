@@ -20,11 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-
 public class AplDbVersion extends DbVersion {
 
-    protected void update(int nextUpdate) {
+    protected int update(int nextUpdate) {
         switch (nextUpdate) {
             case 1:
                 apply("CREATE TABLE IF NOT EXISTS block (db_id IDENTITY, id BIGINT NOT NULL, version INT NOT NULL, "
@@ -704,9 +702,7 @@ public class AplDbVersion extends DbVersion {
             case 256:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
             case 257:
-//                 it's an example of previously created shard for checking purpose
-//                apply("INSERT INTO shard(shard_id, shard_hash) VALUES(1, '000000001')");
-                return;
+                return 257;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

@@ -130,12 +130,54 @@ class DatabaseManagerTest {
     }
 
     @Test
+    void createShardInitTableSchemaVersion() throws Exception {
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L, new ShardInitTableSchemaVersion());
+        assertNotNull(newShardDb);
+        assertNotNull(newShardDb.getConnection());
+        databaseManager.shutdown(newShardDb);
+//        newShardDb.shutdown(); // not needed
+    }
+
+    @Test
     void createAndAddShardWithoutId() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null);
+        assertNotNull(newShardDb);
+        assertNotNull(newShardDb.getConnection());
+        databaseManager.shutdown(newShardDb);
+//        newShardDb.shutdown(); // not needed
+    }
+
+    @Test
+    void createShardAddConstraintsSchemaVersion() throws Exception {
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
+        assertNotNull(newShardDb);
+        assertNotNull(newShardDb.getConnection());
+        databaseManager.shutdown(newShardDb);
+//        newShardDb.shutdown(); // not needed
+    }
+
+    @Test
+    void createShardTwoSchemaVersion() throws Exception {
+        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        assertNotNull(databaseManager);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        assertNotNull(dataSource);
+        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null, new ShardInitTableSchemaVersion());
+        assertNotNull(newShardDb);
+        assertNotNull(newShardDb.getConnection());
+        newShardDb = databaseManager.createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
         databaseManager.shutdown(newShardDb);

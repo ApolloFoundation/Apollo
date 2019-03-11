@@ -12,6 +12,8 @@ import java.util.Optional;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedSelectInsert;
@@ -60,20 +62,21 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     }
 
     @Override
-    public MigrateState addOrCreateShard(DatabaseMetaInfo source) {
+    public MigrateState addOrCreateShard(DatabaseMetaInfo source, DbVersion dbVersion) {
         log.debug("Creating shard db file...");
         Objects.requireNonNull(source, "source meta-info is NULL");
         Objects.requireNonNull(source.getNewFileName(), "new DB file is NULL");
+        Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         try {
             // add info about state
-            TransactionalDataSource shardDb = databaseManager.createAndAddShard(null);
+            TransactionalDataSource shardDb = databaseManager.createAndAddShard(null, dbVersion);
             if (optionDAO.get(PREVIOUS_MIGRATION_KEY, shardDb) != null) {
                 return MigrateState.SHARD_DB_CREATED; // continue to next state
             }
             optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name(), shardDb);
             return MigrateState.SHARD_DB_CREATED;
         } catch (Exception e) {
-            log.error("Error creation Temp Db", e);
+            log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             return MigrateState.FAILED;
         }
     }
@@ -132,7 +135,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(source, "source meta-info is NULL");
         Objects.requireNonNull(target, "target meta-info is NULL");
         log.debug("Starting LINKED data transfer from [{}] tables...", tableNameCountMap.size());
-        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target);
+        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
         optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
 //        Block snapshootBlock = this.blockchain.getLastBlock(targetDataSource);
         if (target.getSnapshotBlock() == null) {
@@ -153,7 +156,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(target, "target meta-info is NULL");
         log.debug("Starting shard data transfer from [{}] tables...", tableNameCountMap.size());
         String lastTableName = null;
-        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target);
+        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
         optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
 /*
         if (optionDAO.get(PREVIOUS_MIGRATION_KEY, targetDataSource) == null) {
@@ -199,7 +202,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 return MigrateState.FAILED;
             } finally {
                 if (targetConnect != null) {
-                    targetDataSource.commit();
+                    targetDataSource.commit(false);
                 }
             }
             log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
@@ -210,13 +213,13 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         return MigrateState.DATA_MOVING_STARTED;
     }
 
-    private TransactionalDataSource assignDataSourceIfMissing(DatabaseMetaInfo source, DatabaseMetaInfo target) {
+    private TransactionalDataSource assignDataSourceIfMissing(DatabaseMetaInfo source, DatabaseMetaInfo target, DbVersion dbVersion) {
         if (source.getDataSource() == null) {
             source.setDataSource(databaseManager.getDataSource());
         }
         TransactionalDataSource targetDataSource = target.getDataSource();
         if (targetDataSource == null) {
-            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(null));
+            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(null, dbVersion));
             targetDataSource = target.getDataSource();
         }
         return targetDataSource;
