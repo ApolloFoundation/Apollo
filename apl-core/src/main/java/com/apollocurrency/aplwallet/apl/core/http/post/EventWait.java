@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * <p>The EventWait API will wait for one of the server events
+ * <p>The EventWait model will wait for one of the server events
  * registered by EventRegister.  EventWait will return immediately
  * if one or more events have occurred since the last time EventWait
  * was called.  All pending events will be returned in a single response.
@@ -59,8 +59,8 @@ import java.util.List;
  *
  * <p>Error Response parameters:</p>
  * <ul>
- * <li>errorCode - API error code</li>
- * <li>errorDescription - API error description</li>
+ * <li>errorCode - model error code</li>
+ * <li>errorDescription - model error description</li>
  * </ul>
  *
  * <p>Event object:</p>
@@ -132,7 +132,7 @@ public class EventWait extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the EventWait API request
+     * Process the EventWait model request
      *
      * The response will be returned immediately if there are any
      * pending events.  Otherwise, an asynchronous context will
@@ -140,8 +140,8 @@ public class EventWait extends AbstractAPIRequestHandler {
      * has completed.  By using an asynchronous context, we avoid
      * tying up the Jetty servlet thread while waiting for an event.
      *
-     * @param   req                 API request
-     * @return                      API response or null
+     * @param   req                 model request
+     * @return                      model response or null
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

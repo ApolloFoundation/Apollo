@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * <p>The GetInboundPeers API will return a list of inbound peers.
+ * <p>The GetInboundPeers model will return a list of inbound peers.
  * An inbound peer is a peer that has sent a request to this peer
  * within the previous 30 minutes.</p>
  *
@@ -50,8 +50,8 @@ import java.util.List;
  *
  * <p>Error Response parameters:</p>
  * <ul>
- * <li>errorCode - API error code</li>
- * <li>errorDescription - API error description</li>
+ * <li>errorCode - model error code</li>
+ * <li>errorDescription - model error description</li>
  * </ul>
  */
 public final class GetInboundPeers extends AbstractAPIRequestHandler {
@@ -73,10 +73,10 @@ public final class GetInboundPeers extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetInboundPeers API request
+     * Process the GetInboundPeers model request
      *
-     * @param   req                 API request
-     * @return                      API response or null
+     * @param   req                 model request
+     * @return                      model response or null
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

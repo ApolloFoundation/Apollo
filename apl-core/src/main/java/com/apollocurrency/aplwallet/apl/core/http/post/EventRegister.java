@@ -34,13 +34,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <p>The EventRegister API will create an event listener and register
+ * <p>The EventRegister model will create an event listener and register
  * one or more server events.
  * The 'add' and 'remove' parameters must be omitted or must both be false
  * in order to create a new event listener.</p>
  *
  * <p>After calling EventRegister, the application needs to call the
- * EventWait API to wait for one of the registered events to occur.
+ * EventWait model to wait for one of the registered events to occur.
  * The events will remain registered so successive calls to EventWait can
  * be made without another call to EventRegister.</p>
  *
@@ -76,8 +76,8 @@ import java.util.List;
  *
  * <p>Error Response parameters:</p>
  * <ul>
- * <li>errorCode - API error code</li>
- * <li>errorDescription - API error description</li>
+ * <li>errorCode - model error code</li>
+ * <li>errorDescription - model error description</li>
  * </ul>
  *
  * <p>Event names:</p>
@@ -159,10 +159,10 @@ public class EventRegister extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the EventRegister API request
+     * Process the EventRegister model request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param   req                 model request
+     * @return                      model response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

@@ -9,14 +9,14 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 
 /**
- * Metadata for REST API
+ * Metadata for REST model
  * @author alukin@gmail.com
  */
 @OpenAPIDefinition(info =
     @Info(
-            title = "Apollo REST API",            
+            title = "Apollo REST model",
             version = "0.0.1",
-            description = "Apollo REST API, OoenAPI/Swagger 2.0 compatible, Work in progress",
+            description = "Apollo REST model, OoenAPI/Swagger 2.0 compatible, Work in progress",
             license = @License(name = "Apollo PUBLIC LICENSE", url = "https://apollocurrency.com/"),
             contact = @Contact(url = "https://github.com/ApolloFoundation/Apollo", name = "Apollo team", email = "info@gigagantics-server.com")
     )

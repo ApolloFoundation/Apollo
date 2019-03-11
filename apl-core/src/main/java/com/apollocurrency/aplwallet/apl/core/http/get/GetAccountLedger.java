@@ -43,7 +43,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ACCOUNT_L
 
 /**
  * <p>
- * The GetAccountLedger API will return entries from the account ledger.  The
+ * The GetAccountLedger model will return entries from the account ledger.  The
  * account ledger tracks all account changes as determined by the apl.ledgerAccounts,
  * apl.ledgerLogUnconfirmed and apl.ledgerTrimKeep properties.
  * </p>
@@ -251,10 +251,10 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetAccountLedger API request
+     * Process the GetAccountLedger model request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param   req                 model request
+     * @return                      model response
      * @throws  AplException        Invalid request
      */
     @Override

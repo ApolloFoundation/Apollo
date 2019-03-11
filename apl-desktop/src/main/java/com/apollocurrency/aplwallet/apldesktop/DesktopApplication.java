@@ -114,7 +114,7 @@ public class DesktopApplication extends Application {
     
     private static String getUrl() {
         /*/TODO: use default URL from config
-        String url = "http://localhost:7876/";//API.getWelcomePageUri().toString();
+        String url = "http://localhost:7876/";//model.getWelcomePageUri().toString();
         
         if (url.startsWith("https")) {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
@@ -416,7 +416,7 @@ public class DesktopApplication extends Application {
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-//TODO: Get Blockchain config from API
+//TODO: Get Blockchain config from model
                         //mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
                         mainStage.setTitle("Apollo" + " Desktop - " + webEngine.getLocation());
 
@@ -445,7 +445,7 @@ public class DesktopApplication extends Application {
             // Invoked when changing the document.location property, when issuing a download request
             webEngine.locationProperty().addListener((observable, oldValue, newValue) -> webViewURLChange(newValue));
 
-            // Invoked when clicking a link to external site like Help or API console
+            // Invoked when clicking a link to external site like Help or model console
             webEngine.setCreatePopupHandler(
                     config -> {
                         LOG.info("popup request from webEngine");
@@ -456,7 +456,7 @@ public class DesktopApplication extends Application {
 
             Scene scene = new Scene(browser);
             //TODO: 
-            //String address = API.getServerRootUri().toString();
+            //String address = model.getServerRootUri().toString();
             String address = "http://localhost:7876/";
             mainStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
             mainStage.initStyle(StageStyle.DECORATED);
@@ -483,7 +483,7 @@ public class DesktopApplication extends Application {
             webEngine2.load(changelogUrl.toString());
 
             Scene scene = new Scene(browser);
-            String address = "http://localhost:7876/";//TODO: Make it right API.getServerRootUri().toString();
+            String address = "http://localhost:7876/";//TODO: Make it right model.getServerRootUri().toString();
             changelogStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
             changelogStage.initStyle(StageStyle.DECORATED);
             changelogStage.setScene(scene);

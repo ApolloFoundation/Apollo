@@ -65,11 +65,11 @@ import org.slf4j.Logger;
 
 /**
  * EventListener listens for peer, block, transaction and account ledger events as
- * specified by the EventRegister API.  Events are held until
- * an EventWait API request is received.  All pending events
+ * specified by the EventRegister model.  Events are held until
+ * an EventWait model request is received.  All pending events
  * are then returned to the application.
  *
- * Event registrations are discarded if an EventWait API request
+ * Event registrations are discarded if an EventWait model request
  * has not been received within apl.apiEventTimeout seconds.
  *
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
@@ -115,7 +115,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     /** Thread pool for asynchronous completions */
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    /** Peer events - update API comments for EventRegister and EventWait if changed */
+    /** Peer events - update model comments for EventRegister and EventWait if changed */
     public static final List<Peers.Event> peerEvents = new ArrayList<>();
     static {
         peerEvents.add(Peers.Event.ADD_INBOUND);
@@ -129,7 +129,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
         peerEvents.add(Peers.Event.UNBLACKLIST);
     }
 
-    /** Block events - update API comments for EventRegister and EventWait if changed */
+    /** Block events - update model comments for EventRegister and EventWait if changed */
     public static final List<BlockchainProcessor.Event> blockEvents = new ArrayList<>();
     static {
         blockEvents.add(BlockchainProcessor.Event.BLOCK_GENERATED);
@@ -137,7 +137,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
         blockEvents.add(BlockchainProcessor.Event.BLOCK_PUSHED);
     }
 
-    /** Transaction events - update API comments for EventRegister and EventWait if changed */
+    /** Transaction events - update model comments for EventRegister and EventWait if changed */
     public static final List<TransactionProcessor.Event> txEvents = new ArrayList<>();
     static {
         txEvents.add(TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
@@ -147,7 +147,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
         txEvents.add(TransactionProcessor.Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
     }
 
-    /** Account ledger events - update API comments for EventRegister and EventWait if changed */
+    /** Account ledger events - update model comments for EventRegister and EventWait if changed */
     public static final List<AccountLedger.Event> ledgerEvents = new ArrayList<>();
     static {
         ledgerEvents.add(AccountLedger.Event.ADD_ENTRY);
@@ -204,7 +204,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
         if (deactivated)
             throw new EventListenerException("Event listener deactivated");
         if (eventListeners.size() >= maxEventUsers && eventListeners.get(address) == null)
-            throw new EventListenerException(String.format("Too many API event users: Maximum %d", maxEventUsers));
+            throw new EventListenerException(String.format("Too many model event users: Maximum %d", maxEventUsers));
         //
         // Start listening for events
         //
@@ -403,7 +403,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
                 try (Writer writer = resp.getWriter()) {
                     response.writeJSONString(writer);
                 } catch (IOException exc) {
-                    LOG.debug(String.format("Unable to return API response to %s: %s",
+                    LOG.debug(String.format("Unable to return model response to %s: %s",
                                                          address, exc.toString()));
                 }
                 context.complete();
@@ -478,7 +478,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
             try (Writer writer = context.getResponse().getWriter()) {
                 response.writeJSONString(writer);
             } catch (IOException exc) {
-                LOG.debug(String.format("Unable to return API response to %s: %s",
+                LOG.debug(String.format("Unable to return model response to %s: %s",
                                                      address, exc.toString()));
             }
             context.complete();

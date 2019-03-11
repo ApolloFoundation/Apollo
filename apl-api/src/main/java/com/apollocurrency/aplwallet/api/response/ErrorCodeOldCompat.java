@@ -4,7 +4,7 @@ package com.apollocurrency.aplwallet.api.response;
  * Integer error codes, compatible wij old implementation.
  * Those error codes used khaotically with quite different descriptions
  * so there's no sense to keep them.
- * Should be gone after transition to new API.
+ * Should be gone after transition to new model.
  * @author alukin@gmail.com
  */
 public class ErrorCodeOldCompat {

@@ -308,7 +308,7 @@ import com.apollocurrency.aplwallet.apl.core.http.post.UploadTaggedData;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
-    //When an API is deleted, set its name to empty string and handler to null.
+    //When an model is deleted, set its name to empty string and handler to null.
     APPROVE_TRANSACTION("approveTransaction", ApproveTransaction.getInstance()),
     BROADCAST_TRANSACTION("broadcastTransaction", BroadcastTransaction.getInstance()),
     CALCULATE_FULL_HASH("calculateFullHash", CalculateFullHash.getInstance()),
@@ -599,7 +599,7 @@ public enum APIEnum {
         final EnumSet<APITag> tagsNotRequiringBlockchain = EnumSet.of(APITag.UTILS);
         for (APIEnum api : values()) {
             if (apiByName.put(api.getName(), api) != null) {
-                AssertionError assertionError = new AssertionError("Duplicate API name: " + api.getName());
+                AssertionError assertionError = new AssertionError("Duplicate model name: " + api.getName());
                 assertionError.printStackTrace();
                 throw assertionError;
             }
@@ -607,7 +607,7 @@ public enum APIEnum {
             final AbstractAPIRequestHandler handler = api.getHandler();
             if (!Collections.disjoint(handler.getAPITags(), tagsNotRequiringBlockchain)
                     && handler.requireBlockchain()) {
-                AssertionError assertionError = new AssertionError("API " + api.getName()
+                AssertionError assertionError = new AssertionError("model " + api.getName()
                         + " is not supposed to require blockchain");
                 assertionError.printStackTrace();
                 throw assertionError;

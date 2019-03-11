@@ -82,7 +82,7 @@ public final class APIServlet extends HttpServlet {
         API.disabledAPIs.forEach(api -> {
             AbstractAPIRequestHandler handler = map.remove(api);
             if (handler == null) {
-                throw new RuntimeException("Invalid API in apl.disabledAPIs: " + api);
+                throw new RuntimeException("Invalid model in apl.disabledAPIs: " + api);
             }
             disabledMap.put(api, handler);
         });
@@ -210,7 +210,7 @@ public final class APIServlet extends HttpServlet {
         } catch (ParameterException e) {
             response = e.getErrorResponse();
         } catch (AplException | RuntimeException e) {
-            LOG.debug("Error processing API request", e);
+            LOG.debug("Error processing model request", e);
             JSONObject json = new JSONObject();
             JSONData.putException(json, e);
             response = JSON.prepare(json);

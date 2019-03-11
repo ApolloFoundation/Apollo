@@ -34,7 +34,7 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 
 /**
- * <p>The GetStackTraces API will return the current stack trace for
+ * <p>The GetStackTraces model will return the current stack trace for
  * each Apl thread.</p>
  *
  * <p>Request parameters:</p>
@@ -92,10 +92,10 @@ public class GetStackTraces extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetStackTraces API request
+     * Process the GetStackTraces model request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param   req                 model request
+     * @return                      model response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

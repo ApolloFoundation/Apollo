@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
     
     <dependencies>     
-        <!-- TODO: remove this dependency later. API must not depend on anything except JSOM annotations and Swagger -->   
+        <!-- TODO: remove this dependency later. model must not depend on anything except JSOM annotations and Swagger -->
         <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-crypto</artifactId>
@@ -30,7 +30,7 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         
-<!-- Swagger annotation for API auto-documenting --> 
+<!-- Swagger annotation for model auto-documenting -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>

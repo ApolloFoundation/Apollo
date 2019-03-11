@@ -245,7 +245,7 @@ public final class API {
                 connector.setIdleTimeout(apiServerIdleTimeout);
                 connector.setReuseAddress(true);
                 apiServer.addConnector(connector);
-                LOG.info("API server using HTTP port " + port);
+                LOG.info("model server using HTTP port " + port);
             }
             //
             // Create the HTTPS connector
@@ -279,7 +279,7 @@ public final class API {
                 connector.setIdleTimeout(apiServerIdleTimeout);
                 connector.setReuseAddress(true);
                 apiServer.addConnector(connector);
-                LOG.info("API server using HTTPS port " + sslPort);
+                LOG.info("model server using HTTPS port " + sslPort);
             } else {
                 sslContextFactory = null;
             }
@@ -339,7 +339,7 @@ public final class API {
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
 
             apiHandler.addEventListener(new ApiContextListener());
-            // Filter to forward requests to new API
+            // Filter to forward requests to new model
             {
               FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
               filterHolder.setAsyncSupported(true);
@@ -379,7 +379,7 @@ public final class API {
             //need this listener to support scopes properly
             apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
 
-            //--------- ADD swagger generated docs and API test page
+            //--------- ADD swagger generated docs and model test page
             // Set the path to our static (Swagger UI) resources
 
             URL su =  API.class.getResource("/swaggerui");
@@ -418,12 +418,12 @@ public final class API {
 
                     apiServer.start();
                     if (sslContextFactory != null) {
-                        LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
-                        LOG.debug("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
+                        LOG.debug("model SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
+                        LOG.debug("model SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
                     }
-                    LOG.info("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
+                    LOG.info("Started model server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
                 } catch (Exception e) {
-                    LOG.error("Failed to start API server", e);
+                    LOG.error("Failed to start model server", e);
                     throw new RuntimeException(e.toString(), e);
                 }
 
@@ -435,7 +435,7 @@ public final class API {
             openAPIPort = 0;
             openAPISSLPort = 0;
             isOpenAPI = false;
-            LOG.info("API server not enabled");
+            LOG.info("model server not enabled");
         }
 
     }
@@ -454,7 +454,7 @@ public final class API {
                     }
                 }
             } catch (Exception e) {
-                LOG.info("Failed to stop API server", e);
+                LOG.info("Failed to stop model server", e);
             }
         }
     }

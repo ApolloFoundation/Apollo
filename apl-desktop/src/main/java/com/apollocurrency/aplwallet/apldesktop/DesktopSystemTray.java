@@ -177,7 +177,7 @@ public class DesktopSystemTray {
     }
 
     private void displayStatus() {
-        //TODO: getLastBlock using API
+        //TODO: getLastBlock using model
         //Block lastBlock = blockchain.getLastBlock();
         Collection<Generator> allGenerators = Generator.getAllGenerators();
 

@@ -31,7 +31,7 @@ public class ResponseBase {
     public String protocol = PROTOCOL_VERSION;
     
     /**
-     * Error code on new API. 0 means success, no error.
+     * Error code on new model. 0 means success, no error.
      */
     public Integer newErrorCode;
     /**
@@ -45,7 +45,7 @@ public class ResponseBase {
      */
     public String errorDescription;
     /**
-     * Old error code. Should be gone in new API
+     * Old error code. Should be gone in new model
      */
     public Long errorCode;
 

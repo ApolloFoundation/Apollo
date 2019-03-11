@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
 
 /**
- * Currency miners can use this API to obtain their target hash value for minting currency units
+ * Currency miners can use this model to obtain their target hash value for minting currency units
  * <p>
  * Parameters
  * <ul>

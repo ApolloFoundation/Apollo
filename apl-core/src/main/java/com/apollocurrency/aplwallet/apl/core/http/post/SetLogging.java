@@ -34,7 +34,7 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p>The SetLogging API will set the ARS log level for all log messages.
+ * <p>The SetLogging model will set the ARS log level for all log messages.
  * It will also set the communication events that are logged.</p>
  *
  * <p>Request parameters:</p>
@@ -104,10 +104,10 @@ public class SetLogging extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the SetLogging API request
+     * Process the SetLogging model request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param   req                 model request
+     * @return                      model response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

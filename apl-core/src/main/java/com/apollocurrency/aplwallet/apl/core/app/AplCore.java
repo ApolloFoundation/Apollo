@@ -165,7 +165,7 @@ public final class AplCore {
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP.getInstance();
                 }                
-                //try to start API as early as possible
+                //try to start model as early as possible
                 API.init();
                 
                 CDI.current().select(NtpTime.class).get().start();
@@ -227,13 +227,13 @@ public final class AplCore {
                 TaggedData.init();
                 AppStatus.getInstance().update("Peer server initialization...");
                 Peers.init();
-                AppStatus.getInstance().update("API Proxy initialization...");
+                AppStatus.getInstance().update("model Proxy initialization...");
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();
-                AppStatus.getInstance().update("API initialization...");
+                AppStatus.getInstance().update("model initialization...");
                 Helper2FA.init(databaseManager);
-//signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
+//signal to model that core is reaqdy to serve requests. Should be removed as soon as all model will be on RestEasy
                 ApiSplitFilter.isCoreReady = true;
 
 

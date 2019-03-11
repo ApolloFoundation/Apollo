@@ -1,4 +1,4 @@
-package com.apollocurrrency.aplwallet.inttest.API;
+package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrency.aplwallet.api.dto.*;
@@ -15,7 +15,6 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.addParamet
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallGet;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallPost;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;

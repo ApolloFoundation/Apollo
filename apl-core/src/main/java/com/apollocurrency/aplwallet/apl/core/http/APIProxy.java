@@ -93,7 +93,7 @@ public class APIProxy {
         int curTime = timeService.getEpochTime();
         getInstance().blacklistedPeers.entrySet().removeIf((entry) -> {
             if (entry.getValue() < curTime) {
-                LOG.debug("Unblacklisting API peer " + entry.getKey());
+                LOG.debug("Unblacklisting model peer " + entry.getKey());
                 return true;
             }
             return false;
@@ -140,7 +140,7 @@ public class APIProxy {
         if (connectablePeers.isEmpty()) {
             return null;
         }
-        // subset of connectable peers that have at least one new API enabled, which was disabled for the
+        // subset of connectable peers that have at least one new model enabled, which was disabled for the
         // The first peer (element 0 of peersHosts) is chosen at random. Next peers are chosen randomly from a
         // previously chosen peers. In worst case the size of peersHosts will be the number of APIs
         Peer peer = getRandomAPIPeer(connectablePeers);
@@ -169,7 +169,7 @@ public class APIProxy {
             }
         }
         peersHosts = Collections.unmodifiableList(currentPeersHosts);
-        LOG.info("Selected API peer " + resultPeer + " peer hosts selected " + currentPeersHosts);
+        LOG.info("Selected model peer " + resultPeer + " peer hosts selected " + currentPeersHosts);
         return resultPeer;
     }
 

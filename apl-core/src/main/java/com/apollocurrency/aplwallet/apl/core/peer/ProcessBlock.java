@@ -56,7 +56,7 @@ final class ProcessBlock extends PeerServlet.PeerRequestHandler {
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             Peers.peersService.submit(() -> {
                 try {
-                    LOG.debug("API: need to process better peer block");
+                    LOG.debug("model: need to process better peer block");
                     lookupBlockchainProcessor().processPeerBlock(request);
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {

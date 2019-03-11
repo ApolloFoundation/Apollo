@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 
 /**
- * <p>The GetLog API will return log messages from the ring buffer
+ * <p>The GetLog model will return log messages from the ring buffer
  * maintained by the MemoryAppender log handler.  The most recent
  * 'count' messages will be returned.  All log messages in the
  * ring buffer will be returned if 'count' is omitted.</p>
@@ -69,10 +69,10 @@ public final class GetLog extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetLog API request
+     * Process the GetLog model request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param   req                 model request
+     * @return                      model response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

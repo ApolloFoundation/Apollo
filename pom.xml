@@ -25,7 +25,7 @@
 <!--
      Tt is a whole mess at the moment. commented out. Please!!! Integration test
      SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
-     ant it MUST use REST API only!
+     ant it MUST use REST model only!
 -->
 <!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
@@ -76,7 +76,7 @@
         <logback.version>1.2.3</logback.version>
         <log4jdbc.version>1.2</log4jdbc.version>
 
-        <!--Tests-->
+        <!--tests-->
         <json-simple.version>1.1.1</json-simple.version>
         <json-unit.version>1.20.0</json-unit.version>
         <junit.version>4.12</junit.version>
@@ -533,7 +533,7 @@
                 <artifactId>mockito-junit-jupiter</artifactId>
                 <version>${mockito.version}</version>
             </dependency>
-            <!--Tests-->
+            <!--tests-->
             <dependency>
                 <groupId>net.javacrumbs.json-unit</groupId>
                 <artifactId>json-unit-core</artifactId>

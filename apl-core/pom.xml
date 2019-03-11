@@ -96,7 +96,7 @@
         </dependency>
 
         <!-- Swagger runtime dependencies -->
-        <!-- Swagger annotation for API auto-documenting --> 
+        <!-- Swagger annotation for model auto-documenting -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
