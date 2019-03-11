@@ -11,14 +11,11 @@ import org.junit.jupiter.api.*;
 
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
-import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 //@RunWith(JUnitPlatform.class)
@@ -163,9 +160,53 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Get Account Public Key")
     public void testGetAccountPublicKey() throws IOException {
-             assertEquals(testConfiguration.getPublicKey(), getAccountPublicKey(testConfiguration.getTestUser()));
+        assertEquals(testConfiguration.getPublicKey(), getAccountPublicKey(testConfiguration.getTestUser()));
 
     }
+
+
+    @Test
+    @DisplayName("Get Account Blockchain Transactions")
+    @Disabled("\"attachment\":{\"version.OrdinaryPayment\":0}")
+    public void testGetAccountTransaction()throws IOException {
+        BlockchainTransactionsResponse blockchainTransactionsResponse =  getAccountTransaction(testConfiguration.getTestUser());
+        assertTrue(blockchainTransactionsResponse.transactions.size()>0);
+    }
+
+
+    @DisplayName("Send Money")
+    @Test
+    public void testSendMoney() throws IOException {
+        CreateTransactionResponse sendMoneyResponse = sendMoney("APL-KL45-8GRF-BKPM-E58NH",100);
+        assertNotNull(sendMoneyResponse.transactionJSON.senderPublicKey);
+        assertNotNull(sendMoneyResponse.transactionJSON.signature);
+        assertNotNull(sendMoneyResponse.transactionJSON.fullHash);
+        assertNotNull(sendMoneyResponse.transactionJSON.amountATM);
+        assertNotNull(sendMoneyResponse.transactionJSON.ecBlockId);
+        assertNotNull(sendMoneyResponse.transactionJSON.senderRS);
+        assertNotNull(sendMoneyResponse.transactionJSON.transaction);
+        assertNotNull(sendMoneyResponse.transactionJSON.feeATM);
+    }
+
+
+    @DisplayName("Set Account Info")
+    @Test
+    public void setAccountInfo() throws IOException {
+        String accountName = "Account "+new Date().getTime();
+        String accountDesc= "Decription "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountInfo(testConfiguration.getTestUser(),testConfiguration.getSecretPhrase(),accountName,accountDesc);
+        assertNotNull(setAccountInfo.transactionJSON.senderPublicKey);
+        assertNotNull(setAccountInfo.transactionJSON.signature);
+        assertNotNull(setAccountInfo.transactionJSON.fullHash);
+        assertNotNull(setAccountInfo.transactionJSON.amountATM);
+        assertNotNull(setAccountInfo.transactionJSON.ecBlockId);
+        assertNotNull(setAccountInfo.transactionJSON.senderRS);
+        assertNotNull(setAccountInfo.transactionJSON.transaction);
+        assertNotNull(setAccountInfo.transactionJSON.feeATM);
+
+
+    }
+
 
 
 

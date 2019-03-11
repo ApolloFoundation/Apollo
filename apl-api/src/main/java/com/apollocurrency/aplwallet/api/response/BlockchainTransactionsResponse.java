@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class BlockchainTransactionsResponse {
     public String serverPublicKey;
     public float requestProcessingTime;
-    ArrayList <TransactionDTO> transactionDTOS = new ArrayList<TransactionDTO>();
-    ArrayList <TransactionDTO> unconfirmedTransactionDTOS = new ArrayList<TransactionDTO>();
+   // public ArrayList <TransactionDTO> transactionDTOS = new ArrayList<TransactionDTO>();
+    public ArrayList <TransactionDTO> transactions = new ArrayList<TransactionDTO>();
+    public ArrayList <TransactionDTO> unconfirmedTransactionDTOS = new ArrayList<TransactionDTO>();
 }
