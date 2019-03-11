@@ -8,10 +8,13 @@ import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class UpdatableMerkleTree {
     private List<Node> nodes;
+    private List<Node> leaves;
     private int leafs;
     private int height;
     private Node root;
@@ -21,6 +24,7 @@ public class UpdatableMerkleTree {
         this.messageDigest = digest;
         this.nodes = new ArrayList<>();
         this.nodes.add(new Node(null));
+        this.leaves = new ArrayList<>();
         this.root = nodes.get(0);
     }
 
@@ -68,73 +72,92 @@ public class UpdatableMerkleTree {
     public void appendNewBalancedLeaf(Node node) {
         if (leafs >= 2) {
             if (leafs == Math.pow(2, height + 1)) {
-                Node right = nodes.get(2);
-                Node left = nodes.get(1);
-
+                Node right = root.getRight();
+                Node left = root.getLeft();
                 messageDigest.update(left.getValue());
                 messageDigest.update(right.getValue());
                 Node upperNode = new Node(messageDigest.digest());
                 upperNode.setLeft(left);
                 upperNode.setRight(right);
                 upperNode.setParent(root);
-                nodes.add(1, upperNode);
-                nodes.add(2, new Node(null));
+                left.setParent(upperNode);
+                right.setParent(upperNode);
+                Node element = new Node(null);
+                root.setRight(element);
+                element.setParent(root);
                 int newNodes = 0;
-                int offset = 3;
                 while (newNodes < height) {
-                    offset += Math.pow(2, newNodes + 1);
-                    nodes.add(offset, new Node(null));
+                    Node additionalNode = new Node(null);
+                    element.setLeft(additionalNode);
+                    element = additionalNode;
                     newNodes++;
                 }
-                nodes.add(node);
-                leafs++;
-                int drift = getDrift(leafs);
-                int parentIndex = getParentIndex(nodes.size() - 1 + drift);
-                updateHash(parentIndex, Math.max(drift, 0));
+                element.setLeft(node);
+                updateHash(element);
                 height++;
             } else if (leafs % 2 == 0) {
-                createNodes(leafs, nodes);
-                leafs++;
-                int drift = getDrift(leafs);
+                createNodes(leafs);
                 nodes.add(node);
-                int parentIndex = getParentIndex(nodes.size() - 1 + drift);
-                updateHash(parentIndex, Math.max(drift, 0));
+                updateHash();
             } else {
-                leafs++;
-                int drift = getDrift(leafs);
                 nodes.add(node);
-                int parentIndex = getParentIndex(nodes.size() - 1 + drift);
-                updateHash(parentIndex, Math.max(drift, 0));
+                updateHash();
             }
         } else {
-            nodes.add(node);
+            if (leaves.size() == 1) {
+                root.setRight(node);
+            } else {
+                root.setLeft(node);
+            }
+            node.setParent(root);
             height = 0;
-            leafs++;
-            updateHash(0);
+            leaves.add(node);
+            updateHash(root);
         }
-
     }
 
-    static void createNodes(int leafs, List<Node> nodes) {
+    public void append(Node node) {
+        int skipCount = (int) Math.pow(2, height);
+        Queue<Node> nodeQueue = new LinkedList<>();
+        for (int i = skipCount; i < leaves.size(); i++) {
+            nodeQueue.add(leaves.get(i));
+        }
+        int heightAppend = nodeQueue.size();
+        int an = 0;
+        int nodesAdd = 0;
+        Node stop = root.getRight();
+        while (!nodeQueue.isEmpty()) {
+            an++;
+            Node n = nodeQueue.remove();
+            nodeQueue.add(n.getParent());
+            heightAppend--;
+
+            if (n.getRight() == null) {
+
+            }
+            if (heightAppend == 0) {
+                nodesAdd++;
+
+            }
+        }
+    }
+
+    static void createNodes(int leafs) {
         int n = leafs + 1;
         int in = leafs;
-        int total = leafs;
         Node mandatory = new Node(null);
-        int size = nodes.size();
-        nodes.add(size - total, mandatory);
         n = n / 2 + n % 2;
-        in = in / 2 + in % 2;
-        total += in;
         while (n != 1) {
             n = n / 2 + n % 2;
             in = in / 2 + in % 2;
-            total += in;
             if (n % 2 == 0) {
                 break;
             }
             if (n % 2 != 0) {
                 Node node = new Node(null);
-                nodes.add(size - total, node);
+                mandatory.setParent(node);
+                node.setLeft(mandatory);
+                mandatory = node;
             }
         }
     }
@@ -180,25 +203,22 @@ public class UpdatableMerkleTree {
     }
     // assume that all childs were updated
     // IMPORTANT: recursive update
-    private void updateHash(int nodeIndex, int drift) {
-        Node node = nodes.get(nodeIndex);
-        int leftChildIndex = getLeftChildIndex(nodeIndex, drift);
-        int rightChildIndex = getRightChildIndex(nodeIndex, drift);
-        if (leftChildIndex < nodes.size()) {
-            Node left = nodes.get(leftChildIndex);
-            if (rightChildIndex >= nodes.size() || invalidChild(leafs, nodeIndex, rightChildIndex)) {
+    private void updateHash(Node node) {
+        if (node.getLeft() != null && node.getRight() != null) {
+            Node left = node.getLeft();
+            if (node.getRight() == null) {
                 node.setValue(left.getValue());
             } else {
-                Node right = nodes.get(rightChildIndex);
+                Node right = node.getRight();
                 messageDigest.update(left.getValue());
                 messageDigest.update(right.getValue());
                 byte[] hash = messageDigest.digest();
                 node.setValue(hash);
             }
         }
-        int parent = getParentIndex(nodeIndex);
-        if (nodeIndex != 0) {
-            updateHash(parent, Math.max(--drift, 0));
+        Node parent = node.getParent();
+        if (parent != null) {
+            updateHash(parent);
         }
     }
 
