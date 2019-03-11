@@ -160,9 +160,9 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.getBlockchainTransactions);
         addParameters(Parameters.account, accountID);
         Response response = httpCallGet();
-        System.out.println(response.body().string());
+       // System.out.println(response.body().string());
         assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), BlockchainTransactionsResponse.class);
+        return  mapper.readValue(response.body().string().toString(), BlockchainTransactionsResponse.class);
     }
 
     public CreateTransactionResponse  setAccountInfo(String accountID,String accountPass,String accountName,String accountDescription) throws IOException {
@@ -179,5 +179,25 @@ public class TestBase {
 
     }
 
+    public CreateTransactionResponse  setAccountProperty(String accountID, String pass, String property ) throws IOException {
+        addParameters(RequestType.requestType,RequestType.setAccountProperty);
+        addParameters(Parameters.secretPhrase, pass);
+        addParameters(Parameters.recipient, accountID);
+        addParameters(Parameters.property, property);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.feeATM, 100000000);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+    }
+
+
+    public GetPropertyResponse  getAccountProperty(String accountID) throws IOException {
+        addParameters(RequestType.requestType,RequestType.getAccountProperties);
+        addParameters(Parameters.recipient, testConfiguration.getTestUser());
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), GetPropertyResponse.class);
+    }
 
 }

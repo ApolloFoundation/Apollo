@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 //@RunWith(JUnitPlatform.class)
@@ -203,11 +205,31 @@ public class TestAccounts extends TestBase {
         assertNotNull(setAccountInfo.transactionJSON.senderRS);
         assertNotNull(setAccountInfo.transactionJSON.transaction);
         assertNotNull(setAccountInfo.transactionJSON.feeATM);
-
-
     }
 
 
+    @DisplayName("Set Account Info")
+    @Test
+    public void setAccountProperty() throws IOException {
+        String property = "Property "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountProperty(testConfiguration.getTestUser(),testConfiguration.getSecretPhrase(),property);
+        assertNotNull(setAccountInfo.transactionJSON.senderPublicKey);
+        assertNotNull(setAccountInfo.transactionJSON.signature);
+        assertNotNull(setAccountInfo.transactionJSON.fullHash);
+        assertNotNull(setAccountInfo.transactionJSON.amountATM);
+        assertNotNull(setAccountInfo.transactionJSON.ecBlockId);
+        assertNotNull(setAccountInfo.transactionJSON.senderRS);
+        assertNotNull(setAccountInfo.transactionJSON.transaction);
+        assertNotNull(setAccountInfo.transactionJSON.feeATM);
+    }
+
+
+    @DisplayName("Get Account Property")
+    public void  getAccountProperty() throws IOException { ;
+        GetPropertyResponse propertyResponse = getAccountProperty(testConfiguration.getTestUser());
+       // assertThat(propertyResponse);
+        //assertEquals("country", getPropertyResponse.getProperties()[0].getProperty());
+    }
 
 
 }

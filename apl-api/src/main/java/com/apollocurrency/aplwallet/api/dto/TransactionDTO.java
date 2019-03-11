@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -11,6 +12,8 @@ public class TransactionDTO {
     public Boolean phased;
     public String ecBlockID;
     public String signatureHash;
+    // TODO : Annotation added for test
+    @JsonIgnore
     public ArrayNode attachment;
     public Integer subtype;
     public String block;
