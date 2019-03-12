@@ -5,6 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GetGountAliasesResponse extends ResponseBase{
+public class GetCountAliasesResponse extends ResponseBase{
     public long numberOfAliases;
 }

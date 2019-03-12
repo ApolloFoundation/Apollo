@@ -1,6 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.*;
+import com.apollocurrency.aplwallet.api.request.CreateTransactionRequestDTO;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.tests.TestAccounts;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
@@ -198,6 +199,111 @@ public class TestBase {
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), GetPropertyResponse.class);
+    }
+
+
+    //Skrypchenko Serhii
+    public GetAliasesResponse getAliases  (String accountID) throws IOException {
+        addParameters(RequestType.requestType,RequestType.getAliases);
+        addParameters(Parameters.account, accountID);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), GetAliasesResponse.class);
+    }
+
+    //Skrypchenko Serhii
+    public GetCountAliasesResponse getAliasCount(String accountID) throws IOException {
+        addParameters(RequestType.requestType,RequestType.getAliasCount);
+        addParameters(Parameters.account, accountID);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), GetCountAliasesResponse.class);
+    }
+
+    //Skrypchenko Serhii
+    public AliasDTO getAlias(String aliasname) throws IOException {
+        addParameters(RequestType.requestType,RequestType.getAlias);
+        //addParameters(Parameters.account, accountID);
+        addParameters(Parameters.aliasName, aliasname);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), AliasDTO.class);
+    }
+
+
+    //Skrypchenko Serhii
+    public  CreateTransactionResponse setAlias (String aliasURL, String aliasName, Integer feeATM, Integer deadline) throws IOException {
+        addParameters(RequestType.requestType,RequestType.setAlias);
+        addParameters(Parameters.aliasURI, aliasURL);
+        addParameters(Parameters.aliasName, aliasName);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.feeATM, feeATM);
+        addParameters(Parameters.deadline, deadline);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+
+    }
+
+    //Skrypchenko Serhii
+    public CreateTransactionResponse deleteAlias(String aliasname) throws IOException {
+        addParameters(RequestType.requestType,RequestType.deleteAlias);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.aliasName, aliasname);
+        addParameters(Parameters.feeATM, 400000000);
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+
+    }
+
+    //Serhii Skrypchenko
+    public GetAliasesResponse getAliasesLike(String aliasename) throws IOException {
+        addParameters(RequestType.requestType,RequestType.getAliasesLike);
+        //addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.aliasPrefix, aliasename);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAliasesResponse.class);
+        //GetAliasesResponse getAliasesResponse = gson.fromJson(response.body().string().toString(), GetAliasesResponse.class);
+        //assertEquals(testConfiguration.getTestUser(), getAliasesResponse.getAliases()[0].getAccountRS());
+    }
+
+
+    //Serhii Skrypchenko (sell Alias)
+    public CreateTransactionResponse sellAlias (String aliasName) throws IOException {
+        addParameters(RequestType.requestType, RequestType.sellAlias);
+        addParameters(Parameters.aliasName, aliasName);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.priceATM, 1500000000);
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+
+
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse buyAlias (String aliasName) throws IOException {
+        addParameters(RequestType.requestType, RequestType.buyAlias);
+        addParameters(Parameters.aliasName, aliasName);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.amountATM, 1500000000);
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+
+
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
     }
 
 }
