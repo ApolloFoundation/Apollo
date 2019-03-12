@@ -26,8 +26,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.awt.*;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
