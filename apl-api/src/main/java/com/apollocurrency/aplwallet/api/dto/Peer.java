@@ -10,6 +10,8 @@ public class Peer {
     private Long downloadedVolume;
     private String address; //ip
     private Boolean inbound;
+    private BlockchainState blockchainState;
+    private PeerServices[] services;
 //    private com.apollocurrency.aplwallet.apl.peer.Peer.BlockchainState blockchainState;
     private Long weight;
     private Long uploadedVolume;
@@ -27,6 +29,24 @@ public class Peer {
     private Long lastConnectAttempt;
     private Long state;
     private Boolean shareAddress;
+    private Integer requestProcessingTime;
+    private String chainId;
+
+    public String getChainId() {
+        return chainId;
+    }
+
+    public void setChainId(String chainId) {
+        this.chainId = chainId;
+    }
+
+    public Integer getRequestProcessingTime() {
+        return requestProcessingTime;
+    }
+
+    public void setRequestProcessingTime(Integer requestProcessingTime) {
+        this.requestProcessingTime = requestProcessingTime;
+    }
 
     public Long getDownloadedVolume() {
         return downloadedVolume;
@@ -59,6 +79,23 @@ public class Peer {
 //    public void setBlockchainState(com.apollocurrency.aplwallet.apl.peer.Peer.BlockchainState blockchainState) {
 //        this.blockchainState = blockchainState;
 //    }
+
+
+    public PeerServices[] getServices() {
+        return services;
+    }
+
+    public void setServices(PeerServices[] services) {
+        this.services = services;
+    }
+
+    public BlockchainState getBlockchainState() {
+        return blockchainState;
+    }
+
+    public void setBlockchainState(BlockchainState blockchainState) {
+        this.blockchainState = blockchainState;
+    }
 
     public Long getWeight() {
         return weight;

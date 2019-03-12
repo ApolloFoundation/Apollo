@@ -263,6 +263,16 @@ public class TestBase {
         return peers.peers;
     }
 
+    public Peer getPeer(String peer) throws IOException {
+        addParameters(RequestType.requestType, RequestType.getPeer);
+        addParameters(Parameters.peer, peer);
+        Response response = httpCallGet();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string().toString(), Peer.class);
+    }
+
+
+
 
 
 
