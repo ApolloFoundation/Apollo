@@ -15,6 +15,7 @@ if exist %APL_TOP%\jre (
 ) else (
 	set JAVA_CMD=java	
 )
+
 @REM determine Java version
 PATH %JAVA_HOME%\bin\;%PATH%
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "java_ver=%%j%%k"
@@ -26,13 +27,15 @@ if  %java_ver% LSS %MIN_JAVA% (
 ) 
 
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B %APL_LIB%\apl-tools*') do set "APL_VER=%%k.%%l.%%m"
+@echo Apollo Version:
+@echo %APL_VER%
 @REM are we in dev env or in production
 if exist %APL_TOP%\Apollo.jar (
-	set APL_MAIN=%APL_TOP%\apl-exec-%APL_VER%.jar
+        set APL_MAIN=%APL_TOP%\apl-exec\Apollo.jar
 	set APL_LIB=%APL_TOP%\lib
 	set APL_GUI_MAIN=%APL_TOP%\lib\apl-exec\apl-desktop-%APL_VER%.jar
 ) else (
-        set APL_MAIN=%APL_TOP%\apl-exec\target\Apollo.jar
+	set APL_MAIN=%APL_TOP%\apl-exec-%APL_VER%.jar
 	set APL_LIB=%APL_TOP%\apl-exec\target\lib
 	set APL_GUI_MAIN=%APL_TOP%\lib\apl-exec\apl-desktop-%APL_VER%.jar
 )
