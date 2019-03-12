@@ -318,6 +318,11 @@ public class UpdatableMerkleTreeTest {
                 leaf6, leaf7, leaf8),
                 nodes);
     }
+
+    @Test
+    public void testBuildAndAppendEqualTrees() {
+
+    }
     @Test
     public void testBuildTreeFromNineNodes() {
         List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),

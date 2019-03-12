@@ -67,13 +67,10 @@ public class UpdatableMerkleTree {
         if (!isPowerOfTwo(size)) {
             int n = nearestPowerOfTwo(size);
             int nodesToAdd = size - n;
-            int counter = size - nodesToAdd * 2;
-            int fc = counter;
+            int rightStartCounter = size - nodesToAdd - 1;
             for (int i = 0; i < nodesToAdd; i++) {
-                Node left = treeNodes.get(counter);
-                counter++;
-                Node right = treeNodes.get(counter);
-                counter++;
+                Node left = treeNodes.get(i);
+                Node right = treeNodes.get(rightStartCounter + i);
                 digest.update(left.getValue());
                 digest.update(right.getValue());
                 Node parent = new Node(digest.digest());
@@ -82,7 +79,7 @@ public class UpdatableMerkleTree {
             for (int i = bottomLevelNodes.size() - 1; i >= 0; i--) {
                 nodes.add(bottomLevelNodes.get(i));
             }
-            bottomLevelNodes.addAll(treeNodes.subList(0, fc));
+            bottomLevelNodes.addAll(treeNodes.subList(nodesToAdd, size - nodesToAdd));
         } else {
             bottomLevelNodes.addAll(treeNodes);
         }
