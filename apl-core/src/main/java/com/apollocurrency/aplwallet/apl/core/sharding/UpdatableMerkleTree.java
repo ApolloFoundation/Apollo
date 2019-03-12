@@ -8,14 +8,11 @@ import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class UpdatableMerkleTree {
     private List<Node> nodes;
     private List<Node> leaves;
-    private int leafs;
     private int height;
     private Node root;
     private MessageDigest messageDigest;
@@ -25,7 +22,7 @@ public class UpdatableMerkleTree {
         this.nodes = new ArrayList<>();
         this.nodes.add(new Node(null));
         this.leaves = new ArrayList<>();
-        this.root = nodes.get(0);
+        this.root = new Node(null);
     }
 
     public void buildTree(List<Node> treeNodes) {
@@ -62,16 +59,12 @@ public class UpdatableMerkleTree {
     }
 
     public Node getRoot() {
-        if (nodes.size() == 0) {
-            return null;
-        } else {
-            return nodes.get(0);
-        }
+        return root;
     }
 
     public void appendNewBalancedLeaf(Node node) {
-        if (leafs >= 2) {
-            if (leafs == Math.pow(2, height + 1)) {
+        if (leaves.size() >= 2) {
+            if (leaves.size() == Math.pow(2, height + 1)) {
                 Node right = root.getRight();
                 Node left = root.getLeft();
                 messageDigest.update(left.getValue());
@@ -82,6 +75,7 @@ public class UpdatableMerkleTree {
                 upperNode.setParent(root);
                 left.setParent(upperNode);
                 right.setParent(upperNode);
+                root.setLeft(upperNode);
                 Node element = new Node(null);
                 root.setRight(element);
                 element.setParent(root);
@@ -89,19 +83,16 @@ public class UpdatableMerkleTree {
                 while (newNodes < height) {
                     Node additionalNode = new Node(null);
                     element.setLeft(additionalNode);
+                    additionalNode.setParent(element);
                     element = additionalNode;
                     newNodes++;
                 }
                 element.setLeft(node);
+                node.setParent(element);
                 updateHash(element);
                 height++;
-            } else if (leafs % 2 == 0) {
-                createNodes(leafs);
-                nodes.add(node);
-                updateHash();
             } else {
-                nodes.add(node);
-                updateHash();
+                append(node);
             }
         } else {
             if (leaves.size() == 1) {
@@ -111,34 +102,34 @@ public class UpdatableMerkleTree {
             }
             node.setParent(root);
             height = 0;
-            leaves.add(node);
             updateHash(root);
         }
+        leaves.add(node);
     }
 
     public void append(Node node) {
         int skipCount = (int) Math.pow(2, height);
-        Queue<Node> nodeQueue = new LinkedList<>();
+        List<Node> nodeList = new ArrayList<>();
         for (int i = skipCount; i < leaves.size(); i++) {
-            nodeQueue.add(leaves.get(i));
+            nodeList.add(leaves.get(i).getParent());
         }
-        int heightAppend = nodeQueue.size();
-        int an = 0;
-        int nodesAdd = 0;
-        Node stop = root.getRight();
-        while (!nodeQueue.isEmpty()) {
-            an++;
-            Node n = nodeQueue.remove();
-            nodeQueue.add(n.getParent());
-            heightAppend--;
-
-            if (n.getRight() == null) {
-
+        Node lastNode = node;
+        while (true) {
+            List<Node> parentList = new ArrayList<>();
+            for (int i = 0; i < nodeList.size(); i+=2) {
+                Node n = nodeList.get(i);
+                parentList.add(n.getParent());
+                if (n.getRight() == null) {
+                    n.setRight(lastNode);
+                    lastNode.setParent(n);
+                    updateHash(node.getParent());
+                    return;
+                }
             }
-            if (heightAppend == 0) {
-                nodesAdd++;
-
-            }
+            Node n = new Node(lastNode, null);
+            lastNode.setParent(n);
+            lastNode = n;
+            nodeList = parentList;
         }
     }
 
@@ -204,7 +195,7 @@ public class UpdatableMerkleTree {
     // assume that all childs were updated
     // IMPORTANT: recursive update
     private void updateHash(Node node) {
-        if (node.getLeft() != null && node.getRight() != null) {
+        if (node.getLeft() != null) {
             Node left = node.getLeft();
             if (node.getRight() == null) {
                 node.setValue(left.getValue());
