@@ -32,11 +32,24 @@ public class HelperFactoryImpl implements HelperFactory<BatchedSelectInsert> {
      */
     @Override
     public Optional<BatchedSelectInsert> createHelper(String helperTableName) {
-        if ("BLOCK".equalsIgnoreCase(helperTableName)) {
-            return Optional.of(new BlockSelectAndInsertHelper());
-        } else if ("TRANSACTION".equalsIgnoreCase(helperTableName)) {
-            return Optional.of(new TransactionSelectAndInsertHelper());
+        Optional<BatchedSelectInsert> helper;
+        switch (helperTableName.toUpperCase()) {
+            case "BLOCK" : {
+                return Optional.of(new BlockSelectAndInsertHelper());
+            }
+            case "TRANSACTION" : {
+                return Optional.of(new TransactionSelectAndInsertHelper());
+            }
+            case "GENESIS_PUBLIC_KEY" :
+            case "PUBLIC_KEY" :
+            case "TAGGED_DATA" :
+            case "SHUFFLING_DATA" :
+            case "DATA_TAG" :
+            case "PRUNABLE_MESSAGE" :
+                return Optional.of(new RelinkingToSnapshotBlockHelper());
+            default:
+                helper = Optional.empty();
         }
-        return Optional.empty();
+        return helper;
     }
 }

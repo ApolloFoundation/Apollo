@@ -79,10 +79,10 @@ public class MoveDataCommand implements DataMigrateOperation {
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, MigrateState.DATA_MOVING_STARTED, null, null);
+                -1, MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, MigrateState.DATA_MOVING_STARTED, null, this.snapshotBlockHeight);
+                -1, MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, this.snapshotBlockHeight);
 
         return dataTransferManagement.moveData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }

@@ -36,6 +36,7 @@ public interface BatchedSelectInsert {
 
     /**
      * Method makes select operations on source database then it insert data into target database.
+     * It also makes 'relinking' records in several tables to snapshot block at specified height.
      *
      * @return quantity of selected and inserted records per every table
      * @throws Exception

@@ -156,40 +156,29 @@ class DataTransferManagementReceiverTest {
 //        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardInitTableSchemaVersion());
 //        assertEquals(SHARD_DB_CREATED, state);
 
-        DatabaseMetaInfo tempDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME, 100,
-                MigrateState.DATA_MOVING_STARTED, null, 1350000L);
+        DatabaseMetaInfo shardDbMetaInfo = new DatabaseMetaInfoImpl(
+                null, null, 100,
+                MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, 1350000L);
 
         DatabaseMetaInfo mainDbMetaInfo = new DatabaseMetaInfoImpl(
                 null, "apl-blockchain", 100,
-                MigrateState.DATA_MOVING_STARTED, null, null);
+                MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, null);
 
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
         // next not linked tables
-        tableNameCountMap.clear();
-        tableNameCountMap.put("BLOCK", -1L);
-        tableNameCountMap.put("TRANSACTION", -1L);
+//        tableNameCountMap.clear();
+//        tableNameCountMap.put("BLOCK", -1L);
+//        tableNameCountMap.put("TRANSACTION", -1L);
 
-        tempDbMetaInfo.setSnapshotBlock(null); // remove snapshot block
-        state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, tempDbMetaInfo);
-//        assertEquals(MigrateState.DATA_MOVING_STARTED, state);
-        assertEquals(MigrateState.FAILED, state);
+        shardDbMetaInfo.setSnapshotBlock(null); // remove snapshot block
+        state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
+        assertEquals(MigrateState.DATA_MOVED_TO_SHARD, state);
+//        assertEquals(MigrateState.FAILED, state);
 
         state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_DB_CREATED, state);
 
-//        state = transferManagementReceiver.createTempDb(tempDbMetaInfo);
-//        assertEquals(SHARD_DB_CREATED, state);
-//
-//        Block block = Genesis.newGenesisBlock(); // create Block in advance
-//        tempDbMetaInfo.setSnapshotBlock(block); // assign snapshot block
-//        state = transferManagementReceiver.addSnapshotBlock(tempDbMetaInfo);
-//        assertEquals(SNAPSHOT_BLOCK_CREATED, state);
-
-//        PublicKeyTable.getInstance().trim(1356113);
-        // next LINKED tables
-
-/*
+        tableNameCountMap.clear();
         tableNameCountMap.put("GENESIS_PUBLIC_KEY", -1L);
         tableNameCountMap.put("PUBLIC_KEY", -1L);
         tableNameCountMap.put("TAGGED_DATA", -1L);
@@ -197,9 +186,8 @@ class DataTransferManagementReceiverTest {
         tableNameCountMap.put("DATA_TAG", -1L);
         tableNameCountMap.put("PRUNABLE_MESSAGE", -1L);
 
-        state = transferManagementReceiver.moveDataBlockLinkedData(tableNameCountMap, mainDbMetaInfo, tempDbMetaInfo);
-        assertEquals(MigrateState.DATA_MOVING_STARTED, state);
-*/
+        state = transferManagementReceiver.relinkDataToSnapshotBlock(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
+        assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
 
         log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start)/1000 );
     }

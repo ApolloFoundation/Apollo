@@ -70,11 +70,11 @@ public class MoveLinkedDataCommand implements DataMigrateOperation {
 
         DatabaseMetaInfo sourceDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 dataTransferManagement.getDatabaseManager().getDataSource(), this.newFileName,
-                -1, MigrateState.DATA_MOVING_STARTED, null, null);
+                -1, MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, null);
         DatabaseMetaInfo targetDatabaseMetaInfo = new DatabaseMetaInfoImpl(
                 dataTransferManagement.getDatabaseManager().getOrCreateShardDataSourceById(-1L), this.newFileName,
-                -1, MigrateState.DATA_MOVING_STARTED, null, null);
+                -1, MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, null);
 
-        return dataTransferManagement.moveDataBlockLinkedData(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
+        return dataTransferManagement.relinkDataToSnapshotBlock(this.tableNameCountMap, sourceDatabaseMetaInfo, targetDatabaseMetaInfo);
     }
 }

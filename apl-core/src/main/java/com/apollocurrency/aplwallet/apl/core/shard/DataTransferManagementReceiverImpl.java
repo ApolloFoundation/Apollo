@@ -91,36 +91,18 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         try {
             // add info about state
             TransactionalDataSource shardDb = databaseManager.createAndAddShard(null, dbVersion);
-            if (optionDAO.get(PREVIOUS_MIGRATION_KEY, shardDb) != null) {
-                return MigrateState.SHARD_DB_CREATED; // continue to next state
+            if (optionDAO.get(PREVIOUS_MIGRATION_KEY/*, shardDb*/) != null) {
+                state = MigrateState.SHARD_DB_CREATED; // continue to next state
+                return state;
             }
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name(), shardDb);
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name()/*, shardDb*/);
             state = MigrateState.SHARD_DB_CREATED;
             return state;
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
             return MigrateState.FAILED;
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MigrateState moveDataBlockLinkedData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target) {
-        Objects.requireNonNull(tableNameCountMap, "tableNameCountMap is NULL");
-        Objects.requireNonNull(source, "source meta-info is NULL");
-        Objects.requireNonNull(target, "target meta-info is NULL");
-        log.debug("Starting LINKED data transfer from [{}] tables...", tableNameCountMap.size());
-        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
-        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
-        if (target.getSnapshotBlock() == null) {
-            log.error("Snapshot block was NOT inserted previously...");
-            state = MigrateState.FAILED;
-            return state;
-        }
-//        target.setSnapshotBlock(snapshootBlock);
-        return this.moveData(tableNameCountMap, source, target);
     }
 
     /**
@@ -131,13 +113,15 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(tableNameCountMap, "tableNameCountMap is NULL");
         Objects.requireNonNull(source, "source meta-info is NULL");
         Objects.requireNonNull(target, "target meta-info is NULL");
+        Objects.requireNonNull(target.getSnapshotBlockHeight(), "target Snapshot Block height is NULL");
         log.debug("Starting shard data transfer from [{}] tables...", tableNameCountMap.size());
+        long startAllTables = System.currentTimeMillis();
         String lastTableName = null;
         TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
-        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
+        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name()/*, targetDataSource*/);
 /*
         if (optionDAO.get(PREVIOUS_MIGRATION_KEY, targetDataSource) == null) {
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name(), targetDataSource);
         } else {
             // continue previous run
             lastTableName = optionDAO.get(LAST_MIGRATION_OBJECT_NAME, targetDataSource);
@@ -148,7 +132,6 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             // check/compare records count in source and target, clear target if needed, reinsert again in case...
         } else {
             // insert data as not processed previously
-            long startAllTables = System.currentTimeMillis();
             Connection targetConnect = null;
 
             String currentTable = null;
@@ -161,7 +144,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                         targetConnect = targetDataSource.begin();
                     }
                     currentTable = tableName;
-                    optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName, targetDataSource);
+                    optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName/*, targetDataSource*/);
                     Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createHelper(tableName);
                     if (sqlSelectAndInsertHelper.isPresent()) {
                         long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
@@ -173,9 +156,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                         log.warn("NO processing HELPER class for table '{}'", tableName);
                     }
                 }
+//                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVED_TO_SHARD.name()/*, targetDataSource*/);
             } catch (Exception e) {
                 log.error("Error processing table = '" + currentTable + "'", e);
                 targetDataSource.rollback(false);
+                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
                 state = MigrateState.FAILED;
                 return state;
             } finally {
@@ -183,12 +168,72 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     targetDataSource.commit(false);
                 }
             }
-            log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
-            boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVED.name(), source.getDataSource());
+            boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVED_TO_SHARD.name()/*, source.getDataSource()*/);
+            state = MigrateState.DATA_MOVED_TO_SHARD;
             log.debug("Add Snapshot block MigrateState.SNAPSHOT_BLOCK_CREATED was saved = {}", result);
-
+            log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
         }
-        state = MigrateState.DATA_MOVING_STARTED;
+//        state = MigrateState.DATA_MOVED_TO_SHARD;
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MigrateState relinkDataToSnapshotBlock(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target) {
+        Objects.requireNonNull(tableNameCountMap, "tableNameCountMap is NULL");
+        Objects.requireNonNull(source, "source meta-info is NULL");
+        Objects.requireNonNull(target, "target meta-info is NULL");
+        Objects.requireNonNull(target.getSnapshotBlockHeight(), "target Snapshot Block height is NULL");
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting LINKED data update from [{}] tables...", tableNameCountMap.size());
+//        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
+//        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name(), targetDataSource);
+        if (target.getSnapshotBlockHeight() == null) {
+            log.error("Snapshot block HEIGHT was not specified...");
+            state = MigrateState.FAILED;
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
+            return state;
+        }
+//        target.setSnapshotBlock(snapshootBlock);
+        String currentTable = null;
+        TransactionalDataSource sourceDataSource = source.getDataSource();
+        try (
+                Connection sourceConnect = sourceDataSource.begin()
+        ) {
+            for (String tableName : tableNameCountMap.keySet()) {
+                long start = System.currentTimeMillis();
+                currentTable = tableName;
+                optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName/*, targetDataSource*/);
+                Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createHelper(tableName);
+                if (sqlSelectAndInsertHelper.isPresent()) {
+                    long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
+                            sourceConnect, null, tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight());
+                    sourceDataSource.commit(false);
+                    log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+//                        sqlSelectAndInsertHelper.get().reset();
+                } else {
+                    log.warn("NO processing HELPER class for table '{}'", tableName);
+                }
+            }
+//                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVED_TO_SHARD.name()/*, targetDataSource*/);
+        } catch (Exception e) {
+            log.error("Error processing table = '" + currentTable + "'", e);
+            sourceDataSource.rollback(false);
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
+            state = MigrateState.FAILED;
+            return state;
+        } finally {
+            if (sourceDataSource != null) {
+                sourceDataSource.commit(false);
+            }
+        }
+        boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_RELINKED_IN_MAIN.name()/*, source.getDataSource()*/);
+        state = MigrateState.DATA_RELINKED_IN_MAIN;
+        log.debug("Add Snapshot block MigrateState.SNAPSHOT_BLOCK_CREATED was saved = {}", result);
+        log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
+
         return state;
     }
 

@@ -81,6 +81,9 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
                                       long batchCommitSize, Long snapshotBlockHeight)
             throws Exception {
         log.debug("Processing: '{}'", tableName);
+        Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
+        Objects.requireNonNull(targetConnect, "targetConnect is NULL");
+        Objects.requireNonNull(tableName, "tableName is NULL");
         Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
         currentTableName = tableName;
 

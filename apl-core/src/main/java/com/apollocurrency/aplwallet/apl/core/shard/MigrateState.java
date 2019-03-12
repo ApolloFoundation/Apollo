@@ -24,5 +24,6 @@ package com.apollocurrency.aplwallet.apl.core.shard;
  * Enum used for tracking migration state on all steps.
  */
 public enum MigrateState {
-    INIT, SHARD_DB_CREATED, DATA_MOVING_STARTED, DATA_MOVED, COMPLETED, FAILED;
+    INIT, SHARD_DB_CREATED, DATA_MOVING_TO_SHARD_STARTED, DATA_MOVED_TO_SHARD,
+    DATA_RELINKED_IN_MAIN, DATA_REMOVED_FROM_MAIN, COMPLETED, FAILED;
 }
