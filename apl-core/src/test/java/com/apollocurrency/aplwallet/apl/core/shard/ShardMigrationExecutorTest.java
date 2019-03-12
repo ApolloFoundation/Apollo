@@ -1,6 +1,9 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -18,16 +21,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateTempDbCommand;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.DbFilesRenameCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.MoveDataCommand;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -41,11 +42,9 @@ import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @EnableWeld
@@ -106,23 +105,9 @@ class ShardMigrationExecutorTest {
         FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
-    @Disabled
-    @Test
-    void executeCreateTempDbOperation() throws IOException {
-        assertNotNull(databaseManager);
-        CreateTempDbCommand tempDbCommand = new CreateTempDbCommand(transferManagementReceiver);
-        MigrateState state = shardMigrationExecutor.executeOperation(tempDbCommand);
-        assertNotNull(state);
-        assertEquals(MigrateState.SHARD_DB_CREATED, state);
-    }
-
     @Test
     void executeAllOperations() throws IOException {
         assertNotNull(databaseManager);
-//        CreateTempDbCommand tempDbCommand = new CreateTempDbCommand(transferManagementReceiver);
-//        MigrateState state = shardMigrationExecutor.executeOperation(tempDbCommand);
-//        assertNotNull(state);
-//        assertEquals(MigrateState.SHARD_DB_CREATED, state);
 
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(0);
         tableNameCountMap.put("BLOCK", -1L);
@@ -133,11 +118,5 @@ class ShardMigrationExecutorTest {
         MigrateState state = shardMigrationExecutor.executeOperation(moveDataCommand);
         assertEquals(MigrateState.FAILED, state);
 
-/*
-        DbFilesRenameCommand dbFilesRenameCommand = new DbFilesRenameCommand(
-                transferManagementReceiver, null, Collections.emptyList(), -1);
-        state = shardMigrationExecutor.executeOperation(dbFilesRenameCommand);
-        assertEquals(MigrateState.COMPLETED, state);
-*/
     }
 }

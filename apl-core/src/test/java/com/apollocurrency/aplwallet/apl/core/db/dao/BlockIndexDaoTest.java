@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

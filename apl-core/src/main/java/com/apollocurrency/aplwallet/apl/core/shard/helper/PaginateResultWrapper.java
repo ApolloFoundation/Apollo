@@ -20,22 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import java.util.Optional;
-
 /**
- * Factory for creation helper used for processing specified table
- * @param <T>
+ * Internal wrapper class is used for paginating on tables by select sql statement.
  *
  * @author yuriy.larin
  */
-public interface HelperFactory<T> {
+class PaginateResultWrapper {
 
-    /**
-     * Create specified helper class
-     *
-     * @param helperTableName table name
-     * @return table specific helper class OR NULL
-     */
-        Optional<T> createHelper(String helperTableName);
+    public Long limitValue = -1L; // previous column value will be used for next select query
+    public Boolean isFinished = Boolean.FALSE; // can be used as sign of ended result
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("PaginateResultWrapper{");
+        sb.append("limitValue=").append(limitValue);
+        sb.append(", isFinished=").append(isFinished);
+        sb.append('}');
+        return sb.toString();
+    }
 }

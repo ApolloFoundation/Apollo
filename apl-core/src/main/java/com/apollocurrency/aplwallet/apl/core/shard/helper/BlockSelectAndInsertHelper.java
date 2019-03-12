@@ -1,3 +1,22 @@
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -13,6 +32,8 @@ import org.slf4j.Logger;
 
 /**
  * Helper class for selecting Table data from one Db and inserting those data into another DB.
+ *
+ * @author yuriy.larin
  */
 public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
     private static final Logger log = getLogger(BlockSelectAndInsertHelper.class);
@@ -56,8 +77,8 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
     }
 
     @Override
-    public long generateInsertStatementsWithPaging(Connection sourceConnect, Connection targetConnect, String tableName,
-                                                   long batchCommitSize, Long snapshotBlockHeight)
+    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect, String tableName,
+                                      long batchCommitSize, Long snapshotBlockHeight)
             throws Exception {
         log.debug("Processing: '{}'", tableName);
         Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
@@ -65,32 +86,32 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
 
         String sqlToExecuteWithPaging;
 
-
         if (tableName.equalsIgnoreCase("block")) {
-            sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID <= ? limit ?"; // 1357553
+            sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID <= ? limit ?";
             log.trace(sqlToExecuteWithPaging);
         } else {
-            throw new IllegalAccessException("Unsupported table. Block is expected. Pls use another Helper class");
+            throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
         }
-        Long DbIdTargetHeight = selectLimitedRangeDbId(sourceConnect, snapshotBlockHeight);
-        if (DbIdTargetHeight == null) {
+        // select DB_ID for target HEIGHT
+        Long dbIdTargetHeight = selectLimitedRangeDbId(sourceConnect, snapshotBlockHeight);
+        if (dbIdTargetHeight == null) {
             String error = String.format("Not Found target DB_ID at snapshot Block height = %s", snapshotBlockHeight);
             log.error(error);
             throw new RuntimeException(error);
         }
         Long lowerIndex = selectLimitedRangeDbId(sourceConnect);
 
-        ResultWrapper resultWrapper = new ResultWrapper();
-        resultWrapper.limitValue = lowerIndex;
+        PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
+        paginateResultWrapper.limitValue = lowerIndex;
 
         long startSelect = System.currentTimeMillis();
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
-                ps.setLong(1, resultWrapper.limitValue);
-                ps.setLong(2, DbIdTargetHeight);
+                ps.setLong(1, paginateResultWrapper.limitValue);
+                ps.setLong(2, dbIdTargetHeight);
                 ps.setLong(3, batchCommitSize);
-            } while (handleResultSet(ps, resultWrapper, targetConnect));
+            } while (handleResultSet(ps, paginateResultWrapper, targetConnect));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -103,7 +124,7 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
         return totalRowCount;
     }
 
-    private boolean handleResultSet(PreparedStatement ps, ResultWrapper resultWrapper, Connection targetConnect)
+    private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper, Connection targetConnect)
             throws SQLException {
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -133,16 +154,16 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
                         log.trace("Precompiled insert = {}", sqlInsertString);
                     }
                 }
-                resultWrapper.limitValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                paginateResultWrapper.limitValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
                     }
                     insertedCount += preparedInsertStatement.executeUpdate();
-                    log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, resultWrapper.limitValue);
+                    log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
                 } catch (Exception e) {
-                    log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, resultWrapper.limitValue);
+                    log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
                     log.error("Failed inserting " + currentTableName, e);
                 }
                 rows++;
@@ -150,10 +171,9 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
             totalRowCount += rows;
         }
         log.trace("Total Records: selected = {}, inserted = {}, rows = {}, {}={}",
-                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, resultWrapper.limitValue);
+                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
 
         targetConnect.commit(); // commit latest records if any
-
         return rows != 0;
     }
 

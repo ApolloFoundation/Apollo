@@ -1,4 +1,8 @@
-package com.apollocurrency.aplwallet.apl.core.db;
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.shard;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,6 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit test for class used for generating shard name file by specified pattern.
+ *
+ * @author yuriy.larin
+ */
 class ShardNameHelperTest {
 
     @Test

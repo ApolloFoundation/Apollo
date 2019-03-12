@@ -25,6 +25,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
@@ -99,9 +100,12 @@ public class DatabaseManager implements ShardManagement {
             currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
             jdbi = currentTransactionalDataSource.init(new AplDbVersion());
         }
-//        openAllShards();
+//        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
     }
 
+    /**
+     * Try to open all shard database sources specified in main db. If
+     */
     private void openAllShards() {
         List<Long> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
@@ -114,9 +118,13 @@ public class DatabaseManager implements ShardManagement {
             } catch (CloneNotSupportedException e) {
                 log.error("Db props clone error", e);
             }
-            TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-            shardDb.init(new AplDbVersion());
-            connectedShardDataSourceMap.put(shardId, shardDb);
+            try {
+                TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
+                shardDb.init(new AplDbVersion());
+                connectedShardDataSourceMap.put(shardId, shardDb);
+            } catch (Exception e) {
+                log.error("Error opening shard db by name = " + shardName, e);
+            }
             log.debug("Prepared '{}' shard...", shardName);
         }
     }
@@ -130,6 +138,9 @@ public class DatabaseManager implements ShardManagement {
         return jdbi;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Long> findAllShards(TransactionalDataSource transactionalDataSource) {
         Objects.requireNonNull(transactionalDataSource, "DataSource cannot be null");
@@ -154,7 +165,7 @@ public class DatabaseManager implements ShardManagement {
     @Override
     public TransactionalDataSource createAndAddShard(Long shardId) {
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-                new ShardDataSourceCreateHelper(this, shardId).createUnitializedDataSource();
+                new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
         shardDb.init(new AplDbVersion());
         connectedShardDataSourceMap.put(shardDataSourceCreateHelper.getShardId(), shardDb);
@@ -169,9 +180,7 @@ public class DatabaseManager implements ShardManagement {
     public TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-                new ShardDataSourceCreateHelper(this, shardId).createUnitializedDataSource();
-//        shardId = shardDataSourceCreateHelper.getShardId();
-//        String shardName = shardDataSourceCreateHelper.getShardName();
+                new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
         shardId = shardDataSourceCreateHelper.getShardId();
         if (connectedShardDataSourceMap.containsKey(shardId)) {

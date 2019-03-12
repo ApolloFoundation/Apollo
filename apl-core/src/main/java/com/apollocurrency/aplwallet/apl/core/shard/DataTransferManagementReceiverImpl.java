@@ -1,3 +1,23 @@
+/*
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -16,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedSelectInsert;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
@@ -74,58 +95,14 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 return MigrateState.SHARD_DB_CREATED; // continue to next state
             }
             optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name(), shardDb);
-            return MigrateState.SHARD_DB_CREATED;
+            state = MigrateState.SHARD_DB_CREATED;
+            return state;
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             return MigrateState.FAILED;
         }
     }
 
-/*
-    @Override
-    public MigrateState createTempDb(DatabaseMetaInfo source) {
-        log.debug("Creating TEMP db file...");
-        Objects.requireNonNull(source, "source meta-info is NULL");
-        Objects.requireNonNull(source.getNewFileName(), "new DB file is NULL");
-        try {
-            // add info about state
-            TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(source.getNewFileName());
-//            databaseManager.shutdown(temporaryDb); // temp db is in Database manager
-            if (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb) != null) {
-                return MigrateState.SHARD_DB_CREATED; // continue to next state
-            }
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name(), temporaryDb);
-            return MigrateState.SHARD_DB_CREATED;
-        } catch (Exception e) {
-            log.error("Error creation Temp Db", e);
-            return MigrateState.FAILED;
-        }
-    }
-
-    @Override
-    public MigrateState addSnapshotBlock(DatabaseMetaInfo targetDataSource) {
-        log.debug("Add Snapshot block into TEMP db...");
-        Objects.requireNonNull(targetDataSource, "target Data Source meta-info is NULL");
-        Block snapshotBlock = targetDataSource.getSnapshotBlock();
-        Objects.requireNonNull(snapshotBlock, "snapshot Block is NULL");
-        TransactionalDataSource temporaryDb = databaseManager.getOrCreateShardDataSourceById(-1L); // temp db is cached
-        if (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb) != null
-                && (optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb).equalsIgnoreCase( MigrateState.SNAPSHOT_BLOCK_CREATED.name())
-                || optionDAO.get(PREVIOUS_MIGRATION_KEY, temporaryDb).equalsIgnoreCase( MigrateState.DATA_MOVING_STARTED.name()) ) ) {
-            return MigrateState.SNAPSHOT_BLOCK_CREATED; // continue to next state
-        }
-        try (Connection connection = temporaryDb.getConnection()) {
-            blockchain.saveBlock(connection, snapshotBlock);
-            log.debug("Saved Snapshot block = {}", snapshotBlock);
-            boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SNAPSHOT_BLOCK_CREATED.name(), temporaryDb);
-            log.debug("Add Snapshot block MigrateState.SNAPSHOT_BLOCK_CREATED was saved = {}", result);
-            return MigrateState.SNAPSHOT_BLOCK_CREATED;
-        } catch (Exception e) {
-            log.error("Error creation Temp Db", e);
-            return MigrateState.FAILED;
-        }
-    }
-/*
     /**
      * {@inheritDoc}
      */
@@ -137,10 +114,10 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         log.debug("Starting LINKED data transfer from [{}] tables...", tableNameCountMap.size());
         TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
         optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_STARTED.name(), targetDataSource);
-//        Block snapshootBlock = this.blockchain.getLastBlock(targetDataSource);
         if (target.getSnapshotBlock() == null) {
             log.error("Snapshot block was NOT inserted previously...");
-            return MigrateState.FAILED;
+            state = MigrateState.FAILED;
+            return state;
         }
 //        target.setSnapshotBlock(snapshootBlock);
         return this.moveData(tableNameCountMap, source, target);
@@ -187,7 +164,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName, targetDataSource);
                     Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createHelper(tableName);
                     if (sqlSelectAndInsertHelper.isPresent()) {
-                        long totalCount = sqlSelectAndInsertHelper.get().generateInsertStatementsWithPaging(
+                        long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
                                 sourceConnect, targetConnect, tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight());
                         targetDataSource.commit(false);
                         log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
@@ -199,7 +176,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             } catch (Exception e) {
                 log.error("Error processing table = '" + currentTable + "'", e);
                 targetDataSource.rollback(false);
-                return MigrateState.FAILED;
+                state = MigrateState.FAILED;
+                return state;
             } finally {
                 if (targetConnect != null) {
                     targetDataSource.commit(false);
@@ -210,7 +188,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             log.debug("Add Snapshot block MigrateState.SNAPSHOT_BLOCK_CREATED was saved = {}", result);
 
         }
-        return MigrateState.DATA_MOVING_STARTED;
+        state = MigrateState.DATA_MOVING_STARTED;
+        return state;
     }
 
     private TransactionalDataSource assignDataSourceIfMissing(DatabaseMetaInfo source, DatabaseMetaInfo target, DbVersion dbVersion) {
@@ -228,10 +207,12 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     /**
      * {@inheritDoc}
      */
+/*
     @Override
     public MigrateState renameDataFiles(DatabaseMetaInfo source, DatabaseMetaInfo target) {
         log.debug("Starting shard files renaming...");
         return MigrateState.COMPLETED;
     }
+*/
 
 }
