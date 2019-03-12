@@ -9,41 +9,92 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UpdatableMerkleTree {
     private List<Node> nodes;
-    private List<Node> leaves;
-    private int height;
-    private Node root;
-    private MessageDigest messageDigest;
+    private MessageDigest digest;
 
     public UpdatableMerkleTree(MessageDigest digest) {
-        this.messageDigest = digest;
+        this(digest, null);
+    }
+
+    public UpdatableMerkleTree(MessageDigest digest, List<byte[]> dataList) {
+        this.digest = digest;
         this.nodes = new ArrayList<>();
-        this.nodes.add(new Node(null));
-        this.leaves = new ArrayList<>();
-        this.root = new Node(null);
+        if (dataList != null && !dataList.isEmpty()) {
+            buildTreeFromScratch(dataList);
+        }
+    }
+
+    public void buildTreeFromScratch(List<byte[]> dataList) {
+        List<Node> treeNodes = dataList.stream().map(digest::digest).map(Node::new).collect(Collectors.toList());
+        if (treeNodes.size() < 3) {
+            for (Node node : treeNodes) {
+                appendLeaf(node);
+            }
+        } else {
+            List<Node> bottomNodes = buildBottomLevel(treeNodes);
+            buildTree(bottomNodes);
+            Collections.reverse(nodes);
+        }
     }
 
     public void buildTree(List<Node> treeNodes) {
         if (treeNodes.size() <= 0) throw new InvalidParameterException("Node list not expected to be empty!");
-
         if (treeNodes.size() > 1) {
             List<Node> parents = new ArrayList<>();
             for (int i = 0; i < treeNodes.size(); i += 2) {
-                Node right = (i + 1 < treeNodes.size()) ? treeNodes.get(i + 1) : null;
+                Node right = treeNodes.get(i + 1);
                 Node left = treeNodes.get(i);
-                messageDigest.update(left.getValue());
-                if (right != null) {
-                    messageDigest.update(right.getValue());
-                }
-                Node parent = new Node(messageDigest.digest());
+                digest.update(left.getValue());
+                digest.update(right.getValue());
+                Node parent = new Node(digest.digest());
                 parents.add(parent);
             }
+            for (int i = parents.size() - 1; i >= 0; i--) {
+                nodes.add(parents.get(i));
+            }
             buildTree(parents);
-        } else {
-            updateHash(0);
         }
+    }
+
+    public List<Node> buildBottomLevel(List<Node> treeNodes) {
+        int size = treeNodes.size();
+        List<Node> bottomLevelNodes = new ArrayList<>();
+        nodes = new ArrayList<>(treeNodes);
+        Collections.reverse(nodes);
+        if (!isPowerOfTwo(size)) {
+            int n = nearestPowerOfTwo(size);
+            int nodesToAdd = size - n;
+            int counter = size - nodesToAdd * 2;
+            int fc = counter;
+            for (int i = 0; i < nodesToAdd; i++) {
+                Node left = treeNodes.get(counter);
+                counter++;
+                Node right = treeNodes.get(counter);
+                counter++;
+                digest.update(left.getValue());
+                digest.update(right.getValue());
+                Node parent = new Node(digest.digest());
+                bottomLevelNodes.add(parent);
+            }
+            for (int i = bottomLevelNodes.size() - 1; i >= 0; i--) {
+                nodes.add(bottomLevelNodes.get(i));
+            }
+            bottomLevelNodes.addAll(treeNodes.subList(0, fc));
+        } else {
+            bottomLevelNodes.addAll(treeNodes);
+        }
+        return bottomLevelNodes;
+    }
+
+    public boolean isPowerOfTwo(int number) {
+        return number > 0 && ((number & (number - 1)) == 0);
+    }
+
+    public int nearestPowerOfTwo(int number) {
+        return (int) Math.pow(2, 32 - Integer.numberOfLeadingZeros(number) - 1);
     }
 
     public List<Node> getNodes() {
@@ -59,107 +110,24 @@ public class UpdatableMerkleTree {
     }
 
     public Node getRoot() {
-        return root;
-    }
-
-    public void appendNewBalancedLeaf(Node node) {
-        if (leaves.size() >= 2) {
-            if (leaves.size() == Math.pow(2, height + 1)) {
-                Node right = root.getRight();
-                Node left = root.getLeft();
-                messageDigest.update(left.getValue());
-                messageDigest.update(right.getValue());
-                Node upperNode = new Node(messageDigest.digest());
-                upperNode.setLeft(left);
-                upperNode.setRight(right);
-                upperNode.setParent(root);
-                left.setParent(upperNode);
-                right.setParent(upperNode);
-                root.setLeft(upperNode);
-                Node element = new Node(null);
-                root.setRight(element);
-                element.setParent(root);
-                int newNodes = 0;
-                while (newNodes < height) {
-                    Node additionalNode = new Node(null);
-                    element.setLeft(additionalNode);
-                    additionalNode.setParent(element);
-                    element = additionalNode;
-                    newNodes++;
-                }
-                element.setLeft(node);
-                node.setParent(element);
-                updateHash(element);
-                height++;
-            } else {
-                append(node);
-            }
+        if (nodes.isEmpty()) {
+            return null;
         } else {
-            if (leaves.size() == 1) {
-                root.setRight(node);
-            } else {
-                root.setLeft(node);
-            }
-            node.setParent(root);
-            height = 0;
-            updateHash(root);
-        }
-        leaves.add(node);
-    }
-
-    public void append(Node node) {
-        int skipCount = (int) Math.pow(2, height);
-        List<Node> nodeList = new ArrayList<>();
-        for (int i = skipCount; i < leaves.size(); i++) {
-            nodeList.add(leaves.get(i).getParent());
-        }
-        Node lastNode = node;
-        while (true) {
-            List<Node> parentList = new ArrayList<>();
-            for (int i = 0; i < nodeList.size(); i+=2) {
-                Node n = nodeList.get(i);
-                parentList.add(n.getParent());
-                if (n.getRight() == null) {
-                    n.setRight(lastNode);
-                    lastNode.setParent(n);
-                    updateHash(node.getParent());
-                    return;
-                }
-            }
-            Node n = new Node(lastNode, null);
-            lastNode.setParent(n);
-            lastNode = n;
-            nodeList = parentList;
-        }
-    }
-
-    static void createNodes(int leafs) {
-        int n = leafs + 1;
-        int in = leafs;
-        Node mandatory = new Node(null);
-        n = n / 2 + n % 2;
-        while (n != 1) {
-            n = n / 2 + n % 2;
-            in = in / 2 + in % 2;
-            if (n % 2 == 0) {
-                break;
-            }
-            if (n % 2 != 0) {
-                Node node = new Node(null);
-                mandatory.setParent(node);
-                node.setLeft(mandatory);
-                mandatory = node;
-            }
+            return nodes.get(0);
         }
     }
 
     public void appendLeaf(Node node) {
-        if (nodes.size() <= 2) {
+        int size = nodes.size();
+        if (size <= 2) {
             nodes.add(node);
-            updateHash(0);
+            if (size == 0) {
+                nodes.add(new Node(node.getValue()));
+            } else {
+                updateHash(0);
+            }
         } else {
-            int pos = nodes.size();
-            int parentIndex = getParentIndex(pos);
+            int parentIndex = getParentIndex(size);
             Node nodeToReplace = nodes.get(parentIndex);
             Node emptyNode = new Node(null);
             nodes.set(parentIndex, emptyNode);
@@ -181,9 +149,9 @@ public class UpdatableMerkleTree {
                 node.setValue(left.getValue());
             } else {
                 Node right = nodes.get(rightChildIndex);
-                messageDigest.update(left.getValue());
-                messageDigest.update(right.getValue());
-                byte[] hash = messageDigest.digest();
+                digest.update(left.getValue());
+                digest.update(right.getValue());
+                byte[] hash = digest.digest();
                 node.setValue(hash);
             }
         }
@@ -191,43 +159,6 @@ public class UpdatableMerkleTree {
         if (nodeIndex != 0) {
             updateHash(parent);
         }
-    }
-    // assume that all childs were updated
-    // IMPORTANT: recursive update
-    private void updateHash(Node node) {
-        if (node.getLeft() != null) {
-            Node left = node.getLeft();
-            if (node.getRight() == null) {
-                node.setValue(left.getValue());
-            } else {
-                Node right = node.getRight();
-                messageDigest.update(left.getValue());
-                messageDigest.update(right.getValue());
-                byte[] hash = messageDigest.digest();
-                node.setValue(hash);
-            }
-        }
-        Node parent = node.getParent();
-        if (parent != null) {
-            updateHash(parent);
-        }
-    }
-
-    private boolean invalidChild(int leafs, int nodeIndex, int rightChildIndex) {
-        int s = nodes.size();
-        int n = leafs;
-        int total = leafs;
-        while (n != 1) {
-            n = n / 2 + n % 2;
-            total += n;
-            if (rightChildIndex >= s - total) {
-                if (n % 2 != 0 && n != 1) {
-                    return true;
-                }
-            }
-
-        }
-        return false;
     }
 
 
@@ -242,13 +173,6 @@ public class UpdatableMerkleTree {
     public int getRightChildIndex(int parentIndex) {
         return parentIndex * 2 + 2;
     }
-    public int getLeftChildIndex(int parentIndex, int drift) {
-        return parentIndex * 2 + 1 - drift;
-    }
-
-    public int getRightChildIndex(int parentIndex, int drift) {
-        return parentIndex * 2 + 2 - drift;
-    }
 
     public void appendLeaves(Node[] nodes) {
         for (Node node : nodes) {
@@ -257,12 +181,12 @@ public class UpdatableMerkleTree {
     }
 
     public void appendLeaf(byte[] value) {
-        this.appendLeaf(new Node(messageDigest.digest(value)));
+        this.appendLeaf(new Node(digest.digest(value)));
     }
 
     public void appendLeaves(byte[][] values) {
         for (byte[] data : values) {
-            appendLeaf(new Node(messageDigest.digest(data)));
+            appendLeaf(new Node(digest.digest(data)));
         }
     }
 
@@ -270,18 +194,6 @@ public class UpdatableMerkleTree {
         for (byte[] hash : hashes) {
             appendLeaf(new Node(hash));
         }
-    }
-
-    public int getDrift(int leafs) {
-        int n = leafs;
-        int drift = 0;
-        while (n != 1) {
-            n = n / 2 + n % 2;
-            if (n != 1 && n % 2 != 0) {
-                drift++;
-            }
-        }
-        return drift;
     }
 
 //    public MerkleHash addTree(MerkleTree tree) {

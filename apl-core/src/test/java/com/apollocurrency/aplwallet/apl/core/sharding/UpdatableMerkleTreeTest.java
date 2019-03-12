@@ -7,15 +7,14 @@ package com.apollocurrency.aplwallet.apl.core.sharding;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 public class UpdatableMerkleTreeTest {
     static final String data1 = "123";
@@ -56,7 +55,7 @@ public class UpdatableMerkleTreeTest {
     static final Node leaf9 = new Node(hash9);
 
     private byte[] getHash(byte[] hash1, byte[] hash2) {
-        MessageDigest md = Crypto.sha256();
+        MessageDigest md = sha256();
         md.update(hash1);
         md.update(hash2);
         return md.digest();
@@ -64,7 +63,7 @@ public class UpdatableMerkleTreeTest {
 
     @Test
     public void testCreateMerkleTreeWithTwoLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         List<Node> nodes = tree.getNodes();
@@ -75,14 +74,13 @@ public class UpdatableMerkleTreeTest {
 
     @Test
     public void testCreateEmptyTree() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         List<Node> nodes = tree.getNodes();
-        Assertions.assertEquals(1, nodes.size());
-        Assertions.assertEquals(Collections.singletonList(new Node(null)), nodes);
+        Assertions.assertEquals(0, nodes.size());
     }
     @Test
     public void testCreateTreeWithOneLeaf() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         List<Node> nodes = tree.getNodes();
         Assertions.assertEquals(2, nodes.size());
@@ -90,7 +88,7 @@ public class UpdatableMerkleTreeTest {
     }
     @Test
     public void testCreateTreeWithThreeLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -103,7 +101,7 @@ public class UpdatableMerkleTreeTest {
 
     @Test
     public void testCreateTreeWithFourLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -117,7 +115,7 @@ public class UpdatableMerkleTreeTest {
     }
     @Test
     public void testCreateTreeWithFiveLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -133,7 +131,7 @@ public class UpdatableMerkleTreeTest {
     }
     @Test
     public void testCreateTreeWithSixLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -151,7 +149,7 @@ public class UpdatableMerkleTreeTest {
     }
     @Test
     public void testCreateTreeWithSevenLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -172,7 +170,7 @@ public class UpdatableMerkleTreeTest {
     }
     @Test
     public void testCreateTreeWithEightLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -196,7 +194,7 @@ public class UpdatableMerkleTreeTest {
     }
     @Test
     public void testCreateTreeWithNineLeafs() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256());
         tree.appendLeaf(data1.getBytes());
         tree.appendLeaf(data2.getBytes());
         tree.appendLeaf(data3.getBytes());
@@ -222,195 +220,152 @@ public class UpdatableMerkleTreeTest {
                 nodes);
     }
 
+
     @Test
-    @Disabled
-    public void testTreePerformance() {
+    public void testBuildEmptyTree() {
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), null);
+        Assertions.assertEquals(0, tree.getNodes().size());
+        tree = new UpdatableMerkleTree(sha256(), Collections.emptyList());
+        Assertions.assertEquals(0, tree.getNodes().size());
+    }
+
+    @Test
+    public void testBuildTreeFromOneNode() {
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), Collections.singletonList(data1.getBytes()));
+        List<Node> nodes = tree.getNodes();
+        Assertions.assertEquals(Arrays.asList(leaf1, leaf1), nodes);
+    }
+    @Test
+    public void testBuildTreeFromTwoNodes() {
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), Arrays.asList(data1.getBytes(), data2.getBytes()));
+        List<Node> nodes = tree.getNodes();
+        Node root = new Node(getHash(hash1, hash2));
+        Assertions.assertEquals(Arrays.asList(root, leaf1, leaf2), nodes);
+    }
+    @Test
+    public void testBuildTreeFromThreeNodes() {
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes()));
+        List<Node> nodes = tree.getNodes();
+        Node left = new Node(getHash(hash2, hash3));
+        Node root = new Node(getHash(left.getValue(), hash1));
+        Assertions.assertEquals(Arrays.asList(root, left, leaf1, leaf2, leaf3), nodes);
+    }
+    @Test
+    public void testBuildTreeFromFourNodes() {
+        List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),
+                data4.getBytes());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), dataList);
+        List<Node> nodes = tree.getNodes();
+        Node left = new Node(getHash(hash1, hash2));
+        Node right = new Node(getHash(hash3, hash4));
+        Node root = new Node(getHash(left.getValue(), right.getValue()));
+        Assertions.assertEquals(Arrays.asList(root, left, right, leaf1, leaf2, leaf3, leaf4), nodes);
+    }
+    @Test
+    public void testBuildTreeFromFiveNodes() {
+        List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),
+                data4.getBytes(), data5.getBytes());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), dataList);
+        List<Node> nodes = tree.getNodes();
+        Node leftLeft = new Node(getHash(hash4, hash5));
+        Node left = new Node(getHash(leftLeft.getValue(), hash1));
+        Node right = new Node(getHash(hash2, hash3));
+        Node root = new Node(getHash(left.getValue(), right.getValue()));
+        Assertions.assertEquals(Arrays.asList(root, left, right, leftLeft, leaf1, leaf2, leaf3, leaf4, leaf5), nodes);
+    }
+    @Test
+    public void testBuildTreeFromSixNodes() {
+        List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),
+                data4.getBytes(), data5.getBytes(), data6.getBytes());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), dataList);
+        List<Node> nodes = tree.getNodes();
+        Node leftLeft = new Node(getHash(hash3, hash4));
+        Node leftRight = new Node(getHash(hash5, hash6));
+        Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
+        Node right = new Node(getHash(hash1, hash2));
+        Node root = new Node(getHash(left.getValue(), right.getValue()));
+        Assertions.assertEquals(Arrays.asList(root, left, right, leftLeft, leftRight, leaf1, leaf2, leaf3, leaf4, leaf5, leaf6), nodes);
+    }
+    @Test
+    public void testBuildTreeFromSevenNodes() {
+        List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),
+                data4.getBytes(), data5.getBytes(), data6.getBytes(), data7.getBytes());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), dataList);
+        List<Node> nodes = tree.getNodes();
+        Node leftLeft = new Node(getHash(hash2, hash3));
+        Node leftRight = new Node(getHash(hash4, hash5));
+        Node rightLeft = new Node(getHash(hash6, hash7));
+        Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
+        Node right = new Node(getHash(rightLeft.getValue(), hash1));
+        Node root = new Node(getHash(left.getValue(), right.getValue()));
+        Assertions.assertEquals(Arrays.asList(root, left, right, leftLeft, leftRight, rightLeft, leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7),
+                nodes);
+    }
+    @Test
+    public void testBuildTreeFromEightNodes() {
+        List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),
+                data4.getBytes(), data5.getBytes(), data6.getBytes(), data7.getBytes(), data8.getBytes());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), dataList);
+        List<Node> nodes = tree.getNodes();
+        Node leftLeft = new Node(getHash(hash1, hash2));
+        Node leftRight = new Node(getHash(hash3, hash4));
+        Node rightLeft = new Node(getHash(hash5, hash6));
+        Node rightRight = new Node(getHash(hash7, hash8));
+        Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
+        Node right = new Node(getHash(rightLeft.getValue(), rightRight.getValue()));
+        Node root = new Node(getHash(left.getValue(), right.getValue()));
+        Assertions.assertEquals(Arrays.asList(root, left, right, leftLeft, leftRight, rightLeft, rightRight, leaf1, leaf2, leaf3, leaf4, leaf5,
+                leaf6, leaf7, leaf8),
+                nodes);
+    }
+    @Test
+    public void testBuildTreeFromNineNodes() {
+        List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(),
+                data4.getBytes(), data5.getBytes(), data6.getBytes(), data7.getBytes(), data8.getBytes(), data9.getBytes());
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), dataList);
+        List<Node> nodes = tree.getNodes();
+        Node leftLeftLeft = new Node(getHash(hash8, hash9));
+        Node leftLeft = new Node(getHash(leftLeftLeft.getValue(), hash1));
+        Node leftRight = new Node(getHash(hash2, hash3));
+        Node rightLeft = new Node(getHash(hash4, hash5));
+        Node rightRight = new Node(getHash(hash6, hash7));
+        Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
+        Node right = new Node(getHash(rightLeft.getValue(), rightRight.getValue()));
+        Node root = new Node(getHash(left.getValue(), right.getValue()));
+        Assertions.assertEquals(Arrays.asList(root, left, right, leftLeft, leftRight, rightLeft, rightRight, leftLeftLeft, leaf1, leaf2, leaf3, leaf4, leaf5,
+                leaf6, leaf7, leaf8, leaf9),
+                nodes);
+    }
+
+    @Test
+    public void testTreeAppendPerformance() {
         int counter = 1_000_000;
         long start = System.currentTimeMillis();
         UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        byte[] bytes = new byte[256];
-        Random random = new Random();
+        byte[] bytes = getHash(hash1, hash2);
         while (counter-- > 0) {
             if (counter % 1000 == 0) {
                 System.out.println(counter);
             }
-            random.nextBytes(bytes);
-            tree.appendNewBalancedLeaf(new Node(bytes));
+            tree.appendLeaf(new Node(bytes));
         }
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000);
-        System.out.println(tree.getNodes().size());
-    }
-
-    @Test
-    public void testBalancedMerkleTreeWithOneLeaf() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        Node root = new Node(hash1);
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
+        System.out.println(tree.getRoot());
     }
     @Test
-    public void testBalancedMerkleTreeWithTwoLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        Node root = new Node(getHash(hash1, hash2));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
+    public void testTreeBuildPerformance() {
+        int counter = 1_000_000;
+        long start = System.currentTimeMillis();
+        byte[] bytes = getHash(hash1, hash2);
+        List<byte[]> bytesToAdd = new ArrayList<>();
+        while (counter-- > 0) {
+            bytesToAdd.add(bytes);
+        }
+        UpdatableMerkleTree tree = new UpdatableMerkleTree(sha256(), bytesToAdd);
+        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000);
+        System.out.println(tree.getRoot());
     }
-    @Test
-    public void testBalancedMerkleTreeWithThreeLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        Node root = new Node(getHash(getHash(hash1, hash2), hash3));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWithFourLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        Node root = new Node(getHash(getHash(hash1, hash2), getHash(hash3, hash4)));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWithFiveLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        Node root = new Node(getHash(getHash(getHash(hash1, hash2), getHash(hash3, hash4)), hash5));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWithSixLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        tree.appendNewBalancedLeaf(new Node(hash6));
-        Node root = new Node(getHash(getHash(getHash(hash1, hash2), getHash(hash3, hash4)), getHash(hash5, hash6)));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWithSevenLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        tree.appendNewBalancedLeaf(new Node(hash6));
-        tree.appendNewBalancedLeaf(new Node(hash7));
-        Node root = new Node(getHash(getHash(getHash(hash1, hash2), getHash(hash3, hash4)), getHash(getHash(hash5, hash6), hash7)));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWithEightLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        tree.appendNewBalancedLeaf(new Node(hash6));
-        tree.appendNewBalancedLeaf(new Node(hash7));
-        tree.appendNewBalancedLeaf(new Node(hash8));
-        Node root = new Node(getHash(getHash(getHash(hash1, hash2), getHash(hash3, hash4)), getHash(getHash(hash5, hash6), getHash(hash7, hash8))));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWithNineLeaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        tree.appendNewBalancedLeaf(new Node(hash6));
-        tree.appendNewBalancedLeaf(new Node(hash7));
-        tree.appendNewBalancedLeaf(new Node(hash8));
-        tree.appendNewBalancedLeaf(new Node(hash9));
-        Node root = new Node(getHash(getHash(getHash(getHash(hash1, hash2), getHash(hash3, hash4)), getHash(getHash(hash5, hash6),
-                getHash(hash7, hash8))), hash9));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-
-    @Test
-    public void testBalancedMerkleTree() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        List<Node> nodes = tree.getNodes();
-        Node leftLeft = new Node(getHash(hash1, hash2));
-        Node leftRight = new Node(getHash(hash3, hash4));
-        Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
-        Node rightLeft = new Node(hash5);
-        Node right = new Node(hash5);
-        Node root = new Node(getHash(left.getValue(), right.getValue()));
-
-        byte[] value = tree.getRoot().getValue();
-        Assertions.assertArrayEquals(root.getValue(), value);
-    }
-    @Test
-    public void testBalancedMerkleTreeWith9Leaves() {
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(Crypto.sha256());
-        tree.appendNewBalancedLeaf(new Node(hash1));
-        tree.appendNewBalancedLeaf(new Node(hash2));
-        tree.appendNewBalancedLeaf(new Node(hash3));
-        tree.appendNewBalancedLeaf(new Node(hash4));
-        tree.appendNewBalancedLeaf(new Node(hash5));
-        tree.appendNewBalancedLeaf(new Node(hash6));
-        tree.appendNewBalancedLeaf(new Node(hash7));
-        tree.appendNewBalancedLeaf(new Node(hash8));
-        tree.appendNewBalancedLeaf(new Node(hash9));
-        List<Node> nodes = tree.getNodes();
-        Node leftLeftLeft = new Node(getHash(hash1, hash2));
-        Node leftLeftRight = new Node(getHash(hash3, hash4));
-        Node leftRightLeft = new Node(getHash(hash5, hash6));
-        Node leftRightRight = new Node(getHash(hash7, hash8));
-        Node leftLeft = new Node(getHash(leftLeftLeft.getValue(), leftLeftRight.getValue()));
-        Node leftRight = new Node(getHash(leftRightLeft.getValue(), leftRightRight.getValue()));
-        Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
-        Node rightLeftLeft = new Node(hash9);
-        Node rightLeft = new Node(hash9);
-        Node right = new Node(hash9);
-        Node root = new Node(getHash(left.getValue(), right.getValue()));
-
-        Assertions.assertEquals(20, nodes.size());
-        Assertions.assertEquals(Arrays.asList(root, left, right, leftLeft, leftRight, rightLeft, leftLeftLeft, leftLeftRight, leftRightLeft,
-                leftRightRight, rightLeftLeft,
-                leaf1, leaf2, leaf3,
-                leaf4, leaf5, leaf6, leaf7, leaf8, leaf9),
-                nodes);
-    }
+    
 
 
     private List<Node> fill(int i, Node node) {
@@ -419,5 +374,14 @@ public class UpdatableMerkleTreeTest {
             nodes.add(node);
         }
         return nodes;
+    }
+
+    private MessageDigest sha256() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 }
