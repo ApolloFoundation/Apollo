@@ -193,9 +193,20 @@ public class TestBase {
     }
 
 
+    public CreateTransactionResponse  deleteAccountProperty(String pass,String property) throws IOException {
+        addParameters(RequestType.requestType,RequestType.deleteAccountProperty);
+        addParameters(Parameters.property, property);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.secretPhrase, pass);
+        addParameters(Parameters.feeATM, 100000000);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+    }
+
     public GetPropertyResponse  getAccountProperty(String accountID) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAccountProperties);
-        addParameters(Parameters.recipient, testConfiguration.getTestUser());
+        addParameters(Parameters.recipient, accountID);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), GetPropertyResponse.class);
@@ -222,6 +233,35 @@ public class TestBase {
         return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
     }
 
+
+     public Account2FA deleteKey(String accountID,String pass) throws IOException {
+         addParameters(RequestType.requestType,RequestType.deleteKey);
+         addParameters(Parameters.account, accountID);
+         addParameters(Parameters.passphrase,pass);
+         Response response = httpCallPost();
+         assertEquals(200, response.code());
+         return   mapper.readValue(response.body().string().toString(), Account2FA.class);
+
+     }
+
+    public AccountDTO enable2FA(String accountID,String pass) throws IOException {
+        addParameters(RequestType.requestType,RequestType.enable2FA);
+        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.passphrase,pass);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+    }
+
+
+    public String[] getPeers() throws IOException {
+        addParameters(RequestType.requestType, RequestType.getPeers);
+        addParameters(Parameters.active, true);
+        Response response = httpCallGet();
+        assertEquals(200, response.code());
+        Peers peers = mapper.readValue(response.body().string().toString(), Peers.class);
+        return peers.peers;
+    }
 
 
 

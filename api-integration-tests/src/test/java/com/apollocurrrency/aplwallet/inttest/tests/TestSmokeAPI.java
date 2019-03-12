@@ -4,6 +4,7 @@ import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 //@RunWith(JUnitPlatform.class)
-public class TestSmokeAPI {
+public class TestSmokeAPI extends TestBase {
 
     private TestConfiguration testConfiguration;
     private  static ObjectMapper mapper = new ObjectMapper(); 
@@ -41,7 +42,7 @@ public class TestSmokeAPI {
                 .withDelay(30, TimeUnit.SECONDS);
 
         //Verify count of peers
-        String [] peers = getPeersCount();
+        String [] peers = getPeers();
         assertTrue("Peer counts < 3",  peers.length >= 3);
 
         //Verify transaction in block
@@ -72,14 +73,6 @@ public class TestSmokeAPI {
     }
 
 
-    private String[] getPeersCount() throws IOException {
-        addParameters(RequestType.requestType, RequestType.getPeers);
-        addParameters(Parameters.active, true);
-        Response response = httpCallGet();
-        assertEquals(200, response.code());
-        Peers peers = mapper.readValue(response.body().string().toString(), Peers.class);
-        return peers.peers;
-    }
 
 
     private CreateTransactionResponse sendMoney(String recipient, int moneyCount, int fee) throws IOException {

@@ -1,10 +1,15 @@
 {
   "host":"localhost",
   "port":"6876",
+
   "publicKey":"02a16b0e1e01a451ba2904ccc0c6d4ed88e3d8e2294b2099580d801eecb34e1c",
   "user":"APL-AKU5-JP6B-Y42V-H5X8U",
   "pass":"111",
+
   "userVault":"APL-6EZW-D59H-AL4B-BVZXN",
   "passVault":"lowering haler nixes tiffed vales rowdy unsays direst cottoned found factored",
-  "secretKey":"02f1f501296c4ee900aa8e1618468bb1a838e67138483d7477cf5ce309d2a4b3"
+  "secretKey":"02f1f501296c4ee900aa8e1618468bb1a838e67138483d7477cf5ce309d2a4b3",
+
+  "adminPassword":"1"
+
 }

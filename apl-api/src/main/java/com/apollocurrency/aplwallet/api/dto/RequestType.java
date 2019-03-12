@@ -1,7 +1,10 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 public enum RequestType {
+    enable2FA,
+    deleteKey,
     generateAccount,
+    deleteAccountProperty,
     requestType,
     getTransaction,
     getPrivateBlockchainTransactions,

@@ -16,5 +16,7 @@ public class AccountDTO {
     public long numberOfBlocks;
     public long requestProcessingTime;
     public String name;
+    public String secret;
+
 }
 

@@ -96,7 +96,7 @@ public class TestAccounts extends TestBase {
         SearchAccountsResponse searchAccountsResponse = searchAccounts("Test1");
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.accounts, "Response accountDTOS - null");
-        assert(searchAccountsResponse.accounts.length >0);
+        assertTrue(searchAccountsResponse.accounts.length >0,"Account not found");
     }
 
     @Test
@@ -240,6 +240,21 @@ public class TestAccounts extends TestBase {
         assertTrue(propertyResponse.properties.length >0);
     }
 
+    @DisplayName("Delete Account Property")
+    @Test
+    public void  deleteAccountProperty() throws IOException { ;
+        CreateTransactionResponse transaction = deleteAccountProperty(testConfiguration.getSecretPhrase(),getAccountProperty(testConfiguration.getTestUser()).properties[0].property);
+        assertNotNull(transaction.transactionJSON.senderPublicKey);
+        assertNotNull(transaction.transactionJSON.signature);
+        assertNotNull(transaction.transactionJSON.fullHash);
+        assertNotNull(transaction.transactionJSON.amountATM);
+        assertNotNull(transaction.transactionJSON.ecBlockId);
+        assertNotNull(transaction.transactionJSON.senderRS);
+        assertNotNull(transaction.transactionJSON.transaction);
+        assertNotNull(transaction.transactionJSON.feeATM);
+
+    }
+
     @DisplayName("Generate Account")
     @Test
     public void  generateAccount() throws IOException { ;
@@ -249,6 +264,26 @@ public class TestAccounts extends TestBase {
         assertNotNull(accountDTO.publicKey);
         assertNotNull(accountDTO.account);
     }
+
+    @DisplayName("Delete Secret Key")
+    @Test
+    public void  deleteKey() throws IOException { ;
+        AccountDTO accountDTO = generateNewAccount();
+        Account2FA deletedAccount = deleteKey(accountDTO.accountRS,accountDTO.passphrase);
+        assertEquals(Status2FA.OK,deletedAccount.getStatus());
+    }
+
+    @DisplayName("Enable 2FA")
+    @Test
+    public void  enable2FA() throws IOException { ;
+        AccountDTO accountDTO = generateNewAccount();
+        accountDTO = enable2FA(accountDTO.accountRS,accountDTO.passphrase);
+        assertNotNull(accountDTO.secret);
+    }
+
+
+
+
 
 
 }
