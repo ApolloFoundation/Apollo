@@ -30,8 +30,10 @@ for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B %APL_LIB%\apl-tools*') do set 
 if exist %APL_TOP%\Apollo.jar (
 	set APL_MAIN=%APL_TOP%\apl-exec-%APL_VER%.jar
 	set APL_LIB=%APL_TOP%\lib
+	set APL_GUI_MAIN=%APL_TOP%\lib\apl-exec\apl-desktop-%APL_VER%.jar
 ) else (
         set APL_MAIN=%APL_TOP%\apl-exec\target\Apollo.jar
 	set APL_LIB=%APL_TOP%\apl-exec\target\lib
+	set APL_GUI_MAIN=%APL_TOP%\lib\apl-exec\apl-desktop-%APL_VER%.jar
 )
 set APL_TOOLS=%APL_LIB%\apl-tools-%APL_VER%.jar
