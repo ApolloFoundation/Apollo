@@ -26,17 +26,31 @@ if  %java_ver% LSS %MIN_JAVA% (
    @echo Java version is OK.	
 ) 
 
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B %APL_LIB%\apl-tools*') do set "APL_VER=%%k.%%l.%%m"
-@echo Apollo Version:
-@echo %APL_VER%
+
 @REM are we in dev env or in production
-if exist %APL_TOP%\Apollo.jar (
-        set APL_MAIN=%APL_TOP%\apl-exec\Apollo.jar
+set IN_DEV=true 
+if exist %APL_TOP%\apl-exec-*.jar (
 	set APL_LIB=%APL_TOP%\lib
-	set APL_GUI_MAIN=%APL_TOP%\lib\apl-exec\apl-desktop-%APL_VER%.jar
+	set IN_DEV=false
+) else (
+	set APL_LIB=%APL_TOP%\apl-exec\target\lib
+)
+
+
+@REM calculate version by parsing path
+for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B %APL_LIB%\apl-tools*') do set "APL_VER=%%k.%%l.%%m"
+
+set APL_GUI_MAIN=%APL_LIB%\apl-desktop-%APL_VER%.jar
+
+if %IN_DEV% == true (
+	ECHO "in dev TRue"
+        set APL_MAIN=%APL_TOP%\apl-exec\target\apl-exec-%APL_VER%.jar
 ) else (
 	set APL_MAIN=%APL_TOP%\apl-exec-%APL_VER%.jar
-	set APL_LIB=%APL_TOP%\apl-exec\target\lib
-	set APL_GUI_MAIN=%APL_TOP%\lib\apl-exec\apl-desktop-%APL_VER%.jar
 )
+
+@echo Apollo Version:
+@echo %APL_VER%
+
+
 set APL_TOOLS=%APL_LIB%\apl-tools-%APL_VER%.jar
