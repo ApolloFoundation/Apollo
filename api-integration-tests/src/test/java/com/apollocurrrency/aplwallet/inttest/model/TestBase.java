@@ -57,6 +57,7 @@ public class TestBase {
         addParameters(Parameters.account, account);
         Response response = httpCallGet();
         assertEquals(200, response.code());
+        //System.out.println(response.body().string());
         return   mapper.readValue(response.body().string().toString(), AccountBlockIdsResponse.class);
     }
 
@@ -171,8 +172,8 @@ public class TestBase {
         addParameters(Parameters.description, accountDescription);
         addParameters(Parameters.secretPhrase, accountPass);
         addParameters(Parameters.recipient, accountID);
-        addParameters(Parameters.deadline, 60);
-        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.feeATM, 300000000);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
@@ -199,5 +200,30 @@ public class TestBase {
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), GetPropertyResponse.class);
     }
+
+
+    public CreateTransactionResponse sendMoneyPrivate(String recipient, int moneyAmount) throws IOException {
+        addParameters(RequestType.requestType,RequestType.sendMoneyPrivate);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.feeATM, "500000000");
+        addParameters(Parameters.deadline, 1440);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+    }
+
+    public AccountDTO generateNewAccount() throws IOException {
+        addParameters(RequestType.requestType,RequestType.generateAccount);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        System.out.println(response.body());
+        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+    }
+
+
+
+
 
 }

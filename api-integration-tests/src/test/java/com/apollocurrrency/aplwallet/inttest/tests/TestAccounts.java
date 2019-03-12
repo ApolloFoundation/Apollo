@@ -6,7 +6,6 @@ import com.apollocurrency.aplwallet.api.response.*;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
-import org.junit.Ignore;
 import org.junit.jupiter.api.*;
 
 
@@ -16,8 +15,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 //@RunWith(JUnitPlatform.class)
@@ -33,7 +30,6 @@ public class TestAccounts extends TestBase {
     }
 
     @Test
-  //  @Disabled("Check fields on GetAccount model and fbc.core.model.Account")
     @DisplayName("Verify GetAccount endpoint")
     public void testAccount() throws IOException {
         GetAccountResponse account = getAccount(testConfiguration.getTestUser());
@@ -86,7 +82,6 @@ public class TestAccounts extends TestBase {
 
 
     @Test
-    @Ignore("Need Set Account Properties")
     @DisplayName("Get Account Properties")
     public void testAccountProperties() throws IOException {
         AccountPropertiesResponse  accountPropertiesResponse = getAccountProperties(testConfiguration.getTestUser());
@@ -100,8 +95,8 @@ public class TestAccounts extends TestBase {
         //Before set Account info Test1
         SearchAccountsResponse searchAccountsResponse = searchAccounts("Test1");
         assertNotNull(searchAccountsResponse, "Response - null");
-        assertNotNull(searchAccountsResponse.accountDTOS, "Response accountDTOS - null");
-        assertTrue(searchAccountsResponse.accountDTOS.length >0);
+        assertNotNull(searchAccountsResponse.accounts, "Response accountDTOS - null");
+        assert(searchAccountsResponse.accounts.length >0);
     }
 
     @Test
@@ -169,7 +164,6 @@ public class TestAccounts extends TestBase {
 
     @Test
     @DisplayName("Get Account Blockchain Transactions")
-    @Disabled("\"attachment\":{\"version.OrdinaryPayment\":0}")
     public void testGetAccountTransaction()throws IOException {
         BlockchainTransactionsResponse blockchainTransactionsResponse =  getAccountTransaction(testConfiguration.getTestUser());
         assertTrue(blockchainTransactionsResponse.transactions.size()>0);
@@ -191,7 +185,22 @@ public class TestAccounts extends TestBase {
     }
 
 
-    @DisplayName("Set Account Info")
+    @DisplayName("Send Money Private")
+    @Test
+    public void testSendMoneyPrivate() throws IOException {
+        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate("APL-KL45-8GRF-BKPM-E58NH",100);
+        assertNotNull(sendMoneyResponse.transactionJSON.senderPublicKey);
+        assertNotNull(sendMoneyResponse.transactionJSON.signature);
+        assertNotNull(sendMoneyResponse.transactionJSON.fullHash);
+        assertNotNull(sendMoneyResponse.transactionJSON.amountATM);
+        assertNotNull(sendMoneyResponse.transactionJSON.ecBlockId);
+        assertNotNull(sendMoneyResponse.transactionJSON.senderRS);
+        assertNotNull(sendMoneyResponse.transactionJSON.transaction);
+        assertNotNull(sendMoneyResponse.transactionJSON.feeATM);
+    }
+
+
+    @DisplayName("Set Account info")
     @Test
     public void setAccountInfo() throws IOException {
         String accountName = "Account "+new Date().getTime();
@@ -208,7 +217,7 @@ public class TestAccounts extends TestBase {
     }
 
 
-    @DisplayName("Set Account Info")
+    @DisplayName("Set Account property")
     @Test
     public void setAccountProperty() throws IOException {
         String property = "Property "+new Date().getTime();
@@ -225,10 +234,20 @@ public class TestAccounts extends TestBase {
 
 
     @DisplayName("Get Account Property")
+    @Test
     public void  getAccountProperty() throws IOException { ;
         GetPropertyResponse propertyResponse = getAccountProperty(testConfiguration.getTestUser());
-       // assertThat(propertyResponse);
-        //assertEquals("country", getPropertyResponse.getProperties()[0].getProperty());
+        assertTrue(propertyResponse.properties.length >0);
+    }
+
+    @DisplayName("Generate Account")
+    @Test
+    public void  generateAccount() throws IOException { ;
+        AccountDTO accountDTO = generateNewAccount();
+        assertNotNull(accountDTO.accountRS);
+        assertNotNull(accountDTO.passphrase);
+        assertNotNull(accountDTO.publicKey);
+        assertNotNull(accountDTO.account);
     }
 
 
