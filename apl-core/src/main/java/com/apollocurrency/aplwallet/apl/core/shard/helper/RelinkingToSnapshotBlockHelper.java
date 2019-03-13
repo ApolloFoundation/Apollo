@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -83,22 +84,7 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
         Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
         currentTableName = tableName;
 
-//        String sqlUpdateLinkedTable = "UPDATE " + currentTableName + " set HEIGHT = ?";
-//        log.trace(sqlUpdateLinkedTable);
         long startSelect = System.currentTimeMillis();
-
-/*
-        try (PreparedStatement ps = sourceConnect.prepareStatement(sqlUpdateLinkedTable) ) {
-            ps.setInt(1, snapshotBlockHeight.intValue());
-            totalRowCount += ps.executeUpdate();
-        } catch (Exception e) {
-            log.error("Processing failed, Table " + currentTableName, e);
-            throw e;
-        }
-        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-        return totalRowCount;
-*/
-
         String sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID >= ? AND DB_ID <= ? limit ?";
         log.trace(sqlToExecuteWithPaging);
         // select MAX DB_ID
@@ -110,6 +96,13 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
         }
         // select MIN DB_ID
         Long lowerIndex = selectLowerDbId(sourceConnect);
+
+        // turn OFF HEIGHT constraint for specified table
+        if (tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
+            issueConstraintUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
+        } else if (tableName.equalsIgnoreCase("PUBLIC_KEY")) {
+            issueConstraintUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
+        }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.limitValue = lowerIndex;
@@ -125,6 +118,16 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
             log.error("Processing failed, Table " + currentTableName, e);
         }
         log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+
+        // turn ON HEIGHT constraint for specified table
+        if (tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
+            issueConstraintUpdateQuery(sourceConnect,
+                    "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_C11 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
+        } else if (tableName.equalsIgnoreCase("PUBLIC_KEY")) {
+            issueConstraintUpdateQuery(sourceConnect,
+                    "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
+        }
+
         return totalRowCount;
     }
 
@@ -136,7 +139,7 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
         try {
 //            insertedCount += preparedInsertStatement.executeUpdate();
             rows = ps.executeUpdate();
-            log.debug("Updating '{}' in {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+            log.debug("Updated rows = '{}' in '{}' : column/value {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
         } catch (Exception e) {
             log.error("Failed Updating '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
             log.error("Failed Updating " + currentTableName, e);
@@ -183,6 +186,16 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
             throw e;
         }
         return bottomDbIdValue;
+    }
+
+    private void issueConstraintUpdateQuery(Connection sourceConnect, String sqlToExecute) throws SQLException {
+        try (Statement stmt = sourceConnect.createStatement()) {
+                stmt.executeUpdate(sqlToExecute);
+                log.trace("SUCCESS, on constraint SQL = {}", sqlToExecute);
+        } catch (Exception e) {
+            log.error("Error on 'constraint related' SQL = " + currentTableName, e);
+            throw e;
+        }
     }
 
 }

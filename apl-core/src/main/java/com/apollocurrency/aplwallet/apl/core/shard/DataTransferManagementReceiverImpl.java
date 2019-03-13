@@ -188,7 +188,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(target.getSnapshotBlockHeight(), "target Snapshot Block height is NULL");
         long startAllTables = System.currentTimeMillis();
         log.debug("Starting LINKED data update from [{}] tables...", tableNameCountMap.size());
-//        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
+        assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
 //        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name(), targetDataSource);
         if (target.getSnapshotBlockHeight() == null) {
             log.error("Snapshot block HEIGHT was not specified...");
