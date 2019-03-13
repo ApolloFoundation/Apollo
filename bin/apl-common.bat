@@ -6,7 +6,7 @@ set apl_bin=%~dp0
 call :getTop %apl_bin%
 goto cont1
 :getTop
-for %%i in ("%~dp1..") do set "APL_TOP=%%~fi"
+for %%i in ("%~dp0..") do set "APL_TOP=%%~fi"
 :cont1
 
 if exist %APL_TOP%\jre ( 
@@ -27,9 +27,9 @@ if  %java_ver% LSS %MIN_JAVA% (
 ) 
 
 
+
 @REM are we in dev env or in production
-set IN_DEV=true 
-if exist %APL_TOP%\apl-exec-*.jar (
+if exist "%APL_TOP%\apl-exec-*.jar" (
 	set APL_LIB=%APL_TOP%\lib
 	set IN_DEV=false
 ) else (
@@ -37,8 +37,9 @@ if exist %APL_TOP%\apl-exec-*.jar (
 )
 
 
+@echo APL_LIB = %APL_LIB%
 @REM calculate version by parsing path
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B %APL_LIB%\apl-tools*') do set "APL_VER=%%k.%%l.%%m"
+for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B "%APL_LIB%\apl-tools*"') do set "APL_VER=%%k.%%l.%%m"
 
 set APL_GUI_MAIN=%APL_LIB%\apl-desktop-%APL_VER%.jar
 
