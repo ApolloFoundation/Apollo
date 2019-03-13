@@ -15,6 +15,7 @@ public class TestConfiguration {
     private String userVault;
     private String passVault;
     private String publicKey;
+    private String adminPass;
 
     private TestConfiguration(){
         try {
@@ -28,6 +29,7 @@ public class TestConfiguration {
             userVault = (String) jsonObject.get("userVault");
             passVault = (String) jsonObject.get("passVault");
             publicKey = (String) jsonObject.get("publicKey");
+            adminPass = (String) jsonObject.get("adminPassword");
         }
         catch (Exception e)
         {
@@ -62,5 +64,8 @@ public class TestConfiguration {
     }
     public String getPassVault() {
         return passVault;
+    }
+    public String getAdminPass() {
+        return adminPass;
     }
 }

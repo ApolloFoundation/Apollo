@@ -31,8 +31,8 @@ public class TestBase {
     public TestBase() {
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
-                .withMaxRetries(5)
-                .withDelay(10, TimeUnit.SECONDS);
+                .withMaxRetries(10)
+                .withDelay(5, TimeUnit.SECONDS);
     }
 
     public boolean verifyTransactionInBlock(String transaction)
@@ -347,7 +347,7 @@ public class TestBase {
         addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+        return   mapper.readValue(response.body().string(), CreateTransactionResponse.class);
     }
 
     public AccountDTO generateNewAccount() throws IOException {
@@ -355,7 +355,7 @@ public class TestBase {
         Response response = httpCallPost();
         assertEquals(200, response.code());
         System.out.println(response.body());
-        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+        return   mapper.readValue(response.body().string(), AccountDTO.class);
     }
 
 
@@ -365,7 +365,7 @@ public class TestBase {
          addParameters(Parameters.passphrase,pass);
          Response response = httpCallPost();
          assertEquals(200, response.code());
-         return   mapper.readValue(response.body().string().toString(), Account2FA.class);
+         return   mapper.readValue(response.body().string(), Account2FA.class);
 
      }
 
@@ -375,7 +375,7 @@ public class TestBase {
         addParameters(Parameters.passphrase,pass);
         Response response = httpCallPost();
         assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+        return   mapper.readValue(response.body().string(), AccountDTO.class);
     }
 
 
@@ -384,7 +384,7 @@ public class TestBase {
         addParameters(Parameters.active, true);
         Response response = httpCallGet();
         assertEquals(200, response.code());
-        Peers peers = mapper.readValue(response.body().string().toString(), Peers.class);
+        Peers peers = mapper.readValue(response.body().string(), Peers.class);
         return peers.peers;
     }
 
@@ -393,7 +393,66 @@ public class TestBase {
         addParameters(Parameters.peer, peer);
         Response response = httpCallGet();
         assertEquals(200, response.code());
-        return mapper.readValue(response.body().string().toString(), Peer.class);
+        return mapper.readValue(response.body().string(), Peer.class);
     }
+
+    public Peer addPeer(String ip) throws IOException {
+        addParameters(RequestType.requestType, RequestType.addPeer);
+        addParameters(Parameters.peer, ip);
+        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), Peer.class);
+    }
+
+    public PeerInfo getMyInfo() throws IOException {
+        addParameters(RequestType.requestType, RequestType.getMyInfo);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), PeerInfo.class);
+    }
+
+    public BlockDTO getBlock(String block) throws IOException {
+        addParameters(RequestType.requestType, getBlock);
+        addParameters(Parameters.block, block);
+        addParameters(Parameters.includeTransactions, true);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), BlockDTO.class);
+
+    }
+
+    public GetBlockIdResponse getBlockId(String height) throws IOException {
+        addParameters(RequestType.requestType, getBlockId);
+        addParameters(Parameters.height, height);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetBlockIdResponse.class);
+
+    }
+
+    public BlockchainInfoDTO getBlockchainStatus() throws IOException {
+        addParameters(RequestType.requestType, getBlockchainStatus);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), BlockchainInfoDTO.class);
+    }
+
+    public GetBloksResponse getBlocks() throws IOException {
+        addParameters(RequestType.requestType, getBlocks);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetBloksResponse.class);
+    }
+
+
+    public ECBlock getECBlock() throws IOException {
+        addParameters(RequestType.requestType, getECBlock);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), ECBlock.class);
+    }
+
+
 
 }
