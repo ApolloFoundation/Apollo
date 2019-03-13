@@ -26,6 +26,27 @@ public class TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestAccounts.class);
     public TestConfiguration testConfiguration = TestConfiguration.getTestConfiguration();;
     public static ObjectMapper mapper = new ObjectMapper();
+    RetryPolicy retryPolicy;
+
+    public TestBase() {
+        retryPolicy = new RetryPolicy()
+                .retryWhen(false)
+                .withMaxRetries(5)
+                .withDelay(10, TimeUnit.SECONDS);
+    }
+
+    public boolean verifyTransactionInBlock(String transaction)
+    {
+     return Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long(0))==1);
+    }
+
+    public TransactionDTO getTransaction(String transaction) throws IOException {
+        addParameters(RequestType.requestType, RequestType.getTransaction);
+        addParameters(Parameters.transaction, transaction);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string().toString(), TransactionDTO.class);
+    }
 
     public BlockListInfoResponse getAccountBlocks(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountBlocks);
@@ -58,6 +79,7 @@ public class TestBase {
         addParameters(Parameters.account, account);
         Response response = httpCallGet();
         assertEquals(200, response.code());
+        //System.out.println(response.body().string());
         return   mapper.readValue(response.body().string().toString(), AccountBlockIdsResponse.class);
     }
 
@@ -172,8 +194,8 @@ public class TestBase {
         addParameters(Parameters.description, accountDescription);
         addParameters(Parameters.secretPhrase, accountPass);
         addParameters(Parameters.recipient, accountID);
-        addParameters(Parameters.deadline, 60);
-        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.feeATM, 300000000);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
@@ -193,14 +215,24 @@ public class TestBase {
     }
 
 
+    public CreateTransactionResponse  deleteAccountProperty(String pass,String property) throws IOException {
+        addParameters(RequestType.requestType,RequestType.deleteAccountProperty);
+        addParameters(Parameters.property, property);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.secretPhrase, pass);
+        addParameters(Parameters.feeATM, 100000000);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+    }
+
     public GetPropertyResponse  getAccountProperty(String accountID) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAccountProperties);
-        addParameters(Parameters.recipient, testConfiguration.getTestUser());
+        addParameters(Parameters.recipient, accountID);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), GetPropertyResponse.class);
     }
-
 
     //Skrypchenko Serhii
     public GetAliasesResponse getAliases  (String accountID) throws IOException {
@@ -304,6 +336,64 @@ public class TestBase {
 
 
         return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+    }
+  
+    public CreateTransactionResponse sendMoneyPrivate(String recipient, int moneyAmount) throws IOException {
+        addParameters(RequestType.requestType,RequestType.sendMoneyPrivate);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.feeATM, "500000000");
+        addParameters(Parameters.deadline, 1440);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+    }
+
+    public AccountDTO generateNewAccount() throws IOException {
+        addParameters(RequestType.requestType,RequestType.generateAccount);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        System.out.println(response.body());
+        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+    }
+
+
+     public Account2FA deleteKey(String accountID,String pass) throws IOException {
+         addParameters(RequestType.requestType,RequestType.deleteKey);
+         addParameters(Parameters.account, accountID);
+         addParameters(Parameters.passphrase,pass);
+         Response response = httpCallPost();
+         assertEquals(200, response.code());
+         return   mapper.readValue(response.body().string().toString(), Account2FA.class);
+
+     }
+
+    public AccountDTO enable2FA(String accountID,String pass) throws IOException {
+        addParameters(RequestType.requestType,RequestType.enable2FA);
+        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.passphrase,pass);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+    }
+
+
+    public String[] getPeers() throws IOException {
+        addParameters(RequestType.requestType, RequestType.getPeers);
+        addParameters(Parameters.active, true);
+        Response response = httpCallGet();
+        assertEquals(200, response.code());
+        Peers peers = mapper.readValue(response.body().string().toString(), Peers.class);
+        return peers.peers;
+    }
+
+    public Peer getPeer(String peer) throws IOException {
+        addParameters(RequestType.requestType, RequestType.getPeer);
+        addParameters(Parameters.peer, peer);
+        Response response = httpCallGet();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string().toString(), Peer.class);
     }
 
 }

@@ -1,6 +1,8 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 public enum Parameters {
+    peer,
+    passphrase,
     account,
     secretPhrase,
     includeLessors,

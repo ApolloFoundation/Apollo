@@ -12,8 +12,11 @@ public class AccountDTO {
     public String publicKey;
     public String unconfirmedBalanceATM;
     public String account;
+    public String passphrase;
     public long numberOfBlocks;
     public long requestProcessingTime;
     public String name;
+    public String secret;
+
 }
 
