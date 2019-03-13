@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -298,6 +299,27 @@ public class BlockDaoImpl implements BlockDao {
     }
 */
 
+    @Override
+    public List<byte[]> getBlockSignaturesFrom(int height, int heightLimit, int limit) {
+        TransactionalDataSource dataSource = lookupDataSource();
+        List<byte[]> blockSignatures = new ArrayList<>();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT signature FROM block "
+                     + "WHERE height >= ? AND height < ? "
+                     + " LIMIT ?")) {
+            pstmt.setInt(1, height);
+            pstmt.setInt(2, heightLimit);
+            pstmt.setInt(3, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    blockSignatures.add(rs.getBytes("block_signature"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return blockSignatures;
+    }
 
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {

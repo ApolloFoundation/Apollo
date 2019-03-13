@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 public interface BlockDao {
 
@@ -63,6 +63,8 @@ public interface BlockDao {
     Block findLastInstantBlock();
 
     Block findRegularBlock(int skipCount);
+
+    List<byte[]> getBlockSignaturesFrom(int height, int heightLimit, int limit);
 
     Block findRegularBlock();
 
