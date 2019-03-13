@@ -197,20 +197,16 @@ public class DesktopMode {
             
             if (RuntimeEnvironment.getInstance().isWindowsRuntime()) 
             {
-                
-                
-                
-                ProcessBuilder pb = new ProcessBuilder(".\\apl-start.vbs");
-            
+                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat");
+                        //.redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
+                        //.redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
                 pb.start();
-                
             }
             else{
                 ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./apl-start.sh");
-            
                 pb.start();
-                
             }
+            
         }            
         catch (IOException e)
         {
