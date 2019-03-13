@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetAliasesResponse extends ResponseBase{
-    public AliasDTO[] aliasDTOS;
+    public AliasDTO[] aliases;
 }
