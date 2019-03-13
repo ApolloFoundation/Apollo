@@ -4,11 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.sharding;
 
+import org.apache.commons.collections4.list.TreeList;
+
 import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class UpdatableMerkleTree {
@@ -19,15 +22,20 @@ public class UpdatableMerkleTree {
         this(digest, null);
     }
 
+
+
     public UpdatableMerkleTree(MessageDigest digest, List<byte[]> dataList) {
+        Objects.requireNonNull(digest, "digest cannot be null");
         this.digest = digest;
-        this.nodes = new ArrayList<>();
         if (dataList != null && !dataList.isEmpty()) {
+            this.nodes = new ArrayList<>(dataList.size() * 2);
             buildTreeFromScratch(dataList);
+        } else {
+            this.nodes = new ArrayList<>();
         }
     }
 
-    public void buildTreeFromScratch(List<byte[]> dataList) {
+    private void buildTreeFromScratch(List<byte[]> dataList) {
         List<Node> treeNodes = dataList.stream().map(digest::digest).map(Node::new).collect(Collectors.toList());
         if (treeNodes.size() < 3) {
             for (Node node : treeNodes) {
@@ -40,7 +48,7 @@ public class UpdatableMerkleTree {
         }
     }
 
-    public void buildTree(List<Node> treeNodes) {
+    private void buildTree(List<Node> treeNodes) {
         if (treeNodes.size() <= 0) throw new InvalidParameterException("Node list not expected to be empty!");
         if (treeNodes.size() > 1) {
             List<Node> parents = new ArrayList<>();
@@ -59,39 +67,152 @@ public class UpdatableMerkleTree {
         }
     }
 
-    public List<Node> buildBottomLevel(List<Node> treeNodes) {
+    private List<Node> buildBottomLevel(List<Node> treeNodes) {
         int size = treeNodes.size();
         List<Node> bottomLevelNodes = new ArrayList<>();
-        nodes = new ArrayList<>(treeNodes);
-        Collections.reverse(nodes);
+        nodes = new ArrayList<>(treeNodes.size() * 2);
         if (!isPowerOfTwo(size)) {
+
             int n = nearestPowerOfTwo(size);
+            int[] innerLevel = getOrderedLeavesIndexes(n);
+            int[] outerLevel = getOrderedLeavesIndexes(n * 2);
+
             int nodesToAdd = size - n;
-            int rightStartCounter = size - nodesToAdd - 1;
+            // build outer level
+            List<Node> outerLeaves = new ArrayList<>(nodesToAdd * 2);
             for (int i = 0; i < nodesToAdd; i++) {
-                Node left = treeNodes.get(i);
-                Node right = treeNodes.get(rightStartCounter + i);
+                Node left = treeNodes.get(outerLevel[2 * i]);
+                Node right = treeNodes.get(outerLevel[2 * i + 1]);
                 digest.update(left.getValue());
                 digest.update(right.getValue());
                 Node parent = new Node(digest.digest());
                 bottomLevelNodes.add(parent);
+                outerLeaves.add(left);
+                outerLeaves.add(right);
             }
+            for (int i = outerLeaves.size() - 1; i >= 0; i--) {
+                nodes.add(outerLeaves.get(i));
+            }
+            // add inner level nodes
+            for (int i = n - 1; i >= nodesToAdd; i--) {
+                nodes.add(treeNodes.get(innerLevel[i]));
+            }
+            // add outer level nodes
             for (int i = bottomLevelNodes.size() - 1; i >= 0; i--) {
                 nodes.add(bottomLevelNodes.get(i));
             }
-            bottomLevelNodes.addAll(treeNodes.subList(nodesToAdd, size - nodesToAdd));
+            // add inner level nodes as parent for next level
+            for (int i = nodesToAdd; i < n; i++) {
+                bottomLevelNodes.add(treeNodes.get(innerLevel[i]));
+            }
         } else {
-            bottomLevelNodes.addAll(treeNodes);
+            int n = nearestPowerOfTwo(size);
+            int[] outerLevel = getOrderedLeavesIndexes(n);
+
+            // add inner level nodes
+            for (int i = n - 1; i >= 0; i--) {
+                nodes.add(treeNodes.get(outerLevel[i]));
+            }
+            // add inner level nodes as parent for next level
+            for (int i = 0; i < n; i++) {
+                bottomLevelNodes.add(treeNodes.get(outerLevel[i]));
+            }
         }
         return bottomLevelNodes;
     }
 
-    public boolean isPowerOfTwo(int number) {
+    static boolean isPowerOfTwo(int number) {
         return number > 0 && ((number & (number - 1)) == 0);
     }
 
-    public int nearestPowerOfTwo(int number) {
-        return (int) Math.pow(2, 32 - Integer.numberOfLeadingZeros(number) - 1);
+    private int[] getOrderedLeavesIndexes(int size) {
+        int[][] nodeIndexes = getNodeIndexes(size);
+        return orderNodeIndexes(nodeIndexes[0], nodeIndexes[1]);
+    }
+
+    private int nearestPowerOfTwo(int number) {
+        return 1 << 32 - Integer.numberOfLeadingZeros(number) - 1;
+    }
+
+    static int[][] getNodeIndexes(int size) {
+        if (size < 2) {
+            throw new IllegalArgumentException("Cannot find indexes for size: " + size);
+        }
+        if (!isPowerOfTwo(size)) {
+            throw new IllegalArgumentException("Size is not power of two: " + size);
+        }
+        int[][] res = new int[2][];
+        int[] left = new int[size / 2];
+        int[] right = new int[size / 2];
+        res[0] = left;
+        res[1] = right;
+        left[0] = 0;
+        right[0] = 1;
+        int indexCounter = 1;
+        int p = 1;
+        int prev = 1 << p;
+        int cur = 1 << p + 1;
+        while (cur <= size) {
+            int steps = (cur - prev) / 2;
+            int mid = prev + steps;
+
+            for (int i = 0; i < steps; i++) {
+                left[indexCounter] = prev + i;
+                right[indexCounter] = mid + i;
+                indexCounter++;
+            }
+
+            p++;
+            prev = 1 << p;
+            cur = 1 << p + 1;
+        }
+        return res;
+    }
+
+    static int[] orderNodeIndexes(int[] left, int[] right) {
+        Objects.requireNonNull(left, "left cannot be null");
+        Objects.requireNonNull(right, "right cannot be null");
+        if (left.length != right.length) {
+            throw new IllegalArgumentException("Branch size mismatch");
+        }
+        if (!isPowerOfTwo(left.length)) {
+            throw new IllegalArgumentException("Size of branch is not power of two");
+        }
+
+        int branchLength = left.length;
+        int[] ordered = new int[2 * branchLength];
+        int[] leftOrdered = orderNodes(left);
+        int[] rightOrdered = orderNodes(right);
+        System.arraycopy(leftOrdered, 0, ordered, 0, branchLength);
+        System.arraycopy(rightOrdered, 0, ordered, branchLength, branchLength);
+        return ordered;
+    }
+
+    static int[] orderNodes(int[] indexes) {
+        if (indexes.length <= 2) {
+            return indexes;
+        }
+        int[] res = new int[indexes.length];
+        List<Integer> list = new TreeList<>();
+        list.add(indexes[0]);
+        list.add(indexes[1]);
+        int position = 1;
+        while (2 * position != indexes.length) {
+            position <<= 1;
+            int start = 1;
+            for (int i = position; i < 2 * position; i++) {
+                if (list.size() <= start) {
+                    list.add(indexes[i]);
+                } else {
+                    list.add(start, indexes[i]);
+                    start += 2;
+                }
+            }
+        }
+        for (int i = 0; i < indexes.length; i++) {
+            res[i] = list.get(i);
+        }
+        return res;
     }
 
     public List<Node> getNodes() {
@@ -193,83 +314,11 @@ public class UpdatableMerkleTree {
         }
     }
 
-//    public MerkleHash addTree(MerkleTree tree) {
-//        if (this.leaves.size() <= 0) throw new InvalidParameterException("Cannot add to a tree with no leaves!");
-//        tree.leaves.forEach(this::appendLeaf);
-//        return this.buildTree();
-//    }
-//
-//    public MerkleHash buildTree() {
-//        if (this.leaves.size() <= 0) throw new InvalidParameterException("Cannot add to a tree with no leaves!");
-//        this.buildTree(this.leaves);
-//        return this.root.getHash();
-//    }
-//
-//    public void buildTree(List<MerkleNode> nodes) {
-//        if (nodes.size() <= 0) throw new InvalidParameterException("Node list not expected to be empty!");
-//
-//        if (nodes.size() == 1) {
-//            this.root = nodes.get(0);
-//        } else {
-//            List<MerkleNode> parents = new ArrayList<>();
-//            for (int i = 0; i < nodes.size(); i += 2) {
-//                MerkleNode right = (i + 1 < nodes.size()) ? nodes.get(i + 1) : null;
-//                MerkleNode parent = new MerkleNode(nodes.get(i), right);
-//                parents.add(parent);
-//            }
-//            buildTree(parents);
-//        }
-//    }
-//
-//    public List<MerkleProofHash> auditProof(MerkleHash leafHash) {
-//        List<MerkleProofHash> auditTrail = new ArrayList<>();
-//
-//        MerkleNode leafNode = this.findLeaf(leafHash);
-//
-//        if (leafNode != null) {
-//            if (leafNode.getParent() == null) throw new InvalidParameterException("Expected leaf to have a parent!");
-//            MerkleNode parent = leafNode.getParent();
-//            this.buildAuditTrail(auditTrail, parent, leafNode);
-//        }
-//
-//        return auditTrail;
-//    }
-//
-//    public static boolean verifyAudit(MerkleHash rootHash, MerkleHash leafHash, List<MerkleProofHash> auditTrail) {
-//        if (auditTrail.size() <= 0) throw new InvalidParameterException("Audit trail cannot be empty!");
-//
-//        MerkleHash testHash = leafHash;
-//
-//        for (MerkleProofHash auditHash : auditTrail) {
-//            testHash = auditHash.direction == MerkleProofHash.Branch.RIGHT
-//                    ? MerkleHash.create(testHash, auditHash.hash)
-//                    : MerkleHash.create(auditHash.hash, testHash);
-//        }
-//
-//        return testHash.equals(rootHash);
-//    }
-//
-//    private MerkleNode findLeaf(MerkleHash hash) {
-//        return this.leaves.stream()
-//                .filter((leaf) -> leaf.getHash() == hash)
-//                .findFirst()
-//                .orElse(null);
-//    }
-//
-//    private void buildAuditTrail(List<MerkleProofHash> auditTrail, MerkleNode parent, MerkleNode child) {
-//        if (parent != null) {
-//            if (child.getParent() != parent) {
-//                throw new InvalidParameterException("Parent of child is not expected parent!");
-//            }
-//
-//            MerkleNode nextChild = parent.getLeftNode() == child ? parent.getRightNode() : parent.getLeftNode();
-//            MerkleProofHash.Branch direction = parent.getLeftNode() == child
-//                    ? MerkleProofHash.Branch.RIGHT
-//                    : MerkleProofHash.Branch.LEFT;
-//
-//            if (nextChild != null) auditTrail.add(new MerkleProofHash(nextChild.getHash(), direction));
-//
-//            this.buildAuditTrail(auditTrail, parent.getParent(), child.getParent());
-//        }
-//    }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UpdatableMerkleTree)) return false;
+        UpdatableMerkleTree that = (UpdatableMerkleTree) o;
+        return nodes.equals(that.nodes);
+    }
 }
