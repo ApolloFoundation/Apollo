@@ -164,15 +164,14 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.sendMoney);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.amountATM, moneyAmount+"00000000");
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
+        //addParameters(Parameters.account, wallet.getUser());
+        //addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
-        String a = response.body().string();
-        System.out.println(a);
         assertEquals(200, response.code());
-        return   mapper.readValue(a, CreateTransactionResponse.class);
+        return   mapper.readValue(response.body().string(), CreateTransactionResponse.class);
     }
 
 

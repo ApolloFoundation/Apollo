@@ -10,7 +10,6 @@ public class WalletProvider implements ArgumentsProvider {
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-        return Stream.of(TestConfiguration.getTestConfiguration().getStandartWallet(),
-                        TestConfiguration.getTestConfiguration().getVaultWallet()).map(Arguments::of);
+        return Stream.of(TestConfiguration.getTestConfiguration().getStandartWallet(), TestConfiguration.getTestConfiguration().getVaultWallet()).map(Arguments::of);
     }
 }
