@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -55,7 +56,7 @@ class DatabaseManagerTest {
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class)
+            TransactionalDataSource.class, DatabaseManager.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class)
             .build();
 
     @BeforeEach

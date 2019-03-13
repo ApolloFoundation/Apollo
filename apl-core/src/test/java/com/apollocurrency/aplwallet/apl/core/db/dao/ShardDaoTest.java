@@ -7,17 +7,16 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -38,6 +37,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.List;
+import javax.inject.Inject;
+
 @EnableWeld
 class ShardDaoTest {
 
@@ -55,6 +58,9 @@ class ShardDaoTest {
             PropertiesConfigLoader.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class, DaoConfig.class,
             JdbiHandleFactory.class, ShardDao.class,
+            GlobalSync.class,
+            GlobalSyncImpl.class,
+            DerivedDbTablesRegistry.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             TransactionalDataSource.class, DatabaseManager.class)
 //            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))

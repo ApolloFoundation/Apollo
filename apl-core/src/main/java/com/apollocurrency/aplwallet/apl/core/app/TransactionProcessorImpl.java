@@ -83,6 +83,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
@@ -222,7 +223,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
                 if (expiredTransactions.size() > 0) {
-                    blockchain.writeLock();
+                    globalSync.writeLock();
                     try {
                         TransactionalDataSource dataSource = lookupDataSource();
                         try {
@@ -237,7 +238,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                             throw e;
                         }
                     } finally {
-                        blockchain.writeUnlock();
+                        globalSync.writeUnlock();
                     }
                 }
             } catch (Exception e) {
@@ -403,14 +404,14 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     Transaction getUnconfirmedTransaction(DbKey dbKey) {
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             Transaction transaction = transactionCache.get(dbKey);
             if (transaction != null) {
                 return transaction;
             }
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return unconfirmedTransactionTable.get(dbKey);
     }
@@ -432,11 +433,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public UnconfirmedTransaction[] getAllWaitingTransactions() {
         UnconfirmedTransaction[] transactions;
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             transactions = waitingTransactions.toArray(new UnconfirmedTransaction[waitingTransactions.size()]);
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         Arrays.sort(transactions, waitingTransactions.comparator());
         return transactions;
@@ -448,17 +449,17 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public TransactionImpl[] getAllBroadcastedTransactions() {
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             return broadcastedTransactions.toArray(new TransactionImpl[broadcastedTransactions.size()]);
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
     }
 
     @Override
     public void broadcast(Transaction transaction) throws AplException.ValidationException {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             if (blockchain.hasTransaction(transaction.getId())) {
                 LOG.info("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
@@ -491,7 +492,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
             }
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -503,7 +504,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void clearUnconfirmedTransactions() {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             List<Transaction> removed = new ArrayList<>();
             TransactionalDataSource dataSource = lookupDataSource();
@@ -528,13 +529,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             transactionCache.clear();
             transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     @Override
     public void requeueAllUnconfirmedTransactions() {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             TransactionalDataSource dataSource = lookupDataSource();
             if (!dataSource.isInTransaction()) {
@@ -564,13 +565,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             transactionCache.clear();
             transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     @Override
     public void rebroadcastAllUnconfirmedTransactions() {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             try (DbIterator<UnconfirmedTransaction> oldNonBroadcastedTransactions = getAllUnconfirmedTransactions()) {
                 for (UnconfirmedTransaction unconfirmedTransaction : oldNonBroadcastedTransactions) {
@@ -582,7 +583,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
             }
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -618,7 +619,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public void processLater(Collection<Transaction> transactions) {
         long currentTime = ntpTime.getTime();
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             for (Transaction transaction : transactions) {
                 blockchain.getTransactionCache().remove(transaction.getId());
@@ -629,12 +630,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 waitingTransactions.add(new UnconfirmedTransaction((TransactionImpl)transaction, Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()))));
             }
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     public void processWaitingTransactions() {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             if (waitingTransactions.size() > 0) {
                 int currentTime = timeService.getEpochTime();
@@ -663,7 +664,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
             }
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -728,7 +729,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             throw new AplException.NotValidException("Invalid transaction id 0");
         }
 
-        blockchain.writeLock();
+        globalSync.writeLock();
         TransactionalDataSource dataSource = lookupDataSource();
         try {
             try {
@@ -765,7 +766,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 throw e;
             }
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
@@ -783,7 +784,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude) {
         SortedSet<UnconfirmedTransaction> transactionSet = new TreeSet<>(cachedUnconfirmedTransactionComparator);
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             //
             // Initialize the unconfirmed transaction cache if it hasn't been done yet
@@ -807,7 +808,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
             });
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return transactionSet;
     }
@@ -823,7 +824,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     public List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException {
         List<Transaction> processed = new ArrayList<>();
         TransactionalDataSource dataSource = lookupDataSource();
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             dataSource.begin();
             try {
@@ -880,7 +881,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 throw e;
             }
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return processed;
     }

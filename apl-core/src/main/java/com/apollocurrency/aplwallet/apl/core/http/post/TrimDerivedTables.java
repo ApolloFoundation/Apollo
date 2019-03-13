@@ -20,11 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class TrimDerivedTables extends AbstractAPIRequestHandler {
@@ -41,10 +43,11 @@ public final class TrimDerivedTables extends AbstractAPIRequestHandler {
         super(new APITag[] {APITag.DEBUG});
     }
 
+    private TrimService trimService = CDI.current().select(TrimService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        lookupBlockchainProcessor().trimDerivedTables();
+        trimService.trimDerivedTables(lookupBlockchain().getHeight());
         response.put("done", true);
         return response;
     }
