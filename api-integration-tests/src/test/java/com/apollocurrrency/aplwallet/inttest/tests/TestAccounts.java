@@ -214,6 +214,7 @@ public class TestAccounts extends TestBase {
         assertNotNull(setAccountInfo.transactionJSON.senderRS);
         assertNotNull(setAccountInfo.transactionJSON.transaction);
         assertNotNull(setAccountInfo.transactionJSON.feeATM);
+        verifyTransactionInBlock(setAccountInfo.transactionJSON.transaction);
     }
 
 

@@ -25,6 +25,27 @@ public class TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestAccounts.class);
     public TestConfiguration testConfiguration = TestConfiguration.getTestConfiguration();;
     public static ObjectMapper mapper = new ObjectMapper();
+    RetryPolicy retryPolicy;
+
+    public TestBase() {
+        retryPolicy = new RetryPolicy()
+                .retryWhen(false)
+                .withMaxRetries(5)
+                .withDelay(10, TimeUnit.SECONDS);
+    }
+
+    public boolean verifyTransactionInBlock(String transaction)
+    {
+     return Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long(0))==1);
+    }
+
+    public TransactionDTO getTransaction(String transaction) throws IOException {
+        addParameters(RequestType.requestType, RequestType.getTransaction);
+        addParameters(Parameters.transaction, transaction);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string().toString(), TransactionDTO.class);
+    }
 
     public BlockListInfoResponse getAccountBlocks(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountBlocks);
@@ -270,7 +291,6 @@ public class TestBase {
         assertEquals(200, response.code());
         return mapper.readValue(response.body().string().toString(), Peer.class);
     }
-
 
 
 

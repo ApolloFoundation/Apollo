@@ -39,4 +39,5 @@ public class TransactionDTO {
     public String feeNQT;
     public String ecBlockId;
     public String referencedTransactionFullHash;
+    public Long requestProcessingTime;
 }
