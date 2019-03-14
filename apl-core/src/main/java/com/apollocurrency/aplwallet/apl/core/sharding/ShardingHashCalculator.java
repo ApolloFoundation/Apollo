@@ -40,7 +40,7 @@ public class ShardingHashCalculator {
             heightOffset += 100;
             blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight + heightOffset, shardEndHeight, BLOCK_LIMIT);
         }
-        UpdatableMerkleTree tree = new UpdatableMerkleTree(createMessageDigest(), allBlockSignatures);
+        MerkleTree tree = new MerkleTree(createMessageDigest(), allBlockSignatures);
         return tree.getRoot().getValue();
     }
 
