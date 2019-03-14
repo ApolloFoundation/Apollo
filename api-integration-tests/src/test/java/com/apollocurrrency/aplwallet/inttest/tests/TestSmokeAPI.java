@@ -42,7 +42,7 @@ public class TestSmokeAPI extends TestBase {
            RetryPolicy retryPolicy = new RetryPolicy()
                 .retryWhen(null)
                 .withMaxRetries(10)
-                .withDelay(30, TimeUnit.SECONDS);
+                .withDelay(5, TimeUnit.SECONDS);
 
         //Verify count of peers
         String [] peers = getPeers();
