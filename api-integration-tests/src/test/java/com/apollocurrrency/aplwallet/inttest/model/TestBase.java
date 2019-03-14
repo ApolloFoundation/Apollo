@@ -35,10 +35,14 @@ public class TestBase {
                 .withMaxRetries(10)
                 .withDelay(5, TimeUnit.SECONDS);
         try {
-            deleteKey(testConfiguration.getVaultWallet());
             testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
         } catch (IOException e) {
-            e.printStackTrace();
+
+        }
+        try {
+            testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
+        } catch (IOException ex) {
+
         }
     }
 
