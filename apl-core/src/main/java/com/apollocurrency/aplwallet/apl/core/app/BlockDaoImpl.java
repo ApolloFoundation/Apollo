@@ -300,16 +300,14 @@ public class BlockDaoImpl implements BlockDao {
 */
 
     @Override
-    public List<byte[]> getBlockSignaturesFrom(int height, int heightLimit, int limit) {
+    public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight) {
         TransactionalDataSource dataSource = lookupDataSource();
         List<byte[]> blockSignatures = new ArrayList<>();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT signature FROM block "
-                     + "WHERE height >= ? AND height <= ? "
-                     + " LIMIT ?")) {
-            pstmt.setInt(1, height);
-            pstmt.setInt(2, heightLimit);
-            pstmt.setInt(3, limit);
+             PreparedStatement pstmt = con.prepareStatement("SELECT block_signature FROM block "
+                     + "WHERE height >= ? AND height < ? ")) {
+            pstmt.setInt(1, fromHeight);
+            pstmt.setInt(2, toHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     blockSignatures.add(rs.getBytes("block_signature"));

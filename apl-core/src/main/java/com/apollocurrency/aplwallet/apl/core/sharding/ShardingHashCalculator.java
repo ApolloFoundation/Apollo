@@ -40,16 +40,15 @@ public class ShardingHashCalculator {
     }
 
     private byte[] doHashCalculation(int shardStartHeight, int shardEndHeight) {
-        List<byte[]> blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight, shardEndHeight, blockSelectLimit);
         List<byte[]> allBlockSignatures = new ArrayList<>();
-        int heightOffset = 0;
-        while (shardStartHeight + heightOffset <= shardEndHeight) {
+        int fromHeight = shardStartHeight;
+        while (fromHeight < shardEndHeight) {
+            List<byte[]> blockSignatures  = blockchain.getBlockSignaturesFrom(fromHeight, Math.min(fromHeight + blockSelectLimit, shardEndHeight));
             allBlockSignatures.addAll(blockSignatures);
-            heightOffset += blockSelectLimit;
-            blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight + heightOffset, shardEndHeight, blockSelectLimit);
+            fromHeight += blockSelectLimit;
         }
         MerkleTree tree = new MerkleTree(createMessageDigest(), allBlockSignatures);
-        return tree.getRoot().getValue();
+        return tree.getRoot() == null ? null : tree.getRoot().getValue();
     }
 
     private MessageDigest createMessageDigest() {
@@ -66,7 +65,7 @@ public class ShardingHashCalculator {
             throw new IllegalArgumentException("shard start height should be less than shard end height");
         }
         long startTime = System.currentTimeMillis();
-        byte[] hash = doHashCalculation(shardEndHeight, shardStartHeight);
+        byte[] hash = doHashCalculation(shardStartHeight, shardEndHeight);
         long time = System.currentTimeMillis() - startTime;
         log.info("Hash calculated in {}s, speed {} bpms", time / 1000, (shardEndHeight - shardStartHeight) / Math.max(time, 1));
         return hash;

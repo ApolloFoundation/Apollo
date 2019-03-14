@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -35,8 +35,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 
 /**
  * Data source with Transaction support implemented by ThreadLocal connection management.
@@ -47,13 +47,12 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private static final Logger log = getLogger(TransactionalDataSource.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder;
-    private static FilteredFactoryImpl factory;
+    private FilteredFactoryImpl factory;
 
-    private static long stmtThreshold;
-    private static long txThreshold;
-    private static long txInterval;
-    private static boolean enableSqlLogs;
+    private long stmtThreshold;
+    private long txThreshold;
+    private long txInterval;
+    private boolean enableSqlLogs;
 
     private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
     private final ThreadLocal<Map<String,Map<DbKey,Object>>> transactionCaches = new ThreadLocal<>();
@@ -70,14 +69,21 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
      */
     @Inject
     public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
-        super(dbProperties);
-        TransactionalDataSource.propertiesHolder = propertiesHolder;
-        stmtThreshold = getPropertyOrDefault("apl.statementLogThreshold", 1000);
-        txThreshold = getPropertyOrDefault("apl.transactionLogThreshold", 5000);
-        txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
-        enableSqlLogs = TransactionalDataSource.propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
-        factory = new FilteredFactoryImpl(stmtThreshold);
+        this(dbProperties,
+                propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
+                propertiesHolder.getIntProperty("apl.transactionLogThreshold", 5000),
+                propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
+                propertiesHolder.getBooleanProperty("apl.enableSqlLogs"));
     }
+    public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {
+        super(dbProperties);
+        this.stmtThreshold = stmtThreshold;
+        this.txThreshold = txThreshold;
+        this.txInterval = txInterval;
+        this.enableSqlLogs = enableSqlLogs;
+        this.factory = new FilteredFactoryImpl(stmtThreshold);
+    }
+
 
     /**
      * Return Connection from ThreadLocal or create new one. AUTO COMMIT = TRUE for such db connection.
@@ -306,8 +312,4 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         log.debug(sb.toString());
     }
 
-    private static long getPropertyOrDefault(String propertyName, long defaultValue) {
-        long temp;
-        return (temp=propertiesHolder.getIntProperty(propertyName)) != 0 ? temp : defaultValue;
-    }
 }

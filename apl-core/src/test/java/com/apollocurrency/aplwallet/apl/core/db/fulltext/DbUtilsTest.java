@@ -41,7 +41,7 @@ public class DbUtilsTest {
             Collections.emptyList());
 
     @RegisterExtension
-    private DbExtension dbExtension = new DbExtension();
+    DbExtension dbExtension = new DbExtension();
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {
         DataSource db = dbExtension.getDataSource();

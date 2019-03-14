@@ -64,7 +64,7 @@ public interface BlockDao {
 
     Block findRegularBlock(int skipCount);
 
-    List<byte[]> getBlockSignaturesFrom(int height, int heightLimit, int limit);
+    List<byte[]> getBlockSignaturesFrom(int from, int to);
 
     Block findRegularBlock();
 
