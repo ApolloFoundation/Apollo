@@ -55,6 +55,7 @@ public enum Parameters {
     order,
     broadcast,
     block,
-    height
+    height,
+    amountATMPerATU
 
 }
