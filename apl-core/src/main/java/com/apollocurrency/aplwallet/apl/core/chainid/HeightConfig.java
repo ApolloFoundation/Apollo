@@ -65,6 +65,8 @@ public class HeightConfig {
 
     public int getMinBlockTimeLimit() {return bp.getMinBlockTimeLimit();}
 
+    public String getShardingDigestAlgorithm() {return bp.getShardingSettings().getDigestAlgorithm();}
+
     public ConsensusSettings.Type getConsensusType() {return bp.getConsensusSettings().getType();}
 
     public int getAdaptiveBlockTime() {return bp.getConsensusSettings().getAdaptiveForgingSettings().getAdaptiveBlockTime();}

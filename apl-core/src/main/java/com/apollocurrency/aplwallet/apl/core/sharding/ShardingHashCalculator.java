@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.sharding;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,30 +21,39 @@ import javax.inject.Singleton;
 public class ShardingHashCalculator {
     private static final Logger log = LoggerFactory.getLogger(ShardingHashCalculator.class);
 
-    private static final int BLOCK_LIMIT = 100;
+    private static final int DEFAULT_BLOCK_LIMIT = 100;
     private Blockchain blockchain;
-    private String algorithm;
-
+    private BlockchainConfig blockchainConfig;
+    private int blockSelectLimit;
     @Inject
-    public ShardingHashCalculator(Blockchain blockchain, String algorithm) {
+    public ShardingHashCalculator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+        this(blockchain, blockchainConfig, DEFAULT_BLOCK_LIMIT);
+    }
+
+    public ShardingHashCalculator(Blockchain blockchain, BlockchainConfig blockchainConfig, int blockSelectLimit) {
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
-        this.algorithm = StringValidator.requireNonBlank(algorithm, "algorithm");
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig, " blockchainConfig");
+        if (blockSelectLimit <= 0) {
+            throw new IllegalArgumentException("blockSelect should be positive");
+        }
+        this.blockSelectLimit = blockSelectLimit;
     }
 
     private byte[] doHashCalculation(int shardStartHeight, int shardEndHeight) {
-        List<byte[]> blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight, shardEndHeight, BLOCK_LIMIT);
+        List<byte[]> blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight, shardEndHeight, blockSelectLimit);
         List<byte[]> allBlockSignatures = new ArrayList<>();
         int heightOffset = 0;
-        while (blockSignatures.size() > 0) {
+        while (shardStartHeight + heightOffset <= shardEndHeight) {
             allBlockSignatures.addAll(blockSignatures);
-            heightOffset += 100;
-            blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight + heightOffset, shardEndHeight, BLOCK_LIMIT);
+            heightOffset += blockSelectLimit;
+            blockSignatures = blockchain.getBlockSignaturesFrom(shardStartHeight + heightOffset, shardEndHeight, blockSelectLimit);
         }
         MerkleTree tree = new MerkleTree(createMessageDigest(), allBlockSignatures);
         return tree.getRoot().getValue();
     }
 
     private MessageDigest createMessageDigest() {
+        String algorithm = blockchainConfig.getCurrentConfig().getShardingDigestAlgorithm();
         try {
             return MessageDigest.getInstance(algorithm);
         }

@@ -305,7 +305,7 @@ public class BlockDaoImpl implements BlockDao {
         List<byte[]> blockSignatures = new ArrayList<>();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT signature FROM block "
-                     + "WHERE height >= ? AND height < ? "
+                     + "WHERE height >= ? AND height <= ? "
                      + " LIMIT ?")) {
             pstmt.setInt(1, height);
             pstmt.setInt(2, heightLimit);
