@@ -1,5 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
+import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -20,7 +21,7 @@ public class TestHelper {
     private static final String baseURL = "http://"+
                                           TestConfiguration.getTestConfiguration().getBaseURL()+":"+
                                           TestConfiguration.getTestConfiguration().getPort();
-    private static HashMap<String,String> reqestParam = new HashMap<>();
+    private static HashMap<String,Object> reqestParam = new HashMap<>();
 
     private static OkHttpClient client;
     private  static ObjectMapper mapper = new ObjectMapper(); 
@@ -64,15 +65,40 @@ public class TestHelper {
             reqestParam.put(parameter.toString(), String.valueOf(value));
         else if (value instanceof Enum)
             reqestParam.put(parameter.toString(), value.toString());
+        else
+            reqestParam.put(parameter.toString(), value);
     }
 
 
     private static String buildGetReqestUrl(){
         StringBuilder reqestUrl =  new StringBuilder();
         reqestUrl.append(baseURL_API);
-        for(Map.Entry<String,String> pair: reqestParam.entrySet()) {
-            reqestUrl.append(pair.getKey()+"="+pair.getValue());
-            reqestUrl.append("&");
+        for(Map.Entry<String,Object> pair: reqestParam.entrySet()) {
+            if (pair.getKey().equals("wallet"))
+            {
+                Wallet wallet = (Wallet) pair.getValue();
+                if (wallet.getSecretKey() == null)
+                {
+                    reqestUrl.append("secretPhrase="+wallet.getPass());
+                    reqestUrl.append("&");
+                }
+                else
+                {
+                    reqestUrl.append("secretBytes="+wallet.getSecretKey());
+                    reqestUrl.append("&");
+                    reqestUrl.append("sender="+wallet.getUser());
+                    reqestUrl.append("&");
+                    reqestUrl.append("account="+wallet.getUser());
+                    reqestUrl.append("&");
+                    reqestUrl.append("passphrase="+wallet.getPass());
+                    reqestUrl.append("&");
+                }
+            }
+            else
+            {
+                reqestUrl.append(pair.getKey()+"="+pair.getValue().toString());
+                reqestUrl.append("&");
+            }
         }
         reqestParam.clear();
         return reqestUrl.toString();
@@ -81,9 +107,34 @@ public class TestHelper {
     private static String buildGetReqestUrl(String peerURL_API){
         StringBuilder reqestUrl =  new StringBuilder();
         reqestUrl.append("http://"+peerURL_API+":"+TestConfiguration.getTestConfiguration().getPort()+"/apl?");
-        for(Map.Entry<String,String> pair: reqestParam.entrySet()) {
-            reqestUrl.append(pair.getKey()+"="+pair.getValue());
-            reqestUrl.append("&");
+        for(Map.Entry<String,Object> pair: reqestParam.entrySet()) {
+            if (pair.getKey().equals("wallet"))
+            {
+                Wallet wallet = (Wallet) pair.getValue();
+                reqestUrl.append("account="+wallet.getUser());
+                reqestUrl.append("&");
+                if (wallet.getSecretKey() == null)
+                {
+                    reqestUrl.append("secretPhrase="+wallet.getPass());
+                    reqestUrl.append("&");
+                }
+                else
+                {
+                    reqestUrl.append("secretBytes="+wallet.getSecretKey());
+                    reqestUrl.append("&");
+                    reqestUrl.append("sender="+wallet.getUser());
+                    reqestUrl.append("&");
+                    reqestUrl.append("account="+wallet.getUser());
+                    reqestUrl.append("&");
+                    reqestUrl.append("passphrase="+wallet.getPass());
+                    reqestUrl.append("&");
+                }
+            }
+            else
+            {
+                reqestUrl.append(pair.getKey()+"="+pair.getValue().toString());
+                reqestUrl.append("&");
+            }
         }
         reqestParam.clear();
         return reqestUrl.toString();

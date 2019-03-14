@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.api.response.SendMoneyResponse;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 
@@ -21,14 +23,14 @@ public class TestAliasAPI extends TestBase {
     @DisplayName("Get Aliases")
     @Test
     public void getAliases() throws IOException {
-        GetAliasesResponse getAliasesResponse = getAliases(testConfiguration.getTestUser());
+        GetAliasesResponse getAliasesResponse = getAliases(testConfiguration.getStandartWallet());
         assertTrue(getAliasesResponse.aliases.length >= 1);
     }
 
     @DisplayName("Get Alias Count")
     @Test
     public void getAliasCount() throws IOException {
-        GetCountAliasesResponse getAliasesCount = getAliasCount(testConfiguration.getTestUser());
+        GetCountAliasesResponse getAliasesCount = getAliasCount(testConfiguration.getStandartWallet());
         assertTrue(getAliasesCount.numberOfAliases >= 1);
     }
 
@@ -42,9 +44,8 @@ public class TestAliasAPI extends TestBase {
 
 
     @DisplayName("Set Alias")
-    @Test
-    public void setAlias() throws IOException {
-        CreateTransactionResponse setAlias = setAlias("testapi.com", "testapiautomation", 400000000, 1400);
+    public void setAlias(String pass) throws IOException {
+        CreateTransactionResponse setAlias = setAlias(testConfiguration.getStandartWallet(),"testapi.com", "testapiautomation", 400000000, 1400);
         assertNotNull(setAlias.transactionJSON.senderPublicKey);
         assertNotNull(setAlias.transactionJSON.signature);
         assertNotNull(setAlias.transactionJSON.fullHash);
@@ -60,7 +61,7 @@ public class TestAliasAPI extends TestBase {
     @DisplayName("Delete Alias")
     @Test
     public void deleteAlias() throws IOException {
-        CreateTransactionResponse deleteAlias = deleteAlias("testapiautomation");
+        CreateTransactionResponse deleteAlias = deleteAlias(testConfiguration.getStandartWallet(),"testapiautomation");
         assertNotNull(deleteAlias.transactionJSON.senderPublicKey);
         assertNotNull(deleteAlias.transactionJSON.signature);
         assertNotNull(deleteAlias.transactionJSON.fullHash);
@@ -84,7 +85,7 @@ public class TestAliasAPI extends TestBase {
     @DisplayName("Sell Alias")
     @Test
     public void sellAlias() throws IOException {
-        CreateTransactionResponse sellAlias = sellAlias("apitest");
+        CreateTransactionResponse sellAlias = sellAlias(testConfiguration.getStandartWallet(),"apitest");
         assertTrue(sellAlias.toString().length() >= 1);
 
     }
@@ -93,7 +94,7 @@ public class TestAliasAPI extends TestBase {
     @DisplayName("Buy Alias")
     @Test
     public void buyAlias() throws IOException {
-        CreateTransactionResponse buyAlias = buyAlias("apitest");
+        CreateTransactionResponse buyAlias = buyAlias(testConfiguration.getStandartWallet(),"apitest");
         assertTrue(buyAlias.toString().length() >= 1);
     }
 

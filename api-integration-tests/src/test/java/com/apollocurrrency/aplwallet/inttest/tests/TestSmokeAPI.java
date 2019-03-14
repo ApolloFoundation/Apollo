@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
@@ -41,14 +42,14 @@ public class TestSmokeAPI extends TestBase {
            RetryPolicy retryPolicy = new RetryPolicy()
                 .retryWhen(null)
                 .withMaxRetries(10)
-                .withDelay(30, TimeUnit.SECONDS);
+                .withDelay(5, TimeUnit.SECONDS);
 
         //Verify count of peers
         String [] peers = getPeers();
         assertTrue("Peer counts < 3",  peers.length >= 3);
 
         //Verify transaction in block
-        String transactionIndex =  sendMoney(testConfiguration.getTestUser(),200000000, 100000000).transaction;
+        String transactionIndex =  sendMoney(testConfiguration.getStandartWallet(),200000000, 100000000).transaction;
         String blockIndex = Failsafe.with(retryPolicy).get(() -> verifyTransactionInBlock(transactionIndex,null));
         assertNotNull("Transaction don't added to block", blockIndex);
 
@@ -77,11 +78,12 @@ public class TestSmokeAPI extends TestBase {
 
 
 
-    private CreateTransactionResponse sendMoney(String recipient, int moneyCount, int fee) throws IOException {
+    private CreateTransactionResponse sendMoney(Wallet wallet, int moneyCount, int fee) throws IOException {
         addParameters(RequestType.requestType, RequestType.sendMoney);
-        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.recipient, wallet.getUser());
         addParameters(Parameters.amountNQT, moneyCount);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeNQT, fee);
         addParameters(Parameters.deadline, 1400);
 

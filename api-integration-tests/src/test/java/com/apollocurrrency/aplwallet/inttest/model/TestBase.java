@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBase {
@@ -29,11 +29,17 @@ public class TestBase {
     public static ObjectMapper mapper = new ObjectMapper();
     RetryPolicy retryPolicy;
 
-    public TestBase() {
+    public TestBase()  {
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(10)
                 .withDelay(5, TimeUnit.SECONDS);
+        try {
+            deleteKey(testConfiguration.getVaultWallet());
+            testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean verifyTransactionInBlock(String transaction)
@@ -84,10 +90,9 @@ public class TestBase {
         return   mapper.readValue(response.body().string().toString(), AccountBlockIdsResponse.class);
     }
 
-    public AccountDTO getAccountId(String account, String secretPhrase) throws IOException {
+    public AccountDTO getAccountId(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountId);
-        addParameters(Parameters.account, account);
-        addParameters(Parameters.secretPhrase, secretPhrase);
+        addParameters(Parameters.wallet,wallet);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
@@ -159,16 +164,18 @@ public class TestBase {
     }
 
 
-    public CreateTransactionResponse sendMoney(String recipient, int moneyAmount) throws IOException {
+    public CreateTransactionResponse sendMoney(Wallet wallet,String recipient, int moneyAmount) throws IOException {
         addParameters(RequestType.requestType,RequestType.sendMoney);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.amountATM, moneyAmount+"00000000");
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
+        //addParameters(Parameters.account, wallet.getUser());
+        //addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
+        return   mapper.readValue(response.body().string(), CreateTransactionResponse.class);
     }
 
 
@@ -189,24 +196,24 @@ public class TestBase {
         return  mapper.readValue(response.body().string().toString(), BlockchainTransactionsResponse.class);
     }
 
-    public CreateTransactionResponse  setAccountInfo(String accountID,String accountPass,String accountName,String accountDescription) throws IOException {
+    public CreateTransactionResponse  setAccountInfo(Wallet wallet,String accountName,String accountDescription) throws IOException {
         addParameters(RequestType.requestType,RequestType.setAccountInfo);
         addParameters(Parameters.name, accountName);
         addParameters(Parameters.description, accountDescription);
-        addParameters(Parameters.secretPhrase, accountPass);
-        addParameters(Parameters.recipient, accountID);
+        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.account, wallet.getUser());
+       // addParameters(Parameters.recipient, accountID);
         addParameters(Parameters.deadline, 1440);
         addParameters(Parameters.feeATM, 300000000);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), CreateTransactionResponse.class);
-
     }
 
-    public CreateTransactionResponse  setAccountProperty(String accountID, String pass, String property ) throws IOException {
+    public CreateTransactionResponse  setAccountProperty(Wallet wallet, String property ) throws IOException {
         addParameters(RequestType.requestType,RequestType.setAccountProperty);
-        addParameters(Parameters.secretPhrase, pass);
-        addParameters(Parameters.recipient, accountID);
+        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.recipient, wallet.getUser());
         addParameters(Parameters.property, property);
         addParameters(Parameters.deadline, 1440);
         addParameters(Parameters.feeATM, 100000000);
@@ -216,11 +223,12 @@ public class TestBase {
     }
 
 
-    public CreateTransactionResponse  deleteAccountProperty(String pass,String property) throws IOException {
+    public CreateTransactionResponse  deleteAccountProperty(Wallet wallet,String property) throws IOException {
         addParameters(RequestType.requestType,RequestType.deleteAccountProperty);
         addParameters(Parameters.property, property);
         addParameters(Parameters.deadline, 1440);
-        addParameters(Parameters.secretPhrase, pass);
+        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.account, wallet.getUser());
         addParameters(Parameters.feeATM, 100000000);
         Response response = httpCallPost();
         assertEquals(200, response.code());
@@ -236,9 +244,10 @@ public class TestBase {
     }
 
     //Skrypchenko Serhii
-    public GetAliasesResponse getAliases  (String accountID) throws IOException {
+    public GetAliasesResponse getAliases  (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliases);
-        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -246,9 +255,10 @@ public class TestBase {
     }
 
     //Skrypchenko Serhii
-    public GetCountAliasesResponse getAliasCount(String accountID) throws IOException {
+    public GetCountAliasesResponse getAliasCount(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliasCount);
-        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -267,11 +277,12 @@ public class TestBase {
 
 
     //Skrypchenko Serhii
-    public  CreateTransactionResponse setAlias (String aliasURL, String aliasName, Integer feeATM, Integer deadline) throws IOException {
+    public  CreateTransactionResponse setAlias (Wallet wallet,String aliasURL, String aliasName, Integer feeATM, Integer deadline) throws IOException {
         addParameters(RequestType.requestType,RequestType.setAlias);
         addParameters(Parameters.aliasURI, aliasURL);
         addParameters(Parameters.aliasName, aliasName);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, feeATM);
         addParameters(Parameters.deadline, deadline);
         Response response = httpCallPost();
@@ -282,9 +293,10 @@ public class TestBase {
     }
 
     //Skrypchenko Serhii
-    public CreateTransactionResponse deleteAlias(String aliasname) throws IOException {
+    public CreateTransactionResponse deleteAlias(Wallet wallet, String aliasname) throws IOException {
         addParameters(RequestType.requestType,RequestType.deleteAlias);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.aliasName, aliasname);
         addParameters(Parameters.feeATM, 400000000);
         addParameters(Parameters.deadline, 60);
@@ -309,10 +321,11 @@ public class TestBase {
 
 
     //Serhii Skrypchenko (sell Alias)
-    public CreateTransactionResponse sellAlias (String aliasName) throws IOException {
+    public CreateTransactionResponse sellAlias (Wallet wallet,String aliasName) throws IOException {
         addParameters(RequestType.requestType, RequestType.sellAlias);
         addParameters(Parameters.aliasName, aliasName);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, 500000000);
         addParameters(Parameters.priceATM, 1500000000);
         addParameters(Parameters.deadline, 60);
@@ -324,10 +337,11 @@ public class TestBase {
         return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
     }
 
-    public CreateTransactionResponse buyAlias (String aliasName) throws IOException {
+    public CreateTransactionResponse buyAlias (Wallet wallet,String aliasName) throws IOException {
         addParameters(RequestType.requestType, RequestType.buyAlias);
         addParameters(Parameters.aliasName, aliasName);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, 500000000);
         addParameters(Parameters.amountATM, 1500000000);
         addParameters(Parameters.deadline, 60);
@@ -339,11 +353,12 @@ public class TestBase {
         return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
     }
   
-    public CreateTransactionResponse sendMoneyPrivate(String recipient, int moneyAmount) throws IOException {
+    public CreateTransactionResponse sendMoneyPrivate(Wallet wallet,String recipient, int moneyAmount) throws IOException {
         addParameters(RequestType.requestType,RequestType.sendMoneyPrivate);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.amountATM, moneyAmount+"00000000");
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
@@ -360,15 +375,30 @@ public class TestBase {
     }
 
 
-     public Account2FA deleteKey(String accountID,String pass) throws IOException {
+     public Account2FA deleteKey(Wallet wallet) throws IOException {
          addParameters(RequestType.requestType,RequestType.deleteKey);
-         addParameters(Parameters.account, accountID);
-         addParameters(Parameters.passphrase,pass);
+         addParameters(Parameters.wallet, wallet);
          Response response = httpCallPost();
          assertEquals(200, response.code());
          return   mapper.readValue(response.body().string(), Account2FA.class);
-
      }
+
+    public Account2FA exportKey(Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType,RequestType.exportKey);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string(), Account2FA.class);
+    }
+
+    public Account2FA importKey(Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, importKey);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string(), Account2FA.class);
+    }
+
 
     public AccountDTO enable2FA(String accountID,String pass) throws IOException {
         addParameters(RequestType.requestType,RequestType.enable2FA);
