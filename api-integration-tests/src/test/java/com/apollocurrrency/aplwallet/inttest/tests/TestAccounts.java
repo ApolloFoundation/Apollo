@@ -256,7 +256,10 @@ public class TestAccounts extends TestBase {
     @DisplayName("Delete Account Property")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    public void  deleteAccountProperty(Wallet wallet) throws IOException { ;
+    public void  deleteAccountProperty(Wallet wallet) throws IOException {
+        String property = "Property "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountProperty(testConfiguration.getStandartWallet(),property);
+        verifyTransactionInBlock(setAccountInfo.transaction);
         CreateTransactionResponse transaction = deleteAccountProperty(testConfiguration.getStandartWallet(),getAccountProperty(wallet).properties[0].property);
         assertNotNull(transaction.transactionJSON.senderPublicKey);
         assertNotNull(transaction.transactionJSON.signature);
