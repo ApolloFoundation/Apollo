@@ -31,6 +31,15 @@ public class Peer {
     private Boolean shareAddress;
     private Integer requestProcessingTime;
     private String chainId;
+    private String isNewlyAdded;
+
+    public String getIsNewlyAdded() {
+        return isNewlyAdded;
+    }
+
+    public void setIsNewlyAdded(String isNewlyAdded) {
+        this.isNewlyAdded = isNewlyAdded;
+    }
 
     public String getChainId() {
         return chainId;

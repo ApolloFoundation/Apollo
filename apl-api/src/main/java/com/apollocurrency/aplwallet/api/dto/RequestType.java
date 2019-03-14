@@ -1,6 +1,10 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 public enum RequestType {
+    getECBlock,
+    getBlockchainStatus,
+    getMyInfo,
+    addPeer,
     enable2FA,
     getPeer,
     deleteKey,

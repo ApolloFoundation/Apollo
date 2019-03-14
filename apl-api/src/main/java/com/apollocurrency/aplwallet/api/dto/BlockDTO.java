@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class BlockDTO {
     public String previousBlockHash;
     public Long payloadLength;
-    public String totalAmountNQT;
+    public String totalAmountATM;
     public String generationSignature;
     public String generator;
     public String generatorPublicKey;
@@ -18,7 +18,7 @@ public class BlockDTO {
     public String blockSignature;
     public TransactionDTO[] transactions;
     public Long version;
-    public String totalFeeNQT;
+    public String totalFeeATM;
     public String previousBlock;
     public String cumulativeDifficulty;
     public String block;
@@ -26,5 +26,8 @@ public class BlockDTO {
     public Long timestamp;
     public String nextBlock;
     private String protocol;
+    public Long requestProcessingTime;
+    public Long timeout;
+
 
 }

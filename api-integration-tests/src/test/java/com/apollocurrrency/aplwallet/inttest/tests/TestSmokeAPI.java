@@ -16,6 +16,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.addParamet
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallGet;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallPost;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -23,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 //@RunWith(JUnitPlatform.class)
+
 public class TestSmokeAPI extends TestBase {
 
     private TestConfiguration testConfiguration;
