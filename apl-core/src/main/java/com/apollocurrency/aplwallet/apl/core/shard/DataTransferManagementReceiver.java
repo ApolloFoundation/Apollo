@@ -38,18 +38,16 @@ public interface DataTransferManagementReceiver {
     String PREVIOUS_MIGRATION_KEY = "SHARD_MIGRATION_STATUS";
     String LAST_MIGRATION_OBJECT_NAME = "LAST_MIGRATION_OBJECT_NAME";
 
-//    Map<String, Long> getTableNameWithCountMap();
-
     DatabaseManager getDatabaseManager();
 
     MigrateState getCurrentState();
 
-    MigrateState addOrCreateShard(DatabaseMetaInfo source, DbVersion dbVersion);
+    MigrateState addOrCreateShard(/*DatabaseMetaInfo source, */DbVersion dbVersion);
 
     MigrateState moveData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
 
     MigrateState relinkDataToSnapshotBlock(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
 
-//    MigrateState renameDataFiles(DatabaseMetaInfo source, DatabaseMetaInfo target);
+    MigrateState updateSecondaryIndex(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source/*, DatabaseMetaInfo target*/);
 
 }

@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -61,6 +62,10 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private volatile long txTimes = 0;
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
+    /**
+     * Optional.EMPTY for 'main db', Optional.value 1...xx for shardId, Optional.value NEGATIVE = -1 for temp db only
+     */
+    private Optional<Long> dbIdentity = Optional.empty();
 
     /**
      * Created by CDI with previously initialized properties.
@@ -76,6 +81,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         txInterval = getPropertyOrDefault("apl.transactionLogInterval", 15) * 60 * 1000;
         enableSqlLogs = TransactionalDataSource.propertiesHolder.getBooleanProperty("apl.enableSqlLogs");
         factory = new FilteredFactoryImpl(stmtThreshold);
+        this.dbIdentity = dbProperties.getDbIdentity();
     }
 
     /**
@@ -309,5 +315,14 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private static long getPropertyOrDefault(String propertyName, long defaultValue) {
         long temp;
         return (temp=propertiesHolder.getIntProperty(propertyName)) != 0 ? temp : defaultValue;
+    }
+
+    /**
+     * Return db identity value related to database type - main db, shard db, temp db.
+     * Optional.EMPTY, Optional.1-xxx , Optional. -1
+     * @return Optional.EMPTY for main db, Optional.value +1 for shardId, Optional.value NEGATIVE = -1L for temp db
+     */
+    public Optional<Long> getDbIdentity() {
+        return this.dbIdentity;
     }
 }

@@ -76,52 +76,54 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         this.preparedInsertStatement = null;
     }
 
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect, String tableName,
-                                      long batchCommitSize, Long snapshotBlockHeight)
+    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
+                                      TableOperationParams operationParams)
             throws Exception {
-        log.debug("Processing: '{}'", tableName);
+        log.debug("Processing: {}", operationParams);
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
         Objects.requireNonNull(targetConnect, "targetConnect is NULL");
-        Objects.requireNonNull(tableName, "tableName is NULL");
-        Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
-        currentTableName = tableName;
+        Objects.requireNonNull(operationParams.tableName, "tableName is NULL");
+        Objects.requireNonNull(operationParams.snapshotBlockHeight, "snapshotBlockHeight is NULL");
+        currentTableName = operationParams.tableName;
 
         String sqlToExecuteWithPaging;
 
-        if (tableName.equalsIgnoreCase("transaction")) {
+        if (operationParams.tableName.equalsIgnoreCase("transaction")) {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID <= ? limit ?";
             log.trace(sqlToExecuteWithPaging);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Transaction' is expected. Pls use another Helper class");
         }
         // select DB_ID for target HEIGHT
-        Long transactionTargetDbID = selectLimitedRangeDbId(sourceConnect, snapshotBlockHeight);;
-        if (transactionTargetDbID == null) {
-            String error = String.format("Not Found Tr DB_ID at snapshot Block height = %s", snapshotBlockHeight);
+        Long upperBoundIdValue = selectLimitedRangeDbId(sourceConnect, operationParams.snapshotBlockHeight);;
+        if (upperBoundIdValue == null) {
+            String error = String.format("Not Found Tr DB_ID at snapshot Block height = %s", operationParams.snapshotBlockHeight);
             log.error(error);
             throw new RuntimeException(error);
         }
-        Long lowerIndex = selectLimitedRangeDbId(sourceConnect);
+        Long lowerBoundIdValue = selectLimitedRangeDbId(sourceConnect);
+        log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
-        paginateResultWrapper.limitValue = lowerIndex;
+        paginateResultWrapper.limitValue = lowerBoundIdValue;
 
         long startSelect = System.currentTimeMillis();
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, paginateResultWrapper.limitValue);
-                ps.setLong(2, transactionTargetDbID);
-                ps.setLong(3, batchCommitSize);
+                ps.setLong(2, upperBoundIdValue);
+                ps.setLong(3, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, targetConnect));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
+            throw e;
         } finally {
             if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
                 this.preparedInsertStatement.close();
             }
         }
-        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("'{}' inserted [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
         return totalRowCount;
     }
 
@@ -166,6 +168,8 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
                 } catch (Exception e) {
                     log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
                     log.error("Failed inserting " + currentTableName, e);
+                    targetConnect.rollback();
+                    throw e;
                 }
                 rows++;
             }

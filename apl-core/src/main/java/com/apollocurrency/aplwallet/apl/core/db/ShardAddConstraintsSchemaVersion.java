@@ -50,55 +50,52 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply("alter table BLOCK add constraint IF NOT EXISTS BLOCK_HEIGHT_IDX unique (HEIGHT)");
             case 13:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("create unique index IF NOT EXISTS BLOCK_DB_ID_UINDEX on BLOCK (DB_ID)");
+                apply("create unique index IF NOT EXISTS PRIMARY_KEY_BLOCK_DB_ID_INDEX on BLOCK (DB_ID)");
             case 14:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("create unique index IF NOT EXISTS PRIMARY_KEY_BLOCK_DB_ID_INDEX on BLOCK (DB_ID)");
+                apply("create index IF NOT EXISTS BLOCK_GENERATOR_ID_IDX on BLOCK (GENERATOR_ID)");
             case 15:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("create index IF NOT EXISTS BLOCK_GENERATOR_ID_IDX on BLOCK (GENERATOR_ID)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_id_idx ON block (id)");
             case 16:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_id_idx ON block (id)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_height_idx ON block (height)");
             case 17:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_height_idx ON block (height)");
-            case 18:
-                log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS block_generator_id_idx ON block (generator_id)");
-            case 19:
+            case 18:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_timestamp_idx ON block (timestamp DESC)");
 /*  ---------------------- TRANSACTION -------------------    */
-            case 20:
+            case 19:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("alter table TRANSACTION add constraint IF NOT EXISTS TRANSACTION_PK primary key (DB_ID)");
-            case 21:
+            case 20:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("alter table TRANSACTION add constraint IF NOT EXISTS TRANSACTION_ID_IDX unique (ID)");
-            case 22:
+            case 21:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("ALTER TABLE TRANSACTION ADD CONSTRAINT IF NOT EXISTS TRANSACTION_TO_BLOCK_FK FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE");
-            case 23:
+            case 22:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("create unique index IF NOT EXISTS TRANSACTION_DB_ID_UINDEX on TRANSACTION (DB_ID)");
-            case 24:
+            case 23:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
-            case 25:
+            case 24:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS transaction_sender_id_idx ON transaction (sender_id)");
-            case 26:
+            case 25:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS transaction_recipient_id_idx ON transaction (recipient_id)");
-            case 27:
+            case 26:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON transaction (block_timestamp DESC)");
-            case 28:
+            case 27:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS referenced_transaction_referenced_transaction_id_idx ON referenced_transaction (referenced_transaction_id)");
-            case 29:
-                return 29;
+            case 28:
+                return 28;
             default:
                 throw new RuntimeException("Shard ADD CONSTRAINTS/INDEXES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

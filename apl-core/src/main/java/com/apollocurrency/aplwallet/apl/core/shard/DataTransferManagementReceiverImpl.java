@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedSelectInsert;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.slf4j.Logger;
 
@@ -53,19 +54,20 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private MigrateState state = MigrateState.INIT;
     private DbProperties dbProperties;
     private DatabaseManager databaseManager;
-    private Blockchain blockchain;
+    private TrimService trimService;
     private OptionDAO optionDAO;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private HelperFactory<BatchedSelectInsert> helperFactory = new HelperFactoryImpl();
+    private Optional<Long> createdShardId;
 
     public DataTransferManagementReceiverImpl() {
     }
 
     @Inject
-    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, Blockchain blockchain) {
+    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService) {
         this.dbProperties = databaseManager.getBaseDbProperties();
         this.databaseManager = databaseManager;
-        this.blockchain = blockchain;
+        this.trimService = trimService;
         this.optionDAO = new OptionDAO(this.databaseManager); // actually we want to use TEMP=TARGET data source in OptionDAO
     }
 
@@ -83,26 +85,32 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     }
 
     @Override
-    public MigrateState addOrCreateShard(DatabaseMetaInfo source, DbVersion dbVersion) {
-        log.debug("Creating shard db file...");
-        Objects.requireNonNull(source, "source meta-info is NULL");
-        Objects.requireNonNull(source.getNewFileName(), "new DB file is NULL");
+    public MigrateState addOrCreateShard(/*DatabaseMetaInfo source, */DbVersion dbVersion) {
+        long start = System.currentTimeMillis();
+//        Objects.requireNonNull(source, "source meta-info is NULL");
+//        Objects.requireNonNull(source.getNewFileName(), "new DB file is NULL");
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
+        log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
         try {
             // add info about state
             TransactionalDataSource shardDb = databaseManager.createAndAddShard(null, dbVersion);
+            createdShardId = shardDb.getDbIdentity();
             if (optionDAO.get(PREVIOUS_MIGRATION_KEY/*, shardDb*/) != null) {
                 state = MigrateState.SHARD_DB_CREATED; // continue to next state
+                log.debug("Previously created shard db={} by schema={} in {} secs", createdShardId, dbVersion.getClass().getSimpleName(),
+                        (System.currentTimeMillis() - start)/1000);
                 return state;
             }
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SHARD_DB_CREATED.name()/*, shardDb*/);
             state = MigrateState.SHARD_DB_CREATED;
-            return state;
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, shardDb*/);
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
-            return MigrateState.FAILED;
+            state = MigrateState.FAILED;
+//            optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, targetDataSource*/);
         }
+        log.debug("INIT shard db={} by schema={} in {} secs", createdShardId, dbVersion.getClass().getSimpleName(),
+                (System.currentTimeMillis() - start)/1000);
+        return state;
     }
 
     /**
@@ -117,8 +125,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         log.debug("Starting shard data transfer from [{}] tables...", tableNameCountMap.size());
         long startAllTables = System.currentTimeMillis();
         String lastTableName = null;
-        TransactionalDataSource targetDataSource = assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
-        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name()/*, targetDataSource*/);
+        TransactionalDataSource targetDataSource = initializeAssignMissingDataSources(source, target, new ShardInitTableSchemaVersion());
+        state = MigrateState.DATA_MOVING_TO_SHARD_STARTED;
+        optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, targetDataSource*/);
 /*
         if (optionDAO.get(PREVIOUS_MIGRATION_KEY, targetDataSource) == null) {
             optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name(), targetDataSource);
@@ -145,13 +154,15 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     }
                     currentTable = tableName;
                     optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName/*, targetDataSource*/);
-                    Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createHelper(tableName);
+                    Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createSelectInsertHelper(tableName);
                     if (sqlSelectAndInsertHelper.isPresent()) {
+                        TableOperationParams operationParams = new TableOperationParams(
+                                tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight(), targetDataSource.getDbIdentity());
                         long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
-                                sourceConnect, targetConnect, tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight());
+                                sourceConnect, targetConnect, operationParams);
                         targetDataSource.commit(false);
                         log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
-//                        sqlSelectAndInsertHelper.get().reset();
+                        sqlSelectAndInsertHelper.get().reset();
                     } else {
                         log.warn("NO processing HELPER class for table '{}'", tableName);
                     }
@@ -160,20 +171,19 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             } catch (Exception e) {
                 log.error("Error processing table = '" + currentTable + "'", e);
                 targetDataSource.rollback(false);
-                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
                 state = MigrateState.FAILED;
+//                optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, targetDataSource*/);
                 return state;
             } finally {
                 if (targetConnect != null) {
                     targetDataSource.commit(false);
                 }
             }
-            boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVED_TO_SHARD.name()/*, source.getDataSource()*/);
             state = MigrateState.DATA_MOVED_TO_SHARD;
+            boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, source.getDataSource()*/);
             log.debug("Add Snapshot block MigrateState.SNAPSHOT_BLOCK_CREATED was saved = {}", result);
             log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
         }
-//        state = MigrateState.DATA_MOVED_TO_SHARD;
         return state;
     }
 
@@ -188,7 +198,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(target.getSnapshotBlockHeight(), "target Snapshot Block height is NULL");
         long startAllTables = System.currentTimeMillis();
         log.debug("Starting LINKED data update from [{}] tables...", tableNameCountMap.size());
-        assignDataSourceIfMissing(source, target, new ShardInitTableSchemaVersion());
+
+        initializeAssignMissingDataSources(source, target, new ShardInitTableSchemaVersion());
 //        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name(), targetDataSource);
         if (target.getSnapshotBlockHeight() == null) {
             log.error("Snapshot block HEIGHT was not specified...");
@@ -202,17 +213,25 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         try (
                 Connection sourceConnect = sourceDataSource.begin()
         ) {
+            long startTrim = System.currentTimeMillis();
+            log.debug("Start trimming '{}' to HEIGHT '{}'", "PUBLIC_KEY", target.getSnapshotBlockHeight());
+            trimService.doTrimDerivedTables(target.getSnapshotBlockHeight().intValue(), sourceDataSource); // TRIM 'PUBLIC_KEY' table before processing
+            log.debug("Trimmed '{}' to HEIGHT '{}' within {} sec", "PUBLIC_KEY", target.getSnapshotBlockHeight(), (System.currentTimeMillis() - startTrim)/1000);
+
             for (String tableName : tableNameCountMap.keySet()) {
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
                 optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName/*, targetDataSource*/);
-                Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createHelper(tableName);
+                Optional<BatchedSelectInsert> sqlSelectAndInsertHelper = helperFactory.createSelectInsertHelper(tableName);
                 if (sqlSelectAndInsertHelper.isPresent()) {
+                    TableOperationParams operationParams = new TableOperationParams(
+                            tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight(), createdShardId);
+
                     long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
-                            sourceConnect, null, tableName, target.getCommitBatchSize(), target.getSnapshotBlockHeight());
+                            sourceConnect, null, operationParams);
                     sourceDataSource.commit(false);
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
-//                        sqlSelectAndInsertHelper.get().reset();
+                    sqlSelectAndInsertHelper.get().reset();
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
@@ -221,29 +240,105 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         } catch (Exception e) {
             log.error("Error processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
-            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
             state = MigrateState.FAILED;
+//            optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, targetDataSource*/);
             return state;
         } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit(false);
             }
         }
-        boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_RELINKED_IN_MAIN.name()/*, source.getDataSource()*/);
         state = MigrateState.DATA_RELINKED_IN_MAIN;
-        log.debug("Add Snapshot block MigrateState.SNAPSHOT_BLOCK_CREATED was saved = {}", result);
+        boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, source.getDataSource()*/);
+        log.debug("Add Snapshot block MigrateState.DATA_RELINKED_IN_MAIN was saved = {}", result);
         log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
 
         return state;
     }
 
-    private TransactionalDataSource assignDataSourceIfMissing(DatabaseMetaInfo source, DatabaseMetaInfo target, DbVersion dbVersion) {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MigrateState updateSecondaryIndex(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source/*, DatabaseMetaInfo target*/) {
+        Objects.requireNonNull(tableNameCountMap, "tableNameCountMap is NULL");
+        Objects.requireNonNull(source, "source meta-info is NULL");
+//        Objects.requireNonNull(target, "target meta-info is NULL");
+        Objects.requireNonNull(source.getSnapshotBlockHeight(), "target Snapshot Block height is NULL");
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting SECONDARY INDEX data update from [{}] tables...", tableNameCountMap.size());
+
+//        initializeAssignMissingDataSources(source, target, new ShardInitTableSchemaVersion());
+
+        if (source.getDataSource() == null) {
+            source.setDataSource(databaseManager.getDataSource());
+        }
+
+//        optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.DATA_MOVING_TO_SHARD_STARTED.name(), targetDataSource);
+        if (source.getSnapshotBlockHeight() == null) {
+            log.error("Snapshot block HEIGHT was not specified...");
+            state = MigrateState.FAILED;
+            optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.FAILED.name()/*, targetDataSource*/);
+            return state;
+        }
+//        target.setSnapshotBlock(snapshootBlock);
+        String currentTable = null;
+        TransactionalDataSource sourceDataSource = source.getDataSource();
+        Connection sourceConnect = null;
+        try {
+            if (!sourceDataSource.isInTransaction()) {
+                sourceConnect = sourceDataSource.begin();
+            } else {
+                sourceConnect = sourceDataSource.getConnection();
+            }
+
+            for (String tableName : tableNameCountMap.keySet()) {
+                long start = System.currentTimeMillis();
+                currentTable = tableName;
+                optionDAO.set(LAST_MIGRATION_OBJECT_NAME, tableName/*, targetDataSource*/);
+                Optional<BatchedSelectInsert> updateIndexHelper = helperFactory.createSelectInsertHelper(tableName);
+                if (updateIndexHelper.isPresent() && createdShardId.isPresent()) {
+                    TableOperationParams operationParams = new TableOperationParams(
+                            tableName, source.getCommitBatchSize(), source.getSnapshotBlockHeight(), createdShardId);
+
+                    long totalCount = updateIndexHelper.get().selectInsertOperation(
+                            sourceConnect, null, operationParams);
+                    sourceDataSource.commit(false);
+                    log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+//                    sourceConnect.commit();
+                    updateIndexHelper.get().reset();
+                } else {
+                    log.warn("NO processing HELPER class for table '{}'", tableName);
+                }
+            }
+//                optionDAO.set(PREVIOUS_MIGRATION_KEY, MigrateState.SECONDARY_INDEX_UPDATED.name()/*, targetDataSource*/);
+        } catch (Exception e) {
+            log.error("Error processing table = '" + currentTable + "'", e);
+            sourceDataSource.rollback(false);
+            state = MigrateState.FAILED;
+//            optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, targetDataSource*/);
+            return state;
+        } finally {
+            if (sourceDataSource != null) {
+                sourceDataSource.commit(false);
+            }
+        }
+        state = MigrateState.SECONDARY_INDEX_UPDATED;
+        boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()/*, source.getDataSource()*/);
+        log.debug("Add Snapshot block MigrateState.SECONDARY_INDEX_UPDATED was saved = {}", result);
+        log.debug("Processed table(s)=[{}] in {} secs", tableNameCountMap.size(), (System.currentTimeMillis() - startAllTables)/1000);
+
+        return state;
+    }
+
+    private TransactionalDataSource initializeAssignMissingDataSources(DatabaseMetaInfo source, DatabaseMetaInfo target, DbVersion dbVersion) {
         if (source.getDataSource() == null) {
             source.setDataSource(databaseManager.getDataSource());
         }
         TransactionalDataSource targetDataSource = target.getDataSource();
         if (targetDataSource == null) {
-            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(null, dbVersion));
+            target.setDataSource(databaseManager.getOrCreateShardDataSourceById(
+                    createdShardId.orElse(null), dbVersion));
             targetDataSource = target.getDataSource();
         }
         return targetDataSource;

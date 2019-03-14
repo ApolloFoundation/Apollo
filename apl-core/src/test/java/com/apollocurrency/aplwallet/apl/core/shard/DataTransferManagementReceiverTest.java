@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver.TEMPORARY_MIGRATION_FILE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_DB_CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -21,6 +21,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -30,7 +35,9 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfoImpl;
@@ -68,20 +75,28 @@ class DataTransferManagementReceiverTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesConfigLoader.class,
+            PropertiesConfigLoader.class, GlobalSyncImpl.class, PropertyProducer.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             TransactionalDataSource.class, DatabaseManager.class, DataTransferManagementReceiverImpl.class,
-            BlockchainConfig.class, BlockchainConfigUpdater.class)
+            BlockchainConfig.class, BlockchainConfigUpdater.class, DerivedDbTablesRegistry.class, TrimService.class)
             .build();
+
+    @Inject
+    private GlobalSync globalSync;
 
     private static Path pathToDb;
     private static PropertiesHolder propertiesHolder;
+    @Inject
+    private PropertyProducer propertyProducer;
     private static DbProperties baseDbProperties;
     private static DatabaseManager databaseManager;
     private DataTransferManagementReceiver transferManagementReceiver;
     private Blockchain blockchain;
-    private BlockchainConfigUpdater configUpdater;
+    @Inject
+    private DerivedDbTablesRegistry dbTablesRegistry;
+    @Inject
+    private TrimService trimService;
 
     @BeforeAll
     static void setUpAll() {
@@ -104,7 +119,7 @@ class DataTransferManagementReceiverTest {
     @BeforeEach
     void setUp() {
         blockchain = CDI.current().select(BlockchainImpl.class).get();
-        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, blockchain);
+        propertyProducer = new PropertyProducer(propertiesHolder);
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         BlockchainProperties blockchainProperties = new BlockchainProperties(
                 10, 10, 10, 10, 10, 10L, new ConsensusSettings());
@@ -120,7 +135,10 @@ class DataTransferManagementReceiverTest {
         blockchainPropertiesMap.put(0, blockchainProperties);
         chain.setBlockchainProperties(blockchainPropertiesMap);
         blockchainConfig.updateChain(chain, 10);
-
+        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
+        dbTablesRegistry.registerDerivedTable(publicKeyTable);
+        trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
+        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
     }
 
     @AfterEach
@@ -133,12 +151,23 @@ class DataTransferManagementReceiverTest {
         MigrateState state = transferManagementReceiver.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
+        state = transferManagementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
+        assertEquals(SHARD_DB_CREATED, state);
+    }
 
+    @Test
+    void createFullShardDb() throws IOException {
+        MigrateState state = transferManagementReceiver.getCurrentState();
+        assertNotNull(state);
+        assertEquals(MigrateState.INIT, state);
+
+/*
         DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
                 null, TEMPORARY_MIGRATION_FILE_NAME,
                 -1, SHARD_DB_CREATED, null, null);
+*/
 
-        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardAddConstraintsSchemaVersion());
+        state = transferManagementReceiver.addOrCreateShard(/*databaseMetaInfo, */new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_DB_CREATED, state);
     }
 
@@ -149,12 +178,14 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null, null);
+//        DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
+//                null, TEMPORARY_MIGRATION_FILE_NAME,
+//                -1, SHARD_DB_CREATED, null, null);
 
-//        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardInitTableSchemaVersion());
-//        assertEquals(SHARD_DB_CREATED, state);
+        state = transferManagementReceiver.addOrCreateShard(
+//                databaseMetaInfo,
+                new ShardInitTableSchemaVersion());
+        assertEquals(SHARD_DB_CREATED, state);
 
         DatabaseMetaInfo shardDbMetaInfo = new DatabaseMetaInfoImpl(
                 null, null, 100,
@@ -162,32 +193,42 @@ class DataTransferManagementReceiverTest {
 
         DatabaseMetaInfo mainDbMetaInfo = new DatabaseMetaInfoImpl(
                 null, "apl-blockchain", 100,
-                MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, null);
+                MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, 1350000L);
 
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
         // next not linked tables
 //        tableNameCountMap.clear();
-//        tableNameCountMap.put("BLOCK", -1L);
-//        tableNameCountMap.put("TRANSACTION", -1L);
+        tableNameCountMap.put("BLOCK", -1L);
+        tableNameCountMap.put("TRANSACTION", -1L);
 
         shardDbMetaInfo.setSnapshotBlock(null); // remove snapshot block
-//        state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
+        state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
 //        assertEquals(MigrateState.DATA_MOVED_TO_SHARD, state);
-//        assertEquals(MigrateState.FAILED, state);
+        assertEquals(MigrateState.FAILED, state);
 
-//        state = transferManagementReceiver.addOrCreateShard(databaseMetaInfo, new ShardAddConstraintsSchemaVersion());
-//        assertEquals(SHARD_DB_CREATED, state);
+        state = transferManagementReceiver.addOrCreateShard(
+//                databaseMetaInfo,
+                new ShardAddConstraintsSchemaVersion());
+        assertEquals(SHARD_DB_CREATED, state);
 
         tableNameCountMap.clear();
-//        tableNameCountMap.put("GENESIS_PUBLIC_KEY", -1L);
+        tableNameCountMap.put("GENESIS_PUBLIC_KEY", -1L);
         tableNameCountMap.put("PUBLIC_KEY", -1L);
 //        tableNameCountMap.put("TAGGED_DATA", -1L);
-//        tableNameCountMap.put("SHUFFLING_DATA", -1L);
-//        tableNameCountMap.put("DATA_TAG", -1L);
-//        tableNameCountMap.put("PRUNABLE_MESSAGE", -1L);
+        tableNameCountMap.put("SHUFFLING_DATA", -1L);
+        tableNameCountMap.put("DATA_TAG", -1L);
+        tableNameCountMap.put("PRUNABLE_MESSAGE", -1L);
 
         state = transferManagementReceiver.relinkDataToSnapshotBlock(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
         assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
+        assertEquals(MigrateState.FAILED, state);
+
+        tableNameCountMap.clear();
+        tableNameCountMap.put("BLOCK_INDEX", -1L);
+        tableNameCountMap.put("TRANSACTION_SHARD_INDEX", -1L);
+        mainDbMetaInfo.setCommitBatchSize(100);
+        state = transferManagementReceiver.updateSecondaryIndex(tableNameCountMap, mainDbMetaInfo/*, shardDbMetaInfo*/);
+        assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 
         log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start)/1000 );
     }

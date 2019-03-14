@@ -36,6 +36,6 @@ public interface HelperFactory<T> {
      * @param helperTableName table name
      * @return table specific helper class OR NULL
      */
-        Optional<T> createHelper(String helperTableName);
+        Optional<T> createSelectInsertHelper(String helperTableName);
 
 }

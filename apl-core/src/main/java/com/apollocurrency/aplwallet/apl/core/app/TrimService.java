@@ -17,9 +17,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class TrimService {
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     private final boolean trimDerivedTables;
@@ -48,14 +49,14 @@ public class TrimService {
         this.globalSync = Objects.requireNonNull(globalSync, "Synchronization service cannot be null");
     }
 
-    private BlockchainProcessor blockchainProcessor;
+//    private BlockchainProcessor blockchainProcessor;
 
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {
         if (block.getHeight() % 5000 == 0) {
             log.info("processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
-            doTrimDerivedTables(block.getHeight());
+            doTrimDerivedTables(block.getHeight(), null);
         }
     }
 
@@ -68,19 +69,21 @@ public class TrimService {
         }
     }
 
-    private BlockchainProcessor lookupBlockchainProcessor() {
+/*    private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
             blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         }
         return blockchainProcessor;
-    }
+    }*/
 
     public void trimDerivedTables(int height) {
         TransactionalDataSource dataSource = dbManager.getDataSource();
         try {
-            dataSource.begin();
+            if (!dataSource.isInTransaction()) {
+                dataSource.begin();
+            }
             long startTime = System.currentTimeMillis();
-            doTrimDerivedTables(height);
+            doTrimDerivedTables(height, dataSource);
             log.debug("Total trim time: " + (System.currentTimeMillis() - startTime));
             dataSource.commit();
 
@@ -92,14 +95,16 @@ public class TrimService {
         }
     }
 
-    private void doTrimDerivedTables(int height) {
+    public void doTrimDerivedTables(int height, TransactionalDataSource dataSource) {
         lastTrimHeight = Math.max(height - maxRollback, 0);
         long onlyTrimTime = 0;
         if (lastTrimHeight > 0) {
             for (DerivedDbTable table : dbTablesRegistry.getDerivedTables()) {
                 globalSync.readLock();
                 try {
-                    TransactionalDataSource dataSource = dbManager.getDataSource();
+                    if (dataSource == null) {
+                        dataSource = dbManager.getDataSource();
+                    }
                     long startTime = System.currentTimeMillis();
                     table.trim(lastTrimHeight);
                     dataSource.commit(false);

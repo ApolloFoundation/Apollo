@@ -88,7 +88,10 @@ class ShardDataSourceCreateHelper {
         log.debug("Create new SHARD '{}'", shardName);
         DbProperties shardDbProperties = null;
         try {
-            shardDbProperties = databaseManager.getBaseDbProperties().deepCopy().dbFileName(shardName).dbUrl(null); // nullify dbUrl intentionally!;
+            shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
+                    .dbFileName(shardName) // change file name
+                    .dbUrl(null)  // nullify dbUrl intentionally!;
+                    .dbIdentity(shardId); // put shard related info
         } catch (CloneNotSupportedException e) {
             log.error("DbProperties cloning error", e);
         }

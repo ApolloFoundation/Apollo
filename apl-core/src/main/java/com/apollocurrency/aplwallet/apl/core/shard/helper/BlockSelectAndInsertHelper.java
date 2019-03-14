@@ -77,43 +77,44 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
     }
 
     @Override
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect, String tableName,
-                                      long batchCommitSize, Long snapshotBlockHeight)
+    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
+                                      TableOperationParams operationParams)
             throws Exception {
-        log.debug("Processing: '{}'", tableName);
+        log.debug("Processing: {}", operationParams);
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
         Objects.requireNonNull(targetConnect, "targetConnect is NULL");
-        Objects.requireNonNull(tableName, "tableName is NULL");
-        Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
-        currentTableName = tableName;
+        Objects.requireNonNull(operationParams.tableName, "tableName is NULL");
+        Objects.requireNonNull(operationParams.snapshotBlockHeight, "snapshotBlockHeight is NULL");
+        currentTableName = operationParams.tableName;
 
         String sqlToExecuteWithPaging;
 
-        if (tableName.equalsIgnoreCase("block")) {
-            sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID <= ? limit ?";
+        if (operationParams.tableName.equalsIgnoreCase("block")) {
+            sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
         }
         // select DB_ID for target HEIGHT
-        Long dbIdTargetHeight = selectLimitedRangeDbId(sourceConnect, snapshotBlockHeight);
-        if (dbIdTargetHeight == null) {
-            String error = String.format("Not Found target DB_ID at snapshot Block height = %s", snapshotBlockHeight);
+        Long upperBoundIdValue = selectUpperDbId(sourceConnect, operationParams.snapshotBlockHeight);
+        if (upperBoundIdValue == null) {
+            String error = String.format("Not Found target DB_ID at snapshot Block height = %s", operationParams.snapshotBlockHeight);
             log.error(error);
             throw new RuntimeException(error);
         }
-        Long lowerIndex = selectLimitedRangeDbId(sourceConnect);
+        Long lowerBoundIdValue = selectLowerDbId(sourceConnect);
+        log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
-        paginateResultWrapper.limitValue = lowerIndex;
+        paginateResultWrapper.limitValue = lowerBoundIdValue;
 
         long startSelect = System.currentTimeMillis();
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, paginateResultWrapper.limitValue);
-                ps.setLong(2, dbIdTargetHeight);
-                ps.setLong(3, batchCommitSize);
+                ps.setLong(2, upperBoundIdValue);
+                ps.setLong(3, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, targetConnect));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
@@ -123,7 +124,7 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
                 this.preparedInsertStatement.close();
             }
         }
-        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("'{}' inserted records [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
         return totalRowCount;
     }
 
@@ -168,6 +169,8 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
                 } catch (Exception e) {
                     log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
                     log.error("Failed inserting " + currentTableName, e);
+                    targetConnect.rollback();
+                    throw e;
                 }
                 rows++;
             }
@@ -180,9 +183,10 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
         return rows != 0;
     }
 
-    private Long selectLimitedRangeDbId(Connection sourceConnect, Long snapshotBlockHeight) throws SQLException {
+    private Long selectUpperDbId(Connection sourceConnect, Long snapshotBlockHeight) throws SQLException {
         // select DB_ID for target HEIGHT
-        String selectDbId = "SELECT DB_ID from BLOCK where HEIGHT = ?";
+//        String selectDbId = "SELECT DB_ID from BLOCK where HEIGHT = ?";
+        String selectDbId = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
         Long highDbIdValue = null;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectDbId)) {
             selectStatement.setInt(1, snapshotBlockHeight.intValue());
@@ -198,7 +202,7 @@ public class BlockSelectAndInsertHelper implements BatchedSelectInsert {
         return highDbIdValue;
     }
 
-    private Long selectLimitedRangeDbId(Connection sourceConnect) throws SQLException {
+    private Long selectLowerDbId(Connection sourceConnect) throws SQLException {
         // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
         String selectDbId = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
         Long bottomDbIdValue = 0L;

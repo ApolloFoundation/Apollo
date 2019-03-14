@@ -213,13 +213,15 @@ public class DatabaseManager implements ShardManagement {
         }
         DbProperties shardDbProperties = null;
         try {
-            shardDbProperties = baseDbProperties.deepCopy().dbFileName(temporaryDatabaseName).dbUrl(null); // nullify dbUrl intentionally!;
+            shardDbProperties = baseDbProperties.deepCopy().dbFileName(temporaryDatabaseName)
+                    .dbUrl(null) // nullify dbUrl intentionally!;
+                    .dbIdentity(TEMP_DB_IDENTITY);
         } catch (CloneNotSupportedException e) {
             log.error("DbProperties cloning error", e);
         }
         TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
         temporaryDataSource.init(new AplDbVersion());
-        connectedShardDataSourceMap.put(-1L, temporaryDataSource); // put temporary DS with special ID
+        connectedShardDataSourceMap.put(TEMP_DB_IDENTITY, temporaryDataSource); // put temporary DS with special ID
         log.debug("new temporaryDataSource '{}' is CREATED", temporaryDatabaseName);
         return temporaryDataSource;
     }

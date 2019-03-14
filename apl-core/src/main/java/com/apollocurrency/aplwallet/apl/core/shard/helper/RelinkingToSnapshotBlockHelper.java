@@ -76,21 +76,21 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
     }
 
     @Override
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect, String tableName,
-                                      long batchCommitSize, Long snapshotBlockHeight)
+    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
+                                      TableOperationParams operationParams)
             throws Exception {
-        log.debug("Processing: '{}'", tableName);
+        log.debug("Processing: {}", operationParams);
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
-        Objects.requireNonNull(snapshotBlockHeight, "snapshotBlockHeight is NULL");
-        currentTableName = tableName;
+        Objects.requireNonNull(operationParams.snapshotBlockHeight, "snapshotBlockHeight is NULL");
+        currentTableName = operationParams.tableName;
 
         long startSelect = System.currentTimeMillis();
         String sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID >= ? AND DB_ID <= ? limit ?";
         log.trace(sqlToExecuteWithPaging);
         // select MAX DB_ID
-        Long transactionTargetDbID = selectUpperDbId(sourceConnect, snapshotBlockHeight);;
+        Long transactionTargetDbID = selectUpperDbId(sourceConnect, operationParams.snapshotBlockHeight);;
         if (transactionTargetDbID == null) {
-            String error = String.format("Not Found MAX height = %s", snapshotBlockHeight);
+            String error = String.format("Not Found MAX height = %s", operationParams.snapshotBlockHeight);
             log.error(error);
             throw new RuntimeException(error);
         }
@@ -98,9 +98,9 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
         Long lowerIndex = selectLowerDbId(sourceConnect);
 
         // turn OFF HEIGHT constraint for specified table
-        if (tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
+        if (operationParams.tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
             issueConstraintUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
-        } else if (tableName.equalsIgnoreCase("PUBLIC_KEY")) {
+        } else if (operationParams.tableName.equalsIgnoreCase("PUBLIC_KEY")) {
             issueConstraintUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
         }
 
@@ -109,21 +109,22 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
-                ps.setLong(1, snapshotBlockHeight);
+                ps.setLong(1, operationParams.snapshotBlockHeight);
                 ps.setLong(2, paginateResultWrapper.limitValue);
                 ps.setLong(3, transactionTargetDbID);
-                ps.setLong(4, batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, batchCommitSize));
+                ps.setLong(4, operationParams.batchCommitSize);
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
+            throw e;
         }
-        log.debug("'{}' = [{}] in {} secs", tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
 
         // turn ON HEIGHT constraint for specified table
-        if (tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
+        if (operationParams.tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
             issueConstraintUpdateQuery(sourceConnect,
                     "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_C11 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
-        } else if (tableName.equalsIgnoreCase("PUBLIC_KEY")) {
+        } else if (operationParams.tableName.equalsIgnoreCase("PUBLIC_KEY")) {
             issueConstraintUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }
@@ -135,14 +136,14 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
                                     Connection targetConnect, long batchCommitSize)
             throws SQLException {
         int rows = 0;
-//        try (ResultSet rs = ps.executeQuery()) {
         try {
-//            insertedCount += preparedInsertStatement.executeUpdate();
             rows = ps.executeUpdate();
-            log.debug("Updated rows = '{}' in '{}' : column/value {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+            log.trace("Updated rows = '{}' in '{}' : column/value {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
         } catch (Exception e) {
             log.error("Failed Updating '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
             log.error("Failed Updating " + currentTableName, e);
+            targetConnect.rollback();
+            throw e;
         }
         log.trace("Total Records: updated = {}, rows = {}, {}={}",
                 totalRowCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
@@ -155,10 +156,10 @@ public class RelinkingToSnapshotBlockHelper implements BatchedSelectInsert {
 
     private Long selectUpperDbId(Connection sourceConnect, Long snapshotBlockHeight) throws SQLException {
         String selectTransactionTimestamp =
-                "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName;
+                "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT < ?";
         Long highDbIdValue = null;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectTransactionTimestamp)) {
-//            selectStatement.setInt(1, snapshotBlockHeight.intValue());
+            selectStatement.setInt(1, snapshotBlockHeight.intValue());
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
                 highDbIdValue = rs.getLong("DB_ID");

@@ -32,6 +32,9 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
  */
 public interface ShardManagement {
 
+    long TEMP_DB_IDENTITY = -1L;
+
+
     /**
      * Find and return all available shard Ids from main db 'SHARD' table
      *

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_DB_CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -21,15 +22,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.MoveDataCommand;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -56,18 +62,26 @@ class ShardMigrationExecutorTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesConfigLoader.class,
+            PropertiesConfigLoader.class, PropertyProducer.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             TransactionalDataSource.class, DatabaseManager.class, DataTransferManagementReceiverImpl.class,
-            ShardMigrationExecutor.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class )
+            ShardMigrationExecutor.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class, TrimService.class )
             .build();
+
+    @Inject
+    private GlobalSync globalSync;
 
     private static Path pathToDb;
     private static PropertiesHolder propertiesHolder;
+    @Inject
+    private PropertyProducer propertyProducer;
     private static DbProperties dbProperties;
     private static DatabaseManager databaseManager;
     private DataTransferManagementReceiver transferManagementReceiver;
+    @Inject
+    private DerivedDbTablesRegistry dbTablesRegistry;
+    private TrimService trimService;
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -98,7 +112,11 @@ class ShardMigrationExecutorTest {
     @BeforeEach
     void setUp() {
         blockchain = CDI.current().select(BlockchainImpl.class).get();
-        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, blockchain);
+        propertyProducer = new PropertyProducer(propertiesHolder);
+        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
+        dbTablesRegistry.registerDerivedTable(publicKeyTable);
+        trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
+        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
     }
 
     @AfterEach
@@ -111,13 +129,17 @@ class ShardMigrationExecutorTest {
     void executeAllOperations() throws IOException {
         assertNotNull(databaseManager);
 
+        MigrateState state = transferManagementReceiver.addOrCreateShard(
+                new ShardInitTableSchemaVersion());
+        assertEquals(SHARD_DB_CREATED, state);
+
         Map<String, Long> tableNameCountMap = new LinkedHashMap<>(0);
         tableNameCountMap.put("BLOCK", -1L);
 //        tableNameCountMap.put("TRANSACTION", -1L);
         MoveDataCommand moveDataCommand = new MoveDataCommand(
                 transferManagementReceiver, tableNameCountMap, null, -1, 0L);
 
-        MigrateState state = shardMigrationExecutor.executeOperation(moveDataCommand);
+        state = shardMigrationExecutor.executeOperation(moveDataCommand);
         assertEquals(MigrateState.FAILED, state);
 
     }

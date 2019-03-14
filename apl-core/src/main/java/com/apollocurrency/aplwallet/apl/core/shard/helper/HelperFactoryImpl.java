@@ -31,7 +31,7 @@ public class HelperFactoryImpl implements HelperFactory<BatchedSelectInsert> {
      * {@inheritDoc}
      */
     @Override
-    public Optional<BatchedSelectInsert> createHelper(String helperTableName) {
+    public Optional<BatchedSelectInsert> createSelectInsertHelper(String helperTableName) {
         Optional<BatchedSelectInsert> helper;
         switch (helperTableName.toUpperCase()) {
             case "BLOCK" : {
@@ -47,9 +47,14 @@ public class HelperFactoryImpl implements HelperFactory<BatchedSelectInsert> {
             case "DATA_TAG" :
             case "PRUNABLE_MESSAGE" :
                 return Optional.of(new RelinkingToSnapshotBlockHelper());
+            case "BLOCK_INDEX" :
+            case "TRANSACTION_SHARD_INDEX" : {
+                return Optional.of(new SecondaryIndexSelectAndInsertHelper());
+            }
             default:
                 helper = Optional.empty();
         }
         return helper;
     }
+
 }

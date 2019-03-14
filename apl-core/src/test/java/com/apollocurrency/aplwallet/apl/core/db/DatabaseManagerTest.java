@@ -40,8 +40,8 @@ import javax.inject.Inject;
 class DatabaseManagerTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
-    private static String DB_FILE_NAME = "test_db";
-    private static String TEMP_FILE_NAME = "apl-temp-db-name";
+    private static String DB_FILE_NAME = "apl-blockchain";
+    private static String TEMP_FILE_NAME = "apl-temp-utest-db-name";
 
     private DbProperties baseDbProperties;
     private Path pathToDb;
@@ -72,7 +72,7 @@ class DatabaseManagerTest {
         } else {
             this.pathToDbFolder = currentPath;
         }
-        String dbFileName = DB_FILE_NAME + ".h2";
+        String dbFileName = DB_FILE_NAME;
         Path dbFile = currentPath.toAbsolutePath().resolve(dbFileName);
         // check and create H2 DB file
         if (!Files.exists(dbFile)) {

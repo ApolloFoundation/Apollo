@@ -42,6 +42,5 @@ public interface BatchedSelectInsert {
      * @throws Exception
      */
     long selectInsertOperation(
-            Connection sourceConnect, Connection targetConnect, String tableName,
-            long batchCommitSize, Long snapshotBlockHeight) throws Exception;
+            Connection sourceConnect, Connection targetConnect, TableOperationParams operationParams) throws Exception;
 }
