@@ -493,14 +493,14 @@ public class TestBase {
 
     //AssetExchange
     //issueAsset
-    public  CreateTransactionResponse issueAsset (String assetName, String description, Integer quantityATU) throws IOException {
+    public  CreateTransactionResponse issueAsset (Wallet wallet,String assetName, String description, Integer quantityATU) throws IOException {
         addParameters(RequestType.requestType, issueAsset);
         addParameters(Parameters.name, assetName);
         addParameters(Parameters.description, description);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.feeATM, "100000000000");
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -509,14 +509,14 @@ public class TestBase {
     }
 
     //placeBidOrder
-    public  CreateTransactionResponse placeBidOrder (String assetID, String priceATM, Integer quantityATU) throws IOException {
+    public  CreateTransactionResponse placeBidOrder (Wallet wallet,String assetID, String priceATM, Integer quantityATU) throws IOException {
         addParameters(RequestType.requestType, placeBidOrder);
         addParameters(Parameters.asset, assetID);
         addParameters(Parameters.priceATM, priceATM);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.feeATM, "100000000");
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1400);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -524,14 +524,14 @@ public class TestBase {
 
     }
     //placeAskOrder
-    public  CreateTransactionResponse placeAskOrder (String assetID, String priceATM, Integer quantityATU) throws IOException {
+    public  CreateTransactionResponse placeAskOrder (Wallet wallet,String assetID, String priceATM, Integer quantityATU) throws IOException {
         addParameters(RequestType.requestType, placeAskOrder);
         addParameters(Parameters.asset, assetID);
         addParameters(Parameters.priceATM, priceATM);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.feeATM, "100000000");
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1400);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -542,14 +542,14 @@ public class TestBase {
 
 
     //cancelBidOrder
-    public  CreateTransactionResponse cancelBidOrder (String bidOrder) throws IOException {
+    public  CreateTransactionResponse cancelBidOrder (Wallet wallet,String bidOrder) throws IOException {
         addParameters(RequestType.requestType, cancelBidOrder);
         addParameters(Parameters.order, bidOrder);
         //addParameters(Parameters.description, description);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         //addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.feeATM, "100000000000");
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -558,11 +558,11 @@ public class TestBase {
     }
 
     //cancelAskOrder
-    public  CreateTransactionResponse cancelAskOrder (String askOrder) throws IOException {
+    public  CreateTransactionResponse cancelAskOrder (Wallet wallet,String askOrder) throws IOException {
         addParameters(RequestType.requestType, cancelAskOrder);
         addParameters(Parameters.order, askOrder);
         //addParameters(Parameters.description, description);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         //addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
@@ -573,11 +573,11 @@ public class TestBase {
     }
 
     //deleteAssetShares
-    public  CreateTransactionResponse deleteAssetShares (String assetID, String quantityATU) throws IOException {
+    public  CreateTransactionResponse deleteAssetShares (Wallet wallet,String assetID, String quantityATU) throws IOException {
         addParameters(RequestType.requestType, deleteAssetShares);
         addParameters(Parameters.asset, assetID);
         //addParameters(Parameters.description, description);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
@@ -588,11 +588,11 @@ public class TestBase {
     }
 
     //dividendPayment
-    public  CreateTransactionResponse dividendPayment (String assetID, Integer amountATMPerATU, Integer height) throws IOException {
+    public  CreateTransactionResponse dividendPayment (Wallet wallet,String assetID, Integer amountATMPerATU, Integer height) throws IOException {
         addParameters(RequestType.requestType, dividendPayment);
         addParameters(Parameters.asset, assetID);
         //addParameters(Parameters.description, description);
-        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.wallet, wallet);
         //addParameters(Parameters.quantityATU, quantityATU);
         addParameters(Parameters.amountATMPerATU, amountATMPerATU);
         addParameters(Parameters.feeATM, "100000000000");
@@ -606,9 +606,9 @@ public class TestBase {
 
 
     //getAccountAssets
-    public  GetAccountAssetsResponse getAccountAssets (String accountID) throws IOException {
+    public  GetAccountAssetsResponse getAccountAssets (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountAssets);
-        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.wallet, wallet);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -616,11 +616,11 @@ public class TestBase {
     }
 
     //getAccountAssetCount
-    public  GetAssetAccountCountResponse getAccountAssetCount (String accountID) throws IOException {
+    public  GetAssetAccountCountResponse getAccountAssetCount (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountAssetCount);
-        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.wallet, wallet);
         Response response = httpCallPost();
-        //System.out.println(response.body().string());
+       // System.out.println(response.body().string());
         assertEquals(200, response.code());
         return mapper.readValue(response.body().string(), GetAssetAccountCountResponse.class);
     }

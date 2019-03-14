@@ -3,9 +3,13 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.AliasDTO;
 import com.apollocurrency.aplwallet.api.dto.AssetDTO;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
 import java.util.Date;
@@ -17,9 +21,10 @@ public class TestAssetExchangeAPI extends TestBase {
 
     //SMOKE API TESTING (STATUS CODE 200)
     @DisplayName("issueAsset")
-    @Test
-    public void issueAsset() throws IOException {
-        CreateTransactionResponse issueAsset = issueAsset("APIORDER11", "issueAssettestAPI", 11);
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void issueAsset(Wallet wallet) throws IOException {
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER11", "issueAssettestAPI", 11);
         verifyCreatingTransaction(issueAsset);
     }
     // NEED to be reviewed and refactored
@@ -67,29 +72,31 @@ public class TestAssetExchangeAPI extends TestBase {
     }*/
 
     @DisplayName("getAccountAssets")
-    @Test
-    public void getAccountAssets() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAccountAssetstTest(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset("setAsset", "issueAssettestAPI", 11);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"setAsset", "issueAssettestAPI", 11);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        GetAccountAssetsResponse getAccountAssets = getAccountAssets(testConfiguration.getTestUser());
+        GetAccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
         assertTrue(getAccountAssets.accountAssets.length >= 1);
 
     }
 
     @DisplayName("getAccountAssetCount")
-    @Test
-    public void getAccountAssetCount() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAccountAssetCountTest(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset("setAsset", "issueAssettestAPI", 11);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"setAsset", "issueAssettestAPI", 11);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(testConfiguration.getTestUser());
+        GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.numberOfAssets.intValue() >= 1);
-        System.out.println("number of Assets on " + testConfiguration.getTestUser() + " = " + getAccountAssetCount.numberOfAssets);
+        System.out.println("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.numberOfAssets);
     }
 
 
@@ -98,79 +105,84 @@ public class TestAssetExchangeAPI extends TestBase {
 
     //SMOKE API TESTING using standard TEST CASES
     @DisplayName("issueAsset + placeAskOrder")
-    @Test
-    public void issueAssetPlaceAskOrder() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void issueAssetPlaceAskOrder(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset("APIORDER9", "issueAssettestAPI", 100);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER9", "issueAssettestAPI", 100);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        verifyCreatingTransaction(placeAskOrder(assetID, "99",10));
+        verifyCreatingTransaction(placeAskOrder(wallet,assetID, "99",10));
     }
 
     @DisplayName("issueAsset + placeAskOrder + cancelAskOrder")
-    @Test
-    public void issueAssetPlaceCancelAskOrder() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void issueAssetPlaceCancelAskOrder(Wallet wallet) throws IOException {
         String assetID;
         String orderID;
-        CreateTransactionResponse issueAsset = issueAsset("APIASK0", "Creating Asset -> placeAskOrder -> cancelAskOrder", 50);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIASK0", "Creating Asset -> placeAskOrder -> cancelAskOrder", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        CreateTransactionResponse placeAskOrder = placeAskOrder(assetID, "99",10);
+        CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
         verifyTransactionInBlock(placeAskOrder.transaction);
         orderID = placeAskOrder.transaction;
-        verifyCreatingTransaction(cancelAskOrder(orderID));
+        verifyCreatingTransaction(cancelAskOrder(wallet,orderID));
     }
 
 
     @DisplayName("issueAsset + placeBidOrder")
-    @Test
-    public void issueAssetPlaceBidOrder() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void issueAssetPlaceBidOrder(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset("APIBID", "issueAsset -> placeBidOrder", 60);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID", "issueAsset -> placeBidOrder", 60);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        verifyCreatingTransaction(placeBidOrder(assetID, "99",10));
+        verifyCreatingTransaction(placeBidOrder(wallet,assetID, "99",10));
     }
 
     @DisplayName("issueAsset + placeBidOrder + cancelBidOrder")
-    @Test
-    public void issueAssetPlaceCancelBidOrder() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void issueAssetPlaceCancelBidOrder(Wallet wallet) throws IOException {
         String assetID;
         String orderID;
-        CreateTransactionResponse issueAsset = issueAsset("APIBID0", "Creating Asset -> placeBidOrder -> cancelBidOrder", 50);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID0", "Creating Asset -> placeBidOrder -> cancelBidOrder", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        CreateTransactionResponse placeBidOrder = placeBidOrder(assetID, "99",10);
+        CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeBidOrder);
         verifyTransactionInBlock(placeBidOrder.transaction);
         orderID = placeBidOrder.transaction;
-        verifyCreatingTransaction(cancelBidOrder(orderID));
+        verifyCreatingTransaction(cancelBidOrder(wallet,orderID));
     }
 
     @DisplayName("getAccountAssets + Delete one of them")
-    @Test
-    public void getAccountAssetsDelete() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAccountAssetsDeleteTest(Wallet wallet) throws IOException {
 
-        GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(testConfiguration.getTestUser());
+        GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.numberOfAssets.intValue() >= 1);
-        System.out.println("number of Assets on " + testConfiguration.getTestUser() + " = " + getAccountAssetCount.numberOfAssets);
+        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount.numberOfAssets);
 
-        GetAccountAssetsResponse getAccountAssets = getAccountAssets(testConfiguration.getTestUser());
+        GetAccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
         assertTrue(getAccountAssets.accountAssets.length >= 1);
 
-        CreateTransactionResponse deleteAssetShares = deleteAssetShares(getAccountAssets.accountAssets[0].asset, getAccountAssets.accountAssets[0].quantityATU);
+        CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,getAccountAssets.accountAssets[0].asset, getAccountAssets.accountAssets[0].quantityATU);
         verifyCreatingTransaction(deleteAssetShares);
 
         verifyTransactionInBlock(deleteAssetShares.transaction);
 
-        GetAssetAccountCountResponse getAccountAssetCount1 = getAccountAssetCount(testConfiguration.getTestUser());
+        GetAssetAccountCountResponse getAccountAssetCount1 = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount1.numberOfAssets.intValue() >= 1);
-        System.out.println("number of Assets on " + testConfiguration.getTestUser() + " = " + getAccountAssetCount1.numberOfAssets);
+        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount1.numberOfAssets);
 
     }
 

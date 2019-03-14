@@ -77,6 +77,8 @@ public class TestHelper {
             if (pair.getKey().equals("wallet"))
             {
                 Wallet wallet = (Wallet) pair.getValue();
+                reqestUrl.append("account="+wallet.getUser());
+                reqestUrl.append("&");
                 if (wallet.getSecretKey() == null)
                 {
                     reqestUrl.append("secretPhrase="+wallet.getPass());
@@ -87,8 +89,6 @@ public class TestHelper {
                     reqestUrl.append("secretBytes="+wallet.getSecretKey());
                     reqestUrl.append("&");
                     reqestUrl.append("sender="+wallet.getUser());
-                    reqestUrl.append("&");
-                    reqestUrl.append("account="+wallet.getUser());
                     reqestUrl.append("&");
                     reqestUrl.append("passphrase="+wallet.getPass());
                     reqestUrl.append("&");
@@ -123,8 +123,6 @@ public class TestHelper {
                     reqestUrl.append("secretBytes="+wallet.getSecretKey());
                     reqestUrl.append("&");
                     reqestUrl.append("sender="+wallet.getUser());
-                    reqestUrl.append("&");
-                    reqestUrl.append("account="+wallet.getUser());
                     reqestUrl.append("&");
                     reqestUrl.append("passphrase="+wallet.getPass());
                     reqestUrl.append("&");
