@@ -41,7 +41,7 @@ public class Test2FA extends TestBase {
         Wallet wallet = new Wallet(accountDTO.account,accountDTO.passphrase, null,"0");
         Account2FA exportKey = exportKey(wallet);
         wallet.setSecretKey(exportKey.secretBytes);
-        Account2FA deletedAccount = deleteKey(wallet);
+        deleteKey(wallet);
         Account2FA importKey = importKey(wallet);
         assertEquals(Status2FA.OK,importKey.getStatus());
     }

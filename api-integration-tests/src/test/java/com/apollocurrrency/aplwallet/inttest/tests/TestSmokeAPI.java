@@ -37,6 +37,7 @@ public class TestSmokeAPI extends TestBase {
     }
 
     @Test
+    @Disabled
     public void verifyCountOfActivePeers() throws IOException {
           long etalonPeerBlockHeight;
            RetryPolicy retryPolicy = new RetryPolicy()

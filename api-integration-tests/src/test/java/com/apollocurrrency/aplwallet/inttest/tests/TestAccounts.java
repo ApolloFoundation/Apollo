@@ -71,10 +71,11 @@ public class TestAccounts extends TestBase {
         assertNotNull(account.account);
     }
 
-    @Test
     @DisplayName("Verify getAccountLedger endpoint")
-    public void testAccountLedger() throws IOException {
-        AccountLedgerResponse accountLedger = getAccountLedger(testConfiguration.getStandartWallet().getUser());
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testAccountLedger(Wallet wallet) throws IOException {
+        AccountLedgerResponse accountLedger = getAccountLedger(wallet);
         assertTrue(accountLedger.entries.length > 0,"Ledger is NULL");
         assertNotNull(accountLedger.entries[0].account);
         assertNotNull(accountLedger.entries[0].accountRS);
@@ -146,10 +147,12 @@ public class TestAccounts extends TestBase {
     }
 
 
-    @Test
+
     @DisplayName("Get Account Ledger Entry")
-    public void testGetAccountLedgerEntry() throws IOException {
-        EntryDTO ledgerEntry = getAccountLedgerEntry(String.valueOf(getAccountLedger(testConfiguration.getStandartWallet().getUser()).entries[0].ledgerId));
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testGetAccountLedgerEntry(Wallet wallet) throws IOException {
+        EntryDTO ledgerEntry = getAccountLedgerEntry(String.valueOf(getAccountLedger(wallet).entries[0].ledgerId));
         assertNotNull(ledgerEntry.eventType);
         assertNotNull(ledgerEntry.ledgerId);
         assertNotNull(ledgerEntry.balance);
@@ -192,9 +195,10 @@ public class TestAccounts extends TestBase {
 
 
     @DisplayName("Send Money Private")
-    @Test
-    public void testSendMoneyPrivate() throws IOException {
-        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(testConfiguration.getStandartWallet(),"APL-KL45-8GRF-BKPM-E58NH",100);
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testSendMoneyPrivate(Wallet wallet) throws IOException {
+        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
         assertNotNull(sendMoneyResponse.transactionJSON.senderPublicKey);
         assertNotNull(sendMoneyResponse.transactionJSON.signature);
         assertNotNull(sendMoneyResponse.transactionJSON.fullHash);
@@ -207,11 +211,12 @@ public class TestAccounts extends TestBase {
 
 
     @DisplayName("Set Account info")
-    @Test
-    public void setAccountInfo() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void setAccountInfo(Wallet wallet) throws IOException {
         String accountName = "Account "+new Date().getTime();
         String accountDesc= "Decription "+new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountInfo(testConfiguration.getStandartWallet(),accountName,accountDesc);
+        CreateTransactionResponse setAccountInfo = setAccountInfo(wallet,accountName,accountDesc);
         assertNotNull(setAccountInfo.transactionJSON.senderPublicKey);
         assertNotNull(setAccountInfo.transactionJSON.signature);
         assertNotNull(setAccountInfo.transactionJSON.fullHash);
@@ -241,16 +246,18 @@ public class TestAccounts extends TestBase {
 
 
     @DisplayName("Get Account Property")
-    @Test
-    public void  getAccountProperty() throws IOException { ;
-        GetPropertyResponse propertyResponse = getAccountProperty(testConfiguration.getStandartWallet().getUser());
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void  getAccountPropertyTest(Wallet wallet) throws IOException { ;
+        GetPropertyResponse propertyResponse = getAccountProperty(wallet);
         assertTrue(propertyResponse.properties.length >0);
     }
 
     @DisplayName("Delete Account Property")
-    @Test
-    public void  deleteAccountProperty() throws IOException { ;
-        CreateTransactionResponse transaction = deleteAccountProperty(        testConfiguration.getStandartWallet(),getAccountProperty(testConfiguration.getStandartWallet().getUser()).properties[0].property);
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void  deleteAccountProperty(Wallet wallet) throws IOException { ;
+        CreateTransactionResponse transaction = deleteAccountProperty(testConfiguration.getStandartWallet(),getAccountProperty(wallet).properties[0].property);
         assertNotNull(transaction.transactionJSON.senderPublicKey);
         assertNotNull(transaction.transactionJSON.signature);
         assertNotNull(transaction.transactionJSON.fullHash);
