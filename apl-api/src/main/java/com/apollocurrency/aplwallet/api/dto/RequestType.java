@@ -95,6 +95,6 @@ public enum RequestType {
     searchAssets,
     getBlock,
     getBlockId,
-    sendMoneyPrivate
-
+    sendMoneyPrivate,
+    dividendPayment
     }
