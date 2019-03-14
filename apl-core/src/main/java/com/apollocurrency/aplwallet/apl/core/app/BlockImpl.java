@@ -20,11 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -33,16 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
 
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
@@ -84,7 +84,7 @@ public final class BlockImpl implements Block {
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
                      byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout,
-                     List<TransactionImpl> transactions,
+                     List<Transaction> transactions,
                      byte[] keySeed) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
                 generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions);
@@ -92,9 +92,9 @@ public final class BlockImpl implements Block {
         bytes = null;
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
-              List<TransactionImpl> transactions) {
+              List<Transaction> transactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -112,7 +112,7 @@ public final class BlockImpl implements Block {
         }
     }
 
-    BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
               byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
               List<Transaction> blockTransactions) {
@@ -315,7 +315,7 @@ public final class BlockImpl implements Block {
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
             int timeout =  !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
-            List<TransactionImpl> blockTransactions = new ArrayList<>();
+            List<Transaction> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }

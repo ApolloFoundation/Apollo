@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.FileUtils;
 import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -26,6 +25,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -43,8 +43,8 @@ public class DbMigrationExecutorTest {
 
     private FullTextSearchService fullTextSearchProvider = Mockito.mock(FullTextSearchService.class);
     private PropertiesHolder propertiesHolder = mockPropertiesHolder();
-    private TemporaryFolderExtension temporaryFolder = FileUtils.initTempFolder();
-
+    @RegisterExtension
+    static TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
 
     private Path targetDbDir = temporaryFolder.newFolder("target").toPath();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
@@ -87,15 +87,10 @@ public class DbMigrationExecutorTest {
         return ph;
     }
 
-
-
     @AfterEach
     void tearDown() throws Exception {
         databaseManager.shutdown();
-        temporaryFolder.delete();
     }
-
-
 
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {

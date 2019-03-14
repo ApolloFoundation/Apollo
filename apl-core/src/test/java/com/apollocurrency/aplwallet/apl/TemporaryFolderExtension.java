@@ -4,17 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl;
 
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
-public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCallback {
-
+public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
     private final File parentFolder;
     private File folder;
+    private File rootFolder;
 
     public TemporaryFolderExtension() {
         this(null);
@@ -24,25 +27,26 @@ public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCa
         this.parentFolder = parentFolder;
     }
 
-    public void delete() {
-        if (folder != null) {
-            recursiveDelete(folder);
-        }
+    public void delete(File file) {
+        Objects.requireNonNull(file);
+        recursiveDelete(file);
     }
+
     @Override
     public void afterEach(ExtensionContext extensionContext) {
-        delete();
+        delete(folder);
     }
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws IOException {
-        create();
+        folder = create(rootFolder == null ? parentFolder : rootFolder);
     }
 
-    public void create() throws IOException {
-        folder = File.createTempFile("junit", "", parentFolder);
-        folder.delete();
-        folder.mkdirs();
+    File create(File parentFolder) throws IOException {
+        File f = File.createTempFile("junit", "", parentFolder);
+        f.delete();
+        f.mkdirs();
+        return f;
     }
 
     public File newFile(String fileName) throws IOException {
@@ -59,9 +63,10 @@ public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCa
         file.mkdirs();
         return file;
     }
+
     public File newFolder() throws IOException {
         File file = getRoot();
-        file =  File.createTempFile("junit", "", file);
+        file = File.createTempFile("junit", "", file);
         file.delete();
         file.mkdirs();
         return file;
@@ -78,10 +83,19 @@ public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCa
     }
 
     public File getRoot() {
-        if (folder == null) {
+        if (folder == null && rootFolder == null) {
             throw new IllegalStateException("the temporary folder has not yet been created");
         }
         return folder;
     }
 
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        rootFolder = create(parentFolder);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        delete(rootFolder);
+    }
 }
