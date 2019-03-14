@@ -21,7 +21,7 @@ import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestAccounts.class);
@@ -477,13 +477,161 @@ public class TestBase {
     }
 
 
+
+    public void verifyCreatingTransaction (CreateTransactionResponse transaction) {
+        assertNotNull(transaction.transactionJSON.senderPublicKey);
+        assertNotNull(transaction.transactionJSON.signature);
+        assertNotNull(transaction.transactionJSON.fullHash);
+        assertNotNull(transaction.transactionJSON.amountATM);
+        assertNotNull(transaction.transactionJSON.ecBlockId);
+        assertNotNull(transaction.transactionJSON.senderRS);
+        assertNotNull(transaction.transactionJSON.transaction);
+        assertNotNull(transaction.transactionJSON.feeATM);
+        assertNotNull(transaction.transactionJSON.type);
+
+    }
+
+    //AssetExchange
+    //issueAsset
+    public  CreateTransactionResponse issueAsset (String assetName, String description, Integer quantityATU) throws IOException {
+        addParameters(RequestType.requestType, issueAsset);
+        addParameters(Parameters.name, assetName);
+        addParameters(Parameters.description, description);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+
+    }
+
+    //placeBidOrder
+    public  CreateTransactionResponse placeBidOrder (String assetID, String priceATM, Integer quantityATU) throws IOException {
+        addParameters(RequestType.requestType, placeBidOrder);
+        addParameters(Parameters.asset, assetID);
+        addParameters(Parameters.priceATM, priceATM);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000");
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+
+    }
+    //placeAskOrder
+    public  CreateTransactionResponse placeAskOrder (String assetID, String priceATM, Integer quantityATU) throws IOException {
+        addParameters(RequestType.requestType, placeAskOrder);
+        addParameters(Parameters.asset, assetID);
+        addParameters(Parameters.priceATM, priceATM);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000");
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+
+    }
+
+
+
+    //cancelBidOrder
+    public  CreateTransactionResponse cancelBidOrder (String bidOrder) throws IOException {
+        addParameters(RequestType.requestType, cancelBidOrder);
+        addParameters(Parameters.order, bidOrder);
+        //addParameters(Parameters.description, description);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        //addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 60);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+
+    }
+
+    //cancelAskOrder
+    public  CreateTransactionResponse cancelAskOrder (String askOrder) throws IOException {
+        addParameters(RequestType.requestType, cancelAskOrder);
+        addParameters(Parameters.order, askOrder);
+        //addParameters(Parameters.description, description);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        //addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+    }
+
+    //deleteAssetShares
+    public  CreateTransactionResponse deleteAssetShares (String assetID, String quantityATU) throws IOException {
+        addParameters(RequestType.requestType, deleteAssetShares);
+        addParameters(Parameters.asset, assetID);
+        //addParameters(Parameters.description, description);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+    }
+
+    //dividendPayment
+    public  CreateTransactionResponse dividendPayment (String assetID, Integer amountATMPerATU, Integer height) throws IOException {
+        addParameters(RequestType.requestType, dividendPayment);
+        addParameters(Parameters.asset, assetID);
+        //addParameters(Parameters.description, description);
+        addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
+        //addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.amountATMPerATU, amountATMPerATU);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.height, height);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+    }
+
+
+    //getAccountAssets
+    public  GetAccountAssetsResponse getAccountAssets (String accountID) throws IOException {
+        addParameters(RequestType.requestType, getAccountAssets);
+        addParameters(Parameters.account, accountID);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAccountAssetsResponse.class);
+    }
+
+    //getAccountAssetCount
+    public  GetAssetAccountCountResponse getAccountAssetCount (String accountID) throws IOException {
+        addParameters(RequestType.requestType, getAccountAssetCount);
+        addParameters(Parameters.account, accountID);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAssetAccountCountResponse.class);
+    }
+
+
     public ECBlock getECBlock() throws IOException {
         addParameters(RequestType.requestType, getECBlock);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return mapper.readValue(response.body().string(), ECBlock.class);
     }
-
 
 
 }
