@@ -86,7 +86,7 @@ public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCa
         if (folder == null && rootFolder == null) {
             throw new IllegalStateException("the temporary folder has not yet been created");
         }
-        return folder;
+        return folder == null ? rootFolder : folder;
     }
 
     @Override
