@@ -60,10 +60,12 @@ public class TestAccounts extends TestBase {
         assertTrue(accountBlocks.blocks.size() > 0);
     }
 
-    @Test
+
     @DisplayName("Verify getAccountId endpoint")
-    public void testAccountId() throws IOException {
-        AccountDTO account = getAccountId(testConfiguration.getStandartWallet());
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testAccountId(Wallet wallet) throws IOException {
+        AccountDTO account = getAccountId(wallet);
         assertEquals(testConfiguration.getStandartWallet().getUser(),account.accountRS);
         assertEquals(testConfiguration.getStandartWallet().getPublicKey(),account.publicKey);
         assertNotNull(account.account);
@@ -174,7 +176,6 @@ public class TestAccounts extends TestBase {
 
 
     @DisplayName("Send Money")
-   // @Test
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoney(Wallet wallet) throws Exception {

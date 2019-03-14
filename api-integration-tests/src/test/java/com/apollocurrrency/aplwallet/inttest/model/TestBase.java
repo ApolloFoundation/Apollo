@@ -28,13 +28,18 @@ public class TestBase {
     public TestConfiguration testConfiguration = TestConfiguration.getTestConfiguration();;
     public static ObjectMapper mapper = new ObjectMapper();
     RetryPolicy retryPolicy;
-    public String a = "2";
 
-    public TestBase() {
+    public TestBase()  {
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(10)
                 .withDelay(5, TimeUnit.SECONDS);
+        try {
+            deleteKey(testConfiguration.getVaultWallet());
+            testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean verifyTransactionInBlock(String transaction)
@@ -87,8 +92,7 @@ public class TestBase {
 
     public AccountDTO getAccountId(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountId);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet,wallet);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
@@ -371,15 +375,30 @@ public class TestBase {
     }
 
 
-     public Account2FA deleteKey(String accountID,String pass) throws IOException {
+     public Account2FA deleteKey(Wallet wallet) throws IOException {
          addParameters(RequestType.requestType,RequestType.deleteKey);
-         addParameters(Parameters.account, accountID);
-         addParameters(Parameters.passphrase,pass);
+         addParameters(Parameters.wallet, wallet);
          Response response = httpCallPost();
          assertEquals(200, response.code());
          return   mapper.readValue(response.body().string(), Account2FA.class);
-
      }
+
+    public Account2FA exportKey(Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType,RequestType.exportKey);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string(), Account2FA.class);
+    }
+
+    public Account2FA importKey(Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, importKey);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        assertEquals(200, response.code());
+        return   mapper.readValue(response.body().string(), Account2FA.class);
+    }
+
 
     public AccountDTO enable2FA(String accountID,String pass) throws IOException {
         addParameters(RequestType.requestType,RequestType.enable2FA);

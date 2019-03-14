@@ -33,6 +33,14 @@ public class Wallet {
         return secretKey;
     }
 
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public void setPass(String pass) {
+        this.pass = pass;
+    }
+
     @Override
     public String toString() {
         if(secretKey == null) return "Standart Wallet";

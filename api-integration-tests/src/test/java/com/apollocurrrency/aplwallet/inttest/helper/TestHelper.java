@@ -84,7 +84,11 @@ public class TestHelper {
                 }
                 else
                 {
+                    reqestUrl.append("secretBytes="+wallet.getSecretKey());
+                    reqestUrl.append("&");
                     reqestUrl.append("sender="+wallet.getUser());
+                    reqestUrl.append("&");
+                    reqestUrl.append("account="+wallet.getUser());
                     reqestUrl.append("&");
                     reqestUrl.append("passphrase="+wallet.getPass());
                     reqestUrl.append("&");
@@ -116,7 +120,11 @@ public class TestHelper {
                 }
                 else
                 {
+                    reqestUrl.append("secretBytes="+wallet.getSecretKey());
+                    reqestUrl.append("&");
                     reqestUrl.append("sender="+wallet.getUser());
+                    reqestUrl.append("&");
+                    reqestUrl.append("account="+wallet.getUser());
                     reqestUrl.append("&");
                     reqestUrl.append("passphrase="+wallet.getPass());
                     reqestUrl.append("&");

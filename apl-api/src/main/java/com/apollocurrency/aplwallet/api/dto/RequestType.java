@@ -1,6 +1,8 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 public enum RequestType {
+    importKey,
+    exportKey,
     getECBlock,
     getBlockchainStatus,
     getMyInfo,
