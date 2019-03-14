@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,7 +15,7 @@ import javax.sql.DataSource;
 
 public class DbTest {
     static DbManipulator manipulator;
-    public DbTest(Path path, String password, String user) throws IOException {
+    public DbTest(Path path, String password, String user) {
         manipulator = new DbManipulator(path, user, password);
     }
     public DbTest() {

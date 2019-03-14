@@ -11,8 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class FileUtils {
-    public static TemporaryFolder initTempFolder() {
-        TemporaryFolder temporaryFolder = new TemporaryFolder();
+    public static TemporaryFolderExtension initTempFolder() {
+        TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
         try {
             temporaryFolder.create();
             return temporaryFolder;
