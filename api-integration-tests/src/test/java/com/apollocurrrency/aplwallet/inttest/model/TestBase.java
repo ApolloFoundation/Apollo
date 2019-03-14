@@ -215,7 +215,7 @@ public class TestBase {
 
     public CreateTransactionResponse  setAccountProperty(Wallet wallet, String property ) throws IOException {
         addParameters(RequestType.requestType,RequestType.setAccountProperty);
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.recipient, wallet.getUser());
         addParameters(Parameters.property, property);
         addParameters(Parameters.deadline, 1440);
@@ -230,8 +230,7 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.deleteAccountProperty);
         addParameters(Parameters.property, property);
         addParameters(Parameters.deadline, 1440);
-        addParameters(Parameters.secretPhrase, wallet.getPass());
-        addParameters(Parameters.account, wallet.getUser());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, 100000000);
         Response response = httpCallPost();
         assertEquals(200, response.code());
@@ -633,6 +632,28 @@ public class TestBase {
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return mapper.readValue(response.body().string(), ECBlock.class);
+    }
+
+    public GetForgingResponse getForging(Wallet wallet) throws IOException{
+        addParameters(RequestType.requestType, getForging);
+        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        Response response = httpCallPost();
+        return mapper.readValue(response.body().string(), GetForgingResponse.class);
+    }
+
+    public ForgingDetails startForging(Wallet wallet) throws IOException{
+        addParameters(RequestType.requestType, startForging);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        Response response = httpCallPost();
+        return mapper.readValue(response.body().string(), ForgingDetails.class);
+    }
+    public ForgingDetails stopForging(Wallet wallet) throws IOException{
+        addParameters(RequestType.requestType, stopForging);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        Response response = httpCallPost();
+        return mapper.readValue(response.body().string(), ForgingDetails.class);
     }
 
 

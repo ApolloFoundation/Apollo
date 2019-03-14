@@ -1,6 +1,9 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 public enum RequestType {
+    getForging,
+    stopForging,
+    startForging,
     importKey,
     exportKey,
     getECBlock,

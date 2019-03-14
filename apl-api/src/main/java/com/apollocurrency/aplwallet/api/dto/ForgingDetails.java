@@ -11,6 +11,11 @@ public class ForgingDetails {
     private Long remaining;
     private Boolean foundAndStopped;
     private BasicAccount account;
+    private long requestProcessingTime;
+    private int forgersCount;
+
+
+
     public ForgingDetails() {
     }
 
@@ -82,6 +87,22 @@ public class ForgingDetails {
 
     public void setAccount(String account) {
         this.account = new BasicAccount(account);
+    }
+
+    public void setAccount(BasicAccount account) {
+        this.account = account;
+    }
+
+    public void setForgersCount(int forgersCount) {
+        this.forgersCount = forgersCount;
+    }
+
+    public long getRequestProcessingTime() {
+        return requestProcessingTime;
+    }
+
+    public void setRequestProcessingTime(long requestProcessingTime) {
+        this.requestProcessingTime = requestProcessingTime;
     }
 
     public ForgingDetails(Long deadline, Long hitTime, Long remaining, Boolean foundAndStopped, String account) {

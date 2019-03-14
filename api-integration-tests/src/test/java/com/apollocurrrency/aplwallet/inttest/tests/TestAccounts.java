@@ -258,9 +258,9 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void  deleteAccountProperty(Wallet wallet) throws IOException {
         String property = "Property "+new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountProperty(testConfiguration.getStandartWallet(),property);
+        CreateTransactionResponse setAccountInfo = setAccountProperty(wallet,property);
         verifyTransactionInBlock(setAccountInfo.transaction);
-        CreateTransactionResponse transaction = deleteAccountProperty(testConfiguration.getStandartWallet(),getAccountProperty(wallet).properties[0].property);
+        CreateTransactionResponse transaction = deleteAccountProperty(wallet,getAccountProperty(wallet).properties[0].property);
         assertNotNull(transaction.transactionJSON.senderPublicKey);
         assertNotNull(transaction.transactionJSON.signature);
         assertNotNull(transaction.transactionJSON.fullHash);
