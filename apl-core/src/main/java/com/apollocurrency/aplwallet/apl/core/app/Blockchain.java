@@ -72,6 +72,8 @@ public interface Blockchain {
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
+    public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
+
     List<Block> getBlocksAfter(long blockId, int limit);
 
     List<Block> getBlocksAfter(long blockId, List<Long> blockList);

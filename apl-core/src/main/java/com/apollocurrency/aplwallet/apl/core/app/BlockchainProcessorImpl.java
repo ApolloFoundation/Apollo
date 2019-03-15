@@ -1478,7 +1478,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         Block previousBlock = lookupBlockhain().getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp);
-        List<TransactionImpl> blockTransactions = new ArrayList<>();
+        List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;
         long totalFeeATM = 0;

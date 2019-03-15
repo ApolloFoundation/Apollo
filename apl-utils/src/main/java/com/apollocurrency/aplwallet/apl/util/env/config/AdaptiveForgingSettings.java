@@ -11,13 +11,16 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"enabled", "adaptiveBlockTime", "maxAdaptiveBlockTimeLimit", "minAdaptiveBlockTimeLimit", "numberOfTransactions"})
 public class AdaptiveForgingSettings {
+    private static final boolean DEFAULT_ENABLED = false;
+    private static final int DEFAULT_ADAPTIVE_BLOCK_TIME = 60;
+    private static final int DEFAULT_NUMBER_OF_TRANSACTIONS = 0;
     private boolean enabled;
     private int adaptiveBlockTime;
     private int numberOfTransactions;
 
     @JsonCreator
     public AdaptiveForgingSettings() {
-        this(false, 60, 0);
+        this(DEFAULT_ENABLED, DEFAULT_ADAPTIVE_BLOCK_TIME, DEFAULT_NUMBER_OF_TRANSACTIONS);
     }
 
     public AdaptiveForgingSettings(boolean enabled, int adaptiveBlockTime, int numberOfTransactions) {
