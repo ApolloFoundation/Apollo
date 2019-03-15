@@ -20,8 +20,7 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestAccounts.class);
@@ -44,7 +43,9 @@ public class TestBase {
 
     public boolean verifyTransactionInBlock(String transaction)
     {
-     return Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long(0))==1);
+        boolean inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long(0))==1);
+        assertTrue(inBlock);
+        return inBlock;
     }
 
     public TransactionDTO getTransaction(String transaction) throws IOException {
@@ -246,19 +247,19 @@ public class TestBase {
     //Skrypchenko Serhii
     public GetAliasesResponse getAliases  (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliases);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
+
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), GetAliasesResponse.class);
+        return   mapper.readValue(response.body().string(), GetAliasesResponse.class);
     }
 
     //Skrypchenko Serhii
     public GetCountAliasesResponse getAliasCount(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliasCount);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
+
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -281,8 +282,7 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.setAlias);
         addParameters(Parameters.aliasURI, aliasURL);
         addParameters(Parameters.aliasName, aliasName);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, feeATM);
         addParameters(Parameters.deadline, deadline);
         Response response = httpCallPost();
@@ -295,11 +295,11 @@ public class TestBase {
     //Skrypchenko Serhii
     public CreateTransactionResponse deleteAlias(Wallet wallet, String aliasname) throws IOException {
         addParameters(RequestType.requestType,RequestType.deleteAlias);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
+
         addParameters(Parameters.aliasName, aliasname);
         addParameters(Parameters.feeATM, 400000000);
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
@@ -311,6 +311,7 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.getAliasesLike);
         //addParameters(Parameters.secretPhrase, testConfiguration.getSecretPhrase());
         addParameters(Parameters.aliasPrefix, aliasename);
+        //addParameters(Parameters.wallet, wallet);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -324,11 +325,11 @@ public class TestBase {
     public CreateTransactionResponse sellAlias (Wallet wallet,String aliasName) throws IOException {
         addParameters(RequestType.requestType, RequestType.sellAlias);
         addParameters(Parameters.aliasName, aliasName);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
+
         addParameters(Parameters.feeATM, 500000000);
         addParameters(Parameters.priceATM, 1500000000);
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -340,11 +341,11 @@ public class TestBase {
     public CreateTransactionResponse buyAlias (Wallet wallet,String aliasName) throws IOException {
         addParameters(RequestType.requestType, RequestType.buyAlias);
         addParameters(Parameters.aliasName, aliasName);
-        addParameters(Parameters.account, wallet.getUser());
-        addParameters(Parameters.secretPhrase, wallet.getPass());
+        addParameters(Parameters.wallet, wallet);
+
         addParameters(Parameters.feeATM, 500000000);
         addParameters(Parameters.amountATM, 1500000000);
-        addParameters(Parameters.deadline, 60);
+        addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
         //System.out.println(response.body().string());
         assertEquals(200, response.code());
@@ -624,6 +625,78 @@ public class TestBase {
         assertEquals(200, response.code());
         return mapper.readValue(response.body().string(), GetAssetAccountCountResponse.class);
     }
+
+    //getAsset
+    public AssetDTO getAsset (Wallet wallet, String asset) throws IOException {
+        addParameters(RequestType.requestType, getAsset);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.asset, asset);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), AssetDTO.class);
+    }
+
+
+    //getAccountCurrentAskOrderIds
+    public GetOrderIdsResponse getAccountCurrentAskOrderIds (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAccountCurrentAskOrderIds);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetOrderIdsResponse.class);
+    }
+
+    //getAccountCurrentBidOrderIds
+    public GetOrderIdsResponse getAccountCurrentBidOrderIds (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAccountCurrentBidOrderIds);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetOrderIdsResponse.class);
+    }
+
+
+    //getAccountCurrentAskOrders
+    public GetAccountCurrentOrdersResponse getAccountCurrentAskOrders (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAccountCurrentAskOrders);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAccountCurrentOrdersResponse.class);
+    }
+
+    //getAccountCurrentBidOrders
+    public GetAccountCurrentOrdersResponse getAccountCurrentBidOrders (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAccountCurrentBidOrders);
+        addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAccountCurrentOrdersResponse.class);
+    }
+
+    //getAllAssets
+    public GetAllAssetsResponse getAllAssets (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAllAssets);
+        //addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAllAssetsResponse.class);
+    }
+
+
+
+
+
+
+
+
+
 
 
     public ECBlock getECBlock() throws IOException {

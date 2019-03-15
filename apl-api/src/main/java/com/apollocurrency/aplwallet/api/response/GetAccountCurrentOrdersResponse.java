@@ -9,6 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetAccountCurrentOrdersResponse extends ResponseBase{
-    public OrderDTO[] bidOrderDTOS;
-    public OrderDTO[] askOrderDTOS;
+    public OrderDTO[] bidOrders;
+    public OrderDTO[] askOrders;
 }

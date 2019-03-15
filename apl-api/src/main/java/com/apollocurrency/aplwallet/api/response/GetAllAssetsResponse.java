@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetAllAssetsResponse extends ResponseBase{
-    public AssetDTO[] assetDTOS;
+    public AssetDTO[] assets;
 }

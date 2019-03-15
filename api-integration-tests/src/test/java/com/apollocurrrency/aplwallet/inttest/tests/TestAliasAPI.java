@@ -6,96 +6,173 @@ import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.GetAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.GetCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.SendMoneyResponse;
+import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Date;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestAliasAPI extends TestBase {
 
     //Skrypchenko Serhii
-    @DisplayName("Get Aliases")
-    @Test
-    public void getAliases() throws IOException {
-        GetAliasesResponse getAliasesResponse = getAliases(testConfiguration.getStandartWallet());
-        assertTrue(getAliasesResponse.aliases.length >= 1);
+    @DisplayName("setAlias + getAliasesCount + Get Aliases")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAliasesTest(Wallet wallet) throws IOException {
+        String alias;
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        alias = setAlias.transaction;
+        verifyTransactionInBlock(alias);
+        GetCountAliasesResponse getAliasesCount = getAliasCount(wallet);
+        assertTrue(getAliasesCount.numberOfAliases >= 1);
+        System.out.println(getAliasesCount.numberOfAliases);
+        GetAliasesResponse getAliasesResponse = getAliases(wallet);
+        assertTrue(Arrays.stream(getAliasesResponse.aliases).filter(aliasDTO -> aliasDTO.alias.equals(alias)).count()==1);
+
     }
 
     @DisplayName("Get Alias Count")
-    @Test
-    public void getAliasCount() throws IOException {
-        GetCountAliasesResponse getAliasesCount = getAliasCount(testConfiguration.getStandartWallet());
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAliasCountTest(Wallet wallet) throws IOException {
+        String alias;
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        alias = setAlias.transaction;
+        verifyTransactionInBlock(alias);
+        GetCountAliasesResponse getAliasesCount = getAliasCount(wallet);
         assertTrue(getAliasesCount.numberOfAliases >= 1);
+        System.out.println(getAliasesCount.numberOfAliases);
     }
 
 
-    @DisplayName("Get Alias")
-    @Test
-    public void getAlias() throws IOException {
-        AliasDTO aliasDTO = getAlias("testapiautomation");
-        assertTrue(aliasDTO.aliasName.length() >= 1);
+    @DisplayName("setAlias + Get Alias")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAlias(Wallet wallet) throws IOException {
+        String aliasname = "setAliasAPI"+new Date().getTime();
+        String alias;
+
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        alias = setAlias.transaction;
+        verifyTransactionInBlock(alias);
+
+        AliasDTO aliasDTO = getAlias(aliasname);
+
+        assertTrue(Arrays.stream(new String[]{aliasDTO.aliasName}).anyMatch(aliasname::equals));
     }
 
 
     @DisplayName("Set Alias")
-    public void setAlias(String pass) throws IOException {
-        CreateTransactionResponse setAlias = setAlias(testConfiguration.getStandartWallet(),"testapi.com", "testapiautomation", 400000000, 1400);
-        assertNotNull(setAlias.transactionJSON.senderPublicKey);
-        assertNotNull(setAlias.transactionJSON.signature);
-        assertNotNull(setAlias.transactionJSON.fullHash);
-        assertNotNull(setAlias.transactionJSON.amountATM);
-        assertNotNull(setAlias.transactionJSON.ecBlockId);
-        assertNotNull(setAlias.transactionJSON.senderRS);
-        assertNotNull(setAlias.transactionJSON.transaction);
-        assertNotNull(setAlias.transactionJSON.feeATM);
-        assertNotNull(setAlias.transactionJSON.type);
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void setAliasTest(Wallet wallet) throws IOException {
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAlias"+new Date().getTime(), 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+
 
     }
 
     @DisplayName("Delete Alias")
-    @Test
-    public void deleteAlias() throws IOException {
-        CreateTransactionResponse deleteAlias = deleteAlias(testConfiguration.getStandartWallet(),"testapiautomation");
-        assertNotNull(deleteAlias.transactionJSON.senderPublicKey);
-        assertNotNull(deleteAlias.transactionJSON.signature);
-        assertNotNull(deleteAlias.transactionJSON.fullHash);
-        assertNotNull(deleteAlias.transactionJSON.amountATM);
-        assertNotNull(deleteAlias.transactionJSON.ecBlockId);
-        assertNotNull(deleteAlias.transactionJSON.senderRS);
-        assertNotNull(deleteAlias.transactionJSON.transaction);
-        assertNotNull(deleteAlias.transactionJSON.feeATM);
-        assertNotNull(deleteAlias.transactionJSON.type);
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void deleteAliasTest(Wallet wallet) throws IOException {
+        String aliasname = "setAliasAPI"+new Date().getTime();
+        String aliasset;
+        String aliasdelete;
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 1000000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        aliasset = setAlias.transaction;
+        verifyTransactionInBlock(aliasset);
+        CreateTransactionResponse deleteAlias = deleteAlias(wallet, aliasname);
+        verifyCreatingTransaction(deleteAlias);
+        aliasdelete = deleteAlias.transaction;
+        verifyTransactionInBlock(aliasdelete);
+        AliasDTO aliasDTO = getAlias(aliasname);
+        assertFalse(Arrays.stream(new String[]{aliasDTO.aliasName}).anyMatch(aliasname::equals));
+
+
     }
 
 
     @DisplayName("Get Aliases Like")
-    @Test
-    public void getAliasesLike() throws IOException {
-        GetAliasesResponse getAliasesLike = getAliasesLike("te");
-        assertTrue(getAliasesLike.aliases.length >= 1);
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void getAliasesLikeTest(Wallet wallet) throws IOException {
+        String aliasname = "Alias"+new Date().getTime();
+        String aliasset;
+        String aliassearch = "Alias";
+
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        aliasset = setAlias.transaction;
+        verifyTransactionInBlock(aliasset);
+        GetAliasesResponse getAliasesLike = getAliasesLike(aliasname);
+        //assertTrue(Arrays.stream(getAliasesLike.aliases)).anyMatch(aliasname::equals));
+        assertTrue(Arrays.stream(getAliasesLike.aliases).filter(aliasDTO -> aliasDTO.aliasName.contains(aliassearch)).count()>=1);
+
 
     }
 
-    @DisplayName("Sell Alias")
-    @Test
-    public void sellAlias() throws IOException {
-        CreateTransactionResponse sellAlias = sellAlias(testConfiguration.getStandartWallet(),"apitest");
+    @DisplayName("setAlias + sellAlias + buyAlias")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void sellAlias(Wallet wallet) throws IOException {
+        String aliasname = "Alias"+new Date().getTime();
+        String aliasset;
+        String aliassell;
+
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        aliasset = setAlias.transaction;
+        verifyTransactionInBlock(aliasset);
+
+        CreateTransactionResponse sellAlias = sellAlias(wallet,aliasname);
         assertTrue(sellAlias.toString().length() >= 1);
+        verifyCreatingTransaction(sellAlias);
+        aliassell = sellAlias.transaction;
+        verifyTransactionInBlock(aliassell);
+
+
+        CreateTransactionResponse buyAlias = buyAlias(wallet, aliasname);
+        assertTrue(buyAlias.toString().length() >= 1);
 
     }
 
 
-    @DisplayName("Buy Alias")
-    @Test
-    public void buyAlias() throws IOException {
-        CreateTransactionResponse buyAlias = buyAlias(testConfiguration.getStandartWallet(),"apitest");
-        assertTrue(buyAlias.toString().length() >= 1);
+    @DisplayName("NEGATIVE: buyAlias if ALIAS is not for sale at the moment")
+    @Tag("NEGATIVE")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void buyAlias(Wallet wallet) throws IOException {
+        String aliasname = "Alias"+new Date().getTime();
+        String aliasset;
+
+
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
+        verifyCreatingTransaction(setAlias);
+        aliasset = setAlias.transaction;
+        verifyTransactionInBlock(aliasset);
+
+
+        CreateTransactionResponse buyAlias = buyAlias(wallet,aliasname);
+        assertTrue(buyAlias.errorDescription, buyAlias.errorDescription.contains("alias is not for sale at the moment"));
+        assertTrue(buyAlias.errorCode.compareTo(new Long(4)) == 0);
+
     }
 
 
