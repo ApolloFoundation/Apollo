@@ -125,6 +125,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final GlobalSync globalSync;
     private final DerivedDbTablesRegistry dbTables;
+    private final ReferencedTransactionService referencedTransactionService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -748,11 +749,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     private BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
-                                    GlobalSync globalSync, DerivedDbTablesRegistry dbTables) {
+                                    GlobalSync globalSync, DerivedDbTablesRegistry dbTables, ReferencedTransactionService referencedTransactionService) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
+        this.referencedTransactionService = referencedTransactionService;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -1169,7 +1171,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (lookupBlockhain().hasTransaction(transaction.getId(), previousLastBlock.getHeight())) {
                     throw new TransactionNotAcceptedException("Transaction is already in the blockchain", transaction);
                 }
-                if (transaction.referencedTransactionFullHash() != null && !hasAllReferencedTransactions(transaction, transaction.getTimestamp(), 0)) {
+                if (transaction.referencedTransactionFullHash() != null && !referencedTransactionService.hasAllReferencedTransactions(transaction, previousLastBlock.getHeight() + 1)) {
                     throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
                             + transaction.getReferencedTransactionFullHash(), transaction);
                 }
@@ -1408,9 +1410,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         DbIterator<UnconfirmedTransaction> allUnconfirmedTransactions = lookupTransactionProcessor().getAllUnconfirmedTransactions();
         try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
                 allUnconfirmedTransactions,
-                transaction -> hasAllReferencedTransactions(
-                        transaction.getTransaction(),
-                        transaction.getTimestamp(), 0))) {
+                transaction -> referencedTransactionService.hasAllReferencedTransactions(
+                        transaction.getTransaction(), previousBlock.getHeight() + 1))) {
             for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
                 orderedUnconfirmedTransactions.add(unconfirmedTransaction);
             }
@@ -1523,15 +1524,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    boolean hasAllReferencedTransactions(Transaction transaction, int timestamp, int count) {
-        if (transaction.referencedTransactionFullHash() == null) {
-            return timestamp - transaction.getTimestamp() < Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN && count < 10;
-        }
-        Transaction referencedTransaction = lookupBlockhain().findTransactionByFullHash(transaction.referencedTransactionFullHash());
-        return referencedTransaction != null
-                && referencedTransaction.getHeight() < transaction.getHeight()
-                && hasAllReferencedTransactions(referencedTransaction, timestamp, count + 1);
-    }
 
     void scheduleScan(int height, boolean validate) {
         TransactionalDataSource dataSource = lookupDataSource();

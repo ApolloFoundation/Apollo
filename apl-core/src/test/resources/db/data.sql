@@ -4,7 +4,10 @@ DELETE FROM PUBLIC.BLOCK;
 DELETE FROM PUBLIC.TWO_FACTOR_AUTH;
 DELETE FROM PUBLIC.ACCOUNT;
 DELETE FROM PUBLIC.VERSION;
+delete from public.transaction_shard_index;
+delete from public.block_index;
 delete from FTL.INDEXES;
+delete from public.option;
 
 
 INSERT INTO PUBLIC.BLOCK
@@ -38,6 +41,18 @@ VALUES (100, 100000000, 100000000, 0, null,	104595, true ),--1
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
 (100, X'a3f312570b65671a7101', true),
  (200, X'f3e0475e0db85a822037', false);
+INSERT into PUBLIC.BLOCK_INDEX (shard_id, block_id, block_height) VALUES
+(10, 30, 30),
+(1, 1, 1),
+(2, 2, 2)
+;
+INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, block_id) VALUES
+(100, 30),
+(101, 1),
+(102, 1),
+(103, 1)
+;
+
 -- set here last value from AplDbVersion
 INSERT into PUBLIC.VERSION values(251);
 INSERT INTO FTL.INDEXES (schema, table, columns)

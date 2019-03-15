@@ -25,7 +25,7 @@ public class DbTestData {
 
     public static DbProperties getDbFileProperties(String fileName) {
         try {
-            return DB_FILE_PROPERTIES.deepCopy().dbUrl(String.format("jdbc:h2:%s", fileName));
+            return DB_FILE_PROPERTIES.deepCopy().dbUrl(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0", fileName));
         }
         catch (CloneNotSupportedException e) {
             throw new RuntimeException("Unable to create copy of dbProperties!", e);

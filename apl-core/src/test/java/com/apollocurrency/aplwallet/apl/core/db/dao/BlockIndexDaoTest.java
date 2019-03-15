@@ -13,78 +13,55 @@ import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
 @EnableWeld
 class BlockIndexDaoTest {
+    @RegisterExtension
+    DbExtension dbExtension = new DbExtension();
 
-    private static PropertiesHolder propertiesHolder;
     @Inject
     private DaoConfig daoConfig;
-    private static DatabaseManager databaseManager;
     private static Jdbi jdbi;
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesConfigLoader.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class, DaoConfig.class, GlobalSync.class,
+    public WeldInitiator weld = WeldInitiator.from(
+            NtpTime.class,
+            BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, GlobalSync.class,
             GlobalSyncImpl.class,
+            PropertiesHolder.class,
             JdbiHandleFactory.class, BlockIndexDao.class, DerivedDbTablesRegistry.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class)
+            TransactionalDataSource.class)
+            .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class))
             .build();
 
     @Inject
     private BlockIndexDao dao;
 
-    @BeforeAll
-    static void setup() {
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                null,
-                false,
-                null,
-                Constants.APPLICATION_DIR_NAME + ".properties",
-                Collections.emptyList());
-        propertiesHolder = new PropertiesHolder();
-        propertiesHolder.init(propertiesLoader.load());
-        DbConfig dbConfig = new DbConfig(propertiesHolder);
-        databaseManager = new DatabaseManager(dbConfig.getDbConfig(), propertiesHolder);
-    }
-
-    @AfterAll
-    static void cleanup() {
-//        databaseManager.shutdown();
-    }
-
     @BeforeEach
     void setUp() {
-        jdbi = databaseManager.getJdbi();
+        jdbi = dbExtension.getDatabaseManger().getJdbi();
         jdbiHandleFactory.setJdbi(jdbi);
         daoConfig.setJdbiHandleFactory(jdbiHandleFactory);
     }
