@@ -31,11 +31,19 @@ import java.util.Optional;
 public interface HelperFactory<T> {
 
     /**
-     * Create specified helper class
+     * Create specified helper class. There are helpers used for select-insert, update.
      *
      * @param helperTableName table name
-     * @return table specific helper class OR NULL
+     * @return table specific helper class OR Empty
      */
         Optional<T> createSelectInsertHelper(String helperTableName);
+
+    /**
+     * Create specified helper class. There are helpers used for deleting
+     * @param helperTableName
+     * @param helperTableName table name
+     * @return table specific helper class OR Empty
+     */
+    Optional<T> createDeleteHelper(String helperTableName);
 
 }

@@ -1,20 +1,4 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
@@ -37,7 +21,7 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
+public class TransactionSelectAndInsertHelper implements BatchedPaginationOperation {
     private static final Logger log = getLogger(TransactionSelectAndInsertHelper.class);
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 //    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -51,7 +35,7 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
     private StringBuilder sqlInsertString = new StringBuilder(500);
     private StringBuilder columnNames = new StringBuilder();
     private StringBuilder columnQuestionMarks = new StringBuilder();
-    private StringBuilder columnValues = new StringBuilder();
+//    private StringBuilder columnValues = new StringBuilder();
 
     private Long totalRowCount = 0L;
     private Long insertedCount = 0L;
@@ -70,7 +54,7 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         this.sqlInsertString = new StringBuilder(500);
         this.columnNames = new StringBuilder();
         this.columnQuestionMarks = new StringBuilder();
-        this.columnValues = new StringBuilder();
+//        this.columnValues = new StringBuilder();
         this.totalRowCount = 0L;
         this.insertedCount = 0L;
         this.preparedInsertStatement = null;
@@ -87,21 +71,30 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         currentTableName = operationParams.tableName;
 
         String sqlToExecuteWithPaging;
+        String sqlSelectUpperBound = null;
+        String sqlSelectBottomBound = null;
+        Long upperBoundIdValue = null;
+        Long lowerBoundIdValue = null;
 
         if (operationParams.tableName.equalsIgnoreCase("transaction")) {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID <= ? limit ?";
             log.trace(sqlToExecuteWithPaging);
+            sqlSelectUpperBound =
+                    "select DB_ID from transaction where block_timestamp <= (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+            log.trace(sqlSelectUpperBound);
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+            log.trace(sqlSelectBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Transaction' is expected. Pls use another Helper class");
         }
         // select DB_ID for target HEIGHT
-        Long upperBoundIdValue = selectLimitedRangeDbId(sourceConnect, operationParams.snapshotBlockHeight);;
+        upperBoundIdValue = selectLimitedRangeDbId(sourceConnect, operationParams.snapshotBlockHeight, sqlSelectUpperBound);
         if (upperBoundIdValue == null) {
             String error = String.format("Not Found Tr DB_ID at snapshot Block height = %s", operationParams.snapshotBlockHeight);
             log.error(error);
             throw new RuntimeException(error);
         }
-        Long lowerBoundIdValue = selectLimitedRangeDbId(sourceConnect);
+        lowerBoundIdValue = selectLimitedRangeDbId(sourceConnect, sqlSelectBottomBound);
         log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
@@ -182,11 +175,9 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         return rows != 0;
     }
 
-    private Long selectLimitedRangeDbId(Connection sourceConnect, Long snapshotBlockHeight) throws SQLException {
-        String selectTransactionTimestamp =
-                "select DB_ID from transaction where block_timestamp <= (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+    private Long selectLimitedRangeDbId(Connection sourceConnect, Long snapshotBlockHeight, String selectValueSql) throws SQLException {
        Long highDbIdValue = null;
-        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectTransactionTimestamp)) {
+        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectValueSql)) {
             selectStatement.setInt(1, snapshotBlockHeight.intValue());
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
@@ -200,11 +191,9 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         return highDbIdValue;
     }
 
-    private Long selectLimitedRangeDbId(Connection sourceConnect) throws SQLException {
-        // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
-        String selectDbId = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+    private Long selectLimitedRangeDbId(Connection sourceConnect, String selectValueSql) throws SQLException {
         Long bottomDbIdValue = 0L;
-        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectDbId)) {
+        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectValueSql)) {
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
                 bottomDbIdValue = rs.getLong("DB_ID");
@@ -216,304 +205,4 @@ public class TransactionSelectAndInsertHelper implements BatchedSelectInsert {
         }
         return bottomDbIdValue;
     }
-
-/*
-
-        ResultSet rs = null;
-        if (tableName.equalsIgnoreCase("block")) {
-            rs = selectStmt.executeQuery(sqlToExecuteWithPaging);
-        } else {
-//            sqlToExecuteWithPaging = "SELECT * FROM " + tableName;
-            rs = selectStmt.executeQuery(sqlToExecuteWithPaging);
-        }
-        log.debug("Select '{}' in {} secs", tableName, (System.currentTimeMillis() - startSelect) / 1000);
-
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int numColumns = rsmd.getColumnCount();
-        int[] columnTypes = new int[numColumns];
-
-        StringBuilder columnNames = new StringBuilder();
-        StringBuilder columnQuestionMarks = new StringBuilder();
-        StringBuilder columnValues = new StringBuilder();
-
-        java.util.Date d = null;
-
-        int targetBlockIdColumnIndex = -1;
-        int targetDbIdColumnIndex = -1;
-        for (int i = 0; i < numColumns; i++) {
-            columnTypes[i] = rsmd.getColumnType(i + 1);
-            if (i != 0) {
-                columnNames.append(",");
-                columnQuestionMarks.append("?,");
-            }
-            String columnName = rsmd.getColumnName(i + 1);
-            columnNames.append(columnName);
-            if (columnName.equalsIgnoreCase("DB_ID")) {
-                targetDbIdColumnIndex = i + 1;
-            }
-        }
-        columnQuestionMarks.append("?");
-
-        long startInsert = System.currentTimeMillis();
-        boolean continueSelect = false;
-
-        do {
-
-        while (rs.next()) {
-            continueSelect = true;
-
-            // no need to synch by StringBuffer implementation
-        StringBuilder sqlInsertString = new StringBuilder(8000);
-        sqlInsertString.append("INSERT INTO ").append(tableName)
-                .append("(").append(columnNames).append(")").append(" values (").append(columnQuestionMarks).append(")");
-        if (log.isTraceEnabled()) {
-            log.trace(sqlInsertString.toString());
-        }
-        try (
-                // precompile sql
-//                PreparedStatement preparedStatement = targetConnect.prepareStatement(sqlInsertString.toString())
-                PreparedStatement preparedStatement = targetConnect.prepareStatement(sqlToExecuteWithPaging)
-        ) {
-
-                for (int i = 0; i < numColumns; i++) {
-                    // bind values
-
-                    switch (columnTypes[i]) {
-                        case Types.BIGINT:
-                        case Types.BIT:
-                        case Types.BOOLEAN:
-                        case Types.DECIMAL:
-                        case Types.DOUBLE:
-                        case Types.FLOAT:
-                        case Types.INTEGER:
-                        case Types.SMALLINT:
-                        case Types.TINYINT:
-                            String v = rs.getString(i + 1);
-                            columnValues.append(v);
-                            break;
-
-                        case Types.DATE:
-                            d = rs.getDate(i + 1);
-                        case Types.TIME:
-                            if (d == null) d = rs.getTime(i + 1);
-                        case Types.TIMESTAMP:
-                            if (d == null) d = rs.getTimestamp(i + 1);
-
-                            if (d == null) {
-                                columnValues.append("null");
-                            } else {
-                                columnValues.append("TO_DATE('").append(dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
-                            }
-                            break;
-
-                        default:
-                            v = rs.getString(i + 1);
-                            if (v != null) {
-                                columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
-                            } else {
-                                columnValues.append("null");
-                            }
-                            break;
-                    }
-                    if (i != columnTypes.length - 1) {
-                        columnValues.append(",");
-                    }
-                    if (targetDbIdColumnIndex == i + 1) {
-                        lowerIndex = rs.getLong(i + 1);
-                    }
-
-                    if (targetBlockIdColumnIndex == i + 1) {
-                        // BLOCK_ID should be assigned
-                        preparedStatement.setObject(i + 1, snapshotBlock.getId());
-                        continue;
-                    }
-                    if (targetDbIdColumnIndex == i + 1) {
-                        // HEIGHT should be assigned
-                        preparedStatement.setObject(i + 1, snapshotBlock.getHeight());
-                        continue;
-                    }
-                    preparedStatement.setObject(i + 1, rs.getObject(i + 1));
-                }
-
-                insertedBeforeBatchCount += preparedStatement.executeUpdate();
-                if (insertedBeforeBatchCount >= batchCommitSize) {
-                    targetConnect.commit();
-                    totalInsertedCount += insertedBeforeBatchCount;
-                    insertedBeforeBatchCount = 0;
-                    log.trace("Partial commit = {}", totalInsertedCount);
-                }
-                columnValues.setLength(0);
-            targetConnect.commit(); // commit latest records if any
-            totalInsertedCount += insertedBeforeBatchCount;
-            log.debug("Finished '{}' inserted [{}] in = {} sec", tableName, totalInsertedCount, (System.currentTimeMillis() - startInsert) / 1000);
-        } catch (Exception e) {
-            sqlInsertString = new StringBuilder(8000);
-            sqlInsertString.append("INSERT INTO ").append(tableName)
-                    .append("(").append(columnNames).append(")").append(" values (").append(columnValues).append(")");
-
-            int errorTotalCount = totalInsertedCount + insertedBeforeBatchCount;
-            log.error("Insert error on record count=[" + errorTotalCount + "] by SQL =\n" + sqlInsertString.toString() + "\n", e);
-//            log.error("Insert error on record count=[" + errorTotalCount + "] by SQL =\n" + sqlToExecuteWithPaging + "\n", e);
-        }
-      } // rs.next()
-     } while (continueSelect); // do ()
-*/
-
-/*
-    public int generateInsertStatements(Connection sourceConnect, Connection targetConnect, String tableName,
-                                 long batchCommitSize, Block snapshotBlock)
-            throws Exception {
-        log.debug("Generating Insert statements for: '{}'", tableName);
-
-        Statement selectStmt = sourceConnect.createStatement();
-        long lowerIndex = 0, upperIndex = batchCommitSize;
-
-        int insertedBeforeBatchCount = 0;
-        int totalInsertedCount = 0;
-        String unFormattedSql;
-        if (tableName.equalsIgnoreCase("block")) {
-            unFormattedSql = "SELECT * FROM %s where HEIGHT BETWEEN %d AND %d limit %d";
-        } else {
-//            unFormattedSql = "SELECT * FROM %s where HEIGHT BETWEEN %d AND %d limit %d";
-            unFormattedSql = "SELECT * FROM %s";
-        }
-        String sqlToExecute;
-
-        long startSelect = System.currentTimeMillis();
-        ResultSet rs = null;
-        if (tableName.equalsIgnoreCase("block")) {
-            sqlToExecute = String.format(unFormattedSql, tableName, lowerIndex, upperIndex, batchCommitSize);
-            rs = selectStmt.executeQuery(sqlToExecute);
-        } else {
-            rs = selectStmt.executeQuery("SELECT * FROM " + tableName);
-        }
-        log.debug("Select '{}' in {} secs", tableName, (System.currentTimeMillis() - startSelect) / 1000);
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int numColumns = rsmd.getColumnCount();
-        int[] columnTypes = new int[numColumns];
-
-        StringBuilder columnNames = new StringBuilder();
-        StringBuilder columnQuestionMarks = new StringBuilder();
-        StringBuilder columnValues = new StringBuilder();
-
-        java.util.Date d = null;
-
-        int targetBlockIdColumnIndex = -1;
-        int targetHeightColumnIndex = -1;
-        for (int i = 0; i < numColumns; i++) {
-            columnTypes[i] = rsmd.getColumnType(i + 1);
-            if (i != 0) {
-                columnNames.append(",");
-                columnQuestionMarks.append("?,");
-            }
-//            columnNames.append(rsmd.getColumnName(i + 1));
-            String columnName = rsmd.getColumnName(i + 1);
-            columnNames.append(columnName);
-            if (snapshotBlock != null
-                    && (columnName.equalsIgnoreCase("BLOCK_ID") || columnName.equalsIgnoreCase("HEIGHT"))) {
-                if (columnName.equalsIgnoreCase("BLOCK_ID")) {
-                    targetBlockIdColumnIndex = i + 1;
-                }
-                if (columnName.equalsIgnoreCase("HEIGHT")) {
-                    targetHeightColumnIndex = i + 1;
-                }
-            }
-
-        }
-        columnQuestionMarks.append("?");
-
-        // no need to synch by StringBuffer implementation
-        StringBuilder sqlInsertString = new StringBuilder(8000);
-        sqlInsertString.append("INSERT INTO ").append(tableName)
-                .append("(").append(columnNames).append(")").append(" values (").append(columnQuestionMarks).append(")");
-
-        if (log.isTraceEnabled()) {
-            log.trace(sqlInsertString.toString());
-        }
-        try (
-                // precompile sql
-                PreparedStatement preparedStatement = targetConnect.prepareStatement(sqlInsertString.toString())
-        ) {
-            long startInsert = System.currentTimeMillis();
-            while (rs.next()) {
-                for (int i = 0; i < numColumns; i++) {
-                    // bind values
-
-                    switch (columnTypes[i]) {
-                        case Types.BIGINT:
-                        case Types.BIT:
-                        case Types.BOOLEAN:
-                        case Types.DECIMAL:
-                        case Types.DOUBLE:
-                        case Types.FLOAT:
-                        case Types.INTEGER:
-                        case Types.SMALLINT:
-                        case Types.TINYINT:
-                            String v = rs.getString(i + 1);
-                            columnValues.append(v);
-                            break;
-
-                        case Types.DATE:
-                            d = rs.getDate(i + 1);
-                        case Types.TIME:
-                            if (d == null) d = rs.getTime(i + 1);
-                        case Types.TIMESTAMP:
-                            if (d == null) d = rs.getTimestamp(i + 1);
-
-                            if (d == null) {
-                                columnValues.append("null");
-                            } else {
-                                columnValues.append("TO_DATE('").append(dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
-                            }
-                            break;
-
-                        default:
-                            v = rs.getString(i + 1);
-                            if (v != null) {
-                                columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
-                            } else {
-                                columnValues.append("null");
-                            }
-                            break;
-                    }
-                    if (i != columnTypes.length - 1) {
-                        columnValues.append(",");
-                    }
-
-                    if (targetBlockIdColumnIndex == i + 1) {
-                        // BLOCK_ID should be assigned
-                        preparedStatement.setObject(i + 1, snapshotBlock.getId());
-                        continue;
-                    }
-                    if (targetHeightColumnIndex == i + 1) {
-                        // HEIGHT should be assigned
-                        preparedStatement.setObject(i + 1, snapshotBlock.getHeight());
-                        continue;
-                    }
-                    preparedStatement.setObject(i + 1, rs.getObject(i + 1));
-
-                }
-                insertedBeforeBatchCount += preparedStatement.executeUpdate();
-                if (insertedBeforeBatchCount >= batchCommitSize) {
-                    targetConnect.commit();
-                    totalInsertedCount += insertedBeforeBatchCount;
-                    insertedBeforeBatchCount = 0;
-                    log.trace("Partial commit = {}", totalInsertedCount);
-                }
-                columnValues.setLength(0);
-            }
-            targetConnect.commit(); // commit latest records if any
-            totalInsertedCount += insertedBeforeBatchCount;
-            log.debug("Finished '{}' inserted [{}] in = {} sec", tableName, totalInsertedCount, (System.currentTimeMillis() - startInsert) / 1000);
-        } catch (Exception e) {
-            sqlInsertString = new StringBuilder(8000);
-            sqlInsertString.append("INSERT INTO ").append(tableName)
-                    .append("(").append(columnNames).append(")").append(" values (").append(columnValues).append(")");
-
-            int errorTotalCount = totalInsertedCount + insertedBeforeBatchCount;
-            log.error("Insert error on record count=[" + errorTotalCount + "] by SQL =\n" + sqlInsertString.toString() + "\n", e);
-        }
-        return totalInsertedCount;
-    }
-*/
 }

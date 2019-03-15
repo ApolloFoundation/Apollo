@@ -81,27 +81,15 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
 
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS public_key (db_id IDENTITY, account_id BIGINT NOT NULL, "
-                        + "public_key BINARY(32), height INT NOT NULL, FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, "
-                        + "latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 4:
                 apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
                         + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
                         + "referenced_transaction_id BIGINT NOT NULL)");
-            case 5:
-                apply("CREATE TABLE IF NOT EXISTS genesis_public_key " +
-                        "(db_id IDENTITY," +
-                        "account_id BIGINT NOT NULL, " +
-                        "public_key BINARY(32), " +
-                        "height INT NOT NULL, " +
-                        "FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, " +
-                        "latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 6:
+            case 4:
                 apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
-            case 7:
+            case 5:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, value)");
-            case 8:
-                return 8;
+            case 6:
+                return 6;
             default:
                 throw new RuntimeException("Shard CREATE TABLES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

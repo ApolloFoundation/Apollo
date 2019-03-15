@@ -1,29 +1,51 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 /**
- * Enum used for tracking migration state on all steps.
+ * Enum used for tracking migration state on all shard operation steps.
  */
 public enum MigrateState {
-    INIT, SHARD_DB_CREATED, DATA_MOVING_TO_SHARD_STARTED, DATA_MOVED_TO_SHARD,
-    DATA_RELINKED_IN_MAIN, SECONDARY_INDEX_UPDATED, DATA_REMOVED_FROM_MAIN, COMPLETED, FAILED;
+    /**
+     * started shard schema, but it was finished yet
+     */
+    INIT,
+    /**
+     * shard schema is created with only initial tables , no constraints/indexes
+     */
+    SHARD_SCHEMA_CREATED,
+    /**
+     * We started copying data (block + tr) from main into shard
+     */
+    DATA_COPY_TO_SHARD_STARTED,
+    /**
+     * We finished copying data (block + tr) from main into shard
+     */
+    DATA_COPIED_TO_SHARD,
+    /**
+     * Shard schema is updated with all constraints/indexes
+     */
+    SHARD_SCHEMA_FULL,
+    /**
+     * Several tables were processed and records were updated to reference shard's snapshot block
+     */
+    DATA_RELINKED_IN_MAIN,
+    /**
+     * The block/tr secondary indexes were updated with shard related info
+     */
+    SECONDARY_INDEX_UPDATED,
+    /**
+     * Block/tr data were deleted from main db after it has beed copied to shard db
+     */
+    DATA_REMOVED_FROM_MAIN,
+    /**
+     * Shard record is inserted in main db and sharding process is completed
+     */
+    COMPLETED,
+    /**
+     * Process failed at any step
+     */
+    FAILED;
 }

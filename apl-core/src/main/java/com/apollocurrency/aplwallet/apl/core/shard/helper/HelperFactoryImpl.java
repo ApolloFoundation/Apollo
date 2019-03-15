@@ -1,20 +1,4 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
@@ -25,14 +9,14 @@ import java.util.Optional;
 /**
  * {@inheritDoc}
  */
-public class HelperFactoryImpl implements HelperFactory<BatchedSelectInsert> {
+public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperation> {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Optional<BatchedSelectInsert> createSelectInsertHelper(String helperTableName) {
-        Optional<BatchedSelectInsert> helper;
+    public Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName) {
+        Optional<BatchedPaginationOperation> helper;
         switch (helperTableName.toUpperCase()) {
             case "BLOCK" : {
                 return Optional.of(new BlockSelectAndInsertHelper());
@@ -57,4 +41,17 @@ public class HelperFactoryImpl implements HelperFactory<BatchedSelectInsert> {
         return helper;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<BatchedPaginationOperation> createDeleteHelper(String helperTableName) {
+        Optional<BatchedPaginationOperation> helper;
+        if ("BLOCK".equals(helperTableName.toUpperCase())) {
+            return Optional.of(new BlockDeleteHelper());
+        } else {
+            helper = Optional.empty();
+        }
+        return helper;
+    }
 }

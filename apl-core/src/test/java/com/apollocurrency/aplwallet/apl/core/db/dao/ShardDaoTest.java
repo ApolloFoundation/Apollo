@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -123,14 +124,14 @@ class ShardDaoTest {
         Shard found1 = dao.getShardById(1L);
         assertNotNull(found1);
         assertNotNull(found1.getShardId());
-        assertEquals("0000001", found1.getShardHash());
+        assertArrayEquals("0000001".getBytes(), found1.getShardHash() );
 
-        found1.setShardHash("000000123");
+        found1.setShardHash("000000123".getBytes());
         dao.updateShard(found1);
 
         Shard found3 = dao.getShardById(1L);
         assertNotNull(found3);
-        assertEquals("000000123", found3.getShardHash());
+        assertArrayEquals("000000123".getBytes(), found3.getShardHash());
 
         dao.hardDeleteShard(1L);
         count = dao.countShard();

@@ -4,7 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_DB_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINKED_IN_MAIN;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -18,8 +21,6 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
@@ -35,9 +36,14 @@ import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.MoveDataCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -129,17 +135,33 @@ class ShardMigrationExecutorTest {
     void executeAllOperations() throws IOException {
         assertNotNull(databaseManager);
 
-        MigrateState state = transferManagementReceiver.addOrCreateShard(
+        CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(transferManagementReceiver,
                 new ShardInitTableSchemaVersion());
-        assertEquals(SHARD_DB_CREATED, state);
+        MigrateState state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
+        assertEquals(SHARD_SCHEMA_CREATED, state);
 
-        Map<String, Long> tableNameCountMap = new LinkedHashMap<>(0);
-        tableNameCountMap.put("BLOCK", -1L);
-//        tableNameCountMap.put("TRANSACTION", -1L);
-        MoveDataCommand moveDataCommand = new MoveDataCommand(
-                transferManagementReceiver, tableNameCountMap, null, -1, 0L);
+        CopyDataCommand copyDataCommand = new CopyDataCommand(
+                transferManagementReceiver, 1L);
+        state = shardMigrationExecutor.executeOperation(copyDataCommand);
+        assertEquals(FAILED /*DATA_COPIED_TO_SHARD*/, state);
 
-        state = shardMigrationExecutor.executeOperation(moveDataCommand);
+        createShardSchemaCommand = new CreateShardSchemaCommand(transferManagementReceiver,
+                new ShardAddConstraintsSchemaVersion());
+        state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
+        assertEquals(SHARD_SCHEMA_FULL, state);
+
+        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(transferManagementReceiver, 0L);
+        state = shardMigrationExecutor.executeOperation(reLinkDataCommand);
+        assertEquals(DATA_RELINKED_IN_MAIN, state);
+
+        UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(transferManagementReceiver, 0L);
+        state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
+        assertEquals(FAILED/*SECONDARY_INDEX_UPDATED*/, state);
+
+        DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(transferManagementReceiver, 0L);
+        state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
+        assertEquals(FAILED/*DATA_REMOVED_FROM_MAIN*/, state);
+
         assertEquals(MigrateState.FAILED, state);
 
     }

@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_DB_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -17,30 +18,31 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfo;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfoImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
@@ -52,7 +54,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
@@ -143,7 +144,7 @@ class DataTransferManagementReceiverTest {
 
     @AfterEach
     void tearDown() {
-        FileUtils.deleteQuietly(pathToDb.toFile());
+//        FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
     @Test
@@ -152,7 +153,7 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
         state = transferManagementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
-        assertEquals(SHARD_DB_CREATED, state);
+        assertEquals(SHARD_SCHEMA_CREATED, state);
     }
 
     @Test
@@ -161,14 +162,8 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-/*
-        DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
-                null, TEMPORARY_MIGRATION_FILE_NAME,
-                -1, SHARD_DB_CREATED, null, null);
-*/
-
-        state = transferManagementReceiver.addOrCreateShard(/*databaseMetaInfo, */new ShardAddConstraintsSchemaVersion());
-        assertEquals(SHARD_DB_CREATED, state);
+        state = transferManagementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+        assertEquals(SHARD_SCHEMA_CREATED, state);
     }
 
     @Test
@@ -178,57 +173,54 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-//        DatabaseMetaInfo databaseMetaInfo = new DatabaseMetaInfoImpl(
-//                null, TEMPORARY_MIGRATION_FILE_NAME,
-//                -1, SHARD_DB_CREATED, null, null);
+        state = transferManagementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
+        assertEquals(SHARD_SCHEMA_CREATED, state);
 
-        state = transferManagementReceiver.addOrCreateShard(
-//                databaseMetaInfo,
-                new ShardInitTableSchemaVersion());
-        assertEquals(SHARD_DB_CREATED, state);
+        List<String> tableNameList = new LinkedList<>();
+        tableNameList.add("BLOCK");
+        tableNameList.add("TRANSACTION");
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 1350000L);
 
-        DatabaseMetaInfo shardDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, null, 100,
-                MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, 1350000L);
+        state = transferManagementReceiver.copyDataToShard(paramInfo);
+        assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
+//        assertEquals(MigrateState.FAILED, state);
 
-        DatabaseMetaInfo mainDbMetaInfo = new DatabaseMetaInfoImpl(
-                null, "apl-blockchain", 100,
-                MigrateState.DATA_MOVING_TO_SHARD_STARTED, null, 1350000L);
+        state = transferManagementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+        assertEquals(SHARD_SCHEMA_FULL, state);
 
-        Map<String, Long> tableNameCountMap = new LinkedHashMap<>(10);
-        // next not linked tables
-//        tableNameCountMap.clear();
-        tableNameCountMap.put("BLOCK", -1L);
-        tableNameCountMap.put("TRANSACTION", -1L);
+        tableNameList.clear();
+        tableNameList.add("GENESIS_PUBLIC_KEY");
+        tableNameList.add("PUBLIC_KEY");
+//        tableNameList.put("TAGGED_DATA", -1L);
+        tableNameList.add("SHUFFLING_DATA");
+        tableNameList.add("DATA_TAG");
+        tableNameList.add("PRUNABLE_MESSAGE");
 
-        shardDbMetaInfo.setSnapshotBlock(null); // remove snapshot block
-        state = transferManagementReceiver.moveData(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
-//        assertEquals(MigrateState.DATA_MOVED_TO_SHARD, state);
-        assertEquals(MigrateState.FAILED, state);
-
-        state = transferManagementReceiver.addOrCreateShard(
-//                databaseMetaInfo,
-                new ShardAddConstraintsSchemaVersion());
-        assertEquals(SHARD_DB_CREATED, state);
-
-        tableNameCountMap.clear();
-        tableNameCountMap.put("GENESIS_PUBLIC_KEY", -1L);
-        tableNameCountMap.put("PUBLIC_KEY", -1L);
-//        tableNameCountMap.put("TAGGED_DATA", -1L);
-        tableNameCountMap.put("SHUFFLING_DATA", -1L);
-        tableNameCountMap.put("DATA_TAG", -1L);
-        tableNameCountMap.put("PRUNABLE_MESSAGE", -1L);
-
-        state = transferManagementReceiver.relinkDataToSnapshotBlock(tableNameCountMap, mainDbMetaInfo, shardDbMetaInfo);
+        paramInfo.setTableNameList(tableNameList);
+        state = transferManagementReceiver.relinkDataToSnapshotBlock(paramInfo);
         assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
+//        assertEquals(MigrateState.FAILED, state);
+
+        tableNameList.clear();
+        tableNameList.add("BLOCK_INDEX");
+        tableNameList.add("TRANSACTION_SHARD_INDEX");
+
+        paramInfo.setTableNameList(tableNameList);
+        state = transferManagementReceiver.updateSecondaryIndex(paramInfo);
+        assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
+
+        tableNameList.clear();
+        tableNameList.add("BLOCK");
+        tableNameList.add("TRANSACTION");
+
+        paramInfo.setTableNameList(tableNameList);
+        state = transferManagementReceiver.deleteCopiedData(paramInfo);
+//        assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
         assertEquals(MigrateState.FAILED, state);
 
-        tableNameCountMap.clear();
-        tableNameCountMap.put("BLOCK_INDEX", -1L);
-        tableNameCountMap.put("TRANSACTION_SHARD_INDEX", -1L);
-        mainDbMetaInfo.setCommitBatchSize(100);
-        state = transferManagementReceiver.updateSecondaryIndex(tableNameCountMap, mainDbMetaInfo/*, shardDbMetaInfo*/);
-        assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
+        paramInfo.setShardHash("000000000".getBytes());
+        state = transferManagementReceiver.addShardInfo(paramInfo);
+        assertEquals(MigrateState.COMPLETED, state);
 
         log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start)/1000 );
     }

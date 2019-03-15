@@ -1,30 +1,12 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 
 /**
  * Interface for different operation executed during sharding process.
@@ -34,20 +16,29 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DatabaseMetaInfo;
  */
 public interface DataTransferManagementReceiver {
 
-    String TEMPORARY_MIGRATION_FILE_NAME = "apl-temp-migration";
+    /**
+     * Common state overall shard migration process
+     */
     String PREVIOUS_MIGRATION_KEY = "SHARD_MIGRATION_STATUS";
+    /**
+     * Last processed table/object within shard migration process
+     */
     String LAST_MIGRATION_OBJECT_NAME = "LAST_MIGRATION_OBJECT_NAME";
 
     DatabaseManager getDatabaseManager();
 
     MigrateState getCurrentState();
 
-    MigrateState addOrCreateShard(/*DatabaseMetaInfo source, */DbVersion dbVersion);
+    MigrateState addOrCreateShard(DbVersion dbVersion);
 
-    MigrateState moveData(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
+    MigrateState copyDataToShard(CommandParamInfo paramInfo);
 
-    MigrateState relinkDataToSnapshotBlock(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source, DatabaseMetaInfo target);
+    MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo);
 
-    MigrateState updateSecondaryIndex(Map<String, Long> tableNameCountMap, DatabaseMetaInfo source/*, DatabaseMetaInfo target*/);
+    MigrateState updateSecondaryIndex(CommandParamInfo paramInfo);
+
+    MigrateState deleteCopiedData(CommandParamInfo paramInfo);
+
+    MigrateState addShardInfo(CommandParamInfo source);
 
 }

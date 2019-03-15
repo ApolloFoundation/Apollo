@@ -5,18 +5,25 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.model;
  */
 public class Shard {
     private Long shardId;
-    private String shardHash;
+    private byte[] shardHash;
+    private Integer shardState;
 
     public Shard() {
     }
 
     public Shard(String shardHash) {
-        this.shardHash = shardHash;
+        this.shardHash = shardHash.getBytes();
     }
 
     public Shard(Long shardId, String shardHash) {
         this.shardId = shardId;
+        this.shardHash = shardHash.getBytes();
+    }
+
+    public Shard(Long shardId, byte[] shardHash, Integer shardState) {
+        this.shardId = shardId;
         this.shardHash = shardHash;
+        this.shardState = shardState;
     }
 
     public Long getShardId() {
@@ -27,12 +34,20 @@ public class Shard {
         this.shardId = shardId;
     }
 
-    public String getShardHash() {
+    public byte[] getShardHash() {
         return shardHash;
     }
 
-    public void setShardHash(String shardHash) {
+    public void setShardHash(byte[] shardHash) {
         this.shardHash = shardHash;
+    }
+
+    public Integer getShardState() {
+        return shardState;
+    }
+
+    public void setShardState(Integer shardState) {
+        this.shardState = shardState;
     }
 
     public static ShardBuilder builder() {
@@ -41,7 +56,8 @@ public class Shard {
 
     public static final class ShardBuilder {
         private Long shardId;
-        private String shardHash;
+        private byte[] shardHash;
+        private Integer shardState;
 
         private ShardBuilder() {
         }
@@ -51,13 +67,18 @@ public class Shard {
             return this;
         }
 
-        public ShardBuilder shardHash(String shardHash) {
+        public ShardBuilder shardHash(byte[] shardHash) {
             this.shardHash = shardHash;
             return this;
         }
 
+        public ShardBuilder shardState(Integer shardState) {
+            this.shardState = shardState;
+            return this;
+        }
+
         public Shard build() {
-            return new Shard(shardId, shardHash);
+            return new Shard(shardId, shardHash, shardState);
         }
     }
 }
