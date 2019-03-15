@@ -27,7 +27,7 @@ public class DbManipulator {
                         .dbUsername(user)
                         .maxConnections(10)
                         .loginTimeout(10)
-                        .maxMemoryRows(100000)
+                        .maxMemoryRows(10000)
                         .defaultLockTimeout(10 * 1000), 1000, 1, 1000, false);
         populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
     }
@@ -40,7 +40,7 @@ public class DbManipulator {
                         .dbUsername("sa")
                         .maxConnections(10)
                         .loginTimeout(10)
-                        .maxMemoryRows(100000)
+                        .maxMemoryRows(10000)
                         .defaultLockTimeout(10 * 1000), 1000, 1, 1000, false);
         populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
     }

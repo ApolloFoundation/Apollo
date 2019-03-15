@@ -39,7 +39,7 @@ public class ShardingHashCalculator {
         this.blockSelectLimit = blockSelectLimit;
     }
 
-    private byte[] doHashCalculation(int shardStartHeight, int shardEndHeight) {
+    private List<byte[]> retrieveBlockSignatures(int shardStartHeight, int shardEndHeight) {
         List<byte[]> allBlockSignatures = new ArrayList<>();
         int fromHeight = shardStartHeight;
         while (fromHeight < shardEndHeight) {
@@ -47,7 +47,11 @@ public class ShardingHashCalculator {
             allBlockSignatures.addAll(blockSignatures);
             fromHeight += blockSelectLimit;
         }
-        MerkleTree tree = new MerkleTree(createMessageDigest(), allBlockSignatures);
+        return allBlockSignatures;
+    }
+
+    private byte[] calculateMerkleRoot(List<byte[]> dataList) {
+        MerkleTree tree = new MerkleTree(createMessageDigest(), dataList);
         return tree.getRoot() == null ? null : tree.getRoot().getValue();
     }
 
@@ -65,7 +69,11 @@ public class ShardingHashCalculator {
             throw new IllegalArgumentException("shard start height should be less than shard end height");
         }
         long startTime = System.currentTimeMillis();
-        byte[] hash = doHashCalculation(shardStartHeight, shardEndHeight);
+        List<byte[]> blockSignatures = retrieveBlockSignatures(shardStartHeight, shardEndHeight);
+        log.info("Retrieved {} block signatures in {}ms",blockSignatures.size(), System.currentTimeMillis() - startTime);
+        long merkleTreeStartTime = System.currentTimeMillis();
+        byte[] hash = calculateMerkleRoot(blockSignatures);
+        log.info("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);
         long time = System.currentTimeMillis() - startTime;
         log.info("Hash calculated in {}s, speed {} bpms", time / 1000, (shardEndHeight - shardStartHeight) / Math.max(time, 1));
         return hash;
