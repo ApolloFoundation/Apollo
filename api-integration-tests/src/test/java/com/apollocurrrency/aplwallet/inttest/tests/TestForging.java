@@ -28,6 +28,5 @@ public class TestForging extends TestBase {
         assertNotNull(getForgingResponse.generators.length >0);
         forgingDetails = stopForging(wallet);
         assertTrue(forgingDetails.getFoundAndStopped());
-
     }
 }

@@ -3,10 +3,13 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.Account2FA;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
 
@@ -47,10 +50,11 @@ public class Test2FA extends TestBase {
     }
 
     @DisplayName("Enable 2FA")
-    @Test
-    public void  enable2FA() throws IOException { ;
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void  enable2FATest(Wallet wallet) throws IOException { ;
         AccountDTO accountDTO = generateNewAccount();
-        accountDTO = enable2FA(accountDTO.accountRS,accountDTO.passphrase);
+        accountDTO = enable2FA(wallet);
         assertNotNull(accountDTO.secret);
     }
 }

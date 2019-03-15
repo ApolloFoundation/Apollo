@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -401,10 +402,9 @@ public class TestBase {
     }
 
 
-    public AccountDTO enable2FA(String accountID,String pass) throws IOException {
+    public AccountDTO enable2FA(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.enable2FA);
-        addParameters(Parameters.account, accountID);
-        addParameters(Parameters.passphrase,pass);
+        addParameters(Parameters.wallet, wallet);
         Response response = httpCallPost();
         assertEquals(200, response.code());
         return   mapper.readValue(response.body().string(), AccountDTO.class);
@@ -654,6 +654,28 @@ public class TestBase {
         addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
         Response response = httpCallPost();
         return mapper.readValue(response.body().string(), ForgingDetails.class);
+    }
+
+    public CreateTransactionResponse sendMessage(Wallet wallet,String recipient, String testMessage) throws IOException { ;
+        addParameters(RequestType.requestType,RequestType.sendMessage);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.message, testMessage);
+        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.messageIsPrunable, true);
+        Response response = httpCallPost();
+        Assert.assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+    }
+
+    public PrunableMessageDTO readMessage(Wallet wallet,String transaction) throws IOException {
+        addParameters(RequestType.requestType,RequestType.readMessage);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.transaction,transaction);
+        Response response = httpCallPost();
+        Assert.assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), PrunableMessageDTO.class);
     }
 
 
