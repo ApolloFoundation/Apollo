@@ -33,7 +33,6 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         tableNameList.add("BLOCK");
-        tableNameList.add("TRANSACTION");
     }
 
     public DeleteCopiedDataCommand(
