@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINKED_IN_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
@@ -42,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -162,7 +164,9 @@ class ShardMigrationExecutorTest {
         state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
         assertEquals(FAILED/*DATA_REMOVED_FROM_MAIN*/, state);
 
-        assertEquals(MigrateState.FAILED, state);
+        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(transferManagementReceiver, new byte[]{3,4,5,6,1});
+        state = shardMigrationExecutor.executeOperation(finishShardingCommand);
+        assertEquals(COMPLETED, state);
 
     }
 }
