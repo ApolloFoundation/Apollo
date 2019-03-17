@@ -37,7 +37,7 @@ public class H2DbInfoExtractorTest {
     @Test
     public void testGetHeight() {
         int height = h2DbInfoExtractor.getHeight(path.toString());
-        Assertions.assertEquals(104671, height);
+        Assertions.assertEquals(1640084, height);
 
     }
 

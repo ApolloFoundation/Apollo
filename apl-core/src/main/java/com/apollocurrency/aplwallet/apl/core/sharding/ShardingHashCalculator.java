@@ -5,12 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.sharding;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -18,40 +21,61 @@ import javax.inject.Singleton;
 public class ShardingHashCalculator {
     private static final Logger log = LoggerFactory.getLogger(ShardingHashCalculator.class);
 
-    private static final int BLOCK_LIMIT = 100;
+    private static final int DEFAULT_BLOCK_LIMIT = 100;
     private Blockchain blockchain;
-
+    private BlockchainConfig blockchainConfig;
+    private int blockSelectLimit;
     @Inject
-    public ShardingHashCalculator(Blockchain blockchain) {
-        this.blockchain = blockchain;
+    public ShardingHashCalculator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+        this(blockchain, blockchainConfig, DEFAULT_BLOCK_LIMIT);
     }
 
-    public byte[] calculateHash(int shardStartHeight) {
-        long blockId = blockchain.getBlockIdAtHeight(shardStartHeight);
-        List<Long> blockIdsAfter = blockchain.getBlockIdsAfter(blockId, BLOCK_LIMIT);
-        MessageDigest digest = Crypto.sha256();
-        long start = System.currentTimeMillis();
-        int blocks = 0;
-        while (blockIdsAfter.size() > 0) {
-            for (Long id : blockIdsAfter) {
-                digest.update(longToBytes(id));
-            }
-            blocks += blockIdsAfter.size();
-            if (blocks % 100_000 == 0) {
-                log.info("Processed {} blocks for shard hash", blocks);
-            }
-            blockIdsAfter = blockchain.getBlockIdsAfter(blockIdsAfter.get(blockIdsAfter.size() - 1), BLOCK_LIMIT);
+    public ShardingHashCalculator(Blockchain blockchain, BlockchainConfig blockchainConfig, int blockSelectLimit) {
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig, " blockchainConfig");
+        if (blockSelectLimit <= 0) {
+            throw new IllegalArgumentException("blockSelect should be positive");
         }
-        long time = System.currentTimeMillis() - start;
-        log.info("Hash calculated in {}s, speed {} bpms", time / 1000, blocks / time);
-        return digest.digest();
+        this.blockSelectLimit = blockSelectLimit;
     }
-    public static byte[] longToBytes(long l) {
-        byte[] result = new byte[8];
-        for (int i = 7; i >= 0; i--) {
-            result[i] = (byte)(l & 0xFF);
-            l >>= 8;
+
+    private List<byte[]> retrieveBlockSignatures(int shardStartHeight, int shardEndHeight) {
+        List<byte[]> allBlockSignatures = new ArrayList<>();
+        int fromHeight = shardStartHeight;
+        while (fromHeight < shardEndHeight) {
+            List<byte[]> blockSignatures  = blockchain.getBlockSignaturesFrom(fromHeight, Math.min(fromHeight + blockSelectLimit, shardEndHeight));
+            allBlockSignatures.addAll(blockSignatures);
+            fromHeight += blockSelectLimit;
         }
-        return result;
+        return allBlockSignatures;
+    }
+
+    private byte[] calculateMerkleRoot(List<byte[]> dataList) {
+        MerkleTree tree = new MerkleTree(createMessageDigest(), dataList);
+        return tree.getRoot() == null ? null : tree.getRoot().getValue();
+    }
+
+    private MessageDigest createMessageDigest() {
+        String algorithm = blockchainConfig.getCurrentConfig().getShardingDigestAlgorithm();
+        try {
+            return MessageDigest.getInstance(algorithm);
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Unable to create message digest for algo - " + algorithm, e);
+        }
+    }
+    public byte[] calculateHash(int shardStartHeight, int shardEndHeight) {
+        if (shardStartHeight >= shardEndHeight) {
+            throw new IllegalArgumentException("shard start height should be less than shard end height");
+        }
+        long startTime = System.currentTimeMillis();
+        List<byte[]> blockSignatures = retrieveBlockSignatures(shardStartHeight, shardEndHeight);
+        log.info("Retrieved {} block signatures in {}ms",blockSignatures.size(), System.currentTimeMillis() - startTime);
+        long merkleTreeStartTime = System.currentTimeMillis();
+        byte[] hash = calculateMerkleRoot(blockSignatures);
+        log.info("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);
+        long time = System.currentTimeMillis() - startTime;
+        log.info("Hash calculated in {}s, speed {} bpms", time / 1000, (shardEndHeight - shardStartHeight) / Math.max(time, 1));
+        return hash;
     }
 }

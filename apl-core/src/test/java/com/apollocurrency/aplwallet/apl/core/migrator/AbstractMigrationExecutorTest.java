@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
+import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 import java.io.File;
@@ -33,6 +33,7 @@ public abstract class AbstractMigrationExecutorTest {
     private final String migrationProp;
     private final String path;
     private final String pathProp;
+    private TemporaryFolderExtension folder = getTempFolder();
 
     public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp ) {
         this.deleteProp = deleteProp;
@@ -45,23 +46,21 @@ public abstract class AbstractMigrationExecutorTest {
     private static Properties properties = new Properties();
     private DatabaseManager databaseManager;
 
-    private static TemporaryFolder folder;
 
     @BeforeEach
     public void setUp() throws IOException {
         databaseManager = new DatabaseManager(DbTestData.DB_MEM_PROPS, propertiesHolder);
-        folder = new TemporaryFolder();
-        folder.create();
+        folder = getTempFolder();
     }
 
     @AfterEach
     public void tearDown() {
         databaseManager.shutdown();
-        folder.delete();
     }
 
     public abstract MigrationExecutor getExecutor(DatabaseManager databaseManager, PropertiesHolder propertiesHolder);
 
+    public abstract TemporaryFolderExtension getTempFolder();
     @Test
     public void testMigrationDirectories() {
         initProperties(true);
@@ -86,7 +85,6 @@ public abstract class AbstractMigrationExecutorTest {
     public void testPerformMigration() throws IOException {
 
         initProperties(true);
-
         File srcFolder = folder.newFolder();
         Files.createFile(srcFolder.toPath().resolve("1"));
         Files.createFile(srcFolder.toPath().resolve("2"));

@@ -64,6 +64,7 @@ public abstract class DbVersion {
             } catch (SQLException e) {
                 log.info("Initializing an empty database");
                 stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL)");
+                con.commit();
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();
             }

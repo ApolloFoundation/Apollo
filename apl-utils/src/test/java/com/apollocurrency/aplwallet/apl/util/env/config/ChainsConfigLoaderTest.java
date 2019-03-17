@@ -37,7 +37,8 @@ public class ChainsConfigLoaderTest {
                     new AdaptiveForgingSettings(true, 60, 0))),
             new BlockchainProperties(42300, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true), new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
             new BlockchainProperties(100000, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true, 1_000_000),
-                    new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0)))
+                    new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
+            new BlockchainProperties(100100, 300, 5, 7, 2, 30000000000L, new ShardingSettings(true, "SHA-512"))
     );
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES2 = Collections.singletonList(
             new BlockchainProperties(0, 2000, 2, 3, 1, (long) 1e8)

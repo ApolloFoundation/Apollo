@@ -30,19 +30,23 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
 import java.util.Random;
 
 @EnableWeld
-public class TwoFactorAuthServiceIntegrationTest extends DbTest {
+public class TwoFactorAuthServiceIntegrationTest {
 
+    @RegisterExtension
+    //should NOT be private
+    DbExtension dbExtension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from().addBeans(MockBean.of(Mockito.mock(NtpTime.class), NtpTime.class)).build();
 
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(getDataSource());
-    private TwoFactorAuthService service = new TwoFactorAuthServiceImpl(repository, "test");
+    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(dbExtension.getDataSource());
+    private TwoFactorAuthService    service = new TwoFactorAuthServiceImpl(repository, "test");
 
     @Test
     public void testEnable() {

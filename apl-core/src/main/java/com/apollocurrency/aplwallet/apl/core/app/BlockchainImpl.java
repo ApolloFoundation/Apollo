@@ -206,6 +206,12 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight) {
+        lookupBlockDao();
+        return blockDao.getBlockSignaturesFrom(fromHeight, toHeight);
+    }
+
+    @Override
     public List<Block> getBlocksAfter(long blockId, int limit) {
         if (limit <= 0) {
             return Collections.emptyList();
