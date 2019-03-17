@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -267,7 +268,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(paramInfo.getTableNameList(), "table Name List is NULL");
         Objects.requireNonNull(paramInfo.getSnapshotBlockHeight(), "target Snapshot Block height is NULL");
         long startAllTables = System.currentTimeMillis();
-        log.debug("Starting SECONDARY INDEX data update from [{}] tables...", paramInfo.getTableNameList().size());
+        log.debug("Starting Deleting data from [{}] tables...", paramInfo.getTableNameList().size());
 
         String currentTable = null;
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
@@ -302,6 +303,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         state = MigrateState.DATA_REMOVED_FROM_MAIN;
         boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name());
         log.debug("Deleted block/transaction, '{}' was saved = {}", state.name(), result);
+        log.debug("Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -309,10 +311,43 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addShardInfo(CommandParamInfo source) {
+    public MigrateState addShardInfo(CommandParamInfo paramInfo) {
+        Objects.requireNonNull(paramInfo, "paramInfo is NULL");
+        Objects.requireNonNull(paramInfo.getShardHash(), "shardHash is NULL");
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting create SHARD record in main db...");
+
+        if (!createdShardId.isPresent()) {
+            String error = "Error. Shard was not initialized previously, " +
+                    "missing addOrCreateShard(dbVersion) step during sharding process!";
+            log.error(error);
+            throw new IllegalStateException(error);
+        }
+
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        try (Connection sourceConnect = sourceDataSource.begin();
+            PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(
+                    "insert into SHARD (SHARD_ID, SHARD_HASH, SHARD_STATE) values (?, ?, ?)")) {
+            preparedInsertStatement.setObject(1, createdShardId.get());
+            preparedInsertStatement.setBytes(2, paramInfo.getShardHash());
+            preparedInsertStatement.setInt(3, 100); // 100% full shard is present on current node
+            int result = preparedInsertStatement.executeUpdate();
+            log.debug("Shard record is created {}", result);
+        } catch (Exception e) {
+            log.error("Error creating Shard record in main db", e);
+            sourceDataSource.rollback(false);
+            state = MigrateState.FAILED;
+            return state;
+        } finally {
+            if (sourceDataSource != null) {
+                sourceDataSource.commit();
+            }
+        }
+
         state = MigrateState.COMPLETED;
-        boolean result = optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name());
-        log.debug("Shard creation, '{}' was saved = {}", state.name(), result);
+        boolean result = optionDAO.delete(PREVIOUS_MIGRATION_KEY); // remove sharding state if all is OK
+        log.debug("Shard creation, '{}' was removed = {}", state.name(), result);
+        log.debug("Shard created with Hash in {} secs", (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 

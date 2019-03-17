@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 

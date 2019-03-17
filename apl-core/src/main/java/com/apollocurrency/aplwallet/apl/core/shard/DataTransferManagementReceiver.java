@@ -39,6 +39,6 @@ public interface DataTransferManagementReceiver {
 
     MigrateState deleteCopiedData(CommandParamInfo paramInfo);
 
-    MigrateState addShardInfo(CommandParamInfo source);
+    MigrateState addShardInfo(CommandParamInfo paramInfo);
 
 }

@@ -212,7 +212,6 @@ class DataTransferManagementReceiverTest {
 
         tableNameList.clear();
         tableNameList.add("BLOCK");
-        tableNameList.add("TRANSACTION");
 
         paramInfo.setTableNameList(tableNameList);
         state = transferManagementReceiver.deleteCopiedData(paramInfo);
