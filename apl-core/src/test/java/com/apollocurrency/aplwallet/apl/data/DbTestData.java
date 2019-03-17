@@ -17,7 +17,7 @@ public class DbTestData {
             .loginTimeout(10)
             .maxMemoryRows(100000)
             .defaultLockTimeout(10 * 1000);
-    public static final DbProperties DB_MEM_PROPS = new DbProperties()
+    private static final DbProperties DB_MEM_PROPS = new DbProperties()
             .dbPassword("sa")
             .dbUsername("sa")
             .maxConnections(10)
