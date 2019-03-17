@@ -94,10 +94,8 @@ public class DatabaseManager implements ShardManagement {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
         // init internal data source stuff only one time till next shutdown() will be called
-        if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
-            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
-        }
+        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+        jdbi = currentTransactionalDataSource.init(new AplDbVersion());
 //        openAllShards();
     }
 

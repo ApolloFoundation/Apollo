@@ -26,13 +26,13 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 @EnableWeld
@@ -41,10 +41,7 @@ public class BlockIndexDaoTest {
     static DbExtension dbExtension = new DbExtension();
 
     @Inject
-    private DaoConfig daoConfig;
-    private static Jdbi jdbi;
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
+    private  JdbiHandleFactory jdbiHandleFactory;
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
@@ -61,13 +58,11 @@ public class BlockIndexDaoTest {
     @Inject
     private BlockIndexDao blockIndexDao;
     @Inject
-    TransactionIndexDao transactionIndexDao;
+    private TransactionIndexDao transactionIndexDao;
 
-    @BeforeEach
-    void setUp() {
-        jdbi = dbExtension.getDatabaseManger().getJdbi();
-        jdbiHandleFactory.setJdbi(jdbi);
-        daoConfig.setJdbiHandleFactory(jdbiHandleFactory);
+    @AfterEach
+    void shutdown() {
+        jdbiHandleFactory.close();
     }
 
     @Test

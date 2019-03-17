@@ -6,7 +6,10 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 
+import java.util.Random;
+
 public class DbTestData {
+    private static final Random random = new Random();
     private static final DbProperties DB_FILE_PROPERTIES = new DbProperties()
             .dbPassword("sa")
             .dbUsername("sa")
@@ -15,7 +18,6 @@ public class DbTestData {
             .maxMemoryRows(100000)
             .defaultLockTimeout(10 * 1000);
     public static final DbProperties DB_MEM_PROPS = new DbProperties()
-            .dbUrl("jdbc:h2:mem:temp")
             .dbPassword("sa")
             .dbUsername("sa")
             .maxConnections(10)
@@ -23,12 +25,19 @@ public class DbTestData {
             .maxMemoryRows(100000)
             .defaultLockTimeout(10 * 1000);
 
-    public static DbProperties getDbFileProperties(String fileName) {
+    public static DbProperties getInMemDbProps() {
+        return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong());
+    }
+
+    private static DbProperties getDbUrlProps(String url) {
         try {
-            return DB_FILE_PROPERTIES.deepCopy().dbUrl(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0", fileName));
+            return DB_FILE_PROPERTIES.deepCopy().dbUrl(url);
         }
         catch (CloneNotSupportedException e) {
             throw new RuntimeException("Unable to create copy of dbProperties!", e);
         }
+    }
+    public static DbProperties getDbFileProperties(String fileName) {
+        return getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0", fileName));
     }
 }

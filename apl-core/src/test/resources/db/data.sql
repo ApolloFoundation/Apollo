@@ -8,7 +8,7 @@ delete from public.transaction_shard_index;
 delete from public.block_index;
 delete from FTL.INDEXES;
 delete from public.option;
-
+delete from public.shard;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,              VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT, TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,          HEIGHT,     GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,         TIMEOUT) VALUES
@@ -52,8 +52,9 @@ INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, block_id) VALUES
 (102, 1),
 (103, 1)
 ;
-
--- set here last value from AplDbVersion
-INSERT into PUBLIC.VERSION values(251);
+INSERT into PUBLIC.SHARD (shard_id, shard_hash) VALUES
+(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176'),
+(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d')
+;
 INSERT INTO FTL.INDEXES (schema, table, columns)
                          VALUES('PUBLIC', 'CURRENCY', 'code,name,description');

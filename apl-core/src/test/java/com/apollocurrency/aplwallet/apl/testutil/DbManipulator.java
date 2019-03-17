@@ -6,12 +6,18 @@ package com.apollocurrency.aplwallet.apl.testutil;
 
 import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+
 public class DbManipulator {
+    private static final Logger logger = getLogger(DbManipulator.class);
     protected Path tempDbFile;
     protected final DatabaseManager databaseManager;
 
@@ -19,7 +25,8 @@ public class DbManipulator {
 
     public DbManipulator(Path dbFile) {
         this.tempDbFile = dbFile;
-        this.databaseManager = new DatabaseManager(tempDbFile == null ? DbTestData.DB_MEM_PROPS : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString()), new PropertiesHolder());
+        DbProperties dbProperties = tempDbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString());
+        this.databaseManager = new DatabaseManager(dbProperties, new PropertiesHolder());
         this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }
 

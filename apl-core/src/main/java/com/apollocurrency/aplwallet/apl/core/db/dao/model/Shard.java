@@ -1,22 +1,46 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * Shard db entity
  */
 public class Shard {
     private Long shardId;
-    private String shardHash;
+    private byte[] shardHash;
 
     public Shard() {
     }
 
-    public Shard(String shardHash) {
+    public Shard copy() {
+        byte[] shardHashCopy = Arrays.copyOf(shardHash, shardHash.length);
+        return new Shard(shardId, shardHashCopy);
+    }
+
+    public Shard(byte[] shardHash) {
         this.shardHash = shardHash;
     }
 
-    public Shard(Long shardId, String shardHash) {
+    public Shard(Long shardId, byte[] shardHash) {
         this.shardId = shardId;
         this.shardHash = shardHash;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Shard shard = (Shard) o;
+        return Objects.equals(shardId, shard.shardId) &&
+                Arrays.equals(shardHash, shard.shardHash);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(shardId);
+        result = 31 * result + Arrays.hashCode(shardHash);
+        return result;
     }
 
     public Long getShardId() {
@@ -27,11 +51,11 @@ public class Shard {
         this.shardId = shardId;
     }
 
-    public String getShardHash() {
+    public byte[] getShardHash() {
         return shardHash;
     }
 
-    public void setShardHash(String shardHash) {
+    public void setShardHash(byte[] shardHash) {
         this.shardHash = shardHash;
     }
 
@@ -41,7 +65,7 @@ public class Shard {
 
     public static final class ShardBuilder {
         private Long shardId;
-        private String shardHash;
+        private byte[] shardHash;
 
         private ShardBuilder() {
         }
@@ -51,7 +75,7 @@ public class Shard {
             return this;
         }
 
-        public ShardBuilder shardHash(String shardHash) {
+        public ShardBuilder shardHash(byte[] shardHash) {
             this.shardHash = shardHash;
             return this;
         }
