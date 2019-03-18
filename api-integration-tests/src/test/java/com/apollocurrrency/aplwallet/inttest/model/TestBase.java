@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.getInstanse;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -68,60 +69,45 @@ public class TestBase {
     public BlockListInfoResponse getAccountBlocks(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountBlocks);
         addParameters(Parameters.account, account);
-        Response response = httpCallGet();
-        assertEquals(200, response.code());
-        return mapper.readValue(response.body().string().toString(), BlockListInfoResponse.class);
+        return getInstanse(BlockListInfoResponse.class);
     }
 
 
     public GetAccountResponse getAccount(String account) throws IOException {
         addParameters(RequestType.requestType, getAccount);
         addParameters(Parameters.account, account);
-        Response response = httpCallPost();
-        assertEquals(200, response.code());
-        return mapper.readValue(response.body().string(), GetAccountResponse.class);
+        return getInstanse(GetAccountResponse.class);
     }
 
 
     public GetAccountBlockCount getAccountBlockCount(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountBlockCount);
         addParameters(Parameters.account, account);
-        Response response = httpCallGet();
-        assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), GetAccountBlockCount.class);
+        return getInstanse(GetAccountBlockCount.class);
     }
 
     public AccountBlockIdsResponse getAccountBlockIds(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountBlockIds);
         addParameters(Parameters.account, account);
-        Response response = httpCallGet();
-        assertEquals(200, response.code());
-        //System.out.println(response.body().string());
-        return   mapper.readValue(response.body().string().toString(), AccountBlockIdsResponse.class);
+        return getInstanse(AccountBlockIdsResponse.class);
     }
 
     public AccountDTO getAccountId(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountId);
         addParameters(Parameters.wallet,wallet);
-        Response response = httpCallPost();
-        assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), AccountDTO.class);
+        return getInstanse(AccountDTO.class);
     }
 
     public AccountLedgerResponse getAccountLedger(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountLedger);
         addParameters(Parameters.wallet, wallet);
-        Response response = httpCallPost();
-        assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), AccountLedgerResponse.class);
+        return getInstanse(AccountLedgerResponse.class);
     }
 
     public AccountPropertiesResponse getAccountProperties(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountProperties);
         addParameters(Parameters.recipient, account);
-        Response response = httpCallPost();
-        assertEquals(200, response.code());
-        return   mapper.readValue(response.body().string().toString(), AccountPropertiesResponse.class);
+        return  getInstanse(AccountPropertiesResponse.class);
     }
 
     public SearchAccountsResponse  searchAccounts(String searchQuery) throws IOException {
@@ -179,8 +165,6 @@ public class TestBase {
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.amountATM, moneyAmount+"00000000");
         addParameters(Parameters.wallet, wallet);
-        //addParameters(Parameters.account, wallet.getUser());
-        //addParameters(Parameters.secretPhrase, wallet.getPass());
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
         Response response = httpCallPost();
@@ -201,7 +185,6 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.getBlockchainTransactions);
         addParameters(Parameters.account, accountID);
         Response response = httpCallGet();
-       // System.out.println(response.body().string());
         assertEquals(200, response.code());
         return  mapper.readValue(response.body().string().toString(), BlockchainTransactionsResponse.class);
     }

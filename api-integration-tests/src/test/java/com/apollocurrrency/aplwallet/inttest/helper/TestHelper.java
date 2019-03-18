@@ -1,7 +1,8 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -156,6 +157,20 @@ public class TestHelper {
            return (T) mapper.readValue(responseBody, CreateTransactionResponse.class);
         } else if (TransactionDTO.class.equals(clas)) {
             return (T) mapper.readValue(responseBody, TransactionDTO.class);
+        }else if (BlockListInfoResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, BlockListInfoResponse.class);
+        }else if (GetAccountResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAccountResponse.class);
+        }else if (GetAccountBlockCount.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAccountBlockCount.class);
+        }else if (AccountBlockIdsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AccountBlockIdsResponse.class);
+        } else if (AccountDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AccountDTO.class);
+        }else if (AccountLedgerResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AccountLedgerResponse.class);
+        }else if (AccountPropertiesResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AccountPropertiesResponse.class);
         }
 
         }
