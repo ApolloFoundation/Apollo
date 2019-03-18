@@ -36,11 +36,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private static final Logger log = getLogger(DataTransferManagementReceiverImpl.class);
 
     private MigrateState state = MigrateState.INIT;
-//    private DbProperties dbProperties;
     private DatabaseManager databaseManager;
     private TrimService trimService;
     private OptionDAO optionDAO;
-//    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
     private Optional<Long> createdShardId;
     private TransactionalDataSource createdShardSource;
@@ -50,9 +48,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
     @Inject
     public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService) {
-//        this.dbProperties = databaseManager.getBaseDbProperties();
-        this.databaseManager = databaseManager;
-        this.trimService = trimService;
+        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+        this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.optionDAO = new OptionDAO(this.databaseManager);
     }
 

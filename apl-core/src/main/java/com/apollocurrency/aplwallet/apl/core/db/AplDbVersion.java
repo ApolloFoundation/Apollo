@@ -690,7 +690,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
                 // SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT NOT NULL, shard_hash VARBINARY not null, shard_state INT)");
+                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT NOT NULL, shard_hash VARBINARY not null, shard_state BIGINT)");
             case 252:
                 apply("alter table shard add constraint IF NOT EXISTS SHARD_PK primary key (shard_id)");
             case 253:
@@ -718,5 +718,12 @@ public class AplDbVersion extends DbVersion {
     @Override
     protected void apply(String sql) {
         super.apply(sql);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("AplDbVersion{");
+        sb.append('}');
+        return sb.toString();
     }
 }

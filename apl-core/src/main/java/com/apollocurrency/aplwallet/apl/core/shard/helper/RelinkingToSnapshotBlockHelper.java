@@ -7,10 +7,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -20,43 +17,10 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-public class RelinkingToSnapshotBlockHelper implements BatchedPaginationOperation {
+public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
     private static final Logger log = getLogger(RelinkingToSnapshotBlockHelper.class);
 
-    private String currentTableName;
-    private ResultSetMetaData rsmd;
-    private int numColumns;
-//    private int[] columnTypes;
-//    int targetDbIdColumnIndex = -1;
-
-//    private StringBuilder sqlInsertString = new StringBuilder(500);
-//    private StringBuilder columnNames = new StringBuilder();
-//    private StringBuilder columnQuestionMarks = new StringBuilder();
-//    private StringBuilder columnValues = new StringBuilder();
-
-    private Long totalRowCount = 0L;
-    private Long insertedCount = 0L;
-    private String BASE_COLUMN_NAME = "DB_ID";
-    private PreparedStatement preparedInsertStatement = null;
-
-
     public RelinkingToSnapshotBlockHelper() {
-    }
-
-    @Override
-    public void reset() {
-        this.currentTableName = null;
-        this.rsmd = null;
-        this.numColumns = -1;
-//        this.columnTypes = null;
-//        this.targetDbIdColumnIndex = -1;
-//        this.sqlInsertString = new StringBuilder(500);
-//        this.columnNames = new StringBuilder();
-//        this.columnQuestionMarks = new StringBuilder();
-//        this.columnValues = new StringBuilder();
-        this.totalRowCount = 0L;
-        this.insertedCount = 0L;
-        this.preparedInsertStatement = null;
     }
 
     @Override
@@ -69,17 +33,15 @@ public class RelinkingToSnapshotBlockHelper implements BatchedPaginationOperatio
         currentTableName = operationParams.tableName;
 
         long startSelect = System.currentTimeMillis();
-        String sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID >= ? AND DB_ID <= ? limit ?";
+        sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID >= ? AND DB_ID <= ? limit ?";
         log.trace(sqlToExecuteWithPaging);
-        // select MAX DB_ID
-        Long transactionTargetDbID = selectUpperDbId(sourceConnect, operationParams.snapshotBlockHeight);;
-        if (transactionTargetDbID == null) {
-            String error = String.format("Not Found MAX height = %s", operationParams.snapshotBlockHeight);
-            log.error(error);
-            throw new RuntimeException(error);
-        }
-        // select MIN DB_ID
-        Long lowerIndex = selectLowerDbId(sourceConnect);
+        sqlSelectUpperBound = "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT < ?";
+        log.trace(sqlSelectUpperBound);
+        sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+        log.trace(sqlSelectBottomBound);
+
+        // select upper, bottom DB_ID
+        selectUpperBottomValues(sourceConnect, operationParams);
 
         // turn OFF HEIGHT constraint for specified table
         if (operationParams.tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
@@ -89,13 +51,13 @@ public class RelinkingToSnapshotBlockHelper implements BatchedPaginationOperatio
         }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
-        paginateResultWrapper.limitValue = lowerIndex;
+        paginateResultWrapper.limitValue = lowerBoundIdValue;
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, operationParams.snapshotBlockHeight);
                 ps.setLong(2, paginateResultWrapper.limitValue);
-                ps.setLong(3, transactionTargetDbID);
+                ps.setLong(3, upperBoundIdValue);
                 ps.setLong(4, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
         } catch (Exception e) {
@@ -138,49 +100,5 @@ public class RelinkingToSnapshotBlockHelper implements BatchedPaginationOperatio
         return rows != 0;
     }
 
-    private Long selectUpperDbId(Connection sourceConnect, Long snapshotBlockHeight) throws SQLException {
-        String selectTransactionTimestamp =
-                "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT < ?";
-        Long highDbIdValue = null;
-        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectTransactionTimestamp)) {
-            selectStatement.setInt(1, snapshotBlockHeight.intValue());
-            ResultSet rs = selectStatement.executeQuery();
-            if (rs.next()) {
-                highDbIdValue = rs.getLong("DB_ID");
-                log.trace("FOUND Transaction's DB_ID value = {}", highDbIdValue);
-            }
-        } catch (Exception e) {
-            log.error("Error finding LINKED DB_ID in = " + currentTableName, e);
-            throw e;
-        }
-        return highDbIdValue;
-    }
-
-    private Long selectLowerDbId(Connection sourceConnect) throws SQLException {
-        // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
-        String selectDbId = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
-        Long bottomDbIdValue = 0L;
-        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectDbId)) {
-            ResultSet rs = selectStatement.executeQuery();
-            if (rs.next()) {
-                bottomDbIdValue = rs.getLong("DB_ID");
-                log.trace("FOUND Minimal Transaction DB_ID value = {}", bottomDbIdValue);
-            }
-        } catch (Exception e) {
-            log.error("Error finding LOW LIMIT DB_ID in = " + currentTableName, e);
-            throw e;
-        }
-        return bottomDbIdValue;
-    }
-
-    private void issueConstraintUpdateQuery(Connection sourceConnect, String sqlToExecute) throws SQLException {
-        try (Statement stmt = sourceConnect.createStatement()) {
-                stmt.executeUpdate(sqlToExecute);
-                log.trace("SUCCESS, on constraint SQL = {}", sqlToExecute);
-        } catch (Exception e) {
-            log.error("Error on 'constraint related' SQL = " + currentTableName, e);
-            throw e;
-        }
-    }
 
 }

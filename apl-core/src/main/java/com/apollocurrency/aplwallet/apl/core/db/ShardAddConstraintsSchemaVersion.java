@@ -111,4 +111,11 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
     protected void apply(String sql) {
         super.apply(sql);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("ShardAddConstraintsSchemaVersion{");
+        sb.append('}');
+        return sb.toString();
+    }
 }

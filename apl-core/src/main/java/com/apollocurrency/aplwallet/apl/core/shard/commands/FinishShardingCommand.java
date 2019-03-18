@@ -44,4 +44,18 @@ public class FinishShardingCommand implements DataMigrateOperation {
         CommandParamInfo paramInfo = new CommandParamInfoImpl(this.shardHash);
         return dataTransferManagement.addShardInfo(paramInfo);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("FinishShardingCommand{");
+        sb.append("shardHash=");
+        if (shardHash == null) sb.append("null");
+        else {
+            sb.append('[');
+            sb.append(shardHash.length);
+            sb.append(']');
+        }
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
@@ -79,7 +80,7 @@ class DataTransferManagementReceiverTest {
             PropertiesConfigLoader.class, GlobalSyncImpl.class, PropertyProducer.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class, DataTransferManagementReceiverImpl.class,
+            TransactionalDataSource.class, DatabaseManager.class,
             BlockchainConfig.class, BlockchainConfigUpdater.class, DerivedDbTablesRegistry.class, TrimService.class)
             .build();
 
@@ -144,7 +145,7 @@ class DataTransferManagementReceiverTest {
 
     @AfterEach
     void tearDown() {
-//        FileUtils.deleteQuietly(pathToDb.toFile());
+        FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
     @Test
@@ -191,7 +192,7 @@ class DataTransferManagementReceiverTest {
         tableNameList.clear();
         tableNameList.add("GENESIS_PUBLIC_KEY");
         tableNameList.add("PUBLIC_KEY");
-//        tableNameList.put("TAGGED_DATA", -1L);
+//        tableNameList.put("TAGGED_DATA", -1L); // !
         tableNameList.add("SHUFFLING_DATA");
         tableNameList.add("DATA_TAG");
         tableNameList.add("PRUNABLE_MESSAGE");

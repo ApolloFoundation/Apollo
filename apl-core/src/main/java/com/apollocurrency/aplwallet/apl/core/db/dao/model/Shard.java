@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 public class Shard {
     private Long shardId;
     private byte[] shardHash;
-    private Integer shardState;
+    private Long shardState;
 
     public Shard() {
     }
@@ -20,7 +20,7 @@ public class Shard {
         this.shardHash = shardHash.getBytes();
     }
 
-    public Shard(Long shardId, byte[] shardHash, Integer shardState) {
+    public Shard(Long shardId, byte[] shardHash, Long shardState) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
@@ -42,11 +42,11 @@ public class Shard {
         this.shardHash = shardHash;
     }
 
-    public Integer getShardState() {
+    public Long getShardState() {
         return shardState;
     }
 
-    public void setShardState(Integer shardState) {
+    public void setShardState(Long shardState) {
         this.shardState = shardState;
     }
 
@@ -57,7 +57,7 @@ public class Shard {
     public static final class ShardBuilder {
         private Long shardId;
         private byte[] shardHash;
-        private Integer shardState;
+        private Long shardState;
 
         private ShardBuilder() {
         }
@@ -72,7 +72,7 @@ public class Shard {
             return this;
         }
 
-        public ShardBuilder shardState(Integer shardState) {
+        public ShardBuilder shardState(Long shardState) {
             this.shardState = shardState;
             return this;
         }

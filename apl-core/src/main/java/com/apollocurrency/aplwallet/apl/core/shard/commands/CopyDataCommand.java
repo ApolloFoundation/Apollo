@@ -63,4 +63,14 @@ public class CopyDataCommand implements DataMigrateOperation {
                 this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight);
         return dataTransferManagement.copyDataToShard(paramInfo);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("CopyDataCommand{");
+        sb.append("tableNameList=").append(tableNameList);
+        sb.append(", commitBatchSize=").append(commitBatchSize);
+        sb.append(", snapshotBlockHeight=").append(snapshotBlockHeight);
+        sb.append('}');
+        return sb.toString();
+    }
 }

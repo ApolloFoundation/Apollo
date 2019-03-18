@@ -105,4 +105,11 @@ public class ShardInitTableSchemaVersion extends DbVersion {
     protected void apply(String sql) {
         super.apply(sql);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("ShardInitTableSchemaVersion{");
+        sb.append('}');
+        return sb.toString();
+    }
 }

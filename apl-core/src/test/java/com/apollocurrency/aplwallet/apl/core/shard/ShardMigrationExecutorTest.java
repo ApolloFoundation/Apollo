@@ -12,6 +12,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.io.File;
@@ -46,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataComm
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -94,6 +96,8 @@ class ShardMigrationExecutorTest {
     private Blockchain blockchain;
     @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
+    @Inject
+    private Event<MigrateState> migrateStateEvent;
 
     @BeforeAll
     static void setUpAll() {
@@ -125,6 +129,7 @@ class ShardMigrationExecutorTest {
         dbTablesRegistry.registerDerivedTable(publicKeyTable);
         trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
         transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
+        shardMigrationExecutor = new ShardMigrationExecutor(transferManagementReceiver, migrateStateEvent);
     }
 
     @AfterEach
@@ -168,5 +173,13 @@ class ShardMigrationExecutorTest {
         state = shardMigrationExecutor.executeOperation(finishShardingCommand);
         assertEquals(COMPLETED, state);
 
+    }
+
+    @Test
+    void executeAll() {
+        assertNotNull(databaseManager);
+        shardMigrationExecutor.createAllCommands(0);
+        MigrateState state = shardMigrationExecutor.executeAllOperations();
+        assertEquals(FAILED/*COMPLETED*/, state);
     }
 }

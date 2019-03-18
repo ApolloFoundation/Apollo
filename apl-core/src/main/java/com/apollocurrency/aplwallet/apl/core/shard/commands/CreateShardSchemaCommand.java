@@ -40,4 +40,12 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
         log.debug("Create Shard Schema Command execute...");
         return dataTransferManagement.addOrCreateShard(dbVersion);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("CreateShardSchemaCommand{");
+        sb.append("dbVersion=").append(dbVersion);
+        sb.append('}');
+        return sb.toString();
+    }
 }
