@@ -1,7 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -143,17 +142,17 @@ public class TestHelper {
         return reqestUrl.toString();
     }
 
-
     public static <T> T getInstanse(Class clas) {
         Response response;
         String responseBody= "";
         try {
         response =  httpCallPost();
         responseBody = response.body().string();
+        //System.out.println(responseBody);
         Assert.assertEquals(200, response.code());
         assertFalse(responseBody.contains("errorDescription"),responseBody);
-       // System.out.println(responseBody);
-
+        return (T) mapper.readValue(responseBody, clas);
+   /*
         if (CreateTransactionResponse.class.equals(clas)) {
            return (T) mapper.readValue(responseBody, CreateTransactionResponse.class);
         } else if (TransactionDTO.class.equals(clas)) {
@@ -172,15 +171,73 @@ public class TestHelper {
             return (T) mapper.readValue(responseBody, AccountLedgerResponse.class);
         }else if (AccountPropertiesResponse.class.equals(clas)) {
             return (T) mapper.readValue(responseBody, AccountPropertiesResponse.class);
+        } else if (SearchAccountsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, SearchAccountsResponse.class);
+        }else if (TransactionListInfoResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, TransactionListInfoResponse.class);
+        }else if (AccountTransactionIdsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AccountTransactionIdsResponse.class);
+        }else if (BalanceDTO.class.equals(clas)) {
+                return (T) mapper.readValue(responseBody, BalanceDTO.class);
+        }else if (EntryDTO.class.equals(clas)) {
+                return (T) mapper.readValue(responseBody, EntryDTO.class);
+        } else if (BlockchainTransactionsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, BlockchainTransactionsResponse.class);
+        } else if (GetPropertyResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetPropertyResponse.class);
+        }else if (GetAliasesResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAliasesResponse.class);
+        }else if (GetCountAliasesResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetCountAliasesResponse.class);
+        }else if (AliasDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AliasDTO.class);
+        }else if (Account2FA.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, Account2FA.class);
+        }else if (Peer.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, Peer.class);
+        }else if (PeerInfo.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, PeerInfo.class);
+        }else if (BlockDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, BlockDTO.class);
+        }else if (GetBlockIdResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetBlockIdResponse.class);
+        }else if (BlockchainInfoDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, BlockchainInfoDTO.class);
+        }else if (GetBloksResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetBloksResponse.class);
+        }else if (GetAccountAssetsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAccountAssetsResponse.class);
+        }else if (GetAssetAccountCountResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAssetAccountCountResponse.class);
+        }else if (AssetDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, AssetDTO.class);
+        }else if (GetOrderIdsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetOrderIdsResponse.class);
+        }else if (GetAccountCurrentOrdersResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAccountCurrentOrdersResponse.class);
+        }else if (GetAllAssetsResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAllAssetsResponse.class);
+        }else if (GetOpenOrderResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetOpenOrderResponse.class);
+        }else if (GetAllTradeResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetAllTradeResponse.class);
+        }else if (ECBlock.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, ECBlock.class);
+        }else if (GetForgingResponse.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, GetForgingResponse.class);
+        }else if (ForgingDetails.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, ForgingDetails.class);
+        }else if (PrunableMessageDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, PrunableMessageDTO.class);
+
+    */
         }
 
-        }
         catch (Exception e)
         {
             throw new UnknownFormatConversionException(responseBody+" : \n"+ e.getMessage());
         }
 
-      throw new UnknownFormatConversionException("Class not found: "+responseBody);
     }
 
 

@@ -175,7 +175,7 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-        GetAllAssetsResponse getAllAssets = getAllAssets(wallet);
+        GetAllAssetsResponse getAllAssets = getAllAssets();
         //System.out.println(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count() >= 1);
         //System.out.println(assetID);
         assertTrue(getAllAssets.assets.length >= 1); //return only first 100 assets
@@ -198,7 +198,7 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyCreatingTransaction(placeAskOrder);
         verifyTransactionInBlock(placeAskOrder.transaction);
         orderID = placeAskOrder.transaction;
-        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders(wallet);
+        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders();
         assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
         assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
     }
@@ -220,7 +220,7 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyTransactionInBlock(placeBidOrder.transaction);
         orderID = placeBidOrder.transaction;
         System.out.println(orderID);
-        GetOpenOrderResponse getAllOpenBidOrders = getAllOpenBidOrders(wallet);
+        GetOpenOrderResponse getAllOpenBidOrders = getAllOpenBidOrders();
         assertTrue(Arrays.stream(getAllOpenBidOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
         assertTrue(Arrays.stream(getAllOpenBidOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
 
@@ -233,7 +233,7 @@ public class TestAssetExchangeAPI extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public  void getAllTradesTest (Wallet wallet) throws IOException {
 
-        GetAllTradeResponse getAllTrades = getAllTrades(wallet);
+        GetAllTradeResponse getAllTrades = getAllTrades();
         assertTrue(getAllTrades.trades.length >= 1);
 
     }

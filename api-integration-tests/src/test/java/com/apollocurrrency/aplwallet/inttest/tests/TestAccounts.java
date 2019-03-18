@@ -105,17 +105,18 @@ public class TestAccounts extends TestBase {
         assertTrue(searchAccountsResponse.accounts.length >0,"Account not found");
     }
 
-    @Test
     @DisplayName("Verify Unconfirmed Transactions endpoint")
-    public void testGetUnconfirmedTransactions() throws IOException {
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
         RetryPolicy retryPolicy = new RetryPolicy()
                 .retryWhen(null)
                 .withMaxRetries(3)
                 .withDelay(10, TimeUnit.SECONDS);
-        sendMoney(testConfiguration.getStandartWallet(),testConfiguration.getStandartWallet().getUser(),2);
-        List<TransactionInfo> unconfirmedTransactionse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactions(testConfiguration.getStandartWallet().getUser()));
-        assertNotNull( unconfirmedTransactionse);
-        assertTrue(unconfirmedTransactionse.size() > 0);
+        sendMoney(wallet,testConfiguration.getStandartWallet().getUser(),2);
+        TransactionListInfoResponse transactionInfos = getUnconfirmedTransactions(wallet);
+        assertNotNull(transactionInfos.unconfirmedTransactions);
+        assertTrue(transactionInfos.unconfirmedTransactions.size() > 0);
     }
 
     @Test
@@ -138,14 +139,14 @@ public class TestAccounts extends TestBase {
         assertTrue(balance.guaranteedBalanceATM > 1);
     }
 
-    @Test
     @DisplayName("Verify Get Balance endpoint")
-    public void testGetBalance() throws IOException {
-        BalanceDTO balance = getBalance(testConfiguration.getStandartWallet().getUser());
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testGetBalance(Wallet wallet) throws IOException {
+        BalanceDTO balance = getBalance(wallet);
         assertTrue(balance.balanceATM > 1);
         assertTrue(balance.unconfirmedBalanceATM > 1);
     }
-
 
 
     @DisplayName("Get Account Ledger Entry")
@@ -162,10 +163,12 @@ public class TestAccounts extends TestBase {
     }
 
 
-    @Test
+
     @DisplayName("Get Account Public Key")
-    public void testGetAccountPublicKey() throws IOException {
-        assertEquals(testConfiguration.getStandartWallet().getPublicKey(), getAccountPublicKey(testConfiguration.getStandartWallet().getUser()));
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testGetAccountPublicKey(Wallet wallet) throws IOException {
+        assertEquals(wallet.getPublicKey(), getAccountPublicKey(wallet).publicKey);
 
     }
 
