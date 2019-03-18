@@ -9,7 +9,7 @@
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
- * 
+ *
  * Removal or modification of this copyright notice is prohibited.
  *
  */
@@ -704,6 +704,14 @@ public class AplDbVersion extends DbVersion {
             case 256:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
             case 257:
+                apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
+                        "referenced_transaction_id BIGINT NOT NULL)");
+            case 258:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
+                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
+            case 259:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
+            case 260:
 //                 it's an example of previously created shard for checking purpose
 //                apply("INSERT INTO shard(shard_id, shard_hash) VALUES(1, '000000001')");
                 return;
