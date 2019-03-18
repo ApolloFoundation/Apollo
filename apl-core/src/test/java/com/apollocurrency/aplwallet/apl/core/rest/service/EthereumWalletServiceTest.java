@@ -1,7 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.config.WalletClientProducer;
-import com.apollocurrency.aplwallet.apl.core.utils.Web3jUtils;
+import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.testutil.FileLoader;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;

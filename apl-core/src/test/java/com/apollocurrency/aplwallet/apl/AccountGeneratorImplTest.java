@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl;
 import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
 import com.apollocurrency.aplwallet.apl.core.app.AccountGeneratorImpl;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.core.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.junit.jupiter.api.Test;

@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -36,7 +36,7 @@ public class Helper2FA {
    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static final VaultKeyStore KEYSTORE = CDI.current().select(VaultKeyStore.class).get();
    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
-   private static final AccountGenerator accountGenerator = new AccountGeneratorImpl(passphraseGenerator);
+   private static final AccountGenerator accountGenerator = new AccountGeneratorImpl();
     
      public static void init(DatabaseManager databaseManagerParam) {
         DatabaseManager databaseManager = databaseManagerParam;

@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.model;
 
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+
 import java.util.ArrayList;
 import java.util.List;
 

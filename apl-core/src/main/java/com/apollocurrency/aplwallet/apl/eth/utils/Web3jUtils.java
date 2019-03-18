@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.utils;
+package com.apollocurrency.aplwallet.apl.eth.utils;
 
 import org.web3j.utils.Convert;
 

@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.model;
+package com.apollocurrency.aplwallet.apl.eth.model;
 
 import org.json.simple.JSONObject;
 import org.web3j.crypto.Credentials;

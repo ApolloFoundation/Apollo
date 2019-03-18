@@ -1,6 +1,6 @@
-package com.apollocurrency.aplwallet.apl.core.rest.service;
+package com.apollocurrency.aplwallet.apl.eth.service;
 
-import com.apollocurrency.aplwallet.apl.core.utils.Web3jUtils;
+import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
 import org.slf4j.Logger;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
