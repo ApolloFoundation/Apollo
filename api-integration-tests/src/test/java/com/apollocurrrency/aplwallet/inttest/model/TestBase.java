@@ -52,11 +52,15 @@ public class TestBase {
 
     public boolean verifyTransactionInBlock(String transaction)
     {
-        boolean inBlock = Failsafe.with(retryPolicy)
-                .get(() -> getTransaction(transaction)
-                        .confirmations
-                        .compareTo(new Long("0"))==1);
-        assertTrue(inBlock);
+        boolean inBlock = false;
+        try {
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long("0"))==1);
+            assertTrue(inBlock);
+        }
+        catch (Exception e)
+        {
+            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+        }
         return inBlock;
     }
 

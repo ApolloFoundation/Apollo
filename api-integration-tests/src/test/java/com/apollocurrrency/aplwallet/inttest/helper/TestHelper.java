@@ -152,6 +152,7 @@ public class TestHelper {
         responseBody = response.body().string();
         Assert.assertEquals(200, response.code());
         assertFalse(responseBody.contains("errorDescription"),responseBody);
+       // System.out.println(responseBody);
 
         if (CreateTransactionResponse.class.equals(clas)) {
            return (T) mapper.readValue(responseBody, CreateTransactionResponse.class);
