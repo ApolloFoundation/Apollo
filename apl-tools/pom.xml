@@ -8,7 +8,6 @@
         <version>1.27.0</version>
     </parent>
 
-    <groupId>com.apollocurrency</groupId>
     <artifactId>apl-tools</artifactId>
     <name>apl-tools</name>
     <packaging>jar</packaging>
@@ -73,7 +72,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>./</classpathPrefix>
-<!--                            <classpathPrefix>lib/</classpathPrefix>-->
+                            <classpathPrefix>lib/</classpathPrefix>
                             <mainClass>com.apollocurrency.aplwallet.apl.tools.ApolloTools</mainClass>
                         </manifest>
                     </archive>

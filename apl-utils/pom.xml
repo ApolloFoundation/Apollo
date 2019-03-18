@@ -8,7 +8,6 @@
         <version>1.27.0</version>
     </parent>
 
-    <groupId>com.apollocurrency</groupId>
     <artifactId>apl-utils</artifactId>
     <name>apl-utils</name>
     <packaging>jar</packaging>
@@ -80,13 +79,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>  
+        </dependency>
         <dependency>
             <groupId>org.jboss.weld.se</groupId>
             <artifactId>weld-se-core</artifactId>
