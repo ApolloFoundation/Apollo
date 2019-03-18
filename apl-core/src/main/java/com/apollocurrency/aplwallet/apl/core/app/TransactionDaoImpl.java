@@ -687,22 +687,4 @@ public class TransactionDaoImpl implements TransactionDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
-    public Long getReferencedTransactionId(long transactionId) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()){
-            PreparedStatement pstmt = con.prepareStatement("SELECT referenced_transaction_id FROM referenced_transaction "
-                    + "WHERE transaction_id = ? ");
-            pstmt.setLong(1, transactionId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getLong(1);
-                } else {
-                    return null;
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 }
