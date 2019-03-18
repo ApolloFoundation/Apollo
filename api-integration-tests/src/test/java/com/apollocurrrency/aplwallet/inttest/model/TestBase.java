@@ -562,6 +562,31 @@ public class TestBase {
         return getInstanse(GetAllTradeResponse.class);
     }
 
+    //getAskOrder
+    public OrderDTO getAskOrder (Wallet wallet, String askOrder) throws IOException {
+        addParameters(RequestType.requestType, getAskOrder);
+
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.order, askOrder);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), OrderDTO.class);
+    }
+
+    //getAskOrderIds
+    public GetOrderIdsResponse getAskOrderIds (Wallet wallet, String assetID) throws IOException {
+        addParameters(RequestType.requestType, getAskOrderIds);
+
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.asset, assetID);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetOrderIdsResponse.class);
+    }
+
+
 
     public ECBlock getECBlock() throws IOException {
         addParameters(RequestType.requestType, getECBlock);
