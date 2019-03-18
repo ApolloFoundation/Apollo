@@ -47,15 +47,17 @@ public class TestBlock extends TestBase {
     }
 
     @Test
-    @DisplayName("Get Blockchain Status")
+    @DisplayName("Get All Bloks")
     public void getAllBlocks() throws IOException {
         GetBloksResponse blockchainStatus = getBlocks();
+        assertNotNull(blockchainStatus);
+        assertNotNull(blockchainStatus.blocks);
         assertTrue(blockchainStatus.blocks.size()>0);
 
     }
 
     @Test
-    @DisplayName("Get Blockchain Status")
+    @DisplayName("Get ECB Block")
     public void getECB() throws IOException {
         ECBlock blockchainStatus =  getECBlock();
         assertNotNull(blockchainStatus);

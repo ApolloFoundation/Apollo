@@ -238,18 +238,7 @@ public class TestAssetExchangeAPI extends TestBase {
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
     //SMOKE API TESTING using standard TEST CASES
     @DisplayName("issueAsset + placeAskOrder")
     @ParameterizedTest
