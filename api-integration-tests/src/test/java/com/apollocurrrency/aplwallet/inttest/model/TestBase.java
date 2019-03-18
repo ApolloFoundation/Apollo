@@ -35,7 +35,7 @@ public class TestBase {
     public TestBase()  {
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
-                .withMaxRetries(10)
+                .withMaxRetries(5)
                 .withDelay(5, TimeUnit.SECONDS);
         try {
             deleteKey(testConfiguration.getVaultWallet());

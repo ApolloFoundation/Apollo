@@ -109,10 +109,6 @@ public class TestAccounts extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
-        RetryPolicy retryPolicy = new RetryPolicy()
-                .retryWhen(null)
-                .withMaxRetries(3)
-                .withDelay(10, TimeUnit.SECONDS);
         sendMoney(wallet,testConfiguration.getStandartWallet().getUser(),2);
         TransactionListInfoResponse transactionInfos = getUnconfirmedTransactions(wallet);
         assertNotNull(transactionInfos.unconfirmedTransactions);
