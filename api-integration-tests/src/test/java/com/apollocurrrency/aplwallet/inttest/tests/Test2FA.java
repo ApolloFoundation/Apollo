@@ -53,8 +53,7 @@ public class Test2FA extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void  enable2FATest(Wallet wallet) throws IOException { ;
-        AccountDTO accountDTO = generateNewAccount();
-        accountDTO = enable2FA(wallet);
+        AccountDTO accountDTO = enable2FA(wallet);
         assertNotNull(accountDTO.secret);
     }
 }

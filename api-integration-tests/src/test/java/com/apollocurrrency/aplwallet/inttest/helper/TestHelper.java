@@ -1,7 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -143,43 +142,27 @@ public class TestHelper {
         return reqestUrl.toString();
     }
 
-
     public static <T> T getInstanse(Class clas) {
         Response response;
         String responseBody= "";
         try {
         response =  httpCallPost();
         responseBody = response.body().string();
+        //System.out.println(responseBody);
         Assert.assertEquals(200, response.code());
-        assertFalse(responseBody.contains("errorDescription"),responseBody);
-
-        if (CreateTransactionResponse.class.equals(clas)) {
-           return (T) mapper.readValue(responseBody, CreateTransactionResponse.class);
-        } else if (TransactionDTO.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, TransactionDTO.class);
-        }else if (BlockListInfoResponse.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, BlockListInfoResponse.class);
-        }else if (GetAccountResponse.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, GetAccountResponse.class);
-        }else if (GetAccountBlockCount.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, GetAccountBlockCount.class);
-        }else if (AccountBlockIdsResponse.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, AccountBlockIdsResponse.class);
-        } else if (AccountDTO.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, AccountDTO.class);
-        }else if (AccountLedgerResponse.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, AccountLedgerResponse.class);
-        }else if (AccountPropertiesResponse.class.equals(clas)) {
-            return (T) mapper.readValue(responseBody, AccountPropertiesResponse.class);
+        if (!clas.equals(Error.class)){
+            assertFalse(responseBody.contains("errorDescription"), responseBody);
         }
-
+            return (T) mapper.readValue(responseBody, clas);
         }
         catch (Exception e)
         {
-            throw new UnknownFormatConversionException(responseBody+" : \n"+ e.getMessage());
+            try {
+                return (T) mapper.readValue(responseBody, Error.class);
+            } catch (IOException ex) {
+                throw new UnknownFormatConversionException(responseBody+" : \n"+ e.getMessage());
+            }
         }
-
-      throw new UnknownFormatConversionException("Class not found: "+responseBody);
     }
 
 
