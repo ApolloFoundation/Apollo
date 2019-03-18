@@ -1,17 +1,21 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UnknownFormatConversionException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class TestHelper {
@@ -137,5 +141,31 @@ public class TestHelper {
         reqestParam.clear();
         return reqestUrl.toString();
     }
+
+
+    public static <T> T getInstanse(Class clas) {
+        Response response;
+        String responseBody= "";
+        try {
+        response =  httpCallPost();
+        responseBody = response.body().string();
+        Assert.assertEquals(200, response.code());
+        assertFalse(responseBody.contains("errorDescription"),responseBody);
+
+        if (CreateTransactionResponse.class.equals(clas)) {
+           return (T) mapper.readValue(responseBody, CreateTransactionResponse.class);
+        } else if (TransactionDTO.class.equals(clas)) {
+            return (T) mapper.readValue(responseBody, TransactionDTO.class);
+        }
+
+        }
+        catch (Exception e)
+        {
+            throw new UnknownFormatConversionException(responseBody+" : \n"+ e.getMessage());
+        }
+
+      throw new UnknownFormatConversionException("Class not found: "+responseBody);
+    }
+
 
 }

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestAccounts.class);
@@ -46,9 +48,13 @@ public class TestBase {
 
     }
 
+
     public boolean verifyTransactionInBlock(String transaction)
     {
-        boolean inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long(0))==1);
+        boolean inBlock = Failsafe.with(retryPolicy)
+                .get(() -> getTransaction(transaction)
+                        .confirmations
+                        .compareTo(new Long("0"))==1);
         assertTrue(inBlock);
         return inBlock;
     }
@@ -56,9 +62,7 @@ public class TestBase {
     public TransactionDTO getTransaction(String transaction) throws IOException {
         addParameters(RequestType.requestType, RequestType.getTransaction);
         addParameters(Parameters.transaction, transaction);
-        Response response = httpCallPost();
-        assertEquals(200, response.code());
-        return mapper.readValue(response.body().string().toString(), TransactionDTO.class);
+        return getInstanse(TransactionDTO.class);
     }
 
     public BlockListInfoResponse getAccountBlocks(String account) throws IOException {
@@ -481,6 +485,9 @@ public class TestBase {
 
 
     public void verifyCreatingTransaction (CreateTransactionResponse transaction) {
+        assertNotNull(transaction);
+        assertNotNull(transaction.transaction,transaction.errorDescription);
+        assertNotNull(transaction.transactionJSON,transaction.errorDescription);
         assertNotNull(transaction.transactionJSON.senderPublicKey);
         assertNotNull(transaction.transactionJSON.signature);
         assertNotNull(transaction.transactionJSON.fullHash);
@@ -693,13 +700,6 @@ public class TestBase {
 
 
 
-
-
-
-
-
-
-
     public ECBlock getECBlock() throws IOException {
         addParameters(RequestType.requestType, getECBlock);
         Response response = httpCallPost();
@@ -729,7 +729,7 @@ public class TestBase {
         return mapper.readValue(response.body().string(), ForgingDetails.class);
     }
 
-    public CreateTransactionResponse sendMessage(Wallet wallet,String recipient, String testMessage) throws IOException { ;
+    public CreateTransactionResponse sendMessage(Wallet wallet,String recipient, String testMessage) { ;
         addParameters(RequestType.requestType,RequestType.sendMessage);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.recipient, recipient);
@@ -737,9 +737,7 @@ public class TestBase {
         addParameters(Parameters.feeATM, 500000000);
         addParameters(Parameters.deadline, 1440);
         addParameters(Parameters.messageIsPrunable, true);
-        Response response = httpCallPost();
-        Assert.assertEquals(200, response.code());
-        return mapper.readValue(response.body().string(), CreateTransactionResponse.class);
+        return getInstanse(CreateTransactionResponse.class);
     }
 
     public PrunableMessageDTO readMessage(Wallet wallet,String transaction) throws IOException {

@@ -48,6 +48,7 @@ public class ResponseBase {
      * Old error code. Should be gone in new model
      */
     public Long errorCode;
+    public String error;
 
     public String description;
 }
