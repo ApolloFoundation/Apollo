@@ -40,7 +40,7 @@ public class TestBase {
         try
         {
           deleteKey(testConfiguration.getVaultWallet());
-        } catch (IOException e)
+        } catch (Exception e)
         {
 
         }
@@ -307,7 +307,7 @@ public class TestBase {
      public Account2FA deleteKey(Wallet wallet) throws IOException {
          addParameters(RequestType.requestType,RequestType.deleteKey);
          addParameters(Parameters.wallet, wallet);
-         return getInstanse(Account2FA.class);
+         return mapper.readValue(httpCallPost().body().string(), Account2FA.class);
      }
 
     public Account2FA exportKey(Wallet wallet) throws IOException {
