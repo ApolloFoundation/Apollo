@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # (C) 2019 Apollo Foundation 
 # Starts Apollo GUI  in foreground
 
@@ -17,4 +17,4 @@ fi
 # uncomment when GUI will start standalone
 # ${JAVA_CMD} $xdock  -jar ${MAIN_GUI_JAR}
 
-${JAVA_CMD} $xdock  -Dapl.runtime.mode=desktop -jar ${MAIN_JAR}
+${JAVA_CMD} $xdock -jar ${MAIN_GUI_JAR}

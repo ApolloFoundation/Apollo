@@ -123,6 +123,7 @@ public class RuntimeEnvironment {
     }
 
     public boolean isDesktopEnabled() {
+       
         return "desktop".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && !isHeadless();
     }
 

@@ -8,7 +8,6 @@
         <version>1.27.0</version>
     </parent>
 
-    <groupId>com.apollocurrency</groupId>
     <artifactId>apl-core</artifactId>
     <name>apl-core</name>
     <packaging>jar</packaging>
@@ -205,12 +204,6 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cxf</groupId>
-                    <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.j256.two-factor-auth</groupId>
