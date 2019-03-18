@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.AliasDTO;
 import com.apollocurrency.aplwallet.api.dto.AssetDTO;
+import com.apollocurrency.aplwallet.api.dto.TradeDTO;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
@@ -180,6 +181,69 @@ public class TestAssetExchangeAPI extends TestBase {
         assertTrue(getAllAssets.assets.length >= 1); //return only first 100 assets
 
     }
+
+
+    //getAllOpenAskOrders
+    @DisplayName("getAllOpenAskOrders")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void getAllOpenAskOrdersTest (Wallet wallet) throws IOException {
+        String assetID;
+        String orderID;
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"AssetOpen1", "Creating Asset -> getAllAssets", 50);
+        verifyCreatingTransaction(issueAsset);
+        assetID = issueAsset.transaction;
+        verifyTransactionInBlock(assetID);
+        CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
+        verifyCreatingTransaction(placeAskOrder);
+        verifyTransactionInBlock(placeAskOrder.transaction);
+        orderID = placeAskOrder.transaction;
+        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders(wallet);
+        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
+        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
+    }
+
+    //getAllOpenBidOrders
+    @DisplayName("getAllOpenBidOrders")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void getAllOpenBidOrdersTest (Wallet wallet) throws IOException {
+        String assetID;
+        String orderID;
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"AssetBid1", "Creating Asset -> getAllAssets", 50);
+        verifyCreatingTransaction(issueAsset);
+        assetID = issueAsset.transaction;
+        verifyTransactionInBlock(assetID);
+        System.out.println(assetID);
+        CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
+        verifyCreatingTransaction(placeBidOrder);
+        verifyTransactionInBlock(placeBidOrder.transaction);
+        orderID = placeBidOrder.transaction;
+        System.out.println(orderID);
+        GetOpenOrderResponse getAllOpenBidOrders = getAllOpenBidOrders(wallet);
+        assertTrue(Arrays.stream(getAllOpenBidOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
+        assertTrue(Arrays.stream(getAllOpenBidOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
+
+    }
+
+
+    //getAllTrades
+    @DisplayName("getAllTrades")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void getAllTradesTest (Wallet wallet) throws IOException {
+
+        GetAllTradeResponse getAllTrades = getAllTrades(wallet);
+        assertTrue(getAllTrades.trades.length >= 1);
+
+    }
+
+
+
+
+
+
+
 
 
 

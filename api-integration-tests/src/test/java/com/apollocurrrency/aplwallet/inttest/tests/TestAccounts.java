@@ -254,6 +254,7 @@ public class TestAccounts extends TestBase {
     }
 
     @DisplayName("Delete Account Property")
+    @Disabled
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void  deleteAccountProperty(Wallet wallet) throws IOException {

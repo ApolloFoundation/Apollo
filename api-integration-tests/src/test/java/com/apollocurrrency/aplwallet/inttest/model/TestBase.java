@@ -690,6 +690,40 @@ public class TestBase {
         return mapper.readValue(response.body().string(), GetAllAssetsResponse.class);
     }
 
+    //getAllOpenAskOrders
+    public GetOpenOrderResponse getAllOpenAskOrders (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAllOpenAskOrders);
+        //addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetOpenOrderResponse.class);
+    }
+
+
+    //getAllOpenBidOrders
+    public GetOpenOrderResponse getAllOpenBidOrders (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAllOpenBidOrders);
+        //addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetOpenOrderResponse.class);
+    }
+
+    //getAllTrades
+    public GetAllTradeResponse getAllTrades (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAllTrades);
+        //addParameters(Parameters.wallet, wallet);
+        Response response = httpCallPost();
+        //System.out.println(response.body().string());
+        assertEquals(200, response.code());
+        return mapper.readValue(response.body().string(), GetAllTradeResponse.class);
+    }
+
+
+
+
 
 
 
