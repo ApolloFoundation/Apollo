@@ -37,15 +37,18 @@ public class TestBase {
                 .retryWhen(false)
                 .withMaxRetries(5)
                 .withDelay(5, TimeUnit.SECONDS);
-        try {
-            deleteKey(testConfiguration.getVaultWallet());
-        } catch (IOException e) {
+        try
+        {
+          deleteKey(testConfiguration.getVaultWallet());
+        } catch (IOException e)
+        {
+
         }
-        try {
-            testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        finally
+        {
+                testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
         }
+
 
     }
 
@@ -313,7 +316,7 @@ public class TestBase {
         return getInstanse(Account2FA.class);
     }
 
-    public Account2FA importKey(Wallet wallet) throws IOException {
+    public Account2FA importKey(Wallet wallet) {
         addParameters(RequestType.requestType, importKey);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(Account2FA.class);

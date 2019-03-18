@@ -150,7 +150,7 @@ public class TestHelper {
         responseBody = response.body().string();
         //System.out.println(responseBody);
         Assert.assertEquals(200, response.code());
-        if (!clas.equals(Error.class)){
+        if (!clas.equals(Error.class) && !clas.equals(Account2FA.class)){
             assertFalse(responseBody.contains("errorDescription"), responseBody);
         }
             return (T) mapper.readValue(responseBody, clas);
