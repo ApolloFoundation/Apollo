@@ -563,27 +563,17 @@ public class TestBase {
     }
 
     //getAskOrder
-    public OrderDTO getAskOrder (Wallet wallet, String askOrder) throws IOException {
+    public OrderDTO getAskOrder (String askOrder) throws IOException {
         addParameters(RequestType.requestType, getAskOrder);
-
-        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.order, askOrder);
-        Response response = httpCallPost();
-        //System.out.println(response.body().string());
-        assertEquals(200, response.code());
-        return mapper.readValue(response.body().string(), OrderDTO.class);
+        return getInstanse(OrderDTO.class);
     }
 
     //getAskOrderIds
-    public GetOrderIdsResponse getAskOrderIds (Wallet wallet, String assetID) throws IOException {
+    public GetOrderIdsResponse getAskOrderIds (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAskOrderIds);
-
-        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.asset, assetID);
-        Response response = httpCallPost();
-        //System.out.println(response.body().string());
-        assertEquals(200, response.code());
-        return mapper.readValue(response.body().string(), GetOrderIdsResponse.class);
+        return getInstanse(GetOrderIdsResponse.class);
     }
 
 
@@ -593,7 +583,7 @@ public class TestBase {
         return getInstanse(ECBlock.class);
     }
 
-    public GetForgingResponse getForging(Wallet wallet) throws IOException{
+    public GetForgingResponse getForging() throws IOException{
         addParameters(RequestType.requestType, getForging);
         addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
         return getInstanse(GetForgingResponse.class);

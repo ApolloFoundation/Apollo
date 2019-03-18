@@ -229,13 +229,10 @@ public class TestAssetExchangeAPI extends TestBase {
 
     //getAllTrades
     @DisplayName("getAllTrades")
-    @ParameterizedTest
-    @ArgumentsSource(WalletProvider.class)
-    public  void getAllTradesTest (Wallet wallet) throws IOException {
-
+    @Test
+    public  void getAllTradesTest () throws IOException {
         GetAllTradeResponse getAllTrades = getAllTrades();
         assertTrue(getAllTrades.trades.length >= 1);
-
     }
 
 
@@ -254,7 +251,7 @@ public class TestAssetExchangeAPI extends TestBase {
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
 
-        GetOrderIdsResponse getAskOrderIds = getAskOrderIds(wallet, assetID);
+        GetOrderIdsResponse getAskOrderIds = getAskOrderIds(assetID);
         assertTrue(getAskOrderIds.askOrderIds.length == 0);
 
 
@@ -264,25 +261,25 @@ public class TestAssetExchangeAPI extends TestBase {
         orderID = placeAskOrder.transaction;
         System.out.println(orderID);
 
-        GetOrderIdsResponse getAskOrderIds1 = getAskOrderIds(wallet, assetID);
+        GetOrderIdsResponse getAskOrderIds1 = getAskOrderIds(assetID);
         assertTrue(Arrays.stream(getAskOrderIds1.askOrderIds).anyMatch(orderID::equals));
 
-        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders(wallet);
+        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders();
         assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
         assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
 
-        OrderDTO getAskOrder = getAskOrder(wallet, orderID);
+        OrderDTO getAskOrder = getAskOrder(orderID);
         assertTrue(getAskOrder.order.equals(orderID));
 
         cancelorderID = cancelAskOrder(wallet, orderID);
         verifyCreatingTransaction(cancelorderID);
         verifyTransactionInBlock(cancelorderID.transaction);
 
-        GetOrderIdsResponse getAskOrderIds2 = getAskOrderIds(wallet, assetID);
+        GetOrderIdsResponse getAskOrderIds2 = getAskOrderIds(assetID);
         assertFalse(Arrays.stream(getAskOrderIds2.askOrderIds).anyMatch(orderID::equals));
         assertTrue(getAskOrderIds.askOrderIds.length == 0);
 
-        GetOpenOrderResponse getAskOrder1 = getAllOpenAskOrders(wallet);
+        GetOpenOrderResponse getAskOrder1 = getAllOpenAskOrders();
         System.out.println(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count());
         assertFalse(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
 
@@ -290,7 +287,7 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyCreatingTransaction(deleteAssetShares);
         verifyTransactionInBlock(deleteAssetShares.transaction);
 
-        GetAllAssetsResponse getAllAssets = getAllAssets(wallet);
+        GetAllAssetsResponse getAllAssets = getAllAssets();
 
         assertFalse(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count()==1);
 

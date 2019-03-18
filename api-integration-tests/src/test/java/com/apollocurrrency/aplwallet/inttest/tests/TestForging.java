@@ -24,7 +24,7 @@ public class TestForging extends TestBase {
     public void  getAccountPropertyTest(Wallet wallet) throws IOException {
         ForgingDetails forgingDetails = startForging(wallet);
         assertTrue(forgingDetails.getHitTime()>0);
-        GetForgingResponse getForgingResponse = getForging(wallet);
+        GetForgingResponse getForgingResponse = getForging();
         assertNotNull(getForgingResponse.generators.length >0);
         forgingDetails = stopForging(wallet);
         assertTrue(forgingDetails.getFoundAndStopped());
