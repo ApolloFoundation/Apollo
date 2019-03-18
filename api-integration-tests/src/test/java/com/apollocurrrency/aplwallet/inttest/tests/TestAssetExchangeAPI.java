@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.AliasDTO;
 import com.apollocurrency.aplwallet.api.dto.AssetDTO;
+import com.apollocurrency.aplwallet.api.dto.OrderDTO;
 import com.apollocurrency.aplwallet.api.dto.TradeDTO;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
@@ -18,8 +19,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestAssetExchangeAPI extends TestBase {
@@ -37,7 +37,7 @@ public class TestAssetExchangeAPI extends TestBase {
     @DisplayName("getAccountAssets")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    public void getAccountAssetstTest(Wallet wallet) throws IOException {
+    public void getAccountAssetsTest(Wallet wallet) throws IOException {
         String assetID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"setAsset", "issueAssettestAPI", 11);
         verifyCreatingTransaction(issueAsset);
@@ -238,6 +238,62 @@ public class TestAssetExchangeAPI extends TestBase {
 
     }
 
+    //Creating Asset -> place AskOrder -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares
+    @DisplayName("getAskOrder + getAskOrderIds")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void getAskOrderTest (Wallet wallet) throws IOException {
+        String assetID;
+        String orderID;
+        Integer quantityATU = 50;
+        String assetName = "Askorder09";
+        CreateTransactionResponse cancelorderID;
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset -> placeAskOrder -> getAskOrdersIds -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares", quantityATU);
+        verifyCreatingTransaction(issueAsset);
+        assetID = issueAsset.transaction;
+        verifyTransactionInBlock(assetID);
+
+        GetOrderIdsResponse getAskOrderIds = getAskOrderIds(wallet, assetID);
+        assertTrue(getAskOrderIds.askOrderIds.length == 0);
+
+
+        CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
+        verifyCreatingTransaction(placeAskOrder);
+        verifyTransactionInBlock(placeAskOrder.transaction);
+        orderID = placeAskOrder.transaction;
+        System.out.println(orderID);
+
+        GetOrderIdsResponse getAskOrderIds1 = getAskOrderIds(wallet, assetID);
+        assertTrue(Arrays.stream(getAskOrderIds1.askOrderIds).anyMatch(orderID::equals));
+
+        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders(wallet);
+        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
+        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
+
+        OrderDTO getAskOrder = getAskOrder(wallet, orderID);
+        assertTrue(getAskOrder.order.equals(orderID));
+
+        cancelorderID = cancelAskOrder(wallet, orderID);
+        verifyCreatingTransaction(cancelorderID);
+        verifyTransactionInBlock(cancelorderID.transaction);
+
+        GetOrderIdsResponse getAskOrderIds2 = getAskOrderIds(wallet, assetID);
+        assertFalse(Arrays.stream(getAskOrderIds2.askOrderIds).anyMatch(orderID::equals));
+        assertTrue(getAskOrderIds.askOrderIds.length == 0);
+
+        GetOpenOrderResponse getAskOrder1 = getAllOpenAskOrders(wallet);
+        System.out.println(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count());
+        assertFalse(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
+
+        CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
+        verifyCreatingTransaction(deleteAssetShares);
+        verifyTransactionInBlock(deleteAssetShares.transaction);
+
+        GetAllAssetsResponse getAllAssets = getAllAssets(wallet);
+
+        assertFalse(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count()==1);
+
+    }
 
 
 
