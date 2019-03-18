@@ -87,6 +87,7 @@ class ShardMigrationExecutorTest {
     @Inject
     private PropertyProducer propertyProducer;
     private static DbProperties dbProperties;
+    private static DbConfig dbConfig;
     private static DatabaseManager databaseManager;
     private DataTransferManagementReceiver transferManagementReceiver;
     @Inject
@@ -116,7 +117,7 @@ class ShardMigrationExecutorTest {
                 Collections.emptyList());
         propertiesHolder = new PropertiesHolder();
         propertiesHolder.init(propertiesLoader.load());
-        DbConfig dbConfig = new DbConfig(propertiesHolder);
+        dbConfig = new DbConfig(propertiesHolder);
         dbProperties = dbConfig.getDbConfig();
         databaseManager = new DatabaseManager(dbProperties, propertiesHolder);
     }
@@ -134,7 +135,6 @@ class ShardMigrationExecutorTest {
 
     @AfterEach
     void tearDownAll() {
-//        databaseManager.shutdown();
         FileUtils.deleteQuietly(pathToDb.toFile());
     }
 

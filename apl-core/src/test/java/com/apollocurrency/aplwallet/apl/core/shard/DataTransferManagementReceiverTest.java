@@ -61,13 +61,11 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 
-@Disabled
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class DataTransferManagementReceiverTest {
@@ -164,7 +162,7 @@ class DataTransferManagementReceiverTest {
         assertEquals(MigrateState.INIT, state);
 
         state = transferManagementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
-        assertEquals(SHARD_SCHEMA_CREATED, state);
+        assertEquals(SHARD_SCHEMA_FULL, state);
     }
 
     @Test

@@ -21,7 +21,7 @@ public class ShardNameHelper {
 
     public static String getShardNameByShardId(Long shardId) {
         if (shardId == null || shardId < 0) {
-            throw new RuntimeException("'shardId' should have positive value, but " + shardId + " was supplied");
+            throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
         }
         String result = String.format(SHARD_NAME_PATTERN, shardId);
         log.debug(result);
