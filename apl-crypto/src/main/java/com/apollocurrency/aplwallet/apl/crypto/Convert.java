@@ -152,6 +152,11 @@ public final class Convert {
         return bigInteger.longValue();
     }
 
+    public static void main(String[] args) {
+        BigInteger bigInteger = new BigInteger(new byte[]{0, 0, 0, 0, 0, 0, 0, 100});
+        System.out.println(bigInteger.longValue());
+    }
+
 
     public static String emptyToNull(String s) {
         return s == null || s.length() == 0 ? null : s;

@@ -74,7 +74,7 @@ public class TransactionImpl implements Transaction {
     @Inject
     private static BlockchainImpl blockchain;
 
-    static final class BuilderImpl implements Builder {
+    public static final class BuilderImpl implements Builder {
 
         private short deadline;
         private byte[] senderPublicKey;
@@ -109,8 +109,8 @@ public class TransactionImpl implements Transaction {
         public BuilderImpl() { // for weld
         }
 
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
-                    AbstractAttachment attachment) {
+        public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
+                           AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
@@ -229,42 +229,42 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl id(long id) {
+        public BuilderImpl id(long id) {
             this.id = id;
             return this;
         }
 
-        BuilderImpl signature(byte[] signature) {
+        public BuilderImpl signature(byte[] signature) {
             this.signature = signature;
             return this;
         }
 
-        BuilderImpl blockId(long blockId) {
+        public BuilderImpl blockId(long blockId) {
             this.blockId = blockId;
             return this;
         }
 
-        BuilderImpl height(int height) {
+        public BuilderImpl height(int height) {
             this.height = height;
             return this;
         }
 
-        BuilderImpl senderId(long senderId) {
+        public BuilderImpl senderId(long senderId) {
             this.senderId = senderId;
             return this;
         }
 
-        BuilderImpl fullHash(byte[] fullHash) {
+        public BuilderImpl fullHash(byte[] fullHash) {
             this.fullHash = fullHash;
             return this;
         }
 
-        BuilderImpl blockTimestamp(int blockTimestamp) {
+        public BuilderImpl blockTimestamp(int blockTimestamp) {
             this.blockTimestamp = blockTimestamp;
             return this;
         }
 
-        BuilderImpl index(short index) {
+        public BuilderImpl index(short index) {
             this.index = index;
             return this;
         }
