@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
 /**
  * Shard db entity
  */
@@ -17,7 +19,7 @@ public class Shard {
 
     public Shard(Long shardId, String shardHash) {
         this.shardId = shardId;
-        this.shardHash = shardHash.getBytes();
+        this.shardHash = Convert.parseHexString(shardHash);
     }
 
     public Shard(Long shardId, byte[] shardHash, Long shardState) {

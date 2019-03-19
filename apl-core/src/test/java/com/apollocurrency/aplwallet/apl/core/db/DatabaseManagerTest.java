@@ -115,7 +115,7 @@ class DatabaseManagerTest {
     @Test
     void init() {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
-        assertNotNull(databaseManager);
+        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
 //        databaseManager.shutdown();
@@ -124,7 +124,7 @@ class DatabaseManagerTest {
     @Test
     void createAndAddShard() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
-        assertNotNull(databaseManager);
+        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L);
@@ -137,7 +137,7 @@ class DatabaseManagerTest {
     @Test
     void createShardInitTableSchemaVersion() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
-        assertNotNull(databaseManager);
+        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L, new ShardInitTableSchemaVersion());
@@ -150,7 +150,7 @@ class DatabaseManagerTest {
     @Test
     void createAndAddShardWithoutId() throws Exception {
         databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
-        assertNotNull(databaseManager);
+        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null);

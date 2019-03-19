@@ -34,11 +34,6 @@ public class OptionDAO {
 
     public String get(String optionName) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        return get(optionName, dataSource);
-    }
-
-    public String get(String optionName, TransactionalDataSource dataSource) {
-        Objects.requireNonNull(dataSource, "dataSource is NULL");
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
             stmt.setString(1, optionName);
@@ -56,12 +51,7 @@ public class OptionDAO {
 
     public boolean set(String optionName, String optionValue) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        return set(optionName, optionValue, dataSource);
-    }
-
-    public boolean set(String optionName, String optionValue, TransactionalDataSource dataSource) {
-        Objects.requireNonNull(dataSource, "dataSource is NULL");
-        if (get(optionName, dataSource) == null) {
+        if (get(optionName) == null) {
             try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
                 stmt.setString(1, optionName);
@@ -101,28 +91,8 @@ public class OptionDAO {
         return false;
     }
 
-    public boolean delete(String optionName, TransactionalDataSource dataSource) {
-        Objects.requireNonNull(dataSource, "dataSource is NULL");
-        if (get(optionName, dataSource) != null) {
-            try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");
-                stmt.setString(1, optionName);
-                int deletedRows = stmt.executeUpdate();
-                return deletedRows == 1;
-            }
-            catch (SQLException e) {
-                LOG.error(e.getMessage());
-            }
-        }
-        return false;
-    }
-
     public void deleteAll() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        deleteAll(dataSource);
-    }
-
-    public void deleteAll(TransactionalDataSource dataSource) {
         Objects.requireNonNull(dataSource, "dataSource is NULL");
             try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("DELETE FROM option");

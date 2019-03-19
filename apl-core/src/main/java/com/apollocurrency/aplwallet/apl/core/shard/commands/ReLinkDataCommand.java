@@ -22,7 +22,7 @@ public class ReLinkDataCommand implements DataMigrateOperation {
 
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList = new LinkedList<>();
-    private int commitBatchSize = 100;
+    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private long snapshotBlockHeight = 0L;
 
     public ReLinkDataCommand(DataTransferManagementReceiver dataTransferManagement,
@@ -35,12 +35,12 @@ public class ReLinkDataCommand implements DataMigrateOperation {
                              long snapshotBlockHeight) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        tableNameList.add("GENESIS_PUBLIC_KEY");
-        tableNameList.add("PUBLIC_KEY");
-        tableNameList.add("TAGGED_DATA");
-        tableNameList.add("SHUFFLING_DATA");
-        tableNameList.add("DATA_TAG");
-        tableNameList.add("PRUNABLE_MESSAGE");
+        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
+        tableNameList.add(PUBLIC_KEY_TABLE_NAME);
+        tableNameList.add(TAGGED_DATA_TABLE_NAME);
+        tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
+        tableNameList.add(DATA_TAG_TABLE_NAME);
+        tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
     }
 
     public ReLinkDataCommand(

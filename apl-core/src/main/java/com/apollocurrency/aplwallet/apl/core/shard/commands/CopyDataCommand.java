@@ -25,7 +25,7 @@ public class CopyDataCommand implements DataMigrateOperation {
 
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList = new LinkedList<>();
-    private int commitBatchSize = 100;
+    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private long snapshotBlockHeight = 0L;
 
     public CopyDataCommand(DataTransferManagementReceiver dataTransferManagement,
@@ -38,8 +38,8 @@ public class CopyDataCommand implements DataMigrateOperation {
                            long snapshotBlockHeight) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        tableNameList.add("BLOCK");
-        tableNameList.add("TRANSACTION");
+        tableNameList.add(BLOCK_TABLE_NAME);
+        tableNameList.add(TRANSACTION_TABLE_NAME);
     }
 
     public CopyDataCommand(

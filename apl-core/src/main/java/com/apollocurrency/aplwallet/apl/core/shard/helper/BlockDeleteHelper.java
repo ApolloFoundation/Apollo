@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
@@ -34,7 +35,7 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
 
         long startSelect = System.currentTimeMillis();
 
-        if ("BLOCK".equalsIgnoreCase(currentTableName)) {
+        if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging =
                     "select DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);

@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
@@ -44,9 +46,9 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         selectUpperBottomValues(sourceConnect, operationParams);
 
         // turn OFF HEIGHT constraint for specified table
-        if (operationParams.tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
+        if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             issueConstraintUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
-        } else if (operationParams.tableName.equalsIgnoreCase("PUBLIC_KEY")) {
+        } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             issueConstraintUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
         }
 
@@ -67,10 +69,10 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
 
         // turn ON HEIGHT constraint for specified table
-        if (operationParams.tableName.equalsIgnoreCase("GENESIS_PUBLIC_KEY")) {
+        if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             issueConstraintUpdateQuery(sourceConnect,
                     "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_C11 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
-        } else if (operationParams.tableName.equalsIgnoreCase("PUBLIC_KEY")) {
+        } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             issueConstraintUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }

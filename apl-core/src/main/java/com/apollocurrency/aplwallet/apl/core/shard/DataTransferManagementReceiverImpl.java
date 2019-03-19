@@ -325,7 +325,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         try (Connection sourceConnect = sourceDataSource.begin();
             PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(
                     "insert into SHARD (SHARD_ID, SHARD_HASH, SHARD_STATE) values (?, ?, ?)")) {
-            preparedInsertStatement.setObject(1, createdShardId.get());
+            preparedInsertStatement.setLong(1, createdShardId.get());
             preparedInsertStatement.setBytes(2, paramInfo.getShardHash());
             preparedInsertStatement.setInt(3, 100); // 100% full shard is present on current node
             int result = preparedInsertStatement.executeUpdate();

@@ -6,6 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DATA_TAG_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PRUNABLE_MESSAGE_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHUFFLING_DATA_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -62,12 +71,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 
 @EnableWeld
-@ExtendWith(MockitoExtension.class)
 class DataTransferManagementReceiverTest {
     private static final Logger log = getLogger(DataTransferManagementReceiverTest.class);
 
@@ -176,8 +182,8 @@ class DataTransferManagementReceiverTest {
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         List<String> tableNameList = new LinkedList<>();
-        tableNameList.add("BLOCK");
-        tableNameList.add("TRANSACTION");
+        tableNameList.add(BLOCK_TABLE_NAME);
+        tableNameList.add(TRANSACTION_TABLE_NAME);
         CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 1350000L);
 
         state = transferManagementReceiver.copyDataToShard(paramInfo);
@@ -188,12 +194,12 @@ class DataTransferManagementReceiverTest {
         assertEquals(SHARD_SCHEMA_FULL, state);
 
         tableNameList.clear();
-        tableNameList.add("GENESIS_PUBLIC_KEY");
-        tableNameList.add("PUBLIC_KEY");
-//        tableNameList.put("TAGGED_DATA", -1L); // !
-        tableNameList.add("SHUFFLING_DATA");
-        tableNameList.add("DATA_TAG");
-        tableNameList.add("PRUNABLE_MESSAGE");
+        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
+        tableNameList.add(PUBLIC_KEY_TABLE_NAME);
+//        tableNameList.add(TAGGED_DATA_TABLE_NAME); // !
+        tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
+        tableNameList.add(DATA_TAG_TABLE_NAME);
+        tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
 
         paramInfo.setTableNameList(tableNameList);
         state = transferManagementReceiver.relinkDataToSnapshotBlock(paramInfo);
@@ -201,8 +207,8 @@ class DataTransferManagementReceiverTest {
 //        assertEquals(MigrateState.FAILED, state);
 
         tableNameList.clear();
-        tableNameList.add("BLOCK_INDEX");
-        tableNameList.add("TRANSACTION_SHARD_INDEX");
+        tableNameList.add(BLOCK_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
 
         paramInfo.setTableNameList(tableNameList);
         state = transferManagementReceiver.updateSecondaryIndex(paramInfo);
@@ -210,7 +216,7 @@ class DataTransferManagementReceiverTest {
         assertEquals(MigrateState.FAILED, state);
 
         tableNameList.clear();
-        tableNameList.add("BLOCK");
+        tableNameList.add(BLOCK_TABLE_NAME);
 
         paramInfo.setTableNameList(tableNameList);
         state = transferManagementReceiver.deleteCopiedData(paramInfo);

@@ -84,12 +84,6 @@ class OptionDAOTest {
     }
 
     @Test
-    void getWithDataSource() {
-        String value = optionDAO.get("unknown_key_1", databaseManager.getDataSource());
-        assertNull(value);
-    }
-
-    @Test
     void set() {
         String unknown_key = "unknown_key_2";
         boolean isInserted = optionDAO.set(unknown_key, "unknown_value");
@@ -119,21 +113,6 @@ class OptionDAOTest {
 
         optionDAO.delete(key1);
         value = optionDAO.get(key1);
-        assertNull(value);
-    }
-
-    @Test
-    void setWithDataSource() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        String unknown_key = "unknown_key_3";
-        boolean isInserted = optionDAO.set(unknown_key, "unknown_value", dataSource);
-        assertTrue(isInserted);
-        String value = optionDAO.get(unknown_key, dataSource);
-        assertNotNull(value);
-        assertEquals("unknown_value", value);
-
-        optionDAO.delete(unknown_key, dataSource);
-        value = optionDAO.get(unknown_key, dataSource);
         assertNull(value);
     }
 

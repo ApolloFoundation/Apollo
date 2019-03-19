@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
+import static com.apollocurrency.aplwallet.apl.crypto.Convert.parseHexString;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -102,7 +103,7 @@ class ShardDaoTest {
         long maxId = dao.getMaxShardId();
         assertEquals(1, maxId);
 
-        Shard shard = new Shard(1L, "0000001");
+        Shard shard = new Shard(1L, "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f");
         dao.saveShard(shard);
         List<Shard> result = dao.getAllShard();
         assertNotNull(result);
@@ -124,7 +125,8 @@ class ShardDaoTest {
         Shard found1 = dao.getShardById(1L);
         assertNotNull(found1);
         assertNotNull(found1.getShardId());
-        assertArrayEquals("0000001".getBytes(), found1.getShardHash() );
+        assertArrayEquals(parseHexString("aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"),
+                found1.getShardHash() );
 
         found1.setShardHash("000000123".getBytes());
         dao.updateShard(found1);

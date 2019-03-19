@@ -22,7 +22,7 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
 
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList = new LinkedList<>();
-    private int commitBatchSize = 100;
+    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private long snapshotBlockHeight = 0L;
 
     public UpdateSecondaryIndexCommand(DataTransferManagementReceiver dataTransferManagement,
@@ -35,8 +35,8 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
                                        long snapshotBlockHeight) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        tableNameList.add("BLOCK_INDEX");
-        tableNameList.add("TRANSACTION_SHARD_INDEX");
+        tableNameList.add(BLOCK_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
     }
 
     public UpdateSecondaryIndexCommand(
