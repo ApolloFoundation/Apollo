@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
@@ -222,7 +223,9 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(propertiesLoader.load());
-        FullTextConfig.getInstance().setDatabaseManager(CDI.current().select(DatabaseManager.class).get());
+        FullTextConfig fullTextConfig = FullTextConfig.getInstance();
+        fullTextConfig.setDatabaseManager(CDI.current().select(DatabaseManager.class).get());
+        fullTextConfig.setFtl(CDI.current().select(FullTextSearchEngine.class).get());
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();

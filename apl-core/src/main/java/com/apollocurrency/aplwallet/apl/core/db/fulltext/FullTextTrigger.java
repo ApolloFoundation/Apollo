@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import javax.enterprise.inject.spi.CDI;
 
+/**
+ * WARNING!!! This class will trigger CDI to create new INSTANCES for SINGLETON beans!!!!
+ */
 public class FullTextTrigger implements Trigger, TransactionCallback {
         private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
     /**
@@ -31,7 +33,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
      */
-    private FullTextSearchEngine ftl;
+    private static FullTextSearchEngine ftl = Objects.requireNonNull(FullTextConfig.getInstance().getFtl(), "Ftl cannot be null");
     private TableData tableData;
 
 
@@ -54,7 +56,6 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
             throws SQLException {
         this.tableData = readTableData(conn, schema, table);
-        this.ftl = CDI.current().select(FullTextSearchEngine.class).get();
     }
 
     /**

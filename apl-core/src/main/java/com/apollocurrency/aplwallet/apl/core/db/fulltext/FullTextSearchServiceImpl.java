@@ -17,7 +17,9 @@ import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
+@Singleton
 public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);

@@ -16,9 +16,18 @@ public class FullTextConfig {
     private List<String> tableNames = new ArrayList<>();
     private String schema = "PUBLIC";
     private DatabaseManager databaseManager;
+    private FullTextSearchEngine ftl;
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public FullTextSearchEngine getFtl() {
+        return ftl;
+    }
+
+    public void setFtl(FullTextSearchEngine ftl) {
+        this.ftl = ftl;
     }
 
     public void setDatabaseManager(DatabaseManager databaseManager) {
