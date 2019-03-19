@@ -4,18 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 
 public class ExportKey extends AbstractAPIRequestHandler {
     private static class ExportPrivateKeyHolder {
@@ -31,12 +30,18 @@ public class ExportKey extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
+
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
-        byte[] secretBytes = Helper2FA.exportSecretBytes(passphrase, accountId);
+
+        File keyStoreFile = Helper2FA.getKeyStoreFile(accountId, passphrase);
+        //TODO send file.
+
+        //todo delete this mock
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
-        response.put("secretBytes", Convert.toHexString(secretBytes));
+        response.put("secretBytes", Long.valueOf(123l).toString(16));
+        //
         return response;
     }
 

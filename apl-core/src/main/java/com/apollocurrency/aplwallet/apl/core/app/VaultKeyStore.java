@@ -1,16 +1,22 @@
+/*
+ * Copyright © 2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
+import io.firstbridge.cryptolib.container.FbWallet;
+
+import java.io.File;
 
 public interface VaultKeyStore {
 
     /**
      * Save encrypted by passphrase secretStore in the json format.
      * @param passphrase - string, which consist of random words for encryption
-     * @param secretStore - secret array of bytes which will be stored into keystore
+     * @param fbWallet - secret array of bytes which will be stored into keystore
      * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
      */
-    Status saveSecretStore(String passphrase, SecretStore secretStore);
+    Status saveSecretKeyStore(Long accountId, String passphrase, FbWallet fbWallet);
 
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
@@ -18,7 +24,7 @@ public interface VaultKeyStore {
      * @param accountId - id of account, which keySeed should be decrypted
      * @return decrypted SecretStore.
      */
-    SecretStore getSecretStore(String passphrase, long accountId);
+    FbWallet getSecretStore(String passphrase, long accountId);
 
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
@@ -26,6 +32,7 @@ public interface VaultKeyStore {
      * @param accountId - id of account, which keySeed should be decrypted
      * @return decrypted secret bytes with status OK or null with fail status
      */
+    @Deprecated
     SecretBytesDetails getSecretBytes(String passphrase, long accountId);
 
     /**
@@ -34,6 +41,7 @@ public interface VaultKeyStore {
      * @param secretBytes - secret array of bytes which will be stored into keystore
      * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
      */
+    @Deprecated
     Status saveSecretBytes(String passphrase, byte[] secretBytes);
 
     /**
@@ -42,8 +50,10 @@ public interface VaultKeyStore {
      * @param accountId - id of account, which secretBytes should be deleted
      * @return status of deletion
      */
+    @Deprecated
      Status deleteSecretBytes(String passphrase, long accountId);
 
+    File getSecretStoreFile(Long accountId, String passphrase);
 
     enum Status {
         NOT_FOUND("Bad credentials"),

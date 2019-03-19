@@ -5,25 +5,29 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
-import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
-import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
+import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
+import com.apollocurrency.aplwallet.apl.core.model.WalletsInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+import io.firstbridge.cryptolib.container.FbWallet;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 
 /**
  * This class is just static helper for 2FA. It should be removed later
@@ -146,7 +150,7 @@ public class Helper2FA {
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
-    public static AplWalletKey generateUserAccounts(String passphrase) throws ParameterException {
+    public static WalletsInfo generateUserAccounts(String passphrase) throws ParameterException {
         if (passphrase == null) {
             if (passphraseGenerator == null) {
                 throw new RuntimeException("Either passphrase generator or passphrase required");
@@ -154,17 +158,18 @@ public class Helper2FA {
             passphrase = passphraseGenerator.generate();
         }
 
-
+        FbWallet fbWallet = new FbWallet();
         AplWalletKey aplAccount = accountGenerator.generateApl();
         EthWalletKey ethAccount = accountGenerator.generateEth();
 
-        SecretStore secretStore = new SecretStore();
-        secretStore.addAplKeys(aplAccount);
-        secretStore.addEthKeys(ethAccount);
+        FbWalletUtil.addAplKey(aplAccount, fbWallet);
+        FbWalletUtil.addEthKey(ethAccount, fbWallet);
 
-        VaultKeyStore.Status status = KEYSTORE.saveSecretStore(aplAccount.getPassphrase(), secretStore);
+        VaultKeyStore.Status status = KEYSTORE.saveSecretKeyStore(aplAccount.getId(), passphrase, fbWallet);
         validateKeyStoreStatus(aplAccount.getId(), status, "generated");
-        return aplAccount;
+
+        WalletsInfo walletKeyInfo = new WalletsInfo(ethAccount, aplAccount, passphrase);
+        return walletKeyInfo;
     }
 
     private static void validateKeyStoreStatus(long accountId, VaultKeyStore.Status status, String notPerformedAction) throws ParameterException {
@@ -173,6 +178,18 @@ public class Helper2FA {
             throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
                     status.message));
         }
+    }
+
+    public static FbWallet getKeyStore(String passphrase, long accountId, boolean isMandatory) throws ParameterException {
+
+         FbWallet store = KEYSTORE.getSecretStore(passphrase, accountId);
+
+        return store;
+    }
+
+    public static File getKeyStoreFile(long accountId, String passphrase) throws ParameterException {
+        File storeFile = KEYSTORE.getSecretStoreFile(accountId, passphrase);
+        return storeFile;
     }
 
     public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {

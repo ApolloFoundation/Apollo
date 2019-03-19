@@ -23,7 +23,7 @@ public class EthUtil {
 //        String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
 //        String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
 //        String addr = cs.getAddress();
-        return new EthWalletKey(cs, keySeed);
+        return new EthWalletKey(cs);
     }
 
 }

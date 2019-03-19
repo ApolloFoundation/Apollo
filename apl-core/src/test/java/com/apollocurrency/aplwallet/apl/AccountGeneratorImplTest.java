@@ -42,7 +42,6 @@ public class AccountGeneratorImplTest {
         EthWalletKey actualAcc = accountGenerator.generateEth();
 
         assertNotNull(actualAcc);
-        assertNotNull(actualAcc.getKeySeed());
         assertNotNull(actualAcc.getCredentials());
         assertNotNull(actualAcc.getCredentials().getAddress());
         assertNotNull(actualAcc.getCredentials().getEcKeyPair());

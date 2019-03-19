@@ -2,14 +2,18 @@ package com.apollocurrency.aplwallet.apl.eth.model;
 
 import org.json.simple.JSONObject;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 
 public class EthWalletKey {
     private Credentials credentials;
-    private byte[] keySeed;
 
-    public EthWalletKey(Credentials credentials, byte[] keySeed) {
+    public EthWalletKey(Credentials credentials) {
         this.credentials = credentials;
-        this.keySeed = keySeed;
+    }
+
+    public EthWalletKey(byte[] privateKey){
+        ECKeyPair ecKeyPair = ECKeyPair.create(privateKey);
+        this.credentials = Credentials.create(ecKeyPair);
     }
 
     public Credentials getCredentials() {
@@ -18,14 +22,6 @@ public class EthWalletKey {
 
     public void setCredentials(Credentials credentials) {
         this.credentials = credentials;
-    }
-
-    public byte[] getKeySeed() {
-        return keySeed;
-    }
-
-    public void setKeySeed(byte[] keySeed) {
-        this.keySeed = keySeed;
     }
 
     public JSONObject toJSON() {

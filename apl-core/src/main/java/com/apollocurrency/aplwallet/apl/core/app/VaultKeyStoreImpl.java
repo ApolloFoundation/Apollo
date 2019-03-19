@@ -4,9 +4,6 @@
 
  package com.apollocurrency.aplwallet.apl.core.app;
 
- import static org.slf4j.LoggerFactory.getLogger;
-
- import com.apollocurrency.aplwallet.apl.core.model.SecretStore;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -14,8 +11,15 @@
  import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
  import com.fasterxml.jackson.databind.ObjectMapper;
  import com.fasterxml.jackson.databind.ObjectWriter;
+ import io.firstbridge.cryptolib.CryptoNotValidException;
+ import io.firstbridge.cryptolib.container.FbWallet;
  import org.slf4j.Logger;
 
+ import javax.enterprise.inject.spi.CDI;
+ import javax.inject.Inject;
+ import javax.inject.Named;
+ import javax.inject.Singleton;
+ import java.io.File;
  import java.io.IOException;
  import java.nio.file.Files;
  import java.nio.file.Path;
@@ -26,10 +30,8 @@
  import java.util.List;
  import java.util.Objects;
  import java.util.stream.Collectors;
- import javax.enterprise.inject.spi.CDI;
- import javax.inject.Inject;
- import javax.inject.Named;
- import javax.inject.Singleton;
+
+ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
  public class VaultKeyStoreImpl implements VaultKeyStore {
      private static final Logger LOG = getLogger(VaultKeyStoreImpl.class);
@@ -127,6 +129,7 @@
 
 
      @Override
+     @Deprecated
      public Status saveSecretBytes(String passphrase, byte[] secretBytes) {
          if (!isAvailable()) {
              return Status.NOT_AVAILABLE;
@@ -145,15 +148,73 @@
      }
 
     @Override
-    public Status saveSecretStore(String passphrase, SecretStore secretStore) {
+    public Status saveSecretKeyStore(Long accountId, String passphrase, FbWallet fbWallet) {
+        byte[] salt = generateBytes(12);
+        String path;
 
+        try {
+            fbWallet.setOpenData(salt);
 
-        return null;
+            byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
+            path = makeTargetPathForNewAccount(accountId).toString();
+
+            fbWallet.saveFile(path, key, salt);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            return Status.WRITE_ERROR;
+        } catch (CryptoNotValidException e) {
+            LOG.error(e.getMessage(), e);
+            return Status.BAD_CREDENTIALS;
+        }
+
+        LOG.info("Created new key store for account " + accountId + ", path - " + path);
+
+        return Status.OK;
     }
 
     @Override
-    public SecretStore getSecretStore(String passphrase, long accountId) {
-        return null;
+    public FbWallet getSecretStore(String passphrase, long accountId) {
+        Objects.requireNonNull(passphrase);
+        Objects.requireNonNull(accountId);
+
+        List<Path> secretPaths = findSecretPaths(accountId);
+
+        if (secretPaths.size() == 0) {
+            LOG.warn("VaultWallet : " +Status.NOT_FOUND);
+            return null;
+        }
+
+        Path privateKeyPath = secretPaths.get(0);
+
+        FbWallet fbWallet = new FbWallet();
+
+        try {
+            fbWallet.openFile(privateKeyPath.toString());
+            byte[] salt = fbWallet.getOpenData();
+            byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
+
+            fbWallet.openFile(privateKeyPath.toString(), key);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            return null;
+        } catch (CryptoNotValidException e) {
+            LOG.error(e.getMessage(), e);
+            return null;
+        }
+
+        return fbWallet;
+    }
+
+    @Override
+    public File getSecretStoreFile(Long accountId, String passphrase) {
+        //TODO check passphrase
+        List<Path> secretPaths = findSecretPaths(accountId);
+
+        if (secretPaths.size() == 0) {
+            return null;
+        }
+
+        return new File(secretPaths.toString());
     }
 
     @Override
