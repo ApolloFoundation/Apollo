@@ -722,8 +722,6 @@ public class AplDbVersion extends DbVersion {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("AplDbVersion{");
-        sb.append('}');
-        return sb.toString();
+        return "AplDbVersion";
     }
 }
