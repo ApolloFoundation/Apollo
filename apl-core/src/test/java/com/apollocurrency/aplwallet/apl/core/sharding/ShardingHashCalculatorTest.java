@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import javax.inject.Inject;
 
+@Disabled
 @EnableWeld
 public class ShardingHashCalculatorTest {
     static final String SHA_512 = "SHA-512";
