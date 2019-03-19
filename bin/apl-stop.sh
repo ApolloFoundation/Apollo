@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # (C) 2019 Apollo Foundation 
 # Stop apl-blockchain application, which was run by apl-start.sh script
 
