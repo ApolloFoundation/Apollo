@@ -31,6 +31,10 @@ public interface ShardDao {
     long countShard();
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT IFNULL(max(SHARD_ID) + 1, 1) as shard_id FROM shard")
+    long getNextShardId();
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT IFNULL(max(SHARD_ID) + 1, 1) FROM shard")
     long getMaxShardId();
 

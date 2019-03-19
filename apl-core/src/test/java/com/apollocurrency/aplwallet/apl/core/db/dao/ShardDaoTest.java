@@ -116,6 +116,9 @@ class ShardDaoTest {
         maxId = dao.getMaxShardId();
         assertEquals(2, maxId);
 
+        long nextId = dao.getNextShardId();
+        assertEquals(2, nextId);
+
         Shard shard2 = new Shard(2L, "0000002");
         dao.saveShard(shard2);
 

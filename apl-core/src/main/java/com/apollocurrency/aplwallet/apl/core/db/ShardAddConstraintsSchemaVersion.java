@@ -22,7 +22,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply("ALTER TABLE block ADD CONSTRAINT IF NOT EXISTS chk_timeout CHECK (timeout >= 0)");
             case 7:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("alter table BLOCK add constraint IF NOT EXISTS BLOCK_ID_IDX unique (ID)"); // PK + unique index
+                apply("alter table BLOCK add constraint IF NOT EXISTS PRIMARY_KEY_BLOCK_ID primary key (ID)"); // PK + unique index
             case 8:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("alter table BLOCK add constraint IF NOT EXISTS BLOCK_TIMESTAMP_IDX unique (TIMESTAMP)");
@@ -56,7 +56,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply("ALTER TABLE TRANSACTION ADD CONSTRAINT IF NOT EXISTS TRANSACTION_TO_BLOCK_FK FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE");
             case 18:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("create unique index IF NOT EXISTS TRANSACTION_PRIMARY_KEY_INDEX on TRANSACTION (DB_ID)");// PK + unique index
+                apply("alter table TRANSACTION add constraint IF NOT EXISTS PRIMARY_KEY_TRANSACTION_DB_ID primary key (DB_ID)"); // PK + unique index
             case 19:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");

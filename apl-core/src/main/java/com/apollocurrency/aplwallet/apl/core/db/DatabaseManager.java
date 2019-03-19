@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -75,15 +74,6 @@ public class DatabaseManager implements ShardManagement {
             jdbi = currentTransactionalDataSource.init(new AplDbVersion());
         }
         return currentTransactionalDataSource;
-    }
-
-    /**
-     * Init current database and shards using dbProperties and optional fulltext search service
-     * @param dbProperties config for database init
-     * @param fullTextSearchService service which provide full
-     */
-    public DatabaseManager(DbProperties dbProperties, PropertiesHolder propertiesHolder,  FullTextSearchService fullTextSearchService) {
-        this(dbProperties, propertiesHolder);
     }
 
     /**
