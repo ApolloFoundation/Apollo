@@ -24,10 +24,11 @@ import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApp
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.*;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.Version;
+
 
 //import com.apollocurrency.aplwallet.apl.core.app.Db;
 
@@ -35,19 +36,14 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 //import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
 //import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
-import com.apollocurrency.aplwallet.apl.util.Version;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
-import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
@@ -74,18 +70,15 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.enterprise.inject.spi.CDI;
-import javax.net.ssl.HttpsURLConnection;
+
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
