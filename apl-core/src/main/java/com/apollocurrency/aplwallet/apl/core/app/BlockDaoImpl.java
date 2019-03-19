@@ -68,24 +68,18 @@ public class BlockDaoImpl implements BlockDao {
 
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
-                        Map<Long, Transaction> transactionCache, DerivedDbTablesRegistry tablesRegistry) {
+                        Map<Long, Transaction> transactionCache, DerivedDbTablesRegistry tablesRegistry, DatabaseManager databaseManager) {
         this.blockCacheSize = blockCacheSize;
         this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
         this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
         this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
         this.tablesRegistry = Objects.requireNonNull(tablesRegistry, "Derived table registry cannot be null");
+        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
     }
 
     @Inject
-    public BlockDaoImpl(DerivedDbTablesRegistry derivedDbTablesRegistry) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), derivedDbTablesRegistry);
-    }
-
-    private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
+    public BlockDaoImpl(DerivedDbTablesRegistry derivedDbTablesRegistry, DatabaseManager databaseManager) {
+        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), derivedDbTablesRegistry, databaseManager);
     }
 
     private TransactionDao lookupTransactionDao() {
@@ -137,7 +131,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     private TransactionalDataSource getDataSourceWithSharding(long blockId) {
-//        lookupDataSource();
+//        databaseManager.getDataSource();
         TransactionalDataSource dataSource;
         Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
         if (shardId != null) {
@@ -145,13 +139,13 @@ public class BlockDaoImpl implements BlockDao {
             dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
-            dataSource = lookupDataSource();
+            dataSource = databaseManager.getDataSource();
         }
         return dataSource;
     }
 
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
-//        lookupDataSource();
+//        databaseManager.getDataSource();
         TransactionalDataSource dataSource;
         Long shardId = lookupBlockIndexDao().getShardIdByBlockHeight(blockHeight);
         if (shardId != null) {
@@ -159,7 +153,7 @@ public class BlockDaoImpl implements BlockDao {
             dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
-            dataSource = lookupDataSource();
+            dataSource = databaseManager.getDataSource();
         }
         return dataSource;
     }
@@ -267,7 +261,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public Block findLastBlock() {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
                      "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
@@ -287,7 +281,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getAllBlocks() {
         Connection con = null;
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
@@ -301,7 +295,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight) {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<byte[]> blockSignatures = new ArrayList<>();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT block_signature FROM block "
@@ -327,7 +321,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
         Connection con = null;
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
@@ -349,7 +343,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
         Connection con = null;
-        TransactionalDataSource dataSource = lookupDataSource(); // TODO: YL implement partial fetch from main + shard db
+        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
@@ -364,7 +358,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public int getBlockCount(long accountId) {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
             pstmt.setLong(1, accountId);
@@ -380,7 +374,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit, List<Long> result) {
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block "
                      + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
@@ -401,7 +395,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(long blockId, int limit, List<Block> result) {
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
@@ -422,7 +416,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result) {
         // Search the database
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE db_id > IFNULL ((SELECT db_id FROM block WHERE id = ?), " + Long.MAX_VALUE + ") "
@@ -447,7 +441,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public Block findBlockWithVersion(int skipCount, int version) {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
              "SELECT * FROM block WHERE version = ? ORDER BY block_timestamp DESC LIMIT 1 OFFSET ?)")) {
@@ -499,7 +493,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public Block findLastBlock(int timestamp) {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 1")) {
             pstmt.setInt(1, timestamp);
@@ -518,7 +512,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public Set<Long> getBlockGenerators(int startHeight) {
         Set<Long> generators = new HashSet<>();
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
                         "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id")) {
@@ -625,7 +619,7 @@ public class BlockDaoImpl implements BlockDao {
     //set next_block_id to null instead of 0 to indicate successful block push
     @Override
     public void commit(Block block) {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
             pstmt.setLong(1, block.getId());
@@ -638,7 +632,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public void deleteBlocksFromHeight(int height) {
         long blockId;
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
@@ -658,7 +652,7 @@ public class BlockDaoImpl implements BlockDao {
     // relying on cascade triggers in the database to delete the transactions and public keys for all deleted blocks
     @Override
     public Block deleteBlocksFrom(long blockId) {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             Block lastBlock = null;
             try {
@@ -710,7 +704,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public void deleteAll() {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             try {
                 Connection con = dataSource.getConnection();

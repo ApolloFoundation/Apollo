@@ -4,13 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
 import java.nio.file.Path;
 import java.util.List;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
+@Singleton
 public class FullTextConfigProducer {
     @Produces
     @Named("fullTextTables")
@@ -26,6 +28,6 @@ public class FullTextConfigProducer {
     @Produces
     @Named("indexDirPath")
     Path produceIndexPath() {
-        return AplCoreRuntime.getInstance().getDirProvider().getFullTextSearchIndexDir();
+        return RuntimeEnvironment.getInstance().getDirProvider().getFullTextSearchIndexDir();
     }
 }

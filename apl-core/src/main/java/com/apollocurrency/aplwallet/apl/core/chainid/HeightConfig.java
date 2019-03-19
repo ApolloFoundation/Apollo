@@ -13,6 +13,7 @@ import java.util.Objects;
 
 public class HeightConfig {
     private final BlockchainProperties bp;
+    private final BlockTimeScaledConfig blockTimeScaledConfig;
     private final int maxPayloadLength;
     private final long maxBalanceAtm;
     private final long initialBaseTarget;
@@ -28,8 +29,10 @@ public class HeightConfig {
         this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(bp.getBlockTime() * bp.getMaxBalance())).longValue();
         this.maxBaseTarget = initialBaseTarget *  50;
         this.minBaseTarget = initialBaseTarget * 9 / 10;
+        this.blockTimeScaledConfig = new BlockTimeScaledConfig(bp.getBlockTime());
     }
 
+    public int getReferencedTransactionHeightSpan() {return blockTimeScaledConfig.getReferencedTransactionHeightSpan();}
 
     public int getMaxPayloadLength() {
         return maxPayloadLength;

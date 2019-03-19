@@ -9,7 +9,7 @@
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
- * 
+ *
  * Removal or modification of this copyright notice is prohibited.
  *
  */
@@ -692,7 +692,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
                 // create SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id IDENTITY PRIMARY KEY, shard_hash VARCHAR not null)");
+                apply("CREATE TABLE IF NOT EXISTS shard (shard_id IDENTITY PRIMARY KEY, shard_hash VARBINARY not null)");
             case 252:
                 apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 253:
@@ -700,10 +700,18 @@ public class AplDbVersion extends DbVersion {
             case 254:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
             case 255:
-                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block_index(block_id))");
+                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE)");
             case 256:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
             case 257:
+                apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
+                        "referenced_transaction_id BIGINT NOT NULL)");
+            case 258:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
+                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
+            case 259:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
+            case 260:
 //                 it's an example of previously created shard for checking purpose
 //                apply("INSERT INTO shard(shard_id, shard_hash) VALUES(1, '000000001')");
                 return;

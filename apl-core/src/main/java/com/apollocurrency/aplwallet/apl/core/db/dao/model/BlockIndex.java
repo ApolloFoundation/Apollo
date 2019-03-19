@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
+import java.util.Objects;
+
 /**
  * Block global secondary index entity.
  */
@@ -7,6 +9,25 @@ public class BlockIndex {
     private Long shardId;
     private Long blockId;
     private Integer blockHeight;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlockIndex that = (BlockIndex) o;
+        return Objects.equals(shardId, that.shardId) &&
+                Objects.equals(blockId, that.blockId) &&
+                Objects.equals(blockHeight, that.blockHeight);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(shardId, blockId, blockHeight);
+    }
+
+    public BlockIndex copy() {
+        return new BlockIndex(shardId, blockId, blockHeight);
+    }
 
     public BlockIndex() {
     }

@@ -67,10 +67,10 @@ public final class BlockImpl implements Block {
     private volatile List<Transaction> blockTransactions;
 
     private byte[] blockSignature;
-    private BigInteger cumulativeDifficulty = BigInteger.ZERO;
-    private long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
+    private BigInteger cumulativeDifficulty;
+    private long baseTarget;
     private volatile long nextBlockId;
-    private int height = -1;
+    private int height;
     private volatile long id;
     private volatile String stringId = null;
     private volatile long generatorId;
@@ -95,6 +95,28 @@ public final class BlockImpl implements Block {
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
               List<Transaction> transactions) {
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey, generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, blockchainConfig.getCurrentConfig().getInitialBaseTarget(), 0L, -1, 0, timeout, transactions);
+    }
+
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
+                     byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
+                     byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
+                     List<Transaction> blockTransactions) {
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorId, null, generationSignature, blockSignature, previousBlockHash,
+                cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, blockTransactions);
+    }
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
+                     byte[] payloadHash, byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature,
+                     byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
+                     List<Transaction> blockTransactions) {
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, 0, generatorPublicKey, generationSignature, blockSignature, previousBlockHash,
+                cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, blockTransactions);
+    }
+
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
+              byte[] payloadHash, long generatorId, byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature,
+              byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
+              List<Transaction> blockTransactions) {
         this.version = version;
         this.timestamp = timestamp;
         this.previousBlockId = previousBlockId;
@@ -102,29 +124,24 @@ public final class BlockImpl implements Block {
         this.totalFeeATM = totalFeeATM;
         this.payloadLength = payloadLength;
         this.payloadHash = payloadHash;
-        this.generatorPublicKey = generatorPublicKey;
         this.generationSignature = generationSignature;
         this.blockSignature = blockSignature;
         this.previousBlockHash = previousBlockHash;
         this.timeout = timeout;
-        if (transactions != null) {
-            this.blockTransactions = Collections.unmodifiableList(transactions);
-        }
-    }
-
-    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
-              byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
-              byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
-              List<Transaction> blockTransactions) {
-        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
-                null, generationSignature, blockSignature, previousBlockHash, timeout, null);
         this.cumulativeDifficulty = cumulativeDifficulty;
         this.baseTarget = baseTarget;
         this.nextBlockId = nextBlockId;
         this.height = height;
         this.id = id;
-        this.generatorId = generatorId;
-        this.blockTransactions = blockTransactions;
+        if (generatorPublicKey != null) {
+            this.generatorPublicKey = generatorPublicKey;
+            this.generatorId = Convert.getId(generatorPublicKey);
+        } else {
+            this.generatorId = generatorId;
+        }
+        if (blockTransactions != null) {
+            this.blockTransactions = Collections.unmodifiableList(blockTransactions);
+        }
     }
 
     @Override

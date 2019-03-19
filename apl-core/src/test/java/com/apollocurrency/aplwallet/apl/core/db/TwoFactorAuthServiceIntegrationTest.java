@@ -40,12 +40,11 @@ import java.util.Random;
 public class TwoFactorAuthServiceIntegrationTest {
 
     @RegisterExtension
-    //should NOT be private
-    DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from().addBeans(MockBean.of(Mockito.mock(NtpTime.class), NtpTime.class)).build();
 
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(dbExtension.getDataSource());
+    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManger().getDataSource());
     private TwoFactorAuthService    service = new TwoFactorAuthServiceImpl(repository, "test");
 
     @Test

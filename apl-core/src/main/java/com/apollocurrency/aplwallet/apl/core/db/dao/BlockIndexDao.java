@@ -69,18 +69,18 @@ public interface BlockIndexDao {
     @Transactional
     @SqlUpdate("INSERT INTO block_index(shard_id, block_id, block_height) " +
             "VALUES (:shardId, :blockId, :blockHeight)")
-    void saveBlockIndex(@BindBean BlockIndex blockIndex);
+    int saveBlockIndex(@BindBean BlockIndex blockIndex);
 
     @Transactional
     @SqlUpdate("UPDATE block_index SET block_id = :blockId, block_height =:blockHeight where shard_id = :shardId AND block_id =:blockId")
-    void updateBlockIndex(@BindBean BlockIndex blockIndex);
+    int updateBlockIndex(@BindBean BlockIndex blockIndex);
 
     @Transactional
     @SqlUpdate("DELETE FROM block_index where shard_id = :shardId AND block_id =:blockId")
-    void hardBlockIndex(@BindBean BlockIndex blockIndex);
+    int hardBlockIndex(@BindBean BlockIndex blockIndex);
 
     @Transactional
     @SqlUpdate("DELETE FROM block_index")
-    void hardDeleteAllBlockIndex();
+    int hardDeleteAllBlockIndex();
 
 }

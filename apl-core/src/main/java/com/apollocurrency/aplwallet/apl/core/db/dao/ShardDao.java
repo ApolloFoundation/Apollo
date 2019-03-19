@@ -19,7 +19,7 @@ public interface ShardDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard where shard_id = :shardId")
     @RegisterRowMapper(ShardRowMapper.class)
-    Shard getShardById(@Bind("shardId") long accountId);
+    Shard getShardById(@Bind("shardId") long shardId);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard")
@@ -33,19 +33,19 @@ public interface ShardDao {
     @Transactional
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash) VALUES (:shardId, :shardHash)")
     @RegisterRowMapper(ShardRowMapper.class)
-    void saveShard(@BindBean Shard shard);
+    int saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash where shard_id =:shardId")
     @RegisterRowMapper(ShardRowMapper.class)
-    void updateShard(@BindBean Shard shard);
+    int updateShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("DELETE FROM shard where shard_id =:shardId")
-    void hardDeleteShard(@Bind("shardId") long shardId);
+    int hardDeleteShard(@Bind("shardId") long shardId);
 
     @Transactional
     @SqlUpdate("DELETE FROM shard")
-    void hardDeleteAllShards();
+    int hardDeleteAllShards();
 
 }

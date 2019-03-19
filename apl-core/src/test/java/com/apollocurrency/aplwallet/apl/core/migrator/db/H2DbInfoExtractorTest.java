@@ -18,12 +18,12 @@ import java.nio.file.Paths;
 
 public class H2DbInfoExtractorTest {
     public static final String DB_SUFFIX = ".h2.db";
-    private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("user", "pass");
+    private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("sa", "sa");
     private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor");
 
     @BeforeEach
     void setUp() throws IOException {
-        DbManipulator manipulator = new DbManipulator(path, "user", "pass");
+        DbManipulator manipulator = new DbManipulator(path);
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();

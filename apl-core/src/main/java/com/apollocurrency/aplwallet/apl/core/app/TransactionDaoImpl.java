@@ -687,5 +687,4 @@ public class TransactionDaoImpl implements TransactionDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
 }

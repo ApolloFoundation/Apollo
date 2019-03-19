@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Encryptable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -41,19 +41,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -63,18 +60,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     
     @Inject
     private static BlockchainImpl blockchain;
 
-    static final class BuilderImpl implements Builder {
+    public static final class BuilderImpl implements Builder {
 
         private short deadline;
         private byte[] senderPublicKey;
@@ -109,8 +108,8 @@ public class TransactionImpl implements Transaction {
         public BuilderImpl() { // for weld
         }
 
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
-                    AbstractAttachment attachment) {
+        public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
+                           AbstractAttachment attachment) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
@@ -229,42 +228,42 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl id(long id) {
+        public BuilderImpl id(long id) {
             this.id = id;
             return this;
         }
 
-        BuilderImpl signature(byte[] signature) {
+        public BuilderImpl signature(byte[] signature) {
             this.signature = signature;
             return this;
         }
 
-        BuilderImpl blockId(long blockId) {
+        public BuilderImpl blockId(long blockId) {
             this.blockId = blockId;
             return this;
         }
 
-        BuilderImpl height(int height) {
+        public BuilderImpl height(int height) {
             this.height = height;
             return this;
         }
 
-        BuilderImpl senderId(long senderId) {
+        public BuilderImpl senderId(long senderId) {
             this.senderId = senderId;
             return this;
         }
 
-        BuilderImpl fullHash(byte[] fullHash) {
+        public BuilderImpl fullHash(byte[] fullHash) {
             this.fullHash = fullHash;
             return this;
         }
 
-        BuilderImpl blockTimestamp(int blockTimestamp) {
+        public BuilderImpl blockTimestamp(int blockTimestamp) {
             this.blockTimestamp = blockTimestamp;
             return this;
         }
 
-        BuilderImpl index(short index) {
+        public BuilderImpl index(short index) {
             this.index = index;
             return this;
         }
