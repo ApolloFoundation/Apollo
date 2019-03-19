@@ -175,21 +175,21 @@ public class DesktopMode {
         Process p;
         try{
             
-            if (OS.indexOf("win") >= 0 ) 
+            if (System.getProperty("os.name").toLowerCase().contains("win")) 
             {
-                
-        //      
-                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat");;
-                p = pb.start();
-                
+
+                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat")
+                // Some magic: Without Redirect Output will not work on windows
+                        .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
+                        .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
+                pb.start();
             }
             else{
-                ProcessBuilder pb = new ProcessBuilder("./apl-start.sh");;
+                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./apl-start.sh");
+                pb.start();
 
-                p = pb.start();
-
-                //p.waitFor();
             }
+            
         }            
         catch (IOException e)
         {
