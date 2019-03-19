@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.crypto;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
-import io.firstbridge.cryptolib.exception.CryptoNotValidException;
+import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
