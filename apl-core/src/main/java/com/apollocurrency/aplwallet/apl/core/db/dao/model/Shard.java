@@ -1,5 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 /**
@@ -13,8 +16,18 @@ public class Shard {
     public Shard() {
     }
 
-    public Shard(String shardHash) {
-        this.shardHash = shardHash.getBytes();
+    public Shard copy() {
+        byte[] shardHashCopy = Arrays.copyOf(shardHash, shardHash.length);
+        return new Shard(shardId, shardHashCopy);
+    }
+
+    public Shard(byte[] shardHash) {
+        this.shardHash = shardHash;
+    }
+
+    public Shard(Long shardId, byte[] shardHash) {
+        this.shardId = shardId;
+        this.shardHash = shardHash;
     }
 
     public Shard(Long shardId, String shardHash) {
@@ -26,6 +39,22 @@ public class Shard {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Shard shard = (Shard) o;
+        return Objects.equals(shardId, shard.shardId) &&
+                Arrays.equals(shardHash, shard.shardHash);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(shardId);
+        result = 31 * result + Arrays.hashCode(shardHash);
+        return result;
     }
 
     public Long getShardId() {

@@ -69,7 +69,7 @@ public class DbMigrationExecutorTest {
     void setUp() throws IOException {
         this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(
             "migrationDb-1");
-        manipulator = new DbManipulator(pathToDbForMigration, "sa", "sa");
+        manipulator = new DbManipulator(pathToDbForMigration);
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();

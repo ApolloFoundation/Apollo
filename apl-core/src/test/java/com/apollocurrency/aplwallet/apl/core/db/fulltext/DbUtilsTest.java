@@ -44,7 +44,7 @@ public class DbUtilsTest {
     DbExtension dbExtension = new DbExtension();
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {
-        DataSource db = dbExtension.getDataSource();
+        DataSource db = dbExtension.getDatabaseManger().getDataSource();
         try (Connection con = db.getConnection()) {
             TableData result = DbUtils.getTableData(con, "currency", "PUBLIC");
             Assertions.assertEquals(CURRENCY_TABLE_DATA, result);
@@ -53,7 +53,7 @@ public class DbUtilsTest {
 
     @Test
     public void testGetDbInfoForNonIndexedTable() throws SQLException {
-        DataSource db = dbExtension.getDataSource();
+        DataSource db = dbExtension.getDatabaseManger().getDataSource();
         try (Connection con = db.getConnection()) {
             TableData result = DbUtils.getTableData(con, "two_factor_auth", "PUBLIC");
             Assertions.assertEquals(TWO_FACTOR_AUTH_TABLE_DATA, result);

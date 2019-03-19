@@ -9,7 +9,7 @@
  * no part of the Nxt software, including this file, may be copied, modified,
  * propagated, or distributed except according to the terms contained in the
  * LICENSE.txt file.
- * 
+ *
  * Removal or modification of this copyright notice is prohibited.
  *
  */
@@ -702,11 +702,19 @@ public class AplDbVersion extends DbVersion {
             case 256:
                 apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, block_id BIGINT NOT NULL)");
             case 257:
-                apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS transaction_shard_index_block_fk FOREIGN KEY (block_id) REFERENCES block_index(block_id)");
+                apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS fk_transaction_shard_index_block_id FOREIGN KEY (block_id) REFERENCES block_index(block_id)");
             case 258:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
             case 259:
-                return 260;
+                apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
+                        "referenced_transaction_id BIGINT NOT NULL)");
+            case 260:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
+                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
+            case 261:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
+            case 262:
+                return 262;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

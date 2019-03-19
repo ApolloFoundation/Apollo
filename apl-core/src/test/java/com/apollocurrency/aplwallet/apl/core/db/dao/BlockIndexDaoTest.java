@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,164 +18,166 @@ import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 
 @EnableWeld
-class BlockIndexDaoTest {
+public class BlockIndexDaoTest {
+    @RegisterExtension
+    static DbExtension dbExtension = new DbExtension();
 
-    private static PropertiesHolder propertiesHolder;
     @Inject
-    private DaoConfig daoConfig;
-    private static DatabaseManager databaseManager;
-    private static Jdbi jdbi;
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
+    private  JdbiHandleFactory jdbiHandleFactory;
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesConfigLoader.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class, DaoConfig.class, GlobalSync.class,
+    public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
+            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+            GlobalSync.class,
             GlobalSyncImpl.class,
-            JdbiHandleFactory.class, BlockIndexDao.class, DerivedDbTablesRegistry.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class)
+            DerivedDbTablesRegistry.class,
+            JdbiHandleFactory.class, BlockIndexDao.class, TransactionIndexDao.class,
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            .addBeans(MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
             .build();
 
     @Inject
-    private BlockIndexDao dao;
+    private BlockIndexDao blockIndexDao;
+    @Inject
+    private TransactionIndexDao transactionIndexDao;
 
-    @BeforeAll
-    static void setup() {
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                null,
-                false,
-                null,
-                Constants.APPLICATION_DIR_NAME + ".properties",
-                Collections.emptyList());
-        propertiesHolder = new PropertiesHolder();
-        propertiesHolder.init(propertiesLoader.load());
-        DbConfig dbConfig = new DbConfig(propertiesHolder);
-        databaseManager = new DatabaseManager(dbConfig.getDbConfig(), propertiesHolder);
-    }
-
-    @AfterAll
-    static void cleanup() {
-//        databaseManager.shutdown();
-    }
-
-    @BeforeEach
-    void setUp() {
-        jdbi = databaseManager.getJdbi();
-        jdbiHandleFactory.setJdbi(jdbi);
-        daoConfig.setJdbiHandleFactory(jdbiHandleFactory);
+    @AfterEach
+    void shutdown() {
+        jdbiHandleFactory.close();
     }
 
     @Test
-    void insertGetAllDelete() {
-        BlockIndex blockIndex = new BlockIndex(1L, 2L, 2);
-        dao.saveBlockIndex(blockIndex);
-
-        List<BlockIndex> result = dao.getAllBlockIndex();
-        assertNotNull(result);
-        assertEquals(1, result.size());
-
-        BlockIndex blockIndex2 = new BlockIndex(2L, 300L, 3);
-        dao.saveBlockIndex(blockIndex2);
-
-        long shardId = dao.getShardIdByBlockId(300L);
-        assertEquals(2L, shardId);
-
-        shardId = dao.getShardIdByBlockHeight(2);
-        assertEquals(1L, shardId);
-
-        dao.hardDeleteAllBlockIndex();
+    void testGetAll() {
+        List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
+        assertEquals(BLOCK_INDEXES, allBlockIndex);
     }
 
     @Test
-    void insertCountDelete() {
-        BlockIndex blockIndex = new BlockIndex(1L, 1L, 1);
-        dao.saveBlockIndex(blockIndex);
+    void testInsert() {
+        blockIndexDao.saveBlockIndex(NOT_SAVED_BLOCK_INDEX);
+        List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
+        ArrayList<BlockIndex> expected = new ArrayList<>(BLOCK_INDEXES);
+        expected.add(NOT_SAVED_BLOCK_INDEX);
+        assertEquals(expected.size(), allBlockIndex.size());
+        assertEquals(expected, allBlockIndex);
+    }
 
-        long count = dao.countBlockIndexByShard(1L);
-        assertEquals(1, count);
+    @Test
+    void testGetShardIdByBlockId() {
+        Long shardId = blockIndexDao.getShardIdByBlockId(BLOCK_INDEX_1.getBlockId());
+        assertNotNull(shardId);
+        assertEquals(BLOCK_INDEX_1.getShardId(), shardId);
+    }
 
-        dao.hardDeleteAllBlockIndex();
+    @Test
+    void testGetShardIdByUnknownBlockId() {
+        Long shardId = blockIndexDao.getShardIdByBlockId(NOT_SAVED_BLOCK_INDEX.getBlockId());
+        assertNull(shardId);
+    }
+
+    @Test
+    void testGetShardIdByHeight() {
+        Long height = blockIndexDao.getShardIdByBlockHeight(BLOCK_INDEX_2.getBlockHeight());
+        assertNotNull(height);
+        assertEquals(BLOCK_INDEX_2.getBlockHeight().longValue(), height.longValue());
+    }
+
+    @Test
+    void testGetShardIdByUnknownHeight() {
+        Long height = blockIndexDao.getShardIdByBlockHeight(NOT_SAVED_BLOCK_INDEX.getBlockHeight());
+        assertNull(height);
+    }
+
+    @Test
+    void testDeleteAll() {
+        int deleteCount = blockIndexDao.hardDeleteAllBlockIndex();
+        assertEquals(3, deleteCount);
+        List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
+        assertEquals(0, allBlockIndex.size());
+        // test cascade delete
+        List<TransactionIndex> allTransactionIndex = transactionIndexDao.getAllTransactionIndex();
+        assertEquals(0, allTransactionIndex.size());
     }
 
     @Test
     void searchForMissingData() {
-        BlockIndex blockIndex = dao.getByBlockId(100L);
+        BlockIndex blockIndex = blockIndexDao.getByBlockId(NOT_SAVED_BLOCK_INDEX.getBlockId());
         assertNull(blockIndex);
 
-        Long shardId = dao.getShardIdByBlockId(100L);
+        Long shardId = blockIndexDao.getShardIdByBlockId(NOT_SAVED_BLOCK_INDEX.getBlockId());
         assertNull(shardId);
 
-        shardId = dao.getShardIdByBlockHeight(100);
+        shardId = blockIndexDao.getShardIdByBlockHeight(NOT_SAVED_BLOCK_INDEX.getBlockHeight());
         assertNull(shardId);
     }
 
     @Test
-    void insertUpdateDelete() {
-        BlockIndex blockIndex = new BlockIndex(1L, 1L, 1);
-        dao.saveBlockIndex(blockIndex);
+    void testGetByBlockId() {
+        BlockIndex blockIndex = blockIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId());
+        assertNotNull(blockIndex);
+        assertEquals(BLOCK_INDEX_1, blockIndex);
+    }
 
-        BlockIndex blockIndex2 = new BlockIndex(1L, 2L, 2);
-        dao.saveBlockIndex(blockIndex2);
-        BlockIndex blockIndex3 = new BlockIndex(1L, 3L, 3);
-        dao.saveBlockIndex(blockIndex3);
+    @Test
+    void testGetByUnknownBlockId() {
+        BlockIndex blockIndex = blockIndexDao.getByBlockId(NOT_SAVED_BLOCK_INDEX.getBlockId());
+        assertNull(blockIndex);
+    }
 
-        BlockIndex blockIndexFound = dao.getByBlockId(2L);
-        assertNotNull(blockIndexFound);
-        assertNotNull(blockIndexFound.getShardId());
-        assertEquals(1L, blockIndexFound.getShardId().longValue());
+    @Test
+    void testGetByBlockHeight() {
+        BlockIndex blockIndex = blockIndexDao.getByBlockHeight(BLOCK_INDEX_0.getBlockHeight());
+        assertNotNull(blockIndex);
+        assertEquals(BLOCK_INDEX_0, blockIndex);
+    }
 
-        blockIndexFound = dao.getByBlockHeight(3);
-        assertNotNull(blockIndexFound);
-        assertNotNull(blockIndexFound.getBlockHeight());
-        assertEquals(3, blockIndexFound.getBlockHeight().intValue());
+    @Test
+    void testGetByUknownBlockHeight() {
+        BlockIndex blockIndex = blockIndexDao.getByBlockHeight(NOT_SAVED_BLOCK_INDEX.getBlockHeight());
+        assertNull(blockIndex);
+    }
 
-        blockIndexFound.setBlockHeight(4);
-        dao.updateBlockIndex(blockIndexFound);
-        blockIndexFound = dao.getByBlockHeight(4);
-        assertNotNull(blockIndexFound);
-        assertNotNull(blockIndexFound.getBlockHeight());
-        assertEquals(4, blockIndexFound.getBlockHeight().intValue());
+    @Test
+    void testUpdateBlockIndex() {
+        BlockIndex copy = BLOCK_INDEX_1.copy();
+        copy.setBlockHeight(NOT_SAVED_BLOCK_INDEX.getBlockHeight());
+        int updateCount = blockIndexDao.updateBlockIndex(copy);
+        assertEquals(1, updateCount);
+        BlockIndex blockIndex = blockIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId());
+        assertEquals(blockIndex, copy);
+        List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
+        assertEquals(Arrays.asList(BLOCK_INDEX_0, copy, BLOCK_INDEX_2), allBlockIndex);
+    }
 
-        List<BlockIndex> result = dao.getByShardId(1L, 10);
-        assertNotNull(result);
-        assertEquals(3, result.size());
-        assertEquals(1L, result.get(0).getShardId().longValue());
-        assertEquals(1L, result.get(0).getBlockId().longValue());
-        assertEquals(1, result.get(0).getBlockHeight().intValue());
-
-        dao.hardBlockIndex(blockIndexFound);
-        long count = dao.countBlockIndexByShard(1L);
-        assertEquals(2, count);
-
-        dao.hardDeleteAllBlockIndex();
+    @Test
+    void testDelete() {
+        int deleteCount = blockIndexDao.hardBlockIndex(BLOCK_INDEX_1);
+        assertEquals(1, deleteCount);
+        assertEquals(Arrays.asList(BLOCK_INDEX_0, BLOCK_INDEX_2), blockIndexDao.getAllBlockIndex());
+        // test cascade delete
+        List<TransactionIndex> transactionIndexList = transactionIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId(), Integer.MAX_VALUE);
+        assertEquals(0, transactionIndexList.size());
     }
 }

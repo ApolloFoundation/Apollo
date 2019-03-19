@@ -49,7 +49,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        databaseManager = new DatabaseManager(DbTestData.DB_MEM_PROPS, propertiesHolder);
+        databaseManager = new DatabaseManager(DbTestData.getInMemDbProps(), propertiesHolder);
         folder = getTempFolder();
     }
 

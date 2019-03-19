@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -56,12 +54,10 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
@@ -169,24 +165,23 @@ public final class AplCore {
                 //try to start API as early as possible
                 API.init();
                 
-                CDI.current().select(NtpTime.class).get().start();
+//                CDI.current().select(NtpTime.class).get().start();
                                 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");
                 setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
-                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
+//                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
-                TransactionalDataSource dataSource = databaseManager.getDataSource();
-
+                databaseManager.getDataSource();
                 CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
                 fullTextSearchService.init(); // first time BEFORE migration
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
-                dataSource = databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
+                databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
 

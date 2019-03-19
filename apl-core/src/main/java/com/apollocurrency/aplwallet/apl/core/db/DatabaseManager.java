@@ -22,16 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -47,8 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Class is used for high level database and shard management.
@@ -60,7 +58,7 @@ public class DatabaseManager implements ShardManagement {
 
     private DbProperties baseDbProperties; // main database properties
     private PropertiesHolder propertiesHolder;
-    private static TransactionalDataSource currentTransactionalDataSource; // main/shard database
+    private TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
 
@@ -86,10 +84,8 @@ public class DatabaseManager implements ShardManagement {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
         // init internal data source stuff only one time till next shutdown() will be called
-        if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
-            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
-        }
+        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+        jdbi = currentTransactionalDataSource.init(new AplDbVersion());
 //        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
     }
 
@@ -275,17 +271,17 @@ public class DatabaseManager implements ShardManagement {
 
     public DatabaseManager() {} // never use it directly
 
-    /**
-     * Optional method, needs revising for shards
-     * @throws IOException
-     */
-    public static void tryToDeleteDb() throws IOException {
-            currentTransactionalDataSource.shutdown();
-            log.info("Removing current Db...");
-            Path dbPath = AplCoreRuntime.getInstance().getDbDir();
-            removeDb(dbPath);
-            log.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
-    }
+//    /**
+//     * Optional method, needs revising for shards
+//     * @throws IOException
+//     */
+//    public static void tryToDeleteDb() throws IOException {
+//            currentTransactionalDataSource.shutdown();
+//            log.info("Removing current Db...");
+//            Path dbPath = AplCoreRuntime.getInstance().getDbDir();
+//            removeDb(dbPath);
+//            log.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
+//    }
 
     /**
      * Optional method, needs revising for shards

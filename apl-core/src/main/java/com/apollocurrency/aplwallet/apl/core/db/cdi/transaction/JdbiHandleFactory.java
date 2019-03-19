@@ -63,7 +63,7 @@ public class JdbiHandleFactory {
         handle.rollback();
     }
 
-    protected void close() {
+    public void close() {
         Handle handle = getCurrentHandle();
         handle.close();
         currentHandleThreadLocal.remove();
