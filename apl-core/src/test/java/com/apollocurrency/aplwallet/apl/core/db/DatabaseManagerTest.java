@@ -32,6 +32,9 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
 import javax.inject.Inject;
@@ -118,7 +121,6 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-//        databaseManager.shutdown();
     }
 
     @Test
@@ -131,7 +133,6 @@ class DatabaseManagerTest {
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
         databaseManager.shutdown(newShardDb);
-//        newShardDb.shutdown(); // not needed
     }
 
     @Test
@@ -142,9 +143,17 @@ class DatabaseManagerTest {
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
-        assertNotNull(newShardDb.getConnection());
+        Connection newShardDbConnection = newShardDb.getConnection();
+        assertNotNull(newShardDbConnection);
+        checkTablesCreated(newShardDbConnection);
         databaseManager.shutdown(newShardDb);
-//        newShardDb.shutdown(); // not needed
+    }
+
+    private void checkTablesCreated(Connection newShardDbConnection) throws SQLException {
+        PreparedStatement sqlStatement = newShardDbConnection.prepareStatement("select * from BLOCK");
+        sqlStatement.execute();
+        sqlStatement = newShardDbConnection.prepareStatement("select * from TRANSACTION");
+        sqlStatement.execute();
     }
 
     @Test
@@ -155,9 +164,10 @@ class DatabaseManagerTest {
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null);
         assertNotNull(newShardDb);
-        assertNotNull(newShardDb.getConnection());
+        Connection newShardDbConnection = newShardDb.getConnection();
+        assertNotNull(newShardDbConnection);
+        checkTablesCreated(newShardDbConnection);
         databaseManager.shutdown(newShardDb);
-//        newShardDb.shutdown(); // not needed
     }
 
     @Test
@@ -168,9 +178,10 @@ class DatabaseManagerTest {
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
-        assertNotNull(newShardDb.getConnection());
+        Connection newShardDbConnection = newShardDb.getConnection();
+        assertNotNull(newShardDbConnection);
+        checkTablesCreated(newShardDbConnection);
         databaseManager.shutdown(newShardDb);
-//        newShardDb.shutdown(); // not needed
     }
 
     @Test
@@ -184,9 +195,10 @@ class DatabaseManagerTest {
         assertNotNull(newShardDb.getConnection());
         newShardDb = databaseManager.createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
-        assertNotNull(newShardDb.getConnection());
+        Connection newShardDbConnection = newShardDb.getConnection();
+        assertNotNull(newShardDbConnection);
+        checkTablesCreated(newShardDbConnection);
         databaseManager.shutdown(newShardDb);
-//        newShardDb.shutdown(); // not needed
     }
 
     @Test
