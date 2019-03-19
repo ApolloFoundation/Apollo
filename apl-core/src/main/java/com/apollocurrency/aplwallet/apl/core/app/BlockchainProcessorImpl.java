@@ -1269,7 +1269,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == Messaging.PHASING_VOTE_CASTING) {
-                    PhasingPoll.PhasingPollResult result = PhasingPoll.getResult(phasedTransaction.getId());
+                    PhasingPollResult result = PhasingPoll.getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         MessagingPhasingVoteCasting phasingVoteCasting = (MessagingPhasingVoteCasting) phasedTransaction.getAttachment();
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {

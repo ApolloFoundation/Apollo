@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -52,6 +53,7 @@ public class BlockchainImpl implements Blockchain {
     private BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
     private EpochTime timeService; // = CDI.current().select(EpochTime.class).get();
     private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
+    private TransactionIndexDao transactionIndexDao;
     private GlobalSync globalSync;
 
     public BlockchainImpl() {        
@@ -59,13 +61,14 @@ public class BlockchainImpl implements Blockchain {
     
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
-                          PropertiesHolder propertiesHolder, GlobalSync globalSync) {
+                          PropertiesHolder propertiesHolder, GlobalSync globalSync, TransactionIndexDao transactionIndexDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
         this.globalSync = globalSync;
+        this.transactionIndexDao = transactionIndexDao;
     }
 
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
@@ -338,12 +341,19 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public boolean hasTransaction(long transactionId) {
-        return transactionDao.hasTransaction(transactionId);
+        return transactionDao.hasTransaction(transactionId) || transactionIndexDao.getByTransactionId(transactionId) != null;
     }
 
     @Override
     public boolean hasTransaction(long transactionId, int height) {
-        return transactionDao.hasTransaction(transactionId, height);
+        boolean result;
+        if (transactionDao.hasTransaction(transactionId, height)) {
+            result = true;
+        } else {
+            Integer transactionHeight = transactionIndexDao.getTransactionHeightByTransactionId(transactionId);
+            result = transactionHeight != null && transactionHeight <= height;
+        }
+        return result;
     }
 
 /*

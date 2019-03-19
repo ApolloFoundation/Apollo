@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -53,7 +54,7 @@ public class GetPhasingPoll extends AbstractAPIRequestHandler {
         if (phasingPoll != null) {
             return JSONData.phasingPoll(phasingPoll, countVotes);
         }
-        PhasingPoll.PhasingPollResult pollResult = PhasingPoll.getResult(transactionId);
+        PhasingPollResult pollResult = PhasingPoll.getResult(transactionId);
         if (pollResult != null) {
             return JSONData.phasingPollResult(pollResult);
         }

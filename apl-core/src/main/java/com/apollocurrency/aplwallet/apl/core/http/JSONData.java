@@ -27,11 +27,11 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
@@ -537,8 +537,8 @@ public final class JSONData {
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
-            try (DbIterator<PhasingPoll.PhasingPollResult> phasingPollResults = PhasingPoll.getApproved(block.getHeight())) {
-                for (PhasingPoll.PhasingPollResult phasingPollResult : phasingPollResults) {
+            try (DbIterator<PhasingPollResult> phasingPollResults = PhasingPoll.getApproved(block.getHeight())) {
+                for (PhasingPollResult phasingPollResult : phasingPollResults) {
                     long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
                         phasedTransactions.add(transaction(false, blockchain.getTransaction(phasedTransactionId)));
@@ -764,7 +764,7 @@ public final class JSONData {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));
         }
         putVoteWeighting(json, poll.getVoteWeighting());
-        PhasingPoll.PhasingPollResult phasingPollResult = PhasingPoll.getResult(poll.getId());
+        PhasingPollResult phasingPollResult = PhasingPoll.getResult(poll.getId());
         json.put("finished", phasingPollResult != null);
         if (phasingPollResult != null) {
             json.put("approved", phasingPollResult.isApproved());
@@ -776,7 +776,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject phasingPollResult(PhasingPoll.PhasingPollResult phasingPollResult) {
+    public static JSONObject phasingPollResult(PhasingPollResult phasingPollResult) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(phasingPollResult.getId()));
         json.put("approved", phasingPollResult.isApproved());
@@ -1110,7 +1110,7 @@ public final class JSONData {
     public static JSONObject transaction(Transaction transaction, boolean includePhasingResult, boolean isPrivate) {
         JSONObject json = transaction(transaction, null, isPrivate);
         if (includePhasingResult && transaction.getPhasing() != null) {
-            PhasingPoll.PhasingPollResult phasingPollResult = PhasingPoll.getResult(transaction.getId());
+            PhasingPollResult phasingPollResult = PhasingPoll.getResult(transaction.getId());
             if (phasingPollResult != null) {
                 json.put("approved", phasingPollResult.isApproved());
                 json.put("result", String.valueOf(phasingPollResult.getResult()));

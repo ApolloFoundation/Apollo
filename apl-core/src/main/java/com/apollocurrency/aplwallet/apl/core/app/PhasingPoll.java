@@ -20,19 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,6 +42,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.spi.CDI;
 
 public final class PhasingPoll extends AbstractPoll {
 
@@ -67,59 +66,6 @@ public final class PhasingPoll extends AbstractPoll {
             }
         } catch (IllegalArgumentException ignore) {}
         return null;
-    }
-
-    public static final class PhasingPollResult {
-
-        private final long id;
-        private final DbKey dbKey;
-        private final long result;
-        private final boolean approved;
-        private final int height;
-
-        private PhasingPollResult(PhasingPoll poll, long result) {
-            this.id = poll.getId();
-            this.dbKey = resultDbKeyFactory.newKey(this.id);
-            this.result = result;
-            this.approved = result >= poll.getQuorum();
-            this.height = blockchain.getHeight();
-        }
-
-        private PhasingPollResult(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.id = rs.getLong("id");
-            this.dbKey = dbKey;
-            this.result = rs.getLong("result");
-            this.approved = rs.getBoolean("approved");
-            this.height = rs.getInt("height");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
-                    + "result, approved, height) VALUES (?, ?, ?, ?)")) {
-                int i = 0;
-                pstmt.setLong(++i, id);
-                pstmt.setLong(++i, result);
-                pstmt.setBoolean(++i, approved);
-                pstmt.setInt(++i, height);
-                pstmt.executeUpdate();
-            }
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public long getResult() {
-            return result;
-        }
-
-        public boolean isApproved() {
-            return approved;
-        }
-
-        public int getHeight() {
-            return height;
-        }
     }
 
     private static final LongKeyFactory<PhasingPoll> phasingPollDbKeyFactory = new LongKeyFactory<PhasingPoll>("id") {
@@ -227,22 +173,11 @@ public final class PhasingPoll extends AbstractPoll {
     private static final LongKeyFactory<PhasingPollResult> resultDbKeyFactory = new LongKeyFactory<PhasingPollResult>("id") {
         @Override
         public DbKey newKey(PhasingPollResult phasingPollResult) {
-            return phasingPollResult.dbKey;
+            return phasingPollResult.getDbKey();
         }
     };
 
-    private static final EntityDbTable<PhasingPollResult> resultTable = new EntityDbTable<PhasingPollResult>("phasing_poll_result", resultDbKeyFactory) {
 
-        @Override
-        protected PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new PhasingPollResult(rs, dbKey);
-        }
-
-        @Override
-        protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
-            phasingPollResult.save(con);
-        }
-    };
 
     public static PhasingPollResult getResult(long id) {
         return resultTable.get(resultDbKeyFactory.newKey(id));
@@ -505,7 +440,7 @@ public final class PhasingPoll extends AbstractPoll {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
             for (byte[] hash : getLinkedFullHashes()) {
-                if (blockchain.hasTransactionByFullHash(hash, height)) {
+                if (blockchain.hasTransaction(Convert.fullHashToId(hash), height)) {
                     count += 1;
                 }
             }
