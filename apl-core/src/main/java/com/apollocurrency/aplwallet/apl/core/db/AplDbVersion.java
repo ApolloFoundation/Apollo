@@ -692,22 +692,20 @@ public class AplDbVersion extends DbVersion {
                 // SHARDING meta-info inside main database
                 apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT NOT NULL, shard_hash VARBINARY not null, shard_state BIGINT)");
             case 252:
-                apply("alter table shard add constraint IF NOT EXISTS SHARD_PK primary key (shard_id)");
+                apply("create unique index IF NOT EXISTS PRIMARY_KEY_SHARD_ID_INDEX on shard (shard_id)"); // primary key + index 
             case 253:
-                apply("create unique index IF NOT EXISTS PRIMARY_KEY_SHARD_ID_INDEX on shard (shard_id)");
-            case 254:
                 apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
-            case 255:
+            case 254:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
-            case 256:
+            case 255:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
-            case 257:
+            case 256:
                 apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, block_id BIGINT NOT NULL)");
-            case 258:
+            case 257:
                 apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS transaction_shard_index_block_fk FOREIGN KEY (block_id) REFERENCES block_index(block_id)");
-            case 259:
+            case 258:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
-            case 260:
+            case 259:
                 return 260;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
