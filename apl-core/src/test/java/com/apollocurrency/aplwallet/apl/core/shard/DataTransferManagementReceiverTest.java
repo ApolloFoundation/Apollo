@@ -25,9 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -181,7 +181,7 @@ class DataTransferManagementReceiverTest {
         state = transferManagementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
-        List<String> tableNameList = new LinkedList<>();
+        List<String> tableNameList = new ArrayList<>();
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
         CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 1350000L);

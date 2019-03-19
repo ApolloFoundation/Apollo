@@ -9,7 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 @Singleton
 public class ShardMigrationExecutor {
     private static final Logger log = getLogger(ShardMigrationExecutor.class);
-    private final List<DataMigrateOperation> dataMigrateOperations = new LinkedList<>();
+    private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
     private DataTransferManagementReceiver managementReceiver;

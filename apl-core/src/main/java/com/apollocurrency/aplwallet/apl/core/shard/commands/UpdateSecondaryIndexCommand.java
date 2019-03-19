@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,7 +21,7 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(UpdateSecondaryIndexCommand.class);
 
     private DataTransferManagementReceiver dataTransferManagement;
-    private List<String> tableNameList = new LinkedList<>();
+    private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private long snapshotBlockHeight = 0L;
 

@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,7 +23,7 @@ public class CopyDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(CopyDataCommand.class);
 
     private DataTransferManagementReceiver dataTransferManagement;
-    private List<String> tableNameList = new LinkedList<>();
+    private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private long snapshotBlockHeight = 0L;
 
