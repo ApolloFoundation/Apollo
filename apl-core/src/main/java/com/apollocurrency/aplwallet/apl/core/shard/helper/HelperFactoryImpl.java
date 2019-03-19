@@ -4,6 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DATA_TAG_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PRUNABLE_MESSAGE_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHUFFLING_DATA_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TAGGED_DATA_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
+
 import java.util.Optional;
 
 /**
@@ -18,27 +29,27 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
     public Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName) {
         Optional<BatchedPaginationOperation> helper;
         switch (helperTableName.toUpperCase()) {
-            case "BLOCK" : {
+            case BLOCK_TABLE_NAME : {
                 return Optional.of(new BlockSelectAndInsertHelper());
             }
-            case "TRANSACTION" : {
+            case TRANSACTION_TABLE_NAME : {
                 return Optional.of(new TransactionSelectAndInsertHelper());
             }
-            case "GENESIS_PUBLIC_KEY" :
-            case "PUBLIC_KEY" :
-            case "TAGGED_DATA" :
-            case "SHUFFLING_DATA" :
-            case "DATA_TAG" :
-            case "PRUNABLE_MESSAGE" :
+            case GENESIS_PUBLIC_KEY_TABLE_NAME :
+            case PUBLIC_KEY_TABLE_NAME :
+            case TAGGED_DATA_TABLE_NAME :
+            case SHUFFLING_DATA_TABLE_NAME :
+            case DATA_TAG_TABLE_NAME :
+            case PRUNABLE_MESSAGE_TABLE_NAME :
                 return Optional.of(new RelinkingToSnapshotBlockHelper());
-            case "BLOCK_INDEX" :
-            case "TRANSACTION_SHARD_INDEX" : {
+            case BLOCK_INDEX_TABLE_NAME :
+            case TRANSACTION_SHARD_INDEX_TABLE_NAME : {
                 return Optional.of(new SecondaryIndexSelectAndInsertHelper());
             }
-            default:
-                helper = Optional.empty();
+            default: {
+                throw new IllegalArgumentException("Incorrect Table name was supplied: " + helperTableName);
+            }
         }
-        return helper;
     }
 
     /**
@@ -46,12 +57,10 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
      */
     @Override
     public Optional<BatchedPaginationOperation> createDeleteHelper(String helperTableName) {
-        Optional<BatchedPaginationOperation> helper;
-        if ("BLOCK".equals(helperTableName.toUpperCase())) {
+        if (BLOCK_TABLE_NAME.equals(helperTableName.toUpperCase())) {
             return Optional.of(new BlockDeleteHelper());
         } else {
-            helper = Optional.empty();
+            throw new IllegalArgumentException("Incorrect Table name was supplied: " + helperTableName);
         }
-        return helper;
     }
 }
