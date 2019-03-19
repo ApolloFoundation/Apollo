@@ -39,8 +39,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import javax.inject.Inject;
 
+@Disabled
 @EnableWeld
-
 public class ShardingHashCalculatorTest {
     static final String SHA_512 = "SHA-256";
     static final byte[] FULL_MEKLE_ROOT = Convert.parseHexString("1c3d41be25207be8d1119e958102fbb2e5933ff06f483f125371efae2bc6ca1d1a5248929443a521f850691a9180be51c4490c52aee9fedb1ce026b128acc479");
