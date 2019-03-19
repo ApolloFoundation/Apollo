@@ -35,11 +35,11 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         currentTableName = operationParams.tableName;
 
         long startSelect = System.currentTimeMillis();
-        sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID >= ? AND DB_ID <= ? limit ?";
+        sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID >= ? AND DB_ID < ? limit ?";
         log.trace(sqlToExecuteWithPaging);
         sqlSelectUpperBound = "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT < ?";
         log.trace(sqlSelectUpperBound);
-        sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+        sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID), 0) as DB_ID from " + currentTableName;
         log.trace(sqlSelectBottomBound);
 
         // select upper, bottom DB_ID

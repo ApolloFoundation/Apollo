@@ -28,12 +28,12 @@ public class TransactionSelectAndInsertHelper extends AbstractBlockTransactionHe
         checkMandatoryParameters(sourceConnect, targetConnect, operationParams);
 
         if ("transaction".equalsIgnoreCase(currentTableName)) {
-            sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID <= ? limit ?";
+            sqlToExecuteWithPaging = "select * from transaction where DB_ID >= ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
                     "select DB_ID from transaction where block_timestamp <= (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID), 0) as DB_ID from " + currentTableName;
             log.trace(sqlSelectBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Transaction' is expected. Pls use another Helper class");
