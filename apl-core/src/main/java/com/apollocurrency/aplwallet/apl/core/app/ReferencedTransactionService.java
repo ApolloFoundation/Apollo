@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import java.util.Objects;
 import javax.inject.Inject;
 
 public class ReferencedTransactionService {
@@ -51,6 +52,7 @@ public class ReferencedTransactionService {
     }
 
     private Integer getHeight(Transaction transaction, Long referencedTransactionId) {
+        Objects.requireNonNull(referencedTransactionId, "referenced transaction id cannot be null here");
         Integer height;
         if (transaction == null) {
             height =  transactionIndexDao.getTransactionHeightByTransactionId(referencedTransactionId);
@@ -61,6 +63,7 @@ public class ReferencedTransactionService {
     }
 
     private Long getId(Transaction transaction, Long transactionId) {
+        Objects.requireNonNull(transactionId, "transaction id cannot be null here");
         Long id;
         if (transaction == null) {
             id = referencedTransactionDao.getReferencedTransactionIdFor(transactionId);
