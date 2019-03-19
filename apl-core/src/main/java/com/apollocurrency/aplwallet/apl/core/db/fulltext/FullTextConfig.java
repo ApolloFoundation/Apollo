@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
 import java.util.ArrayList;
@@ -14,6 +15,15 @@ public class FullTextConfig {
 
     private List<String> tableNames = new ArrayList<>();
     private String schema = "PUBLIC";
+    private DatabaseManager databaseManager;
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
+    public void setDatabaseManager(DatabaseManager databaseManager) {
+        this.databaseManager = databaseManager;
+    }
 
     public void registerTable(String tableName) {
         StringValidator.requireNonBlank(tableName, "Table name");
