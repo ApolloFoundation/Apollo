@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
@@ -97,9 +98,9 @@ public class DesktopMode {
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
-        
-        LOG = getLogger(DesktopMode.class);        
         */
+        LOG = getLogger(DesktopMode.class);        
+        
         desktopApp = new DesktopApplication();            
         Thread desktopAppThread = new Thread(() -> {
                 desktopApp.launch();
@@ -194,16 +195,18 @@ public class DesktopMode {
         Process p;
         try{
             
-            if (OS.indexOf("win") >= 0 ) 
+            if (RuntimeEnvironment.getInstance().isWindowsRuntime()) 
             {
-                
-                p = Runtime.getRuntime().exec("./bin/apl-run.bat");
-                
+                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat");
+                        //.redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
+                        //.redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
+                pb.start();
             }
             else{
-                p = Runtime.getRuntime().exec("/usr/bin/bash ./bin/apl-run.sh");
-                //p.waitFor();
+                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./apl-start.sh");
+                pb.start();
             }
+            
         }            
         catch (IOException e)
         {

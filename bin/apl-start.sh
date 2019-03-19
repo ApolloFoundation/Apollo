@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # (C) 2019 Apollo Foundation 
 # Starts Apollo blockchain in background
 # Required for Linux/MacOs installer.
@@ -18,6 +18,6 @@ if [ -e ~/${APPLICATION}/apl.pid ]; then
     fi
 fi
 
-nohup ${JAVA_CMD} -jar ${MAIN_JAR} > /dev/null 2>&1 &
+nohup ${JAVA_CMD} -jar ${MAIN_JAR} $@ > /dev/null 2>&1 &
 echo $! > ~/${APPLICATION}/apl.pid
 cd - > /dev/null
