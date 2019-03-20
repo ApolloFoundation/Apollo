@@ -45,7 +45,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
             log.trace(sqlSelectBottomBound);
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
             sqlToExecuteWithPaging =
-                    "select ID, BLOCK_ID, DB_ID from transaction where DB_ID >= ? AND DB_ID < ? limit ?";
+                    "select ID, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
                     "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
