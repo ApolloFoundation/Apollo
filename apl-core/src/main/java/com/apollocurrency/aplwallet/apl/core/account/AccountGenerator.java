@@ -15,6 +15,12 @@ public interface AccountGenerator {
     AplWalletKey generateApl();
 
     /**
+     * Generate new account with predefined secret key.
+     * @return AplWallet
+     */
+    AplWalletKey generateApl(byte[] secretBytes);
+
+    /**
      * Generate new account with random key.
      * @return EthWallet
      */

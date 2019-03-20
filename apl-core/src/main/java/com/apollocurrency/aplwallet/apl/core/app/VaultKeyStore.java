@@ -33,7 +33,10 @@ public interface VaultKeyStore {
      * @return decrypted secret bytes with status OK or null with fail status
      */
     @Deprecated
-    SecretBytesDetails getSecretBytes(String passphrase, long accountId);
+    SecretBytesDetails getSecretBytesV0(String passphrase, long accountId);
+
+
+    boolean migrateOldKeyStorageToTheNew(String passphrase, long accountId);
 
     /**
      * Save encrypted by passphrase secretBytes to keystore

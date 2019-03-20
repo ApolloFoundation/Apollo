@@ -9,13 +9,17 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 
+/**
+ * New export will export keystore file instead secret.
+ */
+@Deprecated
 public class ExportKey extends AbstractAPIRequestHandler {
     private static class ExportPrivateKeyHolder {
         private static final ExportKey INSTANCE = new ExportKey();
@@ -34,14 +38,13 @@ public class ExportKey extends AbstractAPIRequestHandler {
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
 
-        File keyStoreFile = Helper2FA.getKeyStoreFile(accountId, passphrase);
-        //TODO send file.
+        byte [] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase, true);
+        String secrethex = secretBytes != null ? Convert.toHexString(secretBytes) : null;
 
-        //todo delete this mock
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
-        response.put("secretBytes", Long.valueOf(123l).toString(16));
-        //
+        response.put("secretBytes", secrethex);
+
         return response;
     }
 

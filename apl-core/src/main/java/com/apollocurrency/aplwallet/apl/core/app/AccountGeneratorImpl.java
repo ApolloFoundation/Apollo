@@ -32,6 +32,15 @@ public class AccountGeneratorImpl implements AccountGenerator {
     }
 
     @Override
+    public AplWalletKey generateApl(byte[] secretBytes) {
+        byte[] keySeed = Crypto.getKeySeed(secretBytes);
+        byte[] privateKey = Crypto.getPrivateKey(keySeed);
+        byte[] accountPublicKey = Crypto.getPublicKey((keySeed));
+        long accountId = Convert.getId(accountPublicKey);
+        return new AplWalletKey(accountId, accountPublicKey, privateKey, secretBytes);
+    }
+
+    @Override
     public EthWalletKey generateEth() {
         return EthUtil.generateNewAccount();
     }

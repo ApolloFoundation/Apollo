@@ -124,7 +124,7 @@ public class VaultKeyStoreTest {
         VaultKeyStoreImpl keyStoreSpy = spy(keyStore);
 
         long accountId = Convert.parseAccountId(ACCOUNT1);
-        SecretBytesDetails secretBytes = keyStoreSpy.getSecretBytes(PASSPHRASE, accountId);
+        SecretBytesDetails secretBytes = keyStoreSpy.getSecretBytesV0(PASSPHRASE, accountId);
         byte[] actualKey = secretBytes.getSecretBytes();
         assertEquals(VaultKeyStore.Status.OK, secretBytes.getExtractStatus()) ;
         String rsAcc = Convert.defaultRsAccount(accountId);
@@ -141,7 +141,7 @@ public class VaultKeyStoreTest {
     @Test
     public void testGetKeyUsingIncorrectPassphrase() {
         long accountId = Convert.parseAccountId(ACCOUNT1);
-        SecretBytesDetails secretBytesDetails = keyStore.getSecretBytes("pass", accountId);
+        SecretBytesDetails secretBytesDetails = keyStore.getSecretBytesV0("pass", accountId);
         assertNull(secretBytesDetails.getSecretBytes());
         assertEquals(VaultKeyStore.Status.DECRYPTION_ERROR, secretBytesDetails.getExtractStatus());
     }
@@ -149,7 +149,7 @@ public class VaultKeyStoreTest {
     @Test
     public void testGetKeyUsingIncorrectAccount() throws Exception {
         long accountId = 0;
-        SecretBytesDetails secretBytesDetails = keyStore.getSecretBytes(PASSPHRASE, accountId);
+        SecretBytesDetails secretBytesDetails = keyStore.getSecretBytesV0(PASSPHRASE, accountId);
         assertNull(secretBytesDetails.getSecretBytes());
         assertEquals(VaultKeyStore.Status.NOT_FOUND, secretBytesDetails.getExtractStatus());
     }
@@ -217,7 +217,7 @@ public class VaultKeyStoreTest {
         Path path = tempDirectory.resolve(".local");
         try {
             Files.createFile(path);
-            SecretBytesDetails secretBytes = keyStore.getSecretBytes(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+            SecretBytesDetails secretBytes = keyStore.getSecretBytesV0(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
             assertEquals(VaultKeyStore.Status.OK, secretBytes.getExtractStatus());
             assertEquals(SECRET_BYTES_1, Convert.toHexString(secretBytes.getSecretBytes()));
 

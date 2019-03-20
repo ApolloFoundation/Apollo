@@ -52,7 +52,7 @@ public class Helper2FA {
     }
      
     public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) throws ParameterException {
-            findSecretBytes(accountId, passphrase, true);
+            findAplSecretBytes(accountId, passphrase, true);
             return service2FA.enable(accountId);
     }
     public static TwoFactorAuthDetails enable2FA(String secretPhrase) throws ParameterException {
@@ -61,7 +61,7 @@ public class Helper2FA {
 
 
     public static Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
-        findSecretBytes(accountId, passphrase, true);
+        findAplSecretBytes(accountId, passphrase, true);
         Status2FA status2FA = service2FA.disable(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
@@ -99,14 +99,11 @@ public class Helper2FA {
         }
     }
 
-    public static SecretBytesDetails findSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
-        SecretBytesDetails secretBytes = KEYSTORE.getSecretBytes(passphrase, accountId);
+    public static byte[] findAplSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
+        FbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
+        String secret = FbWalletUtil.getAplKeySecret(fbWallet);
 
-        if (isMandatory) {
-            validateKeyStoreStatus(accountId, secretBytes.getExtractStatus(), "found");
-        }
-
-        return secretBytes;
+        return Convert.parseHexString(secret);
     }
 
     public static VaultKeyStore.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
@@ -120,7 +117,7 @@ public class Helper2FA {
     }
 
     public static Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
-        findSecretBytes(accountId, passphrase, true);
+        findAplSecretBytes(accountId, passphrase, true);
         Status2FA status2FA = service2FA.confirm(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
@@ -140,7 +137,7 @@ public class Helper2FA {
     }
 
     public static Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
-        SecretBytesDetails secretBytes = findSecretBytes(accountId, passphrase, true);
+        byte[] secretBytes = findAplSecretBytes(accountId, passphrase, true);
         return service2FA.tryAuth(accountId, code);
     }
 
@@ -150,7 +147,12 @@ public class Helper2FA {
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
+
     public static WalletsInfo generateUserAccounts(String passphrase) throws ParameterException {
+         return generateUserAccounts(passphrase, null);
+    }
+
+    public static WalletsInfo generateUserAccounts(String passphrase, byte[] secretApl) throws ParameterException {
         if (passphrase == null) {
             if (passphraseGenerator == null) {
                 throw new RuntimeException("Either passphrase generator or passphrase required");
@@ -159,7 +161,7 @@ public class Helper2FA {
         }
 
         FbWallet fbWallet = new FbWallet();
-        AplWalletKey aplAccount = accountGenerator.generateApl();
+        AplWalletKey aplAccount = secretApl == null ? accountGenerator.generateApl() : accountGenerator.generateApl(secretApl);
         EthWalletKey ethAccount = accountGenerator.generateEth();
 
         FbWalletUtil.addAplKey(aplAccount, fbWallet);
@@ -193,7 +195,7 @@ public class Helper2FA {
     }
 
     public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {
-        return findSecretBytes(accountId, passphrase, true).getSecretBytes();
+        return findAplSecretBytes(accountId, passphrase, true);
     }
     public static Pair<VaultKeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
         if (passphrase == null) {
