@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -59,7 +60,7 @@ class DatabaseManagerTest {
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class)
+            TransactionalDataSource.class, DatabaseManagerImpl.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class)
             .build();
 
     @BeforeEach
@@ -117,7 +118,7 @@ class DatabaseManagerTest {
 
     @Test
     void init() {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
@@ -125,11 +126,11 @@ class DatabaseManagerTest {
 
     @Test
     void createAndAddShard() throws Exception {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L);
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L);
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
         databaseManager.shutdown(newShardDb);
@@ -137,11 +138,11 @@ class DatabaseManagerTest {
 
     @Test
     void createShardInitTableSchemaVersion() throws Exception {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -158,11 +159,11 @@ class DatabaseManagerTest {
 
     @Test
     void createAndAddShardWithoutId() throws Exception {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null);
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null);
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -172,11 +173,11 @@ class DatabaseManagerTest {
 
     @Test
     void createShardAddConstraintsSchemaVersion() throws Exception {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -186,14 +187,14 @@ class DatabaseManagerTest {
 
     @Test
     void createShardTwoSchemaVersion() throws Exception {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = databaseManager.createAndAddShard(null, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = databaseManager.createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
+        newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -203,11 +204,11 @@ class DatabaseManagerTest {
 
     @Test
     void createTemporaryDb() throws Exception {
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = databaseManager.createAndAddTemporaryDb(TEMP_FILE_NAME);
+        TransactionalDataSource temporaryDb = ((ShardManagement)databaseManager).createAndAddTemporaryDb(TEMP_FILE_NAME);
         assertNotNull(temporaryDb);
         assertNotNull(temporaryDb.getConnection());
         databaseManager.shutdown(temporaryDb);

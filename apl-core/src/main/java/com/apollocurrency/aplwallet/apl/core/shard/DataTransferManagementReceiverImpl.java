@@ -77,7 +77,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         try {
             optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()); // store info about started process 'SHARD CREATION'
             // add info about state
-            createdShardSource = databaseManager.createAndAddShard(null, dbVersion);
+            createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(null, dbVersion);
             createdShardId = createdShardSource.getDbIdentity();
             if (dbVersion instanceof ShardAddConstraintsSchemaVersion
                     || dbVersion instanceof AplDbVersion) {
@@ -352,7 +352,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private TransactionalDataSource initializeAssignMissingDataSources(DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         if (createdShardSource == null) {
-            createdShardSource = databaseManager.getOrCreateShardDataSourceById(null, dbVersion);
+            createdShardSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(null, dbVersion);
             createdShardId = createdShardSource.getDbIdentity();
             return createdShardSource;
         }

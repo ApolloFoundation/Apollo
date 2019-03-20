@@ -17,6 +17,7 @@ import java.util.Collections;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -44,7 +45,7 @@ class OptionDAOTest {
             PropertiesConfigLoader.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class)
+            TransactionalDataSource.class, DatabaseManagerImpl.class)
             .build();
 
     private static Path pathToDb;
@@ -68,7 +69,7 @@ class OptionDAOTest {
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         optionDAO = new OptionDAO(databaseManager);
     }
 

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.testutil;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -26,7 +27,7 @@ public class DbManipulator {
     public DbManipulator(Path dbFile) {
         this.tempDbFile = dbFile;
         DbProperties dbProperties = tempDbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString());
-        this.databaseManager = new DatabaseManager(dbProperties, new PropertiesHolder());
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder());
         this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }
 

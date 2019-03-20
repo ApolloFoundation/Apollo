@@ -111,7 +111,7 @@ public final class Account {
     long activeLesseeId;
     Set<ControlType> controls;
 
-    public static void init(DatabaseManager databaseManagerParam, 
+    public static void init(DatabaseManager databaseManagerParam,
                             PropertiesHolder propertiesHolder,
                             BlockchainProcessor blockchainProcessorParam,
                             BlockchainConfig blockchainConfigParam,

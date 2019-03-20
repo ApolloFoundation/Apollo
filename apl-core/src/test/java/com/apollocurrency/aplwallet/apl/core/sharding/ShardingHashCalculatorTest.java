@@ -31,7 +31,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
@@ -40,7 +39,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import javax.inject.Inject;
 
-@Disabled
 @EnableWeld
 public class ShardingHashCalculatorTest {
     static final String SHA_512 = "SHA-512";
@@ -120,7 +118,6 @@ public class ShardingHashCalculatorTest {
     }
 
     @Test
-    @Disabled
     public void testCalculateShardingHashFromMainDb() {
         DbProperties dbFileProperties = DbTestData.getDbFileProperties(Paths.get("unit-test-db").resolve(Constants.APPLICATION_DIR_NAME).toAbsolutePath().toString());
         TransactionalDataSource transactionalDataSource = new TransactionalDataSource(dbFileProperties, new PropertiesHolder());

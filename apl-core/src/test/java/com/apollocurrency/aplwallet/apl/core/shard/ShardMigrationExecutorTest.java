@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -47,7 +48,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataComm
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -75,7 +75,7 @@ class ShardMigrationExecutorTest {
             PropertiesConfigLoader.class, PropertyProducer.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class, DataTransferManagementReceiverImpl.class,
+            TransactionalDataSource.class, DatabaseManagerImpl.class, DataTransferManagementReceiverImpl.class,
             ShardMigrationExecutor.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class, TrimService.class )
             .build();
 
@@ -119,7 +119,7 @@ class ShardMigrationExecutorTest {
         propertiesHolder.init(propertiesLoader.load());
         dbConfig = new DbConfig(propertiesHolder);
         dbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManager(dbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
     }
 
     @BeforeEach

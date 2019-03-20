@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -84,7 +85,7 @@ class DataTransferManagementReceiverTest {
             PropertiesConfigLoader.class, GlobalSyncImpl.class, PropertyProducer.class,
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManager.class,
+            TransactionalDataSource.class, DatabaseManagerImpl.class,
             BlockchainConfig.class, BlockchainConfigUpdater.class, DerivedDbTablesRegistry.class, TrimService.class)
             .build();
 
@@ -119,7 +120,7 @@ class DataTransferManagementReceiverTest {
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManager(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
     }
 
     @BeforeEach

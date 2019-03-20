@@ -46,7 +46,7 @@ public final class Trade {
         TRADE
     }
 
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {

@@ -45,7 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
 public final class PrunableMessage {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {

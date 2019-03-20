@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import org.slf4j.Logger;
 
 @Singleton
@@ -137,7 +138,7 @@ public class BlockDaoImpl implements BlockDao {
         Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
         if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
+            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = databaseManager.getDataSource();
@@ -151,7 +152,7 @@ public class BlockDaoImpl implements BlockDao {
         Long shardId = lookupBlockIndexDao().getShardIdByBlockHeight(blockHeight);
         if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
+            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = databaseManager.getDataSource();
