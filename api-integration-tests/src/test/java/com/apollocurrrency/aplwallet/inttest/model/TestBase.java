@@ -1,56 +1,54 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.request.CreateTransactionRequestDTO;
 import com.apollocurrency.aplwallet.api.response.*;
-import com.apollocurrrency.aplwallet.inttest.tests.TestAccounts;
-import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
-import org.junit.Assert;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.management.GarbageCollectorMXBean;
-import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
 import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.getInstanse;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBase {
-    public static final Logger log = LoggerFactory.getLogger(TestAccounts.class);
-    public TestConfiguration testConfiguration = TestConfiguration.getTestConfiguration();;
-    public static ObjectMapper mapper = new ObjectMapper();
-    RetryPolicy retryPolicy;
+    public static final Logger log = LoggerFactory.getLogger(TestBase.class);
+    public static TestInfo testInfo;
+    private static RetryPolicy retryPolicy;
 
-    public TestBase()  {
+    @BeforeAll
+    static void initAll() {
+        getTestConfiguration();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(5)
-                .withDelay(10, TimeUnit.SECONDS);
-        try
-        {
-          deleteKey(testConfiguration.getVaultWallet());
-        } catch (Exception e)
-        {
-
-        }
-        finally
-        {
-                testConfiguration.getVaultWallet().setPass(importKey(testConfiguration.getVaultWallet()).passphrase);
-        }
-
-
+                .withDelay(5, TimeUnit.SECONDS);
+        try {
+            getTestConfiguration()
+                    .getVaultWallet()
+                    .setPass(importKey(getTestConfiguration()
+                    .getVaultWallet()).passphrase);
+        }catch (Exception e){}
     }
+
+
+
+
+    @BeforeEach
+    void setUP(TestInfo testInfo) {
+        TestBase.testInfo = testInfo;
+    }
+
+
 
     public boolean verifyTransactionInBlock(String transaction)
     {
@@ -171,9 +169,9 @@ public class TestBase {
         return getInstanse(AccountDTO.class);
     }
 
-    public BlockchainTransactionsResponse getAccountTransaction (String accountID) throws IOException {
+    public BlockchainTransactionsResponse getAccountTransaction (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getBlockchainTransactions);
-        addParameters(Parameters.account, accountID);
+        addParameters(Parameters.wallet, wallet);
         return  getInstanse(BlockchainTransactionsResponse.class);
     }
 
@@ -304,7 +302,7 @@ public class TestBase {
     }
 
 
-     public Account2FA deleteKey(Wallet wallet) throws IOException {
+     public static Account2FA deleteKey(Wallet wallet) throws IOException {
          addParameters(RequestType.requestType,RequestType.deleteKey);
          addParameters(Parameters.wallet, wallet);
          return mapper.readValue(httpCallPost().body().string(), Account2FA.class);
@@ -316,7 +314,7 @@ public class TestBase {
         return getInstanse(Account2FA.class);
     }
 
-    public Account2FA importKey(Wallet wallet) {
+    public static Account2FA importKey(Wallet wallet) {
         addParameters(RequestType.requestType, importKey);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(Account2FA.class);
@@ -348,7 +346,7 @@ public class TestBase {
     public Peer addPeer(String ip) throws IOException {
         addParameters(RequestType.requestType, RequestType.addPeer);
         addParameters(Parameters.peer, ip);
-        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
         return getInstanse(Peer.class);
     }
 
@@ -609,20 +607,20 @@ public class TestBase {
 
     public GetForgingResponse getForging() throws IOException{
         addParameters(RequestType.requestType, getForging);
-        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
         return getInstanse(GetForgingResponse.class);
     }
 
     public ForgingDetails startForging(Wallet wallet) throws IOException{
         addParameters(RequestType.requestType, startForging);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
         return getInstanse(ForgingDetails.class);
     }
     public ForgingDetails stopForging(Wallet wallet) throws IOException{
         addParameters(RequestType.requestType, stopForging);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.adminPassword, testConfiguration.getAdminPass());
+        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
         return getInstanse(ForgingDetails.class);
     }
 
@@ -642,6 +640,19 @@ public class TestBase {
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.transaction,transaction);
         return getInstanse(PrunableMessageDTO.class);
+    }
+
+    @AfterEach
+    void testEnd() {
+        TestBase.testInfo = null;
+    }
+
+    @AfterAll
+    static void afterAll() {
+        try {
+            deleteKey(getTestConfiguration().getVaultWallet());
+        } catch (Exception e) { }
+
     }
 
 
