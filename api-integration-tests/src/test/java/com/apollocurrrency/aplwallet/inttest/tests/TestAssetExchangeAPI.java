@@ -1,9 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.AliasDTO;
 import com.apollocurrency.aplwallet.api.dto.AssetDTO;
 import com.apollocurrency.aplwallet.api.dto.OrderDTO;
-import com.apollocurrency.aplwallet.api.dto.TradeDTO;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
@@ -16,8 +14,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 

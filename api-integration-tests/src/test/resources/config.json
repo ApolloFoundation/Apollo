@@ -1,6 +1,6 @@
 {
   "host":"localhost",
-  "port":"7876",
+  "port":"6876",
   "adminPassword":"1",
   "standartWallet":
      {

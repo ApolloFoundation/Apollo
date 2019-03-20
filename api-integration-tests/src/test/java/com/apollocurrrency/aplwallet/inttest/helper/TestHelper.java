@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -9,6 +10,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Assert;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 public class TestHelper {
+    public static ObjectMapper mapper = new ObjectMapper();
     private static final String baseURL_API = "http://"+
             TestConfiguration.getTestConfiguration().getBaseURL()+":"+
             TestConfiguration.getTestConfiguration().getPort()+"/apl?";
@@ -26,9 +30,8 @@ public class TestHelper {
                                           TestConfiguration.getTestConfiguration().getBaseURL()+":"+
                                           TestConfiguration.getTestConfiguration().getPort();
     private static HashMap<String,Object> reqestParam = new HashMap<>();
-
     private static OkHttpClient client;
-    private  static ObjectMapper mapper = new ObjectMapper(); 
+
 
     public static OkHttpClient getClient() {
         if (client == null)
@@ -150,6 +153,7 @@ public class TestHelper {
         responseBody = response.body().string();
         //System.out.println(responseBody);
         Assert.assertEquals(200, response.code());
+        if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE"))
         assertFalse(responseBody.contains("errorDescription"), responseBody);
         return (T) mapper.readValue(responseBody, clas);
         }

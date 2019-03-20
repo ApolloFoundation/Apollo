@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.junit.jupiter.api.Assertions.*;
 
 //@RunWith(JUnitPlatform.class)
@@ -27,7 +28,7 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Verify AccountBlockCount endpoint")
     public void testAccountBlockCount() throws IOException {
-        GetAccountBlockCount accountBlockCount = getAccountBlockCount(testConfiguration.getStandartWallet().getUser());
+        GetAccountBlockCount accountBlockCount = getAccountBlockCount(getTestConfiguration().getStandartWallet().getUser());
         log.trace("Acoount count = {}", accountBlockCount.numberOfBlocks);
         assertTrue(accountBlockCount.numberOfBlocks > 0);
     }
@@ -35,9 +36,9 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Verify GetAccount endpoint")
     public void testAccount() throws IOException {
-        GetAccountResponse account = getAccount(testConfiguration.getStandartWallet().getUser());
+        GetAccountResponse account = getAccount(getTestConfiguration().getStandartWallet().getUser());
         log.trace("Get Account = {}", account.accountRS);
-        assertEquals(account.accountRS,testConfiguration.getStandartWallet().getUser());
+        assertEquals(account.accountRS, getTestConfiguration().getStandartWallet().getUser());
         assertNotNull(account.account,"Check account");
         assertNotNull(account.balanceATM,"Check balanceATM");
         assertNotNull(account.publicKey,"Check publicKey");
@@ -46,7 +47,7 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Verify AccountBlockIds endpoint")
     public void testAccountBlockIds() throws IOException {
-        AccountBlockIdsResponse accountBlockIds = getAccountBlockIds(testConfiguration.getStandartWallet().getUser());
+        AccountBlockIdsResponse accountBlockIds = getAccountBlockIds( getTestConfiguration().getStandartWallet().getUser());
         log.trace("BlockIds count = {}", accountBlockIds.blockIds.size());
         assertTrue(accountBlockIds.blockIds.size() > 0);
     }
@@ -55,7 +56,7 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Verify getAccountBlocks endpoint")
     public void testAccountBlocks() throws IOException {
-        BlockListInfoResponse accountBlocks = getAccountBlocks(testConfiguration.getStandartWallet().getUser());
+        BlockListInfoResponse accountBlocks = getAccountBlocks( getTestConfiguration().getStandartWallet().getUser());
         log.trace("Blocks count = {}", accountBlocks.blocks.size());
         assertTrue(accountBlocks.blocks.size() > 0);
     }
@@ -66,8 +67,8 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testAccountId(Wallet wallet) throws IOException {
         AccountDTO account = getAccountId(wallet);
-        assertEquals(testConfiguration.getStandartWallet().getUser(),account.accountRS);
-        assertEquals(testConfiguration.getStandartWallet().getPublicKey(),account.publicKey);
+        assertEquals(getTestConfiguration().getStandartWallet().getUser(),account.accountRS);
+        assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(),account.publicKey);
         assertNotNull(account.account);
     }
 
@@ -90,7 +91,7 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Get Account Properties")
     public void testAccountProperties() throws IOException {
-        AccountPropertiesResponse  accountPropertiesResponse = getAccountProperties(testConfiguration.getStandartWallet().getUser());
+        AccountPropertiesResponse  accountPropertiesResponse = getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
         assertNotNull(accountPropertiesResponse.properties,"Account Properties is NULL");
         assertTrue(accountPropertiesResponse.properties.size() > 0,"Account Properties count = 0");
     }
@@ -109,7 +110,7 @@ public class TestAccounts extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
-        sendMoney(wallet,testConfiguration.getStandartWallet().getUser(),2);
+        sendMoney(wallet, getTestConfiguration().getStandartWallet().getUser(),2);
         TransactionListInfoResponse transactionInfos = getUnconfirmedTransactions(wallet);
         assertNotNull(transactionInfos.unconfirmedTransactions);
         assertTrue(transactionInfos.unconfirmedTransactions.size() > 0);
@@ -122,8 +123,8 @@ public class TestAccounts extends TestBase {
                 .retryWhen(null)
                 .withMaxRetries(3)
                 .withDelay(5, TimeUnit.SECONDS);
-        sendMoney(testConfiguration.getStandartWallet(),testConfiguration.getStandartWallet().getUser(),2);
-        AccountTransactionIdsResponse accountTransactionIdsResponse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactionIds(testConfiguration.getStandartWallet().getUser()));
+        sendMoney( getTestConfiguration().getStandartWallet(), getTestConfiguration().getStandartWallet().getUser(),2);
+        AccountTransactionIdsResponse accountTransactionIdsResponse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactionIds( getTestConfiguration().getStandartWallet().getUser()));
         assertTrue(accountTransactionIdsResponse.unconfirmedTransactionIds.size() > 0);
     }
 
@@ -131,7 +132,7 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Verify Get Guaranteed Balance endpoint")
     public void testGetGuaranteedBalance() throws IOException {
-        BalanceDTO balance = getGuaranteedBalance(testConfiguration.getStandartWallet().getUser(), 2000);
+        BalanceDTO balance = getGuaranteedBalance( getTestConfiguration().getStandartWallet().getUser(), 2000);
         assertTrue(balance.guaranteedBalanceATM > 1);
     }
 
@@ -169,10 +170,12 @@ public class TestAccounts extends TestBase {
     }
 
 
-    @Test
+
     @DisplayName("Get Account Blockchain Transactions")
-    public void testGetAccountTransaction()throws IOException {
-        BlockchainTransactionsResponse blockchainTransactionsResponse =  getAccountTransaction(testConfiguration.getStandartWallet().getUser());
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public void testGetAccountTransaction(Wallet wallet)throws IOException {
+        BlockchainTransactionsResponse blockchainTransactionsResponse =  getAccountTransaction(wallet);
         assertTrue(blockchainTransactionsResponse.transactions.size()>0);
     }
 
@@ -232,7 +235,7 @@ public class TestAccounts extends TestBase {
     @Test
     public void setAccountProperty() throws IOException {
         String property = "Property "+new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountProperty(testConfiguration.getStandartWallet(),property);
+        CreateTransactionResponse setAccountInfo = setAccountProperty( getTestConfiguration().getStandartWallet(),property);
         assertNotNull(setAccountInfo.transactionJSON.senderPublicKey);
         assertNotNull(setAccountInfo.transactionJSON.signature);
         assertNotNull(setAccountInfo.transactionJSON.fullHash);

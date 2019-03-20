@@ -7,7 +7,8 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
 
-import static com.apollocurrrency.aplwallet.inttest.model.TestBase.mapper;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.mapper;
+
 
 public class TestConfiguration {
     private JSONParser parser;
