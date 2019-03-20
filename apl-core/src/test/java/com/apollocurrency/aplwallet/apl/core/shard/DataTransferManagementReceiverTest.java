@@ -17,6 +17,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOp
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
@@ -26,20 +27,29 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
@@ -52,14 +62,17 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -82,51 +95,73 @@ class DataTransferManagementReceiverTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";
 
+//    private Path targetDbDir = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);
+//    private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
+//    private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
+
+    @RegisterExtension
+    DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
+
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesConfigLoader.class, GlobalSyncImpl.class, PropertyProducer.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManagerImpl.class,
-            BlockchainConfig.class, BlockchainConfigUpdater.class, DerivedDbTablesRegistry.class, TrimService.class)
+    public WeldInitiator weld = WeldInitiator.from(
+            PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+            JdbiHandleFactory.class, ReferencedTransactionDao.class,
+            /*GlobalSync.class, */TransactionTestData.class, PropertyProducer.class,
+            GlobalSyncImpl.class,
+            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
+            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+//            .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
+            .addBeans(MockBean.of(baseDbProperties, DbProperties.class))
             .build();
 
     @Inject
+    private JdbiHandleFactory jdbiHandleFactory;
+    @Inject
     private GlobalSync globalSync;
+    @Inject
+    private TrimService trimService;
+    @Inject
+    private DataTransferManagementReceiver managementReceiver;
 
-    private static Path pathToDb;
+    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
     private static PropertiesHolder propertiesHolder;
     @Inject
     private PropertyProducer propertyProducer;
     private static DbProperties baseDbProperties;
-    private static DatabaseManager databaseManager;
-    private DataTransferManagementReceiver transferManagementReceiver;
+//    private static DatabaseManager databaseManager;
+//    private DataTransferManagementReceiver transferManagementReceiver;
     private Blockchain blockchain;
     @Inject
     private DerivedDbTablesRegistry dbTablesRegistry;
-    @Inject
-    private TrimService trimService;
+//    @Inject
+//    private TrimService trimService;
 
     @BeforeAll
     static void setUpAll() {
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-        String workingDir = System.getProperty("user.dir");
-        pathToDb = FileSystems.getDefault().getPath(workingDir + File.separator  + BASE_SUB_DIR);
+//        String workingDir = System.getProperty("user.dir");
+//        pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 null,
                 false,
-                "./" + BASE_SUB_DIR,
+//                "./" + BASE_SUB_DIR,
+                null,
                 Constants.APPLICATION_DIR_NAME + ".properties",
                 Collections.emptyList());
         propertiesHolder = new PropertiesHolder();
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
+//        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
     }
 
     @BeforeEach
     void setUp() {
+/*
         blockchain = CDI.current().select(BlockchainImpl.class).get();
         propertyProducer = new PropertyProducer(propertiesHolder);
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -144,56 +179,58 @@ class DataTransferManagementReceiverTest {
         blockchainPropertiesMap.put(0, blockchainProperties);
         chain.setBlockchainProperties(blockchainPropertiesMap);
         blockchainConfig.updateChain(chain, 10);
+*/
         PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
         dbTablesRegistry.registerDerivedTable(publicKeyTable);
-        trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
-        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
+//        trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
+//        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
     }
 
     @AfterEach
     void tearDown() {
+        jdbiHandleFactory.close();
         FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
     @Test
     void createShardDb() throws IOException {
-        MigrateState state = transferManagementReceiver.getCurrentState();
+        MigrateState state = managementReceiver.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
-        state = transferManagementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
+        state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
         assertEquals(SHARD_SCHEMA_CREATED, state);
     }
 
     @Test
     void createFullShardDb() throws IOException {
-        MigrateState state = transferManagementReceiver.getCurrentState();
+        MigrateState state = managementReceiver.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        state = transferManagementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+        state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_SCHEMA_FULL, state);
     }
 
     @Test
     void createShardDbAndMoveDataFromMain() throws IOException {
         long start = System.currentTimeMillis();
-        MigrateState state = transferManagementReceiver.getCurrentState();
+        MigrateState state = managementReceiver.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        state = transferManagementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
+        state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         List<String> tableNameList = new ArrayList<>();
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 1350000L);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 104671L);
 
-        state = transferManagementReceiver.copyDataToShard(paramInfo);
-//        assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
-        assertEquals(MigrateState.FAILED, state);
+        state = managementReceiver.copyDataToShard(paramInfo);
+        assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
+//        assertEquals(MigrateState.FAILED, state);
 
-        state = transferManagementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+        state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_SCHEMA_FULL, state);
 
         tableNameList.clear();
@@ -205,7 +242,7 @@ class DataTransferManagementReceiverTest {
         tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
 
         paramInfo.setTableNameList(tableNameList);
-        state = transferManagementReceiver.relinkDataToSnapshotBlock(paramInfo);
+        state = managementReceiver.relinkDataToSnapshotBlock(paramInfo);
         assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
@@ -214,20 +251,20 @@ class DataTransferManagementReceiverTest {
         tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
 
         paramInfo.setTableNameList(tableNameList);
-        state = transferManagementReceiver.updateSecondaryIndex(paramInfo);
-//        assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
-        assertEquals(MigrateState.FAILED, state);
+        state = managementReceiver.updateSecondaryIndex(paramInfo);
+        assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
+//        assertEquals(MigrateState.FAILED, state);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);
 
         paramInfo.setTableNameList(tableNameList);
-        state = transferManagementReceiver.deleteCopiedData(paramInfo);
-//        assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
-        assertEquals(MigrateState.FAILED, state);
+        state = managementReceiver.deleteCopiedData(paramInfo);
+        assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
+//        assertEquals(MigrateState.FAILED, state);
 
         paramInfo.setShardHash("000000000".getBytes());
-        state = transferManagementReceiver.addShardInfo(paramInfo);
+        state = managementReceiver.addShardInfo(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
 
         log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start)/1000 );

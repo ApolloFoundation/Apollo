@@ -49,8 +49,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+
 @EnableWeld
-public class ReferencedTransactionDaoTest {
+class ReferencedTransactionDaoTest {
 
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;

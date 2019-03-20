@@ -88,6 +88,6 @@ INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_tra
 (10, -2262365651675616510, 808614188720864902   ),
 (11, -1536976186224925700, -4081443370478530685 ),
 ;
-INSERT into version values (260);
+INSERT into version values (262);
 INSERT INTO FTL.INDEXES (schema, table, columns)
                          VALUES('PUBLIC', 'CURRENCY', 'code,name,description');

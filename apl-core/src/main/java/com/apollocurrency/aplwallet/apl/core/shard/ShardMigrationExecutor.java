@@ -101,6 +101,7 @@ public class ShardMigrationExecutor {
     }
 
     public MigrateState executeAllOperations() {
+        log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;
         for (DataMigrateOperation dataMigrateOperation : dataMigrateOperations) {
             log.debug("Before execute {}", dataMigrateOperation);
@@ -112,6 +113,7 @@ public class ShardMigrationExecutor {
                 break;
             }
         }
+        log.debug("FINISHED SHARDING '{}'..", state);
         return state;
     }
 

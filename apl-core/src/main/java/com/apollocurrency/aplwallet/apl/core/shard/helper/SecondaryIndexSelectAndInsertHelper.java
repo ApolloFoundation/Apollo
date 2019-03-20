@@ -37,20 +37,20 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
 
         if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging =
-                    "select ? as shard_id, ID, HEIGHT, DB_ID from BLOCK where DB_ID >= ? AND DB_ID < ? limit ?";
+                    "select ? as shard_id, ID, HEIGHT, DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID), 0) as DB_ID from BLOCK";
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
             sqlToExecuteWithPaging =
                     "select ID, BLOCK_ID, DB_ID from transaction where DB_ID >= ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                    "select DB_ID from transaction where block_timestamp <= (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+                    "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID), 0) as DB_ID from TRANSACTION";
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from TRANSACTION";
             log.trace(sqlSelectBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'BLOCK_INDEX' OR 'TRANSACTION_SHARD_INDEX' is expected. Pls use another Helper class");

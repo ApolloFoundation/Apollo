@@ -45,8 +45,9 @@ public class ShardObserver {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         boolean res = false;
         if (currentConfig.isShardingEnabled()) {
-            int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
-            if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
+//            int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
+            int minRollbackHeight = 104_000;
+            if (minRollbackHeight != 0 /*&& minRollbackHeight % currentConfig.getShardingFrequency() == 0*/) {
                 log.info("Start sharding....");
                 databaseManager.getDataSource().begin();
                 try {

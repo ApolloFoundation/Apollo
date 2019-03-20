@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -20,7 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DbManipulator {
     private static final Logger logger = getLogger(DbManipulator.class);
     protected Path tempDbFile;
-    protected final DatabaseManager databaseManager;
+    protected /*final */DatabaseManager databaseManager;
 
     private DbPopulator populator;
 
@@ -31,6 +32,15 @@ public class DbManipulator {
         this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }
 
+    public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
+        Objects.requireNonNull(dbProperties, "dbProperties is NULL");
+        Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
+//        this.tempDbFile = dbFile;
+//        DbProperties dbProperties = tempDbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString());
+//        this.databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder());
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
+        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
+    }
 
     public DbManipulator()  {
         this(null);

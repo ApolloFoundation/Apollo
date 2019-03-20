@@ -40,7 +40,7 @@ public abstract class AbstractBlockTransactionHelper extends AbstractHelper {
                 ps.setLong(1, paginateResultWrapper.limitValue);
                 ps.setLong(2, upperBoundIdValue);
                 ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, targetConnect));
+            } while (handleResultSet(ps, paginateResultWrapper, targetConnect, operationParams));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -52,7 +52,8 @@ public abstract class AbstractBlockTransactionHelper extends AbstractHelper {
         return startSelect;
     }
 
-    protected boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper, Connection targetConnect)
+    protected boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
+                                      Connection targetConnect, TableOperationParams operationParams)
             throws SQLException {
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -86,22 +87,30 @@ public abstract class AbstractBlockTransactionHelper extends AbstractHelper {
 
                 try {
                     for (int i = 0; i < numColumns; i++) {
-                        preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
+                        Object object = rs.getObject(i + 1);
+                        columnValues.append(object).append(", ");
+                        preparedInsertStatement.setObject(i + 1, object);
                     }
                     insertedCount += preparedInsertStatement.executeUpdate();
                     log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
                 } catch (Exception e) {
                     log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
-                    log.error("Failed inserting " + currentTableName, e);
+                    log.error("Failed inserting = {}, value={}", currentTableName, columnValues);
                     targetConnect.rollback();
                     throw e;
                 }
                 rows++;
             }
             totalRowCount += rows;
+            columnValues.setLength(0);
         }
         log.trace("Total Records: selected = {}, inserted = {}, rows = {}, {}={}",
                 totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+        if (rows == 1) {
+            // in case we have only 1 RECORD selected, move lower bound
+            // move lower bound
+            paginateResultWrapper.limitValue += operationParams.batchCommitSize;
+        }
 
         targetConnect.commit(); // commit latest records if any
         return rows != 0;

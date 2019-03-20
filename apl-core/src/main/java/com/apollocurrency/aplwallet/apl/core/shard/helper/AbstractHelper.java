@@ -26,6 +26,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     StringBuilder sqlInsertString = new StringBuilder(500);
     StringBuilder columnNames = new StringBuilder();
     StringBuilder columnQuestionMarks = new StringBuilder();
+    StringBuilder columnValues = new StringBuilder();
 
     Long totalRowCount = 0L;
     Long insertedCount = 0L;
@@ -46,6 +47,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         this.sqlInsertString = new StringBuilder(500);
         this.columnNames = new StringBuilder();
         this.columnQuestionMarks = new StringBuilder();
+        this.columnValues = new StringBuilder();
         this.totalRowCount = 0L;
         this.insertedCount = 0L;
         this.preparedInsertStatement = null;

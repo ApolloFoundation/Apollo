@@ -21,7 +21,9 @@ public class ReferencedTransactionService {
     private int maxReferencedTransactions;
 
 
-    public ReferencedTransactionService(ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao, Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
+    public ReferencedTransactionService(
+            ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+            Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
         this.referencedTransactionDao = referencedTransactionDao;
         this.transactionIndexDao = transactionIndexDao;
         this.blockchain = blockchain;
@@ -30,7 +32,9 @@ public class ReferencedTransactionService {
     }
 
     @Inject
-    public ReferencedTransactionService(ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao, Blockchain blockchain, BlockchainConfig blockchainConfig) {
+    public ReferencedTransactionService(
+            ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+            Blockchain blockchain, BlockchainConfig blockchainConfig) {
         this(referencedTransactionDao, transactionIndexDao, blockchain, blockchainConfig, DEFAULT_MAX_REFERENCED_TRANSACTIONS);
     }
 

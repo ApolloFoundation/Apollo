@@ -79,6 +79,7 @@ public class ReferencedTransactionServiceTest {
     void setUp() {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
     }
+
     @Test
     void testHasAllReferencedTransaction() {
         doReturn(1000).when(config).getReferencedTransactionHeightSpan();

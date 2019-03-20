@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -25,6 +27,10 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     public DbExtension(Path path) {
         manipulator = new DbManipulator(path);
+    }
+
+    public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
+        manipulator = new DbManipulator(dbProperties, propertiesHolder);
     }
 
     public DbExtension() {
