@@ -19,6 +19,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Deprecated
 public class ImportKey extends AbstractAPIRequestHandler {
     private static class ImportKeyHolder {
         private static final ImportKey INSTANCE = new ImportKey();

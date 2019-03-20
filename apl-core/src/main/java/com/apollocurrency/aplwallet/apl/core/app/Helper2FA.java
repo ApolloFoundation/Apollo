@@ -182,21 +182,12 @@ public class Helper2FA {
         }
     }
 
-    public static FbWallet getKeyStore(String passphrase, long accountId, boolean isMandatory) throws ParameterException {
-
-         FbWallet store = KEYSTORE.getSecretStore(passphrase, accountId);
-
-        return store;
-    }
-
     public static File getKeyStoreFile(long accountId, String passphrase) throws ParameterException {
         File storeFile = KEYSTORE.getSecretStoreFile(accountId, passphrase);
         return storeFile;
     }
 
-    public static byte[] exportSecretBytes(String passphrase, long accountId) throws ParameterException {
-        return findAplSecretBytes(accountId, passphrase, true);
-    }
+    @Deprecated
     public static Pair<VaultKeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
         if (passphrase == null) {
             passphrase = passphraseGenerator.generate();
