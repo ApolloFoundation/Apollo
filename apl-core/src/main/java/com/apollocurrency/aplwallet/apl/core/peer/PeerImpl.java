@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -76,7 +75,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import javax.enterprise.inject.spi.CDI;
 
-final class PeerImpl implements Peer {
+public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     
