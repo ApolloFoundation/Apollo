@@ -2,18 +2,18 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.sharding;
+package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
@@ -40,7 +40,7 @@ import java.nio.file.Paths;
 import javax.inject.Inject;
 
 @EnableWeld
-public class ShardingHashCalculatorTest {
+public class ShardingHashCalculatorImplTest {
     static final String SHA_512 = "SHA-512";
     static final byte[] FULL_MEKLE_ROOT = Convert.parseHexString("1c3d41be25207be8d1119e958102fbb2e5933ff06f483f125371efae2bc6ca1d1a5248929443a521f850691a9180be51c4490c52aee9fedb1ce026b128acc479");
     static final byte[] PARTIAL_MERKLE_ROOT_2_6 = Convert.parseHexString("fd0c5b17d693d5cd5cd3453090ffcdcfe121e39782de478c43e24e2416d4969901c807bcd2afe2ed8ab13723c9341fe26cf04b8d0405df179bad531c607c7610");
@@ -70,7 +70,7 @@ public class ShardingHashCalculatorTest {
     }
     @Test
     public void testCalculateHashForAllBlocks() throws IOException {
-        ShardingHashCalculator shardingHashCalculator = new ShardingHashCalculator(blockchain, blockchainConfig, 500);
+        ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 500);
 
         byte[] merkleRoot1 = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_1.getHeight(), BlockTestData.BLOCK_12.getHeight() + 1);
         byte[] merkleRoot2 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_12.getHeight() + 1);
@@ -82,7 +82,7 @@ public class ShardingHashCalculatorTest {
     }
     @Test
     public void testCalculateHashWhenNoBlocks() throws IOException {
-        ShardingHashCalculator shardingHashCalculator = new ShardingHashCalculator(blockchain, blockchainConfig, 200);
+        ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
         byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_1.getHeight());
 
@@ -90,7 +90,7 @@ public class ShardingHashCalculatorTest {
     }
     @Test
     public void testCalculateHashForMiddleBlocks() throws IOException {
-        ShardingHashCalculator shardingHashCalculator = new ShardingHashCalculator(blockchain, blockchainConfig, 200);
+        ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
         byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_2.getHeight(), BlockTestData.BLOCK_6.getHeight());
 
@@ -98,7 +98,7 @@ public class ShardingHashCalculatorTest {
     }
     @Test
     public void testCalculateHashForFirstBlocks() throws IOException {
-        ShardingHashCalculator shardingHashCalculator = new ShardingHashCalculator(blockchain, blockchainConfig, 200);
+        ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
         byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_9.getHeight());
 
@@ -106,7 +106,7 @@ public class ShardingHashCalculatorTest {
     }
     @Test
     public void testCalculateHashForLastBlocks() throws IOException {
-        ShardingHashCalculator shardingHashCalculator = new ShardingHashCalculator(blockchain, blockchainConfig, 200);
+        ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
         byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_7.getHeight(), BlockTestData.BLOCK_12.getHeight() + 1000);
 
@@ -114,7 +114,7 @@ public class ShardingHashCalculatorTest {
     }
     @Test
     public void testCreateShardingHashCalculatorWithZeroBlockSelectLimit() throws IOException {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new ShardingHashCalculator(blockchain, blockchainConfig, 0));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 0));
     }
 
     @Test
@@ -126,7 +126,7 @@ public class ShardingHashCalculatorTest {
             protected int update(int nextUpdate) {return 260;} //do not modify original db!!!
         });
         Mockito.doReturn(transactionalDataSource).when(databaseManager).getDataSource();
-        ShardingHashCalculator shardingHashCalculator = new ShardingHashCalculator(blockchain, blockchainConfig, 5000);
+        ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 5000);
         byte[] bytes = shardingHashCalculator.calculateHash(0, 2_000_000);
     }
 }

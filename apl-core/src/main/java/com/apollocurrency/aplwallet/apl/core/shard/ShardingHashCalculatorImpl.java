@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.sharding;
+package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -17,20 +17,23 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+/**
+ * <p>This implementation uses merkle tree and block signatures for hash calculations</p>
+ */
 @Singleton
-public class ShardingHashCalculator {
-    private static final Logger log = LoggerFactory.getLogger(ShardingHashCalculator.class);
+public class ShardingHashCalculatorImpl implements ShardingHashCalculator {
+    private static final Logger log = LoggerFactory.getLogger(ShardingHashCalculatorImpl.class);
 
     private static final int DEFAULT_BLOCK_LIMIT = 100;
     private Blockchain blockchain;
     private BlockchainConfig blockchainConfig;
     private int blockSelectLimit;
     @Inject
-    public ShardingHashCalculator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+    public ShardingHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig) {
         this(blockchain, blockchainConfig, DEFAULT_BLOCK_LIMIT);
     }
 
-    public ShardingHashCalculator(Blockchain blockchain, BlockchainConfig blockchainConfig, int blockSelectLimit) {
+    public ShardingHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig, int blockSelectLimit) {
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, " blockchainConfig");
         if (blockSelectLimit <= 0) {
@@ -64,6 +67,13 @@ public class ShardingHashCalculator {
             throw new RuntimeException("Unable to create message digest for algo - " + algorithm, e);
         }
     }
+
+    /**
+     * {@inheritDoc}
+     * <p>This implementation utilize block signatures as shard data and merkle tree as hashing data structure</p>
+     * @return calculated hash or null, when no blocks exist between shardStartHeight(inclusive) and shardEndHeight(exclusive)
+     */
+    @Override
     public byte[] calculateHash(int shardStartHeight, int shardEndHeight) {
         if (shardStartHeight >= shardEndHeight) {
             throw new IllegalArgumentException("shard start height should be less than shard end height");

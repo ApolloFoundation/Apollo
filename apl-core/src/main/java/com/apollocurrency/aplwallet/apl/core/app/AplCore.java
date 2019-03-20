@@ -70,10 +70,10 @@ import javax.enterprise.inject.spi.CDI;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
-    
+
 //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
     private AbstractBlockValidator bcValidator;
-    
+
     private static volatile boolean shutdown = false;
 
     private static volatile Time time = CDI.current().select(EpochTime.class).get();
@@ -86,11 +86,11 @@ public final class AplCore {
 
     public AplCore() {
     }
-    
+
     public static boolean isShutdown() {
         return shutdown;
     }
- 
+
 
     public static int getEpochTime() { // left for awhile
         return time.getTime();
@@ -125,10 +125,9 @@ public final class AplCore {
             LOG.info("blockchainProcessor Shutdown...");
         }
         Peers.shutdown();
-        if (fullTextSearchService != null) {
-            fullTextSearchService.shutdown();
-            LOG.info("blockchainProcessor Shutdown...");
-        }
+        fullTextSearchService.shutdown();
+        LOG.info("full text service shutdown...");
+
         if (databaseManager != null) {
             databaseManager.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
@@ -136,7 +135,7 @@ public final class AplCore {
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         AplCore.shutdown = true;
     }
-    
+
     private static void setServerStatus(ServerStatus status, URI wallet) {
         AplCoreRuntime.getInstance().setServerStatus(status, wallet);
     }
@@ -154,19 +153,19 @@ public final class AplCore {
 
             try {
                 long startTime = System.currentTimeMillis();
-                checkPorts();  
+                checkPorts();
                 //TODO: move to application level this UPnP initialization
                 boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
                 if(enableAPIUPnP || enablePeerUPnP){
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP.getInstance();
-                }                
+                }
                 //try to start API as early as possible
                 API.init();
-                
+
 //                CDI.current().select(NtpTime.class).get().start();
-                                
+
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");

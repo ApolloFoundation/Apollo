@@ -35,8 +35,9 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public final class PopOffCounter implements AddOn {
     private static final Logger LOG = getLogger(PopOffCounter.class);
 

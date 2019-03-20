@@ -23,6 +23,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -41,6 +42,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @EnableWeld
+@Disabled
 class DatabaseManagerTest {
 
     private static String BASE_SUB_DIR = "unit-test-db";

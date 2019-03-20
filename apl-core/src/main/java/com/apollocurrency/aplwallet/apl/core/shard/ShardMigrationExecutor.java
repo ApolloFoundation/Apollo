@@ -6,15 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation;
@@ -25,6 +19,13 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndex
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Component for starting sharding process which contains several steps/states.
@@ -38,12 +39,18 @@ public class ShardMigrationExecutor {
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
     private DataTransferManagementReceiver managementReceiver;
+    private ShardingHashCalculator shardingHashCalculator;
+    private BlockIndexDao blockIndexDao;
 
     @Inject
     public ShardMigrationExecutor(DataTransferManagementReceiver managementReceiver,
-                                  javax.enterprise.event.Event<MigrateState> migrateStateEvent) {
+                                  javax.enterprise.event.Event<MigrateState> migrateStateEvent,
+                                  ShardingHashCalculator shardingHashCalculator,
+                                  BlockIndexDao blockIndexDao) {
         this.managementReceiver = Objects.requireNonNull(managementReceiver, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
+        this.shardingHashCalculator = Objects.requireNonNull(shardingHashCalculator, "sharding hash calculator is NULL");
+        this.blockIndexDao = Objects.requireNonNull(blockIndexDao, "blockIndexDao is NULL");
     }
 
     public void createAllCommands(int height) {
@@ -63,10 +70,24 @@ public class ShardMigrationExecutor {
         DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, height);
         this.addOperation(deleteCopiedDataCommand);
 
-        // TODO: YL replace by real value OR by real call
-        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, new byte[]{3,4,5,6,1});
+        byte[] hash = calculateHash(height);
+        if (hash == null) {
+            throw new IllegalStateException("Cannot calculate shard hash");
+        }
+        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, hash);
         this.addOperation(finishShardingCommand);
 
+    }
+
+    private byte[] calculateHash(int height) {
+        int lastShardHeight = getHeight();
+        byte[] hash = shardingHashCalculator.calculateHash(lastShardHeight + 1, height);
+        return hash;
+    }
+
+    private int getHeight() {
+        Integer lastShardHeight = blockIndexDao.getLastHeight();
+        return lastShardHeight != null ? lastShardHeight + 1 : 0;
     }
 
     public void cleanCommands() {

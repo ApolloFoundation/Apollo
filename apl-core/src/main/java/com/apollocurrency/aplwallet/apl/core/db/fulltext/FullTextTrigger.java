@@ -16,10 +16,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
+import javax.enterprise.inject.spi.CDI;
 
 /**
- * WARNING!!! This class will trigger CDI to create new INSTANCES for SINGLETON beans!!!!
+ * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
  */
 public class FullTextTrigger implements Trigger, TransactionCallback {
         private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
@@ -28,12 +28,12 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
      */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
-    private static DatabaseManager databaseManager = Objects.requireNonNull(FullTextConfig.getInstance().getDatabaseManager(), "Database manager is null");
+    private static DatabaseManager databaseManager;
     /**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
      */
-    private static FullTextSearchEngine ftl = Objects.requireNonNull(FullTextConfig.getInstance().getFtl(), "Ftl cannot be null");
+    private static FullTextSearchEngine ftl = CDI.current().select(FullTextSearchEngine.class).get();
     private TableData tableData;
 
 
@@ -87,7 +87,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         //
         // Commit the change immediately if we are not in a transaction
         //
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = lookupDatabaseManager().getDataSource();
         if (!dataSource.isInTransaction()) {
             try {
                 ftl.commitRow(oldRow, newRow, tableData);
@@ -108,6 +108,13 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         // Register our transaction callback
         //
         dataSource.registerCallback(this);
+    }
+
+    private DatabaseManager lookupDatabaseManager() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager;
     }
 
     /**

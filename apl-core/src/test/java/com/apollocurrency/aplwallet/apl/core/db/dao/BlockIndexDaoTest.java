@@ -172,6 +172,44 @@ public class BlockIndexDaoTest {
     }
 
     @Test
+    void testCount() {
+        int actualCount = blockIndexDao.count();
+        assertEquals(BLOCK_INDEXES.size(), actualCount);
+    }
+
+    @Test
+    void testGetLast() {
+        BlockIndex last = blockIndexDao.getLast();
+
+        assertEquals(BLOCK_INDEX_0, last);
+    }
+
+    @Test
+    void getLastHeight() {
+        Integer height = blockIndexDao.getLastHeight();
+
+        assertEquals(BLOCK_INDEX_0.getBlockHeight(), height);
+    }
+
+    @Test
+    void getLastHeightWhenNoBlockIndexesExist() {
+        blockIndexDao.hardDeleteAllBlockIndex();
+
+        Integer height = blockIndexDao.getLastHeight();
+
+        assertNull(height);
+    }
+
+    @Test
+    void getLastWhenNoBlockIndexesExist() {
+        blockIndexDao.hardDeleteAllBlockIndex();
+
+        BlockIndex last = blockIndexDao.getLast();
+
+        assertNull(last);
+    }
+
+    @Test
     void testDelete() {
         int deleteCount = blockIndexDao.hardBlockIndex(BLOCK_INDEX_1);
         assertEquals(1, deleteCount);
