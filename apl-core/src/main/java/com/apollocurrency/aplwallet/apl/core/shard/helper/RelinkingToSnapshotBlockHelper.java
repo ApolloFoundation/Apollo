@@ -32,6 +32,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         log.debug("Processing: {}", operationParams);
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
         Objects.requireNonNull(operationParams.snapshotBlockHeight, "snapshotBlockHeight is NULL");
+        Objects.requireNonNull(operationParams.tableName, "tableName is NULL");
         currentTableName = operationParams.tableName;
 
         long startSelect = System.currentTimeMillis();

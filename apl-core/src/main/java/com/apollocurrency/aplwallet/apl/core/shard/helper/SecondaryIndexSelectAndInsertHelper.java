@@ -63,7 +63,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
             issueConstraintUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_shard_id_idx");
             issueConstraintUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_shard_id_idx");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint transaction_shard_index_block_fk");
+            issueConstraintUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint fk_transaction_shard_index_block_id");
             issueConstraintUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_index_shard_1_idx");
         }
 
@@ -101,7 +101,8 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                     "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             issueConstraintUpdateQuery(sourceConnect,
-                    "ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS transaction_shard_index_block_fk FOREIGN KEY (block_id) REFERENCES block_index(block_id)");
+                    "ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS " +
+                            "fk_transaction_shard_index_block_id FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
             issueConstraintUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
         }
