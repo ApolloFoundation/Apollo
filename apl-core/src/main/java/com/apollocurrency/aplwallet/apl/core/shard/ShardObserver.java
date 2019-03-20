@@ -41,26 +41,33 @@ public class ShardObserver {
         tryCreateShard();
     }
 
+    private volatile boolean isSharding;
+
     public boolean tryCreateShard() {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         boolean res = false;
         if (currentConfig.isShardingEnabled()) {
-//            int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
-            int minRollbackHeight = 104_000;
-            if (minRollbackHeight != 0 /*&& minRollbackHeight % currentConfig.getShardingFrequency() == 0*/) {
-                log.info("Start sharding....");
-                databaseManager.getDataSource().begin();
-                try {
-                    shardMigrationExecutor.cleanCommands();
-                    shardMigrationExecutor.createAllCommands(minRollbackHeight);
-                    shardMigrationExecutor.executeAllOperations();
+            int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
+            if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
+                if (isSharding) {
+                    log.warn("Previous shard was no finished! Will skip next shard at height: " + minRollbackHeight);
+                } else {
+                    isSharding = true;
+                    log.info("Start sharding....");
+//                    databaseManager.getDataSource().begin();
+                    try {
+                        shardMigrationExecutor.cleanCommands();
+                        shardMigrationExecutor.createAllCommands(minRollbackHeight);
+                        shardMigrationExecutor.executeAllOperations();
+                    }
+                    catch (Throwable t) {
+                        log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
+                    }
+//                    databaseManager.getDataSource().commit();
+                    log.info("Finished sharding successfully!");
+                    res = true;
+                    isSharding = false;
                 }
-                catch (Throwable t) {
-                    log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
-                }
-                databaseManager.getDataSource().commit();
-                log.info("Finished sharding successfully!");
-                res = true;
             }
         }
         return res;
