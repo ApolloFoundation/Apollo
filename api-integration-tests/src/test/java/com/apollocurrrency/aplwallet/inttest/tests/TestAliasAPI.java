@@ -89,11 +89,12 @@ public class TestAliasAPI extends TestBase {
 
     }
 
+   // @Disabled
     @DisplayName("Delete Alias")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void deleteAliasTest(Wallet wallet) throws IOException {
-        String aliasname = "setAliasAPI"+new Date().getTime();
+        String aliasname = "setAliasAPI"+String.valueOf(new Date().getTime()).substring(0,6);
         String aliasset;
         String aliasdelete;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 1000000000, 1400);
@@ -104,10 +105,8 @@ public class TestAliasAPI extends TestBase {
         verifyCreatingTransaction(deleteAlias);
         aliasdelete = deleteAlias.transaction;
         verifyTransactionInBlock(aliasdelete);
-        AliasDTO aliasDTO = getAlias(aliasname);
-        assertFalse(Arrays.stream(new String[]{aliasDTO.aliasName}).anyMatch(aliasname::equals));
-
-
+        GetAliasesResponse getAliasesResponse = getAliases(wallet);
+        assertFalse(Arrays.stream(getAliasesResponse.aliases).filter(aliasDTO -> aliasDTO.alias.equals(aliasname)).count()==1);
     }
 
 
@@ -161,7 +160,7 @@ public class TestAliasAPI extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void buyAlias(Wallet wallet) throws IOException {
-        String aliasname = "Alias"+new Date().getTime();
+        String aliasname = "AlS"+String.valueOf(new Date().getTime()).substring(0,6);
         String aliasset;
 
 

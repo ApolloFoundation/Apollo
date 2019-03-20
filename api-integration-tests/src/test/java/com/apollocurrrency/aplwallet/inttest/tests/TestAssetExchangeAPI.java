@@ -19,8 +19,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestAssetExchangeAPI extends TestBase {
 
@@ -75,7 +74,7 @@ public class TestAssetExchangeAPI extends TestBase {
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
         AssetDTO getAsset = getAsset(wallet, issueAsset.transaction);
-        assertTrue(String.valueOf(getAsset.asset.equals(issueAsset.transaction)), getAsset.name.equals(assetName));
+        assertTrue(getAsset.name.equals(assetName),String.valueOf(getAsset.asset.equals(issueAsset.transaction)));
         assertTrue(getAsset.accountRS.equals(wallet.getUser()));
         System.out.println("asset = " + getAsset.asset + " ; name = " + getAsset.name + " ;  AccountRS = " + wallet.getUser());
     }
@@ -244,7 +243,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         String orderID;
         Integer quantityATU = 50;
-        String assetName = "Askorder09";
+        String assetName = "Ask"+String.valueOf(new Date().getTime()).substring(0,6);
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset -> placeAskOrder -> getAskOrdersIds -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -281,6 +280,7 @@ public class TestAssetExchangeAPI extends TestBase {
 
         GetOpenOrderResponse getAskOrder1 = getAllOpenAskOrders();
         System.out.println(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count());
+
         assertFalse(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
@@ -288,8 +288,7 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyTransactionInBlock(deleteAssetShares.transaction);
 
         GetAllAssetsResponse getAllAssets = getAllAssets();
-
-        assertFalse(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count()==1);
+        assertTrue(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count()== 0);
 
     }
 
