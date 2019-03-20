@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.response.GetAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.GetCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.SendMoneyResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.ErrorAPI;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.Disabled;
@@ -100,12 +101,16 @@ public class TestAliasAPI extends TestBase {
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.transaction;
         verifyTransactionInBlock(aliasset);
+        AliasDTO getAlias = getAlias(aliasname);
+        assertTrue(Arrays.stream(new String[]{getAlias.aliasName}).anyMatch(aliasname::equals));
         CreateTransactionResponse deleteAlias = deleteAlias(wallet, aliasname);
         verifyCreatingTransaction(deleteAlias);
         aliasdelete = deleteAlias.transaction;
         verifyTransactionInBlock(aliasdelete);
-        AliasDTO aliasDTO = getAlias(aliasname);
-        assertFalse(Arrays.stream(new String[]{aliasDTO.aliasName}).anyMatch(aliasname::equals));
+
+        GetAliasesResponse getAliasesResponse = getAliases(wallet);
+        assertFalse(Arrays.stream(getAliasesResponse.aliases).filter(aliasDTO -> aliasDTO.alias.equals(aliasname)).count()==1);
+
 
 
     }

@@ -36,7 +36,7 @@ public class TestBase {
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(5)
-                .withDelay(5, TimeUnit.SECONDS);
+                .withDelay(10, TimeUnit.SECONDS);
         try
         {
           deleteKey(testConfiguration.getVaultWallet());
@@ -253,7 +253,7 @@ public class TestBase {
         addParameters(RequestType.requestType,RequestType.deleteAlias);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.aliasName, aliasname);
-        addParameters(Parameters.feeATM, 400000000);
+        addParameters(Parameters.feeATM, 100000000);
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
 
@@ -272,7 +272,7 @@ public class TestBase {
         addParameters(RequestType.requestType, RequestType.sellAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.feeATM, 100000000);
         addParameters(Parameters.priceATM, 1500000000);
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
@@ -282,7 +282,7 @@ public class TestBase {
         addParameters(RequestType.requestType, RequestType.buyAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.feeATM, 500000000);
+        addParameters(Parameters.feeATM, 100000000);
         addParameters(Parameters.amountATM, 1500000000);
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
@@ -500,9 +500,8 @@ public class TestBase {
     }
 
     //getAsset
-    public AssetDTO getAsset (Wallet wallet, String asset) throws IOException {
+    public AssetDTO getAsset (String asset) throws IOException {
         addParameters(RequestType.requestType, getAsset);
-        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.asset, asset);
         return getInstanse(AssetDTO.class);
     }
@@ -575,6 +574,31 @@ public class TestBase {
         addParameters(Parameters.asset, assetID);
         return getInstanse(GetOrderIdsResponse.class);
     }
+
+    //getAskOrders
+    public GetOpenOrderResponse getAskOrders (String assetID) throws IOException {
+        addParameters(RequestType.requestType, getAskOrders);
+        addParameters(Parameters.asset, assetID);
+
+        return getInstanse(GetOpenOrderResponse.class);
+    }
+
+    //getAssetAccountCount
+    public  GetAssetAccountCountResponse getAssetAccountCount (String assetID) throws IOException {
+        addParameters(RequestType.requestType, getAssetAccountCount);
+        addParameters(Parameters.asset, assetID);
+        return getInstanse(GetAssetAccountCountResponse.class);
+    }
+
+    //getAssetAccounts
+    public  GetAccountAssetsResponse getAssetAccounts (String assetID) throws IOException {
+        addParameters(RequestType.requestType, getAssetAccounts);
+        addParameters(Parameters.asset, assetID);
+        return getInstanse(GetAccountAssetsResponse.class);
+    }
+
+
+
 
 
 
