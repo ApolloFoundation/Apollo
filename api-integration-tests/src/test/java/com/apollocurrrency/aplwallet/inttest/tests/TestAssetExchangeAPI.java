@@ -14,6 +14,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.function.BooleanSupplier;
+
+import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -69,8 +72,8 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-
-        AssetDTO getAsset = getAsset(issueAsset.transaction);
+ 
+        AssetDTO getAsset = getAsset(assetID);   
         assertTrue(getAsset.name.equals(assetName),String.valueOf(getAsset.asset.equals(issueAsset.transaction)));
         assertTrue(getAsset.accountRS.equals(wallet.getUser()));
         System.out.println("asset = " + getAsset.asset + " ; name = " + getAsset.name + " ;  AccountRS = " + wallet.getUser());
@@ -369,7 +372,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
 
         Integer quantityATU = 50;
-        String assetName = "Askorder09";
+        String assetName = "ApiTest";
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetAccounts API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -392,8 +395,94 @@ public class TestAssetExchangeAPI extends TestBase {
     }
 
 
+    //getAssetDeletes
+    @DisplayName("getAssetDeletes + getExpectedAssetDeletes")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void getAssetDeletesTest (Wallet wallet) throws IOException {
+        String assetID;
+
+        Integer quantityATU = 50;
+        String assetName = "ApiTest";
+
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetDelete API test", quantityATU);
+        verifyCreatingTransaction(issueAsset);
+        assetID = issueAsset.transaction;
+        verifyTransactionInBlock(assetID);
+        System.out.println("assetID = " + assetID);
 
 
+        GetExpectedAssetDeletes getAssetDeletes = getAssetDeletes(wallet);
+        assertTrue(Arrays.stream(getAssetDeletes.deletes).filter(deletes -> deletes.asset.contains(assetID)).count()==0);
+
+        GetAccountAssetsResponse getAssetAccount = getAssetAccounts(assetID);
+        System.out.println(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+        assertTrue(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+
+        CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
+
+        GetExpectedAssetDeletes getExpectedAssetDeletes = getExpectedAssetDeletes(wallet);
+        assertTrue(Arrays.stream(getExpectedAssetDeletes.deletes).filter(deletes -> deletes.asset.contains(assetID)).count()==1);
+
+        verifyCreatingTransaction(deleteAssetShares);
+        verifyTransactionInBlock(deleteAssetShares.transaction);
+
+        getAssetAccount = getAssetAccounts(assetID);
+        System.out.println(getAssetAccount.accountAssets.length);
+        assertTrue(getAssetAccount.accountAssets.length == 0);
+
+        getAssetDeletes = getAssetDeletes(wallet);
+        assertTrue(Arrays.stream(getAssetDeletes.deletes).filter(deletes -> deletes.asset.contains(assetID)).count()==1);
+
+    }
+
+
+    //getAssetIds
+    @DisplayName("getAssetAccounts")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void getAssetIdsTest () throws IOException {
+
+        GetAssetIdsResponse getAssetIds = getAssetIds();
+        assertTrue(getAssetIds.assetIds.length >= 0);
+
+    }
+
+    //transferAsset
+    @DisplayName("transferAsset")
+    @ParameterizedTest
+    @ArgumentsSource(WalletProvider.class)
+    public  void transferAsset (Wallet wallet) throws IOException {
+
+        String assetID;
+        Integer quantityATU = 50;
+        String assetName = "Transfer01";
+
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "transferAsset API test", quantityATU);
+        verifyCreatingTransaction(issueAsset);
+        assetID = issueAsset.transaction;
+        verifyTransactionInBlock(assetID);
+        System.out.println("assetID = " + assetID);
+
+        if (wallet.getSecretKey() == null) {
+            CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getVaultWallet().getUser());
+            verifyCreatingTransaction(transferAsset);
+            verifyTransactionInBlock(transferAsset.transaction);
+
+            GetAccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
+            assertTrue(Arrays.stream(getAccountAssets.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+        }
+        else {
+            CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getStandartWallet().getUser());
+            verifyCreatingTransaction(transferAsset);
+            verifyTransactionInBlock(transferAsset.transaction);
+
+            GetAccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet());
+            assertTrue(Arrays.stream(getAccountAssets.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+
+        }
+
+    }
 
 
 

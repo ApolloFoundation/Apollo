@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -158,7 +159,10 @@ public class TestAliasAPI extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void buyAlias(Wallet wallet) throws IOException {
-        String aliasname = "AlS"+String.valueOf(new Date().getTime()).substring(0,6);
+        String aliasname = "AlS"+String.valueOf(new Date().getTime()).substring(7);
+        Date date = new Date();
+        System.out.println(date.getTime());
+        System.out.println(String.valueOf(date.getTime()).substring(7));
         String aliasset;
 
 
@@ -166,11 +170,17 @@ public class TestAliasAPI extends TestBase {
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.transaction;
         verifyTransactionInBlock(aliasset);
+        System.out.println(aliasname);
 
 
         CreateTransactionResponse buyAlias = buyAlias(wallet,aliasname);
         assertTrue(buyAlias.errorDescription.contains("alias is not for sale at the moment"),buyAlias.errorDescription);
         assertTrue(buyAlias.errorCode.compareTo(new Long(4)) == 0);
+
+        CreateTransactionResponse deleteAlias = deleteAlias(wallet, aliasname);
+        verifyCreatingTransaction(deleteAlias);
+
+        verifyTransactionInBlock(deleteAlias.transaction);
 
     }
 
