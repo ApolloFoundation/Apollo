@@ -4,12 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static org.mockito.Mockito.mock;
+
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -46,10 +49,10 @@ public class ShardingHashCalculatorImplTest {
     static final byte[] PARTIAL_MERKLE_ROOT_2_6 = Convert.parseHexString("fd0c5b17d693d5cd5cd3453090ffcdcfe121e39782de478c43e24e2416d4969901c807bcd2afe2ed8ab13723c9341fe26cf04b8d0405df179bad531c607c7610");
     static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("c6e0d2347aa247757a57d1b52117bc32e8b024f9ec62b5d8a5d40b0765700fea7a63c932a2dd3e12c06477a24c1074a6971b6819c79c6beebfb42e866cca389d");
     static final byte[] PARTIAL_MERKLE_ROOT_1_8 = Convert.parseHexString("b492fe046090127b5a53fc425e117c8aea4535ee0ad90e9affb98a056951671d66594ebaca0f064042a0b0ac0856273520eb2f487aab2dce3d7c822f3127516f");
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-    PropertiesHolder propertiesHolder = Mockito.mock(PropertiesHolder.class);
-    DatabaseManager databaseManager = Mockito.mock(DatabaseManager.class);
-    HeightConfig heightConfig = Mockito.mock(HeightConfig.class);
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    DatabaseManager databaseManager = mock(DatabaseManager.class);
+    HeightConfig heightConfig = mock(HeightConfig.class);
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
     @WeldSetup
@@ -58,7 +61,8 @@ public class ShardingHashCalculatorImplTest {
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
                     MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class),
-                    MockBean.of(Mockito.mock(NtpTime.class), NtpTime.class)
+                    MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
+                    MockBean.of(mock(NtpTime.class), NtpTime.class)
             ).build();
     @Inject
     Blockchain blockchain;
@@ -72,9 +76,9 @@ public class ShardingHashCalculatorImplTest {
     public void testCalculateHashForAllBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 500);
 
-        byte[] merkleRoot1 = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_1.getHeight(), BlockTestData.BLOCK_12.getHeight() + 1);
-        byte[] merkleRoot2 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_12.getHeight() + 1);
-        byte[] merkleRoot3 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_12.getHeight() + 20000);
+        byte[] merkleRoot1 = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_0.getHeight(), BlockTestData.BLOCK_11.getHeight() + 1);
+        byte[] merkleRoot2 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_11.getHeight() + 1);
+        byte[] merkleRoot3 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_11.getHeight() + 20000);
 
         Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot1);
         Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot2);
@@ -84,7 +88,7 @@ public class ShardingHashCalculatorImplTest {
     public void testCalculateHashWhenNoBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_1.getHeight());
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_0.getHeight());
 
         Assertions.assertNull(merkleRoot);
     }
@@ -92,7 +96,7 @@ public class ShardingHashCalculatorImplTest {
     public void testCalculateHashForMiddleBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_2.getHeight(), BlockTestData.BLOCK_6.getHeight());
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_1.getHeight(), BlockTestData.BLOCK_5.getHeight());
 
         Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_2_6, merkleRoot);
     }
@@ -100,7 +104,7 @@ public class ShardingHashCalculatorImplTest {
     public void testCalculateHashForFirstBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_9.getHeight());
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_8.getHeight());
 
         Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_1_8, merkleRoot);
     }
@@ -108,7 +112,7 @@ public class ShardingHashCalculatorImplTest {
     public void testCalculateHashForLastBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_7.getHeight(), BlockTestData.BLOCK_12.getHeight() + 1000);
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_6.getHeight(), BlockTestData.BLOCK_11.getHeight() + 1000);
 
         Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }

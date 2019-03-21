@@ -4,12 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
+
 import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
-import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -123,6 +125,6 @@ public class DbMigrationExecutorTest {
         Assertions.assertFalse(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
-        Assertions.assertEquals(1640084, migratedHeight);
+        Assertions.assertEquals(BLOCK_11.getHeight(), migratedHeight);
     }
 }

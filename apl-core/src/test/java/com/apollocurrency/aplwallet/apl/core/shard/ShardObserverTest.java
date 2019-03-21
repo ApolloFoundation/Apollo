@@ -6,7 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,12 +17,15 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.internal.stubbing.answers.AnswersWithDelay;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @ExtendWith(MockitoExtension.class)
 public class ShardObserverTest {
@@ -35,8 +40,6 @@ public class ShardObserverTest {
     BlockchainProcessor blockchainProcessor;
     @Mock
     DatabaseManager databaseManager;
-    @Mock
-    TransactionalDataSource transactionalDataSource;
     @Mock
     HeightConfig heightConfig;
     private ShardObserver shardObserver;
@@ -54,7 +57,7 @@ public class ShardObserverTest {
         boolean created = shardObserver.tryCreateShard();
 
         assertFalse(created);
-        verify(blockchainProcessor, never()).getMinRollbackHeight();
+        verify(shardMigrationExecutor, never()).executeAllOperations();
     }
 
     @Test
@@ -66,7 +69,7 @@ public class ShardObserverTest {
         boolean created = shardObserver.tryCreateShard();
 
         assertFalse(created);
-        verify(databaseManager, never()).getDataSource();
+        verify(shardMigrationExecutor, never()).executeAllOperations();
     }
 
     @Test
@@ -77,12 +80,11 @@ public class ShardObserverTest {
         boolean created = shardObserver.tryCreateShard();
 
         assertFalse(created);
-        verify(databaseManager, never()).getDataSource();
+        verify(shardMigrationExecutor, never()).executeAllOperations();
     }
 
     @Test
     void testShardSuccessful() {
-        doReturn(transactionalDataSource).when(databaseManager).getDataSource();
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -90,8 +92,36 @@ public class ShardObserverTest {
         boolean created = shardObserver.tryCreateShard();
 
         assertTrue(created);
-        verify(transactionalDataSource, times(1)).begin();
-        verify(transactionalDataSource, times(1)).commit();
+        verify(shardMigrationExecutor, times(1)).executeAllOperations();
     }
 
+    @Test
+    void testShardWhenShardExecutorThrowAnyException() {
+        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
+        doReturn(true).when(heightConfig).isShardingEnabled();
+        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        doThrow(new RuntimeException()).when(shardMigrationExecutor).executeAllOperations();
+
+        boolean created = shardObserver.tryCreateShard();
+
+        assertFalse(created);
+        verify(shardMigrationExecutor, times(1)).executeAllOperations();
+    }
+    @Test
+    void testShardWhenStartedTwoShardProcedures() throws ExecutionException, InterruptedException {
+        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
+        doReturn(true).when(heightConfig).isShardingEnabled();
+        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        doAnswer(new AnswersWithDelay(1000, (inv) -> null)).when(shardMigrationExecutor).executeAllOperations();
+
+        CompletableFuture<Boolean> c1 = CompletableFuture.supplyAsync(()-> shardObserver.tryCreateShard());
+        CompletableFuture<Boolean> c2 = CompletableFuture.supplyAsync(()-> shardObserver.tryCreateShard());
+
+        boolean cr1 = c1.get();
+        boolean cr2 = c2.get();
+
+        assertFalse(cr1 && cr2);
+        assertTrue(cr1 || cr2);
+        verify(shardMigrationExecutor, times(1)).executeAllOperations();
+    }
 }
