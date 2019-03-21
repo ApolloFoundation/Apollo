@@ -80,7 +80,7 @@ public class ShardingHashCalculatorImpl implements ShardingHashCalculator {
         }
         long startTime = System.currentTimeMillis();
         List<byte[]> blockSignatures = retrieveBlockSignatures(shardStartHeight, shardEndHeight);
-        log.info("Retrieved {} block signatures in {}ms",blockSignatures.size(), System.currentTimeMillis() - startTime);
+        log.info("Retrieved {} block signatures in {} ms",blockSignatures.size(), System.currentTimeMillis() - startTime);
         long merkleTreeStartTime = System.currentTimeMillis();
         byte[] hash = calculateMerkleRoot(blockSignatures);
         log.info("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);

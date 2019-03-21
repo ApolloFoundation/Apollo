@@ -59,7 +59,7 @@ public class OptionDAO {
                 stmt.execute();
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                LOG.error("OptionDAO insert error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         } else {
             try (Connection con = dataSource.getConnection()) {
@@ -69,7 +69,7 @@ public class OptionDAO {
                 stmt.execute();
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                LOG.error("OptionDAO update error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         }
         return true;

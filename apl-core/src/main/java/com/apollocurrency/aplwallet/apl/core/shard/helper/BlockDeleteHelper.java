@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 
@@ -27,8 +26,8 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
     }
 
     @Override
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
-                                      TableOperationParams operationParams)
+    public long processOperation(Connection sourceConnect, Connection targetConnect,
+                                 TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
         checkMandatoryParameters(sourceConnect, operationParams);
@@ -50,14 +49,14 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
         selectUpperBottomValues(sourceConnect, operationParams);
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
-        paginateResultWrapper.limitValue = lowerBoundIdValue;
+        paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
-                ps.setLong(1, paginateResultWrapper.limitValue);
+                ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(2, upperBoundIdValue);
                 ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -73,7 +72,7 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                    Connection targetConnect, long batchCommitSize)
+                                    Connection targetConnect, TableOperationParams operationParams)
             throws SQLException {
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -90,15 +89,15 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                         log.trace("Precompiled delete = {}", sqlInsertString);
                     }
                 }
-                paginateResultWrapper.limitValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
                     preparedInsertStatement.setObject(1, rs.getObject(1));
-                    preparedInsertStatement.setObject(2, batchCommitSize);
+                    preparedInsertStatement.setObject(2, operationParams.batchCommitSize);
                     insertedCount += preparedInsertStatement.executeUpdate();
-                    log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                    log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
-                    log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                    log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                     log.error("Failed Deleting " + currentTableName, e);
                     targetConnect.rollback();
                     throw e;
@@ -108,8 +107,13 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
             totalRowCount += rows;
         }
         log.trace("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={}", currentTableName,
-                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
 
+        if (rows == 1) {
+            // in case we have only 1 RECORD selected, move lower bound
+            // move lower bound
+            paginateResultWrapper.lowerBoundColumnValue += operationParams.batchCommitSize;
+        }
         targetConnect.commit(); // commit latest records if any
         return rows != 0;
     }

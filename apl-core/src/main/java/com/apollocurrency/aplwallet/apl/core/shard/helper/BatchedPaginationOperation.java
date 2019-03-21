@@ -28,6 +28,6 @@ public interface BatchedPaginationOperation {
      * @return quantity of processed records per every table passed inside 'operationParams'
      * @throws Exception
      */
-    long selectInsertOperation(
+    long processOperation(
             Connection sourceConnect, Connection targetConnect, TableOperationParams operationParams) throws Exception;
 }
