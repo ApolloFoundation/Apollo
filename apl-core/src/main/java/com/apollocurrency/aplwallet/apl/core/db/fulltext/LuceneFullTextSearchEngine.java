@@ -40,7 +40,9 @@ import java.util.StringJoiner;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
+@Singleton
 public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
 
