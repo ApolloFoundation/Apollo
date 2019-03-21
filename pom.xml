@@ -13,7 +13,24 @@
         <name>Apollo Foundation</name>
         <url>https://www.apollocurrency.com/</url>
     </organization>
-
+    <repositories>
+        <!-- arti.firstbridge.work does not chache in apl repo so we have to add Maven Central here -->
+        <repository>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <layout>default</layout>
+            <url>http://repo1.maven.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>   
+        <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
+        <repository>
+            <id>apl</id>
+            <name>arti.firstbridge.work-releases</name>
+            <url>https://arti.firstbridge.work/artifactory/apl</url>
+        </repository>
+    </repositories>
     <modules>
         <module>apl-api</module>
         <module>apl-crypto</module>
@@ -48,6 +65,7 @@
         <servlet-api.version>3.1.0</servlet-api.version>
 
         <!--Crypto-->
+
         <fbcrypto.version>1.2.5</fbcrypto.version>
         <bcprov.version>1.61</bcprov.version>
 
@@ -190,6 +208,18 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>${bcprov.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <type>jar</type>
+            <version>${bcprov.version}</version>
+        </dependency>        
+            
             <!--Logging-->
             <dependency>
                 <groupId>ch.qos.logback</groupId>

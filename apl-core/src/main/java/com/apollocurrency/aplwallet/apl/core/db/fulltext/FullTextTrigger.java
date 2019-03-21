@@ -31,17 +31,12 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
      */
-    private FullTextSearchEngine ftl;
+    private static FullTextSearchEngine ftl = CDI.current().select(FullTextSearchEngine.class).get();
     private TableData tableData;
 
 
-    private TableData readTableData(String schema, String tableName) throws SQLException {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        try (Connection con = databaseManager.getDataSource().getConnection()) {
-            return DbUtils.getTableData(con, tableName, schema);
-        }
+    private TableData readTableData(Connection connection, String schema, String tableName) throws SQLException {
+         return DbUtils.getTableData(connection, tableName, schema);
     }
 
     /**
@@ -58,8 +53,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
             throws SQLException {
-        this.tableData = readTableData(schema, table);
-        this.ftl = CDI.current().select(FullTextSearchEngine.class).get();
+        this.tableData = readTableData(conn, schema, table);
     }
 
     /**
