@@ -30,10 +30,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
@@ -56,8 +54,6 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -70,21 +66,16 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
-//@Disabled
 @EnableWeld
 class DataTransferManagementReceiverTest {
     private static final Logger log = getLogger(DataTransferManagementReceiverTest.class);
 
     private static String BASE_SUB_DIR = "unit-test-db";
-
-//    private Path targetDbDir = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);
-//    private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
-//    private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
+    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
 
     @RegisterExtension
     DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
@@ -104,35 +95,21 @@ class DataTransferManagementReceiverTest {
             .addBeans(MockBean.of(baseDbProperties, DbProperties.class))
             .build();
 
+    private static PropertiesHolder propertiesHolder;
+    private static DbProperties baseDbProperties;
+
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
     @Inject
-    private GlobalSync globalSync;
-    @Inject
-    private TrimService trimService;
-    @Inject
     private DataTransferManagementReceiver managementReceiver;
-
-    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
-    private static PropertiesHolder propertiesHolder;
-    @Inject
-    private PropertyProducer propertyProducer;
-    private static DbProperties baseDbProperties;
-    private Blockchain blockchain;
     @Inject
     private DerivedDbTablesRegistry dbTablesRegistry;
-//    @Inject
-//    private TrimService trimService;
 
     @BeforeAll
     static void setUpAll() {
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-//        String workingDir = System.getProperty("user.dir");
-//        pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 null,
                 false,
-//                "./" + BASE_SUB_DIR,
                 null,
                 Constants.APPLICATION_DIR_NAME + ".properties",
                 Collections.emptyList());
@@ -140,7 +117,6 @@ class DataTransferManagementReceiverTest {
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
-//        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
     }
 
     @BeforeEach

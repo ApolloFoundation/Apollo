@@ -57,16 +57,21 @@ public class ShardMigrationExecutor {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardInitTableSchemaVersion());
         this.addOperation(createShardSchemaCommand);
+
         CopyDataCommand copyDataCommand = new CopyDataCommand(managementReceiver, height);
         this.addOperation(copyDataCommand);
+
         CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardAddConstraintsSchemaVersion());
         this.addOperation(createShardConstraintsCommand);
+
         ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height);
         this.addOperation(reLinkDataCommand);
+
         UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
                 (managementReceiver, height);
         this.addOperation(updateSecondaryIndexCommand);
+
         DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, height);
         this.addOperation(deleteCopiedDataCommand);
 

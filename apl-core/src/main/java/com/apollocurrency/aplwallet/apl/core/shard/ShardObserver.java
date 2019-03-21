@@ -52,7 +52,9 @@ public class ShardObserver {
                 if (isSharding) {
                     log.warn("Previous shard was no finished! Will skip next shard at height: " + minRollbackHeight);
                 } else {
+                    MigrateState state = MigrateState.INIT;
                     isSharding = true;
+                    long start = System.currentTimeMillis();
                     log.info("Start sharding....");
                     try {
                         log.debug("Clean commands....");
@@ -60,13 +62,19 @@ public class ShardObserver {
                         log.debug("Create all commands....");
                         shardMigrationExecutor.createAllCommands(minRollbackHeight);
                         log.debug("Start all commands....");
-                        shardMigrationExecutor.executeAllOperations();
+                        state = shardMigrationExecutor.executeAllOperations();
                     }
                     catch (Throwable t) {
                         log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
+                        res = false;
                     }
-                    log.info("Finished sharding successfully!");
-                    res = true;
+                    if (state != MigrateState.FAILED && state != MigrateState.INIT ) {
+                        log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);
+                        res = true;
+                    } else {
+                        log.info("FAILED sharding in {} secs", (System.currentTimeMillis() - start) / 1000);
+                        res = false;
+                    }
                     isSharding = false;
                 }
             }

@@ -35,9 +35,6 @@ public class DbManipulator {
     public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         Objects.requireNonNull(dbProperties, "dbProperties is NULL");
         Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
-//        this.tempDbFile = dbFile;
-//        DbProperties dbProperties = tempDbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString());
-//        this.databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder());
         this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
         this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }

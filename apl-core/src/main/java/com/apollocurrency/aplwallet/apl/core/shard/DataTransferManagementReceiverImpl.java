@@ -287,7 +287,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     long totalCount = updateIndexHelper.get().processOperation(
                             sourceConnect, null, operationParams);
                     sourceConnect.commit();
-                    log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+                    log.debug("Totally deleted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
