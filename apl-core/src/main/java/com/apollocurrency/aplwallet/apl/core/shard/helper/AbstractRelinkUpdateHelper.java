@@ -23,7 +23,7 @@ public abstract class AbstractRelinkUpdateHelper extends AbstractHelper {
         currentTableName = operationParams.tableName;
     }
 
-    protected void selectUpperBottomValues(Connection sourceConnect, TableOperationParams operationParams) throws SQLException {
+    protected void selectLowerAndUpperBoundValues(Connection sourceConnect, TableOperationParams operationParams) throws SQLException {
         upperBoundIdValue = selectUpperDbId(sourceConnect, operationParams.snapshotBlockHeight, sqlSelectUpperBound);
         if (upperBoundIdValue == null) {
             String error = String.format("Not Found MAX height = %s", operationParams.snapshotBlockHeight);

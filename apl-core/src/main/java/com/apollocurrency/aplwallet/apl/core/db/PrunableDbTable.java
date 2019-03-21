@@ -56,9 +56,9 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     }
 
     @Override
-    public final void trim(int height) {
+    public final void trim(int height, TransactionalDataSource dataSource) {
         prune();
-        super.trim(height);
+        super.trim(height, dataSource);
     }
 
     protected void prune() {

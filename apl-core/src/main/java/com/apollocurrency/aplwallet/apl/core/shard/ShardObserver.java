@@ -54,7 +54,6 @@ public class ShardObserver {
                 } else {
                     isSharding = true;
                     log.info("Start sharding....");
-//                    databaseManager.getDataSource().begin();
                     try {
                         log.debug("Clean commands....");
                         shardMigrationExecutor.cleanCommands();
@@ -62,14 +61,13 @@ public class ShardObserver {
                         shardMigrationExecutor.createAllCommands(minRollbackHeight);
                         log.debug("Start all commands....");
                         shardMigrationExecutor.executeAllOperations();
-                        log.info("Finished sharding successfully!");
-                        res = true;
-                        isSharding = false;
                     }
                     catch (Throwable t) {
                         log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
                     }
-//                    databaseManager.getDataSource().commit();
+                    log.info("Finished sharding successfully!");
+                    res = true;
+                    isSharding = false;
                 }
             }
         }

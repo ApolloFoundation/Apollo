@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -167,7 +168,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
         try ( Connection sourceConnect = sourceDataSource.begin() ) {
+
             long startTrim = System.currentTimeMillis();
+            currentTable = PUBLIC_KEY_TABLE_NAME; // assign name for trim
             log.debug("Start trimming '{}' to HEIGHT '{}'", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight());
             trimService.doTrimDerivedTables(paramInfo.getSnapshotBlockHeight().intValue(), sourceDataSource); // TRIM 'PUBLIC_KEY' table before processing
             log.debug("Trimmed '{}' to HEIGHT '{}' within {} sec", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight(), (System.currentTimeMillis() - startTrim)/1000);
@@ -183,6 +186,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
                     long totalCount = sqlSelectAndInsertHelper.get().processOperation(
                             sourceConnect, null, operationParams);
+                    sourceConnect.commit();
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                     sqlSelectAndInsertHelper.get().reset();
                 } else {
@@ -233,6 +237,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
                     long totalCount = updateIndexHelper.get().processOperation(
                             sourceConnect, null, operationParams);
+                    sourceConnect.commit();
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
@@ -281,6 +286,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
                     long totalCount = updateIndexHelper.get().processOperation(
                             sourceConnect, null, operationParams);
+                    sourceConnect.commit();
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);

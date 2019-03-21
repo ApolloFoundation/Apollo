@@ -20,6 +20,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -31,30 +40,21 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
-import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
-import com.apollocurrency.aplwallet.apl.util.env.config.ConsensusSettings;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
@@ -75,21 +75,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-
+//@Disabled
 @EnableWeld
-@Disabled
 class DataTransferManagementReceiverTest {
     private static final Logger log = getLogger(DataTransferManagementReceiverTest.class);
 
@@ -106,7 +93,7 @@ class DataTransferManagementReceiverTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            /*GlobalSync.class, */TransactionTestData.class, PropertyProducer.class,
+            TransactionTestData.class, PropertyProducer.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
@@ -114,7 +101,6 @@ class DataTransferManagementReceiverTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-//            .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .addBeans(MockBean.of(baseDbProperties, DbProperties.class))
             .build();
 
@@ -132,8 +118,6 @@ class DataTransferManagementReceiverTest {
     @Inject
     private PropertyProducer propertyProducer;
     private static DbProperties baseDbProperties;
-//    private static DatabaseManager databaseManager;
-//    private DataTransferManagementReceiver transferManagementReceiver;
     private Blockchain blockchain;
     @Inject
     private DerivedDbTablesRegistry dbTablesRegistry;
@@ -161,29 +145,8 @@ class DataTransferManagementReceiverTest {
 
     @BeforeEach
     void setUp() {
-/*
-        blockchain = CDI.current().select(BlockchainImpl.class).get();
-        propertyProducer = new PropertyProducer(propertiesHolder);
-        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        BlockchainProperties blockchainProperties = new BlockchainProperties(
-                10, 10, 10, 10, 10, 10L, new ConsensusSettings());
-        HeightConfig heightConfig = new HeightConfig(blockchainProperties);
-        blockchainConfig.setCurrentConfig(heightConfig);
-        Chain chain = new Chain();
-        UUID chainId = UUID.randomUUID();
-        chain.setChainId(chainId);
-        chain.setName(chainId.toString());
-        chain.setDescription(chainId.toString());
-        chain.setGenesisLocation("genesisAccounts-junit.json");
-        Map<Integer, BlockchainProperties> blockchainPropertiesMap = new HashMap<>(1);
-        blockchainPropertiesMap.put(0, blockchainProperties);
-        chain.setBlockchainProperties(blockchainPropertiesMap);
-        blockchainConfig.updateChain(chain, 10);
-*/
         PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
         dbTablesRegistry.registerDerivedTable(publicKeyTable);
-//        trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
-//        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
     }
 
     @AfterEach
@@ -224,7 +187,7 @@ class DataTransferManagementReceiverTest {
         List<String> tableNameList = new ArrayList<>();
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 104671L);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 8000L);
 
         state = managementReceiver.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);

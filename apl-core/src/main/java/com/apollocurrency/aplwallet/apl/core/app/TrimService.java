@@ -106,7 +106,7 @@ public class TrimService {
                         dataSource = dbManager.getDataSource();
                     }
                     long startTime = System.currentTimeMillis();
-                    table.trim(lastTrimHeight);
+                    table.trim(lastTrimHeight, dataSource);
                     dataSource.commit(false);
                     onlyTrimTime += (System.currentTimeMillis() - startTime);
                 }

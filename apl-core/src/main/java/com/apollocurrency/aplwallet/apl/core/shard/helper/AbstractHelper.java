@@ -104,8 +104,10 @@ abstract class AbstractHelper implements BatchedPaginationOperation {
         Objects.requireNonNull(sqlToExecute, "sqlToExecute is NULL");
         try (Statement stmt = sourceConnect.createStatement()) {
             stmt.executeUpdate(sqlToExecute);
-            log.trace("SUCCESS, on constraint SQL = {}", sqlToExecute);
+            sourceConnect.commit();
+            log.debug("SUCCESS, on execution constraint SQL = {}", sqlToExecute);
         } catch (Exception e) {
+            sourceConnect.rollback();
             log.error("Error on 'constraint related' SQL = " + currentTableName, e);
             throw e;
         }

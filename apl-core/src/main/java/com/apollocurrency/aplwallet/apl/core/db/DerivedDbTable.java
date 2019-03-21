@@ -74,7 +74,7 @@ public abstract class DerivedDbTable {
         }
     }
 
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         //nothing to trim
     }
 

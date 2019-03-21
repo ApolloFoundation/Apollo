@@ -44,23 +44,27 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         log.trace(sqlSelectBottomBound);
 
         // select upper, bottom DB_ID
-        selectUpperBottomValues(sourceConnect, operationParams);
+        selectLowerAndUpperBoundValues(sourceConnect, operationParams);
 
         // turn OFF HEIGHT constraint for specified table
         if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
+            executeUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop primary key");
+            executeUpdateQuery(sourceConnect, "drop index GENESIS_PUBLIC_KEY_ACCOUNT_ID_HEIGHT_IDX");
+            executeUpdateQuery(sourceConnect, "drop index GENESIS_PUBLIC_KEY_HEIGHT_IDX");
         } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
         }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
+        paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
 
-        try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
+       try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, operationParams.snapshotBlockHeight);
                 ps.setLong(2, paginateResultWrapper.lowerBoundColumnValue);
-                ps.setLong(3, upperBoundIdValue);
+                ps.setLong(3, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(4, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
         } catch (Exception e) {
@@ -73,11 +77,17 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
                     "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_C11 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
+            executeUpdateQuery(sourceConnect,
+                    "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS PRIMARY_KEY_GENESIS_PUBLIC_KEY primary key (DB_ID)");
+            executeUpdateQuery(sourceConnect,
+                    "CREATE UNIQUE INDEX IF NOT EXISTS genesis_public_key_account_id_height_idx on genesis_public_key(account_id, height)");
+            executeUpdateQuery(sourceConnect,
+                    "CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
         } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }
-
+        log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
         return totalRowCount;
     }
 

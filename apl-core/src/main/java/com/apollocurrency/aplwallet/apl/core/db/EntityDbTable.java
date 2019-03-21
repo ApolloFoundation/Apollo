@@ -492,12 +492,14 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            if (dataSource == null) {
+                dataSource = databaseManager.getDataSource();
+            }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         } else {
-            super.trim(height);
+            super.trim(height, dataSource);
         }
     }
 

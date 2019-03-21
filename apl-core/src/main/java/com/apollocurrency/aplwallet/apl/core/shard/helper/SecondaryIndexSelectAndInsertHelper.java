@@ -56,7 +56,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
             throw new IllegalAccessException("Unsupported table. 'BLOCK_INDEX' OR 'TRANSACTION_SHARD_INDEX' is expected. Pls use another Helper class");
         }
         // select upper, bottom DB_ID
-        selectUpperBottomValues(sourceConnect, operationParams);
+        selectLowerAndUpperBoundValues(sourceConnect, operationParams);
 
         // turn OFF HEIGHT constraint for specified table
         if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
@@ -69,17 +69,18 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
+        paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
-                if ("BLOCK_INDEX".equalsIgnoreCase(currentTableName)) {
+                if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
                     ps.setLong(1, operationParams.shardId.get());
                     ps.setLong(2, paginateResultWrapper.lowerBoundColumnValue);
-                    ps.setLong(3, upperBoundIdValue);
+                    ps.setLong(3, paginateResultWrapper.upperBoundColumnValue);
                     ps.setLong(4, operationParams.batchCommitSize);
-                } else if ("TRANSACTION_SHARD_INDEX".equalsIgnoreCase(operationParams.tableName)) {
+                } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
                     ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
-                    ps.setLong(2, upperBoundIdValue);
+                    ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                     ps.setLong(3, operationParams.batchCommitSize);
                 }
             } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
@@ -117,10 +118,9 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
         int rows = 0;
         try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                if (rsmd == null) {
-                    // it called one time one first loop only
-                    createAndPrepareInsertStatement(targetConnect, rs);
-                }
+                // it called one time one first loop only
+                extractMetaDataCreateInsert(targetConnect, rs);
+
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
@@ -147,26 +147,29 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                 totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
 
         targetConnect.commit(); // commit latest records if any
+//        return rows != 0 && (1 + paginateResultWrapper.lowerBoundColumnValue >= paginateResultWrapper.upperBoundColumnValue);
         return rows != 0;
     }
 
-    private void createAndPrepareInsertStatement(Connection targetConnect, ResultSet resultSet) throws SQLException {
+    private void extractMetaDataCreateInsert(Connection targetConnect, ResultSet resultSet) throws SQLException {
         Objects.requireNonNull(targetConnect, "targetConnect is NULL");
         Objects.requireNonNull(resultSet, "resultSet is NULL");
-        rsmd = resultSet.getMetaData();
-        numColumns = rsmd.getColumnCount();
-        columnTypes = new int[numColumns];
-        if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            sqlInsertString.append("insert into BLOCK_INDEX (shard_id, block_id, block_height)")
-                    .append(" values (").append("?, ?, ?").append(")");
-        } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, block_id)")
-                    .append(" values (").append("?, ?").append(")");
-        }
-        // precompile sql
-        if (preparedInsertStatement == null) {
-            preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
-            log.trace("Precompiled insert = {}", sqlInsertString);
+        if (rsmd == null) {
+            rsmd = resultSet.getMetaData();
+            numColumns = rsmd.getColumnCount();
+            columnTypes = new int[numColumns];
+            if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+                sqlInsertString.append("insert into BLOCK_INDEX (shard_id, block_id, block_height)")
+                        .append(" values (").append("?, ?, ?").append(")");
+            } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+                sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, block_id)")
+                        .append(" values (").append("?, ?").append(")");
+            }
+            // precompile sql
+            if (preparedInsertStatement == null) {
+                preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
+                log.trace("Precompiled insert = {}", sqlInsertString);
+            }
         }
     }
 

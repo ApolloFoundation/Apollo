@@ -30,13 +30,14 @@ public abstract class AbstractBlockTransactionHelper extends AbstractHelper {
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
+        paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
 
         long startSelect = System.currentTimeMillis();
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
-                ps.setLong(2, upperBoundIdValue);
+                ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(3, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, targetConnect, operationParams));
         } catch (Exception e) {
@@ -84,11 +85,11 @@ public abstract class AbstractBlockTransactionHelper extends AbstractHelper {
                 totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
         if (rows == 1) {
             // in case we have only 1 RECORD selected, move lower bound
-            // move lower bound
             paginateResultWrapper.lowerBoundColumnValue += operationParams.batchCommitSize;
         }
 
         targetConnect.commit(); // commit latest records if any
+//        return rows != 0 && (1 + paginateResultWrapper.lowerBoundColumnValue >= paginateResultWrapper.upperBoundColumnValue);
         return rows != 0;
     }
 

@@ -19,7 +19,6 @@ import org.slf4j.Logger;
  * @author yuriy.larin
  */
 public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
-//public class BlockDeleteHelper extends AbstractBlockTransactionHelper {
     private static final Logger log = getLogger(BlockDeleteHelper.class);
 
     public BlockDeleteHelper() {
@@ -46,15 +45,16 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
             throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
         }
         // select upper, bottom DB_ID
-        selectUpperBottomValues(sourceConnect, operationParams);
+        selectLowerAndUpperBoundValues(sourceConnect, operationParams);
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
+        paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
-                ps.setLong(2, upperBoundIdValue);
+                ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(3, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams));
         } catch (Exception e) {
@@ -65,7 +65,7 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                 this.preparedInsertStatement.close();
             }
         }
-        log.debug("Inserted '{}' = [{}] within {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("Deleted '{}' = [{}] within {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
 
         log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
         return totalRowCount;
@@ -80,8 +80,9 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                  // handle rows here
                 if (rsmd == null) {
                     rsmd = rs.getMetaData();
-                    if ("BLOCK".equalsIgnoreCase(currentTableName)) {
-                        sqlInsertString.append("delete from BLOCK WHERE DB_ID > ? LIMIT ?");
+                    if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+//                        sqlInsertString.append("delete from BLOCK WHERE DB_ID > ? AND DB_ID < ? LIMIT ?");
+                        sqlInsertString.append("delete from BLOCK WHERE DB_ID < ? LIMIT ?");
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
@@ -89,13 +90,14 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                         log.trace("Precompiled delete = {}", sqlInsertString);
                     }
                 }
-                paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+//                paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
-                    preparedInsertStatement.setObject(1, rs.getObject(1));
+//                    preparedInsertStatement.setObject(1, rs.getObject(1));
+                    preparedInsertStatement.setObject(1, paginateResultWrapper.upperBoundColumnValue);
                     preparedInsertStatement.setObject(2, operationParams.batchCommitSize);
                     insertedCount += preparedInsertStatement.executeUpdate();
-                    log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+                    log.debug("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                     log.error("Failed Deleting " + currentTableName, e);
