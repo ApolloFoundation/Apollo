@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.api.response.*;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
+import org.bouncycastle.cms.Recipient;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -595,7 +596,44 @@ public class TestBase {
         return getInstanse(GetAccountAssetsResponse.class);
     }
 
+    //getAssetDeletes
+    public  GetExpectedAssetDeletes getAssetDeletes (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAssetDeletes);
+        addParameters(Parameters.wallet, wallet);
+        return getInstanse(GetExpectedAssetDeletes.class);
+    }
 
+    //getExpectedAssetDeletes
+    public  GetExpectedAssetDeletes getExpectedAssetDeletes (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getExpectedAssetDeletes);
+        addParameters(Parameters.wallet, wallet);
+        return getInstanse(GetExpectedAssetDeletes.class);
+    }
+
+    //getAssetDividends NOT READY YET!!!!!
+    /*public  GetAssetDividends getAssetDividends (Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getAssetDividends);
+        addParameters(Parameters.wallet, wallet);
+        return getInstanse(GetAssetDividends.class);
+    }*/
+
+    //getAssetIds
+    public  GetAssetIdsResponse getAssetIds () throws IOException {
+        addParameters(RequestType.requestType, getAssetIds);
+        return getInstanse(GetAssetIdsResponse.class);
+    }
+
+    //transferAsset
+    public  CreateTransactionResponse transferAsset (Wallet wallet, String asset, Integer quantityATU, String recipient) throws IOException {
+        addParameters(RequestType.requestType, transferAsset);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.asset, asset);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.quantityATU, quantityATU);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
 
 
 
