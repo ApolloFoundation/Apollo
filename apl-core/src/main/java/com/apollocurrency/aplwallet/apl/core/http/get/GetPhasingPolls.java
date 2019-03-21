@@ -20,13 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -55,11 +56,11 @@ public final class GetPhasingPolls extends AbstractAPIRequestHandler {
         JSONArray jsonArray = new JSONArray();
         response.put("polls", jsonArray);
         for (long transactionId : transactionIds) {
-            PhasingPoll poll = PhasingPoll.getPoll(transactionId);
+            PhasingPoll poll = PhasingPollService.getPoll(transactionId);
             if (poll != null) {
                 jsonArray.add(JSONData.phasingPoll(poll, countVotes));
             } else {
-                PhasingPollResult pollResult = PhasingPoll.getResult(transactionId);
+                PhasingPollResult pollResult = PhasingPollService.getResult(transactionId);
                 if (pollResult != null) {
                     jsonArray.add(JSONData.phasingPollResult(pollResult));
                 }

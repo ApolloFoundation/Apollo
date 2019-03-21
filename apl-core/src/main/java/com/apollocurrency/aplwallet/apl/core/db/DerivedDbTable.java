@@ -79,6 +79,10 @@ public abstract class DerivedDbTable {
         //nothing to trim
     }
 
+    public static DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
     public void createSearchIndex(Connection con) throws SQLException {
         //implemented in EntityDbTable only
     }

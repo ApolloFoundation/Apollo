@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -47,7 +47,7 @@ public class GetAccountPhasedTransactionCount extends AbstractAPIRequestHandler 
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long accountId = ParameterParser.getAccountId(req, true);
         JSONObject response = new JSONObject();
-        response.put("numberOfPhasedTransactions", PhasingPoll.getAccountPhasedTransactionCount(accountId));
+        response.put("numberOfPhasedTransactions", PhasingPollService.getAccountPhasedTransactionCount(accountId));
         return response;
     }
 }

@@ -2,38 +2,29 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+package com.apollocurrency.aplwallet.apl.core.phasing;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public final class PhasingPollResult {
+public class PhasingPollResult {
 
     private final long id;
-    private final DbKey dbKey;
     private final long result;
     private final boolean approved;
     private final int height;
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public PhasingPollResult(PhasingPoll poll, long result) {
+    public PhasingPollResult(PhasingPoll poll, long result, int height) {
         this.id = poll.getId();
-        this.dbKey = PhasingPoll.resultDbKeyFactory.newKey(this.id);
         this.result = result;
         this.approved = result >= poll.getQuorum();
-        this.height = PhasingPoll.blockchain.getHeight();
+        this.height = height;
     }
 
-    public PhasingPollResult(ResultSet rs, DbKey dbKey) throws SQLException {
+    public PhasingPollResult(ResultSet rs) throws SQLException {
         this.id = rs.getLong("id");
-        this.dbKey = dbKey;
         this.result = rs.getLong("result");
         this.approved = rs.getBoolean("approved");
         this.height = rs.getInt("height");

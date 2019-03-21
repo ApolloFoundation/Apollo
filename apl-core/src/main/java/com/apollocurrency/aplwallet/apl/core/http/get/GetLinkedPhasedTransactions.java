@@ -20,19 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 
 public class GetLinkedPhasedTransactions extends AbstractAPIRequestHandler {
     private static class GetLinkedPhasedTransactionsHolder {
@@ -52,7 +52,7 @@ public class GetLinkedPhasedTransactions extends AbstractAPIRequestHandler {
         byte[] linkedFullHash = ParameterParser.getBytes(req, "linkedFullHash", true);
 
         JSONArray json = new JSONArray();
-        List<? extends Transaction> transactions = PhasingPoll.getLinkedPhasedTransactions(linkedFullHash);
+        List<? extends Transaction> transactions = PhasingPollService.getLinkedPhasedTransactions(linkedFullHash);
         transactions.forEach(transaction -> json.add(JSONData.transaction(false, transaction)));
         JSONObject response = new JSONObject();
         response.put("transactions", json);

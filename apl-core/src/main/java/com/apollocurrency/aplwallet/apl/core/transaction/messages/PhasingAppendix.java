@@ -6,32 +6,32 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
@@ -207,7 +207,7 @@ public class PhasingAppendix extends AbstractAppendix {
             if (hashedSecret.length == 0 || hashedSecret.length > Byte.MAX_VALUE) {
                 throw new AplException.NotValidException("Invalid hashedSecret " + Convert.toHexString(hashedSecret));
             }
-            if (PhasingPoll.getHashFunction(algorithm) == null) {
+            if (PhasingPollService.getHashFunction(algorithm) == null) {
                 throw new AplException.NotValidException("Invalid hashedSecretAlgorithm " + algorithm);
             }
         } else {
@@ -232,7 +232,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        PhasingPoll.addPoll(transaction, this);
+        PhasingPollService.addPoll(transaction, this);
     }
 
     @Override
@@ -268,10 +268,10 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void countVotes(Transaction transaction) {
-        if (PhasingPoll.getResult(transaction.getId()) != null) {
+        if (PhasingPollService.getResult(transaction.getId()) != null) {
             return;
         }
-        PhasingPoll poll = PhasingPoll.getPoll(transaction.getId());
+        PhasingPoll poll = PhasingPollService.getPoll(transaction.getId());
         long result = poll.countVotes();
         poll.finish(result);
         if (result >= poll.getQuorum()) {
@@ -287,7 +287,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        PhasingPoll poll = PhasingPoll.getPoll(transaction.getId());
+        PhasingPoll poll = PhasingPollService.getPoll(transaction.getId());
         long result = poll.countVotes();
         if (result >= poll.getQuorum()) {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {
