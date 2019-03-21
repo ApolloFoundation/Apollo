@@ -56,8 +56,11 @@ public class ShardObserver {
                     log.info("Start sharding....");
 //                    databaseManager.getDataSource().begin();
                     try {
+                        log.debug("Clean commands....");
                         shardMigrationExecutor.cleanCommands();
+                        log.debug("Create all commands....");
                         shardMigrationExecutor.createAllCommands(minRollbackHeight);
+                        log.debug("Start all commands....");
                         shardMigrationExecutor.executeAllOperations();
                         log.info("Finished sharding successfully!");
                         res = true;

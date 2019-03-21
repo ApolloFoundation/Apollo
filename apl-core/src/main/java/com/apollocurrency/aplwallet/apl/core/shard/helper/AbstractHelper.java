@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 /**
  * Common fields and methods used by inherited classes.
  */
-public abstract class AbstractHelper implements BatchedPaginationOperation {
+abstract class AbstractHelper implements BatchedPaginationOperation {
     private static final Logger log = getLogger(AbstractHelper.class);
 
     String currentTableName; // processed table name
@@ -57,8 +57,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         lowerBoundIdValue = null;
     }
 
-    public abstract long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
-                               TableOperationParams operationParams) throws Exception;
+    public abstract long processOperation(Connection sourceConnect, Connection targetConnect,
+                                          TableOperationParams operationParams) throws Exception;
 
 
     protected Long selectUpperDbId(Connection sourceConnect, Long snapshotBlockHeight, String selectValueSql) throws SQLException {
@@ -99,7 +99,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         return bottomDbIdValue;
     }
 
-    protected void issueConstraintUpdateQuery(Connection sourceConnect, String sqlToExecute) throws SQLException {
+    protected void executeUpdateQuery(Connection sourceConnect, String sqlToExecute) throws SQLException {
         Objects.requireNonNull(sourceConnect, "source connection is NULL");
         Objects.requireNonNull(sqlToExecute, "sqlToExecute is NULL");
         try (Statement stmt = sourceConnect.createStatement()) {

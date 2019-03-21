@@ -27,8 +27,8 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
     }
 
     @Override
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
-                                      TableOperationParams operationParams)
+    public long processOperation(Connection sourceConnect, Connection targetConnect,
+                                 TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
         checkMandatoryParameters(sourceConnect, operationParams);
@@ -60,25 +60,25 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
 
         // turn OFF HEIGHT constraint for specified table
         if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_shard_id_idx");
-            issueConstraintUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_shard_id_idx");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_shard_id_idx");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_shard_id_idx");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint fk_transaction_shard_index_block_id");
-            issueConstraintUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_index_shard_1_idx");
+            executeUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint fk_transaction_shard_index_block_id");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_index_shard_1_idx");
         }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
-        paginateResultWrapper.limitValue = lowerBoundIdValue;
+        paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 if ("BLOCK_INDEX".equalsIgnoreCase(currentTableName)) {
                     ps.setLong(1, operationParams.shardId.get());
-                    ps.setLong(2, paginateResultWrapper.limitValue);
+                    ps.setLong(2, paginateResultWrapper.lowerBoundColumnValue);
                     ps.setLong(3, upperBoundIdValue);
                     ps.setLong(4, operationParams.batchCommitSize);
                 } else if ("TRANSACTION_SHARD_INDEX".equalsIgnoreCase(operationParams.tableName)) {
-                    ps.setLong(1, paginateResultWrapper.limitValue);
+                    ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                     ps.setLong(2, upperBoundIdValue);
                     ps.setLong(3, operationParams.batchCommitSize);
                 }
@@ -95,15 +95,15 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
 
         // turn ON HEIGHT constraint for specified table
         if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect,
+            executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
-            issueConstraintUpdateQuery(sourceConnect,
+            executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect,
+            executeUpdateQuery(sourceConnect,
                     "ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS " +
                             "fk_transaction_shard_index_block_id FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
-            issueConstraintUpdateQuery(sourceConnect,
+            executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
         }
 
@@ -121,7 +121,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                     // it called one time one first loop only
                     createAndPrepareInsertStatement(targetConnect, rs);
                 }
-                paginateResultWrapper.limitValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
                     for (int i = 0; i < numColumns; i++) {
@@ -132,9 +132,9 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                         }
                     }
                     insertedCount += preparedInsertStatement.executeUpdate();
-                    log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                    log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
-                    log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                    log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                     log.error("Failed inserting " + currentTableName, e);
                     targetConnect.rollback();
                     throw e;
@@ -144,7 +144,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
             totalRowCount += rows;
         }
         log.trace("Total Records '{}': selected = {}, inserted = {}, rows = {}, {}={}", currentTableName,
-                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
 
         targetConnect.commit(); // commit latest records if any
         return rows != 0;

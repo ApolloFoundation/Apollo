@@ -21,8 +21,8 @@ public class TransactionSelectAndInsertHelper extends AbstractBlockTransactionHe
     public TransactionSelectAndInsertHelper() {
     }
 
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
-                                      TableOperationParams operationParams)
+    public long processOperation(Connection sourceConnect, Connection targetConnect,
+                                 TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
         checkMandatoryParameters(sourceConnect, targetConnect, operationParams);

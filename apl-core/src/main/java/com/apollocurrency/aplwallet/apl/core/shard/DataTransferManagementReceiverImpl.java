@@ -126,7 +126,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 if (sqlSelectAndInsertHelper.isPresent()) {
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), targetDataSource.getDbIdentity());
-                    long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
+                    long totalCount = sqlSelectAndInsertHelper.get().processOperation(
                             sourceConnect, targetConnect, operationParams);
                     targetDataSource.commit(false);
                     log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
@@ -181,7 +181,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId);
 
-                    long totalCount = sqlSelectAndInsertHelper.get().selectInsertOperation(
+                    long totalCount = sqlSelectAndInsertHelper.get().processOperation(
                             sourceConnect, null, operationParams);
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                     sqlSelectAndInsertHelper.get().reset();
@@ -231,7 +231,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId);
 
-                    long totalCount = updateIndexHelper.get().selectInsertOperation(
+                    long totalCount = updateIndexHelper.get().processOperation(
                             sourceConnect, null, operationParams);
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                 } else {
@@ -279,7 +279,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId);
 
-                    long totalCount = updateIndexHelper.get().selectInsertOperation(
+                    long totalCount = updateIndexHelper.get().processOperation(
                             sourceConnect, null, operationParams);
                     log.debug("Totally updated '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                 } else {

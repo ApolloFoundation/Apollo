@@ -74,9 +74,9 @@ public class ShardMigrationExecutor {
         if (hash == null) {
             throw new IllegalStateException("Cannot calculate shard hash");
         }
+        log.debug("SHARD HASH = {}", hash.length);
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, hash);
         this.addOperation(finishShardingCommand);
-
     }
 
     private byte[] calculateHash(int height) {
@@ -105,7 +105,7 @@ public class ShardMigrationExecutor {
         MigrateState state = MigrateState.INIT;
         for (DataMigrateOperation dataMigrateOperation : dataMigrateOperations) {
             log.debug("Before execute {}", dataMigrateOperation);
-            state = dataMigrateOperation.execute();;
+            state = dataMigrateOperation.execute();
             log.debug("After execute step {} = '{}' before Fire Event...", dataMigrateOperation, state.name());
             migrateStateEvent.select(literal(state)).fire(state);
             if (state == MigrateState.FAILED) {

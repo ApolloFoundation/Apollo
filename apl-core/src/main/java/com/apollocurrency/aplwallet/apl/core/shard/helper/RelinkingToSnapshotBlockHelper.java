@@ -26,8 +26,8 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
     }
 
     @Override
-    public long selectInsertOperation(Connection sourceConnect, Connection targetConnect,
-                                      TableOperationParams operationParams)
+    public long processOperation(Connection sourceConnect, Connection targetConnect,
+                                 TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
@@ -48,18 +48,18 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
 
         // turn OFF HEIGHT constraint for specified table
         if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
+            executeUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
         } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
+            executeUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
         }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
-        paginateResultWrapper.limitValue = lowerBoundIdValue;
+        paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, operationParams.snapshotBlockHeight);
-                ps.setLong(2, paginateResultWrapper.limitValue);
+                ps.setLong(2, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(3, upperBoundIdValue);
                 ps.setLong(4, operationParams.batchCommitSize);
             } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
@@ -71,10 +71,10 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
 
         // turn ON HEIGHT constraint for specified table
         if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect,
+            executeUpdateQuery(sourceConnect,
                     "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_C11 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            issueConstraintUpdateQuery(sourceConnect,
+            executeUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }
 
@@ -87,18 +87,18 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         int rows = 0;
         try {
             rows = ps.executeUpdate();
-            log.trace("Updated rows = '{}' in '{}' : column/value {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+            log.trace("Updated rows = '{}' in '{}' : column/value {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
         } catch (Exception e) {
-            log.error("Failed Updating '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+            log.error("Failed Updating '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
             log.error("Failed Updating " + currentTableName, e);
             targetConnect.rollback();
             throw e;
         }
         log.trace("Total Records: updated = {}, rows = {}, {}={}",
-                totalRowCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.limitValue);
+                totalRowCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
 
         totalRowCount += rows;
-        paginateResultWrapper.limitValue += batchCommitSize;
+        paginateResultWrapper.lowerBoundColumnValue += batchCommitSize;
         targetConnect.commit(); // commit latest records if any
         return rows != 0;
     }
