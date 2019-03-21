@@ -72,8 +72,8 @@ public class TestAssetExchangeAPI extends TestBase {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-
-        AssetDTO getAsset = getAsset(assetID);
+ 
+        AssetDTO getAsset = getAsset(assetID);   
         assertTrue(getAsset.name.equals(assetName),String.valueOf(getAsset.asset.equals(issueAsset.transaction)));
         assertTrue(getAsset.accountRS.equals(wallet.getUser()));
         System.out.println("asset = " + getAsset.asset + " ; name = " + getAsset.name + " ;  AccountRS = " + wallet.getUser());
