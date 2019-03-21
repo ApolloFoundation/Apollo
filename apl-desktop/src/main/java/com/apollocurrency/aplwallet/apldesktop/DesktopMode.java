@@ -20,34 +20,17 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
-import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
-
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopMode {
@@ -57,9 +40,6 @@ public class DesktopMode {
     private static DesktopSystemTray desktopSystemTray;
     private static DesktopApplication desktopApp;
     private static String OS = System.getProperty("os.name").toLowerCase();
-    private static PropertiesHolder properties;
-    private static DirProvider dirProvider;
-    private static AplContainer container;
     private static String APIUrl;
     
     public static void main(String[] args) {
@@ -195,16 +175,19 @@ public class DesktopMode {
         Process p;
         try{
             
-            if (RuntimeEnvironment.getInstance().isWindowsRuntime()) 
+            if (System.getProperty("os.name").toLowerCase().contains("win")) 
             {
-                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat");
-                        //.redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
-                        //.redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
+
+                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat")
+                // Some magic: Without Redirect Output will not work on windows
+                        .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
+                        .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
                 pb.start();
             }
             else{
                 ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./apl-start.sh");
                 pb.start();
+
             }
             
         }            

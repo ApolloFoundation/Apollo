@@ -33,15 +33,13 @@ import javax.enterprise.inject.spi.CDI;
 public abstract class DerivedDbTable {
 
     protected final String table;
-    private static DerivedDbTablesRegistry dbTables;
     protected static DatabaseManager databaseManager;
 
     // We should find better place for table init
     protected DerivedDbTable(String table) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        if (dbTables == null) dbTables = CDI.current().select(DerivedDbTablesRegistry.class).get();
-        dbTables.registerDerivedTable(this);
+        DerivedDbTablesRegistry.getInstance().registerDerivedTable(this);
         FullTextConfig.getInstance().registerTable(table);
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
