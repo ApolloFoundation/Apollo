@@ -90,7 +90,7 @@ public class TestAliasAPI extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void deleteAliasTest(Wallet wallet) throws IOException {
-        String aliasname = "setAliasAPI"+String.valueOf(new Date().getTime()).substring(0,6);
+        String aliasname = "setAliasAPI"+String.valueOf(new Date().getTime()).substring(7);
         String aliasset;
         String aliasdelete;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 1000000000, 1400);
@@ -135,7 +135,6 @@ public class TestAliasAPI extends TestBase {
         String aliasname = "Alias"+new Date().getTime();
         String aliasset;
         String aliassell;
-
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.transaction;

@@ -77,8 +77,6 @@ public class TestSmokeAPI extends TestBase {
     }
 
 
-
-
     private CreateTransactionResponse sendMoney(Wallet wallet, int moneyCount, int fee) throws IOException {
         addParameters(RequestType.requestType, RequestType.sendMoney);
         addParameters(Parameters.recipient, wallet.getUser());

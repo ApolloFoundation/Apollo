@@ -65,7 +65,7 @@ public class TestAssetExchangeAPI extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void getAssetTest(Wallet wallet) throws IOException {
         String assetID;
-        String assetName = "assetName0";
+        String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
         String description = "description of assetName";
         Integer quantityATU = 10;
         CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, description, quantityATU);
@@ -243,7 +243,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         String orderID;
         Integer quantityATU = 50;
-        String assetName = "Ask"+String.valueOf(new Date().getTime()).substring(0,6);
+        String assetName = "Ask"+String.valueOf(new Date().getTime()).substring(7);
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset -> placeAskOrder -> getAskOrdersIds -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -307,7 +307,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         String orderID;
         Integer quantityATU = 50;
-        String assetName = "Order000";
+        String assetName = "ASO"+String.valueOf(new Date().getTime()).substring(7);
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset + placeAskOrder + getAskOrders", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -338,7 +338,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
 
         Integer quantityATU = 50;
-        String assetName = "Askorder09";
+        String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetAccountCount API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -372,7 +372,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
 
         Integer quantityATU = 50;
-        String assetName = "ApiTest";
+        String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetAccounts API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -403,7 +403,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
 
         Integer quantityATU = 50;
-        String assetName = "ApiTest";
+        String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetDelete API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -456,7 +456,7 @@ public class TestAssetExchangeAPI extends TestBase {
 
         String assetID;
         Integer quantityATU = 50;
-        String assetName = "Transfer01";
+        String assetName = "TR"+String.valueOf(new Date().getTime()).substring(7);
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "transferAsset API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
