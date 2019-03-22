@@ -1,21 +1,18 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -223,9 +220,6 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(propertiesLoader.load());
-        FullTextConfig fullTextConfig = FullTextConfig.getInstance();
-        fullTextConfig.setDatabaseManager(CDI.current().select(DatabaseManager.class).get());
-        fullTextConfig.setFtl(CDI.current().select(FullTextSearchEngine.class).get());
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();

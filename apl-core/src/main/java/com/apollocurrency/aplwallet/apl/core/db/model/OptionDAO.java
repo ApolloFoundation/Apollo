@@ -13,7 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.slf4j.Logger;
 
@@ -59,7 +59,7 @@ public class OptionDAO {
                 stmt.execute();
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                LOG.error("OptionDAO insert error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         } else {
             try (Connection con = dataSource.getConnection()) {
@@ -69,7 +69,7 @@ public class OptionDAO {
                 stmt.execute();
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                LOG.error("OptionDAO update error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         }
         return true;
@@ -89,6 +89,18 @@ public class OptionDAO {
             }
         }
         return false;
+    }
+
+    public void deleteAll() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        Objects.requireNonNull(dataSource, "dataSource is NULL");
+            try (Connection con = dataSource.getConnection()) {
+                PreparedStatement stmt = con.prepareStatement("DELETE FROM option");
+                int deletedRows = stmt.executeUpdate();
+            }
+            catch (SQLException e) {
+                LOG.error(e.getMessage());
+            }
     }
 
 }

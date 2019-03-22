@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -49,7 +50,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        databaseManager = new DatabaseManager(DbTestData.getInMemDbProps(), propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder);
         folder = getTempFolder();
     }
 

@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
@@ -33,6 +32,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.enterprise.inject.Vetoed;
@@ -61,6 +61,10 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private volatile long txTimes = 0;
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
+    /**
+     * Optional.EMPTY for 'main db', Optional.value 1...xx for shardId, Optional.value NEGATIVE = -1 for temp db only
+     */
+    private Optional<Long> dbIdentity = Optional.empty();
 
     /**
      * Created by CDI with previously initialized properties.
@@ -75,6 +79,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
                 propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
                 propertiesHolder.getBooleanProperty("apl.enableSqlLogs"));
     }
+
     public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {
         super(dbProperties);
         this.stmtThreshold = stmtThreshold;
@@ -82,6 +87,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         this.txInterval = txInterval;
         this.enableSqlLogs = enableSqlLogs;
         this.factory = new FilteredFactoryImpl(stmtThreshold);
+        this.dbIdentity = dbProperties.getDbIdentity();
     }
 
 
@@ -126,7 +132,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
      * {@inheritDoc}
      */
     @Override
-    public void begin() {
+    public Connection begin() {
         if (localConnection.get() != null) {
             throw new IllegalStateException("Transaction already in progress");
         }
@@ -137,6 +143,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             ((DbConnectionWrapper)con).txStart = System.currentTimeMillis();
             localConnection.set((DbConnectionWrapper)con);
             transactionCaches.set(new HashMap<>());
+            return con;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -312,4 +319,12 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         log.debug(sb.toString());
     }
 
+    /**
+     * Return db identity value related to database type - main db, shard db, temp db.
+     * Optional.EMPTY, Optional.1-xxx , Optional. -1
+     * @return Optional.EMPTY for main db, Optional.value +1 for shardId, Optional.value NEGATIVE = -1L for temp db
+     */
+    public Optional<Long> getDbIdentity() {
+        return this.dbIdentity;
+    }
 }

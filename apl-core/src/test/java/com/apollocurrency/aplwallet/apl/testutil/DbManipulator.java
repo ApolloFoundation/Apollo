@@ -4,7 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -12,24 +15,26 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.Objects;
 
 
 public class DbManipulator {
     private static final Logger logger = getLogger(DbManipulator.class);
     protected Path tempDbFile;
-    protected final DatabaseManager databaseManager;
+    protected DatabaseManager databaseManager;
 
     private DbPopulator populator;
 
     public DbManipulator(Path dbFile) {
+        this(dbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(dbFile.toAbsolutePath().toString()), null);
         this.tempDbFile = dbFile;
-        DbProperties dbProperties = tempDbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString());
-        this.databaseManager = new DatabaseManager(dbProperties, new PropertiesHolder());
-        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }
 
+    public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
+        Objects.requireNonNull(dbProperties, "dbProperties is NULL");
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder == null ? new PropertiesHolder() : propertiesHolder);
+        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
+    }
 
     public DbManipulator()  {
         this(null);

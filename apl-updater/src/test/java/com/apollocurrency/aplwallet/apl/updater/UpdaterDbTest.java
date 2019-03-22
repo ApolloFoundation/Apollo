@@ -125,10 +125,11 @@ public class UpdaterDbTest {
                 }
 
                 @Override
-                public void begin() {
+                public Connection begin() {
                     try {
                         connection = dataSource.getConnection();
                         connection.setAutoCommit(false);
+                        return connection;
                     }
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);

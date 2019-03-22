@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -142,8 +143,8 @@ public final class PhasingPoll extends AbstractPoll {
         }
 
         @Override
-        public void trim(int height) {
-            super.trim(height);
+        public void trim(int height, TransactionalDataSource dataSource) {
+            super.trim(height, null);
             try (Connection con = lookupDataSource().getConnection();
                  DbIterator<PhasingPoll> pollsToTrim = phasingPollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
                  PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");

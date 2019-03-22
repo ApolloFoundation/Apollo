@@ -3,12 +3,15 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 import java.util.Arrays;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
 /**
  * Shard db entity
  */
 public class Shard {
     private Long shardId;
     private byte[] shardHash;
+    private Long shardState;
 
     public Shard() {
     }
@@ -25,6 +28,17 @@ public class Shard {
     public Shard(Long shardId, byte[] shardHash) {
         this.shardId = shardId;
         this.shardHash = shardHash;
+    }
+
+    public Shard(Long shardId, String shardHash) {
+        this.shardId = shardId;
+        this.shardHash = Convert.parseHexString(shardHash);
+    }
+
+    public Shard(Long shardId, byte[] shardHash, Long shardState) {
+        this.shardId = shardId;
+        this.shardHash = shardHash;
+        this.shardState = shardState;
     }
 
     @Override
@@ -59,6 +73,14 @@ public class Shard {
         this.shardHash = shardHash;
     }
 
+    public Long getShardState() {
+        return shardState;
+    }
+
+    public void setShardState(Long shardState) {
+        this.shardState = shardState;
+    }
+
     public static ShardBuilder builder() {
         return new ShardBuilder();
     }
@@ -66,6 +88,7 @@ public class Shard {
     public static final class ShardBuilder {
         private Long shardId;
         private byte[] shardHash;
+        private Long shardState;
 
         private ShardBuilder() {
         }
@@ -80,8 +103,13 @@ public class Shard {
             return this;
         }
 
+        public ShardBuilder shardState(Long shardState) {
+            this.shardState = shardState;
+            return this;
+        }
+
         public Shard build() {
-            return new Shard(shardId, shardHash);
+            return new Shard(shardId, shardHash, shardState);
         }
     }
 }

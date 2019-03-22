@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.BlockIndexRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
@@ -11,6 +9,8 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.List;
 
 /**
  * Global Block Index management + retrieving interface
@@ -61,6 +61,18 @@ public interface BlockIndexDao {
     @RegisterRowMapper(BlockIndexRowMapper.class)
     List<BlockIndex> getAllBlockIndex();
 
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM block_index ORDER BY block_height desc LIMIT 1")
+    @RegisterRowMapper(BlockIndexRowMapper.class)
+    BlockIndex getLast();
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT block_height FROM block_index ORDER BY block_height desc LIMIT 1")
+    Integer getLastHeight();
+
+    @Transactional(readOnly = true)
+    @SqlQuery("select count(*) from block_index")
+    int count();
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT count(*) FROM block_index where shard_id =:shardId")

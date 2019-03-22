@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -15,9 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
@@ -26,6 +25,14 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     public DbExtension(Path path) {
         manipulator = new DbManipulator(path);
+    }
+
+    public DbExtension(DbProperties dbProperties) {
+        this(dbProperties, null);
+    }
+
+    public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
+        manipulator = new DbManipulator(dbProperties, propertiesHolder);
     }
 
     public DbExtension() {
@@ -45,10 +52,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     private void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
-        Path tempDbFile = manipulator.getTempDbFile();
-        if (tempDbFile != null) {
-            Files.delete(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
-        }
     }
 
     @Override
@@ -60,6 +63,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
         shutdownDbAndDelete();
+        staticInit = false;
     }
 
     @Override

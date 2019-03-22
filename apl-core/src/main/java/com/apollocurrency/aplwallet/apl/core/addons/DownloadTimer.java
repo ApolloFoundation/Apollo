@@ -35,7 +35,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Map;
 import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DownloadTimer implements AddOn {
         private static final Logger LOG = getLogger(DownloadTimer.class);
 

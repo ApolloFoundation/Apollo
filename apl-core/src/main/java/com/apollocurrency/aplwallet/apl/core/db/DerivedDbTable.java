@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -75,7 +74,7 @@ public abstract class DerivedDbTable {
         }
     }
 
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         //nothing to trim
     }
 

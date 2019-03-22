@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
@@ -78,8 +79,8 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     }
     
     @Override
-    public void trim(int height) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
+    public void trim(int height, TransactionalDataSource dataSource) {
+        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK), dataSource);
     }
 
     @Override

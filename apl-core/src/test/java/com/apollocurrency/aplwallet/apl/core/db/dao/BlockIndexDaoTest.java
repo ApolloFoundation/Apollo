@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.*;
@@ -5,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -32,7 +36,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 @EnableWeld
@@ -166,6 +169,44 @@ public class BlockIndexDaoTest {
         assertEquals(blockIndex, copy);
         List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
         assertEquals(Arrays.asList(BLOCK_INDEX_0, copy, BLOCK_INDEX_2), allBlockIndex);
+    }
+
+    @Test
+    void testCount() {
+        int actualCount = blockIndexDao.count();
+        assertEquals(BLOCK_INDEXES.size(), actualCount);
+    }
+
+    @Test
+    void testGetLast() {
+        BlockIndex last = blockIndexDao.getLast();
+
+        assertEquals(BLOCK_INDEX_0, last);
+    }
+
+    @Test
+    void getLastHeight() {
+        Integer height = blockIndexDao.getLastHeight();
+
+        assertEquals(BLOCK_INDEX_0.getBlockHeight(), height);
+    }
+
+    @Test
+    void getLastHeightWhenNoBlockIndexesExist() {
+        blockIndexDao.hardDeleteAllBlockIndex();
+
+        Integer height = blockIndexDao.getLastHeight();
+
+        assertNull(height);
+    }
+
+    @Test
+    void getLastWhenNoBlockIndexesExist() {
+        blockIndexDao.hardDeleteAllBlockIndex();
+
+        BlockIndex last = blockIndexDao.getLast();
+
+        assertNull(last);
     }
 
     @Test

@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -28,6 +28,7 @@ import java.util.Arrays;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -39,6 +40,7 @@ public class ChecksumObserver {
     private final DatabaseManager databaseManager;
     private final Blockchain blockchain;
 
+    @Inject
     public ChecksumObserver(DatabaseManager databaseManager, Blockchain blockchain) {
         this.databaseManager = databaseManager;
         this.blockchain = blockchain;

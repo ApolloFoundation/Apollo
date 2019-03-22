@@ -35,6 +35,7 @@ public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCa
     @Override
     public void afterEach(ExtensionContext extensionContext) {
         delete(folder);
+        folder = null;
     }
 
     @Override

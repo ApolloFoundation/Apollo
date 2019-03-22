@@ -208,7 +208,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 long startDeleteDeletedTime = System.currentTimeMillis();
 //                int totalDeleteDeleted = deleteDeletedOldAlgo(pstmtDeleteDeleted, height);
                 int totalDeleteDeleted = deleteDeletedNewAlgo(pstmtSelectDeleteDeletedIds, pstmtSelectDeleteDeletedCandidates, pstmtDeletedById,
-                        dbKeyFactory, height);
+                        dbKeyFactory, height, dataSource);
                 LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
@@ -224,7 +224,8 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
     private static int deleteDeletedNewAlgo(PreparedStatement pstmtSelectDeleteDeletedIds,
                                             PreparedStatement pstmtSelectDeleteDeletedCandidates,
                                             PreparedStatement pstmtDeletedById, KeyFactory dbKeyFactory,
-                                            int height) throws SQLException {
+                                            int height,
+                                            TransactionalDataSource dataSource) throws SQLException {
         int deleted = 0;
         pstmtSelectDeleteDeletedIds.setInt(1, height);
         Set<DbKey> ids = new HashSet<>();
@@ -234,7 +235,9 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             }
         }
         pstmtSelectDeleteDeletedCandidates.setInt(1, height);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (dataSource == null) {
+            dataSource = databaseManager.getDataSource();
+        }
         try (ResultSet candidatesRs = pstmtSelectDeleteDeletedCandidates.executeQuery()) {
             while (candidatesRs.next()) {
                 DbKey dbKey = dbKeyFactory.newKey(candidatesRs);

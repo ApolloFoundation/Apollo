@@ -27,7 +27,7 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
         long start = System.currentTimeMillis();
         boolean b = super.execute();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > stmtThreshold)
+        if (elapsed > stmtThreshold && blockchain != null) // blockchain can be NULL in unit test only
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
                     (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
         return b;
@@ -38,7 +38,7 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
         long start = System.currentTimeMillis();
         ResultSet r = super.executeQuery();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > stmtThreshold)
+        if (elapsed > stmtThreshold && blockchain != null) // blockchain can be NULL in unit test only
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
                     (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
         return r;
@@ -49,7 +49,7 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
         long start = System.currentTimeMillis();
         int c = super.executeUpdate();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > stmtThreshold)
+        if (elapsed > stmtThreshold && blockchain != null) // blockchain can be NULL in unit test only
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
                     (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
         return c;

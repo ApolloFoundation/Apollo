@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -57,8 +57,8 @@ public final class Vote {
         }
 
         @Override
-        public void trim(int height) {
-            super.trim(height);
+        public void trim(int height, TransactionalDataSource dataSource) {
+            super.trim(height, dataSource);
             try (Connection con = databaseManager.getDataSource().getConnection();
                  DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
