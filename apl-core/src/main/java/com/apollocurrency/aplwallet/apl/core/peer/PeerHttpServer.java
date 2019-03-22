@@ -86,6 +86,7 @@ public class PeerHttpServer {
             }
             peerServer.setHandler(ctxHandler);
             peerServer.setStopAtShutdown(true);
+            
             ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
                 try {
                     if (enablePeerUPnP) {
