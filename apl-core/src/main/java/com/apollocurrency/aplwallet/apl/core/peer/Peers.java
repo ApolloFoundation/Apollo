@@ -366,7 +366,7 @@ public final class Peers {
         }
 
         ThreadPool.runAfterStart("UnresolvedPeersAnalyzer", new UnresolvedPeersAnalyzer(unresolvedPeers));
-        
+  // -- above was static section      
         PeerHttpServer.init();
         // get main db data source
         TransactionalDataSource dataSource = lookupDataSource();
