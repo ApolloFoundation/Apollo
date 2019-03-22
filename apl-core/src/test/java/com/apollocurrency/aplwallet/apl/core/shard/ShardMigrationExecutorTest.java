@@ -16,6 +16,7 @@ import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -57,9 +59,9 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -67,15 +69,14 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collections;
-import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-@Disabled
 @EnableWeld
 class ShardMigrationExecutorTest {
     private static final Logger log = getLogger(ShardMigrationExecutorTest.class);
 
     private static String BASE_SUB_DIR = "unit-test-db";
+    private static final String SHA_512 = "SHA-512";
     private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
 
     @RegisterExtension
@@ -83,20 +84,14 @@ class ShardMigrationExecutorTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+            PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             TransactionTestData.class, PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
             DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
-/*
-            PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            TransactionTestData.class, PropertyProducer.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
-*/
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
+            BlockImpl.class, ShardMigrationExecutor.class)
+            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -107,6 +102,8 @@ class ShardMigrationExecutorTest {
 
     private static PropertiesHolder propertiesHolder;
     private static DbProperties baseDbProperties;
+    private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
@@ -114,12 +111,6 @@ class ShardMigrationExecutorTest {
     private DataTransferManagementReceiver managementReceiver;
     @Inject
     private DerivedDbTablesRegistry dbTablesRegistry;
-    @Inject
-    private Event<MigrateState> migrateStateEvent;
-    @Inject
-    BlockIndexDao blockIndexDao;
-    @Inject
-    ShardingHashCalculator shardingHashCalculator;
     @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
 
@@ -135,6 +126,8 @@ class ShardMigrationExecutorTest {
         propertiesHolder.init(propertiesLoader.load());
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
+        Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
+        Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
 
     @BeforeEach
@@ -146,55 +139,12 @@ class ShardMigrationExecutorTest {
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
+        extension.getDatabaseManger().shutdown();
         FileUtils.deleteQuietly(pathToDb.toFile());
     }
-
-/*
-    @BeforeAll
-    static void setUpAll() {
-        Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
-        String workingDir = System.getProperty("user.dir");
-        // path to temporary databaseManager inside project
-        pathToDb = FileSystems.getDefault().getPath(workingDir + File.separator  + BASE_SUB_DIR);
-
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
-        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                configDirProvider,
-                false,
-                "./" + BASE_SUB_DIR,
-                Constants.APPLICATION_DIR_NAME + ".properties",
-                Collections.emptyList());
-        propertiesHolder = new PropertiesHolder();
-        propertiesHolder.init(propertiesLoader.load());
-        dbConfig = new DbConfig(propertiesHolder);
-        dbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
-    }
-
-    @BeforeEach
-    void setUp() {
-        blockchain = CDI.current().select(BlockchainImpl.class).get();
-        propertyProducer = new PropertyProducer(propertiesHolder);
-        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
-        dbTablesRegistry.registerDerivedTable(publicKeyTable);
-        trimService = new TrimService(false, 100,720, databaseManager, dbTablesRegistry, globalSync);
-        transferManagementReceiver = new DataTransferManagementReceiverImpl(databaseManager, trimService);
-        shardMigrationExecutor = new ShardMigrationExecutor(transferManagementReceiver, migrateStateEvent, shardingHashCalculator, blockIndexDao);
-    }
-*/
-
-/*
-    @AfterEach
-    void tearDownAll() {
-        FileUtils.deleteQuietly(pathToDb.toFile());
-    }
-*/
 
     @Test
     void executeAllOperations() throws IOException {
-//        assertNotNull(databaseManager);
-
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardInitTableSchemaVersion());
         MigrateState state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
@@ -233,8 +183,7 @@ class ShardMigrationExecutorTest {
 
     @Test
     void executeAll() {
-//        assertNotNull(databaseManager);
-        shardMigrationExecutor.createAllCommands(0);
+        shardMigrationExecutor.createAllCommands(8000);
         MigrateState state = shardMigrationExecutor.executeAllOperations();
 //        assertEquals(FAILED, state);
         assertEquals(COMPLETED, state);

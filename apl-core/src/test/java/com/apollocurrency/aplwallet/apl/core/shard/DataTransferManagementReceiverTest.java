@@ -128,6 +128,7 @@ class DataTransferManagementReceiverTest {
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
+        extension.getDatabaseManger().shutdown();
         FileUtils.deleteQuietly(pathToDb.toFile());
     }
 

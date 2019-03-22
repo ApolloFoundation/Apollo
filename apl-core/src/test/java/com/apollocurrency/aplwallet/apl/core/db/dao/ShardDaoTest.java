@@ -149,35 +149,34 @@ class ShardDaoTest {
         assertEquals(2, count);
     }
 
-    @Disabled
-//    @Test
+    @Test
     void insertDelete() {
         long maxId = dao.getMaxShardId();
-        assertEquals(1, maxId);
+        assertEquals(3, maxId);
 
-        Shard shard = new Shard(1L, "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f");
+        Shard shard = new Shard(3L, "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f");
         dao.saveShard(shard);
         List<Shard> result = dao.getAllShard();
         assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(3, result.size());
         assertNotNull(result.get(0).getShardId());
         assertNotNull(result.get(0).getShardHash());
 
         long count = dao.countShard();
-        assertEquals(1, count);
+        assertEquals(3, count);
         maxId = dao.getMaxShardId();
-        assertEquals(2, maxId);
+        assertEquals(4, maxId);
 
         long nextId = dao.getNextShardId();
-        assertEquals(2, nextId);
+        assertEquals(4, nextId);
 
-        Shard shard2 = new Shard(2L, "0000002");
+        Shard shard2 = new Shard(5L, "0000005");
         dao.saveShard(shard2);
 
         maxId = dao.getMaxShardId();
-        assertEquals(3, maxId);
+        assertEquals(6, maxId);
 
-        Shard found1 = dao.getShardById(1L);
+        Shard found1 = dao.getShardById(3L);
         assertNotNull(found1);
         assertNotNull(found1.getShardId());
         assertArrayEquals(parseHexString("aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"),
@@ -186,13 +185,13 @@ class ShardDaoTest {
         found1.setShardHash("000000123".getBytes());
         dao.updateShard(found1);
 
-        Shard found3 = dao.getShardById(1L);
+        Shard found3 = dao.getShardById(3L);
         assertNotNull(found3);
         assertArrayEquals("000000123".getBytes(), found3.getShardHash());
 
         dao.hardDeleteShard(1L);
         count = dao.countShard();
-        assertEquals(1, count);
+        assertEquals(3, count);
 
         dao.hardDeleteAllShards();
     }

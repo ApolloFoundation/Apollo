@@ -11,7 +11,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class ReferencedTransactionService {
     private static final int DEFAULT_MAX_REFERENCED_TRANSACTIONS = 9;
     private ReferencedTransactionDao referencedTransactionDao;
