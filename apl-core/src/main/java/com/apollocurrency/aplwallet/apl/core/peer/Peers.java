@@ -164,7 +164,7 @@ public final class Peers {
 
     static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
-
+    static PeerHttpServer peerHttpServer = new PeerHttpServer();
     private Peers() {} // never
  
     private static TransactionalDataSource lookupDataSource() {
@@ -183,9 +183,9 @@ public final class Peers {
     public static void init() {
         String myHost = null;
         int myPort = -1;
-        if (PeerHttpServer.myAddress != null) {
+        if (peerHttpServer.myAddress != null) {
             try {
-                URI uri = new URI("http://" + PeerHttpServer.myAddress);
+                URI uri = new URI("http://" + peerHttpServer.myAddress);
                 myHost = uri.getHost();
                 myPort = (uri.getPort() == -1 ? Peers.getDefaultPeerPort() : uri.getPort());
                 InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
@@ -232,7 +232,7 @@ public final class Peers {
                 if (!hallmark.isValid()) {
                     throw new RuntimeException("Hallmark is not valid");
                 }
-                if (PeerHttpServer.myAddress != null) {
+                if (peerHttpServer.myAddress != null) {
                     if (!hallmark.getHost().equals(myHost)) {
                         throw new RuntimeException("Invalid hallmark host");
                     }
@@ -241,29 +241,29 @@ public final class Peers {
                     }
                 }
             } catch (RuntimeException e) {
-                LOG.error("Your hallmark is invalid: " + Peers.myHallmark + " for your address: " + PeerHttpServer.myAddress);
+                LOG.error("Your hallmark is invalid: " + Peers.myHallmark + " for your address: " + peerHttpServer.myAddress);
                 throw new RuntimeException(e.toString(), e);
             }
         }
         List<Peer.Service> servicesList = new ArrayList<>();
         JSONObject json = new JSONObject();
-        if (PeerHttpServer.myAddress != null) {
+        if (peerHttpServer.myAddress != null) {
             try {
-                URI uri = new URI("http://" + PeerHttpServer.myAddress);
+                URI uri = new URI("http://" + peerHttpServer.myAddress);
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
                 if (port >= 0) {
-                    announcedAddress = PeerHttpServer.myAddress;
+                    announcedAddress = peerHttpServer.myAddress;
                 } else {
-                    announcedAddress = host + (PeerHttpServer.myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + PeerHttpServer.myPeerServerPort : "");
+                    announcedAddress = host + (peerHttpServer.myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + peerHttpServer.myPeerServerPort : "");
                 }
                 if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                     throw new RuntimeException("Invalid announced address length: " + announcedAddress);
                 }
                 json.put("announcedAddress", announcedAddress);
             } catch (URISyntaxException e) {
-                LOG.info("Your announce address is invalid: " + PeerHttpServer.myAddress);
+                LOG.info("Your announce address is invalid: " + peerHttpServer.myAddress);
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -273,9 +273,9 @@ public final class Peers {
         }
         json.put("application", Constants.APPLICATION);
         json.put("version",Constants.VERSION.toString());
-        json.put("platform", PeerHttpServer.myPlatform);
+        json.put("platform", peerHttpServer.myPlatform);
         json.put("chainId", blockchainConfig.getChain().getChainId());
-        json.put("shareAddress", PeerHttpServer.shareMyAddress);
+        json.put("shareAddress", peerHttpServer.shareMyAddress);
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
@@ -367,7 +367,7 @@ public final class Peers {
 
         ThreadPool.runAfterStart("UnresolvedPeersAnalyzer", new UnresolvedPeersAnalyzer(unresolvedPeers));
   // -- above was static section      
-        PeerHttpServer.init();
+
         // get main db data source
         TransactionalDataSource dataSource = lookupDataSource();
 
@@ -401,18 +401,18 @@ public final class Peers {
 
     public static void shutdown() {
         shutdown = true;
-        PeerHttpServer.shutdown();
+        peerHttpServer.shutdown();
         ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
         ThreadPool.shutdownExecutor("peersService", peersService, 5);
     }
 
     public static void suspend() {
-        suspend =  PeerHttpServer.suspend();
+        suspend =  peerHttpServer.suspend();
     }
 
     public static void resume() {
         if(suspend) {
-         suspend = !PeerHttpServer.resume();         
+         suspend = !peerHttpServer.resume();         
         }
     }
 
@@ -549,7 +549,7 @@ public final class Peers {
             return null;
         }
 
-        if (PeerHttpServer.myAddress != null && PeerHttpServer.myAddress.equalsIgnoreCase(announcedAddress)) {
+        if (peerHttpServer.myAddress != null && peerHttpServer.myAddress.equalsIgnoreCase(announcedAddress)) {
             return null;
         }
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {

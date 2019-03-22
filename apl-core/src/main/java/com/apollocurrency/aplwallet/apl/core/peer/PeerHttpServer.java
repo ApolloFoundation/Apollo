@@ -31,22 +31,19 @@ public class PeerHttpServer {
      
      static final int MAX_PLATFORM_LENGTH = 30;
     
-     static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();   
-     static boolean shareMyAddress;
-     static int myPeerServerPort;
-     static boolean enablePeerUPnP;    
-     static String myPlatform;
-     static String myAddress;
-     static Server peerServer;
+     PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();   
+     boolean shareMyAddress;
+     int myPeerServerPort;
+     boolean enablePeerUPnP;    
+     String myPlatform;
+     String myAddress;
+     Server peerServer;
     
     //TODO: remove static context
     static final UPnP upnp = UPnP.getInstance();
     
-    private PeerHttpServer() {
-    }
-    
-    public static void init()
-    {
+    public PeerHttpServer() {
+
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
         myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
         String platform = propertiesHolder.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
@@ -112,11 +109,11 @@ public class PeerHttpServer {
         }
     }
     
-    public static void shutdown(){
+    public void shutdown(){
         if (peerServer != null) {
             try {
                 peerServer.stop();
-                if (PeerHttpServer.enablePeerUPnP) {
+                if (enablePeerUPnP) {
                     Connector[] peerConnectors = peerServer.getConnectors();
                     for (Connector peerConnector : peerConnectors) {
                         if (peerConnector instanceof ServerConnector)
@@ -129,7 +126,7 @@ public class PeerHttpServer {
         }        
     }
     
-    public static boolean suspend(){
+    public boolean suspend(){
          boolean res = false;
            if (peerServer != null) {
             try {
@@ -142,7 +139,7 @@ public class PeerHttpServer {
         return res;
     }
     
-    public static boolean resume() {
+    public  boolean resume() {
         boolean res = false;
         if (peerServer != null) {
             try {
