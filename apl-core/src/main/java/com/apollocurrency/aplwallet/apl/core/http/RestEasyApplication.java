@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 
 
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
 /**
@@ -25,10 +26,11 @@ public class RestEasyApplication extends Application  {
     @Override
     public Set<Class<?>> getClasses() {
 
-        HashSet<Class<?>> set = new HashSet<Class<?>>();
+        HashSet<Class<?>> set = new HashSet<>();
         set.add(Metadata.class);
-        set.add( ServerInfoEndpoint.class);        
-        set.add(BackendControlEndpoint.class); 
+        set.add(ServerInfoEndpoint.class);
+        set.add(KeyStoreController.class);
+        set.add(BackendControlEndpoint.class);
         
         //TODO: add all endpoints below
         //swagger openapi endpoint

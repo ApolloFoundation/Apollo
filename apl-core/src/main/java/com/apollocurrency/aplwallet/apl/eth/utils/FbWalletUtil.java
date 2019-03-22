@@ -15,6 +15,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
  import org.slf4j.LoggerFactory;
 
  import java.io.File;
+ import java.io.FileInputStream;
  import java.nio.file.Path;
  import java.util.Objects;
  import java.util.regex.Pattern;
@@ -71,13 +72,13 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
         fbWallet.addKey(kr);
 
         DataRecord drSecretK = new DataRecord();
-        dr.alias = APL_SECRET_KEY_ALIAS;
-        dr.data = Convert.toHexString(aplWalletKey.getSecretBytes());
-        dr.encoding = "HEX";
+        drSecretK.alias = APL_SECRET_KEY_ALIAS;
+        drSecretK.data = Convert.toHexString(aplWalletKey.getSecretBytes());
+        drSecretK.encoding = "HEX";
         KeyRecord krSecretK = new KeyRecord();
-        kr.alias = dr.alias;
-        kr.keyType = KeyTypes.APOLLO_OLD;
-        kr.publicKey = Convert.toHexString(aplWalletKey.getPublicKey());
+        krSecretK.alias = drSecretK.alias;
+        krSecretK.keyType = KeyTypes.APOLLO_OLD;
+        krSecretK.publicKey = Convert.toHexString(aplWalletKey.getPublicKey());
         fbWallet.addData(drSecretK);
         fbWallet.addKey(krSecretK);
     }
@@ -123,5 +124,27 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
              return null;
          }
      }
+
+
+     public static FbWallet buildWallet(byte[] keyStore, String passPhrase){
+        if(passPhrase == null || keyStore == null || keyStore.length==0){
+            return null;
+        }
+
+        try {
+            File file = FileUtil.createFile(keyStore, "temporal");
+
+            FbWallet fbWallet = new FbWallet();
+            fbWallet.readOpenData(new FileInputStream(file));
+            byte[] key = fbWallet.keyFromPassPhrase(passPhrase, fbWallet.getContanerIV());
+            fbWallet.openStream(new FileInputStream(file), key);
+            return fbWallet;
+        } catch (Exception ex){
+            LOG.error(ex.getMessage(), ex);
+            return null;
+        }
+
+     }
+
 
 }

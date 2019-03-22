@@ -21,6 +21,13 @@ public class AplWalletKey extends BasicAccount {
     @JsonIgnore
     private byte[] secretBytes;
 
+    public AplWalletKey(long id, byte[] publicKey, byte[] privateKey, byte[] secretBytes) {
+        this.id = id;
+        this.publicKey = publicKey;
+        this.privateKey = privateKey;
+        this.secretBytes = secretBytes;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -63,14 +70,6 @@ public class AplWalletKey extends BasicAccount {
 
     public void setPassphrase(String passphrase) {
         this.passphrase = passphrase;
-    }
-
-    public AplWalletKey(long id, byte[] publicKey, byte[] privateKey, byte[] secretBytes) {
-        this.id = id;
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
-//        this.passphrase = passphrase;
-        this.secretBytes = secretBytes;
     }
 
     public void setSecretBytes(byte[] secretBytes) {

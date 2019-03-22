@@ -15,6 +15,7 @@ public class NewApiRegistry {
     private static Map<String,String> apis = new HashMap<>();
     static{
         apis.put("getServerInfo", "/rest/serverinfo"); 
+        apis.put("uploadKeyStore", "/rest/keyStore/upload");
         //TODO: add new implemented endpoints
     }
     public static String getRestPath(String rqType) {

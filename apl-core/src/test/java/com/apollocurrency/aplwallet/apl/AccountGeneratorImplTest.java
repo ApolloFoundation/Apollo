@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
-import com.apollocurrency.aplwallet.apl.core.app.AccountGeneratorImpl;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AccountGeneratorImplTest {
-    private AccountGenerator accountGenerator = new AccountGeneratorImpl();
+    private AccountGeneratorUtil accountGenerator = new AccountGeneratorUtil();
     private static final String MESSAGE = "Test message";
 
     @Test

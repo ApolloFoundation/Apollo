@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -13,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.WalletsInfo;
+import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
@@ -40,8 +40,7 @@ public class Helper2FA {
    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static final VaultKeyStore KEYSTORE = CDI.current().select(VaultKeyStore.class).get();
    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
-   private static final AccountGenerator accountGenerator = new AccountGeneratorImpl();
-    
+
      public static void init(DatabaseManager databaseManagerParam) {
         DatabaseManager databaseManager = databaseManagerParam;
         service2FA = new TwoFactorAuthServiceImpl(
@@ -161,8 +160,8 @@ public class Helper2FA {
         }
 
         FbWallet fbWallet = new FbWallet();
-        AplWalletKey aplAccount = secretApl == null ? accountGenerator.generateApl() : accountGenerator.generateApl(secretApl);
-        EthWalletKey ethAccount = accountGenerator.generateEth();
+        AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : AccountGeneratorUtil.generateApl(secretApl);
+        EthWalletKey ethAccount = AccountGeneratorUtil.generateEth();
 
         FbWalletUtil.addAplKey(aplAccount, fbWallet);
         FbWalletUtil.addEthKey(ethAccount, fbWallet);

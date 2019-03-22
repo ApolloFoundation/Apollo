@@ -10,6 +10,9 @@ import java.io.File;
 
 public interface VaultKeyStore {
 
+
+    Status saveSecretKeyStore(String passphrase, FbWallet fbWallet);
+
     /**
      * Save encrypted by passphrase secretStore in the json format.
      * @param passphrase - string, which consist of random words for encryption
@@ -72,5 +75,14 @@ public interface VaultKeyStore {
             this.message = message;
         }
         public String message;
+
+        public boolean isOK(){
+            return this.message.equals(Status.OK.message);
+        }
+
+        public boolean isDuplicate(){
+            return this.message.equals(Status.DUPLICATE_FOUND.message);
+        }
+
     }
 }

@@ -5,6 +5,8 @@
  package com.apollocurrency.aplwallet.apl.core.app;
 
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+ import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
+ import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
@@ -171,13 +173,23 @@
          return saved ? Status.OK : Status.WRITE_ERROR;
      }
 
+    public Status saveSecretKeyStore(String passphrase, FbWallet fbWallet) {
+        String aplKeySecret = FbWalletUtil.getAplKeySecret(fbWallet);
+
+        AplWalletKey aplWalletKey = AccountGeneratorUtil.generateApl(Convert.parseHexString(aplKeySecret));
+
+        return saveSecretKeyStore(aplWalletKey.getId(), passphrase, fbWallet);
+    }
+
     @Override
     public Status saveSecretKeyStore(Long accountId, String passphrase, FbWallet fbWallet) {
         byte[] salt = generateBytes(12);
         Path path;
 
         try {
-            fbWallet.setOpenData(salt);
+            if(isAccountExist(accountId)){
+                return Status.DUPLICATE_FOUND;
+            }
 
             byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
             path = makeTargetPathForNewAccount(accountId);
@@ -220,8 +232,8 @@
 
         FbWallet fbWallet = new FbWallet();
         try {
-            fbWallet.openFile(secretPath.toString());
-            byte[] salt = fbWallet.getOpenData();
+            fbWallet.readOpenData(secretPath.toString());
+            byte[] salt = fbWallet.getContanerIV();
             byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
 
             fbWallet.openFile(secretPath.toString(), key);

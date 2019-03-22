@@ -2,10 +2,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.utils;
 
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.core.account.AccountGenerator;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -14,14 +13,17 @@ import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class AccountGeneratorImpl implements AccountGenerator {
-    private static final Logger log = getLogger(AccountGeneratorImpl.class);
+public class AccountGeneratorUtil {
+    private static final Logger log = getLogger(AccountGeneratorUtil.class);
 
-    public AccountGeneratorImpl() {
+    public AccountGeneratorUtil() {
     }
 
-    @Override
-    public AplWalletKey generateApl() {
+    /**
+     * Generate new account with random key.
+     * @return AplWallet
+     */
+    public static AplWalletKey generateApl() {
         byte[] secretBytes = new byte[32];
         Crypto.getSecureRandom().nextBytes(secretBytes);
         byte[] keySeed = Crypto.getKeySeed(secretBytes);
@@ -31,8 +33,11 @@ public class AccountGeneratorImpl implements AccountGenerator {
         return new AplWalletKey(accountId, accountPublicKey, privateKey, secretBytes);
     }
 
-    @Override
-    public AplWalletKey generateApl(byte[] secretBytes) {
+    /**
+     * Generate new account with predefined secret key.
+     * @return AplWallet
+     */
+    public static AplWalletKey generateApl(byte[] secretBytes) {
         byte[] keySeed = Crypto.getKeySeed(secretBytes);
         byte[] privateKey = Crypto.getPrivateKey(keySeed);
         byte[] accountPublicKey = Crypto.getPublicKey((keySeed));
@@ -40,8 +45,11 @@ public class AccountGeneratorImpl implements AccountGenerator {
         return new AplWalletKey(accountId, accountPublicKey, privateKey, secretBytes);
     }
 
-    @Override
-    public EthWalletKey generateEth() {
+    /**
+     * Generate new account with random key.
+     * @return EthWallet
+     */
+    public static EthWalletKey generateEth() {
         return EthUtil.generateNewAccount();
     }
 }
