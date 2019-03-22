@@ -690,7 +690,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
                 // SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT NOT NULL, shard_hash VARBINARY not null, shard_state BIGINT)");
+                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY not null, shard_state BIGINT)");
             case 252:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 253:

@@ -121,7 +121,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         try (Connection con = transactionalDataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(shardSelect)) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
+                if (rs.next()) {
                     result.add(rs.getLong("shard_id"));
                 }
             }

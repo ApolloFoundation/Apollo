@@ -137,7 +137,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
             }
         } catch (Exception e) {
-            log.error("Error processing table = '" + currentTable + "'", e);
+            log.error("Error COPY processing table = '" + currentTable + "'", e);
             targetDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
@@ -194,7 +194,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
             }
         } catch (Exception e) {
-            log.error("Error processing table = '" + currentTable + "'", e);
+            log.error("Error RELINK processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
@@ -244,7 +244,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
             }
         } catch (Exception e) {
-            log.error("Error processing table = '" + currentTable + "'", e);
+            log.error("Error UPDATE S/Index processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
@@ -293,7 +293,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
             }
         } catch (Exception e) {
-            log.error("Error processing table = '" + currentTable + "'", e);
+            log.error("Error DELETE processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
