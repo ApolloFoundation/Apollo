@@ -57,7 +57,7 @@ public class DbMigrationExecutorTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
 
-    private Path targetDbDir = temporaryFolder.newFolder("target").toPath();
+    private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
     private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
     @WeldSetup
@@ -77,7 +77,14 @@ public class DbMigrationExecutorTest {
     @Inject
     private DatabaseManager databaseManager;
 
-
+    private Path createTempDir() {
+        try {
+            return temporaryFolder.newFolder().toPath();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Unable to create dbMigration TARGET dir");
+        }
+    }
     @BeforeEach
     void setUp() throws IOException {
         this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(

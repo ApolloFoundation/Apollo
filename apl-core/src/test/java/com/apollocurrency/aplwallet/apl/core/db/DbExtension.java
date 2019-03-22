@@ -16,9 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
@@ -27,6 +25,10 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     public DbExtension(Path path) {
         manipulator = new DbManipulator(path);
+    }
+
+    public DbExtension(DbProperties dbProperties) {
+        this(dbProperties, null);
     }
 
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
@@ -50,10 +52,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     private void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
-        Path tempDbFile = manipulator.getTempDbFile();
-        if (tempDbFile != null) {
-            Files.delete(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
-        }
     }
 
     @Override
@@ -65,6 +63,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
         shutdownDbAndDelete();
+        staticInit = false;
     }
 
     @Override

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -15,27 +17,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 
 public class DbManipulator {
     private static final Logger logger = getLogger(DbManipulator.class);
     protected Path tempDbFile;
-    protected /*final */DatabaseManager databaseManager;
+    protected DatabaseManager databaseManager;
 
     private DbPopulator populator;
 
     public DbManipulator(Path dbFile) {
+        this(dbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(dbFile.toAbsolutePath().toString()), null);
         this.tempDbFile = dbFile;
-        DbProperties dbProperties = tempDbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(tempDbFile.toAbsolutePath().toString());
-        this.databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder());
-        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }
 
     public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         Objects.requireNonNull(dbProperties, "dbProperties is NULL");
-        Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
-        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder == null ? new PropertiesHolder() : propertiesHolder);
         this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
     }
 

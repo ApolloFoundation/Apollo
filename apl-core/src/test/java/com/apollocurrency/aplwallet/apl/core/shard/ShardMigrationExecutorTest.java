@@ -13,15 +13,14 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -43,14 +42,10 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataComm
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -62,29 +57,28 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.Properties;
 import javax.inject.Inject;
 
 @EnableWeld
 class ShardMigrationExecutorTest {
-    private static final Logger log = getLogger(ShardMigrationExecutorTest.class);
 
-    private static String BASE_SUB_DIR = "unit-test-db";
     private static final String SHA_512 = "SHA-512";
-    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(getTempFilePath("shardMigrationTestDb").toAbsolutePath().toString()));
+    static PropertiesHolder propertiesHolder = initPropertyHolder();
+    private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
+            BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             TransactionTestData.class, PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
@@ -96,14 +90,10 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(baseDbProperties, DbProperties.class))
+            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .build();
 
 
-    private static PropertiesHolder propertiesHolder;
-    private static DbProperties baseDbProperties;
-    private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
@@ -116,16 +106,6 @@ class ShardMigrationExecutorTest {
 
     @BeforeAll
     static void setUpAll() {
-        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                null,
-                false,
-                null,
-                Constants.APPLICATION_DIR_NAME + ".properties",
-                Collections.emptyList());
-        propertiesHolder = new PropertiesHolder();
-        propertiesHolder.init(propertiesLoader.load());
-        DbConfig dbConfig = new DbConfig(propertiesHolder);
-        baseDbProperties = dbConfig.getDbConfig();
         Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
@@ -139,8 +119,6 @@ class ShardMigrationExecutorTest {
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
-        extension.getDatabaseManger().shutdown();
-        FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
     @Test
@@ -187,5 +165,25 @@ class ShardMigrationExecutorTest {
         MigrateState state = shardMigrationExecutor.executeAllOperations();
 //        assertEquals(FAILED, state);
         assertEquals(COMPLETED, state);
+    }
+
+    private Path getTempFilePath(String fileName) {
+        try {
+            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Unable to create shard db file", e);
+        }
+    }
+    private static PropertiesHolder initPropertyHolder() {
+        PropertiesHolder propertiesHolder = new PropertiesHolder();
+        Properties properties = new Properties();
+        properties.put("apl.trimFrequency", 1000);
+        properties.put("apl.trimDerivedTables", true);
+        properties.put("apl.maxRollback", 21600);
+
+        propertiesHolder.init(properties);
+        return propertiesHolder;
+
     }
 }

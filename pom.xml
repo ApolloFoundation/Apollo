@@ -48,7 +48,7 @@
         <servlet-api.version>3.1.0</servlet-api.version>
 
         <!--Crypto-->
-        <fbcrypto.version>1.2.5</fbcrypto.version>
+        <fbcrypto.version>1.2.6</fbcrypto.version>
         <bcprov.version>1.60</bcprov.version>
 
         <!--QR-code-->

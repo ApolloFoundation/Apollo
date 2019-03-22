@@ -9,68 +9,21 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.AfterAll;
+import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.nio.file.Path;
-import java.util.Collections;
 
-@EnableWeld
 class OptionDAOTest {
+    @RegisterExtension
+    static DbExtension dbExtension = new DbExtension();
 
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesConfigLoader.class, GlobalSyncImpl.class, DerivedDbTablesRegistry.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DbConfig.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            TransactionalDataSource.class, DatabaseManagerImpl.class)
-            .build();
-
-    private static Path pathToDb;
-    private static PropertiesHolder propertiesHolder;
-    private static DbProperties baseDbProperties;
-    private static DatabaseManager databaseManager;
     private static OptionDAO optionDAO;
 
     @BeforeAll
-    static void setUpAll() {
-        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                null,
-                false,
-                null,
-                Constants.APPLICATION_DIR_NAME + ".properties",
-                Collections.emptyList());
-        propertiesHolder = new PropertiesHolder();
-        propertiesHolder.init(propertiesLoader.load());
-        DbConfig dbConfig = new DbConfig(propertiesHolder);
-        baseDbProperties = dbConfig.getDbConfig();
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
-        optionDAO = new OptionDAO(databaseManager);
-    }
-
-    @AfterAll
-    static void stopAll() {
-        databaseManager.shutdown();
+    static void init() {
+        optionDAO = new OptionDAO(dbExtension.getDatabaseManger());
     }
 
     @Test
