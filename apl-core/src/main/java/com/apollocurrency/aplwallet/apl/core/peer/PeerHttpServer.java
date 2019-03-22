@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
@@ -24,8 +22,8 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- *
- * @author al
+ * Peer HTTP server that handles http requests and PeerWebSockets
+ * @author alukin@gmail.com
  */
 public class PeerHttpServer {
     
@@ -114,4 +112,48 @@ public class PeerHttpServer {
         }
     }
     
+    public static void shutdown(){
+        if (peerServer != null) {
+            try {
+                peerServer.stop();
+                if (PeerHttpServer.enablePeerUPnP) {
+                    Connector[] peerConnectors = peerServer.getConnectors();
+                    for (Connector peerConnector : peerConnectors) {
+                        if (peerConnector instanceof ServerConnector)
+                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
+                    }
+                }
+            } catch (Exception e) {
+                LOG.info("Failed to stop peer server", e);
+            }
+        }        
+    }
+    
+    public static boolean suspend(){
+         boolean res = false;
+           if (peerServer != null) {
+            try {
+                peerServer.stop();
+                res=true;
+            } catch (Exception e) {
+                LOG.info("Failed to stop peer server", e);
+            }
+        }  
+        return res;
+    }
+    
+    public static boolean resume() {
+        boolean res = false;
+        if (peerServer != null) {
+            try {
+                LOG.debug("Starting peer server");
+                peerServer.start();
+                LOG.debug("peer server started");
+                res = true;
+            } catch (Exception e) {
+                LOG.info("Failed to resume peer server", e);
+            }
+        }
+        return res;
+    }    
 }
