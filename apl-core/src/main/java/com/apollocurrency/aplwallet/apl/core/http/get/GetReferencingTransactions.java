@@ -20,17 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class GetReferencingTransactions extends AbstractAPIRequestHandler {
@@ -47,6 +49,7 @@ public final class GetReferencingTransactions extends AbstractAPIRequestHandler 
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
     }
 
+    private static ReferencedTransactionService referencedTransactionService = CDI.current().select(ReferencedTransactionService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -55,12 +58,8 @@ public final class GetReferencingTransactions extends AbstractAPIRequestHandler 
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = lookupBlockchain().getReferencingTransactions(transactionId, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(false, transaction));
-            }
-        }
+        List<Transaction> referencingTransactions = referencedTransactionService.getReferencingTransactions(transactionId, firstIndex, lastIndex);
+        referencingTransactions.forEach(tx-> transactions.add(JSONData.transaction(false, tx)));
 
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);

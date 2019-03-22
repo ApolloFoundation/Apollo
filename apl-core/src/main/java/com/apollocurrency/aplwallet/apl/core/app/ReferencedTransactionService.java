@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 
@@ -49,6 +50,10 @@ public class ReferencedTransactionService {
             referencedTransactionId = getId(referencedTransaction, referencedTransactionId);
         }
         return true;
+    }
+
+    public List<Transaction> getReferencingTransactions(long transactionId, int from, Integer limit) {
+        return referencedTransactionDao.getReferencingTransactions(transactionId, from, limit);
     }
 
     private Integer getHeight(Transaction transaction, Long referencedTransactionId) {

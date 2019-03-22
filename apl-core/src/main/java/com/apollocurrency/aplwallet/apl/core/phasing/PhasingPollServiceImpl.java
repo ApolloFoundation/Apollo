@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -15,13 +18,19 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -32,7 +41,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingPollVoterTable voterTable;
     private final PhasingPollLinkedTransactionTable linkedTransactionTable;
     private final PhasingVoteTable phasingVoteTable;
-    private Blockchain blockchain;
+    private Blockchain blockchain; //TODO init in constructor
+    private GlobalSync globalSync;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable, PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable, PhasingVoteTable phasingVoteTable) {
@@ -56,7 +66,11 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public PhasingPoll getPoll(long id) {
-        return phasingPollTable.get(id);
+        PhasingPoll phasingPoll = phasingPollTable.get(id);
+        getAndSetLinkedFullHashes(phasingPoll);
+        byte[] fullHash = blockchain.getFullHash(phasingPoll.getId());
+        phasingPoll.setFullHash(fullHash);
+        return phasingPoll;
     }
 
     @Override
@@ -146,13 +160,15 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         }
     }
 
-    public void finish(PhasingPoll phasingPoll, long result, int height) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, height);
+    public void finish(PhasingPoll phasingPoll, long result) {
+        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight() + 1);
         resultTable.insert(phasingPollResult);
     }
 
-    public List<byte[]> getLinkedFullHashes(PhasingPoll phasingPoll) {
-        return linkedTransactionTable.get(phasingPoll.getId());
+    public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
+        List<byte[]> linkedFullHashes = linkedTransactionTable.get(phasingPoll.getId());
+        phasingPoll.setLinkedFullHashes(linkedFullHashes);
+        return linkedFullHashes;
     }
 
     public long countVotes(PhasingPoll phasingPoll) {
@@ -163,7 +179,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         int height = Math.min(phasingPoll.getFinishHeight(), blockchain.getHeight());
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
-            for (byte[] hash : getLinkedFullHashes(phasingPoll)) {
+            for (byte[] hash : getAndSetLinkedFullHashes(phasingPoll)) {
                 if (blockchain.hasTransaction(Convert.fullHashToId(hash), height)) {
                     count += 1;
                 }
@@ -201,6 +217,38 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             phasingVote = new PhasingVote(transaction, voter, phasedTransactionId);
             phasingVoteTable.insert(phasingVote);
         }
+    }
+    @Override
+    public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
+        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        List<Transaction> result = new ArrayList<>();
+        globalSync.readLock();
+        try {
+            try (DbIterator<Transaction> phasedTransactions = getFinishingTransactions(blockchain.getHeight() + 1)) {
+                for (Transaction phasedTransaction : phasedTransactions) {
+                    try {
+                        phasedTransaction.validate();
+                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
+                            result.add(phasedTransaction);
+                        }
+                    } catch (AplException.ValidationException ignore) {
+                    }
+                }
+            }
+
+            blockchainProcessor.selectUnconfirmedTransactions(duplicates, blockchain.getLastBlock(), -1).forEach(
+                    unconfirmedTransaction -> {
+                        Transaction transaction = unconfirmedTransaction.getTransaction();
+                        if (transaction.getPhasing() == null && filter.test(transaction)) {
+                            result.add(transaction);
+                        }
+                    }
+            );
+        } finally {
+            globalSync.readUnlock();
+        }
+        return result;
     }
 
 }

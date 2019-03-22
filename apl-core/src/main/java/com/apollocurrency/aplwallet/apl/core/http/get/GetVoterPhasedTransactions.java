@@ -32,6 +32,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 
@@ -44,7 +45,7 @@ public class GetVoterPhasedTransactions extends AbstractAPIRequestHandler {
     public static GetVoterPhasedTransactions getInstance() {
         return GetVoterPhasedTransactionsHolder.INSTANCE;
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private GetVoterPhasedTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING}, "account", "firstIndex", "lastIndex");
     }
@@ -56,7 +57,7 @@ public class GetVoterPhasedTransactions extends AbstractAPIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<Transaction> iterator = PhasingPollService.getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
+        try (DbIterator<Transaction> iterator = phasingPollService.getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(false, transaction));

@@ -32,6 +32,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetAccountPhasedTransactions extends AbstractAPIRequestHandler {
@@ -47,7 +48,7 @@ public class GetAccountPhasedTransactions extends AbstractAPIRequestHandler {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING},
                 "account", "firstIndex", "lastIndex");
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long accountId = ParameterParser.getAccountId(req, true);
@@ -58,7 +59,7 @@ public class GetAccountPhasedTransactions extends AbstractAPIRequestHandler {
         JSONArray transactions = new JSONArray();
 
         try (DbIterator<? extends Transaction> iterator =
-                PhasingPollService.getAccountPhasedTransactions(accountId, firstIndex, lastIndex)) {
+                phasingPollService.getAccountPhasedTransactions(accountId, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(false, transaction));

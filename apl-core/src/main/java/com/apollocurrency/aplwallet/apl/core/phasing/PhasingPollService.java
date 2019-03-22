@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -53,4 +55,19 @@ public interface PhasingPollService {
 
     void addPoll(Transaction transaction, PhasingAppendix appendix);
 
+    void finish(PhasingPoll phasingPoll, long result);
+
+    List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll);
+
+    long countVotes(PhasingPoll phasingPoll);
+
+    DbIterator<PhasingVote> getVotes(long phasedTransactionId, int from, int to);
+
+    PhasingVote getVote(long phasedTransactionId, long voterId);
+
+    long getVoteCount(long phasedTransactionId);
+
+    void addVote(Transaction transaction, Account voter, long phasedTransactionId);
+
+    List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
 }

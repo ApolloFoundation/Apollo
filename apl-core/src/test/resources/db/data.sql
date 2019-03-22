@@ -60,11 +60,11 @@ INSERT into PUBLIC.BLOCK_INDEX (shard_id, block_id, block_height) VALUES
 (1, 1, 1),
 (2, 2, 2)
 ;
-INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, block_id) VALUES
-(100, 30),
-(101, 1),
-(102, 1),
-(103, 1)
+INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_hash, block_id) VALUES
+(100,X'cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e' 30),
+(101,X'2270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d' 1),
+(102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' 1),
+(103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' 1)
 ;
 INSERT into PUBLIC.SHARD (shard_id, shard_hash) VALUES
 (1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176'),

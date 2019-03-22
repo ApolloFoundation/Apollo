@@ -32,6 +32,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetLinkedPhasedTransactions extends AbstractAPIRequestHandler {
@@ -46,13 +47,13 @@ public class GetLinkedPhasedTransactions extends AbstractAPIRequestHandler {
     private GetLinkedPhasedTransactions() {
         super(new APITag[]{APITag.PHASING}, "linkedFullHash");
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         byte[] linkedFullHash = ParameterParser.getBytes(req, "linkedFullHash", true);
 
         JSONArray json = new JSONArray();
-        List<? extends Transaction> transactions = PhasingPollService.getLinkedPhasedTransactions(linkedFullHash);
+        List<? extends Transaction> transactions = phasingPollService.getLinkedPhasedTransactions(linkedFullHash);
         transactions.forEach(transaction -> json.add(JSONData.transaction(false, transaction)));
         JSONObject response = new JSONObject();
         response.put("transactions", json);

@@ -20,20 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetPhasingPollVotes extends AbstractAPIRequestHandler {
@@ -48,18 +49,18 @@ public class GetPhasingPollVotes extends AbstractAPIRequestHandler {
     private GetPhasingPollVotes() {
         super(new APITag[] {APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
 
-        PhasingPoll phasingPoll = PhasingPollService.getPoll(transactionId);
+        PhasingPoll phasingPoll = phasingPollService.getPoll(transactionId);
         if (phasingPoll != null) {
             JSONObject response = new JSONObject();
             JSONArray votesJSON = new JSONArray();
-            try (DbIterator<PhasingVote> votes = PhasingVote.getVotes(transactionId, firstIndex, lastIndex)) {
+            try (DbIterator<PhasingVote> votes = phasingPollService.getVotes(transactionId, firstIndex, lastIndex)) {
                 for (PhasingVote vote : votes) {
                     votesJSON.add(JSONData.phasingPollVote(vote));
                 }

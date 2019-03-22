@@ -37,7 +37,7 @@ public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static final String appendixName = "Phasing";
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
@@ -232,7 +232,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        PhasingPollService.addPoll(transaction, this);
+        phasingPollService.addPoll(transaction, this);
     }
 
     @Override
@@ -268,12 +268,12 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void countVotes(Transaction transaction) {
-        if (PhasingPollService.getResult(transaction.getId()) != null) {
+        if (phasingPollService.getResult(transaction.getId()) != null) {
             return;
         }
-        PhasingPoll poll = PhasingPollService.getPoll(transaction.getId());
-        long result = poll.countVotes();
-        poll.finish(result);
+        PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
+        long result = phasingPollService.countVotes(poll);
+        phasingPollService.finish(poll, result);
         if (result >= poll.getQuorum()) {
             try {
                 release(transaction);
@@ -287,13 +287,13 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        PhasingPoll poll = PhasingPollService.getPoll(transaction.getId());
-        long result = poll.countVotes();
+        PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
+        long result = phasingPollService.countVotes(poll);
         if (result >= poll.getQuorum()) {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {
                 try {
                     release(transaction);
-                    poll.finish(result);
+                    phasingPollService.finish(poll, result);
                     LOG.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
                 } catch (RuntimeException e) {
                     LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);

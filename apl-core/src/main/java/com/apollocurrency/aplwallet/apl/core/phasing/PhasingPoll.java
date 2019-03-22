@@ -21,13 +21,26 @@ public class PhasingPoll extends AbstractPoll  {
     private final long quorum;
     private final byte[] hashedSecret;
     private final byte algorithm;
-
+    private List<byte[]> linkedFullHashes;
+    private byte[] fullHash;
     public PhasingPoll(Transaction transaction, PhasingAppendix appendix) {
         super(transaction.getId(), transaction.getSenderId(), appendix.getFinishHeight(), appendix.getVoteWeighting());
         this.quorum = appendix.getQuorum();
         this.whitelist = appendix.getWhitelist();
         this.hashedSecret = appendix.getHashedSecret();
         this.algorithm = appendix.getAlgorithm();
+    }
+
+    public List<byte[]> getLinkedFullHashes() {
+        return linkedFullHashes;
+    }
+
+    public void setLinkedFullHashes(List<byte[]> linkedFullHashes) {
+        this.linkedFullHashes = linkedFullHashes;
+    }
+
+    public void setFullHash(byte[] fullHash) {
+        this.fullHash = fullHash;
     }
 
     public PhasingPoll(ResultSet rs) throws SQLException {
@@ -56,9 +69,9 @@ public class PhasingPoll extends AbstractPoll  {
         return quorum;
     }
 
-//    public byte[] getFullHash() {
-//        return blockchain.getFullHash(this.id);
-//    }
+    public byte[] getFullHash() {
+        return fullHash;
+    }
 
 
     public byte[] getHashedSecret() {

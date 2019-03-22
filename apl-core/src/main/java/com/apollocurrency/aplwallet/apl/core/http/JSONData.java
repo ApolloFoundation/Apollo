@@ -106,6 +106,7 @@ public final class JSONData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     private JSONData() {} // never
 
@@ -538,7 +539,7 @@ public final class JSONData {
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
-            try (DbIterator<PhasingPollResult> phasingPollResults = PhasingPollService.getApproved(block.getHeight())) {
+            try (DbIterator<PhasingPollResult> phasingPollResults = phasingPollService.getApproved(block.getHeight())) {
                 for (PhasingPollResult phasingPollResult : phasingPollResults) {
                     long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
@@ -765,14 +766,14 @@ public final class JSONData {
             json.put("hashedSecret", Convert.toHexString(poll.getHashedSecret()));
         }
         putVoteWeighting(json, poll.getVoteWeighting());
-        PhasingPollResult phasingPollResult = PhasingPollService.getResult(poll.getId());
+        PhasingPollResult phasingPollResult = phasingPollService.getResult(poll.getId());
         json.put("finished", phasingPollResult != null);
         if (phasingPollResult != null) {
             json.put("approved", phasingPollResult.isApproved());
             json.put("result", String.valueOf(phasingPollResult.getResult()));
             json.put("executionHeight", phasingPollResult.getHeight());
         } else if (countVotes) {
-            json.put("result", String.valueOf(poll.countVotes()));
+            json.put("result", String.valueOf( phasingPollService.countVotes(poll)));
         }
         return json;
     }
@@ -1111,7 +1112,7 @@ public final class JSONData {
     public static JSONObject transaction(Transaction transaction, boolean includePhasingResult, boolean isPrivate) {
         JSONObject json = transaction(transaction, null, isPrivate);
         if (includePhasingResult && transaction.getPhasing() != null) {
-            PhasingPollResult phasingPollResult = PhasingPollService.getResult(transaction.getId());
+            PhasingPollResult phasingPollResult = phasingPollService.getResult(transaction.getId());
             if (phasingPollResult != null) {
                 json.put("approved", phasingPollResult.isApproved());
                 json.put("result", String.valueOf(phasingPollResult.getResult()));

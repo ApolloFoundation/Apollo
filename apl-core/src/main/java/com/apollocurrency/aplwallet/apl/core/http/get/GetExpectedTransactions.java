@@ -20,21 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 public final class GetExpectedTransactions extends AbstractAPIRequestHandler {
 
@@ -46,6 +48,7 @@ public final class GetExpectedTransactions extends AbstractAPIRequestHandler {
         return GetExpectedTransactionsHolder.INSTANCE;
     }
 
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private GetExpectedTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS}, "account", "account", "account");
     }
@@ -57,7 +60,7 @@ public final class GetExpectedTransactions extends AbstractAPIRequestHandler {
         Filter<Transaction> filter = accountIds.isEmpty() ? transaction -> true :
                 transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
 
-        List<? extends Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = phasingPollService.getExpectedTransactions(filter);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();

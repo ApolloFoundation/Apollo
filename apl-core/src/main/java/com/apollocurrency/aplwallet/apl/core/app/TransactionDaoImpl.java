@@ -666,25 +666,4 @@ public class TransactionDaoImpl implements TransactionDao {
     public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, this::loadTransaction);
     }
-
-    @Override
-    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
-                    + "WHERE referenced_transaction.referenced_transaction_id = ? "
-                    + "AND referenced_transaction.transaction_id = transaction.id "
-                    + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
-                    + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setLong(++i, transactionId);
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 }

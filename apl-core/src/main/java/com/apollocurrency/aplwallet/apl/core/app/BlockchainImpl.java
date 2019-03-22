@@ -25,10 +25,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.sql.Connection;
@@ -37,7 +35,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +53,7 @@ public class BlockchainImpl implements Blockchain {
     private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
     private TransactionIndexDao transactionIndexDao;
     private GlobalSync globalSync;
+    private PhasingPollService phasingPollService;
 
     public BlockchainImpl() {        
     }
@@ -357,12 +355,12 @@ public class BlockchainImpl implements Blockchain {
         return result;
     }
 
-/*
+
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
         return transactionDao.hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
-*/
+
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
@@ -438,44 +436,7 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.findPrunableTransactions(con, minTimestamp, maxTimestamp);
     }
 
-    //phased transactions
-    @Override
-    public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
-        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        List<Transaction> result = new ArrayList<>();
-        globalSync.readLock();
-        try {
-            try (DbIterator<Transaction> phasedTransactions = PhasingPollService.getFinishingTransactions(getHeight() + 1)) {
-                for (Transaction phasedTransaction : phasedTransactions) {
-                    try {
-                        phasedTransaction.validate();
-                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
-                            result.add(phasedTransaction);
-                        }
-                    } catch (AplException.ValidationException ignore) {
-                    }
-                }
-            }
 
-            blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
-                    unconfirmedTransaction -> {
-                        Transaction transaction = unconfirmedTransaction.getTransaction();
-                        if (transaction.getPhasing() == null && filter.test(transaction)) {
-                            result.add(transaction);
-                        }
-                    }
-            );
-        } finally {
-            globalSync.readUnlock();
-        }
-        return result;
-    }
-
-    @Override
-    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
-        return transactionDao.getReferencingTransactions(transactionId, from, to);
-    }
 
     @Override
     public Set<Long> getBlockGenerators(int startHeight) {

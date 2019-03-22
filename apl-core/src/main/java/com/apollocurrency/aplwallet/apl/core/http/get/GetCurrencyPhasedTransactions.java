@@ -33,6 +33,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetCurrencyPhasedTransactions extends AbstractAPIRequestHandler {
@@ -47,7 +48,7 @@ public class GetCurrencyPhasedTransactions extends AbstractAPIRequestHandler {
     private GetCurrencyPhasedTransactions() {
         super(new APITag[]{APITag.MS, APITag.PHASING}, "currency", "account", "withoutWhitelist", "firstIndex", "lastIndex");
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", true);
@@ -57,7 +58,7 @@ public class GetCurrencyPhasedTransactions extends AbstractAPIRequestHandler {
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = PhasingPollService.getHoldingPhasedTransactions(currencyId, VoteWeighting.VotingModel.CURRENCY,
+        try (DbIterator<? extends Transaction> iterator = phasingPollService.getHoldingPhasedTransactions(currencyId, VoteWeighting.VotingModel.CURRENCY,
                 accountId, withoutWhitelist, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();

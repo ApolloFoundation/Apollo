@@ -3,7 +3,6 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionIndexRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -25,7 +24,6 @@ public interface TransactionIndexDao {
      */
     @Transactional(readOnly = true)
     @SqlQuery("SELECT transaction_id, block_id FROM transaction_shard_index WHERE block_id =:blockId LIMIT :limit")
-    @RegisterBeanMapper(TransactionIndex.class)
     @RegisterRowMapper(TransactionIndexRowMapper.class)
     List<TransactionIndex> getByBlockId(@Bind("blockId") long blockId, @Bind("limit") long limit);
 

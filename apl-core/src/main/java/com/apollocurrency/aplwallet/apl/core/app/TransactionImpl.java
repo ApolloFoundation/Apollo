@@ -157,7 +157,7 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl referencedTransactionFullHash(byte[] referencedTransactionFullHash) {
+        public BuilderImpl referencedTransactionFullHash(byte[] referencedTransactionFullHash) {
             this.referencedTransactionFullHash = referencedTransactionFullHash;
             return this;
         }
@@ -474,7 +474,7 @@ public class TransactionImpl implements Transaction {
     public void setBlock(Block block) {
         this.block = block;
         this.blockId = block.getId();
-        this.height = block.getHeight();
+        this.height  = block.getHeight();
         this.blockTimestamp = block.getTimestamp();
     }
 

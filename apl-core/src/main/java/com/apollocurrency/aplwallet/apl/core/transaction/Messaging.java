@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -40,13 +39,14 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public abstract class Messaging extends TransactionType {
-    
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
 
@@ -670,7 +670,7 @@ public abstract class Messaging extends TransactionType {
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                 }
-                PhasingPoll poll = PhasingPollService.getPoll(phasedTransactionId);
+                PhasingPoll poll = phasingPollService.getPoll(phasedTransactionId);
                 if (poll == null) {
                     throw new AplException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId) + ", or phasing is finished");
                 }
@@ -713,7 +713,7 @@ public abstract class Messaging extends TransactionType {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
-                PhasingVote.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
             }
         }
 
