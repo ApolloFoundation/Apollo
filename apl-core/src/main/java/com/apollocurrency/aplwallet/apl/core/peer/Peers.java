@@ -163,8 +163,11 @@ public final class Peers {
     static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
     static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
+    
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
+    
     static PeerHttpServer peerHttpServer = new PeerHttpServer();
+    
     private Peers() {} // never
  
     private static TransactionalDataSource lookupDataSource() {
@@ -173,12 +176,6 @@ public final class Peers {
         }
         return databaseManager.getDataSource();
     }
- 
-    private static final Runnable peerUnBlacklistingThread = new PeerUnBlacklistingThread();
-
-    private static final Runnable peerConnectingThread = new PeerConnectingThread();
-
-    private static final Runnable getMorePeersThread = new GetMorePeersThread();
 
     public static void init() {
         String myHost = null;
@@ -391,10 +388,10 @@ public final class Peers {
         }), Account.Event.BALANCE);
 
         if (! propertiesHolder.isOffline()) {
-            ThreadPool.scheduleThread("PeerConnecting", Peers.peerConnectingThread, 20);
-            ThreadPool.scheduleThread("PeerUnBlacklisting", Peers.peerUnBlacklistingThread, 60);
+            ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(), 20);
+            ThreadPool.scheduleThread("PeerUnBlacklisting", new PeerUnBlacklistingThread(), 60);
             if (Peers.getMorePeers) {
-                ThreadPool.scheduleThread("GetMorePeers", Peers.getMorePeersThread, 20);
+                ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(), 20);
             }
         }
     }
