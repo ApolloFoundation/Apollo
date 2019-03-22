@@ -14,8 +14,8 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
  import org.slf4j.Logger;
  import org.slf4j.LoggerFactory;
 
+ import java.io.ByteArrayInputStream;
  import java.io.File;
- import java.io.FileInputStream;
  import java.nio.file.Path;
  import java.util.Objects;
  import java.util.regex.Pattern;
@@ -132,18 +132,15 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
         }
 
         try {
-            File file = FileUtil.createFile(keyStore, "temporal");
-
             FbWallet fbWallet = new FbWallet();
-            fbWallet.readOpenData(new FileInputStream(file));
+            fbWallet.readOpenData(new ByteArrayInputStream(keyStore));
             byte[] key = fbWallet.keyFromPassPhrase(passPhrase, fbWallet.getContanerIV());
-            fbWallet.openStream(new FileInputStream(file), key);
+            fbWallet.openStream(new ByteArrayInputStream(keyStore), key);
             return fbWallet;
         } catch (Exception ex){
             LOG.error(ex.getMessage(), ex);
             return null;
         }
-
      }
 
 
