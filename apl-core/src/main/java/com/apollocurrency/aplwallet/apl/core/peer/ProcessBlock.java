@@ -30,7 +30,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-final class ProcessBlock extends PeerServlet.PeerRequestHandler {
+final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
 
     private static class ProcessBlockHolder {

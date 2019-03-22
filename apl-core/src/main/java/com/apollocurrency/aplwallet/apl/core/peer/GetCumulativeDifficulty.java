@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-final class GetCumulativeDifficulty extends PeerServlet.PeerRequestHandler {
+final class GetCumulativeDifficulty extends PeerRequestHandler {
 
     private static class GetCumulativeDifficultyHolder {
         private static final GetCumulativeDifficulty INSTANCE = new GetCumulativeDifficulty();

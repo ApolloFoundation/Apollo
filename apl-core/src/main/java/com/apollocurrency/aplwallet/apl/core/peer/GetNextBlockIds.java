@@ -27,7 +27,7 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.List;
 
-final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
+final class GetNextBlockIds extends PeerRequestHandler {
 
     private static class GetNextBlockIdsHolder {
         private static final GetNextBlockIds INSTANCE = new GetNextBlockIds();

@@ -31,7 +31,7 @@ import org.json.simple.JSONStreamAware;
 import java.util.ArrayList;
 import java.util.List;
 
-final class GetNextBlocks extends PeerServlet.PeerRequestHandler {
+final class GetNextBlocks extends PeerRequestHandler {
 
     private static class GetNextBlocksHolder {
         private static final GetNextBlocks INSTANCE = new GetNextBlocks();

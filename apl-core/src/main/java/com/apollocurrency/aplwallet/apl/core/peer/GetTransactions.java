@@ -32,7 +32,7 @@ import org.json.simple.JSONStreamAware;
 /**
  * Get the transactions
  */
-public class GetTransactions extends PeerServlet.PeerRequestHandler {
+public class GetTransactions extends PeerRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static class GetTransactionsHolder {
         private static final GetTransactions INSTANCE = new GetTransactions();
