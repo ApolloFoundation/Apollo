@@ -29,7 +29,7 @@ import org.json.simple.JSONStreamAware;
 import java.util.List;
 import java.util.SortedSet;
 
-final class GetUnconfirmedTransactions extends PeerServlet.PeerRequestHandler {
+final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     private static class GetUnconfirmedTransactionsHolder {
         private static final GetUnconfirmedTransactions INSTANCE = new GetUnconfirmedTransactions();

@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-final class ProcessTransactions extends PeerServlet.PeerRequestHandler {
+final class ProcessTransactions extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessTransactions.class);
 
     private static class ProcessTransactionsHolder {

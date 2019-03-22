@@ -48,13 +48,7 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.DoSFilter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -89,7 +83,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.enterprise.inject.spi.CDI;
-import javax.servlet.DispatcherType;
 
 public final class Peers {
     private static final Logger LOG = getLogger(Peers.class);
@@ -131,12 +124,10 @@ public final class Peers {
     static final boolean useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
     static final boolean isGzipEnabled;
 
-    private static final String myPlatform;
-    private static final String myAddress;
-    private static final int myPeerServerPort;
+
     private static final String myHallmark;
-    private static final boolean shareMyAddress;
-    private static final boolean enablePeerUPnP;
+   
+    
     private static final int maxNumberOfInboundConnections;
     private static final int maxNumberOfOutboundConnections;
     public static final int maxNumberOfConnectedPublicPeers;
@@ -151,7 +142,7 @@ public final class Peers {
     static final boolean ignorePeerAnnouncedAddress;
     static final boolean cjdnsOnly;
     static final int MAX_APPLICATION_LENGTH = 20;
-    static final int MAX_PLATFORM_LENGTH = 30;
+
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
     static final boolean hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails");
 
@@ -160,8 +151,8 @@ public final class Peers {
     private static volatile Peer.BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
-    private static boolean shutdown;
-    private static boolean suspend;
+    static boolean shutdown=false;
+    static boolean suspend;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
 
@@ -172,23 +163,14 @@ public final class Peers {
 
     static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
-    
-    //TODO: remove static context
-    private static final UPnP upnp = UPnP.getInstance();
+
     
     static {
-
-        String platform = propertiesHolder.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
-        if (platform.length() > MAX_PLATFORM_LENGTH) {
-            platform = platform.substring(0, MAX_PLATFORM_LENGTH);
-        }
-        myPlatform = platform;
-        myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());
         String myHost = null;
         int myPort = -1;
-        if (myAddress != null) {
+        if (PeerHttpServer.myAddress != null) {
             try {
-                URI uri = new URI("http://" + myAddress);
+                URI uri = new URI("http://" + PeerHttpServer.myAddress);
                 myHost = uri.getHost();
                 myPort = (uri.getPort() == -1 ? Peers.getDefaultPeerPort() : uri.getPort());
                 InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
@@ -208,7 +190,7 @@ public final class Peers {
                     }
                 }
                 if (!addrValid) {
-                    InetAddress extAddr = upnp.getExternalAddress();
+                    InetAddress extAddr = PeerHttpServer.upnp.getExternalAddress();
                     if (extAddr != null) {
                         for (InetAddress myAddr : myAddrs) {
                             if (extAddr.equals(myAddr)) {
@@ -228,10 +210,6 @@ public final class Peers {
             }
         }
 
-        myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
-        shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();
-
-        enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
         if (Peers.myHallmark != null && Peers.myHallmark.length() > 0) {
             try {
@@ -239,7 +217,7 @@ public final class Peers {
                 if (!hallmark.isValid()) {
                     throw new RuntimeException("Hallmark is not valid");
                 }
-                if (myAddress != null) {
+                if (PeerHttpServer.myAddress != null) {
                     if (!hallmark.getHost().equals(myHost)) {
                         throw new RuntimeException("Invalid hallmark host");
                     }
@@ -248,29 +226,29 @@ public final class Peers {
                     }
                 }
             } catch (RuntimeException e) {
-                LOG.error("Your hallmark is invalid: " + Peers.myHallmark + " for your address: " + myAddress);
+                LOG.error("Your hallmark is invalid: " + Peers.myHallmark + " for your address: " + PeerHttpServer.myAddress);
                 throw new RuntimeException(e.toString(), e);
             }
         }
         List<Peer.Service> servicesList = new ArrayList<>();
         JSONObject json = new JSONObject();
-        if (myAddress != null) {
+        if (PeerHttpServer.myAddress != null) {
             try {
-                URI uri = new URI("http://" + myAddress);
+                URI uri = new URI("http://" + PeerHttpServer.myAddress);
                 String host = uri.getHost();
                 int port = uri.getPort();
                 String announcedAddress;
                 if (port >= 0) {
-                    announcedAddress = myAddress;
+                    announcedAddress = PeerHttpServer.myAddress;
                 } else {
-                    announcedAddress = host + (myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + myPeerServerPort : "");
+                    announcedAddress = host + (PeerHttpServer.myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + PeerHttpServer.myPeerServerPort : "");
                 }
                 if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                     throw new RuntimeException("Invalid announced address length: " + announcedAddress);
                 }
                 json.put("announcedAddress", announcedAddress);
             } catch (URISyntaxException e) {
-                LOG.info("Your announce address is invalid: " + myAddress);
+                LOG.info("Your announce address is invalid: " + PeerHttpServer.myAddress);
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -280,9 +258,9 @@ public final class Peers {
         }
         json.put("application", Constants.APPLICATION);
         json.put("version",Constants.VERSION.toString());
-        json.put("platform", Peers.myPlatform);
+        json.put("platform", PeerHttpServer.myPlatform);
         json.put("chainId", blockchainConfig.getChain().getChainId());
-        json.put("shareAddress", Peers.shareMyAddress);
+        json.put("shareAddress", PeerHttpServer.shareMyAddress);
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
@@ -443,76 +421,6 @@ public final class Peers {
         return databaseManager.getDataSource();
     }
 
-    private static class Init {
-
-        private final static Server peerServer;
-
-        static {
-            shutdown = false;
-            if (Peers.shareMyAddress) {
-                peerServer = new Server();
-                ServerConnector connector = new ServerConnector(peerServer);
-                final int port = Peers.myPeerServerPort;
-                connector.setPort(port);
-                final String host = propertiesHolder.getStringProperty("apl.peerServerHost");
-                connector.setHost(host);
-                connector.setIdleTimeout(propertiesHolder.getIntProperty("apl.peerServerIdleTimeout"));
-                connector.setReuseAddress(true);
-                peerServer.addConnector(connector);
-
-                ServletContextHandler ctxHandler = new ServletContextHandler();
-                ctxHandler.setContextPath("/");
-
-                ServletHolder peerServletHolder = new ServletHolder(new PeerServlet());
-                ctxHandler.addServlet(peerServletHolder, "/*");
-
-                if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
-                    FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*",
-                            EnumSet.of(DispatcherType.REQUEST));
-                    dosFilterHolder.setInitParameter("maxRequestsPerSec", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.maxRequestsPerSec"));
-                    dosFilterHolder.setInitParameter("delayMs", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.delayMs"));
-                    dosFilterHolder.setInitParameter("maxRequestMs", propertiesHolder.getStringProperty("apl.peerServerDoSFilter.maxRequestMs"));
-                    dosFilterHolder.setInitParameter("trackSessions", "false");
-                    dosFilterHolder.setAsyncSupported(true);
-                }
-
-                if (isGzipEnabled) {
-                    GzipHandler gzipHandler = new GzipHandler();
-                    gzipHandler.setIncludedMethods("GET", "POST");
-                    gzipHandler.setIncludedPaths("/*");
-                    gzipHandler.setMinGzipSize(MIN_COMPRESS_SIZE);
-                    ctxHandler.setGzipHandler(gzipHandler);
-                }
-
-                peerServer.setHandler(ctxHandler);
-                peerServer.setStopAtShutdown(true);
-                ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
-                    try {
-                        if (enablePeerUPnP) {
-                            Connector[] peerConnectors = peerServer.getConnectors();
-                            for (Connector peerConnector : peerConnectors) {
-                                if (peerConnector instanceof ServerConnector)
-                                    upnp.addPort(((ServerConnector)peerConnector).getPort());
-                            }
-                        }
-                        peerServer.start();
-                        LOG.info("Started peer networking server at " + host + ":" + port);
-                    } catch (Exception e) {
-                        LOG.error("Failed to start peer networking server", e);
-                        throw new RuntimeException(e.toString(), e);
-                    }
-                }, true);
-            } else {
-                peerServer = null;
-                LOG.info("shareMyAddress is disabled, will not start peer networking server");
-            }
-        }
-
-        private static void init() {}
-
-        private Init() {}
-
-    }
 
     private static final Runnable peerUnBlacklistingThread = () -> {
 
@@ -821,19 +729,19 @@ public final class Peers {
                 ThreadPool.scheduleThread("GetMorePeers", Peers.getMorePeersThread, 20);
             }
         }
-        Init.init();
+        PeerHttpServer.init();
     }
 
     public static void shutdown() {
         shutdown = true;
-        if (Init.peerServer != null) {
+        if (PeerHttpServer.peerServer != null) {
             try {
-                Init.peerServer.stop();
-                if (enablePeerUPnP) {
-                    Connector[] peerConnectors = Init.peerServer.getConnectors();
+                PeerHttpServer.peerServer.stop();
+                if (PeerHttpServer.enablePeerUPnP) {
+                    Connector[] peerConnectors = PeerHttpServer.peerServer.getConnectors();
                     for (Connector peerConnector : peerConnectors) {
                         if (peerConnector instanceof ServerConnector)
-                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
+                            PeerHttpServer.upnp.deletePort(((ServerConnector)peerConnector).getPort());
                     }
                 }
             } catch (Exception e) {
@@ -846,9 +754,9 @@ public final class Peers {
 
     public static void suspend() {
         suspend = true;
-        if (Init.peerServer != null) {
+        if (PeerHttpServer.peerServer != null) {
             try {
-                Init.peerServer.stop();
+                PeerHttpServer.peerServer.stop();
             } catch (Exception e) {
                 LOG.info("Failed to stop peer server", e);
             }
@@ -858,10 +766,10 @@ public final class Peers {
     public static void resume() {
         suspend = false;
 
-        if (Init.peerServer != null) {
+        if (PeerHttpServer.peerServer != null) {
             try {
                 LOG.debug("Starting peer server");
-                Init.peerServer.start();
+                PeerHttpServer.peerServer.start();
                 LOG.debug("peer server started");
             } catch (Exception e) {
                 LOG.info("Failed to resume peer server", e);
@@ -1002,7 +910,7 @@ public final class Peers {
             return null;
         }
 
-        if (Peers.myAddress != null && Peers.myAddress.equalsIgnoreCase(announcedAddress)) {
+        if (PeerHttpServer.myAddress != null && PeerHttpServer.myAddress.equalsIgnoreCase(announcedAddress)) {
             return null;
         }
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {

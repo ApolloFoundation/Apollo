@@ -24,7 +24,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-final class GetPeers extends PeerServlet.PeerRequestHandler {
+final class GetPeers extends PeerRequestHandler {
 
     private static class GetPeersHolder {
         private static final GetPeers INSTANCE = new GetPeers();

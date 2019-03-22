@@ -33,7 +33,7 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class GetInfo extends PeerServlet.PeerRequestHandler {
+final class GetInfo extends PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 

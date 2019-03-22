@@ -223,7 +223,7 @@ public final class PeerImpl implements Peer {
     }
 
     void setPlatform(String platform) {
-        if (platform != null && platform.length() > Peers.MAX_PLATFORM_LENGTH) {
+        if (platform != null && platform.length() > PeerHttpServer.MAX_PLATFORM_LENGTH) {
             throw new IllegalArgumentException("Invalid platform length: " + platform.length());
         }
         this.platform = platform;
