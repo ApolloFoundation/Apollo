@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
+import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.firstbridge.cryptolib.container.FbWallet;
@@ -35,6 +36,13 @@ public class KeyStoreController {
         // Check that we have a file upload request
         if(!ServletFileUpload.isMultipartContent(request)){
             return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        //Check admin password
+        if (!API.checkPassword(request)) {
+            return  Response.status(Response.Status.BAD_REQUEST)
+                    .entity("This endpoint protected by admin password, please first specify the admin password in the account settings.")
+                    .build();
         }
 
         byte[] keyStore = null;
