@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.firstbridge.cryptolib.container.FbWallet;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
@@ -11,7 +12,6 @@ import org.apache.commons.io.IOUtils;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
@@ -24,6 +24,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 public class KeyStoreController {
 
     private final VaultKeyStore vaultKeyStore = CDI.current().select(VaultKeyStore.class).get();
+    private PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private Integer maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");
 
     @POST
     @Path("/upload")
@@ -41,6 +43,8 @@ public class KeyStoreController {
 
         try {
             ServletFileUpload upload = new ServletFileUpload();
+            // Set overall request size constraint
+            upload.setSizeMax(Long.valueOf(maxKeyStoreSize));
             FileItemIterator fileIterator = upload.getItemIterator(request);
 
             while (fileIterator.hasNext()) {
@@ -72,14 +76,13 @@ public class KeyStoreController {
             if(status.isOK()){
                 return Response.status(200).build();
             } else {
-                Response.status(Response.Status.BAD_REQUEST).entity("Failed to upload file. " + status.message).build();
+                return Response.status(Response.Status.BAD_REQUEST).entity("Failed to upload file. " + status.message).build();
             }
         } catch (Exception ex){
             LOG.error(ex.getMessage(), ex);
             return Response.status(Response.Status.BAD_REQUEST).entity("Failed to upload file.").build();
         }
 
-        return Response.status(200).entity("Uploaded file name : ").build();
     }
 
 }
