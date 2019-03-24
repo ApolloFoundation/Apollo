@@ -26,23 +26,17 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAllAssets extends AbstractAPIRequestHandler {
 
-    private static class GetAllAssetsHolder {
-        private static final GetAllAssets INSTANCE = new GetAllAssets();
-    }
-
-    public static GetAllAssets getInstance() {
-        return GetAllAssetsHolder.INSTANCE;
-    }
-
-    private GetAllAssets() {
+    public GetAllAssets() {
         super(new APITag[] {APITag.AE}, "firstIndex", "lastIndex", "includeCounts");
     }
 

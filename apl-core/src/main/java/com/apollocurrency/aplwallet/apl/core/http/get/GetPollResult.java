@@ -35,18 +35,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_RESULTS_NOT_AVAILABLE;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class GetPollResult extends AbstractAPIRequestHandler {
 
-    private static class GetPollResultHolder {
-        private static final GetPollResult INSTANCE = new GetPollResult();
-    }
-
-    public static GetPollResult getInstance() {
-        return GetPollResultHolder.INSTANCE;
-    }
-
-    private GetPollResult() {
+    public GetPollResult() {
         super(new APITag[]{APITag.VS}, "poll", "votingModel", "holding", "minBalance", "minBalanceModel");
     }
 

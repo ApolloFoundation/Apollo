@@ -33,18 +33,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetScheduledTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetScheduledTransactionsHolder {
-        private static final GetScheduledTransactions INSTANCE = new GetScheduledTransactions();
-    }
-
-    public static GetScheduledTransactions getInstance() {
-        return GetScheduledTransactionsHolder.INSTANCE;
-    }
-
-    private GetScheduledTransactions() {
+    public GetScheduledTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
     }
 

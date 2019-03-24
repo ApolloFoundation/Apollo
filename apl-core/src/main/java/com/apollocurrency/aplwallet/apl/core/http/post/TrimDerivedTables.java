@@ -22,22 +22,16 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class TrimDerivedTables extends AbstractAPIRequestHandler {
 
-    private static class TrimDerivedTablesHolder {
-        private static final TrimDerivedTables INSTANCE = new TrimDerivedTables();
-    }
-
-    public static TrimDerivedTables getInstance() {
-        return TrimDerivedTablesHolder.INSTANCE;
-    }
-
-    private TrimDerivedTables() {
+    public TrimDerivedTables() {
         super(new APITag[] {APITag.DEBUG});
     }
 

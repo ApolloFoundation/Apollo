@@ -33,6 +33,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>
@@ -66,17 +67,10 @@ import java.util.List;
  * </ul>
  * </ul>
  */
+@Vetoed
 public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler {
 
-    private static class GetNextBlockGeneratorsTempHolder {
-        private static final GetNextBlockGeneratorsTemp INSTANCE = new GetNextBlockGeneratorsTemp();
-    }
-
-    public static GetNextBlockGeneratorsTemp getInstance() {
-        return GetNextBlockGeneratorsTempHolder.INSTANCE;
-    }
-
-    private GetNextBlockGeneratorsTemp() {
+    public GetNextBlockGeneratorsTemp() {
         super(new APITag[] {APITag.FORGING}, "limit");
     }
 

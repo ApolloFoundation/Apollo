@@ -29,9 +29,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 public abstract class DerivedDbTable {
-
+    @Inject
+    FullTextConfig fullTextConfig;
+    
     protected final String table;
     protected static DatabaseManager databaseManager;
 
@@ -40,7 +43,7 @@ public abstract class DerivedDbTable {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         DerivedDbTablesRegistry.getInstance().registerDerivedTable(this);
-        FullTextConfig.getInstance().registerTable(table);
+        fullTextConfig.registerTable(table);
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }

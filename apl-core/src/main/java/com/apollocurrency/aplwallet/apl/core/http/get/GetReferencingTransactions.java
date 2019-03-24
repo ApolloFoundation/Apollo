@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetReferencingTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetReferencingTransactionsHolder {
-        private static final GetReferencingTransactions INSTANCE = new GetReferencingTransactions();
-    }
-
-    public static GetReferencingTransactions getInstance() {
-        return GetReferencingTransactionsHolder.INSTANCE;
-    }
-
-    private GetReferencingTransactions() {
+   public GetReferencingTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
     }
 

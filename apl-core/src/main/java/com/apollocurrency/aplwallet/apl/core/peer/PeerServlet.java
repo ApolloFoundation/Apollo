@@ -66,17 +66,17 @@ public final class PeerServlet extends WebSocketServlet {
 
     static {
         Map<String,PeerRequestHandler> map = new HashMap<>();
-        map.put("addPeers", AddPeers.getInstance());
-        map.put("getCumulativeDifficulty", GetCumulativeDifficulty.getInstance());
-        map.put("getInfo", GetInfo.getInstance());
-        map.put("getMilestoneBlockIds", GetMilestoneBlockIds.getInstance());
-        map.put("getNextBlockIds", GetNextBlockIds.getInstance());
-        map.put("getNextBlocks", GetNextBlocks.getInstance());
-        map.put("getPeers", GetPeers.getInstance());
-        map.put("getTransactions", GetTransactions.getInstance());
-        map.put("getUnconfirmedTransactions", GetUnconfirmedTransactions.getInstance());
-        map.put("processBlock", ProcessBlock.getInstance());
-        map.put("processTransactions", ProcessTransactions.getInstance());
+        map.put("addPeers", new AddPeers());
+        map.put("getCumulativeDifficulty", new GetCumulativeDifficulty());
+        map.put("getInfo", new GetInfo());
+        map.put("getMilestoneBlockIds", new GetMilestoneBlockIds());
+        map.put("getNextBlockIds", new GetNextBlockIds());
+        map.put("getNextBlocks", new GetNextBlocks());
+        map.put("getPeers", new GetPeers());
+        map.put("getTransactions", new GetTransactions());
+        map.put("getUnconfirmedTransactions", new GetUnconfirmedTransactions());
+        map.put("processBlock", new ProcessBlock());
+        map.put("processTransactions", new ProcessTransactions());
         peerRequestHandlers = Collections.unmodifiableMap(map);
     }
 

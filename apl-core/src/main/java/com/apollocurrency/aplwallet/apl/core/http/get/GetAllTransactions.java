@@ -20,19 +20,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+import javax.enterprise.inject.Vetoed;
 
-
+@Vetoed
 public class GetAllTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetAllTransactionsHolder {
-        private static final GetAllTransactions INSTANCE = new GetAllTransactions();
-    }
-
-    public static GetAllTransactions getInstance() {
-        return GetAllTransactionsHolder.INSTANCE;
-    }
-
-    private GetAllTransactions() {
+    public GetAllTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS}, "type", "subtype", "firstIndex", "lastIndex");
     }
 

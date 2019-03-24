@@ -35,15 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAliases extends AbstractAPIRequestHandler {
 
-    private static class GetAliasesHolder {
-        private static final GetAliases INSTANCE = new GetAliases();
-    }
-
-    public static GetAliases getInstance() {
-        return GetAliasesHolder.INSTANCE;
-    }
-
-    private GetAliases() {
+    public GetAliases() {
         super(new APITag[] {APITag.ALIASES}, "timestamp", "account", "firstIndex", "lastIndex");
     }
 

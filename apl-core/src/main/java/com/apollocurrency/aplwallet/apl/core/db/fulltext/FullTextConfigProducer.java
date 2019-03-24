@@ -9,18 +9,21 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import java.nio.file.Path;
 import java.util.List;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 public class FullTextConfigProducer {
+    @Inject
+    FullTextConfig fullTextConfig;
     @Produces
     @Named("fullTextTables")
     List<String> produceFullTextTables() {
-        return FullTextConfig.getInstance().getTableNames();
+        return fullTextConfig.getTableNames();
     }
     @Produces
     @Named("tablesSchema")
     String produceTablesSchema() {
-        return FullTextConfig.getInstance().getSchema();
+        return fullTextConfig.getSchema();
     }
 
     @Produces

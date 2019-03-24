@@ -36,18 +36,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedExchangeRequests extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedExchangeRequestsHolder {
-        private static final GetExpectedExchangeRequests INSTANCE = new GetExpectedExchangeRequests();
-    }
-
-    public static GetExpectedExchangeRequests getInstance() {
-        return GetExpectedExchangeRequestsHolder.INSTANCE;
-    }
-
-    private GetExpectedExchangeRequests() {
+    public GetExpectedExchangeRequests() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.MS}, "account", "currency", "includeCurrencyInfo");
     }
 

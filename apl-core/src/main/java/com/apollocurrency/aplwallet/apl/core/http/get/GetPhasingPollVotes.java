@@ -29,22 +29,17 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetPhasingPollVotes extends AbstractAPIRequestHandler {
-    private static class GetPhasingPollVotesHolder {
-        private static final GetPhasingPollVotes INSTANCE = new GetPhasingPollVotes();
-    }
 
-    public static GetPhasingPollVotes getInstance() {
-        return GetPhasingPollVotesHolder.INSTANCE;
-    }
-
-    private GetPhasingPollVotes() {
+    public GetPhasingPollVotes() {
         super(new APITag[] {APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
     }
 

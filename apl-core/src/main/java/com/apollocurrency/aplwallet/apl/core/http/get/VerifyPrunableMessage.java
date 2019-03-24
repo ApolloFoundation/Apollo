@@ -38,16 +38,10 @@ import java.util.Arrays;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.EITHER_MESSAGE_ENCRYPTED_MESSAGE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_MESSAGE_ENCRYPTED_MESSAGE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
-
-    private static class VerifyPrunableMessageHolder {
-        private static final VerifyPrunableMessage INSTANCE = new VerifyPrunableMessage();
-    }
-
-    public static VerifyPrunableMessage getInstance() {
-        return VerifyPrunableMessageHolder.INSTANCE;
-    }
 
     private static final JSONStreamAware NO_SUCH_PLAIN_MESSAGE;
     static {
@@ -65,7 +59,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
         NO_SUCH_ENCRYPTED_MESSAGE = JSON.prepare(response);
     }
 
-    private VerifyPrunableMessage() {
+    public VerifyPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction",
                 "message", "messageIsText",
                 "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "compressMessageToEncrypt", "account");

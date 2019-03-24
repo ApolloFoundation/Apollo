@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class TransferAsset extends CreateTransaction {
 
-    private static class TransferAssetHolder {
-        private static final TransferAsset INSTANCE = new TransferAsset();
-    }
-
-    public static TransferAsset getInstance() {
-        return TransferAssetHolder.INSTANCE;
-    }
-
-    private TransferAsset() {
+    public TransferAsset() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
     }
 

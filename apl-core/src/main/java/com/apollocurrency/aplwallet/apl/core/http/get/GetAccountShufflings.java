@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccountShufflings extends AbstractAPIRequestHandler {
 
-    private static class GetAccountShufflingsHolder {
-        private static final GetAccountShufflings INSTANCE = new GetAccountShufflings();
-    }
-
-    public static GetAccountShufflings getInstance() {
-        return GetAccountShufflingsHolder.INSTANCE;
-    }
-
-    private GetAccountShufflings() {
+    public GetAccountShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "includeFinished", "includeHoldingInfo", "firstIndex", "lastIndex");
     }
 

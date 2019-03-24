@@ -26,23 +26,17 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAllOpenBidOrders extends AbstractAPIRequestHandler {
 
-    private static class GetAllOpenBidOrdersHolder {
-        private static final GetAllOpenBidOrders INSTANCE = new GetAllOpenBidOrders();
-    }
-
-    public static GetAllOpenBidOrders getInstance() {
-        return GetAllOpenBidOrdersHolder.INSTANCE;
-    }
-
-    private GetAllOpenBidOrders() {
+    public GetAllOpenBidOrders() {
         super(new APITag[] {APITag.AE}, "firstIndex", "lastIndex");
     }
 

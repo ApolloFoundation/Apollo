@@ -32,15 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetDGSPurchaseCount extends AbstractAPIRequestHandler {
 
-    private static class GetDGSPurchaseCountHolder {
-        private static final GetDGSPurchaseCount INSTANCE = new GetDGSPurchaseCount();
-    }
-
-    public static GetDGSPurchaseCount getInstance() {
-        return GetDGSPurchaseCountHolder.INSTANCE;
-    }
-
-    private GetDGSPurchaseCount() {
+    public GetDGSPurchaseCount() {
         super(new APITag[] {APITag.DGS}, "seller", "buyer", "withPublicFeedbacksOnly", "completed");
     }
 

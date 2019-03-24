@@ -40,15 +40,8 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static class GetBlockchainStatusHolder {
-        private static final GetBlockchainStatus INSTANCE = new GetBlockchainStatus();
-    }
 
-    public static GetBlockchainStatus getInstance() {
-        return GetBlockchainStatusHolder.INSTANCE;
-    }
-
-    private GetBlockchainStatus() {
+    public GetBlockchainStatus() {
         super(new APITag[] {APITag.BLOCKS, APITag.INFO});
     }
 

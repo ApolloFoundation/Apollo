@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -28,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
@@ -37,18 +35,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedAssetTransfers extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedAssetTransfersHolder {
-        private static final GetExpectedAssetTransfers INSTANCE = new GetExpectedAssetTransfers();
-    }
-
-    public static GetExpectedAssetTransfers getInstance() {
-        return GetExpectedAssetTransfersHolder.INSTANCE;
-    }
-
-    private GetExpectedAssetTransfers() {
+    public GetExpectedAssetTransfers() {
         super(new APITag[]{APITag.AE}, "asset", "account", "includeAssetInfo");
     }
 

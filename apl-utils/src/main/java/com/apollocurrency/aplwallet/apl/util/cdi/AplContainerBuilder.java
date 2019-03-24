@@ -80,7 +80,9 @@ public class AplContainerBuilder {
         if (recursiveScanPackages != null && !recursiveScanPackages.isEmpty()) {
             recursiveScanPackages.forEach(p -> weld.addPackage(true, p));
         }
-
+        
+        weld.enableDevMode();
+        
         WeldContainer newContainer = weld.initialize();
 
         if (newContainer.isUnsatisfied()) {

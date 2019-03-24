@@ -37,18 +37,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ASSET_NAME_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DECIMALS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class IssueAsset extends CreateTransaction {
 
-    private static class IssueAssetHolder {
-        private static final IssueAsset INSTANCE = new IssueAsset();
-    }
-
-    public static IssueAsset getInstance() {
-        return IssueAssetHolder.INSTANCE;
-    }
-
-    private IssueAsset() {
+    public IssueAsset() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "name", "description", "quantityATU", "decimals");
     }
 

@@ -9,7 +9,9 @@ import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Singleton;
 
+@Singleton
 public class FullTextConfig {
 
     private List<String> tableNames = new ArrayList<>();
@@ -25,16 +27,7 @@ public class FullTextConfig {
         this.schema = schema;
     }
 
-    // singleton
-    private static class FullTextConfigHolder {
-        private static final FullTextConfig INSTANCE = new FullTextConfig();
-    }
-
-    public static FullTextConfig getInstance() {
-        return FullTextConfigHolder.INSTANCE;
-    }
-
-    private FullTextConfig() {}
+    public FullTextConfig() {}
 
     public List<String> getTableNames() {
         return Collections.unmodifiableList(tableNames);

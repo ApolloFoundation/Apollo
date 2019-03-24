@@ -32,19 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_OWNER;
+import javax.enterprise.inject.Vetoed;
 
-
+@Vetoed
 public final class DeleteAlias extends CreateTransaction {
 
-    private static class DeleteAliasHolder {
-        private static final DeleteAlias INSTANCE = new DeleteAlias();
-    }
-
-    public static DeleteAlias getInstance() {
-        return DeleteAliasHolder.INSTANCE;
-    }
-
-    private DeleteAlias() {
+    public DeleteAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName");
     }
 

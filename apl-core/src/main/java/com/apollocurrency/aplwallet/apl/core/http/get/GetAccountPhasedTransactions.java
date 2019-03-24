@@ -28,22 +28,17 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetAccountPhasedTransactions extends AbstractAPIRequestHandler {
-    private static class GetAccountPhasedTransactionsHolder {
-        private static final GetAccountPhasedTransactions INSTANCE = new GetAccountPhasedTransactions();
-    }
 
-    public static GetAccountPhasedTransactions getInstance() {
-        return GetAccountPhasedTransactionsHolder.INSTANCE;
-    }
-
-    private GetAccountPhasedTransactions() {
+    public GetAccountPhasedTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING},
                 "account", "firstIndex", "lastIndex");
     }

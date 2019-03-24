@@ -30,16 +30,10 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 final class GetNextBlocks extends PeerRequestHandler {
-
-    private static class GetNextBlocksHolder {
-        private static final GetNextBlocks INSTANCE = new GetNextBlocks();
-    }
-
-    public static GetNextBlocks getInstance() {
-        return GetNextBlocksHolder.INSTANCE;
-    }
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
     static {
@@ -48,7 +42,7 @@ final class GetNextBlocks extends PeerRequestHandler {
         TOO_MANY_BLOCKS_REQUESTED = JSON.prepare(response);
     }
 
-    private GetNextBlocks() {}
+    public GetNextBlocks() {}
 
 
     @Override

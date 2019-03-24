@@ -40,18 +40,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_LISTING_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_LISTING_TAGS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DGSListing extends CreateTransaction {
 
-    private static class DGSListingHolder {
-        private static final DGSListing INSTANCE = new DGSListing();
-    }
-
-    public static DGSListing getInstance() {
-        return DGSListingHolder.INSTANCE;
-    }
-
-    private DGSListing() {
+    public DGSListing() {
         super("messageFile", new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "name", "description", "tags", "quantity", "priceATM");
     }

@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -174,21 +175,13 @@ import javax.servlet.http.HttpServletRequest;
  *   </tbody>
  * </table>
  */
+@Vetoed
 public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
-
-    /** GetAccountLedgerEntry instance */
-    private static class GetAccountLedgerEntryHolder {
-        private static final GetAccountLedgerEntry INSTANCE = new GetAccountLedgerEntry();
-    }
-
-    public static GetAccountLedgerEntry getInstance() {
-        return GetAccountLedgerEntryHolder.INSTANCE;
-    }
 
     /**
      * Create the GetAccountLedgerEntry instance
      */
-    private GetAccountLedgerEntry() {
+    public GetAccountLedgerEntry() {
         super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo");
     }
 

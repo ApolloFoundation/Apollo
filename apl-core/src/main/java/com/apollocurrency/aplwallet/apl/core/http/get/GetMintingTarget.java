@@ -32,6 +32,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * Currency miners can use this API to obtain their target hash value for minting currency units
@@ -43,17 +44,10 @@ import java.math.BigInteger;
  * <li>units - number of currency units the miner is trying to mint
  * </ul>
  */
+@Vetoed
 public final class GetMintingTarget extends AbstractAPIRequestHandler {
 
-    private static class GetMintingTargetHolder {
-        private static final GetMintingTarget INSTANCE = new GetMintingTarget();
-    }
-
-    public static GetMintingTarget getInstance() {
-        return GetMintingTargetHolder.INSTANCE;
-    }
-
-    private GetMintingTarget() {
+    public GetMintingTarget() {
         super(new APITag[] {APITag.MS}, "currency", "account", "units");
     }
 

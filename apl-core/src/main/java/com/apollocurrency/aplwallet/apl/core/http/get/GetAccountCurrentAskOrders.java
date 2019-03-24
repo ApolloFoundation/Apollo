@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccountCurrentAskOrders extends AbstractAPIRequestHandler {
 
-    private static class GetAccountCurrentAskOrdersHolder {
-        private static final GetAccountCurrentAskOrders INSTANCE = new GetAccountCurrentAskOrders();
-    }
-
-    public static GetAccountCurrentAskOrders getInstance() {
-        return GetAccountCurrentAskOrdersHolder.INSTANCE;
-    }
-
-    private GetAccountCurrentAskOrders() {
+    public GetAccountCurrentAskOrders() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
     }
 

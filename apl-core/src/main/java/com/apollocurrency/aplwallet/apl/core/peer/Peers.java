@@ -46,8 +46,6 @@ import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ServerConnector;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -202,7 +200,7 @@ public final class Peers {
                     }
                 }
                 if (!addrValid) {
-                    InetAddress extAddr = PeerHttpServer.upnp.getExternalAddress();
+                    InetAddress extAddr = peerHttpServer.upnp.getExternalAddress();
                     if (extAddr != null) {
                         for (InetAddress myAddr : myAddrs) {
                             if (extAddr.equals(myAddr)) {

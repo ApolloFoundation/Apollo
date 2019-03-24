@@ -163,7 +163,7 @@ public final class AplCore {
                 boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
                 if(enableAPIUPnP || enablePeerUPnP){
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
-                    UPnP.getInstance();
+                    UPnP upnp = CDI.current().select(UPnP.class).get();
                 }                
                 //try to start API as early as possible
                 API.init();

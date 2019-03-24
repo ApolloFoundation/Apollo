@@ -31,20 +31,14 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class StartShuffler extends AbstractAPIRequestHandler {
 
-    private static class StartShufflerHolder {
-        private static final StartShuffler INSTANCE = new StartShuffler();
-    }
-
-    public static StartShuffler getInstance() {
-        return StartShufflerHolder.INSTANCE;
-    }
-
-    private StartShuffler() {
+    public StartShuffler() {
         super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey", "recipientAccount",
                 "recipientPassphrase");
     }

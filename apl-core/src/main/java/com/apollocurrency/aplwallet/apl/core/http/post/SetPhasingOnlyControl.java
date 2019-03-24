@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 /**
  * Sets an account control that blocks transactions unless they are phased with certain parameters
@@ -67,17 +68,10 @@ import org.json.simple.JSONStreamAware;
  *
  * 
  */
+@Vetoed
 public final class SetPhasingOnlyControl extends CreateTransaction {
 
-    private static class SetPhasingOnlyControlHolder {
-        private static final SetPhasingOnlyControl INSTANCE = new SetPhasingOnlyControl();
-    }
-
-    public static SetPhasingOnlyControl getInstance() {
-        return SetPhasingOnlyControlHolder.INSTANCE;
-    }
-
-    private SetPhasingOnlyControl() {
+    public SetPhasingOnlyControl() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "controlVotingModel", "controlQuorum", "controlMinBalance",
                 "controlMinBalanceModel", "controlHolding", "controlWhitelisted", "controlWhitelisted", "controlWhitelisted",
                 "controlMaxFees", "controlMinDuration", "controlMaxDuration");

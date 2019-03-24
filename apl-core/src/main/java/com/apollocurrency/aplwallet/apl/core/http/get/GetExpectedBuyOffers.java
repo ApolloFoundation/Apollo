@@ -38,18 +38,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedBuyOffersHolder {
-        private static final GetExpectedBuyOffers INSTANCE = new GetExpectedBuyOffers();
-    }
-
-    public static GetExpectedBuyOffers getInstance() {
-        return GetExpectedBuyOffersHolder.INSTANCE;
-    }
-
-    private GetExpectedBuyOffers() {
+    public GetExpectedBuyOffers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "sortByRate");
     }
 

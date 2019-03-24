@@ -25,23 +25,16 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public final class GetCurrencyIds extends AbstractAPIRequestHandler {
 
-    private static class GetCurrencyIdsHolder {
-        private static final GetCurrencyIds INSTANCE = new GetCurrencyIds();
-    }
-
-    public static GetCurrencyIds getInstance() {
-        return GetCurrencyIdsHolder.INSTANCE;
-    }
-
-    private GetCurrencyIds() {
+    public GetCurrencyIds() {
         super(new APITag[] {APITag.MS}, "firstIndex", "lastIndex");
     }
 

@@ -8,7 +8,9 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.util.EnumSet;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -25,6 +27,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Peer HTTP server that handles http requests and PeerWebSockets
  * @author alukin@gmail.com
  */
+@Vetoed
 public class PeerHttpServer {
     
      private static final Logger LOG = getLogger(PeerHttpServer.class);
@@ -40,7 +43,8 @@ public class PeerHttpServer {
      Server peerServer;
     
     //TODO: remove static context
-    static final UPnP upnp = UPnP.getInstance();
+    @Inject
+     UPnP upnp;
     
     public PeerHttpServer() {
 

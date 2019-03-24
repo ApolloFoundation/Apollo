@@ -42,22 +42,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+@Vetoed
 public final class DumpPeers extends AbstractAPIRequestHandler {
-        private static final Logger LOG = getLogger(DumpPeers.class);
+   
+    private static final Logger LOG = getLogger(DumpPeers.class);
 
-    private static class DumpPeersHolder {
-        private static final DumpPeers INSTANCE = new DumpPeers();
-    }
-
-    public static DumpPeers getInstance() {
-        return DumpPeersHolder.INSTANCE;
-    }
-
-    private DumpPeers() {
+    public DumpPeers() {
         super(new APITag[] {APITag.DEBUG}, "version", "weight", "connect", "adminPassword");
     }
 

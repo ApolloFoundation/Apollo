@@ -25,22 +25,15 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public final class GetAliasCount extends AbstractAPIRequestHandler {
 
-    private static class GetAliasCountHolder {
-        private static final GetAliasCount INSTANCE = new GetAliasCount();
-    }
-
-    public static GetAliasCount getInstance() {
-        return GetAliasCountHolder.INSTANCE;
-    }
-
-    private GetAliasCount() {
+    public GetAliasCount() {
         super(new APITag[] {APITag.ALIASES}, "account");
     }
 

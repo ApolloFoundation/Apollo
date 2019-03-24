@@ -25,8 +25,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
+import javax.enterprise.inject.Vetoed;
 import org.apache.commons.lang3.ArrayUtils;
 
+@Vetoed
 public class UpdaterUtil {
     public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
      String secondCertificatePrefix, String certificateSuffix) {
