@@ -18,7 +18,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -40,14 +40,16 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 
 import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import org.slf4j.Logger;
 
 @Singleton
@@ -136,7 +138,7 @@ public class BlockDaoImpl implements BlockDao {
         Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
         if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
+            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = databaseManager.getDataSource();
@@ -150,7 +152,7 @@ public class BlockDaoImpl implements BlockDao {
         Long shardId = lookupBlockIndexDao().getShardIdByBlockHeight(blockHeight);
         if (shardId != null) {
             // shard data source
-            dataSource = databaseManager.getOrCreateShardDataSourceById(shardId);
+            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
         } else {
             // default data source
             dataSource = databaseManager.getDataSource();

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import java.sql.Connection;

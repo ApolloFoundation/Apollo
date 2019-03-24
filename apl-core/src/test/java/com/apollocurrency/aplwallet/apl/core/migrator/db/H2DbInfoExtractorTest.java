@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
+
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -37,7 +39,7 @@ public class H2DbInfoExtractorTest {
     @Test
     public void testGetHeight() {
         int height = h2DbInfoExtractor.getHeight(path.toString());
-        Assertions.assertEquals(1640084, height);
+        Assertions.assertEquals(BLOCK_11.getHeight(), height);
 
     }
 

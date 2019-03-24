@@ -18,13 +18,11 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+package com.apollocurrency.aplwallet.apl.core.db;
 
 public class AplDbVersion extends DbVersion {
 
-    protected void update(int nextUpdate) {
+    protected int update(int nextUpdate) {
         switch (nextUpdate) {
             case 1:
                 apply("CREATE TABLE IF NOT EXISTS block (db_id IDENTITY, id BIGINT NOT NULL, version INT NOT NULL, "
@@ -691,30 +689,34 @@ public class AplDbVersion extends DbVersion {
             case 250:
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
-                // create SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id IDENTITY PRIMARY KEY, shard_hash VARBINARY not null)");
+                // SHARDING meta-info inside main database
+                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY not null, shard_state BIGINT)");
             case 252:
-                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
+                apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 253:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
+                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 254:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
             case 255:
-                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
             case 256:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
+                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, block_id BIGINT NOT NULL)");
             case 257:
+                apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS fk_transaction_shard_index_block_id " +
+                        "FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
+            case 258:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
+            case 259:
                 apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
                         "referenced_transaction_id BIGINT NOT NULL)");
-            case 258:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
-                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
-            case 259:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
             case 260:
-//                 it's an example of previously created shard for checking purpose
-//                apply("INSERT INTO shard(shard_id, shard_hash) VALUES(1, '000000001')");
-                return;
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
+            case 261:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS " +
+                        "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
+                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
+            case 262:
+                return 262;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
@@ -725,7 +727,9 @@ public class AplDbVersion extends DbVersion {
     protected void apply(String sql) {
         super.apply(sql);
     }
+
+    @Override
+    public String toString() {
+        return "AplDbVersion";
+    }
 }
-/**
- * intuits gnawing forget yielded dunging crabbier shuffle forager chemises mores camels soberly heedful shutter
- */

@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -57,9 +56,9 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
     }
 
     @Override
-    public final void trim(int height) {
+    public final void trim(int height, TransactionalDataSource dataSource) {
         prune();
-        super.trim(height);
+        super.trim(height, dataSource);
     }
 
     protected void prune() {

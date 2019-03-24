@@ -16,18 +16,19 @@ import javax.inject.Singleton;
 public class FullTextConfigProducer {
     @Produces
     @Named("fullTextTables")
-    List<String> produceFullTextTables() {
+    public List<String> produceFullTextTables() {
         return FullTextConfig.getInstance().getTableNames();
     }
+
     @Produces
     @Named("tablesSchema")
-    String produceTablesSchema() {
+    public String produceTablesSchema() {
         return FullTextConfig.getInstance().getSchema();
     }
 
     @Produces
     @Named("indexDirPath")
-    Path produceIndexPath() {
+    public Path produceIndexPath() {
         return RuntimeEnvironment.getInstance().getDirProvider().getFullTextSearchIndexDir();
     }
 }

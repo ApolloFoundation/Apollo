@@ -4,17 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
+
 import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -46,12 +57,14 @@ public class DbMigrationExecutorTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
 
-    private Path targetDbDir = temporaryFolder.newFolder("target").toPath();
+    private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
     private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
-            TransactionalDataSource.class, DatabaseManager.class)
+            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, TransactionProcessorImpl.class,
+            GlobalSyncImpl.class,
+            BlockDaoImpl.class, DerivedDbTablesRegistry.class, BlockchainConfig.class, EpochTime.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
@@ -64,7 +77,14 @@ public class DbMigrationExecutorTest {
     @Inject
     private DatabaseManager databaseManager;
 
-
+    private Path createTempDir() {
+        try {
+            return temporaryFolder.newFolder().toPath();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Unable to create dbMigration TARGET dir");
+        }
+    }
     @BeforeEach
     void setUp() throws IOException {
         this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(
@@ -94,7 +114,8 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(
+                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -110,7 +131,8 @@ public class DbMigrationExecutorTest {
 
     @Test
     public void testDbMigration() throws IOException {
-        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
+        DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(
+                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -120,6 +142,6 @@ public class DbMigrationExecutorTest {
         Assertions.assertFalse(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
-        Assertions.assertEquals(1640084, migratedHeight);
+        Assertions.assertEquals(BLOCK_11.getHeight(), migratedHeight);
     }
 }

@@ -12,7 +12,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class ReferencedTransactionService {
     private static final int DEFAULT_MAX_REFERENCED_TRANSACTIONS = 9;
     private ReferencedTransactionDao referencedTransactionDao;
@@ -22,7 +24,9 @@ public class ReferencedTransactionService {
     private int maxReferencedTransactions;
 
 
-    public ReferencedTransactionService(ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao, Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
+    public ReferencedTransactionService(
+            ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+            Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
         this.referencedTransactionDao = referencedTransactionDao;
         this.transactionIndexDao = transactionIndexDao;
         this.blockchain = blockchain;
@@ -31,7 +35,9 @@ public class ReferencedTransactionService {
     }
 
     @Inject
-    public ReferencedTransactionService(ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao, Blockchain blockchain, BlockchainConfig blockchainConfig) {
+    public ReferencedTransactionService(
+            ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+            Blockchain blockchain, BlockchainConfig blockchainConfig) {
         this(referencedTransactionDao, transactionIndexDao, blockchain, blockchainConfig, DEFAULT_MAX_REFERENCED_TRANSACTIONS);
     }
 

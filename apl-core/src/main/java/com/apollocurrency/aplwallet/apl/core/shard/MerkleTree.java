@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.sharding;
+package com.apollocurrency.aplwallet.apl.core.shard;
 
 import org.apache.commons.collections4.list.TreeList;
 

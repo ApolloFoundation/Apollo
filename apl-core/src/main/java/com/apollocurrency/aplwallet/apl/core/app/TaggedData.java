@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
@@ -66,7 +67,7 @@ public class TaggedData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {

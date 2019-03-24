@@ -32,7 +32,9 @@ import org.slf4j.Logger;
 
 import java.util.Map;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class Demo implements AddOn {
     private static final Logger LOG = getLogger(Demo.class);
 
