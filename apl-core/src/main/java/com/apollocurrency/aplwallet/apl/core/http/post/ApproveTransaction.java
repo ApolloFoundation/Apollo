@@ -39,6 +39,7 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public class ApproveTransaction extends CreateTransaction {
@@ -53,6 +54,7 @@ public class ApproveTransaction extends CreateTransaction {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
                 "revealedSecret", "revealedSecretIsText");
     }
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -69,7 +71,7 @@ public class ApproveTransaction extends CreateTransaction {
         List<byte[]> phasedTransactionFullHashes = new ArrayList<>(phasedTransactionValues.length);
         for (String phasedTransactionValue : phasedTransactionValues) {
             byte[] hash = Convert.parseHexString(phasedTransactionValue);
-            PhasingPoll phasingPoll = PhasingPollService.getPoll(Convert.fullHashToId(hash));
+            PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
             if (phasingPoll == null) {
                 return UNKNOWN_TRANSACTION_FULL_HASH;
             }

@@ -64,8 +64,7 @@ public class TransactionTestData {
         TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
         try {
             Transaction.Builder builder = new TransactionImpl.BuilderImpl(version, null,
-                    amount, fee, deadline, transactionType.parseAttachment(buffer))
-                    .timestamp(timestamp)
+                    amount, fee, deadline, transactionType.parseAttachment(buffer), timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullhash)
                     .signature(Convert.parseHexString(signature))
                     .blockId(blockId)

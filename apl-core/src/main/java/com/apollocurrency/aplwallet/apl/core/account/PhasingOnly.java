@@ -36,6 +36,7 @@ public final class PhasingOnly {
     
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     public static PhasingOnly get(long accountId) {
         return AccountRestrictions.phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.ByteClause("voting_model", DbClause.Op.NE, VoteWeighting.VotingModel.NONE.getCode())));
@@ -126,7 +127,7 @@ public final class PhasingOnly {
     }
 
     void checkTransaction(Transaction transaction) throws AplException.AccountControlException {
-        if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
+        if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), phasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
             throw new AplException.AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double) maxFees) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
         }
         if (transaction.getType() == Messaging.PHASING_VOTE_CASTING) {

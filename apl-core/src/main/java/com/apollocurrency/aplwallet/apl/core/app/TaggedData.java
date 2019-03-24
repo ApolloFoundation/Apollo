@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.TypeLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -60,6 +61,7 @@ public class TaggedData {
         }
 
     };
+    private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -524,7 +526,8 @@ public class TaggedData {
 
     public static void add(TransactionImpl transaction, TaggedDataUpload attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
-            TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
+            DbKey dbKey = keyFactory.newKey(transaction.getId());
+            TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());

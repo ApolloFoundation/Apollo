@@ -159,6 +159,11 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash) {
+        return false;
+    }
+
 /*
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash) {
@@ -243,8 +248,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer))
-                    .timestamp(timestamp)
+                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer), timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
                     .blockId(blockId)

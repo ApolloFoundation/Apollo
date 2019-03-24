@@ -28,9 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.*;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -130,6 +128,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final DerivedDbTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
     private final PhasingPollService phasingPollService;
+    private final TransactionValidator transactionValidator;
+    private final TransactionApplier transactionApplier;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -753,12 +753,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     private BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
-                                    GlobalSync globalSync, DerivedDbTablesRegistry dbTables, ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService) {
+                                    GlobalSync globalSync, DerivedDbTablesRegistry dbTables,
+                                    ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
+                                    TransactionValidator transactionValidator,
+                                    TransactionApplier transactionApplier) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
         this.phasingPollService = phasingPollService;
+        this.transactionValidator = transactionValidator;
+        this.transactionApplier = transactionApplier;
         this.referencedTransactionService = referencedTransactionService;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
@@ -1136,7 +1141,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     continue;
                 }
                 try {
-                    phasedTransaction.validate();
+                    transactionValidator.validate(phasedTransaction);
                     if (!phasedTransaction.attachmentIsDuplicate(duplicates, false)) {
                         validPhasedTransactions.add(phasedTransaction);
                     } else {
@@ -1188,7 +1193,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException("Invalid transaction id 0", transaction);
                 }
                 try {
-                    transaction.validate();
+                    transactionValidator.validate(transaction);
                 } catch (AplException.ValidationException e) {
                     throw new TransactionNotAcceptedException(e.getMessage(), transaction);
                 }
@@ -1226,7 +1231,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             isProcessingBlock = true;
             for (Transaction transaction : block.getTransactions()) {
-                if (! ((TransactionImpl)transaction).applyUnconfirmed()) {
+                if (! transactionApplier.applyUnconfirmed(transaction)) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
@@ -1237,7 +1242,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
             for (Transaction transaction : block.getTransactions()) {
                 try {
-                    ((TransactionImpl)transaction).apply();
+                    transactionApplier.apply(transaction);
                     if (transaction.getTimestamp() > fromTimestamp) {
                         for (AbstractAppendix appendage : transaction.getAppendages(true)) {
                             if ((appendage instanceof Prunable) &&
@@ -1289,7 +1294,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             possiblyApprovedTransactions.forEach(transaction -> {
                 if (phasingPollService.getResult(transaction.getId()) == null) {
                     try {
-                        transaction.validate();
+                        transactionValidator.validate(transaction);
                         transaction.getPhasing().tryCountVotes(transaction, duplicates);
                     } catch (AplException.ValidationException e) {
                         log.debug("At height " + block.getHeight() + " phased transaction " + transaction.getStringId()
@@ -1439,7 +1444,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     continue;
                 }
                 try {
-                    unconfirmedTransaction.getTransaction().validate();
+                    transactionValidator.validate(unconfirmedTransaction.getTransaction());
                 } catch (AplException.ValidationException e) {
                     continue;
                 }
@@ -1467,7 +1472,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try (DbIterator<Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(lookupBlockhain().getHeight() + 1)) {
             for (Transaction phasedTransaction : phasedTransactions) {
                 try {
-                    phasedTransaction.validate();
+                    transactionValidator.validate(phasedTransaction);
                     phasedTransaction.attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
                 } catch (AplException.ValidationException ignore) {
                 }

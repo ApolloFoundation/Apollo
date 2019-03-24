@@ -26,15 +26,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -69,6 +66,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
@@ -105,67 +104,69 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private volatile boolean cacheInitialized = false;
-
-    private LongKeyFactory<UnconfirmedTransaction> unconfirmedTransactionDbKeyFactory = new LongKeyFactory<UnconfirmedTransaction>("id") {
-
-        @Override
-        public DbKey newKey(UnconfirmedTransaction unconfirmedTransaction) {
-            return unconfirmedTransaction.getTransaction().getDbKey();
-        }
-
-    };
-
-    public LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory() {
-        return unconfirmedTransactionDbKeyFactory;
+    private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
+    private final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable;
+    private final TransactionValidator validator;
+    private final TransactionApplier transactionApplier;
+    @Inject
+    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier) {
+        this.transactionKeyFactory = transactionKeyFactory;
+        this.unconfirmedTransactionTable = createUnconfirmedTransactionTable(transactionKeyFactory);
+        this.validator = validator;
+        this.transactionApplier = applier;
     }
 
-    private final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable =
-            new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", unconfirmedTransactionDbKeyFactory) {
+    private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
+        return
+                new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", keyFactory) {
 
-        @Override
-        protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new UnconfirmedTransaction(rs);
-        }
-
-        @Override
-        protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
-            unconfirmedTransaction.save(con);
-            if (transactionCache.size() < maxUnconfirmedTransactions) {
-                transactionCache.put(unconfirmedTransaction.getDbKey(), unconfirmedTransaction);
-            }
-        }
-
-        @Override
-        public void rollback(int height) {
-            try (Connection con = lookupDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
-                pstmt.setInt(1, height);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        UnconfirmedTransaction unconfirmedTransaction = load(con, rs, null);
-                        waitingTransactions.add(unconfirmedTransaction);
-                        transactionCache.remove(unconfirmedTransaction.getDbKey());
+                    @Override
+                    protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                        return new UnconfirmedTransaction(rs);
                     }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-            super.rollback(height);
-            unconfirmedDuplicates.clear();
-        }
 
-        @Override
-        public void truncate() {
-            super.truncate();
-            clearCache();
-        }
+                    @Override
+                    protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+                        unconfirmedTransaction.save(con);
+                        if (transactionCache.size() < maxUnconfirmedTransactions) {
+                            DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
+                            transactionCache.put(dbKey, unconfirmedTransaction);
+                        }
+                    }
 
-        @Override
-        protected String defaultSort() {
-            return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
-        }
+                    @Override
+                    public void rollback(int height) {
+                        try (Connection con = lookupDataSource().getConnection();
+                             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
+                            pstmt.setInt(1, height);
+                            try (ResultSet rs = pstmt.executeQuery()) {
+                                while (rs.next()) {
+                                    UnconfirmedTransaction unconfirmedTransaction = load(con, rs, null);
+                                    waitingTransactions.add(unconfirmedTransaction);
+                                    DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
+                                    transactionCache.remove(dbKey);
+                                }
+                            }
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e.toString(), e);
+                        }
+                        super.rollback(height);
+                        unconfirmedDuplicates.clear();
+                    }
 
-    };
+                    @Override
+                    public void truncate() {
+                        super.truncate();
+                        clearCache();
+                    }
+
+                    @Override
+                    protected String defaultSort() {
+                        return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
+                    }
+
+                };
+    }
 
     private final Set<TransactionImpl> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Listeners<List<? extends Transaction>,Event> transactionListeners = new Listeners<>();
@@ -207,49 +208,50 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
 
 
-    private final Runnable removeUnconfirmedTransactionsThread = () -> {
-
-        try {
+    private Runnable createRemoveUnconfirmedTransactionsThread() {
+        return () -> {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
-                    return;
-                }
-                List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
-                try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                        new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
-                    while (iterator.hasNext()) {
-                        expiredTransactions.add(iterator.next());
+                try {
+                    if (lookupBlockchainProcessor().isDownloading() && !testUnconfirmedTransactions) {
+                        return;
                     }
-                }
-                if (expiredTransactions.size() > 0) {
-                    globalSync.writeLock();
-                    try {
-                        TransactionalDataSource dataSource = lookupDataSource();
-                        try {
-                            dataSource.begin();
-                            for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
-                                removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
-                            }
-                            dataSource.commit();
-                        } catch (Exception e) {
-                            LOG.error(e.toString(), e);
-                            dataSource.rollback();
-                            throw e;
+                    List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
+                    try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
+                            new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
+                        while (iterator.hasNext()) {
+                            expiredTransactions.add(iterator.next());
                         }
-                    } finally {
-                        globalSync.writeUnlock();
                     }
+                    if (expiredTransactions.size() > 0) {
+                        globalSync.writeLock();
+                        try {
+                            TransactionalDataSource dataSource = lookupDataSource();
+                            try {
+                                dataSource.begin();
+                                for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
+                                    removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
+                                }
+                                dataSource.commit();
+                            } catch (Exception e) {
+                                LOG.error(e.toString(), e);
+                                dataSource.rollback();
+                                throw e;
+                            }
+                        } finally {
+                            globalSync.writeUnlock();
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.info("Error removing unconfirmed transactions", e);
                 }
-            } catch (Exception e) {
-                LOG.info("Error removing unconfirmed transactions", e);
+            } catch (Throwable t) {
+                LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+                t.printStackTrace();
+                System.exit(1);
             }
-        } catch (Throwable t) {
-            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-            t.printStackTrace();
-            System.exit(1);
-        }
 
-    };
+        };
+    }
 
     private final Runnable rebroadcastTransactionsThread = () -> {
 
@@ -354,7 +356,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 ThreadPool.runAfterStart("InitialUnconfirmedTxsRebroadcasting",this::rebroadcastAllUnconfirmedTransactions);
                 ThreadPool.scheduleThread("RebroadcastTransactions", rebroadcastTransactionsThread, 23);
             }
-            ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", removeUnconfirmedTransactionsThread, 20);
+            ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", createRemoveUnconfirmedTransactionsThread(), 20);
             ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
         }
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
@@ -398,7 +400,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public Transaction getUnconfirmedTransaction(long transactionId) {
-        DbKey dbKey = unconfirmedTransactionDbKeyFactory.newKey(transactionId);
+        DbKey dbKey = transactionKeyFactory.newKey(transactionId);
         return getUnconfirmedTransaction(dbKey);
     }
 
@@ -464,7 +466,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 LOG.info("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
                 return;
             }
-            if (getUnconfirmedTransaction(((TransactionImpl)transaction).getDbKey()) != null) {
+            DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
+            if (getUnconfirmedTransaction(dbKey) != null) {
                 if (enableTransactionRebroadcasting) {
                     broadcastedTransactions.add((TransactionImpl) transaction);
                     LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
@@ -473,7 +476,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 return;
             }
-            transaction.validate();
+            validator.validate(transaction);
             UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction((TransactionImpl) transaction, ntpTime.getTime());
             boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
             if (broadcastLater) {
@@ -511,7 +514,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 dataSource.begin();
                 try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getAllUnconfirmedTransactions()) {
                     for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
-                        unconfirmedTransaction.getTransaction().undoUnconfirmed();
+                        transactionApplier.undoUnconfirmed(unconfirmedTransaction.getTransaction());
                         removed.add(unconfirmedTransaction.getTransaction());
                     }
                 }
@@ -552,7 +555,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             List<Transaction> removed = new ArrayList<>();
             try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getAllUnconfirmedTransactions()) {
                 for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
-                    unconfirmedTransaction.getTransaction().undoUnconfirmed();
+                    transactionApplier.undoUnconfirmed(unconfirmedTransaction.getTransaction());
                     if (removed.size() < maxUnconfirmedTransactions) {
                         removed.add(unconfirmedTransaction.getTransaction());
                     }
@@ -605,8 +608,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             pstmt.setLong(1, transaction.getId());
             int deleted = pstmt.executeUpdate();
             if (deleted > 0) {
-                ((TransactionImpl)transaction).undoUnconfirmed();
-                transactionCache.remove(((TransactionImpl)transaction).getDbKey());
+                transactionApplier.undoUnconfirmed(transaction);
+                DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
+                transactionCache.remove(dbKey);
                 transactionListeners.notify(Collections.singletonList(transaction), Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
             }
         } catch (SQLException e) {
@@ -643,7 +647,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 while (iterator.hasNext()) {
                     UnconfirmedTransaction unconfirmedTransaction = iterator.next();
                     try {
-                        unconfirmedTransaction.validate();
+                        validator.validate(unconfirmedTransaction);
                         processTransaction(unconfirmedTransaction);
                         iterator.remove();
                         addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
@@ -683,10 +687,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             try {
                 TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
                 receivedTransactions.add(transaction);
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || blockchain.hasTransaction(transaction.getId())) {
+                DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
+                if (getUnconfirmedTransaction(dbKey) != null || blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
-                transaction.validate();
+                validator.validate(transaction);
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (broadcastedTransactions.contains(transaction)) {
@@ -736,8 +741,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
-
-                if (getUnconfirmedTransaction(transaction.getDbKey()) != null || blockchain.hasTransaction(transaction.getId())) {
+                DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
+                if (getUnconfirmedTransaction(dbKey) != null || blockchain.hasTransaction(transaction.getId())) {
                     throw new AplException.ExistingTransactionException("Transaction already processed");
                 }
 
@@ -749,7 +754,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
 
-                if (! transaction.applyUnconfirmed()) {
+                if (! transactionApplier.applyUnconfirmed(transaction)) {
                     throw new AplException.InsufficientBalanceException("Insufficient balance");
                 }
 
@@ -793,7 +798,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     DbIterator<UnconfirmedTransaction> it = getAllUnconfirmedTransactions();
                     while (it.hasNext()) {
                         UnconfirmedTransaction unconfirmedTransaction = it.next();
-                        transactionCache.put(unconfirmedTransaction.getDbKey(), unconfirmedTransaction);
+                        DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
+                        transactionCache.put(dbKey, unconfirmedTransaction);
                     }
                     cacheInitialized = true;
                 }

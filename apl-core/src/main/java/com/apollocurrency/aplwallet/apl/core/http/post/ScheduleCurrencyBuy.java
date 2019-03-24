@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
@@ -52,6 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
+    private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
 
     private static class ScheduleCurrencyBuyHolder {
         private static final ScheduleCurrencyBuy INSTANCE = new ScheduleCurrencyBuy();
@@ -114,7 +116,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
 
             globalSync.updateLock();
             try {
-                transaction.validate();
+                validator.validate(transaction);
                 CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
                 if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
                     LOG.debug("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());

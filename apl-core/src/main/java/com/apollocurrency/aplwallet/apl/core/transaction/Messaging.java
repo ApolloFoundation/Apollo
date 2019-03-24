@@ -123,7 +123,7 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
                 return attachment.getAliasName().length() + attachment.getAliasURI().length();
             }
@@ -430,14 +430,14 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType POLL_CREATION = new Messaging() {
         private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
                 return numOptions <= 19 ? 0 : numOptions - 19;
             }
         };
         private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingPollCreation attachment = (MessagingPollCreation) appendage;
                 int size = attachment.getPollName().length() + attachment.getPollDescription().length();
                 for (String option : ((MessagingPollCreation) appendage).getPollOptions()) {
@@ -725,7 +725,7 @@ public abstract class Messaging extends TransactionType {
     public static final Messaging ACCOUNT_INFO = new Messaging() {
         private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
                 return attachment.getName().length() + attachment.getDescription().length();
             }
@@ -793,7 +793,7 @@ public abstract class Messaging extends TransactionType {
     public static final Messaging ACCOUNT_PROPERTY = new Messaging() {
         private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
                 return attachment.getValue().length();
             }

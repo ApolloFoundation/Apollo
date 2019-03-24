@@ -209,9 +209,9 @@ public class MintWorker implements Runnable{
     private JSONObject currencyMint(byte[] keySeed, long currencyId, long nonce, long units, long counter) {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
+        int timestamp = ((Long) ecBlock.get("timestamp")).intValue();
         Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
-                (short) 120, attachment)
-                .timestamp(((Long) ecBlock.get("timestamp")).intValue())
+                (short) 120, attachment, timestamp)
                 .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
                 .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {

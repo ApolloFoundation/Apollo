@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -43,6 +44,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingVoteTable phasingVoteTable;
     private Blockchain blockchain; //TODO init in constructor
     private GlobalSync globalSync;
+    private TransactionValidator transactionValidator;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable, PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable, PhasingVoteTable phasingVoteTable) {
@@ -228,7 +230,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             try (DbIterator<Transaction> phasedTransactions = getFinishingTransactions(blockchain.getHeight() + 1)) {
                 for (Transaction phasedTransaction : phasedTransactions) {
                     try {
-                        phasedTransaction.validate();
+                        transactionValidator.validate(phasedTransaction);
                         if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
                             result.add(phasedTransaction);
                         }

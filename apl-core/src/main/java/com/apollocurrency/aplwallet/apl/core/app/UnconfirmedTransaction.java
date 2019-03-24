@@ -124,12 +124,18 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public long getId() {
-        return transaction.getId();
+    public void setFeeATM(long feeATM) {
+        if (transaction.getSignature() != null) {
+            throw new UnsupportedOperationException("Unable to set fee for already signed transaction");
+        } else {
+            transaction.setFeeATM(feeATM);
+        }
+
     }
 
-    DbKey getDbKey() {
-        return transaction.getDbKey();
+    @Override
+    public long getId() {
+        return transaction.getId();
     }
 
     @Override
@@ -247,11 +253,6 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public boolean verifySignature() {
         return transaction.verifySignature();
-    }
-
-    @Override
-    public void validate() throws AplException.ValidationException {
-        transaction.validate();
     }
 
     @Override

@@ -62,6 +62,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public void setFeeATM(long feeATM) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public long getId() {
         return id;
     }
@@ -183,11 +188,6 @@ public class SimpleTransaction implements Transaction {
     @Override
     public boolean verifySignature() {
         return false;
-    }
-
-    @Override
-    public void validate() throws AplException.ValidationException {
-
     }
 
     @Override

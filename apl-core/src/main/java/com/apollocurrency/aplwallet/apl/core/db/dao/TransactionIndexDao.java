@@ -23,7 +23,7 @@ public interface TransactionIndexDao {
      * @return found records list
      */
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT transaction_id, block_id FROM transaction_shard_index WHERE block_id =:blockId LIMIT :limit")
+    @SqlQuery("SELECT * FROM transaction_shard_index WHERE block_id =:blockId LIMIT :limit")
     @RegisterRowMapper(TransactionIndexRowMapper.class)
     List<TransactionIndex> getByBlockId(@Bind("blockId") long blockId, @Bind("limit") long limit);
 
@@ -33,7 +33,7 @@ public interface TransactionIndexDao {
     TransactionIndex getByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT b.shard_id, b.block_id FROM transaction_shard_index join block_index b on transaction_shard_index.block_id = b.block_id where transaction_id =:transactionId")
+    @SqlQuery("SELECT b.shard_id FROM transaction_shard_index join block_index b on transaction_shard_index.block_id = b.block_id where transaction_id =:transactionId")
     Long getShardIdByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
@@ -50,7 +50,7 @@ public interface TransactionIndexDao {
     Integer getTransactionHeightByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional
-    @SqlUpdate("INSERT INTO transaction_shard_index(transaction_id, block_id) VALUES (:transactionId, :blockId)")
+    @SqlUpdate("INSERT INTO transaction_shard_index(transaction_id, partial_transaction_hash, block_id) VALUES (:transactionId, :partialTransactionHash, :blockId)")
     void saveTransactionIndex(@BindBean TransactionIndex transactionIndex);
 
     @Transactional

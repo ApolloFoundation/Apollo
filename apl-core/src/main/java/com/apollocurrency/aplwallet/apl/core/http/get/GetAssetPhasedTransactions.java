@@ -33,6 +33,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
@@ -43,7 +44,7 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
     public static GetAssetPhasedTransactions getInstance() {
         return GetAssetPhasedTransactionsHolder.INSTANCE;
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private GetAssetPhasedTransactions() {
         super(new APITag[]{APITag.AE, APITag.PHASING}, "asset", "account", "withoutWhitelist", "firstIndex", "lastIndex");
     }
@@ -57,7 +58,7 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = PhasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
+        try (DbIterator<? extends Transaction> iterator = phasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
                 accountId, withoutWhitelist, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
