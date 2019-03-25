@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -35,7 +34,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandler {
@@ -51,7 +49,6 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
     private GetExpectedCurrencyTransfers() {
         super(new APITag[]{APITag.MS}, "currency", "account", "includeCurrencyInfo");
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -70,7 +67,7 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 
-        List<Transaction> transactions = phasingPollService.getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
 
         JSONObject response = new JSONObject();
         JSONArray transfersData = new JSONArray();

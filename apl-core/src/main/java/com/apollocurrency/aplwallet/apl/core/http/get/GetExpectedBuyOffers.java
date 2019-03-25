@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
@@ -37,7 +36,6 @@ import org.json.simple.JSONStreamAware;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
@@ -59,7 +57,6 @@ public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
         MonetarySystemPublishExchangeOffer a2 = (MonetarySystemPublishExchangeOffer)o2.getAttachment();
         return Long.compare(a2.getBuyRateATM(), a1.getBuyRateATM());
     };
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
@@ -78,7 +75,7 @@ public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 
-        List<Transaction> transactions = phasingPollService.getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         if (sortByRate) {
             Collections.sort(transactions, rateComparator);
         }

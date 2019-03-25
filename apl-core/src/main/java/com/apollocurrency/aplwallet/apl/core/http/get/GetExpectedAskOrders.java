@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -37,7 +36,6 @@ import org.json.simple.JSONStreamAware;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
@@ -53,7 +51,6 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
     private GetExpectedAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
         ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment)o1.getAttachment();
         ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment)o2.getAttachment();
@@ -73,7 +70,7 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 
-        List<Transaction> transactions = phasingPollService.getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         if (sortByPrice) {
             Collections.sort(transactions, priceComparator);
         }

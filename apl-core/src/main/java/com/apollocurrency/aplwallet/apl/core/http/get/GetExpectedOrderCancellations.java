@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -33,7 +32,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandler {
@@ -45,7 +43,6 @@ public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandl
     public static GetExpectedOrderCancellations getInstance() {
         return GetExpectedOrderCancellationsHolder.INSTANCE;
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private GetExpectedOrderCancellations() {
         super(new APITag[] {APITag.AE});
     }
@@ -55,7 +52,7 @@ public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandl
         Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION
                 || transaction.getType() == ColoredCoins.BID_ORDER_CANCELLATION;
 
-        List<? extends Transaction> transactions = phasingPollService.getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();
         transactions.forEach(transaction -> cancellations.add(JSONData.expectedOrderCancellation(transaction)));
         JSONObject response = new JSONObject();
