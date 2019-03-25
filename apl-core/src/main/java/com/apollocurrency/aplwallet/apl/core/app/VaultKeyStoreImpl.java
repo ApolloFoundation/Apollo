@@ -32,8 +32,11 @@
  import java.time.OffsetDateTime;
  import java.time.ZoneOffset;
  import java.time.format.DateTimeFormatter;
+ import java.util.ArrayList;
  import java.util.Comparator;
+ import java.util.List;
  import java.util.Objects;
+ import java.util.stream.Collectors;
 
  import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
@@ -78,7 +81,7 @@
      public SecretBytesDetails getSecretBytesV0(String passphrase, long accountId)  {
          Objects.requireNonNull(passphrase);
 
-         Path secretPath = findSecretPaths(accountId);
+         Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
          if (secretPath == null) {
              return new SecretBytesDetails(null, Status.NOT_FOUND);
@@ -111,12 +114,12 @@
      }
 
 
-     public Path findSecretPaths(long accountId) {
+     public Path findKeyStorePathWithLatestVersion(long accountId) {
          try {
-             Path paths = Files.list(keystoreDirPath)
+             Path path = Files.list(keystoreDirPath)
                      //Find files for this account.
-                     .filter(path -> Objects.equals(
-                             FbWalletUtil.getAccount(path.toString().toUpperCase()),
+                     .filter(p -> Objects.equals(
+                             FbWalletUtil.getAccount(p.toString().toUpperCase()),
                              Convert.defaultRsAccount(accountId).toUpperCase())
                      )
                      //Sorted by versions.
@@ -127,11 +130,28 @@
                      .findFirst()
                      .orElse(null);
 
-             return paths;
+             return path;
          }
          catch (IOException e) {
              LOG.debug("VaultKeyStore IO error while searching path to secret key of account " + accountId, e.getMessage());
              return null;
+         }
+     }
+
+     public List<Path> findKeyStorePaths(long accountId) {
+         try {
+             List<Path> paths = Files.list(keystoreDirPath)
+                     //Find files for this account.
+                     .filter(path -> Objects.equals(
+                             FbWalletUtil.getAccount(path.toString().toUpperCase()),
+                             Convert.defaultRsAccount(accountId).toUpperCase())
+                     )
+                     .collect(Collectors.toList());
+             return paths;
+         }
+         catch (IOException e) {
+             LOG.debug("VaultKeyStore IO error while searching path to secret key of account " + accountId, e.getMessage());
+             return new ArrayList<>();
          }
      }
 
@@ -218,7 +238,7 @@
         Objects.requireNonNull(passphrase);
         Objects.requireNonNull(accountId);
 
-        Path secretPath = findSecretPaths(accountId);
+        Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
         if (secretPath == null) {
             LOG.warn("VaultWallet : " + Status.NOT_FOUND);
@@ -227,7 +247,7 @@
 
         if(!isStorageVersionLatest(secretPath)){
             if(migrateOldKeyStorageToTheNew(passphrase, accountId)){
-                secretPath = findSecretPaths(accountId);
+                secretPath = findKeyStorePathWithLatestVersion(accountId);
             }
         }
 
@@ -251,7 +271,7 @@
 
     @Override
     public File getSecretStoreFile(Long accountId, String passphrase) {
-        Path secretPath = findSecretPaths(accountId);
+        Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
         // Check passphrase / migrate keys from old key store to the new.
         FbWallet fbWallet = getSecretStore(passphrase, accountId);
@@ -262,33 +282,29 @@
         return secretPath == null ? null : new File(secretPath.toString());
     }
 
-    @Deprecated
     @Override
-     public Status deleteSecretBytes(String passphrase, long accountId) {
+     public Status deleteKeyStore(String passphrase, long accountId) {
          if (!isAvailable()) {
              return Status.NOT_AVAILABLE;
          }
-         SecretBytesDetails secretBytes = getSecretBytesV0(passphrase, accountId);
-         if (secretBytes.getExtractStatus() != Status.OK) {
-             return secretBytes.getExtractStatus();
+
+         FbWallet fbWallet = getSecretStore(passphrase, accountId);
+         if (fbWallet==null || CollectionUtils.isEmpty(fbWallet.getAllData())) {
+             return Status.BAD_CREDENTIALS;
          }
-         Path secretPath = findSecretPaths(accountId);
+         List<Path> secretPaths = findKeyStorePaths(accountId);
 
-        if(!isStorageVersionLatest(secretPath)){
-            if(migrateOldKeyStorageToTheNew(passphrase, accountId)){
-                secretPath = findSecretPaths(accountId);
-            }
-        }
-
-         return deleteFileWithStatus(secretPath);
+         return deleteFileWithStatus(secretPaths);
      }
 
-     public Status deleteFileWithStatus(Path path) {
+     public Status deleteFileWithStatus(List<Path> paths) {
          try {
-             deleteFile(path);
+             for (Path path : paths) {
+                 deleteFile(path);
+             }
          }
          catch (IOException e) {
-             LOG.debug("Unable to delete file " + path, e);
+             LOG.debug("Unable to delete file. " + paths.get(0), e);
              return Status.DELETE_ERROR;
          }
          return Status.OK;
@@ -322,13 +338,13 @@
      }
 
      public boolean isNewVersionAccountExist(long accountId) {
-         Path path = findSecretPaths(accountId);
+         Path path = findKeyStorePathWithLatestVersion(accountId);
 
          return path != null && isStorageVersionLatest(path);
      }
 
     public boolean isAccountExist(long accountId) {
-        Path path = findSecretPaths(accountId);
+        Path path = findKeyStorePathWithLatestVersion(accountId);
 
         return path != null;
     }

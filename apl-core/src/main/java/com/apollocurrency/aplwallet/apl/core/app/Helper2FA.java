@@ -20,14 +20,11 @@ import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.firstbridge.cryptolib.container.FbWallet;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 
 /**
  * This class is just static helper for 2FA. It should be removed later
@@ -110,7 +107,7 @@ public class Helper2FA {
             Status2FA status2FA = disable2FA(accountId, passphrase, code);
             validate2FAStatus(status2FA, accountId);
         }
-        VaultKeyStore.Status status = KEYSTORE.deleteSecretBytes(passphrase, accountId);
+        VaultKeyStore.Status status = KEYSTORE.deleteKeyStore(passphrase, accountId);
         validateKeyStoreStatus(accountId, status, "deleted");
         return status;
     }
@@ -165,6 +162,8 @@ public class Helper2FA {
 
         FbWalletUtil.addAplKey(aplAccount, fbWallet);
         FbWalletUtil.addEthKey(ethAccount, fbWallet);
+        //throw Exception if OpenData null
+        fbWallet.setOpenData(new byte[1]);
 
         VaultKeyStore.Status status = KEYSTORE.saveSecretKeyStore(aplAccount.getId(), passphrase, fbWallet);
         validateKeyStoreStatus(aplAccount.getId(), status, "generated");

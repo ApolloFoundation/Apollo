@@ -60,8 +60,7 @@ public interface VaultKeyStore {
      * @param accountId - id of account, which secretBytes should be deleted
      * @return status of deletion
      */
-    @Deprecated
-     Status deleteSecretBytes(String passphrase, long accountId);
+     Status deleteKeyStore(String passphrase, long accountId);
 
     File getSecretStoreFile(Long accountId, String passphrase);
 
