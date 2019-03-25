@@ -170,6 +170,24 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+    public int getAllPhasedTransactionsCount() throws SQLException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result")) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    public boolean isTransactionPhased(long id) throws SQLException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("select 1 from phasing_poll where id = ? UNION select 1 from phasing_poll_result where id ?")) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
 
     @Override
     public void trim(int height, TransactionalDataSource dataSource) {

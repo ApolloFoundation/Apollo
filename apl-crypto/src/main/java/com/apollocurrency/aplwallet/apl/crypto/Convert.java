@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -127,6 +128,38 @@ public final class Convert {
             l >>= longSize;
         }
         return result;
+    }
+
+    public static byte[] concat(byte[]... arrs) {
+        Objects.requireNonNull(arrs, "Arrs cannot be null");
+
+        int length = 0;
+        for (byte[] arr : arrs) {
+            length += arr.length;
+        }
+        byte[] result = new byte[length];
+        int offset = 0;
+        for (byte[] arr : arrs) {
+            System.arraycopy(arr, 0, result, offset, arr.length);
+            offset += arr.length;
+        }
+        return result;
+    }
+
+    public static byte[] reverse(byte[] bytes) {
+        byte[] reversed = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            reversed[i] = bytes[bytes.length - i - 1];
+        }
+        return reversed;
+    }
+    public static byte[] reverseSelf(byte[] bytes) {
+        for (int i = 0; i < bytes.length / 2; i++) {
+            byte temp = bytes[i];
+            bytes[i] = bytes[bytes.length - i - 1];
+            bytes[bytes.length - i - 1] = temp;
+        }
+        return bytes;
     }
 
     public static long bytesToLong(byte[] b) {

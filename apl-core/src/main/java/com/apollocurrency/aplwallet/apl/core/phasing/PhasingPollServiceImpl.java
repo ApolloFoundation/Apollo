@@ -6,9 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -18,20 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -43,16 +33,15 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingPollLinkedTransactionTable linkedTransactionTable;
     private final PhasingVoteTable phasingVoteTable;
     private Blockchain blockchain; //TODO init in constructor
-    private GlobalSync globalSync;
-    private TransactionValidator transactionValidator;
 
     @Inject
-    public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable, PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable, PhasingVoteTable phasingVoteTable) {
+    public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable, PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable, PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
         this.linkedTransactionTable = linkedTransactionTable;
         this.phasingVoteTable = phasingVoteTable;
+        this.blockchain = blockchain;
     }
 
     @Override
@@ -220,37 +209,26 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             phasingVoteTable.insert(phasingVote);
         }
     }
-    @Override
-    public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
-        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        List<Transaction> result = new ArrayList<>();
-        globalSync.readLock();
-        try {
-            try (DbIterator<Transaction> phasedTransactions = getFinishingTransactions(blockchain.getHeight() + 1)) {
-                for (Transaction phasedTransaction : phasedTransactions) {
-                    try {
-                        transactionValidator.validate(phasedTransaction);
-                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
-                            result.add(phasedTransaction);
-                        }
-                    } catch (AplException.ValidationException ignore) {
-                    }
-                }
-            }
 
-            blockchainProcessor.selectUnconfirmedTransactions(duplicates, blockchain.getLastBlock(), -1).forEach(
-                    unconfirmedTransaction -> {
-                        Transaction transaction = unconfirmedTransaction.getTransaction();
-                        if (transaction.getPhasing() == null && filter.test(transaction)) {
-                            result.add(transaction);
-                        }
-                    }
-            );
-        } finally {
-            globalSync.readUnlock();
+
+    @Override
+    public int getAllPhasedTransactionsCount() {
+        try {
+            return phasingPollTable.getAllPhasedTransactionsCount();
         }
-        return result;
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public boolean isTransactionPhased(long id){
+        try {
+            return phasingPollTable.isTransactionPhased(id);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
 }

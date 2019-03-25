@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
@@ -1017,6 +1018,38 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return null;
     }
 
+    @Override
+    public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
+        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        List<Transaction> result = new ArrayList<>();
+        globalSync.readLock();
+        try {
+            try (DbIterator<Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(blockchain.getHeight() + 1)) {
+                for (Transaction phasedTransaction : phasedTransactions) {
+                    try {
+                        transactionValidator.validate(phasedTransaction);
+                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
+                            result.add(phasedTransaction);
+                        }
+                    } catch (AplException.ValidationException ignore) {
+                    }
+                }
+            }
+
+            selectUnconfirmedTransactions(duplicates, blockchain.getLastBlock(), -1).forEach(
+                    unconfirmedTransaction -> {
+                        Transaction transaction = unconfirmedTransaction.getTransaction();
+                        if (transaction.getPhasing() == null && filter.test(transaction)) {
+                            result.add(transaction);
+                        }
+                    }
+            );
+        } finally {
+            globalSync.readUnlock();
+        }
+        return result;
+    }
+
     public void shutdown() {
         ThreadPool.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
         getMoreBlocks = false;
@@ -1194,7 +1227,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException(e.getMessage(), transaction);
                 }
             }
-            if (((TransactionImpl)transaction).attachmentIsDuplicate(duplicates, true)) {
+            if (transaction.attachmentIsDuplicate(duplicates, true)) {
                 throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
             }
             if (!hasPrunedTransactions) {

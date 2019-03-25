@@ -69,5 +69,4 @@ public final class GetPhasingPolls extends AbstractAPIRequestHandler {
         }
         return response;
     }
-
 }

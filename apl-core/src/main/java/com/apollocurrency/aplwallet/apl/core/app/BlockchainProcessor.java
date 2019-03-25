@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
@@ -34,6 +35,8 @@ public interface BlockchainProcessor {
     Peer getLastBlockchainFeeder();
 
     int getLastBlockchainFeederHeight();
+
+    List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
 
     boolean isScanning();
 

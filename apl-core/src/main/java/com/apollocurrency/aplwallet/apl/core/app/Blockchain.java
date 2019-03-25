@@ -105,6 +105,8 @@ public interface Blockchain {
 
     boolean hasTransactionByFullHash(String fullHash);
 
+    boolean hasTransactionByFullHash(byte[] fullHash);
+
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
 
     byte[] getFullHash(long transactionId);

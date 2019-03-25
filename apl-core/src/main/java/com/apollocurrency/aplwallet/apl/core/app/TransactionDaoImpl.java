@@ -163,15 +163,9 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash) {
-        return false;
-    }
-
-/*
-    @Override
-    public boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
-*/
+
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {

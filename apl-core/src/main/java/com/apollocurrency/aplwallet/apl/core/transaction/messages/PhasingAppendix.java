@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -38,6 +39,7 @@ public class PhasingAppendix extends AbstractAppendix {
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final String appendixName = "Phasing";
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
@@ -180,15 +182,7 @@ public class PhasingAppendix extends AbstractAppendix {
                 if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                     throw new AplException.NotValidException("Duplicate linked transaction ids");
                 }
-                Transaction linkedTransaction = blockchain.findTransactionByFullHash(hash, currentHeight);
-                if (linkedTransaction != null) {
-                    if (transaction.getTimestamp() - linkedTransaction.getTimestamp() > Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN) {
-                        throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
-                    }
-                    if (linkedTransaction.getPhasing() != null) {
-                        throw new AplException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
-                    }
-                }
+                checkLinkedTransaction(hash, currentHeight, transaction.getHeight());
             }
             if (params.getQuorum() > linkedFullHashes.length) {
                 throw new AplException.NotValidException("Quorum of " + params.getQuorum() + " cannot be achieved in by-transaction voting with "
@@ -222,6 +216,19 @@ public class PhasingAppendix extends AbstractAppendix {
         if (finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
                 || finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
             throw new AplException.NotCurrentlyValidException("Invalid finish height " + finishHeight);
+        }
+    }
+
+    private void checkLinkedTransaction(byte[] hash, int currentHeight, int transactionHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
+        Transaction linkedTransaction = blockchain.findTransactionByFullHash(hash, currentHeight);
+        boolean b = blockchain.hasTransactionByFullHash(hash);
+        if (linkedTransaction != null) {
+            if (transactionHeight - linkedTransaction.getHeight() > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
+                throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
+            }
+            if (phasingPollService.isTransactionPhased(linkedTransaction.getId())) {
+                throw new AplException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
+            }
         }
     }
 

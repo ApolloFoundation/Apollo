@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -69,5 +68,7 @@ public interface PhasingPollService {
 
     void addVote(Transaction transaction, Account voter, long phasedTransactionId);
 
-    List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
+    int getAllPhasedTransactionsCount();
+
+    boolean isTransactionPhased(long id);
 }
