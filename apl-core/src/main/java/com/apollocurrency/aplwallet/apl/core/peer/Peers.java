@@ -80,6 +80,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 public final class Peers {
     private static final Logger LOG = getLogger(Peers.class);
@@ -163,8 +164,8 @@ public final class Peers {
     static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
     
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
-    
-    static PeerHttpServer peerHttpServer = new PeerHttpServer();
+
+    private  static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();  
     
     private Peers() {} // never
  

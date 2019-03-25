@@ -35,26 +35,19 @@ public class PeerHttpServer {
      
      static final int MAX_PLATFORM_LENGTH = 30;
     
-     PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();   
+     private PropertiesHolder propertiesHolder;
      boolean shareMyAddress;
      int myPeerServerPort;
      boolean enablePeerUPnP;    
      String myPlatform;
      String myAddress;
      Server peerServer;
-    
-    //TODO: injecting does not work, fix
-     @Inject
      UPnP upnp;
-    private UPnP lookupUPnP(){
-        if(upnp==null){
-            upnp = CDI.current().select(UPnP.class).get();
-        }
-        return upnp;
-    }
     
-    public PeerHttpServer() {
-
+    @Inject
+    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp) {
+        this.propertiesHolder = propertiesHolder;
+        this.upnp = upnp;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
         myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
         String platform = propertiesHolder.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
@@ -104,7 +97,7 @@ public class PeerHttpServer {
                         Connector[] peerConnectors = peerServer.getConnectors();
                         for (Connector peerConnector : peerConnectors) {
                             if (peerConnector instanceof ServerConnector) {
-                                lookupUPnP().addPort(((ServerConnector) peerConnector).getPort());
+                                upnp.addPort(((ServerConnector) peerConnector).getPort());
                             }
                         }
                     }
@@ -129,7 +122,7 @@ public class PeerHttpServer {
                     Connector[] peerConnectors = peerServer.getConnectors();
                     for (Connector peerConnector : peerConnectors) {
                         if (peerConnector instanceof ServerConnector)
-                            lookupUPnP().deletePort(((ServerConnector)peerConnector).getPort());
+                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
                     }
                 }
             } catch (Exception e) {

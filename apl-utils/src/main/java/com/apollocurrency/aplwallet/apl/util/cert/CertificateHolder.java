@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
-import com.apollocurrency.aplwallet.apl.util.env.FilePath;
 import io.firstbridge.cryptolib.KeyReader;
 import io.firstbridge.cryptolib.impl.KeyReaderImpl;
 import java.io.File;
@@ -54,9 +53,8 @@ public class CertificateHolder {
                     if (vc != null) {
                         put(vc.getApolloId(), vc);
                         if (loadPrivateKey) {
-                            FilePath fp = new FilePath(f);
-                            String parent = fp.getPath();
-                            String fn = fp.getFileName();
+                            String parent = f.getParent();
+                            String fn = f.getName();
                             PrivateKey pk = null;
                             pk = readPvtKey(parent + "/" + pvtKeyFileName(fn));
                             if (pk == null) {//no key in the same dir, try ../private
@@ -66,10 +64,10 @@ public class CertificateHolder {
                                if(vc.checkKeys(pk)){
                                  vc.setPrivateKey(pk);
                                }else{
-                                   log.error("Private key file does not correspond to certificate: {}"+fp.getAbsPath());
+                                   log.error("Private key file does not correspond to certificate: {}"+f.getAbsolutePath());
                                }
                             } else {
-                                log.error("Private key file not foud for certificate: {}", fp.getAbsPath());
+                                log.error("Private key file not foud for certificate: {}", f.getAbsolutePath());
                             }
                         }
                     }
@@ -93,13 +91,13 @@ public class CertificateHolder {
 
     public static String rmSuffixes(String fn) {
         String name = new String(fn);
-        FilePath fp = new FilePath(fn);
-        String ext = fp.getExtension();
-        if (ext.equalsIgnoreCase("pem")) {
-            name = fp.getName();
-        } else {
-            name = fn;
+        String ext="";
+        int last_dot = fn.lastIndexOf(".");
+        if(last_dot>=0){
+            ext=fn.substring(last_dot+1);
+            name=fn.substring(0, last_dot);
         }
+
         String[] sfxes = {"_pvtkey", "_req", "_cert", "_selfcert", "_csr"};
         for (String s : sfxes) {
             int idx = name.indexOf(s);
