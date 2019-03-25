@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
  */
 public class AplContainerBuilder {
     private static final Logger log = LoggerFactory.getLogger(AplContainerBuilder.class);
-
+    
+    private boolean devMode = false;
+    
     private String containerId;
 
     private Boolean annotatedDiscoveryMode;
@@ -42,7 +44,12 @@ public class AplContainerBuilder {
         disableDiscovery = true;
         return this;
     }
-
+    
+    public AplContainerBuilder devMode(){
+        devMode=true;
+        return this;
+    }
+        
     public AplContainerBuilder interceptors(Class<?>... interceptors) {
         if (interceptors != null && interceptors.length > 0) {
             this.interceptors = Arrays.stream(interceptors).collect(Collectors.toList());
@@ -80,8 +87,10 @@ public class AplContainerBuilder {
         if (recursiveScanPackages != null && !recursiveScanPackages.isEmpty()) {
             recursiveScanPackages.forEach(p -> weld.addPackage(true, p));
         }
-        
-        weld.enableDevMode();
+
+        if(devMode){
+          weld.enableDevMode();
+        }
         
         WeldContainer newContainer = weld.initialize();
 

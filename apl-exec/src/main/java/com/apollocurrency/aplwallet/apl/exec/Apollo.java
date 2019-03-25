@@ -211,6 +211,9 @@ public class Apollo {
                 .recursiveScanPackages(DatabaseManager.class)
                 .recursiveScanPackages(FullTextConfig.class)
                 .annotatedDiscoveryMode()
+  //TODO:  turn it on periodically in development process
+  // to check CDI errors
+  //              .devMode()
                 .build();
 
         // init config holders
