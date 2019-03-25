@@ -4,21 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import static com.apollocurrency.aplwallet.apl.crypto.Convert.parseHexString;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.NOT_SAVED_SHARD;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARDS;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_0;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.time.Instant;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -33,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -84,19 +75,41 @@ class ShardRecoveryDaoTest {
     void testUnknownShardById() {
         ShardRecovery recovery = dao.getShardRecoveryById(-1L);
         assertNull(recovery);
+        recovery = dao.getLatestShardRecovery();
+        assertNull(recovery);
     }
+
+    @Test
+    void testShortInsert() {
+        ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
+        long insertedId = dao.saveShardRecovery(recovery);
+        assertTrue(insertedId >= 1L);
+
+        ShardRecovery recovery2 = new ShardRecovery(MigrateState.INIT, "TEST");
+        insertedId = dao.saveShardRecovery(recovery2);
+        assertTrue(insertedId >= 1L);
+
+        dao.hardDeleteAllShardRecovery();
+    }
+
 
     @Test
     void testInsert() {
         ShardRecovery recovery = new ShardRecovery(
                 MigrateState.INIT, "BLOCK", "DB_ID", 1L,
-                "DB_ID", 100000);
+                "DB_ID", Instant.now());
 
         long insertedId = dao.saveShardRecovery(recovery);
         assertTrue(insertedId >= 1L);
 
         long count = dao.countShardRecovery();
         assertEquals(1, count);
+
+        ShardRecovery found = dao.getLatestShardRecovery();
+        assertNotNull(found);
+        assertNotNull(found.getShardRecoveryId());
+        assertEquals(MigrateState.INIT, found.getState());
+        assertNotNull(found.getUpdated());
 
         List<ShardRecovery> actual = dao.getAllShardRecovery();
         assertEquals(1, actual.size());
@@ -111,7 +124,7 @@ class ShardRecoveryDaoTest {
     void testUpdate() {
         ShardRecovery recovery = new ShardRecovery(
                 MigrateState.INIT, "BLOCK", "DB_ID", 1L,
-                "DB_ID", 100000);
+                "DB_ID", Instant.now());
         long insertedId = dao.saveShardRecovery(recovery);
         assertTrue(insertedId > 1L);
 
@@ -123,6 +136,7 @@ class ShardRecoveryDaoTest {
         List<ShardRecovery> actual = dao.getAllShardRecovery();
         assertEquals(1, actual.size());
         assertEquals(recovery.getState(), actual.get(0).getState());
+        assertNotNull(actual.get(0).getUpdated());
 
         ShardRecovery found = dao.getShardRecoveryById(actual.get(0).getShardRecoveryId());
         assertEquals(MigrateState.SHARD_SCHEMA_FULL, found.getState());

@@ -717,12 +717,12 @@ public class AplDbVersion extends DbVersion {
                         "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
             case 262:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
-                        "state VARCHAR NOT NULL, object_name VARCHAR NOT NULL, column_name VARCHAR NOT NULL, " +
-                        "last_column_value BIGINT, last_column_str VARCHAR, timestamp INT NOT NULL)");
+                        "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
+                        "last_column_value BIGINT, last_column_str VARCHAR, updated TIMESTAMP(9) NOT NULL)");
             case 263:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
             case 264:
-                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state, object_name)");
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
             case 265:
                 return 266;
             default:

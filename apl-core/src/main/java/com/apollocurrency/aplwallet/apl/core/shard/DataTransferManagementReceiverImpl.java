@@ -21,6 +21,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
@@ -43,14 +45,16 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
     private Optional<Long> createdShardId;
     private TransactionalDataSource createdShardSource;
+    private ShardRecoveryDao shardRecoveryDao;
 
     public DataTransferManagementReceiverImpl() {
     }
 
     @Inject
-    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService) {
+    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService, ShardRecoveryDao shardRecoveryDao) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
+        this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.optionDAO = new OptionDAO(this.databaseManager);
     }
 
@@ -76,6 +80,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
         try {
+            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
             optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name()); // store info about started process 'SHARD CREATION'
             // add info about state
             createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(null, dbVersion);

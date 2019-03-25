@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
+import java.time.Instant;
+
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 
 /**
@@ -12,12 +14,12 @@ public class ShardRecovery {
     private String columnName;
     private Long lastColumnValue;
     private String lastColumnStr;
-    private Integer timestamp;
+    private Instant updated = Instant.now();
 
     public ShardRecovery() {
     }
 
-    public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Integer timestamp) {
+    public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Instant updated) {
         this.shardRecoveryId = shardRecoveryId;
         if (state != null) {
             this.state = state.name();
@@ -26,10 +28,10 @@ public class ShardRecovery {
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
         this.lastColumnStr = lastColumnStr;
-        this.timestamp = timestamp;
+        this.updated = updated;
     }
 
-    public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Integer timestamp) {
+    public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Instant updated) {
         if (state != null) {
             this.state = state.name();
         }
@@ -37,22 +39,35 @@ public class ShardRecovery {
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
         this.lastColumnStr = lastColumnStr;
-        this.timestamp = timestamp;
+        this.updated = updated;
     }
 
-    public ShardRecovery(String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Integer timestamp) {
+    public ShardRecovery(String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Instant updated) {
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
         this.lastColumnStr = lastColumnStr;
-        this.timestamp = timestamp;
+        this.updated = updated;
     }
 
-    public ShardRecovery(String objectName, String columnName, Long lastColumnValue, Integer timestamp) {
+    public ShardRecovery(String objectName, String columnName, Long lastColumnValue, Instant updated) {
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
-        this.timestamp = timestamp;
+        this.updated = updated;
+    }
+
+    public ShardRecovery(MigrateState state) {
+        if (state != null) {
+            this.state = state.name();
+        }
+    }
+
+    public ShardRecovery(MigrateState state, String objectName) {
+        if (state != null) {
+            this.state = state.name();
+        }
+        this.objectName = objectName;
     }
 
     public Long getShardRecoveryId() {
@@ -61,15 +76,6 @@ public class ShardRecovery {
 
     public void setShardRecoveryId(Long shardRecoveryId) {
         this.shardRecoveryId = shardRecoveryId;
-    }
-
-    public ShardRecovery(String state) {
-        this.state = state;
-    }
-
-    public ShardRecovery(String state, String objectName) {
-        this.state = state;
-        this.objectName = objectName;
     }
 
     public MigrateState getState() {
@@ -117,12 +123,12 @@ public class ShardRecovery {
         this.lastColumnStr = lastColumnStr;
     }
 
-    public Integer getTimestamp() {
-        return timestamp;
+    public Instant getUpdated() {
+        return updated;
     }
 
-    public void setTimestamp(Integer timestamp) {
-        this.timestamp = timestamp;
+    public void setUpdated(Instant updated) {
+        this.updated = updated;
     }
 
     public static ShardRecoveryBuilder builder() {
@@ -136,7 +142,7 @@ public class ShardRecovery {
         private String columnName;
         private Long lastColumnValue;
         private String lastColumnStr;
-        private Integer timestamp;
+        private Instant updated;
 
         private ShardRecoveryBuilder() {
         }
@@ -171,15 +177,15 @@ public class ShardRecovery {
             return this;
         }
 
-        public ShardRecoveryBuilder timestamp(Integer timestamp) {
-            this.timestamp = timestamp;
+        public ShardRecoveryBuilder updated(Instant updated) {
+            this.updated = updated;
             return this;
         }
 
         public ShardRecovery build() {
             return new ShardRecovery(
                     shardRecoveryId, MigrateState.valueOf(state), objectName,
-                    columnName, lastColumnValue, lastColumnStr, timestamp);
+                    columnName, lastColumnValue, lastColumnStr, updated);
         }
     }
 }

@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -84,7 +85,7 @@ class DataTransferManagementReceiverTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            TransactionTestData.class, PropertyProducer.class,
+            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDao.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)

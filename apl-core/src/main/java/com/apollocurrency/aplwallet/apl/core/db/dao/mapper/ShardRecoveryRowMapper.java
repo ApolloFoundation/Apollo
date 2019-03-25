@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -22,7 +23,7 @@ public class ShardRecoveryRowMapper implements RowMapper<ShardRecovery> {
                 .columnName(rs.getString("column_name"))
                 .lastColumnValue(rs.getLong("last_column_value"))
                 .lastColumnStr(rs.getString("last_column_str"))
-                .timestamp(rs.getInt("timestamp"))
+                .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
                 .build();
     }
 }

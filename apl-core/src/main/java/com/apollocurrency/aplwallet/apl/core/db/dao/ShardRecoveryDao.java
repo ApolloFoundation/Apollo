@@ -23,6 +23,11 @@ public interface ShardRecoveryDao {
     ShardRecovery getShardRecoveryById(@Bind("shardRecoveryId") long shardRecoveryId);
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard_recovery limit 1")
+    @RegisterRowMapper(ShardRecoveryRowMapper.class)
+    ShardRecovery getLatestShardRecovery();
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard_recovery")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     List<ShardRecovery> getAllShardRecovery();
@@ -33,15 +38,15 @@ public interface ShardRecoveryDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO shard_recovery(" +
-            "shard_recovery_id, state, object_name, column_name, last_column_value, last_column_str, timestamp) " +
-            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :lastColumnStr, :timestamp)")
+            "shard_recovery_id, state, object_name, column_name, last_column_value, last_column_str, updated) " +
+            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :lastColumnStr, CURRENT_TIMESTAMP())")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     @GetGeneratedKeys
     long saveShardRecovery(@BindBean ShardRecovery shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard_recovery SET state=:state, object_name=:objectName, column_name=:columnName, " +
-            "last_column_value=:lastColumnValue, last_column_str=:lastColumnStr, timestamp=:timestamp " +
+            "last_column_value=:lastColumnValue, last_column_str=:lastColumnStr, updated=CURRENT_TIMESTAMP() " +
             "where shard_recovery_id =:shardRecoveryId")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     int updateShardRecovery(@BindBean ShardRecovery shardRecovery);
