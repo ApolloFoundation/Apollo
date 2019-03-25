@@ -716,7 +716,15 @@ public class AplDbVersion extends DbVersion {
                         "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
                         "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
             case 262:
-                return 262;
+                apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
+                        "state VARCHAR NOT NULL, object_name VARCHAR NOT NULL, column_name VARCHAR NOT NULL, " +
+                        "last_column_value BIGINT, last_column_str VARCHAR, timestamp INT NOT NULL)");
+            case 263:
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
+            case 264:
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state, object_name)");
+            case 265:
+                return 266;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
