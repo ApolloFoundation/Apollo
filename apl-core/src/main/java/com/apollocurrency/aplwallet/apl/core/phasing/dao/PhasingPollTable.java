@@ -7,13 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
 
 import java.sql.Connection;
@@ -178,9 +172,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    public void trim(int height) {
-        super.trim(height);
-        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+    public void trim(int height, TransactionalDataSource dataSource) {
+        super.trim(height, dataSource);
+        try (Connection con = dataSource.getConnection();
              DbIterator<PhasingPoll> pollsToTrim = getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
              PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");
              PreparedStatement pstmt2 = con.prepareStatement("DELETE FROM phasing_poll_voter WHERE transaction_id = ?");

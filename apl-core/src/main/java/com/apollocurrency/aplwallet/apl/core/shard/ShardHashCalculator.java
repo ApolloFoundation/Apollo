@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 /**
  * Calculate hash for shard data
  */
-public interface ShardingHashCalculator {
+public interface ShardHashCalculator {
     /**
      * Calculate hash for shard data from shardStartHeight to shardEndHeight
      * @param shardStartHeight height of data from which hash calculation will be started (inclusive)

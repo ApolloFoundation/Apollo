@@ -62,7 +62,7 @@ public class DbMigrationExecutorTest {
     private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
-            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, TransactionProcessorImpl.class,
+            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class,
             GlobalSyncImpl.class,
             BlockDaoImpl.class, DerivedDbTablesRegistry.class, BlockchainConfig.class, EpochTime.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))

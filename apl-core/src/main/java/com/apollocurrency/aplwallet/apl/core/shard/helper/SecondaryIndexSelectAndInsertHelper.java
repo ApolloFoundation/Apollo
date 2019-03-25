@@ -45,7 +45,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
             log.trace(sqlSelectBottomBound);
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
             sqlToExecuteWithPaging =
-                    "select ID, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+                    "select ID, FULL_HASH, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
                     "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
@@ -162,8 +162,8 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                 sqlInsertString.append("insert into BLOCK_INDEX (shard_id, block_id, block_height)")
                         .append(" values (").append("?, ?, ?").append(")");
             } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, block_id)")
-                        .append(" values (").append("?, ?").append(")");
+                sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, partial_transaction_hash, block_id)")
+                        .append(" values (").append("?, ?, ?").append(")");
             }
             // precompile sql
             if (preparedInsertStatement == null) {

@@ -39,17 +39,17 @@ public class ShardMigrationExecutor {
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
     private DataTransferManagementReceiver managementReceiver;
-    private ShardingHashCalculator shardingHashCalculator;
+    private ShardHashCalculator shardHashCalculator;
     private BlockIndexDao blockIndexDao;
 
     @Inject
     public ShardMigrationExecutor(DataTransferManagementReceiver managementReceiver,
                                   javax.enterprise.event.Event<MigrateState> migrateStateEvent,
-                                  ShardingHashCalculator shardingHashCalculator,
+                                  ShardHashCalculator shardHashCalculator,
                                   BlockIndexDao blockIndexDao) {
         this.managementReceiver = Objects.requireNonNull(managementReceiver, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
-        this.shardingHashCalculator = Objects.requireNonNull(shardingHashCalculator, "sharding hash calculator is NULL");
+        this.shardHashCalculator = Objects.requireNonNull(shardHashCalculator, "sharding hash calculator is NULL");
         this.blockIndexDao = Objects.requireNonNull(blockIndexDao, "blockIndexDao is NULL");
     }
 
@@ -86,7 +86,7 @@ public class ShardMigrationExecutor {
 
     private byte[] calculateHash(int height) {
         int lastShardHeight = getHeight();
-        byte[] hash = shardingHashCalculator.calculateHash(lastShardHeight + 1, height);
+        byte[] hash = shardHashCalculator.calculateHash(lastShardHeight + 1, height);
         return hash;
     }
 

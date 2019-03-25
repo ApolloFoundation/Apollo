@@ -21,19 +21,19 @@ import javax.inject.Singleton;
  * <p>This implementation uses merkle tree and block signatures for hash calculations</p>
  */
 @Singleton
-public class ShardingHashCalculatorImpl implements ShardingHashCalculator {
-    private static final Logger log = LoggerFactory.getLogger(ShardingHashCalculatorImpl.class);
+public class ShardHashCalculatorImpl implements ShardHashCalculator {
+    private static final Logger log = LoggerFactory.getLogger(ShardHashCalculatorImpl.class);
 
     private static final int DEFAULT_BLOCK_LIMIT = 100;
     private Blockchain blockchain;
     private BlockchainConfig blockchainConfig;
     private int blockSelectLimit;
     @Inject
-    public ShardingHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+    public ShardHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig) {
         this(blockchain, blockchainConfig, DEFAULT_BLOCK_LIMIT);
     }
 
-    public ShardingHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig, int blockSelectLimit) {
+    public ShardHashCalculatorImpl(Blockchain blockchain, BlockchainConfig blockchainConfig, int blockSelectLimit) {
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, " blockchainConfig");
         if (blockSelectLimit <= 0) {

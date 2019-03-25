@@ -81,7 +81,7 @@ class ShardMigrationExecutorTest {
             BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             TransactionTestData.class, PropertyProducer.class,
-            GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
+            GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
             DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
             BlockImpl.class, ShardMigrationExecutor.class)
