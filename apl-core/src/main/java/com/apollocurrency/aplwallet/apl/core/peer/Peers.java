@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -81,9 +79,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import org.slf4j.LoggerFactory;
 
 public final class Peers {
-    private static final Logger LOG = getLogger(Peers.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
 
     public enum Event {
         BLACKLIST, UNBLACKLIST, DEACTIVATE, REMOVE,
@@ -155,8 +154,9 @@ public final class Peers {
     static boolean suspend;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
-
-    private static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
+    // used by threads
+    static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
+    
     private static final ConcurrentMap<String, String> selfAnnouncedAddresses = new ConcurrentHashMap<>();
 
     static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
@@ -388,7 +388,7 @@ public final class Peers {
 
         if (! propertiesHolder.isOffline()) {
             ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(), 20);
-            ThreadPool.scheduleThread("PeerUnBlacklisting", new PeerUnBlacklistingThread(), 60);
+            ThreadPool.scheduleThread("PeerUnBlacklisting", new PeerUnBlacklistingThread(timeService), 60);
             if (Peers.getMorePeers) {
                 ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(), 20);
             }
@@ -1159,54 +1159,6 @@ public final class Peers {
         }
     }
 
-    private static class UnresolvedPeersAnalyzer implements Runnable {
 
-        private final List<Future<String>> unresolvedPeers;
-
-        public UnresolvedPeersAnalyzer(List<Future<String>> unresolvedPeers) {
-            this.unresolvedPeers = unresolvedPeers;
-        }
-
-        public void run()
-        {  for (Future<String> unresolvedPeer : unresolvedPeers) {
-            try {
-                String badAddress = unresolvedPeer.get(5, TimeUnit.SECONDS);
-                if (badAddress != null) {
-                    LOG.debug("Failed to resolve peer address: " + badAddress);
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-                LOG.debug("Failed to add peer", e);
-            } catch (TimeoutException ignore) {
-            }
-        }
-        LOG.debug("Known peers: " + peers.size());
-        }
-    }
-
-    private static class PeerUnBlacklistingThread implements Runnable {
-
-        public PeerUnBlacklistingThread() {
-        }
-
-        public void run(){
-            try {
-                try {
-                    
-                    int curTime = timeService.getEpochTime();
-                    for (PeerImpl peer : peers.values()) {
-                        peer.updateBlacklistedStatus(curTime);
-                    }
-                    
-                } catch (Exception e) {
-                    LOG.debug("Error un-blacklisting peer", e);
-                }
-            } catch (Throwable t) {
-                LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
-                System.exit(1);
-            }
-        }
-    }
 
 }
