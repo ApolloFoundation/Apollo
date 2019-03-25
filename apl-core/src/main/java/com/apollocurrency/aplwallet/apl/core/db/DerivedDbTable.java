@@ -37,13 +37,19 @@ public abstract class DerivedDbTable {
     
     protected final String table;
     protected static DatabaseManager databaseManager;
-
+    
+    private FullTextConfig lookupFullTextConfig(){
+        if(fullTextConfig==null){
+            fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
+        }
+        return fullTextConfig;
+    }
     // We should find better place for table init
     protected DerivedDbTable(String table) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         DerivedDbTablesRegistry.getInstance().registerDerivedTable(this);
-        fullTextConfig.registerTable(table);
+        lookupFullTextConfig().registerTable(table);
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }

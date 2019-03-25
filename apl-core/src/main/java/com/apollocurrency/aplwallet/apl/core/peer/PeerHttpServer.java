@@ -11,6 +11,7 @@ import java.util.EnumSet;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -27,7 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Peer HTTP server that handles http requests and PeerWebSockets
  * @author alukin@gmail.com
  */
-@Vetoed
+@Singleton
 public class PeerHttpServer {
     
      private static final Logger LOG = getLogger(PeerHttpServer.class);
@@ -42,9 +43,15 @@ public class PeerHttpServer {
      String myAddress;
      Server peerServer;
     
-    //TODO: remove static context
-    @Inject
+    //TODO: injecting does not work, fix
+     @Inject
      UPnP upnp;
+    private UPnP lookupUPnP(){
+        if(upnp==null){
+            upnp = CDI.current().select(UPnP.class).get();
+        }
+        return upnp;
+    }
     
     public PeerHttpServer() {
 
@@ -97,7 +104,7 @@ public class PeerHttpServer {
                         Connector[] peerConnectors = peerServer.getConnectors();
                         for (Connector peerConnector : peerConnectors) {
                             if (peerConnector instanceof ServerConnector) {
-                                upnp.addPort(((ServerConnector) peerConnector).getPort());
+                                lookupUPnP().addPort(((ServerConnector) peerConnector).getPort());
                             }
                         }
                     }
@@ -122,7 +129,7 @@ public class PeerHttpServer {
                     Connector[] peerConnectors = peerServer.getConnectors();
                     for (Connector peerConnector : peerConnectors) {
                         if (peerConnector instanceof ServerConnector)
-                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
+                            lookupUPnP().deletePort(((ServerConnector)peerConnector).getPort());
                     }
                 }
             } catch (Exception e) {
