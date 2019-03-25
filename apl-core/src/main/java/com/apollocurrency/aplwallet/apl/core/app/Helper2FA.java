@@ -181,20 +181,13 @@ public class Helper2FA {
         }
     }
 
-    public static File getKeyStoreFile(long accountId, String passphrase) throws ParameterException {
-        File storeFile = KEYSTORE.getSecretStoreFile(accountId, passphrase);
-        return storeFile;
-    }
-
     @Deprecated
-    public static Pair<VaultKeyStore.Status, String> importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
+    public static WalletsInfo importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
         if (passphrase == null) {
             passphrase = passphraseGenerator.generate();
         }
-        VaultKeyStore.Status status = KEYSTORE.saveSecretBytes(passphrase, secretBytes);
-        long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-        validateKeyStoreStatus(accountId, status, "imported");
-        return new ImmutablePair<>(status, passphrase);
+        WalletsInfo walletsInfo = generateUserAccounts(passphrase, secretBytes);
+        return walletsInfo;
     }
 
 

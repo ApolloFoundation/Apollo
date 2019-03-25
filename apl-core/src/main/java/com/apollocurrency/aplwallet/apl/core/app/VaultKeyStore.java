@@ -41,6 +41,10 @@ public interface VaultKeyStore {
 
     boolean migrateOldKeyStorageToTheNew(String passphrase, long accountId);
 
+    boolean isNewVersionAccountExist(long accountId);
+
+    boolean isAccountExist(long accountId);
+
     /**
      * Save encrypted by passphrase secretBytes to keystore
      * @param passphrase - string, which consist of random words for encryption

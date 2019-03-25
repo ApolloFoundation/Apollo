@@ -17,6 +17,7 @@
  import com.fasterxml.jackson.databind.ObjectWriter;
  import io.firstbridge.cryptolib.CryptoNotValidException;
  import io.firstbridge.cryptolib.container.FbWallet;
+ import org.apache.commons.collections4.CollectionUtils;
  import org.slf4j.Logger;
 
  import javax.enterprise.inject.spi.CDI;
@@ -187,7 +188,7 @@
         Path path;
 
         try {
-            if(isAccountExist(accountId)){
+            if(isNewVersionAccountExist(accountId)){
                 return Status.DUPLICATE_FOUND;
             }
 
@@ -250,18 +251,18 @@
 
     @Override
     public File getSecretStoreFile(Long accountId, String passphrase) {
-        //TODO check passphrase
         Path secretPath = findSecretPaths(accountId);
 
-        if(!isStorageVersionLatest(secretPath)){
-            if(migrateOldKeyStorageToTheNew(passphrase, accountId)){
-                secretPath = findSecretPaths(accountId);
-            }
+        // Check passphrase / migrate keys from old key store to the new.
+        FbWallet fbWallet = getSecretStore(passphrase, accountId);
+        if(fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllKeys())){
+            return null;
         }
 
         return secretPath == null ? null : new File(secretPath.toString());
     }
 
+    @Deprecated
     @Override
      public Status deleteSecretBytes(String passphrase, long accountId) {
          if (!isAvailable()) {
@@ -307,7 +308,7 @@
      }
 
      private Path makeTargetPathForNewAccount(long accountId) {
-         if (isAccountExist(accountId)) {
+         if (isNewVersionAccountExist(accountId)) {
              LOG.debug("Account already exist");
              return null;
          }
@@ -320,11 +321,17 @@
          return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.defaultRsAccount(accountId)));
      }
 
-     private boolean isAccountExist(long accountId) {
+     public boolean isNewVersionAccountExist(long accountId) {
          Path path = findSecretPaths(accountId);
 
          return path != null && isStorageVersionLatest(path);
      }
+
+    public boolean isAccountExist(long accountId) {
+        Path path = findSecretPaths(accountId);
+
+        return path != null;
+    }
 
      public boolean storeJSONSecretBytes(Path keyPath, EncryptedSecretBytesDetails secretBytesDetails) {
          try {

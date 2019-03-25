@@ -1,27 +1,37 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
-import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.firstbridge.cryptolib.container.FbWallet;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
+import org.jboss.resteasy.annotations.jaxrs.FormParam;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
 
 import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
 @Path("/keyStore")
+@Singleton
 public class KeyStoreController {
 
     private final VaultKeyStore vaultKeyStore = CDI.current().select(VaultKeyStore.class).get();
@@ -31,18 +41,19 @@ public class KeyStoreController {
     @POST
     @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadFile(@Context HttpServletRequest request) {
-
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Import keystore container. (file)",
+            tags = {"keyStore"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Response.class)))
+            }
+    )
+    public Response importKeyStore(@Context HttpServletRequest request) {
         // Check that we have a file upload request
         if(!ServletFileUpload.isMultipartContent(request)){
             return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-
-        //Check admin password
-        if (!API.checkPassword(request)) {
-            return  Response.status(Response.Status.BAD_REQUEST)
-                    .entity("This endpoint protected by admin password, please first specify the admin password in the account settings.")
-                    .build();
         }
 
         byte[] keyStore = null;
@@ -91,6 +102,34 @@ public class KeyStoreController {
             return Response.status(Response.Status.BAD_REQUEST).entity("Failed to upload file.").build();
         }
 
+    }
+
+
+    @POST
+    @Path("/download")
+    @Produces(MediaType.MULTIPART_FORM_DATA)
+    @Operation(summary = "Export keystore container. (file)",
+            tags = {"keyStore"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "multipart/form-data",
+                                    schema = @Schema(implementation = Response.class)))
+            }
+    )
+    public Response downloadKeyStore(@FormParam("account") String account,
+                                     @FormParam("passphrase") String passphraseReq) throws ParameterException {
+        String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
+        long accountId = ParameterParser.getAccountId(account, "account", true);
+
+        if(!vaultKeyStore.isAccountExist(accountId)){
+            return Response.status(Response.Status.BAD_REQUEST).entity("Key for this account is not exist.").build();
+        }
+
+        File keyStore = vaultKeyStore.getSecretStoreFile(accountId, passphraseStr);
+
+        Response.ResponseBuilder response = Response.ok(keyStore);
+        response.header("Content-disposition", "attachment; filename="+ keyStore.getName());
+        return response.build();
     }
 
 }

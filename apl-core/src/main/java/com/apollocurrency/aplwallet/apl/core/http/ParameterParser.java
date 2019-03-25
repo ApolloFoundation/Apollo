@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Search;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -243,7 +244,10 @@ public final class ParameterParser {
     }
 
     public static long getAccountId(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
-        String paramValue = Convert.emptyToNull(req.getParameter(name));
+        return getAccountId(Convert.emptyToNull(req.getParameter(name)), name, isMandatory);
+    }
+
+    public static long getAccountId(String paramValue, String name, boolean isMandatory) throws ParameterException {
         if (paramValue == null) {
             if (isMandatory) {
                 throw new ParameterException(missing(name));
@@ -602,6 +606,12 @@ public final class ParameterParser {
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
         return API.elGamalDecrypt(secretPhrase);
+    }
+    public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
+        if (StringUtils.isEmpty(passphrase) && isMandatory) {
+            throw new ParameterException(JSONResponses.missing(passphrase));
+        }
+        return API.elGamalDecrypt(passphrase);
     }
 
     public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
