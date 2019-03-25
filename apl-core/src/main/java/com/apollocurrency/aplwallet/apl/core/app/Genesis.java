@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
@@ -63,7 +64,7 @@ public final class Genesis {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
-    private static BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+    private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
 
     static {
@@ -103,7 +104,7 @@ public final class Genesis {
         return digest.digest();
     }
 
-    static Block newGenesisBlock() {
+    public static Block newGenesisBlock() {
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadGenesisAccountsJSON());
     }
 
@@ -111,7 +112,7 @@ public final class Genesis {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
-
+        blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.reset();
         TransactionalDataSource dataSource = lookupDataSource();
         int count = 0;

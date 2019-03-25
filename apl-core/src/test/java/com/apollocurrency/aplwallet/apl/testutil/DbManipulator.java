@@ -4,77 +4,59 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import javax.sql.DataSource;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 
 public class DbManipulator {
-    protected final Path tempDbFile;
-    protected final DataSourceWrapper dataSourceWrapper;
+    private static final Logger logger = getLogger(DbManipulator.class);
+    protected Path tempDbFile;
+    protected DatabaseManager databaseManager;
 
     private DbPopulator populator;
 
-    public DbManipulator(Path dbFile, String user, String password) throws IOException {
-        tempDbFile = dbFile;
-        dataSourceWrapper =
-                new DataSourceWrapper(new DbProperties()
-                        .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
-                        .dbPassword(password)
-                        .dbUsername(user)
-                        .maxConnections(10)
-                        .loginTimeout(10)
-                        .maxMemoryRows(100000)
-                        .defaultLockTimeout(10 * 1000));
-        populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
+    public DbManipulator(Path dbFile) {
+        this(dbFile == null ? DbTestData.getInMemDbProps() : DbTestData.getDbFileProperties(dbFile.toAbsolutePath().toString()), null);
+        this.tempDbFile = dbFile;
     }
 
+    public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
+        Objects.requireNonNull(dbProperties, "dbProperties is NULL");
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder == null ? new PropertiesHolder() : propertiesHolder);
+        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
+    }
 
     public DbManipulator()  {
-        tempDbFile = createTempFile();
-        dataSourceWrapper = new DataSourceWrapper(new DbProperties()
-                        .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
-                        .dbPassword("sa")
-                        .dbUsername("sa")
-                        .maxConnections(10)
-                        .loginTimeout(10)
-                        .maxMemoryRows(100000)
-                        .defaultLockTimeout(10 * 1000));
-        populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
-    }
-
-    private Path createTempFile() {
-        try {
-            return Files.createTempFile("testdb", "h2");
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        this(null);
     }
 
     public void init() {
-        AplDbVersion dbVersion = new AplDbVersion();
-        dataSourceWrapper.init(dbVersion);
         populator.initDb();
     }
 
     public void shutdown() throws IOException {
-        dataSourceWrapper.shutdown();
-        Files.deleteIfExists(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
+        databaseManager.shutdown();
+    }
+
+    public Path getTempDbFile() {
+        return tempDbFile;
     }
 
     public void populate() {
         populator.populateDb();
     }
 
-    public DataSource getDataSource() {
-        return dataSourceWrapper;
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 }

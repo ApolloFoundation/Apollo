@@ -46,10 +46,12 @@ public class AccountLedgerTable extends DerivedDbTable {
          * @param   height                  Trim height
          */
         @Override
-        public void trim(int height) {
+        public void trim(int height, TransactionalDataSource dataSource) {
             if (trimKeep <= 0)
                 return;
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            if (dataSource == null) {
+                dataSource = databaseManager.getDataSource();
+            }
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
                 pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));

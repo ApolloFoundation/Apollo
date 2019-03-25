@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,22 +33,29 @@ import javax.inject.Inject;
 public abstract class DerivedDbTable {
     @Inject
     FullTextConfig fullTextConfig;
+    @Inject
+    DerivedDbTablesRegistry derivedDbTablesRegistry;
     
     protected final String table;
     protected static DatabaseManager databaseManager;
     
-    private FullTextConfig lookupFullTextConfig(){
+    //TODO: fix injects and remove
+    private void lookupCdi(){
         if(fullTextConfig==null){
             fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
         }
-        return fullTextConfig;
+        if(derivedDbTablesRegistry==null){
+            derivedDbTablesRegistry = CDI.current().select(DerivedDbTablesRegistry.class).get();
+        }
     }
+    
     // We should find better place for table init
     protected DerivedDbTable(String table) {
+        lookupCdi();
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        DerivedDbTablesRegistry.getInstance().registerDerivedTable(this);
-        lookupFullTextConfig().registerTable(table);
+        derivedDbTablesRegistry.registerDerivedTable(this);
+        fullTextConfig.registerTable(table);
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
@@ -82,7 +88,7 @@ public abstract class DerivedDbTable {
         }
     }
 
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         //nothing to trim
     }
 

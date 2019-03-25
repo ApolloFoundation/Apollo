@@ -96,7 +96,7 @@
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>./</classpathPrefix>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass> com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
+                            <mainClass>com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

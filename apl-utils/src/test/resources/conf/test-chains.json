@@ -1,0 +1,115 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "defaultPeers": [],
+    "wellKnownPeers": [
+      "51.15.250.32",
+      "51.15.253.171",
+      "51.15.210.116",
+      "51.15.242.197",
+      "51.15.218.241"
+    ],
+    "blacklistedPeers": [],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "genesisLocation": "data/genesisAccounts-testnet.json",
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 2000,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+      },
+      {
+        "height": 42300,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true
+        }
+      },
+      {
+        "height": 100000,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 1E+6
+        }
+      },
+      {
+        "height": 100100,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 5,
+        "maxBlockTimeLimit": 7,
+        "minBlockTimeLimit": 2,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "digestAlgorithm": "SHA-512"
+        }
+      }
+    ]
+  },
+  {
+    "chainId": "ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1",
+    "wellKnownPeers": [
+      "51.15.0.1",
+      "51.15.1.0"
+    ],
+    "name": "Gotham",
+    "description": "Batman's chain",
+    "symbol": "BTM",
+    "prefix": "BTM",
+    "project": "I am batman!",
+    "genesisLocation": "data/batman-genesis.json",
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 2000,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 1E8
+      }
+    ]
+  }
+]

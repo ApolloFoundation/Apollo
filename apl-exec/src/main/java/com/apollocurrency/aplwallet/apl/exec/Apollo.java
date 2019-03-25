@@ -1,16 +1,20 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -173,9 +177,9 @@ public class Apollo {
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
                 configDirProvider,
-                args.isResourceIgnored(),
                 StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                "chains.json");
+                args.isResourceIgnored()
+                );
 // init application data dir provider
 
         Map<UUID, Chain> chains = chainsConfigLoader.load();
@@ -208,12 +212,18 @@ public class Apollo {
                 .recursiveScanPackages(ServerInfoService.class)
                 .recursiveScanPackages(Account.class)
                 .recursiveScanPackages(TransactionType.class)
+                .recursiveScanPackages(FullTextTrigger.class)
+                .recursiveScanPackages(BlockchainConfig.class)
                 .recursiveScanPackages(DatabaseManager.class)
+                .recursiveScanPackages(DerivedDbTablesRegistry.class)
                 .recursiveScanPackages(FullTextConfig.class)
+                .annotatedDiscoveryMode()
+                .interceptors(JdbiTransactionalInterceptor.class)
+                .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
   //TODO:  turn it on periodically in development process
   // to check CDI errors
-  //              .devMode()
+                .devMode()
                 .build();
 
         // init config holders

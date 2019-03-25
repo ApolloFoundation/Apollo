@@ -58,10 +58,7 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
-        "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS"
-        }
+        "maxBalance": 30000000000
       },
       {
         "height": 314800,
@@ -69,13 +66,7 @@
         "blockTime": 10,
         "maxBlockTimeLimit": 60,
         "minBlockTimeLimit": 7,
-        "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS",
-          "adaptiveForgingSettings": {
-            "enabled": "false"
-          }
-        }
+        "maxBalance": 30000000000
       },
       {
         "height": 355000,
@@ -84,8 +75,7 @@
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10
@@ -99,8 +89,7 @@
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 20
@@ -114,8 +103,7 @@
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 40
@@ -129,8 +117,7 @@
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 60
@@ -143,13 +130,7 @@
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
-        "maxBalance": 10000000000,
-        "consensus": {
-          "type": "POS",
-          "adaptiveForgingSettings": {
-            "enabled": "false"
-          }
-        }
+        "maxBalance": 10000000000
       },
       {
         "height": 1250000,
@@ -158,11 +139,8 @@
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus":
-        {
-          "type": "POS",
-          "adaptiveForgingSettings":
-          {
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
@@ -175,11 +153,8 @@
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
         "maxBalance": 10000000000,
-        "consensus":
-        {
-          "type": "POS",
-          "adaptiveForgingSettings":
-          {
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
@@ -189,8 +164,6 @@
   },
   {
     "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1",
-    "active": false,
-    "defaultPeers": [],
     "wellKnownPeers": [
       "51.15.235.41",
       "51.15.69.39",
@@ -198,7 +171,6 @@
       "51.15.114.68",
       "51.15.140.80"
     ],
-    "blacklistedPeers": [],
     "name": "Apollo public testnet",
     "description": "Apollo main test chain, running on last stable release",
     "symbol": "Apollo",
@@ -212,10 +184,7 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
-        "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS"
-        }
+        "maxBalance": 30000000000
       },
       {
         "height": 2000,
@@ -224,8 +193,7 @@
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 60
@@ -239,8 +207,7 @@
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10
@@ -251,8 +218,6 @@
   },
   {
     "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6",
-    "active": false,
-    "defaultPeers": [],
     "wellKnownPeers": [
       "51.15.233.202",
       "51.15.247.49",
@@ -260,7 +225,6 @@
       "51.15.228.126",
       "51.15.228.171"
     ],
-    "blacklistedPeers": [],
     "name": "Apollo development testnet",
     "description": "Apollo development test chain, running on latest development version",
     "symbol": "Apollo",
@@ -274,17 +238,12 @@
         "blockTime": 10,
         "maxBlockTimeLimit": 12,
         "minBlockTimeLimit": 8,
-        "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS"
-        }
+        "maxBalance": 30000000000
       }
     ]
   },
   {
     "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
-    "active": false,
-    "defaultPeers": [],
     "wellKnownPeers": [
       "51.15.250.32",
       "51.15.253.171",
@@ -292,7 +251,6 @@
       "51.15.242.197",
       "51.15.218.241"
     ],
-    "blacklistedPeers": [],
     "name": "Apollo experimental testnet",
     "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
     "symbol": "Apollo",
@@ -306,10 +264,7 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
-        "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS"
-        }
+        "maxBalance": 30000000000
       },
       {
         "height": 2000,
@@ -318,8 +273,7 @@
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 60
@@ -333,8 +287,7 @@
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensus": {
-          "type": "POS",
+        "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10

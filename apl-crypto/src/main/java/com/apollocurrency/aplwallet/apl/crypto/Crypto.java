@@ -20,10 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
+import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
-import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -36,14 +44,6 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);

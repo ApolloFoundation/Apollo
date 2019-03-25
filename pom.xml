@@ -69,6 +69,7 @@
         <fbcrypto.version>1.2.6</fbcrypto.version>
         <bcprov.version>1.61</bcprov.version>
 
+
         <!--QR-code-->
         <zxing.version>3.3.0</zxing.version>
 

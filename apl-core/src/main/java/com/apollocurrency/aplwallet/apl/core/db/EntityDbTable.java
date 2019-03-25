@@ -47,7 +47,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
-    private static FullTextSearchService fullText = CDI.current().select(FullTextSearchService.class).get();
+    private static FullTextSearchService fullText;
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -492,12 +492,14 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            if (dataSource == null) {
+                dataSource = databaseManager.getDataSource();
+            }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         } else {
-            super.trim(height);
+            super.trim(height, dataSource);
         }
     }
 
@@ -505,6 +507,9 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
             log.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
+            if (fullText == null) {
+                fullText = CDI.current().select(FullTextSearchService.class).get();
+            }
             fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }

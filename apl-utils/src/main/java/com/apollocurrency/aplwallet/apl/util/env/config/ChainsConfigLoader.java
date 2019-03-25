@@ -18,12 +18,34 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
     private static final ObjectMapper MAPPER = JSON.getMapper();
     private static final String DEFAULT_CHAINS_FILENAME = "chains.json";
 
-    public ChainsConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String configDir, String resourceName) {
-        super(dirProvider, ignoreResources, configDir, resourceName);
+    public ChainsConfigLoader(boolean ignoreResources, String configDir, String resourceName) {
+        super(ignoreResources, configDir, resourceName);
     }
-    public ChainsConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String configDir) {
-        this(dirProvider, ignoreResources, configDir, DEFAULT_CHAINS_FILENAME);
+
+    public ChainsConfigLoader(String resourceName) {
+        super(resourceName);
     }
+
+    public ChainsConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String resourceName) {
+        super(dirProvider, ignoreResources, resourceName);
+    }
+
+    public ChainsConfigLoader(boolean ignoreResources, String configDir) {
+        super(ignoreResources, configDir, DEFAULT_CHAINS_FILENAME);
+    }
+
+    public ChainsConfigLoader() {
+        super(DEFAULT_CHAINS_FILENAME);
+    }
+
+    public ChainsConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources) {
+        super(dirProvider, ignoreResources, DEFAULT_CHAINS_FILENAME);
+    }
+
+    public ChainsConfigLoader(ConfigDirProvider dirProvider, String configDir, boolean ignoreResources) {
+        super(dirProvider, ignoreResources, configDir, DEFAULT_CHAINS_FILENAME);
+    }
+
 
     @Override
     protected Map<UUID, Chain> read(InputStream is) throws IOException {
