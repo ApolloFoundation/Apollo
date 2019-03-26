@@ -57,7 +57,7 @@ INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
 (100, X'a3f312570b65671a7101', true),
 (200, X'f3e0475e0db85a822037', false);
 INSERT into PUBLIC.BLOCK_INDEX (shard_id, block_id, block_height) VALUES
-(10, 30, 30),
+(3, 30, 30),
 (1, 1, 1),
 (2, 2, 2)
 ;
@@ -69,7 +69,8 @@ INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_h
 ;
 INSERT into PUBLIC.SHARD (shard_id, shard_hash) VALUES
 (1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176'),
-(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d')
+(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d'),
+(3, X'931A8011F4BA1CDC0BCAE807032FE18B1E4F0B634F8DA6016E421D06C7E13693')
 ;
 INSERT into PUBLIC.REFERENCED_SHARD_TRANSACTION (db_id, transaction_id, referenced_transaction_id) VALUES
 (1, 100, 101),
