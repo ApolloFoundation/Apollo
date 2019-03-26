@@ -34,7 +34,7 @@ public abstract class AbstractMigrationExecutorTest {
     private final String migrationProp;
     private final String path;
     private final String pathProp;
-    private TemporaryFolderExtension folder = getTempFolder();
+    private TemporaryFolderExtension folder;
 
     public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp ) {
         this.deleteProp = deleteProp;
@@ -98,7 +98,7 @@ public abstract class AbstractMigrationExecutorTest {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
         Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
-        List<Path> paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
+        List<Path> paths = Files.list(folder.getRoot().toPath()).filter(Files::exists).collect(Collectors.toList());
         Assertions.assertEquals(1, paths.size());
         Assertions.assertEquals(destDir.toPath(), paths.get(0));
     }
