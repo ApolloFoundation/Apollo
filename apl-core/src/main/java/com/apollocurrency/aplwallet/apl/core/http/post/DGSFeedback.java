@@ -33,18 +33,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DGSFeedback extends CreateTransaction {
 
-    private static class DGSFeedbackHolder {
-        private static final DGSFeedback INSTANCE = new DGSFeedback();
-    }
-
-    public static DGSFeedback getInstance() {
-        return DGSFeedbackHolder.INSTANCE;
-    }
-
-    private DGSFeedback() {
+    public DGSFeedback() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "purchase");
     }

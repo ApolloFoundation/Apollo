@@ -32,6 +32,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The GetStackTraces API will return the current stack trace for
@@ -73,21 +74,13 @@ import java.lang.management.ThreadMXBean;
  * <li>  trace   - Array of stack trace elements</li>
  * </ul>
  */
+@Vetoed
 public class GetStackTraces extends AbstractAPIRequestHandler {
-
-    /** GetLog instance */
-    private static class GetStackTracesHolder {
-        private static final GetStackTraces INSTANCE = new GetStackTraces();
-    }
-
-    public static GetStackTraces getInstance() {
-        return GetStackTracesHolder.INSTANCE;
-    }
 
     /**
      * Create the GetStackTraces instance
      */
-    private GetStackTraces() {
+    public GetStackTraces() {
         super(new APITag[] {APITag.DEBUG}, "depth");
     }
 

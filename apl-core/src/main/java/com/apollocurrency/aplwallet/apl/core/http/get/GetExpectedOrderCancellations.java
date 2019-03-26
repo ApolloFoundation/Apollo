@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -34,18 +33,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedOrderCancellationsHolder {
-        private static final GetExpectedOrderCancellations INSTANCE = new GetExpectedOrderCancellations();
-    }
-
-    public static GetExpectedOrderCancellations getInstance() {
-        return GetExpectedOrderCancellationsHolder.INSTANCE;
-    }
-
-    private GetExpectedOrderCancellations() {
+    public GetExpectedOrderCancellations() {
         super(new APITag[] {APITag.AE});
     }
 

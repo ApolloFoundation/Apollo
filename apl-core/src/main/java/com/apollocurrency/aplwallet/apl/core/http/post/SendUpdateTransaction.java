@@ -19,19 +19,13 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Platform;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class SendUpdateTransaction extends CreateTransaction {
 
-    private static class SendUpdateTransactionHolder {
-        private static final SendUpdateTransaction INSTANCE = new SendUpdateTransaction();
-    }
-
-    public static SendUpdateTransaction getInstance() {
-        return SendUpdateTransactionHolder.INSTANCE;
-    }
-
-    private SendUpdateTransaction() {
+    public SendUpdateTransaction() {
         super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "hash", "version", "urlFirstPart",
                 "urlSecondPart",
                 "level");

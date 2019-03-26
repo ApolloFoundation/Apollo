@@ -34,18 +34,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_DESCRIPTION_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_NAME_LENGTH;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class SetAccountInfo extends CreateTransaction {
 
-    private static class SetAccountInfoHolder {
-        private static final SetAccountInfo INSTANCE = new SetAccountInfo();
-    }
-
-    public static SetAccountInfo getInstance() {
-        return SetAccountInfoHolder.INSTANCE;
-    }
-
-    private SetAccountInfo() {
+    public SetAccountInfo() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
     }
 

@@ -28,21 +28,15 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class DeleteScheduledTransaction extends AbstractAPIRequestHandler {
 
-    private static class DeleteScheduledTransactionHolder {
-        private static final DeleteScheduledTransaction INSTANCE = new DeleteScheduledTransaction();
-    }
-
-    public static DeleteScheduledTransaction getInstance() {
-        return DeleteScheduledTransactionHolder.INSTANCE;
-    }
-
-    private DeleteScheduledTransaction() {
+    public DeleteScheduledTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "transaction");
     }
 

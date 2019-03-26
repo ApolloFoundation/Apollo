@@ -28,18 +28,12 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.List;
 import java.util.SortedSet;
+import javax.enterprise.inject.Vetoed;
 
-final class GetUnconfirmedTransactions extends PeerServlet.PeerRequestHandler {
+@Vetoed
+final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
-    private static class GetUnconfirmedTransactionsHolder {
-        private static final GetUnconfirmedTransactions INSTANCE = new GetUnconfirmedTransactions();
-    }
-
-    public static GetUnconfirmedTransactions getInstance() {
-        return GetUnconfirmedTransactionsHolder.INSTANCE;
-    }
-
-    private GetUnconfirmedTransactions() {}
+    public GetUnconfirmedTransactions() {}
 
 
     @Override

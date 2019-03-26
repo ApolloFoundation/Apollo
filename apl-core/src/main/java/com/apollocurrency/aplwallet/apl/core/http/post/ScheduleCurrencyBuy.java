@@ -42,28 +42,24 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
 
-    private static class ScheduleCurrencyBuyHolder {
-        private static final ScheduleCurrencyBuy INSTANCE = new ScheduleCurrencyBuy();
-    }
-
-    public static ScheduleCurrencyBuy getInstance() {
-        return ScheduleCurrencyBuyHolder.INSTANCE;
-    }
 
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
 
-    private ScheduleCurrencyBuy() {
+    public ScheduleCurrencyBuy() {
+
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
                 "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }

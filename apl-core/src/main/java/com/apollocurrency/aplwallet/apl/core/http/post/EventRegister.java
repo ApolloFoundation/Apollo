@@ -32,6 +32,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The EventRegister API will create an event listener and register
@@ -106,16 +107,9 @@ import java.util.List;
  * <li>Transaction.REMOVE_UNCONFIRMED_TRANSACTIONS</li>
  * </ul>
  */
+@Vetoed
 public class EventRegister extends AbstractAPIRequestHandler {
 
-    /** EventRegister instance */
-    private static class EventRegisterHolder {
-        private static final EventRegister INSTANCE = new EventRegister();
-    }
-
-    public static EventRegister getInstance() {
-        return EventRegisterHolder.INSTANCE;
-    }
 
     /** Events registers */
     private static final JSONObject eventsRegistered = new JSONObject();
@@ -154,7 +148,7 @@ public class EventRegister extends AbstractAPIRequestHandler {
     /**
      * Create the EventRegister instance
      */
-    private EventRegister() {
+    public EventRegister() {
         super(new APITag[] {APITag.INFO}, "event", "event", "event", "add", "remove");
     }
 

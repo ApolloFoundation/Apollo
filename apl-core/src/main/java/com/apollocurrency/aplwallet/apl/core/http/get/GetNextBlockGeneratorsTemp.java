@@ -35,8 +35,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+
 
 /**
  * <p>
@@ -70,17 +72,10 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  * </ul>
  */
+@Vetoed
 public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler {
 
-    private static class GetNextBlockGeneratorsTempHolder {
-        private static final GetNextBlockGeneratorsTemp INSTANCE = new GetNextBlockGeneratorsTemp();
-    }
-
-    public static GetNextBlockGeneratorsTemp getInstance() {
-        return GetNextBlockGeneratorsTempHolder.INSTANCE;
-    }
-
-    private GetNextBlockGeneratorsTemp() {
+    public GetNextBlockGeneratorsTemp() {
         super(new APITag[] {APITag.FORGING}, "limit");
     }
 

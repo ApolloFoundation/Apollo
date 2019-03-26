@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAllTrades extends AbstractAPIRequestHandler {
 
-    private static class GetAllTradesHolder {
-        private static final GetAllTrades INSTANCE = new GetAllTrades();
-    }
-
-    public static GetAllTrades getInstance() {
-        return GetAllTradesHolder.INSTANCE;
-    }
-
-    private GetAllTrades() {
+    public GetAllTrades() {
         super(new APITag[] {APITag.AE}, "timestamp", "firstIndex", "lastIndex", "includeAssetInfo");
     }
     

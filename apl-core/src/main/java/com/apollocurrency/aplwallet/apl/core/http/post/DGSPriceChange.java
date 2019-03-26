@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DGSPriceChange extends CreateTransaction {
 
-    private static class DGSPriceChangeHolder {
-        private static final DGSPriceChange INSTANCE = new DGSPriceChange();
-    }
-
-    public static DGSPriceChange getInstance() {
-        return DGSPriceChangeHolder.INSTANCE;
-    }
-
-    private DGSPriceChange() {
+    public DGSPriceChange() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "goods", "priceATM");
     }

@@ -24,22 +24,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class HexConvert extends AbstractAPIRequestHandler {
 
-    private static class HexConvertHolder {
-        private static final HexConvert INSTANCE = new HexConvert();
-    }
-
-    public static HexConvert getInstance() {
-        return HexConvertHolder.INSTANCE;
-    }
-
-    private HexConvert() {
+    public HexConvert() {
         super(new APITag[] {APITag.UTILS}, "string");
     }
 

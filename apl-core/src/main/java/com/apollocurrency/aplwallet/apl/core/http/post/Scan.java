@@ -25,22 +25,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class Scan extends AbstractAPIRequestHandler {
 
-    private static class ScanHolder {
-        private static final Scan INSTANCE = new Scan();
-    }
-
-    public static Scan getInstance() {
-        return ScanHolder.INSTANCE;
-    }
-
-    private Scan() {
+    public Scan() {
         super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "validate");
     }
 

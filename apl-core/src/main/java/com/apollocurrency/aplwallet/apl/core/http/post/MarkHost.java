@@ -37,21 +37,13 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class MarkHost extends AbstractAPIRequestHandler {
-
-    private static class MarkHostHolder {
-        private static final MarkHost INSTANCE = new MarkHost();
-    }
-
-    public static MarkHost getInstance() {
-        return MarkHostHolder.INSTANCE;
-    }
-
-    private MarkHost() {
+    public MarkHost() {
         super(new APITag[] {APITag.TOKENS}, "secretPhrase", "host", "weight", "date", "account", "passphrase");
     }
 

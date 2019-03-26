@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
@@ -84,7 +85,7 @@ class ShardMigrationExecutorTest {
             GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
             DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
-            BlockImpl.class, ShardMigrationExecutor.class)
+            BlockImpl.class, ShardMigrationExecutor.class, FullTextConfig.class )
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))

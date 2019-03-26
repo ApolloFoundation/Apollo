@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -50,17 +51,10 @@ import org.json.simple.JSONStreamAware;
  * phrase or account is specified. Holding type codes are listed in getConstants.
  * In addition, the holding identifier must be specified when the holding type is ASSET or CURRENCY.
  */
+@Vetoed
 public class StopFundingMonitor extends AbstractAPIRequestHandler {
 
-    private static class StopFundingMonitorHolder {
-        private static final StopFundingMonitor INSTANCE = new StopFundingMonitor();
-    }
-
-    public static StopFundingMonitor getInstance() {
-        return StopFundingMonitorHolder.INSTANCE;
-    }
-
-    private StopFundingMonitor() {
+    public StopFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
                 "account", "adminPassword", "passphrase");
     }

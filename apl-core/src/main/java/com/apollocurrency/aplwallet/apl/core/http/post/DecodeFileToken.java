@@ -36,19 +36,12 @@ import java.io.IOException;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_FILE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TOKEN;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TOKEN;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DecodeFileToken extends AbstractAPIRequestHandler {
 
-
-    private static class DecodeFileTokenHolder {
-        private static final DecodeFileToken INSTANCE = new DecodeFileToken();
-    }
-
-    public static DecodeFileToken getInstance() {
-        return DecodeFileTokenHolder.INSTANCE;
-    }
-
-    private DecodeFileToken() {
+    public DecodeFileToken() {
         super("file", new APITag[] {APITag.TOKENS}, "token");
     }
 

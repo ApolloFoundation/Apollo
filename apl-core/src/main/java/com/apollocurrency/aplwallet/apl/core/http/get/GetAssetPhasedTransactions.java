@@ -29,22 +29,17 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
-    private static class GetAssetPhasedTransactionsHolder {
-        private static final GetAssetPhasedTransactions INSTANCE = new GetAssetPhasedTransactions();
-    }
 
-    public static GetAssetPhasedTransactions getInstance() {
-        return GetAssetPhasedTransactionsHolder.INSTANCE;
-    }
-
-    private GetAssetPhasedTransactions() {
+    public GetAssetPhasedTransactions() {
         super(new APITag[]{APITag.AE, APITag.PHASING}, "asset", "account", "withoutWhitelist", "firstIndex", "lastIndex");
     }
 

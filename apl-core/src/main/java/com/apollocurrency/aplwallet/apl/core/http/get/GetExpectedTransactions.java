@@ -35,18 +35,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedTransactionsHolder {
-        private static final GetExpectedTransactions INSTANCE = new GetExpectedTransactions();
-    }
-
-    public static GetExpectedTransactions getInstance() {
-        return GetExpectedTransactionsHolder.INSTANCE;
-    }
-
-    private GetExpectedTransactions() {
+    public GetExpectedTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS}, "account", "account", "account");
     }
 

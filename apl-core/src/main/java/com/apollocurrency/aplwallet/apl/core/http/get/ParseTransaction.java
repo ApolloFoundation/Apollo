@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -35,19 +36,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Vetoed
 public final class ParseTransaction extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(ParseTransaction.class);
 
-
-    private static class ParseTransactionHolder {
-        private static final ParseTransaction INSTANCE = new ParseTransaction();
-    }
-
-    public static ParseTransaction getInstance() {
-        return ParseTransactionHolder.INSTANCE;
-    }
-
-    private ParseTransaction() {
+    public ParseTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 

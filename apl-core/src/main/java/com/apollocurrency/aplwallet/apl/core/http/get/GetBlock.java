@@ -34,18 +34,10 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_BLOCK;
-
+import javax.enterprise.inject.Vetoed;
+@Vetoed
 public final class GetBlock extends AbstractAPIRequestHandler {
-
-    private static class GetBlockHolder {
-        private static final GetBlock INSTANCE = new GetBlock();
-    }
-
-    public static GetBlock getInstance() {
-        return GetBlockHolder.INSTANCE;
-    }
-
-    private GetBlock() {
+    public GetBlock() {
         super(new APITag[] {APITag.BLOCKS}, "block", "height", "timestamp", "includeTransactions", "includeExecutedPhased");
     }
 

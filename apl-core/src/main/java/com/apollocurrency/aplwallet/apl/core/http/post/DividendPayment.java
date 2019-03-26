@@ -28,21 +28,15 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class DividendPayment extends CreateTransaction {
 
-    private static class DividendPaymentHolder {
-        private static final DividendPayment INSTANCE = new DividendPayment();
-    }
-
-    public static DividendPayment getInstance() {
-        return DividendPaymentHolder.INSTANCE;
-    }
-
-    private DividendPayment() {
+    public DividendPayment() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountATMPerATU");
     }
 

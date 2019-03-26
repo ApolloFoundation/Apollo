@@ -39,18 +39,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_URI_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_NAME;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class SetAlias extends CreateTransaction {
 
-    private static class SetAliasHolder {
-        private static final SetAlias INSTANCE = new SetAlias();
-    }
-
-    public static SetAlias getInstance() {
-        return SetAliasHolder.INSTANCE;
-    }
-
-    private SetAlias() {
+    public SetAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
     }
 

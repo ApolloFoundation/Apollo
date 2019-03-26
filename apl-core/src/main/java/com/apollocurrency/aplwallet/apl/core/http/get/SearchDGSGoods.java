@@ -30,28 +30,22 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class SearchDGSGoods extends AbstractAPIRequestHandler {
-
-    private static class SearchDGSGoodsHolder {
-        private static final SearchDGSGoods INSTANCE = new SearchDGSGoods();
-    }
-
-    public static SearchDGSGoods getInstance() {
-        return SearchDGSGoodsHolder.INSTANCE;
-    }
 
     @Override
     protected boolean logRequestTime() {
         return true;
     }
 
-    private SearchDGSGoods() {
+    public SearchDGSGoods() {
         super(new APITag[] {APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
     }
 

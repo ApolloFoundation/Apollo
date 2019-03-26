@@ -36,18 +36,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedCurrencyTransfersHolder {
-        private static final GetExpectedCurrencyTransfers INSTANCE = new GetExpectedCurrencyTransfers();
-    }
-
-    public static GetExpectedCurrencyTransfers getInstance() {
-        return GetExpectedCurrencyTransfersHolder.INSTANCE;
-    }
-
-    private GetExpectedCurrencyTransfers() {
+    public GetExpectedCurrencyTransfers() {
         super(new APITag[]{APITag.MS}, "currency", "account", "includeCurrencyInfo");
     }
 

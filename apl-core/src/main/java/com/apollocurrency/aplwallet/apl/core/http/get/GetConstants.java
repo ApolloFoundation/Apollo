@@ -50,21 +50,14 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
+@Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
-
-    private static class GetConstantsHolder {
-        private static final GetConstants INSTANCE = new GetConstants();
-    }
-
-    public static GetConstants getInstance() {
-        return GetConstantsHolder.INSTANCE;
-    }
 
     private static final class Holder {
 
@@ -224,7 +217,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
         }
     }
 
-    private GetConstants() {
+    public GetConstants() {
         super(new APITag[] {APITag.INFO});
     }
 

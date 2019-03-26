@@ -21,20 +21,14 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-final class GetCumulativeDifficulty extends PeerServlet.PeerRequestHandler {
+@Vetoed
+final class GetCumulativeDifficulty extends PeerRequestHandler {
 
-    private static class GetCumulativeDifficultyHolder {
-        private static final GetCumulativeDifficulty INSTANCE = new GetCumulativeDifficulty();
-    }
-
-    public static GetCumulativeDifficulty getInstance() {
-        return GetCumulativeDifficultyHolder.INSTANCE;
-    }
-
-    private GetCumulativeDifficulty() {}
+    public GetCumulativeDifficulty() {}
 
 
     @Override

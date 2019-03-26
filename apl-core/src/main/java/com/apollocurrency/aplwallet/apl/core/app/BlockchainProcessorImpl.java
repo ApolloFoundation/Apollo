@@ -749,7 +749,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Inject
-    private BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
+    public BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
                                     GlobalSync globalSync, DerivedDbTablesRegistry dbTables, ReferencedTransactionService referencedTransactionService) {
         this.validator = validator;
         this.blockEvent = blockEvent;

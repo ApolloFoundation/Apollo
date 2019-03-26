@@ -36,15 +36,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_A
 
 public final class GetAssets extends AbstractAPIRequestHandler {
 
-    private static class GetAssetsHolder {
-        private static final GetAssets INSTANCE = new GetAssets();
-    }
-
-    public static GetAssets getInstance() {
-        return GetAssetsHolder.INSTANCE;
-    }
-
-    private GetAssets() {
+    public GetAssets() {
         super(new APITag[] {APITag.AE}, "assets", "assets", "assets", "includeCounts"); // limit to 3 for testing
     }
 

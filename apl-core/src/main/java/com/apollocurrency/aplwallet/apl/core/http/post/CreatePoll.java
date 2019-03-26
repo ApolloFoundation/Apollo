@@ -40,18 +40,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ZEROOPTIONS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DESCRIPTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class CreatePoll extends CreateTransaction {
 
-    private static class CreatePollHolder {
-        private static final CreatePoll INSTANCE = new CreatePoll();
-    }
-
-    public static CreatePoll getInstance() {
-        return CreatePollHolder.INSTANCE;
-    }
-
-    private CreatePoll() {
+    public CreatePoll() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION},
                 "name", "description", "finishHeight", "votingModel",
                 "minNumberOfOptions", "maxNumberOfOptions",
