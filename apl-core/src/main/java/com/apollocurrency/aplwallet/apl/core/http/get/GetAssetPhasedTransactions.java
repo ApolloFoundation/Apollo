@@ -28,12 +28,12 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
@@ -42,7 +42,7 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
 
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
-    private GetAssetPhasedTransactions() {
+    public GetAssetPhasedTransactions() {
         super(new APITag[]{APITag.AE, APITag.PHASING}, "asset", "account", "withoutWhitelist", "firstIndex", "lastIndex");
     }
 
