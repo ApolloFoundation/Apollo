@@ -11,12 +11,14 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMO
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -104,6 +106,8 @@ class ShardMigrationExecutorTest {
     private DerivedDbTablesRegistry dbTablesRegistry;
     @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
+    @Inject
+    private Blockchain blockchain;
 
     @BeforeAll
     static void setUpAll() {
@@ -115,6 +119,7 @@ class ShardMigrationExecutorTest {
     void setUp() {
         PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
         dbTablesRegistry.registerDerivedTable(publicKeyTable);
+        blockchain.setLastBlock(BLOCK_11);
     }
 
     @AfterEach

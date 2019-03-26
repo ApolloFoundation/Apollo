@@ -4,8 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -15,15 +23,16 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -33,23 +42,29 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import javax.inject.Inject;
 
 @EnableWeld
 public class ShardHashCalculatorImplTest {
-    static final String SHA_512 = "SHA-512";
-    static final byte[] FULL_MEKLE_ROOT = Convert.parseHexString("1c3d41be25207be8d1119e958102fbb2e5933ff06f483f125371efae2bc6ca1d1a5248929443a521f850691a9180be51c4490c52aee9fedb1ce026b128acc479");
-    static final byte[] PARTIAL_MERKLE_ROOT_2_6 = Convert.parseHexString("fd0c5b17d693d5cd5cd3453090ffcdcfe121e39782de478c43e24e2416d4969901c807bcd2afe2ed8ab13723c9341fe26cf04b8d0405df179bad531c607c7610");
-    static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("c6e0d2347aa247757a57d1b52117bc32e8b024f9ec62b5d8a5d40b0765700fea7a63c932a2dd3e12c06477a24c1074a6971b6819c79c6beebfb42e866cca389d");
-    static final byte[] PARTIAL_MERKLE_ROOT_1_8 = Convert.parseHexString("b492fe046090127b5a53fc425e117c8aea4535ee0ad90e9affb98a056951671d66594ebaca0f064042a0b0ac0856273520eb2f487aab2dce3d7c822f3127516f");
+    static final String SHA_256 = "SHA-256";
+    static final byte[] FULL_MEKLE_ROOT = Convert.parseHexString("b87941d4db242065ac84b4b14dd2b35e22d89d7f41272c0a6448a2c1734c444d");
+    static final byte[] PARTIAL_MERKLE_ROOT_2_6 =  Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
+    static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("da5ad74821dc77fa9fb0f0ddd2e48284fe630fee9bf70f98d7aa38032ddc8f57");
+    static final byte[] PARTIAL_MERKLE_ROOT_1_8 =  Convert.parseHexString("3987b0f2fb15fdbe3e815cbdd1ff8f9527d4dc18989ae69bc446ca0b40759a6b");
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     DatabaseManager databaseManager = mock(DatabaseManager.class);
@@ -57,73 +72,90 @@ public class ShardHashCalculatorImplTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistry.class, EpochTime.class, GlobalSyncImpl.class, TransactionDaoImpl.class)
+    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistry.class, EpochTime.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class,
+            JdbiHandleFactory.class)
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
                     MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class),
+                    MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
-                    MockBean.of(mock(NtpTime.class), NtpTime.class),
-                    MockBean.of(mock(TransactionIndexDao.class), TransactionIndexDao.class)
+                    MockBean.of(mock(NtpTime.class), NtpTime.class)
             ).build();
+
+    @Inject
+    JdbiHandleFactory jdbiHandleFactory;
+    @Inject
+    ShardHashCalculator shardHashCalculator;
+
     @Inject
     Blockchain blockchain;
-
     @BeforeEach
     void setUp() {
-        Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
+        Mockito.doReturn(SHA_256).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        blockchain.setLastBlock(BLOCK_11);
+    }
+
+    @AfterEach
+    void cleanup() {
+        jdbiHandleFactory.close();
     }
     @Test
     public void testCalculateHashForAllBlocks() throws IOException {
-        ShardHashCalculatorImpl shardingHashCalculator = new ShardHashCalculatorImpl(blockchain, blockchainConfig, 500);
 
-        byte[] merkleRoot1 = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_0.getHeight(), BlockTestData.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot2 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot3 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_11.getHeight() + 20000);
+        byte[] merkleRoot1 = shardHashCalculator.calculateHash(GENESIS_BLOCK.getHeight(), BLOCK_11.getHeight() + 1);
+        byte[] merkleRoot2 = shardHashCalculator.calculateHash(GENESIS_BLOCK.getHeight(), BLOCK_11.getHeight() + 1);
+        byte[] merkleRoot3 = shardHashCalculator.calculateHash(GENESIS_BLOCK.getHeight(), BLOCK_11.getHeight() + 20000);
+        assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot1);
+        assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot2);
+        assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot3);
+    }
 
-        Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot1);
-        Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot2);
-        Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot3);
+    private void hash(List<Block> blocks) {
+        try {
+            MerkleTree merkleTree = new MerkleTree(MessageDigest.getInstance(SHA_256));
+            blocks.stream().map(Block::getBlockSignature).forEach(merkleTree::appendLeaf);
+            merkleTree.appendLeaf(GENESIS_BLOCK.getGenerationSignature());
+            byte[] value = merkleTree.getRoot().getValue();
+            System.out.println(Convert.toHexString(value));
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
     }
     @Test
     public void testCalculateHashWhenNoBlocks() throws IOException {
-        ShardHashCalculatorImpl shardingHashCalculator = new ShardHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_0.getHeight());
+        byte[] merkleRoot = shardHashCalculator.calculateHash(BLOCK_11.getHeight() + 1, BLOCK_11.getHeight() + 100_000);
 
         Assertions.assertNull(merkleRoot);
     }
+
     @Test
     public void testCalculateHashForMiddleBlocks() throws IOException {
-        ShardHashCalculatorImpl shardingHashCalculator = new ShardHashCalculatorImpl(blockchain, blockchainConfig, 200);
-
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_1.getHeight(), BlockTestData.BLOCK_5.getHeight());
-
-        Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_2_6, merkleRoot);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(BLOCK_1.getHeight(), BLOCK_5.getHeight());
+        assertArrayEquals(PARTIAL_MERKLE_ROOT_2_6, merkleRoot);
     }
     @Test
     public void testCalculateHashForFirstBlocks() throws IOException {
-        ShardHashCalculatorImpl shardingHashCalculator = new ShardHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_8.getHeight());
-
-        Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_1_8, merkleRoot);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(0, BLOCK_8.getHeight());
+        assertArrayEquals(PARTIAL_MERKLE_ROOT_1_8, merkleRoot);
     }
     @Test
     public void testCalculateHashForLastBlocks() throws IOException {
-        ShardHashCalculatorImpl shardingHashCalculator = new ShardHashCalculatorImpl(blockchain, blockchainConfig, 200);
 
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_6.getHeight(), BlockTestData.BLOCK_11.getHeight() + 1000);
-
-        Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(BLOCK_6.getHeight(), BLOCK_11.getHeight() + 1000);
+        assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }
     @Test
     public void testCreateShardingHashCalculatorWithZeroBlockSelectLimit() throws IOException {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new ShardHashCalculatorImpl(blockchain, blockchainConfig, 0));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new ShardHashCalculatorImpl(mock(Blockchain.class), mock(BlockchainConfig.class), mock(ShardDao.class), 0));
     }
 
     @Test
+    @Disabled
     public void testCalculateShardingHashFromMainDb() {
         DbProperties dbFileProperties = DbTestData.getDbFileProperties(Paths.get("unit-test-db").resolve(Constants.APPLICATION_DIR_NAME).toAbsolutePath().toString());
         TransactionalDataSource transactionalDataSource = new TransactionalDataSource(dbFileProperties, new PropertiesHolder());
@@ -132,7 +164,6 @@ public class ShardHashCalculatorImplTest {
             protected int update(int nextUpdate) {return 260;} //do not modify original db!!!
         });
         Mockito.doReturn(transactionalDataSource).when(databaseManager).getDataSource();
-        ShardHashCalculatorImpl shardingHashCalculator = new ShardHashCalculatorImpl(blockchain, blockchainConfig, 5000);
-        byte[] bytes = shardingHashCalculator.calculateHash(0, 2_000_000);
+        byte[] bytes = shardHashCalculator.calculateHash(0, 2_000_000);
     }
 }

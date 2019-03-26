@@ -20,5 +20,5 @@ public class DerivedDbTablesRegistry {
     } 
     public List<DerivedDbTable> getDerivedTables() {
         return derivedTables;
-    }     
+    }
   }

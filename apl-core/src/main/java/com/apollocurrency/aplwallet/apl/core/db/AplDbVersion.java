@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
@@ -662,7 +662,6 @@ public class AplDbVersion extends DbVersion {
                         "account_id BIGINT NOT NULL, " +
                         "public_key BINARY(32), " +
                         "height INT NOT NULL, " +
-                        "FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, " +
                         "latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 242:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
@@ -716,7 +715,9 @@ public class AplDbVersion extends DbVersion {
                         "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
                         "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
             case 262:
-                return 262;
+                apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
+            case 263:
+                return 263;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
