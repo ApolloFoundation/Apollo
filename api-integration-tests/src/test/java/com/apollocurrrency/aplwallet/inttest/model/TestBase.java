@@ -31,8 +31,8 @@ public class TestBase {
         getTestConfiguration();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
-                .withMaxRetries(5)
-                .withDelay(5, TimeUnit.SECONDS);
+                .withMaxRetries(20)
+                .withDelay(1, TimeUnit.SECONDS);
         try {
             getTestConfiguration()
                     .getVaultWallet()
@@ -55,7 +55,7 @@ public class TestBase {
     {
         boolean inBlock = false;
         try {
-            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations.compareTo(new Long("0"))==1);
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations>=0);
             assertTrue(inBlock);
         }
         catch (Exception e)
