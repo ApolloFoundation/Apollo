@@ -30,20 +30,14 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class LeaseBalance extends CreateTransaction {
 
-    private static class LeaseBalanceHolder {
-        private static final LeaseBalance INSTANCE = new LeaseBalance();
-    }
-
-    public static LeaseBalance getInstance() {
-        return LeaseBalanceHolder.INSTANCE;
-    }
-
-    private LeaseBalance() {
+    public LeaseBalance() {
         super(new APITag[] {APITag.FORGING, APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "period", "recipient");
     }
 

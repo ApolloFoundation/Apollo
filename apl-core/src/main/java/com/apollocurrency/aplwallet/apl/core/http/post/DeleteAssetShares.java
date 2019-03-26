@@ -32,19 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DeleteAssetShares extends CreateTransaction {
 
-    private static class DeleteAssetSharesHolder {
-        private static final DeleteAssetShares INSTANCE = new DeleteAssetShares();
-    }
-
-    public static DeleteAssetShares getInstance() {
-        return DeleteAssetSharesHolder.INSTANCE;
-    }
-
-
-    private DeleteAssetShares() {
+    public DeleteAssetShares() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU");
     }
 

@@ -36,18 +36,12 @@ import java.util.Arrays;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.HASHES_MISMATCH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class VerifyTaggedData extends AbstractAPIRequestHandler {
 
-    private static class VerifyTaggedDataHolder {
-        private static final VerifyTaggedData INSTANCE = new VerifyTaggedData();
-    }
-
-    public static VerifyTaggedData getInstance() {
-        return VerifyTaggedDataHolder.INSTANCE;
-    }
-
-    private VerifyTaggedData() {
+    public VerifyTaggedData() {
         super("file", new APITag[]{APITag.DATA}, "transaction",
                 "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }

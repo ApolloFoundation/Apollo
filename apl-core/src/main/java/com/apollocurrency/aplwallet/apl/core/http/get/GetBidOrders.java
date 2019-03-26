@@ -37,19 +37,13 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.Arrays;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetBidOrders extends AbstractAPIRequestHandler {
 
-    private static class GetBidOrdersHolder {
-        private static final GetBidOrders INSTANCE = new GetBidOrders();
-    }
-
-    public static GetBidOrders getInstance() {
-        return GetBidOrdersHolder.INSTANCE;
-    }
-
-    private GetBidOrders() {
+    public GetBidOrders() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
     }
     @Override

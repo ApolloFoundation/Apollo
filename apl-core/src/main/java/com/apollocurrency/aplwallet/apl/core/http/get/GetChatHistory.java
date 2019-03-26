@@ -12,21 +12,15 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Chat;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public class GetChatHistory extends AbstractAPIRequestHandler {
-    private static class GetChatHistoryHolder {
-        private static final GetChatHistory INSTANCE = new GetChatHistory();
-    }
-
-    public static GetChatHistory getInstance() {
-        return GetChatHistoryHolder.INSTANCE;
-    }
-    private GetChatHistory() {
+    public GetChatHistory() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.MESSAGES}, "account1", "account2", "firstIndex", "lastIndex");
     }
 

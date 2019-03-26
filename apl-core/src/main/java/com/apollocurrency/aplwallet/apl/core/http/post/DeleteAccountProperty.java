@@ -30,21 +30,15 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class DeleteAccountProperty extends CreateTransaction {
 
-    private static class DeleteAccountPropertyHolder {
-        private static final DeleteAccountProperty INSTANCE = new DeleteAccountProperty();
-    }
-
-    public static DeleteAccountProperty getInstance() {
-        return DeleteAccountPropertyHolder.INSTANCE;
-    }
-
-    private DeleteAccountProperty() {
+    public DeleteAccountProperty() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "setter");
     }
 

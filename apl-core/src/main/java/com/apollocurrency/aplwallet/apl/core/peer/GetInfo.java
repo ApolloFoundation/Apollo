@@ -28,23 +28,16 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class GetInfo extends PeerServlet.PeerRequestHandler {
+@Vetoed
+final class GetInfo extends PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
-
-    private static class GetInfoHolder {
-        private static final GetInfo INSTANCE = new GetInfo();
-    }
-
-    public static GetInfo getInstance() {
-        return GetInfoHolder.INSTANCE;
-    }
 
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     static {
@@ -53,7 +46,7 @@ final class GetInfo extends PeerServlet.PeerRequestHandler {
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
     }
 
-    private GetInfo() {}
+    public GetInfo() {}
 
     @Override
     protected boolean isChainIdProtected() {

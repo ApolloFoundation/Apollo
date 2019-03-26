@@ -26,22 +26,15 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-
+@Vetoed
 public final class GetPoll extends AbstractAPIRequestHandler {
 
-    private static class GetPollHolder {
-        private static final GetPoll INSTANCE = new GetPoll();
-    }
-
-    public static GetPoll getInstance() {
-        return GetPollHolder.INSTANCE;
-    }
-
-    private GetPoll() {
+    public GetPoll() {
         super(new APITag[] {APITag.VS}, "poll");
     }
 

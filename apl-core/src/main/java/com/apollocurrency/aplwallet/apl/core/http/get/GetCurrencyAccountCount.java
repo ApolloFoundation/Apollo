@@ -25,22 +25,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetCurrencyAccountCount extends AbstractAPIRequestHandler {
 
-    private static class GetCurrencyAccountCountHolder {
-        private static final GetCurrencyAccountCount INSTANCE = new GetCurrencyAccountCount();
-    }
-
-    public static GetCurrencyAccountCount getInstance() {
-        return GetCurrencyAccountCountHolder.INSTANCE;
-    }
-
-    private GetCurrencyAccountCount() {
+    public GetCurrencyAccountCount() {
         super(new APITag[] {APITag.MS}, "currency", "height");
     }
 

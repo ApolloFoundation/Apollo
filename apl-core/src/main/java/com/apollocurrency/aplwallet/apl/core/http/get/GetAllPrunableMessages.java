@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAllPrunableMessages extends AbstractAPIRequestHandler {
 
-    private static class GetAllPrunableMessagesHolder {
-        private static final GetAllPrunableMessages INSTANCE = new GetAllPrunableMessages();
-    }
-
-    public static GetAllPrunableMessages getInstance() {
-        return GetAllPrunableMessagesHolder.INSTANCE;
-    }
-
-    private GetAllPrunableMessages() {
+    public GetAllPrunableMessages() {
         super(new APITag[] {APITag.MESSAGES}, "firstIndex", "lastIndex", "timestamp");
     }
 

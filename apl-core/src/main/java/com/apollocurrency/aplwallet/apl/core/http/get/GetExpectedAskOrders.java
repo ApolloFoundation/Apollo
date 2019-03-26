@@ -36,19 +36,13 @@ import org.json.simple.JSONStreamAware;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedAskOrdersHolder {
-        private static final GetExpectedAskOrders INSTANCE = new GetExpectedAskOrders();
-    }
-
-    public static GetExpectedAskOrders getInstance() {
-        return GetExpectedAskOrdersHolder.INSTANCE;
-    }
-
-    private GetExpectedAskOrders() {
+    public GetExpectedAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
     }
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {

@@ -30,23 +30,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class SearchAccounts extends AbstractAPIRequestHandler {
 
-    private static class SearchAccountsHolder {
-        private static final SearchAccounts INSTANCE = new SearchAccounts();
-    }
-
-    public static SearchAccounts getInstance() {
-        return SearchAccountsHolder.INSTANCE;
-    }
-
-    private SearchAccounts() {
+    public SearchAccounts() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.SEARCH}, "query", "firstIndex", "lastIndex");
     }
 

@@ -38,18 +38,12 @@ import org.json.simple.JSONStreamAware;
 import java.util.Arrays;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetAskOrders extends AbstractAPIRequestHandler {
 
-    private static class GetAskOrdersHolder {
-        private static final GetAskOrders INSTANCE = new GetAskOrders();
-    }
-
-    public static GetAskOrders getInstance() {
-        return GetAskOrdersHolder.INSTANCE;
-    }
-
-    private GetAskOrders() {
+    public GetAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
     }
     @Override

@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSGoodsPurchases extends AbstractAPIRequestHandler {
 
-    private static class GetDGSGoodsPurchasesHolder {
-        private static final GetDGSGoodsPurchases INSTANCE = new GetDGSGoodsPurchases();
-    }
-
-    public static GetDGSGoodsPurchases getInstance() {
-        return GetDGSGoodsPurchasesHolder.INSTANCE;
-    }
-
-    private GetDGSGoodsPurchases() {
+    public GetDGSGoodsPurchases() {
         super(new APITag[] {APITag.DGS}, "goods", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
     }
 

@@ -11,21 +11,15 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 //TODO: Refactor that according to Feng shui
+@Vetoed
 public final class GetElGamalPublicKey extends AbstractAPIRequestHandler {
-    
-    private static class GetElGamalPublicKeyHolder {
-        private static final GetElGamalPublicKey INSTANCE = new GetElGamalPublicKey();
-    }
-    
-    public static GetElGamalPublicKey getInstance() {
-        return GetElGamalPublicKeyHolder.INSTANCE;
-    }
 
-    private GetElGamalPublicKey() {
+    public GetElGamalPublicKey() {
         super(new APITag[] {APITag.TRANSACTIONS}, "publicKey");
     }
     

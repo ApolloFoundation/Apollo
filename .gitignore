@@ -17,3 +17,4 @@ logs
 apl_test_db
 nbactions.xml
 **/nbactions.xml
+/apl-exec/apl.log

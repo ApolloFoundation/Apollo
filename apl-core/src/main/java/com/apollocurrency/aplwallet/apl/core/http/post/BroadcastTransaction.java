@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -53,17 +54,10 @@ import org.json.simple.JSONStreamAware;
  * <p>
  * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl.Appendix.Prunable} interface.
  */
+@Vetoed
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
 
-    private static class BroadcastTransactionHolder {
-        private static final BroadcastTransaction INSTANCE = new BroadcastTransaction();
-    }
-
-    public static BroadcastTransaction getInstance() {
-        return BroadcastTransactionHolder.INSTANCE;
-    }
-
-    private BroadcastTransaction() {
+    public BroadcastTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 

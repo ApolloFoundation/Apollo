@@ -24,22 +24,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDataTagCount extends AbstractAPIRequestHandler {
 
-    private static class GetDataTagCountHolder {
-        private static final GetDataTagCount INSTANCE = new GetDataTagCount();
-    }
-
-    public static GetDataTagCount getInstance() {
-        return GetDataTagCountHolder.INSTANCE;
-    }
-
-    private GetDataTagCount() {
+    public GetDataTagCount() {
         super(new APITag[] {APITag.DATA});
     }
 

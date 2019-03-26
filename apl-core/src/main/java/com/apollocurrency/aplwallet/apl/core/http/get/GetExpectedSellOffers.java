@@ -37,18 +37,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedSellOffersHolder {
-        private static final GetExpectedSellOffers INSTANCE = new GetExpectedSellOffers();
-    }
-
-    public static GetExpectedSellOffers getInstance() {
-        return GetExpectedSellOffersHolder.INSTANCE;
-    }
-
-    private GetExpectedSellOffers() {
+    public GetExpectedSellOffers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "sortByRate");
     }
 

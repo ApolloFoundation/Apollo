@@ -37,18 +37,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedBidOrdersHolder {
-        private static final GetExpectedBidOrders INSTANCE = new GetExpectedBidOrders();
-    }
-
-    public static GetExpectedBidOrders getInstance() {
-        return GetExpectedBidOrdersHolder.INSTANCE;
-    }
-
-    private GetExpectedBidOrders() {
+    public GetExpectedBidOrders() {
         super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
     }
 

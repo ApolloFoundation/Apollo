@@ -35,18 +35,13 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedAssetTransfers extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedAssetTransfersHolder {
-        private static final GetExpectedAssetTransfers INSTANCE = new GetExpectedAssetTransfers();
-    }
-
-    public static GetExpectedAssetTransfers getInstance() {
-        return GetExpectedAssetTransfersHolder.INSTANCE;
-    }
-
-    private GetExpectedAssetTransfers() {
+    public GetExpectedAssetTransfers() {
         super(new APITag[]{APITag.AE}, "asset", "account", "includeAssetInfo");
     }
     @Override

@@ -34,17 +34,12 @@ import org.json.simple.JSONStreamAware;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class GetLinkedPhasedTransactions extends AbstractAPIRequestHandler {
-    private static class GetLinkedPhasedTransactionsHolder {
-        private static final GetLinkedPhasedTransactions INSTANCE = new GetLinkedPhasedTransactions();
-    }
 
-    public static GetLinkedPhasedTransactions getInstance() {
-        return GetLinkedPhasedTransactionsHolder.INSTANCE;
-    }
-
-    private GetLinkedPhasedTransactions() {
+    public GetLinkedPhasedTransactions() {
         super(new APITag[]{APITag.PHASING}, "linkedFullHash");
     }
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();

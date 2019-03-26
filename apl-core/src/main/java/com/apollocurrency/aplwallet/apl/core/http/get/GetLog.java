@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The GetLog API will return log messages from the ring buffer
@@ -50,21 +51,13 @@ import java.util.Iterator;
  * <li>messages - An array of log messages</li>
  * </ul>
  */
+@Vetoed
 public final class GetLog extends AbstractAPIRequestHandler {
-
-    /** GetLog instance */
-    private static class GetLogHolder {
-        private static final GetLog INSTANCE = new GetLog();
-    }
-
-    public static GetLog getInstance() {
-        return GetLogHolder.INSTANCE;
-    }
 
     /**
      * Create the GetLog instance
      */
-    private GetLog() {
+    public GetLog() {
         super(new APITag[] {APITag.DEBUG}, "count");
     }
 

@@ -33,17 +33,14 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedOrderCancellationsHolder {
-        private static final GetExpectedOrderCancellations INSTANCE = new GetExpectedOrderCancellations();
-    }
 
-    public static GetExpectedOrderCancellations getInstance() {
-        return GetExpectedOrderCancellationsHolder.INSTANCE;
-    }
-    private GetExpectedOrderCancellations() {
+    public GetExpectedOrderCancellations() {
         super(new APITag[] {APITag.AE});
     }
 

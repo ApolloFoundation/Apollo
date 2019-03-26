@@ -34,19 +34,13 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class EncryptTo extends AbstractAPIRequestHandler {
 
-    private static class EncryptToHolder {
-        private static final EncryptTo INSTANCE = new EncryptTo();
-    }
-
-    public static EncryptTo getInstance() {
-        return EncryptToHolder.INSTANCE;
-    }
-
-    private EncryptTo() {
+    public EncryptTo() {
         super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase"
                 , "account", "passphrase");
     }

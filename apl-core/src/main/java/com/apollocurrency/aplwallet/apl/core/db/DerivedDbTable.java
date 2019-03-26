@@ -28,20 +28,34 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 public abstract class DerivedDbTable {
-
+    @Inject
+    FullTextConfig fullTextConfig;
+    @Inject
+    DerivedDbTablesRegistry derivedDbTablesRegistry;
+    
     protected final String table;
-    private static DerivedDbTablesRegistry dbTables;
     protected static DatabaseManager databaseManager;
-
+    
+    //TODO: fix injects and remove
+    private void lookupCdi(){
+        if(fullTextConfig==null){
+            fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
+        }
+        if(derivedDbTablesRegistry==null){
+            derivedDbTablesRegistry = CDI.current().select(DerivedDbTablesRegistry.class).get();
+        }
+    }
+    
     // We should find better place for table init
     protected DerivedDbTable(String table) {
+        lookupCdi();
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        if (dbTables == null) dbTables = CDI.current().select(DerivedDbTablesRegistry.class).get();
-        dbTables.registerDerivedTable(this);
-        FullTextConfig.getInstance().registerTable(table);
+        derivedDbTablesRegistry.registerDerivedTable(this);
+        fullTextConfig.registerTable(table);
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }

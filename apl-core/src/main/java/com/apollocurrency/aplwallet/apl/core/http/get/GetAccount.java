@@ -34,23 +34,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccount extends AbstractAPIRequestHandler {
 
-    private static class GetAccountHolder {
-        private static final GetAccount INSTANCE = new GetAccount();
-    }
-
-    public static GetAccount getInstance() {
-        return GetAccountHolder.INSTANCE;
-    }
-
-    private GetAccount() {
+    public GetAccount() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
     }
 

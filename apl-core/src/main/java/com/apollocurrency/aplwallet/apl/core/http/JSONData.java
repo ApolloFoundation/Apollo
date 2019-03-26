@@ -100,8 +100,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 
+@Vetoed
 public final class JSONData {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();

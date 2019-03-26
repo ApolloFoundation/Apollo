@@ -39,18 +39,16 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class ApproveTransaction extends CreateTransaction {
-    public static ApproveTransaction getInstance() {
-        return ApproveTransactionHolder.INSTANCE;
-    }
 
-    private static class ApproveTransactionHolder {
-        private static final ApproveTransaction INSTANCE = new ApproveTransaction();
-    }
-    private ApproveTransaction() {
+    public ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
                 "revealedSecret", "revealedSecretIsText");
     }

@@ -8,21 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class SendMoneyPrivate extends CreateTransaction {
 
-    private static class SendMoneyPrivateHolder {
-        private static final SendMoneyPrivate INSTANCE = new SendMoneyPrivate();
-    }
-
-    public static SendMoneyPrivate getInstance() {
-        return SendMoneyPrivateHolder.INSTANCE;
-    }
-
-    private SendMoneyPrivate() {
+    public SendMoneyPrivate() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");
     }
 

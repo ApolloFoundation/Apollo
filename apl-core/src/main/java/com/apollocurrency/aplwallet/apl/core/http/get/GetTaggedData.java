@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetTaggedData extends AbstractAPIRequestHandler {
 
-    private static class GetTaggedDataHolder {
-        private static final GetTaggedData INSTANCE = new GetTaggedData();
-    }
-
-    public static GetTaggedData getInstance() {
-        return GetTaggedDataHolder.INSTANCE;
-    }
-
-    private GetTaggedData() {
+    public GetTaggedData() {
         super(new APITag[] {APITag.DATA}, "transaction", "includeData", "retrieve");
     }
 

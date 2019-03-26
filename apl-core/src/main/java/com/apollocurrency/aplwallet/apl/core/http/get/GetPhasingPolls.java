@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -35,17 +36,10 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetPhasingPolls extends AbstractAPIRequestHandler {
 
-    private static class GetPhasingPollsHolder {
-        private static final GetPhasingPolls INSTANCE = new GetPhasingPolls();
-    }
-
-    public static GetPhasingPolls getInstance() {
-        return GetPhasingPollsHolder.INSTANCE;
-    }
-
-    private GetPhasingPolls() {
+    public GetPhasingPolls() {
         super(new APITag[] {APITag.PHASING}, "transaction", "transaction", "transaction", "countVotes"); // limit to 3 for testing
     }
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();

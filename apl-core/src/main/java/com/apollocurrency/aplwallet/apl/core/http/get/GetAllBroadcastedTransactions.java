@@ -24,23 +24,17 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetAllBroadcastedTransactionsHolder {
-        private static final GetAllBroadcastedTransactions INSTANCE = new GetAllBroadcastedTransactions();
-    }
-
-    public static GetAllBroadcastedTransactions getInstance() {
-        return GetAllBroadcastedTransactionsHolder.INSTANCE;
-    }
-
-    private GetAllBroadcastedTransactions() {
+    public GetAllBroadcastedTransactions() {
         super(new APITag[] {APITag.DEBUG});
     }
 

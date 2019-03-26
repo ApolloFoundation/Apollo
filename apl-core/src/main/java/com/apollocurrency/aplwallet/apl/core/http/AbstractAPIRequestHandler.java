@@ -24,8 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public abstract class AbstractAPIRequestHandler {
 
     private List<String> parameters;

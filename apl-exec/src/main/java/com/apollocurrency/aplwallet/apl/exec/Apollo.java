@@ -7,8 +7,10 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
@@ -213,9 +215,16 @@ public class Apollo {
                 .recursiveScanPackages(FullTextTrigger.class)
                 .recursiveScanPackages(BlockchainConfig.class)
                 .recursiveScanPackages(DatabaseManager.class)
+                .recursiveScanPackages(DerivedDbTablesRegistry.class)
+                .recursiveScanPackages(FullTextConfig.class)
+                .annotatedDiscoveryMode()
                 .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
-                .annotatedDiscoveryMode().build();
+                .annotatedDiscoveryMode()
+  //TODO:  turn it on periodically in development process
+  // to check CDI errors
+                .devMode()
+                .build();
 
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();

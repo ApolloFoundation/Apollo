@@ -51,9 +51,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 
+@Vetoed
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
 
@@ -273,7 +275,7 @@ public final class Poll extends AbstractPoll {
     private final byte maxRangeValue;
     private final int timestamp;
 
-    private Poll(Transaction transaction, MessagingPollCreation attachment) {
+    public Poll(Transaction transaction, MessagingPollCreation attachment) {
         super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
         this.dbKey = pollDbKeyFactory.newKey(this.id);
         this.name = attachment.getPollName();
@@ -286,7 +288,7 @@ public final class Poll extends AbstractPoll {
         this.timestamp = blockchain.getLastBlockTimestamp();
     }
 
-    private Poll(ResultSet rs, DbKey dbKey) throws SQLException {
+    public Poll(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
         this.dbKey = dbKey;
         this.name = rs.getString("name");
