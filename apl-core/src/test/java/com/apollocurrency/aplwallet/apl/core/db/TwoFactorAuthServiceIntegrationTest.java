@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
