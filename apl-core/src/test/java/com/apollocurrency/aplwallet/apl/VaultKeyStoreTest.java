@@ -33,6 +33,8 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
 @EnableWeld
@@ -92,6 +94,7 @@ public class VaultKeyStoreTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveKey() throws Exception {
         VaultKeyStoreImpl keyStoreSpy = spy(keyStore);
 
@@ -118,6 +121,7 @@ public class VaultKeyStoreTest {
 
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKey() throws Exception {
 
 
@@ -139,6 +143,7 @@ public class VaultKeyStoreTest {
 
     }
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKeyUsingIncorrectPassphrase() {
         long accountId = Convert.parseAccountId(ACCOUNT1);
         SecretBytesDetails secretBytesDetails = keyStore.getSecretBytes("pass", accountId);
@@ -147,6 +152,7 @@ public class VaultKeyStoreTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKeyUsingIncorrectAccount() throws Exception {
         long accountId = 0;
         SecretBytesDetails secretBytesDetails = keyStore.getSecretBytes(PASSPHRASE, accountId);
@@ -155,30 +161,35 @@ public class VaultKeyStoreTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveDuplicateKey() throws IOException {
         VaultKeyStore.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
         assertEquals(VaultKeyStore.Status.DUPLICATE_FOUND, status);
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteKey() {
         VaultKeyStore.Status status = keyStore.deleteSecretBytes(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
         assertEquals(VaultKeyStore.Status.OK, status);
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteNotFound() {
         VaultKeyStore.Status status = keyStore.deleteSecretBytes(PASSPHRASE, Convert.parseAccountId(ACCOUNT2));
         assertEquals(VaultKeyStore.Status.NOT_FOUND, status);
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteIncorrectPassphrase() {
         VaultKeyStore.Status status = keyStore.deleteSecretBytes(PASSPHRASE + "0", Convert.parseAccountId(ACCOUNT1));
         assertEquals(VaultKeyStore.Status.DECRYPTION_ERROR, status);
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteIOError() throws IOException {
         VaultKeyStoreImpl spiedKeyStore = Mockito.spy(keyStore);
         doThrow(new IOException()).when(spiedKeyStore).deleteFile(any(Path.class));
@@ -188,6 +199,7 @@ public class VaultKeyStoreTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteNotAvailable() throws IOException {
         Path path = tempDirectory.resolve(".local");
         try {
@@ -201,6 +213,7 @@ public class VaultKeyStoreTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveNotAvailable() throws IOException {
         Path path = tempDirectory.resolve(".local");
         try {
@@ -213,6 +226,7 @@ public class VaultKeyStoreTest {
         }
     }
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetNotAvailable() throws IOException {
         Path path = tempDirectory.resolve(".local");
         try {
