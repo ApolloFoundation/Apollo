@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.model;
 import com.apollocurrency.aplwallet.apl.core.account.BasicAccount;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.json.simple.JSONObject;
 
@@ -24,6 +25,18 @@ public class AplWalletKey extends BasicAccount {
     public AplWalletKey(long id, byte[] publicKey, byte[] privateKey, byte[] secretBytes) {
         this.id = id;
         this.publicKey = publicKey;
+        this.privateKey = privateKey;
+        this.secretBytes = secretBytes;
+    }
+
+    public AplWalletKey(byte[] secretBytes) {
+        byte[] keySeed = Crypto.getKeySeed(secretBytes);
+        byte[] privateKey = Crypto.getPrivateKey(keySeed);
+        byte[] accountPublicKey = Crypto.getPublicKey((keySeed));
+        long accountId = Convert.getId(accountPublicKey);
+
+        this.id = accountId;
+        this.publicKey = accountPublicKey;
         this.privateKey = privateKey;
         this.secretBytes = secretBytes;
     }

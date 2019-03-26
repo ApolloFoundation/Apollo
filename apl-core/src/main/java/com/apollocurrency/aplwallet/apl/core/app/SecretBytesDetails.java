@@ -9,9 +9,9 @@ import java.util.Objects;
 
 public class SecretBytesDetails {
     private byte[] secretBytes;
-    private VaultKeyStore.Status extractStatus;
+    private KeyStoreService.Status extractStatus;
 
-    public SecretBytesDetails(byte[] secretBytes, VaultKeyStore.Status extractStatus) {
+    public SecretBytesDetails(byte[] secretBytes, KeyStoreService.Status extractStatus) {
         this.secretBytes = secretBytes;
         this.extractStatus = extractStatus;
     }
@@ -29,7 +29,7 @@ public class SecretBytesDetails {
         return secretBytes;
     }
 
-    public VaultKeyStore.Status getExtractStatus() {
+    public KeyStoreService.Status getExtractStatus() {
         return extractStatus;
     }
 

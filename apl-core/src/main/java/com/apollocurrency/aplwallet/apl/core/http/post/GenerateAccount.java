@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.model.WalletsInfo;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -30,7 +30,7 @@ public class GenerateAccount extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = request.getParameter("passphrase");
-        WalletsInfo aplWalletKey = Helper2FA.generateUserAccounts(passphrase);
+        WalletKeysInfo aplWalletKey = Helper2FA.generateUserAccounts(passphrase);
         if (aplWalletKey != null) { return aplWalletKey.toJSON();}
         return JSONResponses.ACCOUNT_GENERATION_ERROR;
     }

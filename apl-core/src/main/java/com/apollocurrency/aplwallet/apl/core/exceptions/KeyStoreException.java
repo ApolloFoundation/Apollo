@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.exceptions;
 
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 
 public class KeyStoreException extends Exception{
 
-    public VaultKeyStore.Status status;
+    public KeyStoreService.Status status;
 
-    public KeyStoreException(VaultKeyStore.Status status) {
+    public KeyStoreException(KeyStoreService.Status status) {
         super(status.message);
         this.status = status;
     }
 
-    public KeyStoreException(Throwable throwable,  VaultKeyStore.Status status) {
+    public KeyStoreException(Throwable throwable,  KeyStoreService.Status status) {
         super(throwable.getMessage(), throwable);
         this.status = status;
     }

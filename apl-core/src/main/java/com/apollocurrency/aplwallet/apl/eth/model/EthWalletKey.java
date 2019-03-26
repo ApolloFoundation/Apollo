@@ -26,7 +26,7 @@ public class EthWalletKey {
 
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("account Eth", credentials.getAddress());
+        jsonObject.put("address", credentials.getAddress());
         jsonObject.put("publicKey", credentials.getEcKeyPair().getPublicKey().toString(16));
 
         return jsonObject;

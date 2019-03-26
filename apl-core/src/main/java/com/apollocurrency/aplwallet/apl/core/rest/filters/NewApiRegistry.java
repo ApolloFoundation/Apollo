@@ -17,6 +17,11 @@ public class NewApiRegistry {
         apis.put("getServerInfo", "/rest/serverinfo"); 
         apis.put("importKeyStore", "/rest/keyStore/upload");
         apis.put("exportKeyStore", "/rest/keyStore/download");
+        apis.put("getAccountInfo", "/rest/keyStore/accountInfo");
+
+
+        apis.put("getEthWalletAmount", "/rest/wallet/eth");
+
         //TODO: add new implemented endpoints
     }
     public static String getRestPath(String rqType) {

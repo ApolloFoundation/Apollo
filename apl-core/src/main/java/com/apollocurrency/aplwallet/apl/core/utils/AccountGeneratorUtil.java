@@ -34,18 +34,6 @@ public class AccountGeneratorUtil {
     }
 
     /**
-     * Generate new account with predefined secret key.
-     * @return AplWallet
-     */
-    public static AplWalletKey generateApl(byte[] secretBytes) {
-        byte[] keySeed = Crypto.getKeySeed(secretBytes);
-        byte[] privateKey = Crypto.getPrivateKey(keySeed);
-        byte[] accountPublicKey = Crypto.getPublicKey((keySeed));
-        long accountId = Convert.getId(accountPublicKey);
-        return new AplWalletKey(accountId, accountPublicKey, privateKey, secretBytes);
-    }
-
-    /**
      * Generate new account with random key.
      * @return EthWallet
      */

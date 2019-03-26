@@ -6,7 +6,8 @@
 
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
  import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
- import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
+ import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
@@ -40,8 +41,8 @@
 
  import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
- public class VaultKeyStoreImpl implements VaultKeyStore {
-     private static final Logger LOG = getLogger(VaultKeyStoreImpl.class);
+ public class VaultKeyStoreServiceImpl implements KeyStoreService {
+     private static final Logger LOG = getLogger(VaultKeyStoreServiceImpl.class);
      private static final Integer CURRENT_KEYSTORE_VERSION = 1;
      private Path keystoreDirPath;
      private Integer version;
@@ -50,11 +51,11 @@
      private NtpTime ntpTime;
 
     @Inject
-    public VaultKeyStoreImpl(@Named("keystoreDirPath")Path keystoreDir) {
+    public VaultKeyStoreServiceImpl(@Named("keystoreDirPath")Path keystoreDir) {
         this(keystoreDir, CURRENT_KEYSTORE_VERSION);
     }
 
-     public VaultKeyStoreImpl(Path keystoreDir, Integer version) {
+     public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version) {
          if (version < 0) {
              throw new IllegalArgumentException("version should not be negative");
          }
@@ -194,16 +195,16 @@
          return saved ? Status.OK : Status.WRITE_ERROR;
      }
 
-    public Status saveSecretKeyStore(String passphrase, FbWallet fbWallet) {
-        String aplKeySecret = FbWalletUtil.getAplKeySecret(fbWallet);
+    public Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet) {
+        String aplKeySecret = fbWallet.getAplKeySecret();
 
-        AplWalletKey aplWalletKey = AccountGeneratorUtil.generateApl(Convert.parseHexString(aplKeySecret));
+        AplWalletKey aplWalletKey = new AplWalletKey(Convert.parseHexString(aplKeySecret));
 
-        return saveSecretKeyStore(aplWalletKey.getId(), passphrase, fbWallet);
+        return saveSecretKeyStore(passphrase, aplWalletKey.getId(), fbWallet);
     }
 
     @Override
-    public Status saveSecretKeyStore(Long accountId, String passphrase, FbWallet fbWallet) {
+    public Status saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet) {
         byte[] salt = generateBytes(12);
         Path path;
 
@@ -234,7 +235,7 @@
     }
 
     @Override
-    public FbWallet getSecretStore(String passphrase, long accountId) {
+    public ApolloFbWallet getSecretStore(String passphrase, long accountId) {
         Objects.requireNonNull(passphrase);
         Objects.requireNonNull(accountId);
 
@@ -251,7 +252,7 @@
             }
         }
 
-        FbWallet fbWallet = new FbWallet();
+        ApolloFbWallet fbWallet = new ApolloFbWallet();
         try {
             fbWallet.readOpenData(secretPath.toString());
             byte[] salt = fbWallet.getContanerIV();
@@ -267,6 +268,17 @@
         }
 
         return fbWallet;
+    }
+
+    @Override
+    public WalletKeysInfo getWalletKeysInfo(String passphrase, long accountId) {
+        ApolloFbWallet fbWallet = getSecretStore(passphrase, accountId);
+
+        if (fbWallet == null) {
+            LOG.warn("VaultWallet : " + Status.NOT_FOUND);
+            return null;
+        }
+        return new WalletKeysInfo(fbWallet);
     }
 
     @Override

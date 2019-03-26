@@ -4,14 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import io.firstbridge.cryptolib.container.FbWallet;
 
 import java.io.File;
 
-public interface VaultKeyStore {
+public interface KeyStoreService {
 
 
-    Status saveSecretKeyStore(String passphrase, FbWallet fbWallet);
+    Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet);
 
     /**
      * Save encrypted by passphrase secretStore in the json format.
@@ -19,7 +21,7 @@ public interface VaultKeyStore {
      * @param fbWallet - secret array of bytes which will be stored into keystore
      * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
      */
-    Status saveSecretKeyStore(Long accountId, String passphrase, FbWallet fbWallet);
+    Status saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet);
 
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
@@ -27,7 +29,9 @@ public interface VaultKeyStore {
      * @param accountId - id of account, which keySeed should be decrypted
      * @return decrypted SecretStore.
      */
-    FbWallet getSecretStore(String passphrase, long accountId);
+    ApolloFbWallet getSecretStore(String passphrase, long accountId);
+
+    WalletKeysInfo getWalletKeysInfo(String passphrase, long accountId);
 
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase

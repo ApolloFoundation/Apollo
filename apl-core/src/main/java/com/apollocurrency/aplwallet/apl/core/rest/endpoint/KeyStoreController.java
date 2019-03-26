@@ -1,8 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.firstbridge.cryptolib.container.FbWallet;
@@ -34,9 +36,38 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 @Singleton
 public class KeyStoreController {
 
-    private final VaultKeyStore vaultKeyStore = CDI.current().select(VaultKeyStore.class).get();
+    private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
     private PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private Integer maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");
+
+
+
+    @POST
+    @Path("/accountInfo")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get user eth key.",
+            tags = {"keyStore"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Response.class)))
+            }
+    )
+    public Response getAccountInfo(@FormParam("account") String account,
+                                     @FormParam("passphrase") String passphraseReq) throws ParameterException {
+        String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
+        long accountId = ParameterParser.getAccountId(account, "account", true);
+
+        if(!keyStoreService.isAccountExist(accountId)){
+            return Response.status(Response.Status.BAD_REQUEST).entity("Key for this account is not exist.").build();
+        }
+
+        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
+
+        Response.ResponseBuilder response = Response.ok(keyStore.toJSON());
+        return response.build();
+    }
+
 
     @POST
     @Path("/upload")
@@ -58,7 +89,7 @@ public class KeyStoreController {
 
         byte[] keyStore = null;
         String passPhrase = null;
-        FbWallet fbWallet;
+        ApolloFbWallet fbWallet;
 
         try {
             ServletFileUpload upload = new ServletFileUpload();
@@ -90,7 +121,7 @@ public class KeyStoreController {
                         .entity("KeyStore or passPhrase is not valid.").build();
             }
 
-            VaultKeyStore.Status status = vaultKeyStore.saveSecretKeyStore(passPhrase, fbWallet);
+            KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passPhrase, fbWallet);
 
             if(status.isOK()){
                 return Response.status(200).build();
@@ -121,11 +152,11 @@ public class KeyStoreController {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
-        if(!vaultKeyStore.isAccountExist(accountId)){
+        if(!keyStoreService.isAccountExist(accountId)){
             return Response.status(Response.Status.BAD_REQUEST).entity("Key for this account is not exist.").build();
         }
 
-        File keyStore = vaultKeyStore.getSecretStoreFile(accountId, passphraseStr);
+        File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
 
         Response.ResponseBuilder response = Response.ok(keyStore);
         response.header("Content-disposition", "attachment; filename="+ keyStore.getName());

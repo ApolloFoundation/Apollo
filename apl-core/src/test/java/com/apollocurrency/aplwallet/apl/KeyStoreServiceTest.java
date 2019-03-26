@@ -21,8 +21,8 @@ import java.util.Random;
 
 import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreImpl;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 @EnableWeld
-public class VaultKeyStoreTest {
+public class KeyStoreServiceTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -68,13 +68,13 @@ public class VaultKeyStoreTest {
     }
 
     private Path tempDirectory;
-    private VaultKeyStoreImpl keyStore;
+    private VaultKeyStoreServiceImpl keyStore;
 
     @BeforeEach
     void setUp() throws Exception {
 //        Crypto.getSecureRandom().nextBytes(nonce);
         tempDirectory = Files.createTempDirectory("keystore-test");
-        keyStore = new VaultKeyStoreImpl(tempDirectory, 0);
+        keyStore = new VaultKeyStoreServiceImpl(tempDirectory, 0);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
     }
 
@@ -93,10 +93,10 @@ public class VaultKeyStoreTest {
 
     @Test
     public void testSaveKey() throws Exception {
-        VaultKeyStoreImpl keyStoreSpy = spy(keyStore);
+        VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
 
-        VaultKeyStore.Status status = keyStoreSpy.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
-        assertEquals(VaultKeyStore.Status.OK, status);
+        KeyStoreService.Status status = keyStoreSpy.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+        assertEquals(KeyStoreService.Status.OK, status);
         verify(keyStoreSpy, times(1)).storeJSONSecretBytes(any(Path.class), any(EncryptedSecretBytesDetails.class));
         verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(anyLong());
 
@@ -121,12 +121,12 @@ public class VaultKeyStoreTest {
     public void testGetKey() throws Exception {
 
 
-        VaultKeyStoreImpl keyStoreSpy = spy(keyStore);
+        VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
 
         long accountId = Convert.parseAccountId(ACCOUNT1);
         SecretBytesDetails secretBytes = keyStoreSpy.getSecretBytesV0(PASSPHRASE, accountId);
         byte[] actualKey = secretBytes.getSecretBytes();
-        assertEquals(VaultKeyStore.Status.OK, secretBytes.getExtractStatus()) ;
+        assertEquals(KeyStoreService.Status.OK, secretBytes.getExtractStatus()) ;
         String rsAcc = Convert.defaultRsAccount(accountId);
 
         verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(accountId);
@@ -143,7 +143,7 @@ public class VaultKeyStoreTest {
         long accountId = Convert.parseAccountId(ACCOUNT1);
         SecretBytesDetails secretBytesDetails = keyStore.getSecretBytesV0("pass", accountId);
         assertNull(secretBytesDetails.getSecretBytes());
-        assertEquals(VaultKeyStore.Status.DECRYPTION_ERROR, secretBytesDetails.getExtractStatus());
+        assertEquals(KeyStoreService.Status.DECRYPTION_ERROR, secretBytesDetails.getExtractStatus());
     }
 
     @Test
@@ -151,39 +151,39 @@ public class VaultKeyStoreTest {
         long accountId = 0;
         SecretBytesDetails secretBytesDetails = keyStore.getSecretBytesV0(PASSPHRASE, accountId);
         assertNull(secretBytesDetails.getSecretBytes());
-        assertEquals(VaultKeyStore.Status.NOT_FOUND, secretBytesDetails.getExtractStatus());
+        assertEquals(KeyStoreService.Status.NOT_FOUND, secretBytesDetails.getExtractStatus());
     }
 
 //    @Test
     public void testSaveDuplicateKey() throws IOException {
-        VaultKeyStore.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
-        assertEquals(VaultKeyStore.Status.DUPLICATE_FOUND, status);
+        KeyStoreService.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
+        assertEquals(KeyStoreService.Status.DUPLICATE_FOUND, status);
     }
 
 //    @Test
     public void testDeleteKey() {
-        VaultKeyStore.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
-        assertEquals(VaultKeyStore.Status.OK, status);
+        KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+        assertEquals(KeyStoreService.Status.OK, status);
     }
 
     @Test
     public void testDeleteNotFound() {
-        VaultKeyStore.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT2));
-        assertEquals(VaultKeyStore.Status.BAD_CREDENTIALS, status);
+        KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT2));
+        assertEquals(KeyStoreService.Status.BAD_CREDENTIALS, status);
     }
 
     @Test
     public void testDeleteIncorrectPassphrase() {
-        VaultKeyStore.Status status = keyStore.deleteKeyStore(PASSPHRASE + "0", Convert.parseAccountId(ACCOUNT1));
-        assertEquals(VaultKeyStore.Status.BAD_CREDENTIALS, status);
+        KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE + "0", Convert.parseAccountId(ACCOUNT1));
+        assertEquals(KeyStoreService.Status.BAD_CREDENTIALS, status);
     }
 
 //    @Test
     public void testDeleteIOError() throws IOException {
-        VaultKeyStoreImpl spiedKeyStore = Mockito.spy(keyStore);
+        VaultKeyStoreServiceImpl spiedKeyStore = Mockito.spy(keyStore);
         doThrow(new IOException()).when(spiedKeyStore).deleteFile(any(Path.class));
-        VaultKeyStore.Status status = spiedKeyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
-        assertEquals(VaultKeyStore.Status.DELETE_ERROR, status);
+        KeyStoreService.Status status = spiedKeyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+        assertEquals(KeyStoreService.Status.DELETE_ERROR, status);
         verify(spiedKeyStore, times(1)).deleteFile(any(Path.class));
     }
 
@@ -192,8 +192,8 @@ public class VaultKeyStoreTest {
         Path path = tempDirectory.resolve(".local");
         try {
             Files.createFile(path);
-            VaultKeyStore.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
-            assertEquals(VaultKeyStore.Status.NOT_AVAILABLE, status);
+            KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+            assertEquals(KeyStoreService.Status.NOT_AVAILABLE, status);
 
         } finally {
             Files.deleteIfExists(path);
@@ -205,8 +205,8 @@ public class VaultKeyStoreTest {
         Path path = tempDirectory.resolve(".local");
         try {
             Files.createFile(path);
-            VaultKeyStore.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
-            assertEquals(VaultKeyStore.Status.NOT_AVAILABLE, status);
+            KeyStoreService.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+            assertEquals(KeyStoreService.Status.NOT_AVAILABLE, status);
 
         } finally {
             Files.deleteIfExists(path);
@@ -218,7 +218,7 @@ public class VaultKeyStoreTest {
         try {
             Files.createFile(path);
             SecretBytesDetails secretBytes = keyStore.getSecretBytesV0(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
-            assertEquals(VaultKeyStore.Status.OK, secretBytes.getExtractStatus());
+            assertEquals(KeyStoreService.Status.OK, secretBytes.getExtractStatus());
             assertEquals(SECRET_BYTES_1, Convert.toHexString(secretBytes.getSecretBytes()));
 
         } finally {

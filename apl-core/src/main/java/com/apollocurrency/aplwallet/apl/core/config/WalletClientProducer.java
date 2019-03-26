@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.config;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -19,7 +20,13 @@ public class WalletClientProducer {
         String ethNodeUrl = propertiesHolder.getStringProperty("eth.node.url");
         String ethNodePort = propertiesHolder.getStringProperty("eth.node.port");
         //TODO move HttpService config to config files.
-        Web3j web3 = Web3j.build(new HttpService(ethNodeUrl + ":" + ethNodePort));  // defaults to http://localhost:8545/
+        String fullUrl = ethNodeUrl;
+
+        if(!StringUtils.isBlank(ethNodePort)) {
+            fullUrl = fullUrl.concat(":" + ethNodePort);
+        }
+
+        Web3j web3 = Web3j.build(new HttpService(fullUrl));  // defaults to http://localhost:8545/
         return web3;
     }
 

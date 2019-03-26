@@ -5,17 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.model.WalletsInfo;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,18 +37,13 @@ public class ImportKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, false));
         byte[] secretBytes = ParameterParser.getBytes(request, "secretBytes", true);
-        JSONObject response = new JSONObject();
 
         try {
-            WalletsInfo walletsInfo = Helper2FA.importSecretBytes(passphrase, secretBytes);
-            response.put("passphrase", walletsInfo.getPassphrase());
-            JSONData.putAccount(response, "account", walletsInfo.getAplId());
-            response.put("eth", walletsInfo.getEthAddress());
-            response.put("status", VaultKeyStore.Status.OK);
+            WalletKeysInfo walletKeysInfo = Helper2FA.importSecretBytes(passphrase, secretBytes);
+            return walletKeysInfo.toJSON();
         } catch (ParameterException e){
             return JSONResponses.vaultWalletError(0l, "import", e.getMessage());
         }
-        return response;
     }
 
     @Override
