@@ -21,6 +21,7 @@ public class NewApiRegistry {
 
 
         apis.put("getEthWalletAmount", "/rest/wallet/eth");
+        apis.put("getEthWalletTransfer", "/rest/wallet/eth/transfer");
 
         //TODO: add new implemented endpoints
     }

@@ -1,6 +1,9 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
+import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.slf4j.Logger;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
@@ -14,6 +17,7 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigDecimal;
@@ -29,7 +33,7 @@ public class EthereumWalletService {
 
     @Inject
     private Web3j web3j;
-
+    private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
 
     public BigInteger getBalanceWei(String accountAddress){
     // send asynchronous requests to get balance
@@ -50,6 +54,18 @@ public class EthereumWalletService {
 
     public BigDecimal getBalanceEther(String address) {
         return Web3jUtils.weiToEther(getBalanceWei(address));
+    }
+
+    /**
+     * Transfer money from account to another one.
+     * @param amountEth
+     * @return String - transaction Hash.
+     */
+    public String transfer(String passphrase, long accountId, String toAddress, BigDecimal amountEth){
+        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+        Credentials ethCredentials = keyStore.getEthWalletKey().getCredentials();
+
+        return transfer(ethCredentials.getAddress(), ethCredentials, toAddress, Web3jUtils.etherToWei(amountEth));
     }
 
     /**
