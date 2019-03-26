@@ -983,6 +983,21 @@ final class TransactionImpl implements Transaction {
             }
         }
 
+        String[] blacklist = {"APL-SP4G-XZ46-U4BN-9Y37G", "APL-CUWX-8NH7-5GGF-9WYCY"};
+        
+        int blockchainHeight = Apl.getBlockchain().getHeight();
+        
+        if (blockchainHeight > 1820000)
+        {
+            for (String blacklistedAccId : blacklist)
+            {
+                if ((senderId == Convert.parseAccountId(blacklistedAccId)) && (recipientId != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
+                {
+                    throw new AplException.NotValidException("Bad request");
+                }
+            };
+        }
+        
         boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPoll.getPoll(getId()) != null;
         for (Appendix.AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
@@ -999,7 +1014,7 @@ final class TransactionImpl implements Transaction {
         if (getFullSize() > AplGlobalObjects.getChainConfig().getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
         }
-        int blockchainHeight = Apl.getBlockchain().getHeight();
+
         if (!validatingAtFinish) {
             long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
             if (feeATM < minimumFeeATM) {
