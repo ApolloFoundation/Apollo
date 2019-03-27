@@ -5,13 +5,14 @@
 # base dir for data files, etc
 APPLICATION=".apl-blockchain"
 
-SCRIPT=`realpath -s $0`
-SCRIPT_DIR=`dirname $SCRIPT`
+# SCRIPT=`realpath -s $0`
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+# SCRIPT_DIR=`dirname $SCRIPT`
 APL_TOP_DIR=`dirname $SCRIPT_DIR`
 ECHO_PREFIX="=== Apollo === "
 echo "${ECHO_PREFIX} Apollo wallet installed in directory: ${APL_TOP_DIR}"
 
-APL_LIB_DIR=`realpath -s ${APL_TOP_DIR}/lib`
+APL_LIB_DIR=${APL_TOP_DIR}/lib
 if [ -x ${APL_LIB_DIR} ]; then
     echo -n
 else
