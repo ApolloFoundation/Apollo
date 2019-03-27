@@ -2,8 +2,7 @@
 # (C) 2019 Apollo Foundation 
 # Starts Apollo GUI  in foreground
 
-SCRIPT=`realpath -s $0`
-DIR=`dirname $SCRIPT`
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
  . ${DIR}/apl-common.sh 
 
