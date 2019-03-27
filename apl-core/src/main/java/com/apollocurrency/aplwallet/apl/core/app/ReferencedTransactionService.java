@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.util.List;
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -42,18 +41,18 @@ public class ReferencedTransactionService {
     }
 
     public boolean hasAllReferencedTransactions(Transaction transaction, int height) {
-        Long referencedTransactionId = getIdFromHash(transaction.getReferencedTransactionFullHash());
+
         int count = 0;
-        while (referencedTransactionId != null ) {
-            Transaction referencedTransaction = blockchain.getTransaction(referencedTransactionId);
-            Integer referencedTransactionHeight = getHeight(referencedTransaction, referencedTransactionId);
+        byte[] hash = hashToBytes(transaction.getReferencedTransactionFullHash());
+        while (hash != null ) {
+            Integer referencedTransactionHeight = blockchain.getTransactionHeight(hash, height);
             if (referencedTransactionHeight == null
                     || referencedTransactionHeight >= height
                     || ++count > maxReferencedTransactions
                     || height - referencedTransactionHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 return false;
             }
-            referencedTransactionId = getId(referencedTransaction, referencedTransactionId);
+            hash = getReferencedFullHash(Convert.fullHashToId(hash));
         }
         return true;
     }
@@ -62,34 +61,22 @@ public class ReferencedTransactionService {
         return referencedTransactionDao.getReferencingTransactions(transactionId, from, limit);
     }
 
-    private Integer getHeight(Transaction transaction, Long referencedTransactionId) {
-        Objects.requireNonNull(referencedTransactionId, "referenced transaction id cannot be null here");
-        Integer height;
-        if (transaction == null) {
-            height =  transactionIndexDao.getTransactionHeightByTransactionId(referencedTransactionId);
-        } else {
-            height = transaction.getHeight();
+
+    private byte[] getReferencedFullHash(long traansactionId) {
+        byte[] hash = null;
+        Long referencedTransactionId = referencedTransactionDao.getReferencedTransactionIdFor(traansactionId);
+        if (referencedTransactionId != null) {
+            hash = blockchain.getFullHash(referencedTransactionId);
         }
-        return height;
+        return hash;
     }
 
-    private Long getId(Transaction transaction, Long transactionId) {
-        Objects.requireNonNull(transactionId, "transaction id cannot be null here");
-        Long id;
-        if (transaction == null) {
-            id = referencedTransactionDao.getReferencedTransactionIdFor(transactionId);
-        } else {
-            id = getIdFromHash(transaction.getReferencedTransactionFullHash());
-        }
-        return id;
-    }
 
-    private Long getIdFromHash(String fullHash) {
-        Long id = null;
-        if (fullHash != null) {
-            id = Convert.fullHashToId(Convert.parseHexString(fullHash));
+    private byte[] hashToBytes(String hash) {
+        if (hash == null) {
+            return null;
         }
-        return id;
+        return Convert.parseHexString(hash);
     }
 
 }

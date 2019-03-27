@@ -220,13 +220,13 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private void checkLinkedTransaction(byte[] hash, int currentHeight, int transactionHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
-        Transaction linkedTransaction = blockchain.findTransactionByFullHash(hash, currentHeight);
-        boolean b = blockchain.hasTransactionByFullHash(hash);
-        if (linkedTransaction != null) {
-            if (transactionHeight - linkedTransaction.getHeight() > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
+        Integer txHeight = blockchain.getTransactionHeight(hash, currentHeight);
+        if (txHeight != null) {
+
+            if (transactionHeight - txHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
             }
-            if (phasingPollService.isTransactionPhased(linkedTransaction.getId())) {
+            if (phasingPollService.isTransactionPhased(Convert.fullHashToId(hash))) {
                 throw new AplException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
             }
         }

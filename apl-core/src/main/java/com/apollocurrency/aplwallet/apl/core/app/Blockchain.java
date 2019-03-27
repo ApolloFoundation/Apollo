@@ -109,6 +109,15 @@ public interface Blockchain {
 
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
 
+    /**
+     * <p>Get transaction height by using fullHash restricted it by heightLimit parameter.</p>
+     * <p>This method will return height of transaction in blockchain, even if transaction currently not exist or not available</p>
+     * @param fullHash fullHash of transaction to retrieved
+     * @param heightLimit upper bound which should not be crossed by returned transaction height
+     * @return height of transaction or null when collision for hash occurred, transaction height greater than heightLimit or transaction with such hash not found
+     */
+    Integer getTransactionHeight(byte[] fullHash, int heightLimit);
+
     byte[] getFullHash(long transactionId);
 
     Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException;

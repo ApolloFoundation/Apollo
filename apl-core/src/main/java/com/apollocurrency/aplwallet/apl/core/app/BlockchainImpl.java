@@ -364,14 +364,11 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private boolean hasShardTransactionByFullHash(byte[] fullHash, int height) {
-        boolean result = false;
         long id = Convert.fullHashToId(fullHash);
         TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(id);
-        if (transactionIndex != null) {
-            result = Arrays.equals(transactionIndex.getPartialTransactionHash(), Arrays.copyOfRange(fullHash, 8, 32))
-                    && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
-        } // else collision occurred
-        return result;
+        byte[] hash = getTransactionIndexFullHash(transactionIndex);
+        return Arrays.equals(hash, fullHash)
+                && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
     }
 
 
@@ -381,17 +378,34 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
+        Transaction transaction = transactionDao.findTransactionByFullHash(fullHash, heightLimit);
+        Integer txHeight = null;
+        if (transaction != null) {
+            txHeight = transaction.getHeight();
+        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)){
+            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.fullHashToId(fullHash));
+        }
+        return txHeight;
+    }
+
+    @Override
     public byte[] getFullHash(long transactionId) {
         byte[] fullHash = transactionDao.getFullHash(transactionId);
         if (fullHash == null) {
             TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(transactionId);
-            if (transactionIndex != null) {
-                byte[] partialTransactionHash = transactionIndex.getPartialTransactionHash();
-                byte[] bytes = Convert.longToBytes(transactionIndex.getTransactionId());
-                byte[] firstPartOfHash = Convert.reverse(bytes); //reverse bytes according to order in Convert.fullHashToId
-                byte[] retrievedHash = Convert.concat(firstPartOfHash, partialTransactionHash);
-                return retrievedHash;
-            }
+            fullHash = getTransactionIndexFullHash(transactionIndex);
+        }
+        return fullHash;
+    }
+
+    private byte[] getTransactionIndexFullHash(TransactionIndex transactionIndex) {
+        byte[] fullHash = null;
+        if (transactionIndex != null) {
+            byte[] partialTransactionHash = transactionIndex.getPartialTransactionHash();
+            byte[] bytes = Convert.longToBytes(transactionIndex.getTransactionId());
+            byte[] firstPartOfHash = Convert.reverse(bytes); //reverse bytes according to order in Convert.fullHashToId
+            fullHash = Convert.concat(firstPartOfHash, partialTransactionHash);
         }
         return fullHash;
     }
