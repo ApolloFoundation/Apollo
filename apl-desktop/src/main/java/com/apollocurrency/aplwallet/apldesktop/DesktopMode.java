@@ -182,32 +182,35 @@ public class DesktopMode {
             //TODO: Refactor that funny code below
             
             String command = "apl-run";
-            if (System.getProperty("apl.exec.mode").equals("tor"))
-            {
+            if (System.getProperty("apl.exec.mode") != null )
+            {    
+                if (System.getProperty("apl.exec.mode").equals("tor"))
+                {
                     command = "apl-run-tor.";                    
-            } else if (System.getProperty("exec.mode").equals("transport")) 
-            {
+                } else if (System.getProperty("apl.exec.mode").equals("transport")) 
+                {
                     command = "apl-run-secure-transport";
+                }
             }
-            
-            if (System.getProperty("os.name").toLowerCase().contains("win")) 
-            {
-                ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
-                // Some magic: Without Redirect Output will not work on Windows
+                if (System.getProperty("os.name").toLowerCase().contains("win")) 
+                {
+                    ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
+                    // Some magic: Without Redirect Output will not work on Windows
                         .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
                         .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
-                pb.start();
-            }
-            else
-            {
-                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./" + command + ".sh");
-                pb.start();
-            }
+                    pb.start();
+                }
+                else
+                {
+                    command = "apl-start";
+                    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./" + command + ".sh");
+                    pb.start();
+                }
             
-        }            
-        catch (IOException e)
-        {
-            LOG.debug(e.getMessage());
+            }            
+            catch (IOException e)
+            {
+                LOG.debug(e.getMessage());
         }/* catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
         }*/
