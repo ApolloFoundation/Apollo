@@ -212,6 +212,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     public boolean isTransactionPhased(long id) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("select 1 from phasing_poll where id = ? UNION select 1 from phasing_poll_result where id ?")) {
+            pstmt.setLong(1, id);
+            pstmt.setLong(2, id);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next();
             }

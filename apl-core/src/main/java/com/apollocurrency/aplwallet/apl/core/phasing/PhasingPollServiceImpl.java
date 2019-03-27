@@ -61,6 +61,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         getAndSetLinkedFullHashes(phasingPoll);
         byte[] fullHash = blockchain.getFullHash(phasingPoll.getId());
         phasingPoll.setFullHash(fullHash);
+        if (phasingPoll.getWhitelist() == null) {
+            phasingPoll.setWhitelist(Convert.toArray(voterTable.get(phasingPoll.getId())));
+        }
         return phasingPoll;
     }
 

@@ -11,6 +11,8 @@ delete from public.option;
 delete from public.shard;
 delete from referenced_transaction;
 delete from referenced_shard_transaction;
+delete from phasing_poll;
+delete from phasing_poll_result;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT, TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -89,6 +91,19 @@ INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_tra
 (9, 808614188720864902	,  2083198303623116770 ),
 (10, -2262365651675616510, 808614188720864902   ),
 (11, -1536976186224925700, -4081443370478530685 ),
+;
+INSERT INTO PUBLIC.PHASING_POLL (
+DB_ID  	    ID  	            ACCOUNT_ID  	    WHITELIST_SIZE  	FINISH_HEIGHT  	VOTING_MODEL  	QUORUM  	MIN_BALANCE  	HOLDING_ID  	MIN_BALANCE_MODEL  	HASHED_SECRET  	ALGORITHM  	HEIGHT) VALUES
+(10	    , 3444674909301056677	,9211698109297098287	        ,1	        ,2000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null        ,0	            ,1000),
+(20	    , 3746857886535243786	,9211698109297098287	        ,1	        ,5000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null        ,0	            ,3500),
+(30	    , 2083198303623116770	,9211698109297098287	        ,1	        ,9500	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null        ,0	            ,8000),
+(40	    ,-4081443370478530685	,9211698109297098287	        ,1	        ,17000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null        ,0	            ,15456),
+;
+INSERT INTO PUBLIC.PHASING_POLL_RESULT
+(DB_ID  	ID  	          RESULT  	APPROVED  	HEIGHT  ) VALUES
+(10	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
+(20	    ,3746857886535243786	,0	    ,TRUE	    ,4000   ),
+(30	    ,2083198303623116770	,0	    ,FALSE	    ,9500   ),
 ;
 INSERT into version values (262);
 INSERT INTO FTL.INDEXES (schema, table, columns)

@@ -30,6 +30,13 @@ public class PhasingPollResult {
         this.height = rs.getInt("height");
     }
 
+    public PhasingPollResult(long id, long result, boolean approved, int height) {
+        this.id = id;
+        this.result = result;
+        this.approved = approved;
+        this.height = height;
+    }
+
     public void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
                 + "result, approved, height) VALUES (?, ?, ?, ?)")) {

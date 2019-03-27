@@ -18,6 +18,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,6 +41,9 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPoll, Long> {
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
+    public List<Long> get(long pollId) {
+        return get(KEY_FACTORY.newKey(pollId));
+    }
 
     @Override
     protected Long load(Connection con, ResultSet rs) throws SQLException {
