@@ -202,7 +202,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             pstmt.setInt(2, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    ids.add(rs.getLong("id"));
+                    ids.add(rs.getLong("db_id"));
                 }
             }
         }

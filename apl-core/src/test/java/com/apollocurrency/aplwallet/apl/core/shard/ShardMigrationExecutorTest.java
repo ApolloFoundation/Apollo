@@ -11,7 +11,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMO
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -43,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingComman
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -115,7 +115,8 @@ class ShardMigrationExecutorTest {
 
     @BeforeEach
     void setUp() {
-        blockchain.setLastBlock(BLOCK_11);
+
+        blockchain.setLastBlock(new BlockTestData().BLOCK_11);
     }
 
     @AfterEach

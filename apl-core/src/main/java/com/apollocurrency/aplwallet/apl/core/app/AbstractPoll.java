@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public abstract class AbstractPoll {
 
@@ -50,6 +51,22 @@ public abstract class AbstractPoll {
         this.finishHeight = rs.getInt("finish_height");
         this.voteWeighting = new VoteWeighting(rs.getByte("voting_model"), rs.getLong("holding_id"),
                 rs.getLong("min_balance"), rs.getByte("min_balance_model"));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AbstractPoll)) return false;
+        AbstractPoll that = (AbstractPoll) o;
+        return id == that.id &&
+                accountId == that.accountId &&
+                finishHeight == that.finishHeight &&
+                Objects.equals(voteWeighting, that.voteWeighting);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, voteWeighting, accountId, finishHeight);
     }
 
     public final long getId() {

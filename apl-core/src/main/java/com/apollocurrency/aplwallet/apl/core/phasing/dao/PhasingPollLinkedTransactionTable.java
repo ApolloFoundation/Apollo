@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -33,6 +34,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     };
     private final Blockchain blockchain;
 
+    @Inject
     public PhasingPollLinkedTransactionTable(Blockchain blockchain) {
         super(TABLE_NAME, KEY_FACTORY);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");

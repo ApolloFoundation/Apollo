@@ -63,7 +63,7 @@ public class PhasingPoll extends AbstractPoll {
     }
 
     public PhasingPoll(long id, long accountId, byte whitelistSize, int finishHeight, byte votingModel,long quorum,
-                       Long minBalance, Long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm) {
+                       long minBalance, long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm) {
         super(id, accountId, finishHeight, new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel));
         this.whitelist = whitelistSize == 0 ? Convert.EMPTY_LONG : null;
         this.quorum = quorum;
@@ -102,6 +102,30 @@ public class PhasingPoll extends AbstractPoll {
         Objects.requireNonNull(whitelist, "Whitelist should not be null");
         this.whitelist = whitelist;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PhasingPoll)) return false;
+        if (!super.equals(o)) return false;
+        PhasingPoll that = (PhasingPoll) o;
+        return quorum == that.quorum &&
+                algorithm == that.algorithm &&
+                Arrays.equals(whitelist, that.whitelist) &&
+                Arrays.equals(hashedSecret, that.hashedSecret) &&
+                Objects.equals(linkedFullHashes, that.linkedFullHashes) &&
+                Arrays.equals(fullHash, that.fullHash);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), quorum, algorithm, linkedFullHashes);
+        result = 31 * result + Arrays.hashCode(whitelist);
+        result = 31 * result + Arrays.hashCode(hashedSecret);
+        result = 31 * result + Arrays.hashCode(fullHash);
+        return result;
+    }
+
     public boolean allowEarlyFinish() {
         return voteWeighting.isBalanceIndependent() && (whitelist.length > 0 || voteWeighting.getVotingModel() != VoteWeighting.VotingModel.ACCOUNT);
     }
