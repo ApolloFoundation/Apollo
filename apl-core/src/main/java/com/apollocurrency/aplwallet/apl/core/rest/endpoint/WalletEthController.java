@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 
 @Path("/wallet/eth")
 @Singleton
-public class WalletController {
+public class WalletEthController {
 
 
     private final EthereumWalletService ethereumWalletService = CDI.current().select(EthereumWalletService.class).get();
@@ -43,7 +43,7 @@ public class WalletController {
                                     schema = @Schema(implementation = Response.class)))
             }
     )
-    public Response getAccountInfo(@QueryParam("address") String address){
+    public Response getEthAddressBalance(@QueryParam("address") String address){
 
         if(StringUtils.isBlank(address)){
             return Response.status(Response.Status.BAD_REQUEST)

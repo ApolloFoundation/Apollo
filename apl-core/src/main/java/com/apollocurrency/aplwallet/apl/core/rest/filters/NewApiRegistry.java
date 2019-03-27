@@ -19,9 +19,16 @@ public class NewApiRegistry {
         apis.put("exportKeyStore", "/rest/keyStore/download");
         apis.put("getAccountInfo", "/rest/keyStore/accountInfo");
 
-
         apis.put("getEthWalletAmount", "/rest/wallet/eth");
         apis.put("getEthWalletTransfer", "/rest/wallet/eth/transfer");
+
+
+        apis.put("getDexHistory", "/rest/dex/history");
+        apis.put("getDexOffers", "/rest/dex/offers");
+        apis.put("getDexOrders", "/rest/dex/order");
+        apis.put("getDexWidthraw", "/rest/dex/widthraw");
+
+
 
         //TODO: add new implemented endpoints
     }
