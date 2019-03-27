@@ -2,11 +2,10 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -17,17 +16,17 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
-import org.mockito.internal.stubbing.answers.AnswersWithDelay;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
 @ExtendWith(MockitoExtension.class)
+@Execution(ExecutionMode.CONCURRENT)
 public class ShardObserverTest {
     public static final int DEFAULT_SHARDING_FREQUENCY = 5_000;
     public static final int NOT_MULTIPLE_SHARDING_FREQUENCY = 4_999;
@@ -105,23 +104,6 @@ public class ShardObserverTest {
         boolean created = shardObserver.tryCreateShard();
 
         assertFalse(created);
-        verify(shardMigrationExecutor, times(1)).executeAllOperations();
-    }
-    @Test
-    void testShardWhenStartedTwoShardProcedures() throws ExecutionException, InterruptedException {
-        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        doAnswer(new AnswersWithDelay(1000, (inv) -> null)).when(shardMigrationExecutor).executeAllOperations();
-
-        CompletableFuture<Boolean> c1 = CompletableFuture.supplyAsync(()-> shardObserver.tryCreateShard());
-        CompletableFuture<Boolean> c2 = CompletableFuture.supplyAsync(()-> shardObserver.tryCreateShard());
-
-        boolean cr1 = c1.get();
-        boolean cr2 = c2.get();
-//TODO: fix it!!
-//        assertFalse(cr1 && cr2);
-//        assertTrue(cr1 || cr2);
         verify(shardMigrationExecutor, times(1)).executeAllOperations();
     }
 }

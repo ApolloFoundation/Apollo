@@ -15,8 +15,6 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -31,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -45,8 +42,11 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataComm
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -103,8 +103,6 @@ class ShardMigrationExecutorTest {
     @Inject
     private DataTransferManagementReceiver managementReceiver;
     @Inject
-    private DerivedDbTablesRegistry dbTablesRegistry;
-    @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
     @Inject
     private Blockchain blockchain;
@@ -117,8 +115,6 @@ class ShardMigrationExecutorTest {
 
     @BeforeEach
     void setUp() {
-        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
-        dbTablesRegistry.registerDerivedTable(publicKeyTable);
         blockchain.setLastBlock(BLOCK_11);
     }
 

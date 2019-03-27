@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +54,8 @@ public class ShardObserver {
                 if (isSharding) {
                     log.warn("Previous shard was no finished! Will skip next shard at height: " + minRollbackHeight);
                 } else {
-                    MigrateState state = MigrateState.INIT;
                     isSharding = true;
+                    MigrateState state = MigrateState.INIT;
                     long start = System.currentTimeMillis();
                     log.info("Start sharding....");
                     try {

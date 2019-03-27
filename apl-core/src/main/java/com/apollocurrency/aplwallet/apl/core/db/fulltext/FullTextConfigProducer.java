@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Set;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,7 +20,7 @@ public class FullTextConfigProducer {
     
     @Produces
     @Named("fullTextTables")
-    List<String> produceFullTextTables() {
+    Set<String> produceFullTextTables() {
         return fullTextConfig.getTableNames();
     }
 

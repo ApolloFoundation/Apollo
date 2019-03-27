@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataComm
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
 import org.slf4j.Logger;

@@ -235,9 +235,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             }
         }
         pstmtSelectDeleteDeletedCandidates.setInt(1, height);
-        if (dataSource == null) {
-            dataSource = databaseManager.getDataSource();
-        }
+
         try (ResultSet candidatesRs = pstmtSelectDeleteDeletedCandidates.executeQuery()) {
             while (candidatesRs.next()) {
                 DbKey dbKey = dbKeyFactory.newKey(candidatesRs);
@@ -254,17 +252,17 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         return deleted;
     }
 
-    private static int deleteDeletedOldAlgo(PreparedStatement pstm, int height) throws SQLException {
-        int deleted;
-        int totalDeleted = 0;
-        pstm.setInt(1, height);
-        pstm.setInt(2, height);
-        do {
-            deleted = pstm.executeUpdate();
-            totalDeleted += deleted;
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            dataSource.commit(false);
-        } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
-        return totalDeleted;
-    }
+//    private  int deleteDeletedOldAlgo(PreparedStatement pstm, int height) throws SQLException {
+//        int deleted;
+//        int totalDeleted = 0;
+//        pstm.setInt(1, height);
+//        pstm.setInt(2, height);
+//        do {
+//            deleted = pstm.executeUpdate();
+//            totalDeleted += deleted;
+//            TransactionalDataSource dataSource = databaseManager.getDataSource();
+//            dataSource.commit(false);
+//        } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
+//        return totalDeleted;
+//    }
 }

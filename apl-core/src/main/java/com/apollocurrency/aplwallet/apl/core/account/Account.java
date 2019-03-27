@@ -68,6 +68,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 
 /**
@@ -92,7 +93,7 @@ public final class Account {
     private static BlockchainProcessor blockchainProcessor;
     private static DatabaseManager databaseManager;
     private static GlobalSync sync;
-
+    private static PublicKeyTable publicKeyTable;
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
            
     
@@ -116,12 +117,14 @@ public final class Account {
                             BlockchainProcessor blockchainProcessorParam,
                             BlockchainConfig blockchainConfigParam,
                             Blockchain blockchainParam,
-                            GlobalSync globalSync
+                            GlobalSync globalSync,
+                            PublicKeyTable pkTable
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
         blockchainConfig = blockchainConfigParam;
         blockchain = blockchainParam;
+        publicKeyTable = pkTable;
         sync = globalSync;
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
@@ -160,7 +163,7 @@ public final class Account {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
-            try (DbIterator<AccountLease> leases = AccountLeaseTable.getLeaseChangingAccounts(height)) {
+            try (DbIterator<AccountLease> leases = AccountLeaseTable.getInstance().getLeaseChangingAccounts(height)) {
                 while (leases.hasNext()) {
                     changingLeases.add(leases.next());
                 }
@@ -248,7 +251,7 @@ public final class Account {
     }
 
     public static int getCount() {
-        return PublicKeyTable.getInstance().getCount() + GenesisPublicKeyTable.getInstance().getCount();
+        return publicKeyTable.getCount() + GenesisPublicKeyTable.getInstance().getCount();
     }
 
     public static int getActiveLeaseCount() {
@@ -374,8 +377,8 @@ public final class Account {
                     publicKey = GenesisPublicKeyTable.getInstance().newEntity(dbKey);
                     GenesisPublicKeyTable.getInstance().insert(publicKey);
                 } else {
-                    publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
-                    PublicKeyTable.getInstance().insert(publicKey);
+                    publicKey = publicKeyTable.newEntity(dbKey);
+                    publicKeyTable.insert(publicKey);
                 }
             }
             account.publicKey = publicKey;
@@ -384,7 +387,7 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey);
+        PublicKey publicKey = publicKeyTable.get(dbKey);
         if (publicKey == null) {
             publicKey = GenesisPublicKeyTable.getInstance().get(dbKey);
         }
@@ -392,7 +395,7 @@ public final class Account {
     }
     
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
-        PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey, cache);
+        PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
             publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, cache);
         }
@@ -400,7 +403,7 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey, int height) {
-        PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey, height);
+        PublicKey publicKey = publicKeyTable.get(dbKey, height);
         if (publicKey == null) {
             publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, height);
         }
@@ -426,7 +429,7 @@ public final class Account {
         DbKey dbKey = PublicKeyTable.newKey(accountId);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
-            publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
+            publicKey = publicKeyTable.newEntity(dbKey);
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
@@ -785,21 +788,21 @@ public final class Account {
     public void apply(byte[] key, boolean isGenesis) {
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
-            publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
+            publicKey = publicKeyTable.newEntity(dbKey);
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
                 GenesisPublicKeyTable.getInstance().insert(publicKey);
             } else {
-               PublicKeyTable.getInstance().insert(publicKey);
+               publicKeyTable.insert(publicKey);
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.height >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
-                PublicKeyTable.getInstance().insert(publicKey);
+                publicKeyTable.insert(publicKey);
             }
         }
         if (publicKeyCache != null) {

@@ -28,16 +28,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 public abstract class DerivedDbTable {
-    @Inject
-    FullTextConfig fullTextConfig;
-    @Inject
-    DerivedDbTablesRegistry derivedDbTablesRegistry;
+    private FullTextConfig fullTextConfig;
+    private DerivedDbTablesRegistry derivedDbTablesRegistry;
     
     protected final String table;
-    protected static DatabaseManager databaseManager;
+    protected DatabaseManager databaseManager;
     
     //TODO: fix injects and remove
     private void lookupCdi(){
@@ -56,9 +53,7 @@ public abstract class DerivedDbTable {
         this.table = table;
         derivedDbTablesRegistry.registerDerivedTable(this);
         fullTextConfig.registerTable(table);
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
+        databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     public void rollback(int height) {
@@ -92,7 +87,7 @@ public abstract class DerivedDbTable {
         //nothing to trim
     }
 
-    public static DatabaseManager getDatabaseManager() {
+    public  DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
 

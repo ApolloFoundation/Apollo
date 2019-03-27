@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
@@ -26,6 +26,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.MerkleTree;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;

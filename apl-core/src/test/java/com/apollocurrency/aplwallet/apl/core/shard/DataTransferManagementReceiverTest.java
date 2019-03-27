@@ -19,8 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -32,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -43,6 +40,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -51,7 +50,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -90,8 +88,6 @@ class DataTransferManagementReceiverTest {
     private JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private DataTransferManagementReceiver managementReceiver;
-    @Inject
-    private DerivedDbTablesRegistry dbTablesRegistry;
 
     private Path createPath(String fileName) {
         try {
@@ -102,11 +98,6 @@ class DataTransferManagementReceiverTest {
         }
     }
 
-    @BeforeEach
-    void setUp() {
-        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
-        dbTablesRegistry.registerDerivedTable(publicKeyTable);
-    }
 
     @AfterEach
     void tearDown() {
