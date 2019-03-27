@@ -183,14 +183,15 @@ public class DesktopMode {
             
             String command = "apl-run";
             if (System.getProperty("apl.exec.mode") != null )
+            {    
                 if (System.getProperty("apl.exec.mode").equals("tor"))
                 {
                     command = "apl-run-tor.";                    
-                } else if (System.getProperty("exec.mode").equals("transport")) 
+                } else if (System.getProperty("apl.exec.mode").equals("transport")) 
                 {
                     command = "apl-run-secure-transport";
                 }
-            
+            }
                 if (System.getProperty("os.name").toLowerCase().contains("win")) 
                 {
                     ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
@@ -201,6 +202,7 @@ public class DesktopMode {
                 }
                 else
                 {
+                    command = "apl-start";
                     ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./" + command + ".sh");
                     pb.start();
                 }
