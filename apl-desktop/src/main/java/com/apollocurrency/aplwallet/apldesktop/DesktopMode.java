@@ -186,7 +186,7 @@ public class DesktopMode {
             {    
                 if (System.getProperty("apl.exec.mode").equals("tor"))
                 {
-                    command = "apl-run-tor.";                    
+                    command = "apl-run-tor";                    
                 } else if (System.getProperty("apl.exec.mode").equals("transport")) 
                 {
                     command = "apl-run-secure-transport";
