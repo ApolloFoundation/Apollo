@@ -28,6 +28,7 @@ public class ShardObserver {
     private DatabaseManager databaseManager;
     private ShardMigrationExecutor shardMigrationExecutor;
 
+    private volatile boolean isSharding = false;
 
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig, DatabaseManager databaseManager, ShardMigrationExecutor shardMigrationExecutor) {
@@ -40,10 +41,12 @@ public class ShardObserver {
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         tryCreateShard();
     }
-
-    private volatile boolean isSharding;
-
-    public boolean tryCreateShard() {
+    
+    public boolean isInSharding(){
+        return isSharding;
+    }
+    
+    public synchronized boolean tryCreateShard() {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         boolean res = false;
         if (currentConfig.isShardingEnabled()) {

@@ -75,10 +75,10 @@ public class ShardingHashCalculatorImplTest {
     @Test
     public void testCalculateHashForAllBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 500);
-
-        byte[] merkleRoot1 = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_0.getHeight(), BlockTestData.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot2 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot3 = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_11.getHeight() + 20000);
+        BlockTestData blockTestData= new BlockTestData();
+        byte[] merkleRoot1 = shardingHashCalculator.calculateHash(blockTestData.BLOCK_0.getHeight(), blockTestData.BLOCK_11.getHeight() + 1);
+        byte[] merkleRoot2 = shardingHashCalculator.calculateHash(0, blockTestData.BLOCK_11.getHeight() + 1);
+        byte[] merkleRoot3 = shardingHashCalculator.calculateHash(0, blockTestData.BLOCK_11.getHeight() + 20000);
 
         Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot1);
         Assertions.assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot2);
@@ -87,32 +87,33 @@ public class ShardingHashCalculatorImplTest {
     @Test
     public void testCalculateHashWhenNoBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
-
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_0.getHeight());
+        BlockTestData blockTestData= new BlockTestData();
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, blockTestData.BLOCK_0.getHeight());
 
         Assertions.assertNull(merkleRoot);
     }
+    
     @Test
     public void testCalculateHashForMiddleBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
-
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_1.getHeight(), BlockTestData.BLOCK_5.getHeight());
+        BlockTestData blockTestData= new BlockTestData();
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(blockTestData.BLOCK_1.getHeight(), blockTestData.BLOCK_5.getHeight());
 
         Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_2_6, merkleRoot);
     }
     @Test
     public void testCalculateHashForFirstBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
-
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, BlockTestData.BLOCK_8.getHeight());
+        BlockTestData blockTestData= new BlockTestData();
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(0, blockTestData.BLOCK_8.getHeight());
 
         Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_1_8, merkleRoot);
     }
     @Test
     public void testCalculateHashForLastBlocks() throws IOException {
         ShardingHashCalculatorImpl shardingHashCalculator = new ShardingHashCalculatorImpl(blockchain, blockchainConfig, 200);
-
-        byte[] merkleRoot = shardingHashCalculator.calculateHash(BlockTestData.BLOCK_6.getHeight(), BlockTestData.BLOCK_11.getHeight() + 1000);
+        BlockTestData blockTestData= new BlockTestData();
+        byte[] merkleRoot = shardingHashCalculator.calculateHash(blockTestData.BLOCK_6.getHeight(), blockTestData.BLOCK_11.getHeight() + 1000);
 
         Assertions.assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }
