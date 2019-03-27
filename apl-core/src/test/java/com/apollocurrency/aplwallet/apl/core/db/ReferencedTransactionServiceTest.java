@@ -4,11 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_0;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_11;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_5;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_8;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_9;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -82,22 +78,25 @@ public class ReferencedTransactionServiceTest {
 
     @Test
     void testHasAllReferencedTransaction() {
+        TransactionTestData td = new TransactionTestData();
         doReturn(1000).when(config).getReferencedTransactionHeightSpan();
-        boolean hasAll = service.hasAllReferencedTransactions(TRANSACTION_0, 1000);
+        boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_0, 1000);
 
         assertTrue(hasAll);
     }
     @Test
     void testHasNotAllReferencedTransactionsWhenHeightIsNotEnough() {
+        TransactionTestData td = new TransactionTestData();
         doReturn(1000).when(config).getReferencedTransactionHeightSpan();
-        boolean hasAll = service.hasAllReferencedTransactions(TRANSACTION_5, TRANSACTION_5.getHeight());
+        boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_5, td.TRANSACTION_5.getHeight());
 
         assertFalse(hasAll);
     }
     @Test
     void testHasNotAllReferencedTransactionsWhenTransactionHeightIsLessThanHeightOfReferencedTransactions() {
+        TransactionTestData td = new TransactionTestData();        
         doReturn(20_000).when(config).getReferencedTransactionHeightSpan();
-        boolean hasAll = service.hasAllReferencedTransactions(TRANSACTION_11, TRANSACTION_11.getHeight());
+        boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_11, td.TRANSACTION_11.getHeight());
 
         assertFalse(hasAll);
     }
@@ -105,12 +104,12 @@ public class ReferencedTransactionServiceTest {
     @Test
     void testHasNotAllReferencedTransactionWhenMaximumNumberOfReferencedTransactionsReached() {
         doReturn(20_000).when(config).getReferencedTransactionHeightSpan();
-
-        boolean hasAll = service.hasAllReferencedTransactions(TRANSACTION_9, TRANSACTION_9.getHeight());
+        TransactionTestData td = new TransactionTestData();
+        boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_9, td.TRANSACTION_9.getHeight());
 
         assertFalse(hasAll);
 
-        hasAll = service.hasAllReferencedTransactions(TRANSACTION_8, TRANSACTION_8.getHeight());
+        hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_8, td.TRANSACTION_8.getHeight());
 
         assertFalse(hasAll);
     }
