@@ -198,6 +198,16 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         return phasingVoteTable.get(phasedTransactionId, voterId);
     }
 
+    @Override
+    public List<Long> getActivePhasedTransactionDbIdsAtHeight(int height) {
+        try {
+            return phasingPollTable.getActivePhasedTransactionDbIds(height);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     public long getVoteCount(long phasedTransactionId) {
         return phasingVoteTable.getCount(new DbClause.LongClause("transaction_id", phasedTransactionId));
     }

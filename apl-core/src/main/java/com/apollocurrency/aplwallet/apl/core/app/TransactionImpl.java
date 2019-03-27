@@ -22,11 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -47,9 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUplo
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +96,7 @@ public class TransactionImpl implements Transaction {
         private int ecBlockHeight;
         private long ecBlockId;
         private short index = -1;
+        private long dbId = 0;
 
         public BuilderImpl() { // for weld
         }
@@ -222,6 +216,12 @@ public class TransactionImpl implements Transaction {
         }
 
         @Override
+        public BuilderImpl dbId(long dbId) {
+            this.dbId = dbId;
+            return this;
+        }
+
+        @Override
         public BuilderImpl ecBlockId(long blockId) {
             this.ecBlockId = blockId;
             this.ecBlockSet = true;
@@ -304,6 +304,7 @@ public class TransactionImpl implements Transaction {
     private volatile long senderId;
     private volatile byte[] fullHash;
     private volatile byte[] bytes = null;
+    private volatile long dbId;
 
     private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
 
@@ -324,6 +325,7 @@ public class TransactionImpl implements Transaction {
         this.fullHash = builder.fullHash;
 		this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
+        this.dbId = builder.dbId;
         if (builder.feeATM <= 0) {
             throw new IllegalArgumentException("Fee should be positive");
         }
@@ -416,6 +418,15 @@ public class TransactionImpl implements Transaction {
 
     long[] getBackFees() {
         return type.getBackFees(this);
+    }
+
+    @Override
+    public long getDbId() {
+        return dbId;
+    }
+
+    public void setDbId(long dbId) {
+        this.dbId = dbId;
     }
 
     @Override

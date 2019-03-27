@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 public interface TransactionDao {
@@ -40,6 +41,8 @@ public interface TransactionDao {
     void saveTransactions(Connection con, List<Transaction> transactions);
 
     int getTransactionCount();
+
+    List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException;
 
 //    DbIterator<Transaction> getAllTransactions();
 

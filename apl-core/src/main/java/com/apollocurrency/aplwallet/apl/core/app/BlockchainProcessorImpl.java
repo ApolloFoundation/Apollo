@@ -114,7 +114,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final boolean simulateEndlessDownload = propertiesHolder.getBooleanProperty("apl.simulateEndlessDownload");
 
     private int initialScanHeight;
-    private volatile int lastTrimHeight;
     private volatile int lastRestoreTime = 0;
     private final Set<Long> prunableTransactions = new HashSet<>();
     private BlockValidator validator;
@@ -127,10 +126,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final PhasingPollService phasingPollService;
     private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
+    private final TrimService trimService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
-    private volatile boolean isTrimming;
     private volatile boolean isScanning;
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
@@ -753,11 +752,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     GlobalSync globalSync, DerivedDbTablesRegistry dbTables,
                                     ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                     TransactionValidator transactionValidator,
-                                    TransactionApplier transactionApplier) {
+                                    TransactionApplier transactionApplier,
+                                    TrimService trimService) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
+        this.trimService = trimService;
         this.phasingPollService = phasingPollService;
         this.transactionValidator = transactionValidator;
         this.transactionApplier = transactionApplier;
@@ -832,7 +833,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public int getMinRollbackHeight() {
-        return trimDerivedTables ? (lastTrimHeight > 0 ? lastTrimHeight : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0)) : 0;
+        return trimDerivedTables ? (trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight() : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0)) : 0;
     }
 
     @Override

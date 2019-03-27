@@ -48,6 +48,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             byte[] fullHash = rs.getBytes("full_hash");
             byte version = rs.getByte("version");
             short transactionIndex = rs.getShort("transaction_index");
+            long dbId = rs.getLong("db_id");
 
             ByteBuffer buffer = null;
             if (attachmentBytes != null) {
@@ -67,7 +68,9 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                     .fullHash(fullHash)
                     .ecBlockHeight(ecBlockHeight)
                     .ecBlockId(ecBlockId)
-                    .index(transactionIndex);
+                    .index(transactionIndex)
+                    .dbId(dbId)
+                    ;
             if (transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
                 if (! rs.wasNull()) {

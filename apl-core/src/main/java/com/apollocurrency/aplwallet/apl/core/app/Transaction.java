@@ -84,6 +84,8 @@ public interface Transaction {
 
         Builder ecBlockHeight(int height);
 
+        Builder dbId(long dbId);
+
         Builder ecBlockId(long blockId);
 
         Transaction build() throws AplException.NotValidException;
@@ -95,6 +97,8 @@ public interface Transaction {
     void setFeeATM(long feeATM);
 
     long getId();
+
+    long getDbId();
 
     String getStringId();
 

@@ -7,13 +7,23 @@ package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -178,6 +188,25 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
                 return rs.getInt(1);
             }
         }
+    }
+
+    public List<Long> getActivePhasedTransactionDbIds(int height) throws SQLException {
+        List<Long> ids = new ArrayList<>();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT db_id FROM transaction WHERE id IN " +
+                         "(SELECT id FROM phasing_poll WHERE height < ? AND id not in " +
+                         "(SELECT id FROM phasing_poll_result WHERE height < ?))")) {
+            pstmt.setInt(1, height);
+            pstmt.setInt(2, height);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getLong("id"));
+                }
+            }
+        }
+        return ids;
     }
 
     public boolean isTransactionPhased(long id) throws SQLException {

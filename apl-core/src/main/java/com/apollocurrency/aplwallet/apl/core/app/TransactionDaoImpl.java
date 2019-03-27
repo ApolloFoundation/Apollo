@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import ucar.unidata.geoloc.vertical.VTfromExistingData;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -92,9 +93,11 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 return null;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } catch (AplException.ValidationException e) {
+        }
+        catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database, id = " + transactionId + ", does not pass validation!", e);
         }
     }
@@ -108,7 +111,7 @@ public class TransactionDaoImpl implements TransactionDao {
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
@@ -126,9 +129,11 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 return null;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } catch (AplException.ValidationException e) {
+        }
+        catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database, full_hash = " + Convert.toHexString(fullHash)
                     + ", does not pass validation!", e);
         }
@@ -142,7 +147,7 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height);
@@ -156,7 +161,8 @@ public class TransactionDaoImpl implements TransactionDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && rs.getInt("height") <= height;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -171,7 +177,7 @@ public class TransactionDaoImpl implements TransactionDao {
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return (transaction.getHeight() <= height &&
@@ -186,7 +192,8 @@ public class TransactionDaoImpl implements TransactionDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -194,7 +201,7 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Transaction transaction = blockDao.getTransactionCache().get(transactionId);
             if (transaction != null) {
                 return transaction.getFullHash();
@@ -208,7 +215,8 @@ public class TransactionDaoImpl implements TransactionDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() ? rs.getBytes("full_hash") : null;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -236,6 +244,7 @@ public class TransactionDaoImpl implements TransactionDao {
             byte[] fullHash = rs.getBytes("full_hash");
             byte version = rs.getByte("version");
             short transactionIndex = rs.getShort("transaction_index");
+            long dbId = rs.getLong("db_id");
 
             ByteBuffer buffer = null;
             if (attachmentBytes != null) {
@@ -255,10 +264,11 @@ public class TransactionDaoImpl implements TransactionDao {
                     .fullHash(fullHash)
                     .ecBlockHeight(ecBlockHeight)
                     .ecBlockId(ecBlockId)
+                    .dbId(dbId)
                     .index(transactionIndex);
             if (transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
-                if (! rs.wasNull()) {
+                if (!rs.wasNull()) {
                     builder.recipientId(recipientId);
                 }
             }
@@ -286,7 +296,8 @@ public class TransactionDaoImpl implements TransactionDao {
 
             return builder.build();
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -294,7 +305,7 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
                 return block.getTransactions();
@@ -304,7 +315,8 @@ public class TransactionDaoImpl implements TransactionDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             return findBlockTransactions(con, blockId);
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -321,9 +333,11 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 return list;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } catch (AplException.ValidationException e) {
+        }
+        catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database for block_id = " + Long.toUnsignedString(blockId)
                     + " does not pass validation!", e);
         }
@@ -352,7 +366,8 @@ public class TransactionDaoImpl implements TransactionDao {
                             rs.getBoolean("prunable_encrypted_message")));
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return result;
@@ -416,14 +431,15 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 if (transaction.referencedTransactionFullHash() != null) {
                     try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
-                         + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
+                            + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
                         pstmt.setLong(1, transaction.getId());
                         pstmt.setLong(2, Convert.fullHashToId(transaction.referencedTransactionFullHash()));
                         pstmt.executeUpdate();
                     }
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -436,7 +452,8 @@ public class TransactionDaoImpl implements TransactionDao {
              ResultSet rs = pstmt.executeQuery()) {
             rs.next();
             return rs.getInt(1);
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -589,7 +606,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
             DbUtils.setLimits(++i, pstmt, from, to);
             return getTransactions(con, pstmt);
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
@@ -629,6 +647,20 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    public List<Transaction> getTransactions(int fromDbId, int toDbId) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM transaction where DB_ID >= ? and DB_ID < ?")) {
+            pstmt.setLong(1, fromDbId);
+            pstmt.setLong(2, toDbId);
+            return loadTransactionList(conn, pstmt);
+        }
+        catch (AplException.NotValidException | SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+
     @Override
     public int getTransactionCount(long accountId, byte type, byte subtype) {
         StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction WHERE (type <> ? OR subtype <> ?) AND (sender_id = ? OR recipient_id = ?) ");
@@ -652,7 +684,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     statement.setByte(++i, subtype);
                 }
             }
-            try(ResultSet rs = statement.executeQuery()) {
+            try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
             }
@@ -665,5 +697,17 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, this::loadTransaction);
+    }
+
+    @Override
+    public List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException {
+        List<Transaction> transactions = new ArrayList<>();
+        try (ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Transaction transaction = loadTransaction(conn, rs);
+                transactions.add(transaction);
+            }
+        }
+        return transactions;
     }
 }

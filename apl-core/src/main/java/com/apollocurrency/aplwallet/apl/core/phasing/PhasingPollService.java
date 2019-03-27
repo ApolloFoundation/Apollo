@@ -64,6 +64,8 @@ public interface PhasingPollService {
 
     PhasingVote getVote(long phasedTransactionId, long voterId);
 
+    List<Long> getActivePhasedTransactionDbIdsAtHeight(int height);
+
     long getVoteCount(long phasedTransactionId);
 
     void addVote(Transaction transaction, Account voter, long phasedTransactionId);
