@@ -14,15 +14,18 @@ public class WalletKeysInfo {
 
     private AplWalletKey aplWalletKey;
     private EthWalletKey ethWalletKey;
+    private EthWalletKey paxWalletKey;
 
     public WalletKeysInfo(ApolloFbWallet apolloWallet) {
         this.aplWalletKey = apolloWallet.getAplWalletKey();
         this.ethWalletKey = apolloWallet.getEthWalletKey();
+        this.paxWalletKey = apolloWallet.getPaxWalletKey();
     }
 
-    public WalletKeysInfo(AplWalletKey aplWalletKey, EthWalletKey ethWalletKey) {
+    public WalletKeysInfo(AplWalletKey aplWalletKey, EthWalletKey ethWalletKey, EthWalletKey paxWalletKey) {
         this.aplWalletKey = aplWalletKey;
         this.ethWalletKey = ethWalletKey;
+        this.paxWalletKey = paxWalletKey;
     }
 
 
@@ -36,6 +39,14 @@ public class WalletKeysInfo {
 
     public EthWalletKey getEthWalletKey() {
         return ethWalletKey;
+    }
+
+    public EthWalletKey getPaxWalletKey() {
+        return paxWalletKey;
+    }
+
+    public void setPaxWalletKey(EthWalletKey paxWalletKey) {
+        this.paxWalletKey = paxWalletKey;
     }
 
     public void setEthWalletKey(EthWalletKey ethWalletKey) {
@@ -54,16 +65,30 @@ public class WalletKeysInfo {
         return aplWalletKey.getPassphrase();
     }
 
+    @Deprecated
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("apl", getAplWalletKey().toJSON());
         jsonObject.put("eth", getEthWalletKey().toJSON());
+        jsonObject.put("pax", getPaxWalletKey().toJSON());
 
          //For backward compatibility.
         jsonObject.put("account", getAplId());
         jsonObject.put("accountRS", Convert2.rsAccount(getAplId()));
         jsonObject.put("publicKey", Convert.toHexString(getAplWalletKey().getPublicKey()));
         jsonObject.put("ethAddress", getEthAddress());
+
+        if (!StringUtils.isBlank(getAplWalletKey().getPassphrase())) {
+            jsonObject.put("passphrase", getAplWalletKey().getPassphrase());
+        }
+        return jsonObject;
+    }
+
+    public JSONObject toJSON_v2() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("apl", getAplWalletKey().toJSON());
+        jsonObject.put("eth", getEthWalletKey().toJSON());
+        jsonObject.put("pax", getPaxWalletKey().toJSON());
 
         if (!StringUtils.isBlank(getAplWalletKey().getPassphrase())) {
             jsonObject.put("passphrase", getAplWalletKey().getPassphrase());

@@ -14,13 +14,15 @@ import io.firstbridge.cryptolib.container.KeyTypes;
 import java.util.Objects;
 
 public class ApolloFbWallet extends FbWallet {
-    public static final String APL_PRIVATE_KEY_ALIAS = "apl_priv";
     /**
      * For backward compatibility
      */
     @Deprecated
     public static final String APL_SECRET_KEY_ALIAS = "apl_secret";
+
+    public static final String APL_PRIVATE_KEY_ALIAS = "apl_priv";
     public static final String ETH_PRIVATE_KEY_ALIAS = "eth_priv";
+    public static final String PAX_PRIVATE_KEY_ALIAS = "pax_priv";
 
 
 
@@ -38,10 +40,17 @@ public class ApolloFbWallet extends FbWallet {
         return new AplWalletKey(Convert.parseHexString(secret));
     }
 
-
     public EthWalletKey getEthWalletKey(){
+        return getEthOrToken(ETH_PRIVATE_KEY_ALIAS);
+    }
+
+    public EthWalletKey getPaxWalletKey(){
+        return getEthOrToken(PAX_PRIVATE_KEY_ALIAS);
+    }
+
+    private EthWalletKey getEthOrToken(String alias){
         String secret = this.getAllData().stream()
-                .filter(dataRecord -> Objects.equals(dataRecord.alias, ETH_PRIVATE_KEY_ALIAS))
+                .filter(dataRecord -> Objects.equals(dataRecord.alias, alias))
                 .map(dataRecord -> dataRecord.data)
                 .findFirst().orElse(null);
 
@@ -75,8 +84,16 @@ public class ApolloFbWallet extends FbWallet {
     }
 
     public void addEthKey(EthWalletKey ethWalletKey){
+        createEthorEthTokenWallet(ethWalletKey, ETH_PRIVATE_KEY_ALIAS);
+    }
+
+    public void addPaxKey(EthWalletKey ethWalletKey){
+       createEthorEthTokenWallet(ethWalletKey, PAX_PRIVATE_KEY_ALIAS);
+    }
+
+    private void createEthorEthTokenWallet(EthWalletKey ethWalletKey, String alias){
         DataRecord dr = new DataRecord();
-        dr.alias = ETH_PRIVATE_KEY_ALIAS;
+        dr.alias = alias;
         dr.data = ethWalletKey.getCredentials().getEcKeyPair().getPrivateKey().toString(16);
         dr.encoding = "HEX";
         KeyRecord kr = new KeyRecord();
@@ -86,6 +103,7 @@ public class ApolloFbWallet extends FbWallet {
         this.addData(dr);
         this.addKey(kr);
     }
+
 
 
 }

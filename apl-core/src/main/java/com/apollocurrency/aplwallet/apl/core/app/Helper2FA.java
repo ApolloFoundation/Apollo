@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
@@ -157,10 +156,10 @@ public class Helper2FA {
 
         ApolloFbWallet apolloWallet = new ApolloFbWallet();
         AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : new AplWalletKey(secretApl);
-        EthWalletKey ethAccount = AccountGeneratorUtil.generateEth();
 
         apolloWallet.addAplKey(aplAccount);
-        apolloWallet.addEthKey(ethAccount);
+        apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
+        apolloWallet.addPaxKey(AccountGeneratorUtil.generateEth());
         //throw Exception if OpenData null
         apolloWallet.setOpenData(new byte[1]);
 

@@ -64,7 +64,7 @@ public class KeyStoreController {
 
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
 
-        Response.ResponseBuilder response = Response.ok(keyStore.toJSON());
+        Response.ResponseBuilder response = Response.ok(keyStore.toJSON_v2());
         return response.build();
     }
 
