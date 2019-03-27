@@ -15,19 +15,14 @@ public class WalletKeysInfo {
     private AplWalletKey aplWalletKey;
     private EthWalletKey ethWalletKey;
     private EthWalletKey paxWalletKey;
+    private String passphrase;
 
-    public WalletKeysInfo(ApolloFbWallet apolloWallet) {
+    public WalletKeysInfo(ApolloFbWallet apolloWallet, String passphrase) {
         this.aplWalletKey = apolloWallet.getAplWalletKey();
         this.ethWalletKey = apolloWallet.getEthWalletKey();
         this.paxWalletKey = apolloWallet.getPaxWalletKey();
+        this.passphrase = passphrase;
     }
-
-    public WalletKeysInfo(AplWalletKey aplWalletKey, EthWalletKey ethWalletKey, EthWalletKey paxWalletKey) {
-        this.aplWalletKey = aplWalletKey;
-        this.ethWalletKey = ethWalletKey;
-        this.paxWalletKey = paxWalletKey;
-    }
-
 
     public AplWalletKey getAplWalletKey() {
         return aplWalletKey;
@@ -62,7 +57,11 @@ public class WalletKeysInfo {
     }
 
     public String getPassphrase() {
-        return aplWalletKey.getPassphrase();
+        return passphrase;
+    }
+
+    public void setPassphrase(String passphrase) {
+        this.passphrase = passphrase;
     }
 
     @Deprecated
@@ -78,8 +77,8 @@ public class WalletKeysInfo {
         jsonObject.put("publicKey", Convert.toHexString(getAplWalletKey().getPublicKey()));
         jsonObject.put("ethAddress", getEthAddress());
 
-        if (!StringUtils.isBlank(getAplWalletKey().getPassphrase())) {
-            jsonObject.put("passphrase", getAplWalletKey().getPassphrase());
+        if (!StringUtils.isBlank(passphrase)) {
+            jsonObject.put("passphrase", passphrase);
         }
         return jsonObject;
     }
@@ -90,8 +89,8 @@ public class WalletKeysInfo {
         jsonObject.put("eth", getEthWalletKey().toJSON());
         jsonObject.put("pax", getPaxWalletKey().toJSON());
 
-        if (!StringUtils.isBlank(getAplWalletKey().getPassphrase())) {
-            jsonObject.put("passphrase", getAplWalletKey().getPassphrase());
+        if (!StringUtils.isBlank(passphrase)) {
+            jsonObject.put("passphrase", passphrase);
         }
         return jsonObject;
     }

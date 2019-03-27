@@ -278,7 +278,7 @@
             LOG.warn("VaultWallet : " + Status.NOT_FOUND);
             return null;
         }
-        return new WalletKeysInfo(fbWallet);
+        return new WalletKeysInfo(fbWallet, passphrase);
     }
 
     @Override

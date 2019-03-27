@@ -166,7 +166,8 @@ public class Helper2FA {
         KeyStoreService.Status status = KEYSTORE.saveSecretKeyStore(passphrase, aplAccount.getId(), apolloWallet);
         validateKeyStoreStatus(aplAccount.getId(), status, "generated");
 
-        WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet);
+        WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
+
         return walletKeyInfo;
     }
 
