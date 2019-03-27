@@ -7,6 +7,7 @@ import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -87,7 +88,6 @@ public class TestAssetExchangeAPI extends TestBase {
 
         String assetID;
         String orderID;
-
         CreateTransactionResponse issueAsset = issueAsset(wallet,"AskOrder0", "Creating Asset -> placeAskOrder -> getAccountCurrentAskOrderIds", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
@@ -109,7 +109,6 @@ public class TestAssetExchangeAPI extends TestBase {
 
         String assetID;
         String orderID;
-
         CreateTransactionResponse issueAsset = issueAsset(wallet,"BidOrder1", "Creating Asset -> placeBidOrder -> getAccountCurrentBidOrderIds", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
@@ -487,13 +486,6 @@ public class TestAssetExchangeAPI extends TestBase {
 
 
 
-
-
-
-
-
-
-
     //SMOKE API TESTING using standard TEST CASES
     @DisplayName("issueAsset + placeAskOrder")
     @ParameterizedTest
@@ -558,15 +550,15 @@ public class TestAssetExchangeAPI extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void getAccountAssetsDeleteTest(Wallet wallet) throws IOException {
-        String assetID;
 
-        String assetname = "assetName0";
+        String assetID;
+         String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
+       // String assetName = "assetName0";
         Integer quantityATU = 50;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,assetname, "Creating Asset -> getAccountAssetCount + getAccountAssets -> Delete created asset", quantityATU);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, "Creating Asset -> getAccountAssetCount + getAccountAssets -> Delete created asset", quantityATU);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.transaction;
         verifyTransactionInBlock(assetID);
-
 
         GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.numberOfAssets.intValue() >= 1);

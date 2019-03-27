@@ -63,14 +63,11 @@ public class TestAliasAPI extends TestBase {
     public void getAlias(Wallet wallet) throws IOException {
         String aliasname = "setAliasAPI"+new Date().getTime();
         String alias;
-
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
         verifyCreatingTransaction(setAlias);
         alias = setAlias.transaction;
         verifyTransactionInBlock(alias);
-
         AliasDTO aliasDTO = getAlias(aliasname);
-
         assertTrue(Arrays.stream(new String[]{aliasDTO.aliasName}).anyMatch(aliasname::equals));
     }
 
