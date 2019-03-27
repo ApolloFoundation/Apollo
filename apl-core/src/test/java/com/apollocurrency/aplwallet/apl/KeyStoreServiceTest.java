@@ -33,6 +33,8 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
 @EnableWeld
@@ -92,6 +94,7 @@ public class KeyStoreServiceTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveKey() throws Exception {
         VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
 
@@ -118,6 +121,7 @@ public class KeyStoreServiceTest {
 
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKey() throws Exception {
 
 
@@ -139,6 +143,7 @@ public class KeyStoreServiceTest {
 
     }
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKeyUsingIncorrectPassphrase() {
         long accountId = Convert.parseAccountId(ACCOUNT1);
         SecretBytesDetails secretBytesDetails = keyStore.getSecretBytesV0("pass", accountId);
@@ -147,6 +152,7 @@ public class KeyStoreServiceTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKeyUsingIncorrectAccount() throws Exception {
         long accountId = 0;
         SecretBytesDetails secretBytesDetails = keyStore.getSecretBytesV0(PASSPHRASE, accountId);
@@ -167,12 +173,14 @@ public class KeyStoreServiceTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteNotFound() {
         KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT2));
         assertEquals(KeyStoreService.Status.BAD_CREDENTIALS, status);
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteIncorrectPassphrase() {
         KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE + "0", Convert.parseAccountId(ACCOUNT1));
         assertEquals(KeyStoreService.Status.BAD_CREDENTIALS, status);
@@ -188,6 +196,7 @@ public class KeyStoreServiceTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testDeleteNotAvailable() throws IOException {
         Path path = tempDirectory.resolve(".local");
         try {
@@ -201,6 +210,7 @@ public class KeyStoreServiceTest {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveNotAvailable() throws IOException {
         Path path = tempDirectory.resolve(".local");
         try {
@@ -213,6 +223,7 @@ public class KeyStoreServiceTest {
         }
     }
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     public void testGetNotAvailable() throws IOException {
         Path path = tempDirectory.resolve(".local");
         try {
