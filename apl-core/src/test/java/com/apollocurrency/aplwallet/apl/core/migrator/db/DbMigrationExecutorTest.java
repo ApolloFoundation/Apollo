@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -59,11 +60,13 @@ public class DbMigrationExecutorTest {
     private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
     private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
+    
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
             TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class,
             GlobalSyncImpl.class,
-            BlockDaoImpl.class, DerivedDbTablesRegistry.class, BlockchainConfig.class, EpochTime.class, NtpTime.class)
+            BlockDaoImpl.class, DerivedDbTablesRegistry.class, BlockchainConfig.class, 
+            FullTextConfig.class, EpochTime.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
@@ -141,6 +144,7 @@ public class DbMigrationExecutorTest {
         Assertions.assertFalse(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
-        Assertions.assertEquals(BLOCK_11.getHeight(), migratedHeight);
+        BlockTestData btd = new BlockTestData();
+        Assertions.assertEquals(btd.BLOCK_11.getHeight(), migratedHeight);
     }
 }
