@@ -56,15 +56,6 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
-    if [[ "$unamestr" == 'Darwin' ]]; then
-	chmod 755 $1/jre/bin/* $1/jre/lib/lib*
-	chmod 755 $1/jre/lib/jspawnhelper $1/jre/lib/jli/* $1/jre/lib/lib*
-    elif [[ "$unamestr" == 'Linux' ]]; then
-	chmod 755 $1/jre/bin/*
-    fi
-
-
-
     cd $1 
     chmod 755 *.sh
 
@@ -76,10 +67,10 @@ then
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
-        ./start-desktop.sh
+        nohup ./bin/apl-run-desktop.sh 2>&1 >/dev/null
     else
         notify "Starting command line application..."
-        ./start.sh
+        ./bin/apl-start.sh
     fi
 
 else
