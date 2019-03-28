@@ -4,8 +4,7 @@
 # Required for Linux/MacOs installers.
 TOR_DIST_DIR=tor-browser_en-US
 
-SCRIPT=`realpath -s $0`
-DIR=`dirname $SCRIPT`
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
  . ${DIR}/apl-common.sh
 

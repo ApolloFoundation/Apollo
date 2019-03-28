@@ -8,4 +8,4 @@ End If
 Set WshShell = CreateObject("WScript.Shell") 
 scriptdir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
 WshShell.CurrentDirectory = scriptdir
-WshShell.Run chr(34) & scriptdir & "\run-secure-transport.bat" & chr(34), 0, false
+WshShell.Run chr(34) & scriptdir & "\apl-run-desktop.bat" & chr(34) & " secure-transport" 

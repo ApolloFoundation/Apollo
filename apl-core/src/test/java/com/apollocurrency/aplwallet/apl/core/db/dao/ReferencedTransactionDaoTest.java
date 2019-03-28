@@ -6,12 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_3;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.NOT_SAVED_REFERENCED_SHARD_TRANSACTION;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.REFERENCED_SHARD_TRANSACTION_1;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.REFERENCED_TRANSACTIONS;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.REFERENCED_TRANSACTION_2;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_12;
-import static com.apollocurrency.aplwallet.apl.data.TransactionTestData.TRANSACTION_3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -83,32 +77,35 @@ class ReferencedTransactionDaoTest {
     @Test
     void testGetAll() {
         List<Long> allReferencedTransactionIds = dao.getAllReferencedTransactionIds();
-
-        Set<Long> expectedIds = REFERENCED_TRANSACTIONS.stream().map(ReferencedTransaction::getReferencedTransactionId).collect(Collectors.toSet());
+        TransactionTestData td = new TransactionTestData();
+        Set<Long> expectedIds = td.REFERENCED_TRANSACTIONS.stream().map(ReferencedTransaction::getReferencedTransactionId).collect(Collectors.toSet());
         assertEquals(expectedIds, new HashSet<>(allReferencedTransactionIds));
     }
 
     @Test
     void testGetById() {
-        Long referencedId = dao.getReferencedTransactionIdFor(TRANSACTION_3.getId());
-
+        TransactionTestData td = new TransactionTestData();
+        Long referencedId = dao.getReferencedTransactionIdFor(td.TRANSACTION_3.getId());
         assertNotNull(referencedId);
-        assertEquals(REFERENCED_TRANSACTION_2.getTransactionId(), referencedId);
+        assertEquals(td.REFERENCED_TRANSACTION_2.getTransactionId(), referencedId);
     }
 
     @Test
     void testGetByIdForTransactionWithoutReferencedTransaction() {
-        Long referencedId = dao.getReferencedTransactionIdFor(TRANSACTION_12.getId());
+        TransactionTestData td = new TransactionTestData();
+        Long referencedId = dao.getReferencedTransactionIdFor(td.TRANSACTION_12.getId());
 
         assertNull(referencedId);
     }
 
     @Test
     void testgetByIdForShardTransaction() {
+        TransactionTestData td = new TransactionTestData();
+
         Long referencedId = dao.getReferencedTransactionIdFor(TRANSACTION_INDEX_1.getTransactionId());
 
         assertNotNull(referencedId);
-        assertEquals(REFERENCED_SHARD_TRANSACTION_1.getReferencedTransactionId(), referencedId);
+        assertEquals(td.REFERENCED_SHARD_TRANSACTION_1.getReferencedTransactionId(), referencedId);
     }
 
     @Test
@@ -120,12 +117,14 @@ class ReferencedTransactionDaoTest {
 
     @Test
     void testSave() {
-        int saveCount = dao.save(NOT_SAVED_REFERENCED_SHARD_TRANSACTION);
+        TransactionTestData td = new TransactionTestData();
+
+        int saveCount = dao.save(td.NOT_SAVED_REFERENCED_SHARD_TRANSACTION);
 
         assertEquals(1, saveCount);
 
-        Long referencedId = dao.getReferencedTransactionIdFor(NOT_SAVED_REFERENCED_SHARD_TRANSACTION.getTransactionId());
-        assertEquals(NOT_SAVED_REFERENCED_SHARD_TRANSACTION.getReferencedTransactionId(), referencedId);
+        Long referencedId = dao.getReferencedTransactionIdFor(td.NOT_SAVED_REFERENCED_SHARD_TRANSACTION.getTransactionId());
+        assertEquals(td.NOT_SAVED_REFERENCED_SHARD_TRANSACTION.getReferencedTransactionId(), referencedId);
     }
 
 }
