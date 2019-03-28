@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.phasing;
 
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -92,6 +92,8 @@ public class PhasingPollServiceTest {
     @Inject
     PhasingPollService phasingPollService;
     @Inject
+    TransactionDao transactionDao;
+    @Inject
     Blockchain blockchain;
     PhasingTestData ptd;
     TransactionTestData ttd;
@@ -120,7 +122,7 @@ public class PhasingPollServiceTest {
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() {
         List<Long> dbIds = phasingPollService.getActivePhasedTransactionDbIdsAtHeight(ttd.TRANSACTION_12.getHeight() + 1);
-        assertEquals(Arrays.asList(ttd.DB_ID_12), dbIds);
+        assertEquals(Arrays.asList(ttd.DB_ID_12, ttd.DB_ID_11), dbIds);
     }
 
     @Test
@@ -137,10 +139,10 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetPoll() {
-        PhasingPoll poll = phasingPollService.getPoll(ptd.POLL_1.getId());
+        PhasingPoll poll = phasingPollService.getPoll(ptd.POLL_3.getId());
 
         assertNotNull(poll);
-        assertEquals(ptd.POLL_1, poll);
+        assertEquals(ptd.POLL_3, poll);
     }
 
     @Test
@@ -156,7 +158,6 @@ public class PhasingPollServiceTest {
 
         assertNotNull(poll);
         assertEquals(ptd.POLL_3, poll);
-        assertArrayEquals(ptd.POLL_3.getWhitelist(), poll.getWhitelist());
     }
 
     @Test
@@ -225,23 +226,23 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVoterPhasedTransactions() {
-        List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_3_VOTER, 0, 100));
+        List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_4_VOTER_0, 0, 100));
 
-        assertEquals(Arrays.asList(ttd.TRANSACTION_12), voterTransactions);
+        assertEquals(Arrays.asList(ttd.TRANSACTION_11), voterTransactions);
     }
 
     @Test
     void testGetVoterPhasedTransactionsWnenBlockchainHeightIsHigherThanPollFinishHeight() {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.BLOCK_11);
-        List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_3_VOTER, 0, 100));
+        List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0, 0, 100));
 
         assertEquals(0, voterTransactions.size());
     }
 
     @Test
     void testGetVoterPhasedTransactionForNonExistentVoter() {
-        List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_3_VOTER + 1, 0, 100));
+        List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0 + 1, 0, 100));
 
         assertEquals(0, voterTransactions.size());
     }
@@ -250,7 +251,7 @@ public class PhasingPollServiceTest {
     void testGetAccountPhasedTransactionsCount() {
         int count = phasingPollService.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId());
 
-        assertEquals(1, count);
+        assertEquals(2, count);
     }
 
     @Test
@@ -261,22 +262,50 @@ public class PhasingPollServiceTest {
     }
 
     @Test
-    void testFinishPoll() throws SQLException {
+    void testFinishPollNotApproved() throws SQLException {
         inTransaction(con -> {
             phasingPollService.finish(ptd.POLL_3, 1);
 
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), 1, true, 1);
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), 1, false, 1);
 
             assertEquals(expected, result);
         });
     }
 
     @Test
-    void testGetVoteCount() {
-        long votes = phasingPollService.getVoteCount(ptd.POLL_3.getId());
+    void testFinishPollApprovedByLinkedTransactions() throws SQLException {
+        inTransaction(con -> {
+            phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
+            PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true, 1);
 
-        assertEquals(1, votes);
+            assertEquals(expected, result);
+        });
+    }
+
+    @Test
+    void testCountVotesForPollWithLinkedTransactions() {
+        blockchain.setLastBlock(new BlockTestData().BLOCK_11);
+        long votes = phasingPollService.countVotes(ptd.POLL_3);
+
+        assertEquals(2, votes);
+    }
+
+    @Test
+    void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
+        blockchain.setLastBlock(new BlockTestData().BLOCK_11);
+        inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
+        long votes = phasingPollService.countVotes(ptd.POLL_3);
+
+        assertEquals(3, votes);
+    }
+
+    @Test
+    void testGetVoteCount() {
+        long votes = phasingPollService.getVoteCount(ptd.POLL_1.getId());
+
+        assertEquals(2, votes);
     }
 
     @Test
@@ -288,16 +317,16 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVotes() {
-        List<PhasingVote> phasingVotes = CollectionUtil.toList(phasingPollService.getVotes(ptd.POLL_3.getId(), 0, 100));
+        List<PhasingVote> phasingVotes = CollectionUtil.toList(phasingPollService.getVotes(ptd.POLL_1.getId(), 0, 100));
 
-        assertEquals(Arrays.asList(ptd.POLL_3_VOTE_0), phasingVotes);
+        assertEquals(Arrays.asList(ptd.POLL_1_VOTE_1, ptd.POLL_1_VOTE_0), phasingVotes);
     }
 
     @Test
     void testCountVotesForWhitelistedPhasedTransaction() {
-        long votes = phasingPollService.countVotes(ptd.POLL_3);
+        long votes = phasingPollService.countVotes(ptd.POLL_1);
 
-        assertEquals(1, votes);
+        assertEquals(2, votes);
     }
 
     @Test
@@ -309,7 +338,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVote() {
-        PhasingVote vote = phasingPollService.getVote(ptd.POLL_1.getId(), ptd.POLL_1_VOTER);
+        PhasingVote vote = phasingPollService.getVote(ptd.POLL_1.getId(), ptd.POLL_1_VOTER_0);
 
         assertEquals(ptd.POLL_1_VOTE_0, vote);
     }
@@ -317,7 +346,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVoteForPhasedTransactionWithoutWhitelist() {
-        PhasingVote vote = phasingPollService.getVote(ptd.POLL_2.getId(), ptd.POLL_1_VOTER);
+        PhasingVote vote = phasingPollService.getVote(ptd.POLL_2.getId(), ptd.POLL_1_VOTER_0);
 
         assertNull(vote);
     }
@@ -325,9 +354,9 @@ public class PhasingPollServiceTest {
     @Test
     void testAddPoll() throws SQLException {
         inTransaction(con -> {
-                    phasingPollService.addPoll(ttd.TRANSACTION_11, ptd.NEW_POLL_APPENDIX);
+                    phasingPollService.addPoll(ttd.TRANSACTION_10, ptd.NEW_POLL_APPENDIX);
 
-                    PhasingPoll poll = phasingPollService.getPoll(ttd.TRANSACTION_11.getId());
+                    PhasingPoll poll = phasingPollService.getPoll(ttd.TRANSACTION_10.getId());
 
                     assertEquals(ptd.NEW_POLL, poll);
                 }
@@ -351,17 +380,25 @@ public class PhasingPollServiceTest {
     @Test
     void testAddVote() throws SQLException {
         inTransaction(con -> {
-                    phasingPollService.addVote(ptd.NEW_VOTE_TX, new Account(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_3.getId());
-                    long voteCount = phasingPollService.getVoteCount(ptd.POLL_3.getId());
+                    phasingPollService.addVote(ptd.NEW_VOTE_TX, new Account(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId());
+                    long voteCount = phasingPollService.getVoteCount(ptd.POLL_1.getId());
 
-                    assertEquals(voteCount, 2);
+                    assertEquals(voteCount, 3);
 
-                    PhasingVote vote = phasingPollService.getVote(ptd.POLL_3.getId(), ptd.NEW_VOTE_TX.getSenderId());
+                    PhasingVote vote = phasingPollService.getVote(ptd.POLL_1.getId(), ptd.NEW_VOTE_TX.getSenderId());
 
                     assertEquals(ptd.NEW_VOTE, vote);
                 }
         );
     }
+
+    @Test
+    void testGetLinkedFullHashes() {
+        List<Transaction> phasedTransactions = phasingPollService.getLinkedPhasedTransactions(ptd.POLL_3.getLinkedFullHashes().get(0));
+
+        assertEquals(Collections.singletonList(ttd.TRANSACTION_12), phasedTransactions);
+    }
+
 
     void inTransaction(Consumer<Connection> consumer) throws SQLException {
         try (Connection con = extension.getDatabaseManger().getDataSource().begin()) { // start new transaction

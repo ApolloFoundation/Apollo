@@ -166,9 +166,13 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
-        List<byte[]> linkedFullHashes = linkedTransactionTable.get(phasingPoll.getId());
-        phasingPoll.setLinkedFullHashes(linkedFullHashes);
-        return linkedFullHashes;
+        if (phasingPoll.getLinkedFullHashes() == null) {
+            List<byte[]> linkedFullHashes = linkedTransactionTable.get(phasingPoll.getId());
+            phasingPoll.setLinkedFullHashes(linkedFullHashes);
+            return linkedFullHashes;
+        } else {
+            return phasingPoll.getLinkedFullHashes();
+        }
     }
 
     @Override
@@ -181,7 +185,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             int count = 0;
             for (byte[] hash : getAndSetLinkedFullHashes(phasingPoll)) {
-                if (blockchain.hasTransaction(Convert.fullHashToId(hash), height)) {
+                if (blockchain.hasTransactionByFullHash(hash, height)) {
                     count += 1;
                 }
             }

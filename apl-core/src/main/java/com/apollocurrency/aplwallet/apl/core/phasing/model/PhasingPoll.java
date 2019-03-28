@@ -15,10 +15,8 @@ import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class PhasingPoll extends AbstractPoll {
 
@@ -26,7 +24,7 @@ public class PhasingPoll extends AbstractPoll {
     private final long quorum;
     private final byte[] hashedSecret;
     private final byte algorithm;
-    private List<byte[]> linkedFullHashes;
+    private byte[][] linkedFullHashes;
     private byte[] fullHash;
 
     public PhasingPoll(Transaction transaction, PhasingAppendix appendix) {
@@ -36,15 +34,15 @@ public class PhasingPoll extends AbstractPoll {
         this.hashedSecret = appendix.getHashedSecret();
         this.algorithm = appendix.getAlgorithm();
         this.fullHash = transaction.getFullHash();
-        this.linkedFullHashes = Arrays.stream(appendix.getLinkedFullHashes()).collect(Collectors.toList());
+        this.linkedFullHashes = appendix.getLinkedFullHashes();
     }
 
     public List<byte[]> getLinkedFullHashes() {
-        return linkedFullHashes;
+        return linkedFullHashes == null ? null : Arrays.asList(linkedFullHashes);
     }
 
     public void setLinkedFullHashes(List<byte[]> linkedFullHashes) {
-        this.linkedFullHashes = linkedFullHashes;
+        this.linkedFullHashes =  linkedFullHashes.toArray(Convert.EMPTY_BYTES);
     }
 
     public void setFullHash(byte[] fullHash) {
@@ -59,23 +57,15 @@ public class PhasingPoll extends AbstractPoll {
         this.algorithm = rs.getByte("algorithm");
     }
 
-    public PhasingPoll(ResultSet rs, List<Long> whitelist) throws SQLException {
-        super(rs);
-        this.quorum = rs.getLong("quorum");
-        this.whitelist = Convert.toArray(whitelist);
-        this.hashedSecret = rs.getBytes("hashed_secret");
-        this.algorithm = rs.getByte("algorithm");
-    }
-
     public PhasingPoll(long id, long accountId, long[] whitelist, byte[] fullHash, int finishHeight, byte votingModel,long quorum,
-                       long minBalance, long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm) {
+                       long minBalance, long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm, byte[][] linkedFullhashes) {
         super(id, accountId, finishHeight, new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel));
-        this.whitelist = whitelist;
+        this.whitelist = whitelist == null ? Convert.EMPTY_LONG : whitelist;
         this.fullHash = fullHash;
         this.quorum = quorum;
         this.hashedSecret = hashedSecret;
         this.algorithm = algorithm;
-        this.linkedFullHashes = Collections.emptyList();
+        this.linkedFullHashes =linkedFullhashes != null ? linkedFullhashes : Convert.EMPTY_BYTES;
     }
 
 
@@ -120,7 +110,7 @@ public class PhasingPoll extends AbstractPoll {
                 algorithm == that.algorithm &&
                 Arrays.equals(whitelist, that.whitelist) &&
                 Arrays.equals(hashedSecret, that.hashedSecret) &&
-                Objects.equals(linkedFullHashes, that.linkedFullHashes) &&
+                Arrays.deepEquals(linkedFullHashes, that.linkedFullHashes) &&
                 Arrays.equals(fullHash, that.fullHash);
     }
 

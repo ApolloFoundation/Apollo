@@ -61,6 +61,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
             pstmt.executeUpdate();
         }
     }
+
     public List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
