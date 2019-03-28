@@ -56,15 +56,6 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
-    if [[ "$unamestr" == 'Darwin' ]]; then
-	chmod 755 $1/jre/bin/* $1/jre/lib/lib*
-	chmod 755 $1/jre/lib/jspawnhelper $1/jre/lib/jli/* $1/jre/lib/lib*
-    elif [[ "$unamestr" == 'Linux' ]]; then
-	chmod 755 $1/jre/bin/*
-    fi
-
-
-
     cd $1 
     chmod 755 *.sh
 
