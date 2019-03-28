@@ -86,9 +86,10 @@ class DataTransferManagementReceiverTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDao.class,
+            DerivedDbTablesRegistry.class,
+            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDao.class, /*ShardRecoveryDaoJdbcImpl.class,*/
             GlobalSyncImpl.class, FullTextConfig.class,
-            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
+            DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))

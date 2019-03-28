@@ -68,14 +68,12 @@ class ShardRecoveryDaoTest {
     @Test
     void testGetAllForEmpty() {
         List<ShardRecovery> allShardRecoveries = dao.getAllShardRecovery();
-        assertEquals(0, allShardRecoveries.size());
+        assertEquals(1, allShardRecoveries.size());
     }
 
     @Test
     void testUnknownShardById() {
-        ShardRecovery recovery = dao.getShardRecoveryById(-1L);
-        assertNull(recovery);
-        recovery = dao.getLatestShardRecovery();
+        ShardRecovery recovery = dao.getShardRecoveryById(-100L);
         assertNull(recovery);
     }
 
@@ -92,18 +90,16 @@ class ShardRecoveryDaoTest {
         dao.hardDeleteAllShardRecovery();
     }
 
-
     @Test
     void testInsert() {
         ShardRecovery recovery = new ShardRecovery(
-                MigrateState.INIT, "BLOCK", "DB_ID", 1L,
-                "DB_ID", Instant.now());
+                MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
 
         long insertedId = dao.saveShardRecovery(recovery);
         assertTrue(insertedId >= 1L);
 
         long count = dao.countShardRecovery();
-        assertEquals(1, count);
+        assertEquals(2, count);
 
         ShardRecovery found = dao.getLatestShardRecovery();
         assertNotNull(found);
@@ -112,19 +108,17 @@ class ShardRecoveryDaoTest {
         assertNotNull(found.getUpdated());
 
         List<ShardRecovery> actual = dao.getAllShardRecovery();
-        assertEquals(1, actual.size());
+        assertEquals(2, actual.size());
         assertEquals(recovery.getState(), actual.get(0).getState());
 
         int deleted = dao.hardDeleteShardRecovery(actual.get(0).getShardRecoveryId());
         assertEquals(1, deleted);
-
     }
 
     @Test
     void testUpdate() {
         ShardRecovery recovery = new ShardRecovery(
-                MigrateState.INIT, "BLOCK", "DB_ID", 1L,
-                "DB_ID", Instant.now());
+                MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
         long insertedId = dao.saveShardRecovery(recovery);
         assertTrue(insertedId > 1L);
 
@@ -134,17 +128,15 @@ class ShardRecoveryDaoTest {
         assertEquals(1, updateCount);
 
         List<ShardRecovery> actual = dao.getAllShardRecovery();
-        assertEquals(1, actual.size());
-        assertEquals(recovery.getState(), actual.get(0).getState());
-        assertNotNull(actual.get(0).getUpdated());
+        assertEquals(2, actual.size());
+        assertEquals(recovery.getState(), actual.get(1).getState());
+        assertNotNull(actual.get(1).getUpdated());
 
-        ShardRecovery found = dao.getShardRecoveryById(actual.get(0).getShardRecoveryId());
+        ShardRecovery found = dao.getShardRecoveryById(actual.get(1).getShardRecoveryId());
         assertEquals(MigrateState.SHARD_SCHEMA_FULL, found.getState());
 
         int deleted = dao.hardDeleteShardRecovery(found.getShardRecoveryId());
         assertEquals(1, deleted);
-
-        dao.hardDeleteAllShardRecovery();
     }
 
     @Test
@@ -156,7 +148,7 @@ class ShardRecoveryDaoTest {
     @Test
     void testCount() {
         long count = dao.countShardRecovery();
-        assertEquals(0, count);
+        assertEquals(1, count);
     }
 
 }

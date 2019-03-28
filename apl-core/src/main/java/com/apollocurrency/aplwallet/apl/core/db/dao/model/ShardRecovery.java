@@ -35,7 +35,7 @@ public class ShardRecovery {
         this.updated = updated;
     }
 
-    public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
+    public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject) {
         if (state != null) {
             this.state = state.name();
         }
@@ -43,7 +43,6 @@ public class ShardRecovery {
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
         this.processedObject = processedObject;
-        this.updated = updated;
     }
 
     public ShardRecovery(String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
