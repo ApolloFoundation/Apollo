@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -34,8 +35,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -72,9 +76,10 @@ class DataTransferManagementReceiverTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            TransactionTestData.class, PropertyProducer.class,
+            DerivedDbTablesRegistry.class,
+            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDao.class, /*ShardRecoveryDaoJdbcImpl.class,*/
             GlobalSyncImpl.class, FullTextConfig.class,
-            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
+            DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
@@ -88,6 +93,10 @@ class DataTransferManagementReceiverTest {
     private JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private DataTransferManagementReceiver managementReceiver;
+    @Inject
+    private BlockIndexDao blockIndexDao;
+    @Inject
+    private TransactionIndexDao transactionIndexDao;
 
     private Path createPath(String fileName) {
         try {
@@ -124,7 +133,7 @@ class DataTransferManagementReceiverTest {
     }
 
     @Test
-    void createShardDbAndMoveDataFromMain() throws IOException {
+    void createShardDbDoAllOperations() throws IOException {
         long start = System.currentTimeMillis();
         MigrateState state = managementReceiver.getCurrentState();
         assertNotNull(state);
@@ -136,7 +145,7 @@ class DataTransferManagementReceiverTest {
         List<String> tableNameList = new ArrayList<>();
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 8000L);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, 8000L);
 
         state = managementReceiver.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
@@ -148,7 +157,7 @@ class DataTransferManagementReceiverTest {
         tableNameList.clear();
 //        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
-//        tableNameList.add(TAGGED_DATA_TABLE_NAME); // !
+//        tableNameList.add(TAGGED_DATA_TABLE_NAME); // ! skip in test
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
         tableNameList.add(DATA_TAG_TABLE_NAME);
         tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
@@ -166,6 +175,10 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.updateSecondaryIndex(paramInfo);
         assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 //        assertEquals(MigrateState.FAILED, state);
+        long blockIndexCount = blockIndexDao.countBlockIndexByShard(3L);
+        assertEquals(8, blockIndexCount);
+        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(3L);
+        assertEquals(5, trIndexCount);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);

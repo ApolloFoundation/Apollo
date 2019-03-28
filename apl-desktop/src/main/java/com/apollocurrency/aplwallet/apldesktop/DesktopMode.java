@@ -117,7 +117,7 @@ public class DesktopMode {
         
         String[] APIPorts = {"6876", "7876"};
         //String url = properties.getStringProperty("apl.APIURL");
-        String url = "http://localhost:" + APIPorts[new Random().nextInt(1)] + "/";
+        String url = "http://localhost:" + APIPorts[new Random().nextInt(2)] + "/";
         Request request = new Request.Builder().url(url).build();
 
         Response response;
@@ -132,6 +132,10 @@ public class DesktopMode {
             APIUrl = url;
             return true;
         }
+        else if ( response.code() == 200){
+            DesktopApplication.updateSplashScreenStatus(response.body().toString());
+        }
+            
         return false;
     }
     
@@ -175,25 +179,38 @@ public class DesktopMode {
         Process p;
         try{
             
-            if (System.getProperty("os.name").toLowerCase().contains("win")) 
-            {
-
-                ProcessBuilder pb = new ProcessBuilder(".\\apl-run.bat")
-                // Some magic: Without Redirect Output will not work on windows
+            //TODO: Refactor that funny code below
+            
+            String command = "apl-run";
+            if (System.getProperty("apl.exec.mode") != null )
+            {    
+                if (System.getProperty("apl.exec.mode").equals("tor"))
+                {
+                    command = "apl-run-tor";                    
+                } else if (System.getProperty("apl.exec.mode").equals("transport")) 
+                {
+                    command = "apl-run-secure-transport";
+                }
+            }
+                if (System.getProperty("os.name").toLowerCase().contains("win")) 
+                {
+                    ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
+                    // Some magic: Without Redirect Output will not work on Windows
                         .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
                         .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
-                pb.start();
-            }
-            else{
-                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./apl-start.sh");
-                pb.start();
-
-            }
+                    pb.start();
+                }
+                else
+                {
+                    command = "apl-start";
+                    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./" + command + ".sh");
+                    pb.start();
+                }
             
-        }            
-        catch (IOException e)
-        {
-            LOG.debug(e.getMessage());
+            }            
+            catch (IOException e)
+            {
+                LOG.debug(e.getMessage());
         }/* catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
         }*/

@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -44,6 +48,12 @@ public interface TransactionIndexDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT count(*) FROM transaction_shard_index where block_id =:blockId")
     long countTransactionIndexByBlockId(@Bind("blockId") long blockId);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT count(transaction_shard_index.TRANSACTION_ID) FROM transaction_shard_index " +
+            "LEFT JOIN BLOCK_INDEX ON BLOCK_INDEX.BLOCK_ID = TRANSACTION_SHARD_INDEX.BLOCK_ID " +
+            "where BLOCK_INDEX.SHARD_ID = :shardId")
+    long countTransactionIndexByShardId(@Bind("shardId") long shardId);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT block_height FROM block_index LEFT JOIN transaction_shard_index on block_index.block_id = transaction_shard_index.block_id where transaction_id = :transactionId")

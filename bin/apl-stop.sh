@@ -2,8 +2,7 @@
 # (C) 2019 Apollo Foundation 
 # Stop apl-blockchain application, which was run by apl-start.sh script
 
-SCRIPT=`realpath -s $0`
-DIR=`dirname $SCRIPT`
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
  . ${DIR}/apl-common.sh
 

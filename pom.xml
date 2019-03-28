@@ -37,7 +37,7 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
-<!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->        
+<!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
 <!--
      Tt is a whole mess at the moment. commented out. Please!!! Integration test
@@ -209,17 +209,17 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>${bcprov.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-            <type>jar</type>
-            <version>${bcprov.version}</version>
-        </dependency>        
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${bcprov.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <type>jar</type>
+                <version>${bcprov.version}</version>
+            </dependency>        
             
             <!--Logging-->
             <dependency>
@@ -826,7 +826,7 @@
                 <configuration>
                     <showDeprecation>false</showDeprecation>
                 </configuration>
-            </plugin>
+            </plugin>     
         </plugins>
     </build>
 
