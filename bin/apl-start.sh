@@ -3,8 +3,7 @@
 # Starts Apollo blockchain in background
 # Required for Linux/MacOs installer.
 
-SCRIPT=`realpath -s $0`
-DIR=`dirname $SCRIPT`
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
  . ${DIR}/apl-common.sh
 
