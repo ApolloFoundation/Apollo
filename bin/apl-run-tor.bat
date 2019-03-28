@@ -3,7 +3,7 @@ set DIRP=%~dp0
 call "%DIRP%\apl-common.bat"
 @REM start Apollo
 
-cd %APL_TOP
+cd %APL_TOP%
 
 echo ClientTransportPlugin obfs4 exec %cd%\tor\tor\obfs4proxy > %systemdrive%%homepath%\torrc
 echo GeoIPFile %cd%\tor\data\tor\geoip >> %systemdrive%%homepath%\torrc
