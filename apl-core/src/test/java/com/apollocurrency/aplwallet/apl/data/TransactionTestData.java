@@ -85,7 +85,7 @@ public class TransactionTestData {
     public final ReferencedTransaction REFERENCED_TRANSACTION_7 = new ReferencedTransaction(8L, TRANSACTION_7.getId(), TRANSACTION_6.getId());
     public final ReferencedTransaction REFERENCED_TRANSACTION_8 = new ReferencedTransaction(9L, TRANSACTION_8.getId(), TRANSACTION_7.getId());
     public final ReferencedTransaction REFERENCED_TRANSACTION_9 = new ReferencedTransaction(10L,TRANSACTION_9.getId(), TRANSACTION_8.getId());
-    public final ReferencedTransaction REFERENCED_TRANSACTION_10 = new ReferencedTransaction(11L,TRANSACTION_11.getId(), TRANSACTION_12.getId());
+    public final ReferencedTransaction REFERENCED_TRANSACTION_10 = new ReferencedTransaction(11L,TRANSACTION_11.getId(), TRANSACTION_8.getId());
     public final ReferencedTransaction NOT_SAVED_REFERENCED_SHARD_TRANSACTION = new ReferencedTransaction(11L, TRANSACTION_10.getId(), TRANSACTION_11.getId());
     public final List<ReferencedTransaction> REFERENCED_TRANSACTIONS = Arrays.asList(REFERENCED_TRANSACTION_0, REFERENCED_TRANSACTION_1, REFERENCED_TRANSACTION_2, REFERENCED_TRANSACTION_3,
             REFERENCED_TRANSACTION_4, REFERENCED_TRANSACTION_5, REFERENCED_TRANSACTION_6, REFERENCED_TRANSACTION_7,REFERENCED_TRANSACTION_8, REFERENCED_TRANSACTION_9, REFERENCED_TRANSACTION_10, REFERENCED_SHARD_TRANSACTION_0, REFERENCED_SHARD_TRANSACTION_1, REFERENCED_SHARD_TRANSACTION_2);
