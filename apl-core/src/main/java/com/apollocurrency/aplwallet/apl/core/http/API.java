@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -58,7 +57,6 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -67,23 +65,14 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
 
 @Vetoed
 public final class API {
@@ -452,23 +441,6 @@ public final class API {
     }
 
 
-    public static final class XFrameOptionsFilter implements Filter {
-
-        @Override
-        public void init(FilterConfig filterConfig) throws ServletException {
-        }
-
-        @Override
-        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-            ((HttpServletResponse) response).setHeader("X-FRAME-OPTIONS", "SAMEORIGIN");
-            chain.doFilter(request, response);
-        }
-
-        @Override
-        public void destroy() {
-        }
-
-    }
 
     public static URI getWelcomePageUri() {
         return welcomePageUri;
