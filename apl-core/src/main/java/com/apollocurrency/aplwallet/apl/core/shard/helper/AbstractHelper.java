@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     private static final Logger log = getLogger(AbstractHelper.class);
 
     protected static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    protected ShardRecoveryDao shardRecoveryDao;
+    protected ShardRecoveryDaoJdbc shardRecoveryDao;
 
     String currentTableName; // processed table name
     ResultSetMetaData rsmd; // for internal usage
@@ -75,7 +76,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
                                           TableOperationParams operationParams) throws Exception;
 
     @Override
-    public void setShardRecoveryDao(ShardRecoveryDao dao) {
+    public void setShardRecoveryDao(ShardRecoveryDaoJdbc dao) {
         this.shardRecoveryDao = Objects.requireNonNull(dao, "shard Recovery Dao is NULL");;
     }
 
@@ -136,7 +137,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
 
     private Long selectLowerDbId(Connection sourceConnect, String selectValueSql) throws SQLException {
         Objects.requireNonNull(sourceConnect, "source connection is NULL");
-        Objects.requireNonNull(sqlSelectBottomBound, "sqlSelectBottomBound is NULL");
+        Objects.requireNonNull(selectValueSql, "selectValueSql is NULL");
         // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
         Long bottomDbIdValue = 0L;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(sqlSelectBottomBound)) {

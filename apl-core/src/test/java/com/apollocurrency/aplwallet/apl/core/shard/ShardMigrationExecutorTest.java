@@ -32,10 +32,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
@@ -83,7 +83,7 @@ class ShardMigrationExecutorTest {
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             TransactionTestData.class, PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
-            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
+            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDaoJdbcImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
             BlockImpl.class, ShardMigrationExecutor.class, FullTextConfig.class )
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -93,8 +93,6 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .build();
-
-
 
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;

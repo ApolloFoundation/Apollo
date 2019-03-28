@@ -30,8 +30,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
@@ -54,14 +54,14 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
     private Optional<Long> createdShardId;
     private TransactionalDataSource createdShardSource;
-    private ShardRecoveryDao shardRecoveryDao;
+    private ShardRecoveryDaoJdbc shardRecoveryDao;
 
     public DataTransferManagementReceiverImpl() {
     }
 
     @Inject
     public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService,
-                                              ShardRecoveryDao shardRecoveryDao) {
+                                              ShardRecoveryDaoJdbc shardRecoveryDao) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
@@ -98,11 +98,12 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             } else {
                 state = MigrateState.SHARD_SCHEMA_CREATED;
             }
-            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+            TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
             if (recovery == null) {
                 // store new value or continue to next step
                 recovery = new ShardRecovery(state);
-                shardRecoveryDao.saveShardRecovery(recovery);
+                shardRecoveryDao.saveShardRecovery(sourceDataSource, recovery);
             } else {
                 if (recovery.getState().getValue() < state.getValue()) {
                     recovery.setState(state); // do not change previous state
@@ -110,10 +111,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     recovery.setColumnName(null);
                     recovery.setProcessedObject(null);
                     recovery.setLastColumnValue(null);
-                    shardRecoveryDao.updateShardRecovery(recovery);
+                    shardRecoveryDao.updateShardRecovery(sourceDataSource, recovery);
                 }
             }
-//            optionDAO.set(PREVIOUS_MIGRATION_KEY, state.name());
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
@@ -141,8 +141,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         String lastTableName = null;
 
         TransactionalDataSource targetDataSource = initializeAssignShardDataSource(new ShardInitTableSchemaVersion());
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         // check previous state
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > DATA_COPIED_TO_SHARD.getValue()) {
             // skip to next step
@@ -155,7 +156,6 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Connection targetConnect = null;
 
         String currentTable = null;
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         try (Connection sourceConnect = sourceDataSource.getConnection() ) {
             for (String tableName : paramInfo.getTableNameList()) {
                 long start = System.currentTimeMillis();
@@ -180,10 +180,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
-                recovery = updateShardRecoveryProcessedTableList(currentTable, DATA_COPY_TO_SHARD_STARTED);
+                recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
             }
             state = DATA_COPIED_TO_SHARD;
-            updateToFinalStepState(recovery, state);
+            updateToFinalStepState(sourceConnect, recovery, state);
+            sourceConnect.commit();
         } catch (Exception e) {
             log.error("Error COPY processing table = '" + currentTable + "'", e);
             targetDataSource.rollback(false);
@@ -209,7 +210,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
         String currentTable = null;
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > DATA_RELINKED_IN_MAIN.getValue()) {
             // skip to next step
@@ -237,10 +238,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
-                recovery = updateShardRecoveryProcessedTableList(currentTable, DATA_RELINK_STARTED);
+                recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_RELINK_STARTED);
             }
             state = DATA_RELINKED_IN_MAIN;
-            updateToFinalStepState(recovery, state);
+            updateToFinalStepState(sourceConnect, recovery, state);
+            sourceConnect.commit();
         } catch (Exception e) {
             log.error("Error RELINK processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
@@ -288,7 +290,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         String currentTable = null;
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > SECONDARY_INDEX_UPDATED.getValue()) {
             // skip to next step
@@ -309,10 +311,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
-                recovery = updateShardRecoveryProcessedTableList(currentTable, SECONDARY_INDEX_STARTED);
+                recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, SECONDARY_INDEX_STARTED);
             }
             state = SECONDARY_INDEX_UPDATED;
-            updateToFinalStepState(recovery, state);
+            updateToFinalStepState(sourceConnect, recovery, state);
+            sourceConnect.commit();
         } catch (Exception e) {
             log.error("Error UPDATE S/Index processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
@@ -340,7 +343,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         String currentTable = null;
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > DATA_REMOVED_FROM_MAIN.getValue()) {
             // skip to next step
@@ -361,10 +364,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
-                recovery = updateShardRecoveryProcessedTableList(currentTable, DATA_REMOVE_STARTED);
+                recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_REMOVE_STARTED);
             }
             state = DATA_REMOVED_FROM_MAIN;
-            updateToFinalStepState(recovery, state);
+            updateToFinalStepState(sourceConnect, recovery, state);
+            sourceConnect.commit();
         } catch (Exception e) {
             log.error("Error DELETE processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
@@ -398,7 +402,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() >= COMPLETED.getValue()) {
             // skip to next step
@@ -418,8 +422,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             log.debug("Shard record is created = '{}'", result);
             state = COMPLETED;
             // remove recovery data when process is completed
-            recovery = shardRecoveryDao.getLatestShardRecovery();
-            result = shardRecoveryDao.hardDeleteShardRecovery(recovery.getShardRecoveryId());
+            recovery = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
+            result = shardRecoveryDao.hardDeleteShardRecovery(sourceConnect, recovery.getShardRecoveryId());
+            sourceConnect.commit();
             log.debug("Shard Recovery is deleted = '{}'", result);
         } catch (Exception e) {
             log.error("Error creating Shard record in main db", e);
@@ -441,8 +446,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
      * @param inProgressState progress state value
      * @return updated and stored instance
      */
-    private ShardRecovery updateShardRecoveryProcessedTableList(String currentTable, MigrateState inProgressState) {
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+    private ShardRecovery updateShardRecoveryProcessedTableList(
+            Connection connection, String currentTable, MigrateState inProgressState) {
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(connection);
         // add processed table name into optional column for later use
         recovery.setState(inProgressState);
         // we want :
@@ -453,7 +459,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 (!AbstractHelper.isContain(recovery.getProcessedObject(), currentTable) ?
                         recovery.getProcessedObject() + " " + currentTable.toUpperCase() : recovery.getProcessedObject())
                 : currentTable.toUpperCase()); // add processed table name into list if NOT exists
-        shardRecoveryDao.updateShardRecovery(recovery); // update info for next step
+        shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
         return recovery;
     }
 
@@ -462,13 +468,13 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
      * @param recovery current recovery
      * @param finalStepState final state
      */
-    private void updateToFinalStepState(ShardRecovery recovery, MigrateState finalStepState) {
+    private void updateToFinalStepState(Connection connection, ShardRecovery recovery, MigrateState finalStepState) {
         recovery.setState(finalStepState);
         recovery.setObjectName(null); // remove currently processed table
         recovery.setColumnName(null); // main column used for pagination on data in table
         recovery.setLastColumnValue(null); // latest processed column value
         recovery.setProcessedObject(null); // list of previously processed table names within one step
-        shardRecoveryDao.updateShardRecovery(recovery); // update info for next step
+        shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
     }
 
     /**

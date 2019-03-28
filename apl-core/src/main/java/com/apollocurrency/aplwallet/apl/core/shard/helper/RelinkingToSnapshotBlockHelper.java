@@ -38,7 +38,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
 
         long startSelect = System.currentTimeMillis();
         assignMainBottomTopSelectSql();
-        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
 
         // select upper, bottom DB_ID
         this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
@@ -111,7 +111,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
         recoveryValue.setState(MigrateState.DATA_RELINK_STARTED);
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
-        shardRecoveryDao.updateShardRecovery(recoveryValue);
+        shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue); // update recovery info
         sourceConnect.commit(); // commit latest records if any
 
         return rows != 0 || paginateResultWrapper.lowerBoundColumnValue < paginateResultWrapper.upperBoundColumnValue;

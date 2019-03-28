@@ -33,7 +33,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         log.debug("Processing: {}", operationParams);
 
         checkMandatoryParameters(sourceConnect, targetConnect, operationParams);
-        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
         // check previous state is correct
         assignMainBottomTopSelectSql(); // define all SQLs
         // select DB_ID for target HEIGHT
@@ -51,7 +51,8 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         return totalSelectedRows;
     }
 
-    protected long doStartSelectAndInsert(Connection sourceConnect, Connection targetConnect, TableOperationParams operationParams) throws SQLException {
+    protected long doStartSelectAndInsert(Connection sourceConnect, Connection targetConnect,
+                                          TableOperationParams operationParams) throws SQLException {
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
@@ -64,7 +65,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, targetConnect, operationParams));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, targetConnect, operationParams));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -77,7 +78,8 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     }
 
     protected boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                      Connection targetConnect, TableOperationParams operationParams)
+                                      Connection sourceConnect, Connection targetConnect,
+                                      TableOperationParams operationParams)
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
@@ -100,7 +102,8 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                     processedRows += preparedInsertStatement.executeUpdate();
-                    log.trace("Inserting '{}' into {} : next value {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+                    log.trace("Inserting '{}' into {} : next value {}={}", rows, currentTableName, BASE_COLUMN_NAME,
+                            paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Inserting '{}' into {}, {}", rows, currentTableName, paginateResultWrapper);
                     log.error("Failed inserting = {}, value={}", currentTableName, columnValues);
@@ -125,8 +128,9 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         recoveryValue.setState(DATA_COPY_TO_SHARD_STARTED);
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
-        shardRecoveryDao.updateShardRecovery(recoveryValue);
-        targetConnect.commit(); // commit latest records if any
+        shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue);
+        sourceConnect.commit(); // commit recovery info
+        targetConnect.commit(); // commit latest copied records if any
         return rows != 0;// || paginateResultWrapper.lowerBoundColumnValue < paginateResultWrapper.upperBoundColumnValue;
     }
 
@@ -194,6 +198,9 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                         columnValues.append("null");
                     }
                     break;
+            }
+            if (i != columnTypes.length - 1) {
+                columnValues.append(",");
             }
         }
     }

@@ -10,14 +10,34 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 
 /**
  * Shard recovery state db entity
+ *
+ * @author yuriy.larin
  */
 public class ShardRecovery {
-    private Long shardRecoveryId;
+    private Long shardRecoveryId; // auto incremented id
+    /**
+     * tracked sharding state
+     */
     private String state = MigrateState.INIT.name();
+    /**
+     * current object/table being processed
+     */
     private String objectName;
+    /**
+     * 'key column name' is used for select/pagination
+     */
     private String columnName;
+    /**
+     * latest 'key column value' stored in previous loop
+     */
     private Long lastColumnValue;
+    /**
+     * list of objects/tables which were processed previously within one step
+     */
     private String processedObject;
+    /**
+     * automatically updated date-time in UTC zone
+     */
     private Instant updated = Instant.now();
 
     public ShardRecovery() {

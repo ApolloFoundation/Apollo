@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import java.sql.Connection;
 
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 
 /**
@@ -37,6 +38,6 @@ public interface BatchedPaginationOperation {
      * We want to assign DAO for keep track on sharding progress.
      * @param dao dao implementation to store/retrieve progress state
      */
-    void setShardRecoveryDao(ShardRecoveryDao dao);
+    void setShardRecoveryDao(ShardRecoveryDaoJdbc dao);
 
 }
