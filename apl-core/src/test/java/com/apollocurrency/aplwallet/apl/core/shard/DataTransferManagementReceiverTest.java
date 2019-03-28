@@ -14,6 +14,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOp
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHUFFLING_DATA_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -36,11 +37,13 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -177,7 +180,7 @@ class DataTransferManagementReceiverTest {
         long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
         long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-        assertEquals(4, trIndexCount);
+        assertEquals(7, trIndexCount);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);
@@ -190,7 +193,12 @@ class DataTransferManagementReceiverTest {
         paramInfo.setShardHash("000000000".getBytes());
         state = managementReceiver.addShardInfo(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
-
+// compare fullhashes
+        TransactionTestData td = new TransactionTestData();
+        TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
+        assertNotNull(index);
+        byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());
+        assertArrayEquals(td.TRANSACTION_1.getFullHash(), fullHash);
         log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start)/1000 );
     }
 }

@@ -23,6 +23,9 @@ public class ConvertTest {
     private static final byte[] ALL_BYTES = new byte[] {1, 2, 3, 4, 5, -1, -3, -2};
     private static final byte[] LONG_BYTES = Convert.parseHexString("ff1ed78a9cc314e0");
     private static final long LONG_VALUE = Long.parseUnsignedLong("18383367719308432608");
+    private static final long ID = -2899336147900037206L;
+    private static final byte[] HASH = Convert.parseHexString("aa07f883227dc3d7343211ea8e84386f17d14a8e23d6f471cd3cd6607b037d52");
+    private static final byte[] PARTIAL_HASH = Convert.parseHexString("343211ea8e84386f17d14a8e23d6f471cd3cd6607b037d52");
 
     @Test
     void testConcatArrays() {
@@ -95,5 +98,26 @@ public class ConvertTest {
     void testBytesToLong() {
         long value = Convert.bytesToLong(LONG_BYTES);
         assertEquals(LONG_VALUE, value);
+    }
+
+    @Test
+    void testToFullHash() {
+        byte[] hash = Convert.toFullHash(ID, PARTIAL_HASH);
+
+        assertArrayEquals(HASH, hash);
+    }
+
+    @Test
+    void testToPartialHash() {
+        byte[] partialHash = Convert.toPartialHash(HASH);
+
+        assertArrayEquals(PARTIAL_HASH, partialHash);
+    }
+
+    @Test
+    void testFullHashToId() {
+        long id = Convert.fullHashToId(HASH);
+
+        assertEquals(ID, id);
     }
 }

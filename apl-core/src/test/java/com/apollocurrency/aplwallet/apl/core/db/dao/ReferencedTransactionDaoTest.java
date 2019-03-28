@@ -135,7 +135,7 @@ class ReferencedTransactionDaoTest {
         TransactionTestData td = new TransactionTestData();
         List<Transaction> referencingTransactions = dao.getReferencingTransactions(td.TRANSACTION_8.getId(), 0, 100);
 
-        assertEquals(Arrays.asList(td.TRANSACTION_9, td.TRANSACTION_11), referencingTransactions);
+        assertEquals(Arrays.asList(td.TRANSACTION_11, td.TRANSACTION_9), referencingTransactions);
 
     }
 

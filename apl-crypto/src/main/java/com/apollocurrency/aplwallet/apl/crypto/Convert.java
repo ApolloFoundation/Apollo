@@ -153,6 +153,13 @@ public final class Convert {
         }
         return reversed;
     }
+
+    public static byte[] toFullHash(long id, byte[] partialHash) {
+        Objects.requireNonNull(partialHash, "partialHash should not be null");
+        byte[] bytes = Convert.longToBytes(id);
+        byte[] firstPartOfHash = Convert.reverse(bytes); //reverse bytes according to order in Convert.fullHashToId
+        return Convert.concat(firstPartOfHash, partialHash);
+    }
     public static byte[] reverseSelf(byte[] bytes) {
         for (int i = 0; i < bytes.length / 2; i++) {
             byte temp = bytes[i];
@@ -183,6 +190,14 @@ public final class Convert {
         }
         BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
         return bigInteger.longValue();
+    }
+
+    public static byte[] toPartialHash(byte[] hash) {
+        Objects.requireNonNull(hash, "Hash should not be null");
+        if (hash.length != 32) {
+            throw new IllegalArgumentException("Invalid hash length");
+        }
+        return Arrays.copyOfRange(hash, 8, hash.length);
     }
 
 

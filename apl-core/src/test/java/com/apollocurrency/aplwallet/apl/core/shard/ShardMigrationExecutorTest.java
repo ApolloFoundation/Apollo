@@ -161,7 +161,7 @@ class ShardMigrationExecutorTest {
         long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
         long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-        assertEquals(4, trIndexCount);
+        assertEquals(7, trIndexCount);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, 8000L);
         state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
@@ -171,7 +171,6 @@ class ShardMigrationExecutorTest {
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, new byte[]{3,4,5,6,1});
         state = shardMigrationExecutor.executeOperation(finishShardingCommand);
         assertEquals(COMPLETED, state);
-
     }
 
     @Test

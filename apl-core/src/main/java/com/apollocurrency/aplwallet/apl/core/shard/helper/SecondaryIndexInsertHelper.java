@@ -7,14 +7,16 @@ import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOp
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
-import org.slf4j.Logger;
 
 /**
  * Helper class is used for inserting block/transaction data into secondary index tables.
@@ -105,6 +107,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
+        boolean isTransactionTable = operationParams.tableName.equalsIgnoreCase(TRANSACTION_SHARD_INDEX_TABLE_NAME);
         try (ResultSet rs = ps.executeQuery()) {
             log.trace("SELECT...where DB_ID > {} AND DB_ID < {} LIMIT {}",
                     paginateResultWrapper.lowerBoundColumnValue, paginateResultWrapper.upperBoundColumnValue,
@@ -114,13 +117,17 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                 extractMetaDataCreateInsert(sourceConnect, rs);
 
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
-
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         // here we are skipping DB_ID latest column in ResultSet
                         // we don't need it for INSERT, only for next SELECT
                         if (i + 1 != numColumns) {
-                            preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
+                            Object object = rs.getObject(i + 1);
+                            if (isTransactionTable && columnTypes[i] == Types.VARBINARY) { // extract and shorten hash (id + shortened hash = full_hash)
+                                byte[] fullHash = (byte[]) object;
+                                object = Convert.toPartialHash(fullHash);
+                            }
+                            preparedInsertStatement.setObject(i + 1, object);
                         }
                     }
                     processedRows += preparedInsertStatement.executeUpdate();
@@ -166,7 +173,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                     "select ID, FULL_HASH, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                    "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+                    "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from TRANSACTION";
             log.trace(sqlSelectBottomBound);
@@ -182,6 +189,9 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             rsmd = resultSet.getMetaData();
             numColumns = rsmd.getColumnCount();
             columnTypes = new int[numColumns];
+            for (int i = 0; i < numColumns; i++) {
+                columnTypes[i] = rsmd.getColumnType(i + 1);
+            }
             if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
                 sqlInsertString.append("insert into BLOCK_INDEX (shard_id, block_id, block_height)")
                         .append(" values (").append("?, ?, ?").append(")");

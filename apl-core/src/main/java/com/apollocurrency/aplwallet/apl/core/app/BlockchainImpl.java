@@ -402,10 +402,7 @@ public class BlockchainImpl implements Blockchain {
     private byte[] getTransactionIndexFullHash(TransactionIndex transactionIndex) {
         byte[] fullHash = null;
         if (transactionIndex != null) {
-            byte[] partialTransactionHash = transactionIndex.getPartialTransactionHash();
-            byte[] bytes = Convert.longToBytes(transactionIndex.getTransactionId());
-            byte[] firstPartOfHash = Convert.reverse(bytes); //reverse bytes according to order in Convert.fullHashToId
-            fullHash = Convert.concat(firstPartOfHash, partialTransactionHash);
+            fullHash = Convert.toFullHash(transactionIndex.getTransactionId(), transactionIndex.getPartialTransactionHash());
         }
         return fullHash;
     }
