@@ -67,7 +67,7 @@ then
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
-        ./bin/apl-run-desktop.sh
+        nohup ./bin/apl-run-desktop.sh 2>&1 >/dev/null
     else
         notify "Starting command line application..."
         ./bin/apl-start.sh
