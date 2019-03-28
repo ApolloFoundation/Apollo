@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -175,10 +174,10 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.updateSecondaryIndex(paramInfo);
         assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 //        assertEquals(MigrateState.FAILED, state);
-        long blockIndexCount = blockIndexDao.countBlockIndexByShard(3L);
+        long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
-        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(3L);
-        assertEquals(5, trIndexCount);
+        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
+        assertEquals(4, trIndexCount);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);

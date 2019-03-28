@@ -9,10 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.inject.Inject;
-import java.time.Instant;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
@@ -22,11 +18,11 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -37,6 +33,9 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class ShardRecoveryDaoTest {

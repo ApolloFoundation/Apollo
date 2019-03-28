@@ -10,18 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
@@ -38,6 +30,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class ShardRecoveryDaoJdbcTest {
