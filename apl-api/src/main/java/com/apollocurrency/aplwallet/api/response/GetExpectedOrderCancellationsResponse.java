@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetExpectedOrderCancellationsResponse extends ResponseBase{
-    public OrderCancellationDTO[] orderCancellationDTOS;
+    public OrderCancellationDTO[] orderCancellations;
 }

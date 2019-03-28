@@ -567,6 +567,13 @@ public class TestBase {
         return getInstanse(OrderDTO.class);
     }
 
+    //getBidOrder
+    public OrderDTO getBidOrder (String bidOrder) throws IOException {
+        addParameters(RequestType.requestType, getBidOrder);
+        addParameters(Parameters.order, bidOrder);
+        return getInstanse(OrderDTO.class);
+    }
+
     //getAskOrderIds
     public GetOrderIdsResponse getAskOrderIds (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAskOrderIds);
@@ -574,9 +581,24 @@ public class TestBase {
         return getInstanse(GetOrderIdsResponse.class);
     }
 
+    //getBidOrderIds
+    public GetOrderIdsResponse getBidOrderIds (String assetID) throws IOException {
+        addParameters(RequestType.requestType, getBidOrderIds);
+        addParameters(Parameters.asset, assetID);
+        return getInstanse(GetOrderIdsResponse.class);
+    }
+
     //getAskOrders
     public GetOpenOrderResponse getAskOrders (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAskOrders);
+        addParameters(Parameters.asset, assetID);
+
+        return getInstanse(GetOpenOrderResponse.class);
+    }
+
+    //getBidOrders
+    public GetOpenOrderResponse getBidOrders (String assetID) throws IOException {
+        addParameters(RequestType.requestType, getBidOrders);
         addParameters(Parameters.asset, assetID);
 
         return getInstanse(GetOpenOrderResponse.class);
@@ -610,6 +632,35 @@ public class TestBase {
         return getInstanse(GetExpectedAssetDeletes.class);
     }
 
+    //getExpectedAskOrders
+    public  GetOpenOrderResponse getExpectedAskOrders (String asset) throws IOException {
+        addParameters(RequestType.requestType, getExpectedAskOrders);
+        addParameters(Parameters.asset, asset);
+        return getInstanse(GetOpenOrderResponse.class);
+    }
+
+    //getExpectedBidOrders
+    public  GetOpenOrderResponse getExpectedBidOrders (String asset) throws IOException {
+        addParameters(RequestType.requestType, getExpectedBidOrders);
+        addParameters(Parameters.asset, asset);
+        return getInstanse(GetOpenOrderResponse.class);
+    }
+
+    //getExpectedOrderCancellations
+    public  GetExpectedOrderCancellationsResponse getExpectedOrderCancellations () throws IOException {
+        addParameters(RequestType.requestType, getExpectedOrderCancellations);
+        return getInstanse(GetExpectedOrderCancellationsResponse.class);
+    }
+
+    //getExpectedAssetTransfers
+    public  GetAssetTransfersResponse getExpectedAssetTransfers (String asset) throws IOException {
+        addParameters(RequestType.requestType, getExpectedAssetTransfers);
+        addParameters(Parameters.asset, asset);
+        return getInstanse(GetAssetTransfersResponse.class);
+    }
+
+
+
     //getAssetDividends NOT READY YET!!!!!
     /*public  GetAssetDividends getAssetDividends (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAssetDividends);
@@ -634,6 +685,42 @@ public class TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
+    //getAssetTransfers
+    public  GetAssetTransfersResponse getAssetTransfers (Wallet wallet, String asset) throws IOException {
+        addParameters(RequestType.requestType, getAssetTransfers);
+        addParameters(Parameters.asset, asset);
+        addParameters(Parameters.wallet, wallet);
+        return getInstanse(GetAssetTransfersResponse.class);
+    }
+
+    //getAssets
+    public  GetAssetsResponse getAssets (String asset) throws IOException {
+        addParameters(RequestType.requestType, getAssets);
+        addParameters(Parameters.assets, asset);
+        //addParameters(Parameters.wallet, wallet);
+        return getInstanse(GetAssetsResponse.class);
+    }
+
+    //getAssetsByIssuer
+    public  GetAssetsByIssuerResponse getAssetsByIssuer (String wallet, String wallet1) throws IOException {
+        addParameters(RequestType.requestType, getAssetsByIssuer);
+        addParameters(Parameters.account, wallet1);
+        addParameters(Parameters.account, wallet);
+        return getInstanse(GetAssetsByIssuerResponse.class);
+    }
+
+    //searchAssets
+    public  GetAssetsResponse searchAssets (String asset) throws IOException {
+        addParameters(RequestType.requestType, searchAssets);
+        addParameters(Parameters.query, asset);
+        return getInstanse(GetAssetsResponse.class);
+    }
+
+
+
+
+
 
 
 
