@@ -24,22 +24,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccountBlockCount extends AbstractAPIRequestHandler {
 
-    private static class GetAccountBlockCountHolder {
-        private static final GetAccountBlockCount INSTANCE = new GetAccountBlockCount();
-    }
-
-    public static GetAccountBlockCount getInstance() {
-        return GetAccountBlockCountHolder.INSTANCE;
-    }
-
-    private GetAccountBlockCount() {
+    public GetAccountBlockCount() {
         super(new APITag[] {APITag.ACCOUNTS}, "account");
     }
 

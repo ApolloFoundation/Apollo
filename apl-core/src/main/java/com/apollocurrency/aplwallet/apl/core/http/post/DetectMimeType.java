@@ -37,20 +37,15 @@ import javax.servlet.http.Part;
 import java.io.IOException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
+import javax.enterprise.inject.Vetoed;
 import static org.slf4j.LoggerFactory.getLogger;
 
+
+@Vetoed
 public final class DetectMimeType extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DetectMimeType.class);
 
-    private static class DetectMimeTypeHolder {
-        private static final DetectMimeType INSTANCE = new DetectMimeType();
-    }
-
-    public static DetectMimeType getInstance() {
-        return DetectMimeTypeHolder.INSTANCE;
-    }
-
-    private DetectMimeType() {
+    public DetectMimeType() {
         super("file", new APITag[] {APITag.DATA, APITag.UTILS}, "data", "filename", "isText");
     }
 

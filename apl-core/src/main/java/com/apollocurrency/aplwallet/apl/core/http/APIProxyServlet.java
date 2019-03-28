@@ -37,6 +37,7 @@ import java.util.List;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
@@ -47,6 +48,7 @@ import org.eclipse.jetty.util.UrlEncoded;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+@Vetoed
 public final class APIProxyServlet extends AsyncMiddleManServlet {
     private static final Logger LOG = getLogger(APIProxyServlet.class);
 
@@ -199,7 +201,8 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     protected Response.Listener newProxyResponseListener(HttpServletRequest request, HttpServletResponse response) {
         return new APIProxyResponseListener(request, response);
     }
-
+   
+    @Vetoed
     private class APIProxyResponseListener extends AsyncMiddleManServlet.ProxyResponseListener {
 
         APIProxyResponseListener(HttpServletRequest request, HttpServletResponse response) {
@@ -228,6 +231,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
     }
 
+    @Vetoed
     private static class PasswordDetectedException extends RuntimeException {
         private final JSONStreamAware errorResponse;
 
@@ -235,7 +239,8 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
             this.errorResponse = errorResponse;
         }
     }
-
+    
+@Vetoed
     static class PasswordFinder {
 
         static int process(ByteBuffer buffer, String[] secrets) {
@@ -265,6 +270,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
     }
 
+@Vetoed
     private static class PasswordFilteringContentTransformer implements AsyncMiddleManServlet.ContentTransformer {
 
         private ByteArrayOutputStream os;

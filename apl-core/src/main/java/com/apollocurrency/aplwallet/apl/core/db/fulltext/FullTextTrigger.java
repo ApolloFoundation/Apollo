@@ -38,7 +38,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
 
 
     private TableData readTableData(Connection connection, String schema, String tableName) throws SQLException {
-            return DbUtils.getTableData(connection, tableName, schema);
+         return DbUtils.getTableData(connection, tableName, schema);
     }
 
     /**

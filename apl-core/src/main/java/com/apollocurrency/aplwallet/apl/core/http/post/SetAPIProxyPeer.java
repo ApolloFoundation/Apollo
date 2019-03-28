@@ -36,18 +36,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.API_PROXY
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PEER_NOT_CONNECTED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PEER_NOT_OPEN_API;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PEER;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class SetAPIProxyPeer extends AbstractAPIRequestHandler {
 
-    private static class SetAPIProxyPeerHolder {
-        private static final SetAPIProxyPeer INSTANCE = new SetAPIProxyPeer();
-    }
-
-    public static SetAPIProxyPeer getInstance() {
-        return SetAPIProxyPeerHolder.INSTANCE;
-    }
-
-    private SetAPIProxyPeer() {
+    public SetAPIProxyPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");
     }
 

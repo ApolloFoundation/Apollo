@@ -25,21 +25,16 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetAccountPhasedTransactionCount extends AbstractAPIRequestHandler {
-    private static class GetAccountPhasedTransactionCountHolder {
-        private static final GetAccountPhasedTransactionCount INSTANCE = new GetAccountPhasedTransactionCount();
-    }
 
-    public static GetAccountPhasedTransactionCount getInstance() {
-        return GetAccountPhasedTransactionCountHolder.INSTANCE;
-    }
-
-    private GetAccountPhasedTransactionCount() {
+    public GetAccountPhasedTransactionCount() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING}, "account");
     }
 

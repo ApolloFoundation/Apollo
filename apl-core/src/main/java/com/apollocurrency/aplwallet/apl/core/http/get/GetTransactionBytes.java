@@ -34,18 +34,12 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetTransactionBytes extends AbstractAPIRequestHandler {
 
-    private static class GetTransactionBytesHolder {
-        private static final GetTransactionBytes INSTANCE = new GetTransactionBytes();
-    }
-
-    public static GetTransactionBytes getInstance() {
-        return GetTransactionBytesHolder.INSTANCE;
-    }
-
-    private GetTransactionBytes() {
+    public GetTransactionBytes() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
     }
 

@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -60,17 +61,10 @@ import org.json.simple.JSONStreamAware;
  * <p>
  * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl.Appendix.Prunable} interface.
  */
+@Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
 
-    private static class SendTransactionHolder {
-        private static final SendTransaction INSTANCE = new SendTransaction();
-    }
-
-    public static SendTransaction getInstance() {
-        return SendTransactionHolder.INSTANCE;
-    }
-
-    private SendTransaction() {
+    public SendTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 

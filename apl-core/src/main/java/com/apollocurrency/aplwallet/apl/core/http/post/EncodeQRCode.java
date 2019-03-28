@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import javax.enterprise.inject.Vetoed;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -86,20 +87,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * the QR code.</li>
  * </ul>
  */
-
+@Vetoed
 public final class EncodeQRCode extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(EncodeQRCode.class);
 
-
-    private static class EncodeQRCodeHolder {
-        private static final EncodeQRCode INSTANCE = new EncodeQRCode();
-    }
-
-    public static EncodeQRCode getInstance() {
-        return EncodeQRCodeHolder.INSTANCE;
-    }
-
-    private EncodeQRCode() {
+    public EncodeQRCode() {
         super(new APITag[] {APITag.UTILS}, "qrCodeData", "width", "height");
     }
     

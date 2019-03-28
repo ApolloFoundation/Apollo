@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccountTaggedData extends AbstractAPIRequestHandler {
 
-    private static class GetAccountTaggedDataHolder {
-        private static final GetAccountTaggedData INSTANCE = new GetAccountTaggedData();
-    }
-
-    public static GetAccountTaggedData getInstance() {
-        return GetAccountTaggedDataHolder.INSTANCE;
-    }
-
-    private GetAccountTaggedData() {
+    public GetAccountTaggedData() {
         super(new APITag[] {APITag.DATA}, "account", "firstIndex", "lastIndex", "includeData");
     }
 

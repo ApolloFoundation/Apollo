@@ -51,9 +51,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 
+@Vetoed
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
 
@@ -239,29 +241,32 @@ public final class Poll extends AbstractPoll {
     public static void init() {
 
     }
-    @Singleton
-    private static class PollObserver {
-        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            if (Poll.isPollsProcessing) {
-                int height = block.getHeight();
-                Poll.checkPolls(height);
-            }
-        }
-    }
 
-    private static void checkPolls(int currentHeight) {
-        try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
-            for (Poll poll : polls) {
-                try {
-                    List<OptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
-                    pollResultsTable.insert(poll, results);
-                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
-                } catch (RuntimeException e) {
-                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
-                }
-            }
-        }
-    }
+//    @Singleton
+//    private static class PollObserver {
+//        public PollObserver(){};
+//        
+//        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+//            if (Poll.isPollsProcessing) {
+//                int height = block.getHeight();
+//                Poll.checkPolls(height);
+//            }
+//        }
+//    }
+//
+//    private static void checkPolls(int currentHeight) {
+//        try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
+//            for (Poll poll : polls) {
+//                try {
+//                    List<OptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
+//                    pollResultsTable.insert(poll, results);
+//                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
+//                } catch (RuntimeException e) {
+//                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
+//                }
+//            }
+//        }
+//    }
 
     private final DbKey dbKey;
     private final String name;
@@ -273,7 +278,7 @@ public final class Poll extends AbstractPoll {
     private final byte maxRangeValue;
     private final int timestamp;
 
-    private Poll(Transaction transaction, MessagingPollCreation attachment) {
+    public Poll(Transaction transaction, MessagingPollCreation attachment) {
         super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
         this.dbKey = pollDbKeyFactory.newKey(this.id);
         this.name = attachment.getPollName();
@@ -286,7 +291,7 @@ public final class Poll extends AbstractPoll {
         this.timestamp = blockchain.getLastBlockTimestamp();
     }
 
-    private Poll(ResultSet rs, DbKey dbKey) throws SQLException {
+    public Poll(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
         this.dbKey = dbKey;
         this.name = rs.getString("name");
@@ -299,7 +304,7 @@ public final class Poll extends AbstractPoll {
         this.timestamp = rs.getInt("timestamp");
     }
 
-    private Poll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting, DbKey dbKey, String name, String description, String[] options, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue, int timestamp) {
+    public Poll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting, DbKey dbKey, String name, String description, String[] options, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue, int timestamp) {
         super(id, accountId, finishHeight, voteWeighting);
         this.dbKey = dbKey;
         this.name = name;

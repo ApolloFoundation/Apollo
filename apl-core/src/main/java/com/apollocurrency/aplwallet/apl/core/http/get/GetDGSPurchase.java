@@ -36,23 +36,16 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+@Vetoed
 public final class GetDGSPurchase extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetDGSPurchase.class);
 
-
-    private static class GetDGSPurchaseHolder {
-        private static final GetDGSPurchase INSTANCE = new GetDGSPurchase();
-    }
-
-    public static GetDGSPurchase getInstance() {
-        return GetDGSPurchaseHolder.INSTANCE;
-    }
-
-    private GetDGSPurchase() {
+    public GetDGSPurchase() {
         super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey", "account", "passphrase");
     }
 

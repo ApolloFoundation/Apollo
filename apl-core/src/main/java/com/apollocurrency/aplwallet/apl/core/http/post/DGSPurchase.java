@@ -38,18 +38,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DGSPurchase extends CreateTransaction {
 
-    private static class DGSPurchaseHolder {
-        private static final DGSPurchase INSTANCE = new DGSPurchase();
-    }
-
-    public static DGSPurchase getInstance() {
-        return DGSPurchaseHolder.INSTANCE;
-    }
-
-    private DGSPurchase() {
+    public DGSPurchase() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
     }

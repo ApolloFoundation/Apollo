@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -35,17 +36,11 @@ import javax.servlet.http.HttpServletRequest;
  * the PRUNABLE service.
  * </p>
  */
+
+@Vetoed
 public class RetrievePrunedData extends AbstractAPIRequestHandler {
 
-    private static class RetrievePrunedDataHolder {
-        private static final RetrievePrunedData INSTANCE = new RetrievePrunedData();
-    }
-
-    public static RetrievePrunedData getInstance() {
-        return RetrievePrunedDataHolder.INSTANCE;
-    }
-
-    private RetrievePrunedData() {
+    public RetrievePrunedData() {
         super(new APITag[] {APITag.DEBUG});
     }
 

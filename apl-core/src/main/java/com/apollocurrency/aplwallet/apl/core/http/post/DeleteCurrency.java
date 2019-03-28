@@ -28,21 +28,15 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyDeletion;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class DeleteCurrency extends CreateTransaction {
 
-    private static class DeleteCurrencyHolder {
-        private static final DeleteCurrency INSTANCE = new DeleteCurrency();
-    }
-
-    public static DeleteCurrency getInstance() {
-        return DeleteCurrencyHolder.INSTANCE;
-    }
-
-    private DeleteCurrency() {
+    public DeleteCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency");
     }
 

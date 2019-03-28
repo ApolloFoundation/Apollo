@@ -22,12 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
@@ -53,26 +51,21 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
-
+@Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static class GetStateHolder {
-        private static final GetState INSTANCE = new GetState();
-    }
-
-    public static GetState getInstance() {
-        return GetStateHolder.INSTANCE;
-    }
-
-    private GetState() {
+    private UPnP upnp = CDI.current().select(UPnP.class).get();
+    
+    public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
-        JSONObject response = GetBlockchainStatus.getInstance().processRequest(req);
+        JSONObject response = new GetBlockchainStatus().processRequest(req);
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
@@ -116,7 +109,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !API.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());
-        InetAddress externalAddress = UPnP.getInstance().getExternalAddress();
+        InetAddress externalAddress = upnp.getExternalAddress();
         if (externalAddress != null) {
             response.put("upnpExternalAddress", externalAddress.getHostAddress());
         }

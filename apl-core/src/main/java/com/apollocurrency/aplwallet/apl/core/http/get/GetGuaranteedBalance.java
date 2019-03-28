@@ -25,22 +25,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetGuaranteedBalance extends AbstractAPIRequestHandler {
 
-    private static class GetGuaranteedBalanceHolder {
-        private static final GetGuaranteedBalance INSTANCE = new GetGuaranteedBalance();
-    }
-
-    public static GetGuaranteedBalance getInstance() {
-        return GetGuaranteedBalanceHolder.INSTANCE;
-    }
-
-    private GetGuaranteedBalance() {
+    public GetGuaranteedBalance() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
     }
 

@@ -26,18 +26,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
-final class GetNextBlockIds extends PeerServlet.PeerRequestHandler {
+@Vetoed
+final class GetNextBlockIds extends PeerRequestHandler {
 
-    private static class GetNextBlockIdsHolder {
-        private static final GetNextBlockIds INSTANCE = new GetNextBlockIds();
-    }
-
-    public static GetNextBlockIds getInstance() {
-        return GetNextBlockIdsHolder.INSTANCE;
-    }
-
-    private GetNextBlockIds() {}
+    public GetNextBlockIds() {}
 
 
     @Override

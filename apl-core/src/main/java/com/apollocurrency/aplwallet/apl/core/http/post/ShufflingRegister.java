@@ -28,21 +28,15 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class ShufflingRegister extends CreateTransaction {
 
-    private static class ShufflingRegisterHolder {
-        private static final ShufflingRegister INSTANCE = new ShufflingRegister();
-    }
-
-    public static ShufflingRegister getInstance() {
-        return ShufflingRegisterHolder.INSTANCE;
-    }
-
-    private ShufflingRegister() {
+    public ShufflingRegister() {
         super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");
     }
 

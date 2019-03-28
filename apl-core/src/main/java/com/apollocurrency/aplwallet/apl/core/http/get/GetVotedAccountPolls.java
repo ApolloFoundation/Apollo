@@ -11,21 +11,15 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public class GetVotedAccountPolls extends AbstractAPIRequestHandler {
-    private static class GetVotedAccountPollsHolder {
-        private static final GetVotedAccountPolls INSTANCE = new GetVotedAccountPolls();
-    }
-
-    public static GetVotedAccountPolls getInstance() {
-        return GetVotedAccountPollsHolder.INSTANCE;
-    }
-    private GetVotedAccountPolls() {
+    public GetVotedAccountPolls() {
         super(new APITag[] {APITag.VS, APITag.ACCOUNTS }, "account", "firstIndex", "lastIndex");
     }
 

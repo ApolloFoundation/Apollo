@@ -47,7 +47,6 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -66,8 +65,6 @@ public class PeerWebSocket {
 
     /** Compressed message flag */
     private static final int FLAG_COMPRESSED = 1;
-
-    private static final int FLAG_NOT_COMPRESSED = 0;
 
     /** Our WebSocket message version */
     private static final int VERSION = 1;
@@ -276,7 +273,7 @@ public class PeerWebSocket {
         //
         String response;
         try {
-            PostRequest postRequest = new PostRequest();
+            PostRequest postRequest = new PostRequest(this);
             requestMap.put(requestId, postRequest);
             response = postRequest.get(Peers.readTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException exc) {
@@ -419,69 +416,4 @@ public class PeerWebSocket {
         }
     }
 
-    /**
-     * POST request
-     */
-    private class PostRequest {
-
-        /** Request latch */
-        private final CountDownLatch latch = new CountDownLatch(1);
-
-        /** Response message */
-        private volatile String response;
-
-        /** Socket exception */
-        private volatile IOException exception;
-
-        /**
-         * Create a post request
-         */
-        public PostRequest() {
-        }
-
-        /**
-         * Wait for the response
-         *
-         * The caller must hold the lock for the request condition
-         *
-         * @param   timeout                 Wait timeout
-         * @param   unit                    Time unit
-         * @return                          Response message
-         * @throws  InterruptedException    Wait interrupted
-         * @throws  IOException             I/O error occurred
-         */
-        public String get(long timeout, TimeUnit unit) throws InterruptedException, IOException {
-            if (!latch.await(timeout, unit)) {
-                throw new SocketTimeoutException("WebSocket read timeout exceeded");
-            }
-            if (exception != null) {
-                throw exception;
-            }
-            return response;
-        }
-
-        /**
-         * Complete the request with a response message
-         *
-         * The caller must hold the lock for the request condition
-         *
-         * @param   response                Response message
-         */
-        public void complete(String response) {
-            this.response = response;
-            latch.countDown();
-        }
-
-        /**
-         * Complete the request with an exception
-         *
-         * The caller must hold the lock for the request condition
-         *
-         * @param   exception             I/O exception
-         */
-        public void complete(IOException exception) {
-            this.exception = exception;
-            latch.countDown();
-        }
-    }
 }
