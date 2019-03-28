@@ -102,5 +102,6 @@ public enum RequestType {
     getBlockId,
     sendMoneyPrivate,
     dividendPayment,
-    getAssetDividends
+    getAssetDividends,
+    getExpectedAssetTransfers
     }

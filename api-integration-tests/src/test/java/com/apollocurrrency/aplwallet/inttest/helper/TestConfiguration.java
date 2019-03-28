@@ -24,8 +24,8 @@ public class TestConfiguration {
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             parser = new JSONParser();
-           // Object obj = parser.parse(new FileReader("src\\test\\resources\\config.json"));
-            Object obj = parser.parse(new FileReader(classLoader.getResource("config.json").getFile()));
+            Object obj = parser.parse(new FileReader("src\\test\\resources\\config.json"));
+          //  Object obj = parser.parse(new FileReader(classLoader.getResource("config.json").getFile()));
             JSONObject jsonObject = (JSONObject) obj;
             host = (String) jsonObject.get("host");
             port = (String) jsonObject.get("port");

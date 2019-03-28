@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetOpenOrderResponse extends ResponseBase{
-    public OrderDTO[] openOrderDTOS;
+    public OrderDTO[] bidOrders;
     public OrderDTO[] askOrders;
     public OrderDTO[] openOrders;
 }
