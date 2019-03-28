@@ -53,7 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;

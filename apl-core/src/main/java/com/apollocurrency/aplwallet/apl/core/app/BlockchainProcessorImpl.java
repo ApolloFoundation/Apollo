@@ -26,8 +26,8 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBindi
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.db.*;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.*;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;

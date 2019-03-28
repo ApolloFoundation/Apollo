@@ -8,6 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 

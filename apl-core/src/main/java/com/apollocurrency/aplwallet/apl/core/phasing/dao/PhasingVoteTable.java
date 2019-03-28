@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

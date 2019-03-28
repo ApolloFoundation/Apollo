@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.phasing;
+package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;

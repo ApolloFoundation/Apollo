@@ -2,11 +2,12 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.phasing;
+package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.AbstractPoll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -14,8 +15,10 @@ import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class PhasingPoll extends AbstractPoll {
 
@@ -32,6 +35,8 @@ public class PhasingPoll extends AbstractPoll {
         this.whitelist = appendix.getWhitelist();
         this.hashedSecret = appendix.getHashedSecret();
         this.algorithm = appendix.getAlgorithm();
+        this.fullHash = transaction.getFullHash();
+        this.linkedFullHashes = Arrays.stream(appendix.getLinkedFullHashes()).collect(Collectors.toList());
     }
 
     public List<byte[]> getLinkedFullHashes() {
@@ -62,13 +67,15 @@ public class PhasingPoll extends AbstractPoll {
         this.algorithm = rs.getByte("algorithm");
     }
 
-    public PhasingPoll(long id, long accountId, byte whitelistSize, int finishHeight, byte votingModel,long quorum,
+    public PhasingPoll(long id, long accountId, long[] whitelist, byte[] fullHash, int finishHeight, byte votingModel,long quorum,
                        long minBalance, long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm) {
         super(id, accountId, finishHeight, new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel));
-        this.whitelist = whitelistSize == 0 ? Convert.EMPTY_LONG : null;
+        this.whitelist = whitelist;
+        this.fullHash = fullHash;
         this.quorum = quorum;
         this.hashedSecret = hashedSecret;
         this.algorithm = algorithm;
+        this.linkedFullHashes = Collections.emptyList();
     }
 
 

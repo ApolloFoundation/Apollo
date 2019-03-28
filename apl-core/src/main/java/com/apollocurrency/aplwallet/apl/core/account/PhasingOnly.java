@@ -6,8 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;

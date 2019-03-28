@@ -13,6 +13,8 @@ delete from referenced_transaction;
 delete from referenced_shard_transaction;
 delete from phasing_poll;
 delete from phasing_poll_result;
+delete from phasing_poll_voter;
+delete from phasing_vote;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT, TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -94,17 +96,29 @@ INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_tra
 ;
 INSERT INTO PUBLIC.PHASING_POLL (
 DB_ID  	    ,ID  	            ,ACCOUNT_ID  	    ,WHITELIST_SIZE  	,FINISH_HEIGHT  	,VOTING_MODEL  	,QUORUM  	,MIN_BALANCE  	,HOLDING_ID  	,MIN_BALANCE_MODEL  ,HASHED_SECRET  ,ALGORITHM  	,HEIGHT) VALUES
-(10	    , 3444674909301056677	,9211698109297098287	        ,1	        ,2000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,1000),
 (20	    , 808614188720864902	,9211698109297098287	        ,1	        ,10000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
-(30	    , 2083198303623116770	,9211698109297098287	        ,1	        ,9500	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
+(30	    , 2083198303623116770	,9211698109297098287	        ,0	        ,9500	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
 (40	    ,-4081443370478530685	,9211698109297098287	        ,1	        ,17000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,15456),
 ;
 INSERT INTO PUBLIC.PHASING_POLL_RESULT
 (DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT  ) VALUES
-(10	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
-(20	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ),
-(30	    ,2083198303623116770	,0	    ,FALSE	    ,9500   ),
+(10	    ,100                	,1	    ,TRUE	    ,300     ),
+(20	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
+(30	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ),
+(40	    ,2083198303623116770	,0	    ,FALSE	    ,9500   ),
 ;
+INSERT into PUBLIC.PHASING_POLL_VOTER
+(DB_ID  	,TRANSACTION_ID  	,VOTER_ID  	,HEIGHT) VALUES
+(20   ,808614188720864902	, 5564664969772495473 ,8000  ),
+(30   ,-4081443370478530685 , 5564664969772495473 ,15456 ),
+;
+--TODO add correct transactions for VOTE_ID
+INSERT into PUBLIC.PHASING_VOTE
+(DB_ID  	,VOTE_ID  	                ,TRANSACTION_ID  	   ,VOTER_ID  	,HEIGHT) VALUES
+(30         ,-2262365651675616510       ,808614188720864902   ,5564664969772495473 ,8999),
+(40         ,9145605905642517648        ,-4081443370478530685 ,5564664969772495473 ,15500),
+;
+
 INSERT into version values (262);
 INSERT INTO FTL.INDEXES (schema, table, columns)
                          VALUES('PUBLIC', 'CURRENCY', 'code,name,description');

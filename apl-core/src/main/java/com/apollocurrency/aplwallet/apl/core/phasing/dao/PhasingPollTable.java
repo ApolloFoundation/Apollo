@@ -15,8 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -182,7 +181,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
     public int getAllPhasedTransactionsCount() throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result")) {
+             PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
@@ -211,7 +210,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     public boolean isTransactionPhased(long id) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("select 1 from phasing_poll where id = ? UNION select 1 from phasing_poll_result where id ?")) {
+             PreparedStatement pstmt = con.prepareStatement("select 1 from phasing_poll where id = ? UNION select 1 from phasing_poll_result where id = ?")) {
             pstmt.setLong(1, id);
             pstmt.setLong(2, id);
             try (ResultSet rs = pstmt.executeQuery()) {

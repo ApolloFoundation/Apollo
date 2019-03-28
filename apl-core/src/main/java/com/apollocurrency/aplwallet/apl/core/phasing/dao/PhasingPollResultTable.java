@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;

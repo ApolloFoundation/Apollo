@@ -2,12 +2,13 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.phasing;
+package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class PhasingPollResult {
 
@@ -63,5 +64,21 @@ public class PhasingPollResult {
 
     public int getHeight() {
         return height;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PhasingPollResult)) return false;
+        PhasingPollResult result1 = (PhasingPollResult) o;
+        return id == result1.id &&
+                result == result1.result &&
+                approved == result1.approved &&
+                height == result1.height;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, result, approved, height);
     }
 }

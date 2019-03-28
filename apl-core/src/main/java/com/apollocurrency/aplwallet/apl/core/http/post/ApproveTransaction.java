@@ -28,7 +28,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_T
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
@@ -40,7 +40,6 @@ import org.json.simple.JSONStreamAware;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
