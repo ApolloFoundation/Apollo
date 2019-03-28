@@ -72,7 +72,7 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         if (keySeed == null) {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
         }
         if (keySeed != null || accountId != 0) {
             if (keySeed != null) {

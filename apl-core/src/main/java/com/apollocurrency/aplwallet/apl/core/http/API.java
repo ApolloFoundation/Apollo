@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -36,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMa
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -46,12 +41,8 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -63,28 +54,23 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +83,6 @@ import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Vetoed
@@ -107,7 +92,6 @@ public final class API {
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
@@ -121,14 +105,10 @@ public final class API {
 
     private static Set<String> allowedBotHosts;
     private static List<NetworkAddress> allowedBotNets;
-    private static final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
-    public static final String adminPassword = propertiesHolder.getStringProperty("apl.adminPassword", "", true);
-    public static boolean disableAdminPassword;
     public static final int maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
     static final boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
     public static final int apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
     public static final boolean apiServerCORS = propertiesHolder.getBooleanProperty("apl.apiServerCORS");
-    private static final String forwardedForHeader = propertiesHolder.getStringProperty("apl.forwardedForHeader");
 
     private static Server apiServer;
 
@@ -136,7 +116,8 @@ public final class API {
     private static URI serverRootUri;
     //TODO: remove static context
     private static final UPnP upnp = CDI.current().select(UPnP.class).get();
-
+    private static final JettyConnectorCreator jettyConnectorCreator = CDI.current().select(JettyConnectorCreator.class).get();
+    
 //TODO: remove this as soon as Al Gamal is ready!    
     private static Thread serverKeysGenerator = new Thread(() -> {
         while (!Thread.currentThread().isInterrupted()) {
@@ -212,13 +193,14 @@ public final class API {
         }
 
         boolean enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
-        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        if (blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
         if (enableAPIServer) {
 
             final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
             final int sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
             final String host = propertiesHolder.getStringProperty("apl.apiServerHost");
-            disableAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
             int maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");
             int minThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMinSize");
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
@@ -226,60 +208,23 @@ public final class API {
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
             threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
-            ServerConnector connector;
             boolean enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
+            
             //
             // Create the HTTP connector
             //
             if (!enableSSL || port != sslPort) {
-                HttpConfiguration configuration = new HttpConfiguration();
-                configuration.setSendDateHeader(false);
-                configuration.setSendServerVersion(false);
-
-                connector = new ServerConnector(apiServer, new HttpConnectionFactory(configuration));
-                connector.setPort(port);
-                connector.setHost(host);
-                connector.setIdleTimeout(apiServerIdleTimeout);
-                connector.setReuseAddress(true);
-                apiServer.addConnector(connector);
+                jettyConnectorCreator.addHttpConnector(host, port, apiServer);
                 LOG.info("API server using HTTP port " + port);
             }
             //
             // Create the HTTPS connector
             //
-            final SslContextFactory sslContextFactory;
+
             if (enableSSL) {
-                HttpConfiguration https_config = new HttpConfiguration();
-                https_config.setSendDateHeader(false);
-                https_config.setSendServerVersion(false);
-                https_config.setSecureScheme("https");
-                https_config.setSecurePort(sslPort);
-                https_config.addCustomizer(new SecureRequestCustomizer());
-                sslContextFactory = new SslContextFactory();
-                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath"))).toString();
-                LOG.info("Using keystore: " + keyStorePath);
-                sslContextFactory.setKeyStorePath(keyStorePath);
-                sslContextFactory.setKeyStorePassword(propertiesHolder.getStringProperty("apl.keyStorePassword", null, true));
-                sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
-                        "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5", "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
-                        "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA");
-                sslContextFactory.addExcludeProtocols("SSLv3");
-                sslContextFactory.setKeyStoreType(propertiesHolder.getStringProperty("apl.keyStoreType"));
-                List<String> ciphers = propertiesHolder.getStringListProperty("apl.apiSSLCiphers");
-                if (!ciphers.isEmpty()) {
-                    sslContextFactory.setIncludeCipherSuites(ciphers.toArray(new String[ciphers.size()]));
-                }
-                connector = new ServerConnector(apiServer, new SslConnectionFactory(sslContextFactory, "http/1.1"),
-                        new HttpConnectionFactory(https_config));
-                connector.setPort(sslPort);
-                connector.setHost(host);
-                connector.setIdleTimeout(apiServerIdleTimeout);
-                connector.setReuseAddress(true);
-                apiServer.addConnector(connector);
-                LOG.info("API server using HTTPS port " + sslPort);
-            } else {
-                sslContextFactory = null;
+                jettyConnectorCreator.addHttpSConnector(host, port, apiServer);
             }
+            
             String localhost = "0.0.0.0".equals(host) || "127.0.0.1".equals(host) ? "localhost" : host;
             try {
                 welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
@@ -402,7 +347,6 @@ public final class API {
             apiServer.setStopAtShutdown(true);
 //            Log.getRootLogger().setDebugEnabled(true);
 
-//            ThreadPool.runBeforeStart("APIInitThread", () -> {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {
@@ -414,21 +358,16 @@ public final class API {
                     }
 
                     apiServer.start();
-                    if (sslContextFactory != null) {
-                        LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
-                        LOG.debug("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
-                    }
+
                     LOG.info("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
                 } catch (Exception e) {
                     LOG.error("Failed to start API server", e);
                     throw new RuntimeException(e.toString(), e);
                 }
 
-          //  }, true);
 
         } else {
             apiServer = null;
-            disableAdminPassword = false;
             openAPIPort = 0;
             openAPISSLPort = 0;
             isOpenAPI = false;
@@ -456,81 +395,6 @@ public final class API {
         }
     }
 
-    public static void verifyPassword(HttpServletRequest req) throws ParameterException {
-        if (API.disableAdminPassword) {
-            return;
-        }
-        if (API.adminPassword.isEmpty()) {
-            throw new ParameterException(NO_PASSWORD_IN_CONFIG);
-        }
-        checkOrLockPassword(req);
-    }
-
-    public static boolean checkPassword(HttpServletRequest req) {
-        if (API.disableAdminPassword) {
-            return true;
-        }
-        if (API.adminPassword.isEmpty()) {
-            return false;
-        }
-        if (Convert.emptyToNull(req.getParameter("adminPassword")) == null) {
-            return false;
-        }
-        try {
-            checkOrLockPassword(req);
-            return true;
-        } catch (ParameterException e) {
-            return false;
-        }
-    }
-
-@Vetoed
-    private static class PasswordCount {
-        private int count;
-        private int time;
-    }
-
-    private static void checkOrLockPassword(HttpServletRequest req) throws ParameterException {
-        int now = timeService.getEpochTime();
-        String remoteHost = null;
-        if (forwardedForHeader != null) {
-            remoteHost = req.getHeader(forwardedForHeader);
-        }
-        if (remoteHost == null) {
-            remoteHost = req.getRemoteHost();
-        }
-        synchronized(incorrectPasswords) {
-            PasswordCount passwordCount = incorrectPasswords.get(remoteHost);
-            if (passwordCount != null && passwordCount.count >= 25 && now - passwordCount.time < 60*60) {
-                LOG.warn("Too many incorrect admin password attempts from " + remoteHost);
-                throw new ParameterException(LOCKED_ADMIN_PASSWORD);
-            }
-            String adminPassword = Convert.nullToEmpty(req.getParameter("adminPassword"));
-            if (!API.adminPassword.equals(adminPassword)) {
-                if (adminPassword.length() > 0) {
-                    if (passwordCount == null) {
-                        passwordCount = new PasswordCount();
-                        incorrectPasswords.put(remoteHost, passwordCount);
-                        if (incorrectPasswords.size() > 1000) {
-                            // Remove one of the locked hosts at random to prevent unlimited growth of the map
-                            List<String> remoteHosts = new ArrayList<>(incorrectPasswords.keySet());
-                            Random r = new Random();
-                            incorrectPasswords.remove(remoteHosts.get(r.nextInt(remoteHosts.size())));
-                        }
-                    }
-                    passwordCount.count++;
-                    passwordCount.time = now;
-                    LOG.warn("Incorrect adminPassword from " + remoteHost);
-                    throw new ParameterException(INCORRECT_ADMIN_PASSWORD);
-                } else {
-                    throw new ParameterException(MISSING_ADMIN_PASSWORD);
-                }
-            }
-            if (passwordCount != null) {
-                incorrectPasswords.remove(remoteHost);
-            }
-        }
-    }
 
     static boolean isAllowed(String remoteHost) {
         if (API.allowedBotHosts == null || API.allowedBotHosts.contains(remoteHost)) {
@@ -587,33 +451,6 @@ public final class API {
         securityHandler.addConstraintMapping(mapping);
     }
 
-    private static class NetworkAddress {
-
-        private BigInteger netAddress;
-        private BigInteger netMask;
-
-        private NetworkAddress(String address) throws UnknownHostException {
-            String[] addressParts = address.split("/");
-            if (addressParts.length == 2) {
-                InetAddress targetHostAddress = InetAddress.getByName(addressParts[0]);
-                byte[] srcBytes = targetHostAddress.getAddress();
-                netAddress = new BigInteger(1, srcBytes);
-                int maskBitLength = Integer.valueOf(addressParts[1]);
-                int addressBitLength = (targetHostAddress instanceof Inet4Address) ? 32 : 128;
-                netMask = BigInteger.ZERO
-                        .setBit(addressBitLength)
-                        .subtract(BigInteger.ONE)
-                        .subtract(BigInteger.ZERO.setBit(addressBitLength - maskBitLength).subtract(BigInteger.ONE));
-            } else {
-                throw new IllegalArgumentException("Invalid address: " + address);
-            }
-        }
-
-        private boolean contains(BigInteger hostAddressToCheck) {
-            return hostAddressToCheck.and(netMask).equals(netAddress);
-        }
-
-    }
 
     public static final class XFrameOptionsFilter implements Filter {
 

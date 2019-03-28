@@ -38,7 +38,8 @@ public abstract class AbstractAPIRequestHandler {
     private TransactionProcessor transactionProcessor;
     protected static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private DatabaseManager databaseManager;
-
+    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;
@@ -68,7 +69,7 @@ public abstract class AbstractAPIRequestHandler {
     public AbstractAPIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
         List<String> parameters = new ArrayList<>();
         Collections.addAll(parameters, origParameters);
-        if ((requirePassword() || parameters.contains("lastIndex")) && ! API.disableAdminPassword) {
+        if ((requirePassword() || parameters.contains("lastIndex")) && ! apw.disableAdminPassword) {
             parameters.add("adminPassword");
         }
         if (allowRequiredBlockParameters()) {

@@ -66,7 +66,8 @@ public final class APIServlet extends HttpServlet {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
-
+    private static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+            
     static {
 
         Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
@@ -166,7 +167,7 @@ public final class APIServlet extends HttpServlet {
             }
 
             if (apiRequestHandler.requirePassword()) {
-                API.verifyPassword(req);
+                apw.verifyPassword(req);
             }
             String accountName2FA = apiRequestHandler.vaultAccountName();
             if (apiRequestHandler.is2FAProtected()) {

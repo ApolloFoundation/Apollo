@@ -67,7 +67,7 @@ public final class GetState extends AbstractAPIRequestHandler {
 
         JSONObject response = new GetBlockchainStatus().processRequest(req);
 
-        if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
+        if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && apw.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
             response.put("numberOfAccounts", Account.getCount());
             response.put("numberOfAssets", Asset.getCount());
@@ -107,7 +107,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
         response.put("peerPort", Peers.getDefaultPeerPort());
         response.put("isOffline", propertiesHolder.isOffline());
-        response.put("needsAdminPassword", !API.disableAdminPassword);
+        response.put("needsAdminPassword", !apw.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());
         InetAddress externalAddress = upnp.getExternalAddress();
         if (externalAddress != null) {
