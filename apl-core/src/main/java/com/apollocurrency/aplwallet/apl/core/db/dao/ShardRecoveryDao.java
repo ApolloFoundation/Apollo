@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import java.util.List;
@@ -38,15 +42,15 @@ public interface ShardRecoveryDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO shard_recovery(" +
-            "shard_recovery_id, state, object_name, column_name, last_column_value, last_column_str, updated) " +
-            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :lastColumnStr, CURRENT_TIMESTAMP())")
+            "shard_recovery_id, state, object_name, column_name, last_column_value, processed_object, updated) " +
+            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :processedObject, CURRENT_TIMESTAMP())")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     @GetGeneratedKeys
     long saveShardRecovery(@BindBean ShardRecovery shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard_recovery SET state=:state, object_name=:objectName, column_name=:columnName, " +
-            "last_column_value=:lastColumnValue, last_column_str=:lastColumnStr, updated=CURRENT_TIMESTAMP() " +
+            "last_column_value=:lastColumnValue, processed_object=:processedObject, updated=CURRENT_TIMESTAMP() " +
             "where shard_recovery_id =:shardRecoveryId")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     int updateShardRecovery(@BindBean ShardRecovery shardRecovery);

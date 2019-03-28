@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.sql.Connection;
-
 import org.slf4j.Logger;
 
 /**
@@ -15,19 +13,41 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-public class TransactionSelectAndInsertHelper extends AbstractBlockTransactionHelper {
+@Deprecated
+public class TransactionSelectAndInsertHelper extends BlockTransactionInsertHelper {
     private static final Logger log = getLogger(TransactionSelectAndInsertHelper.class);
 
     public TransactionSelectAndInsertHelper() {
     }
 
+/*
+    @Override
     public long processOperation(Connection sourceConnect, Connection targetConnect,
                                  TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
-        checkMandatoryParameters(sourceConnect, targetConnect, operationParams);
 
-        if ("transaction".equalsIgnoreCase(currentTableName)) {
+        checkMandatoryParameters(sourceConnect, targetConnect, operationParams);
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+        // check previous state is correct
+        assignMainBottomTopSelectSql();
+        // select DB_ID for target HEIGHT
+        this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
+
+        if (restoreLowerBoundIdOrSkipTable(sourceConnect, operationParams, recoveryValue)) {
+            return totalSelectedRows; // skip current table
+        }
+
+        log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
+        // do selection and insertion process
+        long startSelect = doStartSelectAndInsert(sourceConnect, targetConnect, operationParams);
+
+        log.debug("'{}' inserted records [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        return totalSelectedRows;
+    }
+
+    private void assignMainBottomTopSelectSql() throws IllegalAccessException {
+        if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
@@ -38,18 +58,7 @@ public class TransactionSelectAndInsertHelper extends AbstractBlockTransactionHe
         } else {
             throw new IllegalAccessException("Unsupported table. 'Transaction' is expected. Pls use another Helper class");
         }
-        // select DB_ID for target HEIGHT
-        upperBoundIdValue = selectUpperDbId(sourceConnect, operationParams.snapshotBlockHeight, sqlSelectUpperBound);
-        if (upperBoundIdValue == null) {
-            String error = String.format("Not Found Transaction's DB_ID at snapshot Block height = %s", operationParams.snapshotBlockHeight);
-            log.error(error);
-            throw new RuntimeException(error);
-        }
-        // do selection and insertion process
-        long startSelect = doStartSelectAndInsert(sourceConnect, targetConnect, operationParams);
-
-        log.debug("'{}' inserted records [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-        return totalRowCount;
     }
+*/
 
 }

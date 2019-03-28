@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
 import java.sql.ResultSet;
@@ -22,7 +26,7 @@ public class ShardRecoveryRowMapper implements RowMapper<ShardRecovery> {
                 .objectName(rs.getString("object_name"))
                 .columnName(rs.getString("column_name"))
                 .lastColumnValue(rs.getLong("last_column_value"))
-                .lastColumnStr(rs.getString("last_column_str"))
+                .processedObject(rs.getString("processed_object"))
                 .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
                 .build();
     }

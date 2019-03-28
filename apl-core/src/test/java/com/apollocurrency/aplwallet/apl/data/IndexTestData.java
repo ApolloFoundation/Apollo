@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
@@ -7,11 +11,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IndexTestData {
-    public static final BlockIndex BLOCK_INDEX_0 = new BlockIndex(10L, 30L, 30);
+    public static final BlockIndex BLOCK_INDEX_0 = new BlockIndex(3L, 3L, 30);
     public static final BlockIndex BLOCK_INDEX_1 = new BlockIndex(1L, 1L, 1);
     public static final BlockIndex BLOCK_INDEX_2 = new BlockIndex(2L, 2L, 2);
     public static final BlockIndex NOT_SAVED_BLOCK_INDEX = new BlockIndex(2L, 100L, 3);
-    public static final TransactionIndex TRANSACTION_INDEX_0 = new TransactionIndex(100L, 30L);
+    public static final TransactionIndex TRANSACTION_INDEX_0 = new TransactionIndex(100L, 3L);
     public static final TransactionIndex TRANSACTION_INDEX_1 = new TransactionIndex(101L, 1L);
     public static final TransactionIndex TRANSACTION_INDEX_2 = new TransactionIndex(102L, 1L);
     public static final TransactionIndex TRANSACTION_INDEX_3 = new TransactionIndex(103L, 1L);

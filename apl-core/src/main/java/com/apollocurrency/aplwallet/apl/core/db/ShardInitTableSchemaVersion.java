@@ -76,8 +76,6 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                 return 6;
             case 24:
                 return 24;
-//            case 262:
-//                return 262;
             default:
                 throw new RuntimeException("Shard CREATE TABLES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

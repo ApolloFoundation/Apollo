@@ -718,7 +718,7 @@ public class AplDbVersion extends DbVersion {
             case 262:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
-                        "last_column_value BIGINT, last_column_str VARCHAR, updated TIMESTAMP(9) NOT NULL)");
+                        "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
             case 263:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
             case 264:

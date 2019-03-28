@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
 /**
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
+public class BlockDeleteHelper extends AbstractHelper {
     private static final Logger log = getLogger(BlockDeleteHelper.class);
 
     public BlockDeleteHelper() {
@@ -33,19 +34,16 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
 
         long startSelect = System.currentTimeMillis();
 
-        if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            sqlToExecuteWithPaging =
-                    "select DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
-            log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
-            log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
-            log.trace(sqlSelectBottomBound);
-        } else {
-            throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
-        }
+        assignMainBottomTopSelectSql();
         // select upper, bottom DB_ID
-        selectLowerAndUpperBoundValues(sourceConnect, operationParams);
+        this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
+
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+
+        if (restoreLowerBoundIdOrSkipTable(sourceConnect, operationParams, recoveryValue)) {
+            return totalSelectedRows; // skip current table
+        }
+        log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
@@ -65,23 +63,23 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                 this.preparedInsertStatement.close();
             }
         }
-        log.debug("Deleted '{}' = [{}] within {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("Deleted '{}' = [{}] within {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
 
-        log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-        return totalRowCount;
+        log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        return totalSelectedRows;
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
                                     Connection targetConnect, TableOperationParams operationParams)
             throws SQLException {
         int rows = 0;
+        int processedRows = 0;
         try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                 // handle rows here
+            while (rs.next()) { // handle rows here
                 if (rsmd == null) {
+                    // it's called one time only
                     rsmd = rs.getMetaData();
                     if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-//                        sqlInsertString.append("delete from BLOCK WHERE DB_ID > ? AND DB_ID < ? LIMIT ?");
                         sqlInsertString.append("delete from BLOCK WHERE DB_ID < ? LIMIT ?");
                     }
                     // precompile sql
@@ -90,13 +88,11 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                         log.trace("Precompiled delete = {}", sqlInsertString);
                     }
                 }
-//                paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
                 try {
-//                    preparedInsertStatement.setObject(1, rs.getObject(1));
                     preparedInsertStatement.setObject(1, paginateResultWrapper.upperBoundColumnValue);
                     preparedInsertStatement.setObject(2, operationParams.batchCommitSize);
-                    insertedCount += preparedInsertStatement.executeUpdate();
+                    processedRows = preparedInsertStatement.executeUpdate();
                     log.debug("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
@@ -106,18 +102,39 @@ public class BlockDeleteHelper extends AbstractRelinkUpdateHelper {
                 }
                 rows++;
             }
-            totalRowCount += rows;
+            totalSelectedRows += rows;
+            totalProcessedCount += processedRows;
         }
         log.trace("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={}", currentTableName,
-                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+                totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
 
         if (rows == 1) {
             // in case we have only 1 RECORD selected, move lower bound
             // move lower bound
             paginateResultWrapper.lowerBoundColumnValue += operationParams.batchCommitSize;
         }
+        // update recovery state + db_id value
+        recoveryValue.setObjectName(currentTableName);
+        recoveryValue.setState(MigrateState.DATA_REMOVE_STARTED);
+        recoveryValue.setColumnName(BASE_COLUMN_NAME);
+        recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
+        shardRecoveryDao.updateShardRecovery(recoveryValue);
         targetConnect.commit(); // commit latest records if any
         return rows != 0;
+    }
+
+    private void assignMainBottomTopSelectSql() throws IllegalAccessException {
+        if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+            sqlToExecuteWithPaging =
+                    "select DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
+            log.trace(sqlToExecuteWithPaging);
+            sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
+            log.trace(sqlSelectUpperBound);
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
+            log.trace(sqlSelectBottomBound);
+        } else {
+            throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
+        }
     }
 
 }

@@ -36,6 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
@@ -82,7 +84,7 @@ class ShardMigrationExecutorTest {
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             TransactionTestData.class, PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
-            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class,
+            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
             BlockImpl.class, ShardMigrationExecutor.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -100,20 +102,16 @@ class ShardMigrationExecutorTest {
     @Inject
     private DataTransferManagementReceiver managementReceiver;
     @Inject
-    private DerivedDbTablesRegistry dbTablesRegistry;
-    @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
+    @Inject
+    private BlockIndexDao blockIndexDao;
+    @Inject
+    private TransactionIndexDao transactionIndexDao;
 
     @BeforeAll
     static void setUpAll() {
         Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-    }
-
-    @BeforeEach
-    void setUp() {
-        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
-        dbTablesRegistry.registerDerivedTable(publicKeyTable);
     }
 
     @AfterEach
@@ -147,6 +145,12 @@ class ShardMigrationExecutorTest {
         state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
 //        assertEquals(FAILED, state);
         assertEquals(SECONDARY_INDEX_UPDATED, state);
+
+        // check by secondary indexes
+        long blockIndexCount = blockIndexDao.countBlockIndexByShard(3L);
+        assertEquals(8, blockIndexCount);
+        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(3L);
+        assertEquals(5, trIndexCount);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, 8000L);
         state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);

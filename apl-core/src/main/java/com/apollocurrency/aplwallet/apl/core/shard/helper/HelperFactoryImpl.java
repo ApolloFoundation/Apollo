@@ -29,11 +29,9 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
     public Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName) {
         Optional<BatchedPaginationOperation> helper;
         switch (helperTableName.toUpperCase()) {
-            case BLOCK_TABLE_NAME : {
-                return Optional.of(new BlockSelectAndInsertHelper());
-            }
+            case BLOCK_TABLE_NAME :
             case TRANSACTION_TABLE_NAME : {
-                return Optional.of(new TransactionSelectAndInsertHelper());
+                return Optional.of(new BlockTransactionInsertHelper());
             }
             case GENESIS_PUBLIC_KEY_TABLE_NAME :
             case PUBLIC_KEY_TABLE_NAME :
@@ -44,7 +42,7 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
                 return Optional.of(new RelinkingToSnapshotBlockHelper());
             case BLOCK_INDEX_TABLE_NAME :
             case TRANSACTION_SHARD_INDEX_TABLE_NAME : {
-                return Optional.of(new SecondaryIndexSelectAndInsertHelper());
+                return Optional.of(new SecondaryIndexInsertHelper());
             }
             default: {
                 throw new IllegalArgumentException("Incorrect Table name was supplied: " + helperTableName);

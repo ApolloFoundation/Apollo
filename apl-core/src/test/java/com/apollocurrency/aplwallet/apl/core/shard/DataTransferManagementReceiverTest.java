@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -47,8 +46,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -66,7 +67,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -104,7 +104,9 @@ class DataTransferManagementReceiverTest {
     @Inject
     private DataTransferManagementReceiver managementReceiver;
     @Inject
-    private DerivedDbTablesRegistry dbTablesRegistry;
+    private BlockIndexDao blockIndexDao;
+    @Inject
+    private TransactionIndexDao transactionIndexDao;
 
     @BeforeAll
     static void setUpAll() {
@@ -120,17 +122,11 @@ class DataTransferManagementReceiverTest {
         baseDbProperties = dbConfig.getDbConfig();
     }
 
-    @BeforeEach
-    void setUp() {
-        PublicKeyTable publicKeyTable = PublicKeyTable.getInstance();
-        dbTablesRegistry.registerDerivedTable(publicKeyTable);
-    }
-
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
         extension.getDatabaseManger().shutdown();
-        FileUtils.deleteQuietly(pathToDb.toFile());
+//        FileUtils.deleteQuietly(pathToDb.toFile());
     }
 
     @Test
@@ -153,7 +149,7 @@ class DataTransferManagementReceiverTest {
     }
 
     @Test
-    void createShardDbAndMoveDataFromMain() throws IOException {
+    void createShardDbDoAllOperations() throws IOException {
         long start = System.currentTimeMillis();
         MigrateState state = managementReceiver.getCurrentState();
         assertNotNull(state);
@@ -165,7 +161,7 @@ class DataTransferManagementReceiverTest {
         List<String> tableNameList = new ArrayList<>();
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 100, 8000L);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, 8000L);
 
         state = managementReceiver.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
@@ -177,7 +173,7 @@ class DataTransferManagementReceiverTest {
         tableNameList.clear();
         tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
-//        tableNameList.add(TAGGED_DATA_TABLE_NAME); // !
+//        tableNameList.add(TAGGED_DATA_TABLE_NAME); // ! skip in test
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
         tableNameList.add(DATA_TAG_TABLE_NAME);
         tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
@@ -195,6 +191,10 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.updateSecondaryIndex(paramInfo);
         assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 //        assertEquals(MigrateState.FAILED, state);
+        long blockIndexCount = blockIndexDao.countBlockIndexByShard(3L);
+        assertEquals(8, blockIndexCount);
+        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(3L);
+        assertEquals(5, trIndexCount);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);

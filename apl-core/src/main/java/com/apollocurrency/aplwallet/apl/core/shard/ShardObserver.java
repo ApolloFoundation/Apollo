@@ -51,6 +51,7 @@ public class ShardObserver {
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
                 if (isSharding) {
                     log.warn("Previous shard was no finished! Will skip next shard at height: " + minRollbackHeight);
+                    log.error("!!! --- SHARD SKIPPING CASE, IT SHOULD NEVER HAPPEN ON PRODUCTION --- !!! You can skip it at YOUR OWN RISK !!!");
                 } else {
                     MigrateState state = MigrateState.INIT;
                     isSharding = true;

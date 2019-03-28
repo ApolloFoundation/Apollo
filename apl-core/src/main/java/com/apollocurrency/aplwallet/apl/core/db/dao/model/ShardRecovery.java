@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
 import java.time.Instant;
@@ -13,13 +17,13 @@ public class ShardRecovery {
     private String objectName;
     private String columnName;
     private Long lastColumnValue;
-    private String lastColumnStr;
+    private String processedObject;
     private Instant updated = Instant.now();
 
     public ShardRecovery() {
     }
 
-    public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Instant updated) {
+    public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
         this.shardRecoveryId = shardRecoveryId;
         if (state != null) {
             this.state = state.name();
@@ -27,26 +31,26 @@ public class ShardRecovery {
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
-        this.lastColumnStr = lastColumnStr;
+        this.processedObject = processedObject;
         this.updated = updated;
     }
 
-    public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Instant updated) {
+    public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
         if (state != null) {
             this.state = state.name();
         }
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
-        this.lastColumnStr = lastColumnStr;
+        this.processedObject = processedObject;
         this.updated = updated;
     }
 
-    public ShardRecovery(String objectName, String columnName, Long lastColumnValue, String lastColumnStr, Instant updated) {
+    public ShardRecovery(String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
-        this.lastColumnStr = lastColumnStr;
+        this.processedObject = processedObject;
         this.updated = updated;
     }
 
@@ -115,12 +119,12 @@ public class ShardRecovery {
         this.lastColumnValue = lastColumnValue;
     }
 
-    public String getLastColumnStr() {
-        return lastColumnStr;
+    public String getProcessedObject() {
+        return processedObject;
     }
 
-    public void setLastColumnStr(String lastColumnStr) {
-        this.lastColumnStr = lastColumnStr;
+    public void setProcessedObject(String processedObject) {
+        this.processedObject = processedObject;
     }
 
     public Instant getUpdated() {
@@ -141,7 +145,7 @@ public class ShardRecovery {
         private String objectName;
         private String columnName;
         private Long lastColumnValue;
-        private String lastColumnStr;
+        private String processedObject;
         private Instant updated;
 
         private ShardRecoveryBuilder() {
@@ -172,8 +176,8 @@ public class ShardRecovery {
             return this;
         }
 
-        public ShardRecoveryBuilder lastColumnStr(String lastColumnStr) {
-            this.lastColumnStr = lastColumnStr;
+        public ShardRecoveryBuilder processedObject(String processedObjectName) {
+            this.processedObject = processedObjectName;
             return this;
         }
 
@@ -185,7 +189,21 @@ public class ShardRecovery {
         public ShardRecovery build() {
             return new ShardRecovery(
                     shardRecoveryId, MigrateState.valueOf(state), objectName,
-                    columnName, lastColumnValue, lastColumnStr, updated);
+                    columnName, lastColumnValue, processedObject, updated);
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("ShardRecovery{");
+        sb.append("shardRecoveryId=").append(shardRecoveryId);
+        sb.append(", state='").append(state).append('\'');
+        sb.append(", objectName='").append(objectName).append('\'');
+        sb.append(", columnName='").append(columnName).append('\'');
+        sb.append(", lastColumnValue=").append(lastColumnValue);
+        sb.append(", processedObject='").append(processedObject).append('\'');
+        sb.append(", updated=").append(updated);
+        sb.append('}');
+        return sb.toString();
     }
 }

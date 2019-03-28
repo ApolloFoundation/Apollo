@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
 /**
@@ -20,10 +21,10 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHelper {
-    private static final Logger log = getLogger(SecondaryIndexSelectAndInsertHelper.class);
+public class SecondaryIndexInsertHelper extends AbstractHelper {
+    private static final Logger log = getLogger(SecondaryIndexInsertHelper.class);
 
-    public SecondaryIndexSelectAndInsertHelper() {
+    public SecondaryIndexInsertHelper() {
     }
 
     @Override
@@ -35,28 +36,15 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
 
         long startSelect = System.currentTimeMillis();
 
-        if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            sqlToExecuteWithPaging =
-                    "select ? as shard_id, ID, HEIGHT, DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
-            log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
-            log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
-            log.trace(sqlSelectBottomBound);
-        } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
-            sqlToExecuteWithPaging =
-                    "select ID, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
-            log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound =
-                    "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
-            log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from TRANSACTION";
-            log.trace(sqlSelectBottomBound);
-        } else {
-            throw new IllegalAccessException("Unsupported table. 'BLOCK_INDEX' OR 'TRANSACTION_SHARD_INDEX' is expected. Pls use another Helper class");
-        }
+        assignMainBottomTopSelectSql(operationParams);
         // select upper, bottom DB_ID
-        selectLowerAndUpperBoundValues(sourceConnect, operationParams);
+        this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+
+        if (restoreLowerBoundIdOrSkipTable(sourceConnect, operationParams, recoveryValue)) {
+            return totalSelectedRows; // skip current table
+        }
+        log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         // turn OFF HEIGHT constraint for specified table
         if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
@@ -83,7 +71,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                     ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                     ps.setLong(3, operationParams.batchCommitSize);
                 }
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -92,7 +80,7 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                 this.preparedInsertStatement.close();
             }
         }
-        log.debug("Inserted '{}' = [{}] within {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("Inserted '{}' = [{}] within {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
 
         // turn ON HEIGHT constraint for specified table
         if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
@@ -108,18 +96,22 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                     "CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
         }
 
-        log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-        return totalRowCount;
+        log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        return totalSelectedRows;
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                    Connection targetConnect, long batchCommitSize)
+                                    Connection sourceConnect, TableOperationParams operationParams)
             throws SQLException {
         int rows = 0;
+        int processedRows = 0;
         try (ResultSet rs = ps.executeQuery()) {
+            log.trace("SELECT...where DB_ID > {} AND DB_ID < {} LIMIT {}",
+                    paginateResultWrapper.lowerBoundColumnValue, paginateResultWrapper.upperBoundColumnValue,
+                    operationParams.batchCommitSize);
             while (rs.next()) {
                 // it called one time one first loop only
-                extractMetaDataCreateInsert(targetConnect, rs);
+                extractMetaDataCreateInsert(sourceConnect, rs);
 
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
 
@@ -131,24 +123,56 @@ public class SecondaryIndexSelectAndInsertHelper extends AbstractRelinkUpdateHel
                             preparedInsertStatement.setObject(i + 1, rs.getObject(i + 1));
                         }
                     }
-                    insertedCount += preparedInsertStatement.executeUpdate();
-                    log.trace("Inserting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+                    processedRows += preparedInsertStatement.executeUpdate();
+                    log.trace("Inserting '{}' into {} : next column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Inserting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                     log.error("Failed inserting " + currentTableName, e);
-                    targetConnect.rollback();
+                    sourceConnect.rollback();
                     throw e;
                 }
                 rows++;
             }
-            totalRowCount += rows;
+            totalSelectedRows += rows;
+            totalProcessedCount += processedRows;
         }
-        log.trace("Total Records '{}': selected = {}, inserted = {}, rows = {}, {}={}", currentTableName,
-                totalRowCount, insertedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
-
-        targetConnect.commit(); // commit latest records if any
-//        return rows != 0 && (1 + paginateResultWrapper.lowerBoundColumnValue >= paginateResultWrapper.upperBoundColumnValue);
+        log.trace("Total Records '{}': selected = {}, updated = {}, rows = {}, {}={}", currentTableName,
+                totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+        if (rows == 1) {
+            // in case we have only 1 RECORD selected, move lower bound
+            paginateResultWrapper.lowerBoundColumnValue += operationParams.batchCommitSize;
+        }
+        // update recovery state + db_id value
+        recoveryValue.setObjectName(currentTableName);
+        recoveryValue.setState(MigrateState.SECONDARY_INDEX_STARTED);
+        recoveryValue.setColumnName(BASE_COLUMN_NAME);
+        recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
+        shardRecoveryDao.updateShardRecovery(recoveryValue);
+        sourceConnect.commit(); // commit latest records if any
         return rows != 0;
+    }
+
+    private void assignMainBottomTopSelectSql(TableOperationParams operationParams) throws IllegalAccessException {
+        if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+            sqlToExecuteWithPaging =
+                    "select ? as shard_id, ID, HEIGHT, DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
+            log.trace(sqlToExecuteWithPaging);
+            sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
+            log.trace(sqlSelectUpperBound);
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
+            log.trace(sqlSelectBottomBound);
+        } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
+            sqlToExecuteWithPaging =
+                    "select ID, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+            log.trace(sqlToExecuteWithPaging);
+            sqlSelectUpperBound =
+                    "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+            log.trace(sqlSelectUpperBound);
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from TRANSACTION";
+            log.trace(sqlSelectBottomBound);
+        } else {
+            throw new IllegalAccessException("Unsupported table. 'BLOCK_INDEX' OR 'TRANSACTION_SHARD_INDEX' is expected. Pls use another Helper class");
+        }
     }
 
     private void extractMetaDataCreateInsert(Connection targetConnect, ResultSet resultSet) throws SQLException {

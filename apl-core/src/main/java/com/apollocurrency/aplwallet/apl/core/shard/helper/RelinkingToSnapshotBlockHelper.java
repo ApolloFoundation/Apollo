@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
 /**
@@ -19,14 +20,14 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
+public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
     private static final Logger log = getLogger(RelinkingToSnapshotBlockHelper.class);
 
     public RelinkingToSnapshotBlockHelper() {
     }
 
     @Override
-    public long processOperation(Connection sourceConnect, Connection targetConnect,
+    public long processOperation(Connection sourceConnect, Connection targetConnect /* targetConnect is NOT used here*/,
                                  TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
@@ -36,24 +37,24 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         currentTableName = operationParams.tableName;
 
         long startSelect = System.currentTimeMillis();
-        sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID > ? AND DB_ID < ? limit ?";
-        log.trace(sqlToExecuteWithPaging);
-        sqlSelectUpperBound = "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT < ?";
-        log.trace(sqlSelectUpperBound);
-        sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
-        log.trace(sqlSelectBottomBound);
+        assignMainBottomTopSelectSql();
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
 
         // select upper, bottom DB_ID
-        selectLowerAndUpperBoundValues(sourceConnect, operationParams);
+        this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
+
+        if (restoreLowerBoundIdOrSkipTable(sourceConnect, operationParams, recoveryValue)) {
+            return totalSelectedRows; // skip current table
+        }
+        log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         // turn OFF HEIGHT constraint for specified table
         if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            executeUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop constraint CONSTRAINT_C11");
-            executeUpdateQuery(sourceConnect, "alter table GENESIS_PUBLIC_KEY drop primary key");
-            executeUpdateQuery(sourceConnect, "drop index GENESIS_PUBLIC_KEY_ACCOUNT_ID_HEIGHT_IDX");
-            executeUpdateQuery(sourceConnect, "drop index GENESIS_PUBLIC_KEY_HEIGHT_IDX");
+            executeUpdateQuery(sourceConnect, "alter table IF EXISTS GENESIS_PUBLIC_KEY drop constraint IF EXISTS CONSTRAINT_C11");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS GENESIS_PUBLIC_KEY_ACCOUNT_ID_HEIGHT_IDX");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS GENESIS_PUBLIC_KEY_HEIGHT_IDX");
         } else if (PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            executeUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint CONSTRAINT_8E8");
+            executeUpdateQuery(sourceConnect, "alter table PUBLIC_KEY drop constraint IF EXISTS CONSTRAINT_8E8");
         }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
@@ -71,14 +72,10 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
         }
-        log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-
         // turn ON HEIGHT constraint for specified table
         if (GENESIS_PUBLIC_KEY_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
                     "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_C11 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
-            executeUpdateQuery(sourceConnect,
-                    "ALTER TABLE GENESIS_PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS PRIMARY_KEY_GENESIS_PUBLIC_KEY primary key (DB_ID)");
             executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS genesis_public_key_account_id_height_idx on genesis_public_key(account_id, height)");
             executeUpdateQuery(sourceConnect,
@@ -87,12 +84,12 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
             executeUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }
-        log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalRowCount, (System.currentTimeMillis() - startSelect) / 1000);
-        return totalRowCount;
+        log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        return totalSelectedRows;
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                    Connection targetConnect, long batchCommitSize)
+                                    Connection sourceConnect, long batchCommitSize)
             throws SQLException {
         int rows = 0;
         try {
@@ -101,17 +98,32 @@ public class RelinkingToSnapshotBlockHelper extends AbstractRelinkUpdateHelper {
         } catch (Exception e) {
             log.error("Failed Updating '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
             log.error("Failed Updating " + currentTableName, e);
-            targetConnect.rollback();
+            sourceConnect.rollback();
             throw e;
         }
         log.trace("Total Records: updated = {}, rows = {}, {}={}",
-                totalRowCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+                totalSelectedRows, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
 
-        totalRowCount += rows;
+        totalSelectedRows += rows;
         paginateResultWrapper.lowerBoundColumnValue += batchCommitSize;
-        targetConnect.commit(); // commit latest records if any
-        return rows != 0;
+        // update recovery state + db_id value
+        recoveryValue.setObjectName(currentTableName);
+        recoveryValue.setState(MigrateState.DATA_RELINK_STARTED);
+        recoveryValue.setColumnName(BASE_COLUMN_NAME);
+        recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
+        shardRecoveryDao.updateShardRecovery(recoveryValue);
+        sourceConnect.commit(); // commit latest records if any
+
+        return rows != 0 || paginateResultWrapper.lowerBoundColumnValue < paginateResultWrapper.upperBoundColumnValue;
     }
 
+    private void assignMainBottomTopSelectSql() {
+        sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID > ? AND DB_ID < ? limit ?";
+        log.trace(sqlToExecuteWithPaging);
+        sqlSelectUpperBound = "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT <= ?";
+        log.trace(sqlSelectUpperBound);
+        sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+        log.trace(sqlSelectBottomBound);
+    }
 
 }
