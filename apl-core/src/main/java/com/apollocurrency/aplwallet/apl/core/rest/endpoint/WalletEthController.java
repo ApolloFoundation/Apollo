@@ -70,7 +70,7 @@ public class WalletEthController {
                                     schema = @Schema(implementation = Response.class)))
             }
     )
-    public Response getTransferEth(@FormParam("account") String account,
+    public Response transferEth(@FormParam("account") String account,
                                    @FormParam("passphrase") String passphraseReq,
                                    @FormParam("toAddress") String toAddress,
                                    @FormParam("amount") String amountEth) throws ParameterException {

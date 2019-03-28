@@ -3,13 +3,22 @@ package com.apollocurrency.aplwallet.apl.eth.service;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
-import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
@@ -18,10 +27,11 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -31,9 +41,73 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class EthereumWalletService {
     private static final Logger log = getLogger(EthereumWalletService.class);
 
-    @Inject
-    private Web3j web3j;
+//    @Inject
+    private Web3j web3j = CDI.current().select(Web3j.class).get();
+//    @Inject
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
+
+    private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+
+    public BigInteger getPaxBalanceWei(String accountAddress){
+        BigInteger balance = null;
+        try {
+            balance = getTokenBalance(paxContractAddress, accountAddress);
+        } catch (InterruptedException | ExecutionException e) {
+            log.error(e.getMessage(), e);
+        }
+        return balance;
+    }
+
+    public BigDecimal getPaxBalanceEther(String address) {
+        return Web3jUtils.weiToEther(getPaxBalanceWei(address));
+    }
+
+    private BigInteger getTokenBalance(String contractAddress, String userAddress) throws ExecutionException, InterruptedException {
+        Function function = balanceOf(userAddress);
+        String responseValue = callSmartContractFunction(function, contractAddress, userAddress);
+
+        List<Type> response = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
+
+        BigInteger balance = (BigInteger)response.get(0).getValue();
+
+        return balance;
+    }
+
+    private BigInteger getTokenTotalSupply(String contractAddress, String fromAddress) throws ExecutionException, InterruptedException {
+        Function function = totalSupply();
+        String responseValue = callSmartContractFunction(function, contractAddress, fromAddress);
+
+        List<Type> response = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
+
+        return (BigInteger) response.get(0).getValue();
+    }
+
+    private Function balanceOf(String owner) {
+        return new Function(
+                "balanceOf",
+                Collections.singletonList(new Address(owner)),
+                Collections.singletonList(new TypeReference<Uint256>() {}));
+    }
+
+    private Function totalSupply() {
+        return new Function(
+                "totalSupply",
+                Collections.emptyList(),
+                Collections.singletonList(new TypeReference<Uint256>() {}));
+    }
+
+    private String callSmartContractFunction(Function function, String contractAddress, String fromAddress) throws ExecutionException, InterruptedException {
+        String encodedFunction = FunctionEncoder.encode(function);
+
+        EthCall response = web3j.ethCall(
+                Transaction.createEthCallTransaction(fromAddress, contractAddress, encodedFunction),
+                DefaultBlockParameterName.LATEST)
+                .sendAsync()
+                .get();
+
+        return response.getValue();
+    }
 
     public BigInteger getBalanceWei(String accountAddress){
     // send asynchronous requests to get balance

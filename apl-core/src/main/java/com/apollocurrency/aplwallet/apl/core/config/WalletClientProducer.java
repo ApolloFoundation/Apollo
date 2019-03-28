@@ -17,8 +17,8 @@ public class WalletClientProducer {
 
     @Produces
     public Web3j initETHClient(){
-        String ethNodeUrl = propertiesHolder.getStringProperty("eth.node.url");
-        String ethNodePort = propertiesHolder.getStringProperty("eth.node.port");
+        String ethNodeUrl = propertiesHolder.getStringProperty("apl.eth.node.url");
+        String ethNodePort = propertiesHolder.getStringProperty("apl.eth.node.port");
         //TODO move HttpService config to config files.
         String fullUrl = ethNodeUrl;
 
