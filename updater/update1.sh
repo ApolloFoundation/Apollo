@@ -67,10 +67,10 @@ then
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
-        ./start-desktop.sh
+        ./bin/apl-run-desktop.sh
     else
         notify "Starting command line application..."
-        ./start.sh
+        ./bin/apl-start.sh
     fi
 
 else
