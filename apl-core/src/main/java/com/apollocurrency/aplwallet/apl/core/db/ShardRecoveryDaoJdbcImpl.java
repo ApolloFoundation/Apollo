@@ -79,9 +79,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
 
     public ShardRecovery getLatestShardRecovery(Connection con) {
         Objects.requireNonNull(con,"connection is NULL");
-        ShardRecovery recovery = null;
-        try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit ?")) {
-            pstmt.setLong(1, 1);
+        try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit 1")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rowMapper.map(rs);
             }
@@ -94,8 +92,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     public List<ShardRecovery> getAllShardRecovery(Connection con) {
         Objects.requireNonNull(con,"connection is NULL");
         List<ShardRecovery> result = new ArrayList<>();
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit ?")) {
-            pstmt.setLong(1, 1);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 ShardRecovery recovery = null;
                 while (rs.next()) {

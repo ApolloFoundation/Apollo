@@ -220,10 +220,14 @@ class ShardRecoveryDaoJdbcTest {
     void hardDeleteShardRecovery() {
         ShardRecovery recovery = new ShardRecovery(MigrateState.COMPLETED, "Object1",
                 "DB_ID", 100L, "TRANSACTION");
-        long result = daoJdbc.saveShardRecovery(connection, recovery);
-        assertTrue(result > 1);
+        long saveResult = daoJdbc.saveShardRecovery(connection, recovery);
+        assertTrue(saveResult > 1);
 
-        long deleteResult = daoJdbc.hardDeleteShardRecovery(connection, result);
+        List<ShardRecovery> allResult = daoJdbc.getAllShardRecovery(connection);
+        assertNotNull(allResult);
+        assertEquals(2, allResult.size());
+
+        long deleteResult = daoJdbc.hardDeleteShardRecovery(connection, saveResult);
         assertEquals(1, deleteResult);
         long resultCount = daoJdbc.countShardRecovery(connection);
         assertEquals(1, resultCount);

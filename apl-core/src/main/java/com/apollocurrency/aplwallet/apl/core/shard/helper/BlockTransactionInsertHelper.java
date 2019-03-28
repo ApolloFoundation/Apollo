@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 public class BlockTransactionInsertHelper extends AbstractHelper {
     private static final Logger log = getLogger(BlockTransactionInsertHelper.class);
 
+    private String sqlDeleteFromBottomBound;
 
     @Override
     public long processOperation(Connection sourceConnect, Connection targetConnect,
@@ -54,6 +55,21 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     protected long doStartSelectAndInsert(Connection sourceConnect, Connection targetConnect,
                                           TableOperationParams operationParams) throws SQLException {
 
+        // clean up previously stored values from latest saved recovery
+        if (lowerBoundIdValue != null && lowerBoundIdValue > 0) {
+            try (PreparedStatement deletePs = sourceConnect.prepareStatement(sqlDeleteFromBottomBound)) {
+                deletePs.setLong(1, lowerBoundIdValue);
+                deletePs.setLong(2, upperBoundIdValue);
+                int deleted = deletePs.executeUpdate();
+                sourceConnect.commit();
+                log.trace("Previous DELETE '{}', lower > {} AND upper < {}, deleted = {}",
+                        currentTableName, lowerBoundIdValue, upperBoundIdValue, deleted);
+            } catch (Exception e) {
+                log.error("Previous DELETE failed, Table " + currentTableName, e);
+                throw e;
+            }
+        }
+
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
         paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
@@ -61,6 +77,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         long startSelect = System.currentTimeMillis();
 
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
+            // select loop
             do {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
@@ -213,14 +230,18 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);
+            sqlDeleteFromBottomBound = "DELETE from BLOCK WHERE DB_ID > ? AND DB_ID < ?";
+            log.trace(sqlDeleteFromBottomBound);
         } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
-                log.trace(sqlToExecuteWithPaging);
-                sqlSelectUpperBound =
-                        "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
-                log.trace(sqlSelectUpperBound);
-                sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
-                log.trace(sqlSelectBottomBound);
+            sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+            log.trace(sqlToExecuteWithPaging);
+            sqlSelectUpperBound =
+                    "select DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc limit 1";
+            log.trace(sqlSelectUpperBound);
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+            log.trace(sqlSelectBottomBound);
+            sqlDeleteFromBottomBound = "DELETE from TRANSACTION WHERE  DB_ID > ? AND DB_ID < ?";
+            log.trace(sqlDeleteFromBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. Either 'Block' or 'Transaction' is expected. Pls use another Helper class");
         }

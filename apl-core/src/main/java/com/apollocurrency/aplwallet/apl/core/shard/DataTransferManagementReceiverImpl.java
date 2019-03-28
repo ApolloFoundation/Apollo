@@ -100,6 +100,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             }
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+            log.trace("Latest = {}", recovery);
             if (recovery == null) {
                 // store new value or continue to next step
                 recovery = new ShardRecovery(state);
