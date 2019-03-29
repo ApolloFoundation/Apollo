@@ -38,7 +38,7 @@ public class BlockDeleteHelper extends AbstractHelper {
         // select upper, bottom DB_ID
         this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
 
-        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
 
         if (restoreLowerBoundIdOrSkipTable(sourceConnect, operationParams, recoveryValue)) {
             return totalSelectedRows; // skip current table
@@ -70,7 +70,7 @@ public class BlockDeleteHelper extends AbstractHelper {
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                    Connection targetConnect, TableOperationParams operationParams)
+                                    Connection sourceConnect, TableOperationParams operationParams)
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
@@ -84,7 +84,7 @@ public class BlockDeleteHelper extends AbstractHelper {
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
-                        preparedInsertStatement = targetConnect.prepareStatement(sqlInsertString.toString());
+                        preparedInsertStatement = sourceConnect.prepareStatement(sqlInsertString.toString());
                         log.trace("Precompiled delete = {}", sqlInsertString);
                     }
                 }
@@ -97,7 +97,7 @@ public class BlockDeleteHelper extends AbstractHelper {
                 } catch (Exception e) {
                     log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                     log.error("Failed Deleting " + currentTableName, e);
-                    targetConnect.rollback();
+                    sourceConnect.rollback();
                     throw e;
                 }
                 rows++;
@@ -118,8 +118,8 @@ public class BlockDeleteHelper extends AbstractHelper {
         recoveryValue.setState(MigrateState.DATA_REMOVE_STARTED);
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
-        shardRecoveryDao.updateShardRecovery(recoveryValue);
-        targetConnect.commit(); // commit latest records if any
+        shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue);
+        sourceConnect.commit(); // commit latest records if any
         return rows != 0;
     }
 

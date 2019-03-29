@@ -17,13 +17,19 @@ public interface ShardRecoveryDaoJdbc {
 
     ShardRecovery getShardRecoveryById(Connection con, long shardRecoveryId);
 
+    ShardRecovery getLatestShardRecovery(TransactionalDataSource sourceDataSource);
+
     ShardRecovery getLatestShardRecovery(Connection con);
 
     List<ShardRecovery> getAllShardRecovery(Connection con);
 
     long countShardRecovery(Connection con);
 
+    long saveShardRecovery(TransactionalDataSource sourceDataSource, ShardRecovery shard);
+
     long saveShardRecovery(Connection con, ShardRecovery shard);
+
+    int updateShardRecovery(TransactionalDataSource sourceDataSource, ShardRecovery shardRecovery);
 
     int updateShardRecovery(Connection con, ShardRecovery shardRecovery);
 

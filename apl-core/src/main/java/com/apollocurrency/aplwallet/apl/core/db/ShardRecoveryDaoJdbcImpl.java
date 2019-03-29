@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,11 +67,19 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         }
     }
 
+    public ShardRecovery getLatestShardRecovery(TransactionalDataSource sourceDataSource) {
+        Objects.requireNonNull(sourceDataSource,"sourceDataSource is NULL");
+        try ( Connection con = sourceDataSource.getConnection()) {
+            return this.getLatestShardRecovery(con);
+        } catch (SQLException e) {
+            log.error("getLatest recovery error", e);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     public ShardRecovery getLatestShardRecovery(Connection con) {
         Objects.requireNonNull(con,"connection is NULL");
-        ShardRecovery recovery = null;
-        try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit ?")) {
-            pstmt.setLong(1, 1);
+        try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit 1")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rowMapper.map(rs);
             }
@@ -83,8 +92,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     public List<ShardRecovery> getAllShardRecovery(Connection con) {
         Objects.requireNonNull(con,"connection is NULL");
         List<ShardRecovery> result = new ArrayList<>();
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit ?")) {
-            pstmt.setLong(1, 1);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 ShardRecovery recovery = null;
                 while (rs.next()) {
@@ -115,19 +123,35 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         }
     }
 
+    public long saveShardRecovery(TransactionalDataSource sourceDataSource, ShardRecovery recovery) {
+        Objects.requireNonNull(sourceDataSource,"source data source is NULL");
+        Objects.requireNonNull(recovery,"recovery is NULL");
+        try ( Connection con = sourceDataSource.getConnection()) {
+            return this.saveShardRecovery(con, recovery);
+        } catch (SQLException e) {
+            log.error("Save recovery error", e);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     public long saveShardRecovery(Connection con, ShardRecovery recovery) {
         Objects.requireNonNull(con,"connection is NULL");
         Objects.requireNonNull(recovery,"recovery is NULL");
+        Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
         try (PreparedStatement pstmt = con.prepareStatement(
                 "INSERT INTO shard_recovery(" +
                         "state, object_name, column_name, last_column_value, processed_object, updated) " +
                         "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP())"
         )) {
             int i = 0;
-            pstmt.setString(++i, recovery.getState().name());
+            pstmt.setString(++i, recovery.getState().name()); // recovery.getState() SHOULD NEVER be NULL, field restriction
             pstmt.setString(++i, recovery.getObjectName());
             pstmt.setString(++i, recovery.getColumnName());
-            pstmt.setLong(++i, recovery.getLastColumnValue());
+            if (recovery.getLastColumnValue() != null) {
+                pstmt.setLong(++i, recovery.getLastColumnValue());
+            } else {
+                pstmt.setNull(++i, Types.BIGINT);
+            }
             pstmt.setString(++i, recovery.getProcessedObject());
             int inserted = pstmt.executeUpdate();
             log.trace("recovery inserted = {}", inserted);
@@ -143,9 +167,22 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         return -1;
     }
 
+    public int updateShardRecovery(TransactionalDataSource sourceDataSource, ShardRecovery recovery) {
+        Objects.requireNonNull(sourceDataSource,"source data source is NULL");
+        Objects.requireNonNull(recovery,"recovery is NULL");
+        Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
+        try ( Connection con = sourceDataSource.getConnection()) {
+            return this.updateShardRecovery(con, recovery);
+        } catch (SQLException e) {
+            log.error("Update recovery error", e);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     public int updateShardRecovery(Connection con, ShardRecovery recovery) {
         Objects.requireNonNull(con,"connection is NULL");
         Objects.requireNonNull(recovery,"recovery is NULL");
+        Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
         int updated = -1;
         try (PreparedStatement pstmt = con.prepareStatement(
                 "UPDATE shard_recovery SET state=?, object_name=?, column_name=?, " +
@@ -156,7 +193,11 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
             pstmt.setString(++i, recovery.getState().name());
             pstmt.setString(++i, recovery.getObjectName());
             pstmt.setString(++i, recovery.getColumnName());
-            pstmt.setLong(++i, recovery.getLastColumnValue());
+            if (recovery.getLastColumnValue() != null) {
+                pstmt.setLong(++i, recovery.getLastColumnValue());
+            } else {
+                pstmt.setNull(++i, Types.BIGINT);
+            }
             pstmt.setString(++i, recovery.getProcessedObject());
             pstmt.setLong(++i, recovery.getShardRecoveryId());
             updated = pstmt.executeUpdate();

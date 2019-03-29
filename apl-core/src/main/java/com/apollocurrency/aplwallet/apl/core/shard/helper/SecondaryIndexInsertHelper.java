@@ -30,7 +30,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
     }
 
     @Override
-    public long processOperation(Connection sourceConnect, Connection targetConnect,
+    public long processOperation(Connection sourceConnect, Connection targetConnect, /* targetConnect is NOT used here*/
                                  TableOperationParams operationParams)
             throws Exception {
         log.debug("Processing: {}", operationParams);
@@ -41,7 +41,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
         assignMainBottomTopSelectSql(operationParams);
         // select upper, bottom DB_ID
         this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
-        recoveryValue = shardRecoveryDao.getLatestShardRecovery();
+        recoveryValue = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
 
         if (restoreLowerBoundIdOrSkipTable(sourceConnect, operationParams, recoveryValue)) {
             return totalSelectedRows; // skip current table
@@ -154,7 +154,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
         recoveryValue.setState(MigrateState.SECONDARY_INDEX_STARTED);
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
-        shardRecoveryDao.updateShardRecovery(recoveryValue);
+        shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue);
         sourceConnect.commit(); // commit latest records if any
         return rows != 0;
     }
