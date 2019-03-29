@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -181,7 +180,12 @@ public final class AplCore {
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
+
+                BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+                blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
+
                 databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
+
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
 

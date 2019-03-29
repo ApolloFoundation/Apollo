@@ -86,7 +86,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-             <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.1.0</version>
@@ -117,7 +117,7 @@
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>                            
                         </configuration>
                     </execution>
-<!-- Unpack 2 webUI components -->                    
+                    <!-- Unpack 2 webUI components -->                    
                     <execution>
                         <id>unpack</id>
                         <phase>package</phase>
@@ -150,7 +150,7 @@
                     </execution>                    
                 </executions>
             </plugin>
-<!-- create cross-platform zip distribution -->            
+            <!-- create cross-platform zip distribution -->            
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
@@ -168,8 +168,57 @@
                             <finalName>${zipname}-${project.version}</finalName>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>distro-libs-assembly</id>
+                        <phase>${zipExecutionPhase}</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/zipdistlibs.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>${zipname}-deps-${project.version}</finalName>
+                        </configuration>
+                    </execution>                    
                 </executions>
-            </plugin>                                    
+            </plugin>
+             
+            <plugin>
+                <groupId>net.nicoulaj.maven.plugins</groupId>
+                <artifactId>checksum-maven-plugin</artifactId>
+                <version>1.8</version>
+                 
+                <executions>
+                    <execution>                     
+                        <goals>
+                            <goal>artifacts</goal>
+                            <goal>files</goal>
+                            <goal>file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <file>${project.build.finalName}.jar</file>
+                    <fileSets>
+                        <fileSet>
+                            <directory>${project.build.directory}/lib</directory>
+                        </fileSet>
+                    </fileSets>                     
+                    <algorithms>
+                        <algorithm>SHA-256</algorithm>
+                    </algorithms>  
+                    <individualFiles>true</individualFiles>
+                    <types>
+                         <type>jar</type>
+                         <type>zip</type> 
+                         <type>tar.gz</type> 
+                    </types>
+                    <csvSummary>true</csvSummary>
+                    <csvSummaryFile>${project.build.finalName}-checksums.csv</csvSummaryFile>
+                </configuration>
+            </plugin>                                                  
         </plugins>
     </build>
 </project>
