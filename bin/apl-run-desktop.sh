@@ -16,4 +16,5 @@ fi
 # uncomment when GUI will start standalone
 # ${JAVA_CMD} $xdock  -jar ${MAIN_GUI_JAR}
 
-${JAVA_CMD} $xdock -jar ${MAIN_GUI_JAR}
+${JAVA_CMD} $xdock -jar ${MAIN_GUI_JAR} $@
+

@@ -23,4 +23,4 @@ fi
 
 nohup ${JAVA_CMD} -jar ${MAIN_JAR} $@ > /dev/null 2>&1 &
 echo $! > ${APPLICATION}/apl.pid
-cd - > /dev/null
+#cd - > /dev/null
