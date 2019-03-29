@@ -39,6 +39,7 @@ public abstract class AbstractAPIRequestHandler {
     protected static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private DatabaseManager databaseManager;
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();

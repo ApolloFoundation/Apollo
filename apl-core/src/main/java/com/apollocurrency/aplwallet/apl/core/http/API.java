@@ -83,9 +83,7 @@ public final class API {
     private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
-    private static byte[] privateKey;
-    private static byte[] publicKey;
-    private static FBElGamalKeyPair elGamalKeyPair;    
+  
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -106,50 +104,11 @@ public final class API {
     //TODO: remove static context
     private static final UPnP upnp = CDI.current().select(UPnP.class).get();
     private static final JettyConnectorCreator jettyConnectorCreator = CDI.current().select(JettyConnectorCreator.class).get();
-    
-//TODO: remove this as soon as Al Gamal is ready!    
-    private static Thread serverKeysGenerator = new Thread(() -> {
-        while (!Thread.currentThread().isInterrupted()) {
-            synchronized (API.class) {
-                byte[] keyBytes = new byte[32];
-                Crypto.getSecureRandom().nextBytes(keyBytes);
-                byte[] keySeed = Crypto.getKeySeed(keyBytes);
-                privateKey = Crypto.getPrivateKey(keySeed);
-                publicKey = Crypto.getPublicKey(keySeed);
-                
-                elGamalKeyPair = Crypto.getElGamalKeyPair();
-                
-            }
-            try {
-                TimeUnit.MINUTES.sleep(15);
-            }
-            catch (InterruptedException e) {
-                return;
-            }
-        }
-    });
 
-    public static synchronized byte[] getServerPublicKey() {
-        return publicKey;
-    }
-    public static synchronized byte[] getServerPrivateKey() {
-        return privateKey;
-    }
 
-    public static synchronized FBElGamalKeyPair getServerElGamalPublicKey() {
-        
-        return elGamalKeyPair;
-        
-    }
-    
-    public static String elGamalDecrypt(String cryptogramm)
-    {
-        return Crypto.elGamalDecrypt(cryptogramm, elGamalKeyPair);
-    }
-    
     public static void init() {
 //    static {
-        serverKeysGenerator.setDaemon(true);
+
         List<String> disabled = new ArrayList<>(propertiesHolder.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
         disabledAPIs = Collections.unmodifiableList(disabled);
@@ -337,7 +296,7 @@ public final class API {
 //            Log.getRootLogger().setDebugEnabled(true);
 
                 try {
-                    serverKeysGenerator.start();
+
                     if (enableAPIUPnP) {
                         Connector[] apiConnectors = apiServer.getConnectors();
                         for (Connector apiConnector : apiConnectors) {

@@ -110,6 +110,7 @@ public final class ParameterParser {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();;
     
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
@@ -496,7 +497,7 @@ public final class ParameterParser {
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
        
     }
 
@@ -602,12 +603,12 @@ public final class ParameterParser {
 
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
     }
 
     public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, parameterName, isMandatory);
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
@@ -971,7 +972,7 @@ public final class ParameterParser {
             publicKey = Crypto.getPublicKey(keySeed);
         }
         long accountId = Account.getId(publicKey);
-        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
+        byte[] sharedKey = Crypto.getSharedKey(elGamal.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
 
