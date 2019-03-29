@@ -180,7 +180,6 @@ public final class AplCore {
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
-
                 BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
                 blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 
