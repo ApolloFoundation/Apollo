@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import io.firstbridge.cryptolib.container.FbWallet;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 
@@ -29,6 +29,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.IOException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
@@ -138,7 +139,7 @@ public class KeyStoreController {
 
     @POST
     @Path("/download")
-    @Produces(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.WILDCARD)
     @Operation(summary = "Export keystore container. (file)",
             tags = {"keyStore"},
             responses = {
@@ -148,7 +149,7 @@ public class KeyStoreController {
             }
     )
     public Response downloadKeyStore(@FormParam("account") String account,
-                                     @FormParam("passphrase") String passphraseReq) throws ParameterException {
+                                     @FormParam("passphrase") String passphraseReq) throws ParameterException, IOException {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
@@ -158,7 +159,7 @@ public class KeyStoreController {
 
         File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
 
-        Response.ResponseBuilder response = Response.ok(keyStore);
+        Response.ResponseBuilder response = Response.ok(FileUtils.readFileToByteArray(keyStore));
         response.header("Content-disposition", "attachment; filename="+ keyStore.getName());
         return response.build();
     }
