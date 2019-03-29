@@ -17,7 +17,7 @@ function notify
     fi
 }
 
-if  [ -d $1 ]
+if  [[ -d $1 ]]
 then
 
     VERSION=$(cat VERSION)
