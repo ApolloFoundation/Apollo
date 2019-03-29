@@ -20,24 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
@@ -46,7 +46,6 @@ public final class GetAskOrders extends AbstractAPIRequestHandler {
     public GetAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
     }
-
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -58,7 +57,7 @@ public final class GetAskOrders extends AbstractAPIRequestHandler {
         long[] cancellations = null;
         if (showExpectedCancellations) {
             Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION;
-            List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+            List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {
                 ColoredCoinsOrderCancellationAttachment attachment = (ColoredCoinsOrderCancellationAttachment) transactions.get(i).getAttachment();

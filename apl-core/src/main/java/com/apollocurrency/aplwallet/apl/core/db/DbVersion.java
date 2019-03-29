@@ -60,7 +60,7 @@ public abstract class DbVersion {
                     throw new RuntimeException("Invalid version table");
                 }
                 rs.close();
-                log.info("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
+                log.debug("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
             } catch (SQLException e) {
                 log.info("Initializing an empty database");
                 stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL)");

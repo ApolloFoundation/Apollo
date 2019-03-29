@@ -6,13 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 
-import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -64,7 +63,7 @@ public class DbMigrationExecutorTest {
     
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
-            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, TransactionProcessorImpl.class,
+            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class,
             GlobalSyncImpl.class,
             BlockDaoImpl.class, DerivedDbTablesRegistry.class, BlockchainConfig.class, 
             FullTextConfig.class, EpochTime.class, NtpTime.class)

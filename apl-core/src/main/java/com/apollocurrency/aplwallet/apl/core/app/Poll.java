@@ -241,32 +241,29 @@ public final class Poll extends AbstractPoll {
     public static void init() {
 
     }
+    @Singleton
+    private static class PollObserver {
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            if (Poll.isPollsProcessing) {
+                int height = block.getHeight();
+                Poll.checkPolls(height);
+            }
+        }
+    }
 
-//    @Singleton
-//    private static class PollObserver {
-//        public PollObserver(){};
-//        
-//        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-//            if (Poll.isPollsProcessing) {
-//                int height = block.getHeight();
-//                Poll.checkPolls(height);
-//            }
-//        }
-//    }
-//
-//    private static void checkPolls(int currentHeight) {
-//        try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
-//            for (Poll poll : polls) {
-//                try {
-//                    List<OptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
-//                    pollResultsTable.insert(poll, results);
-//                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
-//                } catch (RuntimeException e) {
-//                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
-//                }
-//            }
-//        }
-//    }
+    private static void checkPolls(int currentHeight) {
+        try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
+            for (Poll poll : polls) {
+                try {
+                    List<OptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
+                    pollResultsTable.insert(poll, results);
+                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
+                } catch (RuntimeException e) {
+                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
+                }
+            }
+        }
+    }
 
     private final DbKey dbKey;
     private final String name;
@@ -302,19 +299,6 @@ public final class Poll extends AbstractPoll {
         this.minRangeValue = rs.getByte("min_range_value");
         this.maxRangeValue = rs.getByte("max_range_value");
         this.timestamp = rs.getInt("timestamp");
-    }
-
-    public Poll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting, DbKey dbKey, String name, String description, String[] options, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue, int timestamp) {
-        super(id, accountId, finishHeight, voteWeighting);
-        this.dbKey = dbKey;
-        this.name = name;
-        this.description = description;
-        this.options = options;
-        this.minNumberOfOptions = minNumberOfOptions;
-        this.maxNumberOfOptions = maxNumberOfOptions;
-        this.minRangeValue = minRangeValue;
-        this.maxRangeValue = maxRangeValue;
-        this.timestamp = timestamp;
     }
 
     private void save(Connection con) throws SQLException {

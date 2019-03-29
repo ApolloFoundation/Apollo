@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;

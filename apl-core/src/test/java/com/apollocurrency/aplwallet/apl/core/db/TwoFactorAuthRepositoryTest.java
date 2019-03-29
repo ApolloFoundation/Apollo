@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 

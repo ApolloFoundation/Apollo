@@ -31,7 +31,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
 
     private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
-        public int getSize(TransactionImpl transaction, Appendix appendix) {
+        public int getSize(Transaction transaction, Appendix appendix) {
             return appendix.getFullSize();
         }
     };

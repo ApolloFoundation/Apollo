@@ -29,11 +29,15 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_D
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -49,14 +53,19 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
-
+    private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    protected EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
@@ -220,9 +229,10 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
         byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
+        int timestamp = timeService.getEpochTime();
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(publicKey, amountATM, feeATM,
-                    deadline, attachment).referencedTransactionFullHash(referencedTransactionFullHash);
+                    deadline, attachment, timestamp).referencedTransactionFullHash(referencedTransactionFullHash);
             if (attachment.getTransactionType().canHaveRecipient()) {
                 builder.recipientId(recipientId);
             }
@@ -239,6 +249,12 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             }
             byte[] keySeed = ParameterParser.getKeySeed(req, senderAccount.getId(), false);
             Transaction transaction = builder.build(keySeed);
+            if (feeATM <= 0 || (propertiesHolder.correctInvalidFees() && keySeed == null)) {
+                int effectiveHeight = blockchain.getHeight();
+                long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
+                feeATM = Math.max(minFee, feeATM);
+                transaction.setFeeATM(feeATM);
+            }
             try {
                 if (Math.addExact(amountATM, transaction.getFeeATM()) > senderAccount.getUnconfirmedBalanceATM()) {
                     return NOT_ENOUGH_FUNDS;
@@ -246,6 +262,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             } catch (ArithmeticException e) {
                 return NOT_ENOUGH_FUNDS;
             }
+
             JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
             response.put("transactionJSON", transactionJSON);
             try {
@@ -261,7 +278,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 lookupTransactionProcessor().broadcast(transaction);
                 response.put("broadcasted", true);
             } else {
-                transaction.validate();
+                validator.validate(transaction);
                 response.put("broadcasted", false);
             }
         } catch (AplException.NotYetEnabledException e) {

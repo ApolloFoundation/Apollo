@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;

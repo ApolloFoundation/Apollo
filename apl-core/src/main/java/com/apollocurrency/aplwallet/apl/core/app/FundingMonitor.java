@@ -664,9 +664,8 @@ public class FundingMonitor {
         FundingMonitor monitor = monitoredAccount.monitor;
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
-                    monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT);
-            builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(blockchain.getLastBlockTimestamp());
+                    monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
+            builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build(monitor.keySeed);
             if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
@@ -701,9 +700,8 @@ public class FundingMonitor {
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
-            builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(blockchain.getLastBlockTimestamp());
+                    0, 0, (short)1440, attachment, blockchain.getLastBlockTimestamp());
+            builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
@@ -738,9 +736,8 @@ public class FundingMonitor {
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
-            builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(blockchain.getLastBlockTimestamp());
+                    0, 0, (short)1440, attachment, blockchain.getLastBlockTimestamp());
+            builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",

@@ -45,8 +45,6 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     void init();
 
-    LongKeyFactory<UnconfirmedTransaction> getUnconfirmedTransactionDbKeyFactory();
-
     DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions();
 
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions(int from, int to);

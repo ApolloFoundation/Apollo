@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
@@ -645,7 +645,7 @@ public class AplDbVersion extends DbVersion {
             case 237:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS public_key_account_id_height_idx ON public_key (account_id, height DESC)");
             case 238:
-                apply(null);
+                apply(null); //should apply null to increment version
             case 239:
                 apply("CREATE TABLE IF NOT EXISTS update_status ("
                         + "db_id IDENTITY, "
@@ -655,14 +655,13 @@ public class AplDbVersion extends DbVersion {
                         + ")"
                 );
             case 240:
-                apply(null);
+                apply(null); //should apply null to increment version
             case 241:
                 apply("CREATE TABLE IF NOT EXISTS genesis_public_key " +
                         "(db_id IDENTITY," +
                         "account_id BIGINT NOT NULL, " +
                         "public_key BINARY(32), " +
                         "height INT NOT NULL, " +
-                        "FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, " +
                         "latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 242:
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
@@ -700,7 +699,7 @@ public class AplDbVersion extends DbVersion {
             case 255:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
             case 256:
-                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, block_id BIGINT NOT NULL)");
+                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, block_id BIGINT NOT NULL)");
             case 257:
                 apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS fk_transaction_shard_index_block_id " +
                         "FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
@@ -716,7 +715,17 @@ public class AplDbVersion extends DbVersion {
                         "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
                         "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
             case 262:
-                return 262;
+                apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
+                        "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
+                        "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
+            case 263:
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
+            case 264:
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
+            case 265:
+                apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
+            case 266:
+                return 266;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

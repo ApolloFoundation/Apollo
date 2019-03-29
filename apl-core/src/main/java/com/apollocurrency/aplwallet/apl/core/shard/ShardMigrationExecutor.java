@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DEFAULT_COMMIT_BATCH_SIZE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -16,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataComm
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
 import org.slf4j.Logger;
@@ -39,17 +41,17 @@ public class ShardMigrationExecutor {
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
     private DataTransferManagementReceiver managementReceiver;
-    private ShardingHashCalculator shardingHashCalculator;
+    private ShardHashCalculator shardHashCalculator;
     private BlockIndexDao blockIndexDao;
 
     @Inject
     public ShardMigrationExecutor(DataTransferManagementReceiver managementReceiver,
                                   javax.enterprise.event.Event<MigrateState> migrateStateEvent,
-                                  ShardingHashCalculator shardingHashCalculator,
+                                  ShardHashCalculator shardHashCalculator,
                                   BlockIndexDao blockIndexDao) {
         this.managementReceiver = Objects.requireNonNull(managementReceiver, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
-        this.shardingHashCalculator = Objects.requireNonNull(shardingHashCalculator, "sharding hash calculator is NULL");
+        this.shardHashCalculator = Objects.requireNonNull(shardHashCalculator, "sharding hash calculator is NULL");
         this.blockIndexDao = Objects.requireNonNull(blockIndexDao, "blockIndexDao is NULL");
     }
 
@@ -72,7 +74,8 @@ public class ShardMigrationExecutor {
                 (managementReceiver, height);
         this.addOperation(updateSecondaryIndexCommand);
 
-        DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, height);
+        DeleteCopiedDataCommand deleteCopiedDataCommand =
+                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE * 5, height);
         this.addOperation(deleteCopiedDataCommand);
 
         byte[] hash = calculateHash(height);
@@ -86,7 +89,7 @@ public class ShardMigrationExecutor {
 
     private byte[] calculateHash(int height) {
         int lastShardHeight = getHeight();
-        byte[] hash = shardingHashCalculator.calculateHash(lastShardHeight + 1, height);
+        byte[] hash = shardHashCalculator.calculateHash(lastShardHeight + 1, height);
         return hash;
     }
 

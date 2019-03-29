@@ -1,9 +1,12 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionIndexRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -24,8 +27,7 @@ public interface TransactionIndexDao {
      * @return found records list
      */
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT transaction_id, block_id FROM transaction_shard_index WHERE block_id =:blockId LIMIT :limit")
-    @RegisterBeanMapper(TransactionIndex.class)
+    @SqlQuery("SELECT * FROM transaction_shard_index WHERE block_id =:blockId LIMIT :limit")
     @RegisterRowMapper(TransactionIndexRowMapper.class)
     List<TransactionIndex> getByBlockId(@Bind("blockId") long blockId, @Bind("limit") long limit);
 
@@ -35,7 +37,7 @@ public interface TransactionIndexDao {
     TransactionIndex getByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT b.shard_id, b.block_id FROM transaction_shard_index join block_index b on transaction_shard_index.block_id = b.block_id where transaction_id =:transactionId")
+    @SqlQuery("SELECT b.shard_id FROM transaction_shard_index join block_index b on transaction_shard_index.block_id = b.block_id where transaction_id =:transactionId")
     Long getShardIdByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
@@ -48,11 +50,17 @@ public interface TransactionIndexDao {
     long countTransactionIndexByBlockId(@Bind("blockId") long blockId);
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT count(transaction_shard_index.TRANSACTION_ID) FROM transaction_shard_index " +
+            "LEFT JOIN BLOCK_INDEX ON BLOCK_INDEX.BLOCK_ID = TRANSACTION_SHARD_INDEX.BLOCK_ID " +
+            "where BLOCK_INDEX.SHARD_ID = :shardId")
+    long countTransactionIndexByShardId(@Bind("shardId") long shardId);
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT block_height FROM block_index LEFT JOIN transaction_shard_index on block_index.block_id = transaction_shard_index.block_id where transaction_id = :transactionId")
     Integer getTransactionHeightByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional
-    @SqlUpdate("INSERT INTO transaction_shard_index(transaction_id, block_id) VALUES (:transactionId, :blockId)")
+    @SqlUpdate("INSERT INTO transaction_shard_index(transaction_id, partial_transaction_hash, block_id) VALUES (:transactionId, :partialTransactionHash, :blockId)")
     void saveTransactionIndex(@BindBean TransactionIndex transactionIndex);
 
     @Transactional

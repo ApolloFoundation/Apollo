@@ -19,7 +19,7 @@ class PaginateResultWrapper {
     public String toString() {
         final StringBuffer sb = new StringBuffer("PaginateResultWrapper{");
         sb.append("lowerBoundColumnValue=").append(lowerBoundColumnValue);
-        sb.append("upperBoundColumnValue=").append(upperBoundColumnValue);
+        sb.append(", upperBoundColumnValue=").append(upperBoundColumnValue);
         sb.append(", isFinished=").append(isFinished);
         sb.append('}');
         return sb.toString();
