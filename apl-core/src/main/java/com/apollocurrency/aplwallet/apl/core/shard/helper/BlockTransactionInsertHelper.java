@@ -57,7 +57,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
 
         // clean up previously stored values from latest saved recovery
         if (lowerBoundIdValue != null && lowerBoundIdValue > 0) {
-            try (PreparedStatement deletePs = sourceConnect.prepareStatement(sqlDeleteFromBottomBound)) {
+            try (PreparedStatement deletePs = targetConnect.prepareStatement(sqlDeleteFromBottomBound)) {
                 deletePs.setLong(1, lowerBoundIdValue);
                 deletePs.setLong(2, upperBoundIdValue);
                 int deleted = deletePs.executeUpdate();

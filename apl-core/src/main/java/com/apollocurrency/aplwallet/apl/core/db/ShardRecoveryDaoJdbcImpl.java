@@ -34,7 +34,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
 
         public ShardRecovery map(ResultSet rs) throws SQLException {
             ShardRecovery recovery = null;
-            if (rs.next()) {
+//            if (rs.next()) {
                 recovery = ShardRecovery.builder()
                         .shardRecoveryId(rs.getLong("shard_recovery_id"))
                         .state(rs.getString("state"))
@@ -44,7 +44,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
                         .processedObject(rs.getString("processed_object"))
                         .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
                         .build();
-            }
+//            }
             return recovery;
         }
     }
@@ -59,7 +59,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery where shard_recovery_id=?")) {
             pstmt.setLong(1, shardRecoveryId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rowMapper.map(rs);
+                return getIfPresent(rs);
             }
         } catch (SQLException e) {
             log.error("getLatest recovery error", e);
@@ -81,7 +81,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         Objects.requireNonNull(con,"connection is NULL");
         try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit 1")) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rowMapper.map(rs);
+                return getIfPresent(rs);
             }
         } catch (SQLException e) {
             log.error("getLatest recovery error", e);
@@ -95,8 +95,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 ShardRecovery recovery = null;
-                while (rs.next()) {
-                    recovery = rowMapper.map(rs);
+                while ((recovery =getIfPresent(rs)) != null) {
                     result.add(recovery);
                 }
                 return result;
@@ -105,6 +104,14 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
             log.error("get All recovery error", e);
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    private ShardRecovery getIfPresent(ResultSet rs) throws SQLException {
+        ShardRecovery shardRecovery = null;
+        if (rs.next()) {
+            shardRecovery = rowMapper.map(rs);
+        }
+        return shardRecovery;
     }
 
     public long countShardRecovery(Connection con) {
