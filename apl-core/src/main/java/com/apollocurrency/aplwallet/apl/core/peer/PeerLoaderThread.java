@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,11 +19,13 @@ import org.slf4j.LoggerFactory;
 class PeerLoaderThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerLoaderThread.class);
     private final List<String> defaultPeers;
+    private EpochTime timeService;
     private final List<Future<String>> unresolvedPeers;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers) {
+    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, EpochTime timeService) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
+        this.timeService=timeService;
     }
     private final Set<PeerDb.Entry> entries = new HashSet<>();
     private PeerDb peerDb;
@@ -33,7 +36,7 @@ class PeerLoaderThread implements Runnable {
         if (peerDb == null) {
             peerDb = CDI.current().select(PeerDb.class).get();
         }
-        final int now = Peers.timeService.getEpochTime();
+        final int now = timeService.getEpochTime();
         Peers.wellKnownPeers.forEach((address) -> entries.add(new PeerDb.Entry(address, 0, now)));
         if (Peers.usePeersDb) {
             LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
@@ -54,7 +57,7 @@ class PeerLoaderThread implements Runnable {
             LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
         }
         entries.forEach((entry) -> {
-            Future<String> unresolvedAddress = Peers.peersService.submit(() -> {
+            Future<String> unresolvedAddress = Peers.peersExecutorService.submit(() -> {
                 PeerImpl peer = Peers.findOrCreatePeer(entry.getAddress(), true);
                 if (peer != null) {
                     peer.setLastUpdated(entry.getLastUpdated());

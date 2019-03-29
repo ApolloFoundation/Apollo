@@ -37,7 +37,7 @@ final class AddPeers extends PeerRequestHandler {
         if (peers != null && Peers.getMorePeers && !Peers.hasTooManyKnownPeers()) {
             final JSONArray services = (JSONArray)request.get("services");
             final boolean setServices = (services != null && services.size() == peers.size());
-            Peers.peersService.submit(() -> {
+            Peers.peersExecutorService.submit(() -> {
                 for (int i=0; i<peers.size(); i++) {
                     String announcedAddress = (String)peers.get(i);
                     PeerImpl newPeer = Peers.findOrCreatePeer(announcedAddress, true);

@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -27,8 +28,10 @@ import org.slf4j.LoggerFactory;
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
     private static DatabaseManager databaseManager;
-        
-    public GetMorePeersThread() {
+    private EpochTime timeService;
+     
+    public GetMorePeersThread(EpochTime timeService) {
+        this.timeService = timeService;
     }
     
     private static TransactionalDataSource lookupDataSource() {
@@ -67,7 +70,7 @@ class GetMorePeersThread implements Runnable {
                 if (peers != null) {
                     JSONArray services = (JSONArray) response.get("services");
                     boolean setServices = services != null && services.size() == peers.size();
-                    int now = Peers.timeService.getEpochTime();
+                    int now = timeService.getEpochTime();
                     for (int i = 0; i < peers.size(); i++) {
                         String announcedAddress = (String) peers.get(i);
                         PeerImpl newPeer = Peers.findOrCreatePeer(announcedAddress, true);
@@ -117,7 +120,7 @@ class GetMorePeersThread implements Runnable {
     }
 
     private void updateSavedPeers() {
-        int now = Peers.timeService.getEpochTime();
+        int now = timeService.getEpochTime();
         //
         // Load the current database entries and map announced address to database entry
         //

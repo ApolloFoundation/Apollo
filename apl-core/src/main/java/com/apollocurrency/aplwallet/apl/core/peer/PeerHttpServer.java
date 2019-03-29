@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.net.InetAddress;
 import java.util.EnumSet;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,10 +36,27 @@ public class PeerHttpServer {
      boolean shareMyAddress;
      int myPeerServerPort;
      boolean enablePeerUPnP;    
-     String myPlatform;
-     String myAddress;
-     Server peerServer;
-     UPnP upnp;
+     private final String myPlatform;
+     private final String myAddress;
+     private Server peerServer;
+     private final UPnP upnp;
+      
+    public boolean isShareMyAddress() {
+        return shareMyAddress;
+    }
+
+    public int getMyPeerServerPort() {
+        return myPeerServerPort;
+    }
+
+    public String getMyPlatform() {
+        return myPlatform;
+    }
+
+    public String getMyAddress() {
+        return myAddress;
+    }
+
     
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp) {
@@ -153,4 +171,8 @@ public class PeerHttpServer {
         }
         return res;
     }    
+
+    public InetAddress getExternalAddress() {
+        return upnp.getExternalAddress();
+    }
 }

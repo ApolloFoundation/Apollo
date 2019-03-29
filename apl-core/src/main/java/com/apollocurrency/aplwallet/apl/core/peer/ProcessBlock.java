@@ -48,7 +48,7 @@ final class ProcessBlock extends PeerRequestHandler {
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
                         && (lastBlock.getTimestamp() > peerBlockTimestamp ||
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
-            Peers.peersService.submit(() -> {
+            Peers.peersExecutorService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");
                     lookupBlockchainProcessor().processPeerBlock(request);

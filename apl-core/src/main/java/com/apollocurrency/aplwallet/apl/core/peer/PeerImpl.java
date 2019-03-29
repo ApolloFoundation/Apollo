@@ -959,7 +959,7 @@ public final class PeerImpl implements Peer {
         return isOpenAPI() && state == Peer.State.CONNECTED
                 && !Version.isOldVersion(version, Constants.MIN_PROXY_VERSION)
                 && !Version.isNewVersion(version)
-                && blockchainState == Peer.BlockchainState.UP_TO_DATE;
+                && blockchainState == BlockchainState.UP_TO_DATE;
     }
 
     public StringBuilder getPeerApiUri() {

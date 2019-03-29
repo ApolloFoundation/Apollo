@@ -100,7 +100,7 @@ public final class Peers {
     static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static DatabaseManager databaseManager;
 
     static int connectTimeout;
@@ -142,21 +142,22 @@ public final class Peers {
 
     private static JSONObject myPeerInfo;
     private static List<Peer.Service> myServices;
-    private static volatile Peer.BlockchainState currentBlockchainState;
+    private static volatile BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
     static boolean shutdown=false;
     static boolean suspend;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
-    // used by threads
+    
+    // used by threads so shoudl be ConcurrentMap
     static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
     
     private static final ConcurrentMap<String, String> selfAnnouncedAddresses = new ConcurrentHashMap<>();
 
     static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
-    static final ExecutorService peersService = new QueuedThreadPool(2, 15, "PeersService");
+    static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
     
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
 
@@ -174,9 +175,9 @@ public final class Peers {
     public static void init() {
         String myHost = null;
         int myPort = -1;
-        if (peerHttpServer.myAddress != null) {
+        if (peerHttpServer.getMyAddress() != null) {
             try {
-                URI uri = new URI("http://" + peerHttpServer.myAddress);
+                URI uri = new URI("http://" + peerHttpServer.getMyAddress());
                 myHost = uri.getHost();
                 myPort = (uri.getPort() == -1 ? Peers.getDefaultPeerPort() : uri.getPort());
                 InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
@@ -196,7 +197,7 @@ public final class Peers {
                     }
                 }
                 if (!addrValid) {
-                    InetAddress extAddr = peerHttpServer.upnp.getExternalAddress();
+                    InetAddress extAddr = peerHttpServer.getExternalAddress();
                     if (extAddr != null) {
                         for (InetAddress myAddr : myAddrs) {
                             if (extAddr.equals(myAddr)) {
@@ -223,7 +224,7 @@ public final class Peers {
                 if (!hallmark.isValid()) {
                     throw new RuntimeException("Hallmark is not valid");
                 }
-                if (peerHttpServer.myAddress != null) {
+                if (peerHttpServer.getMyAddress() != null) {
                     if (!hallmark.getHost().equals(myHost)) {
                         throw new RuntimeException("Invalid hallmark host");
                     }
@@ -232,86 +233,10 @@ public final class Peers {
                     }
                 }
             } catch (RuntimeException e) {
-                LOG.error("Your hallmark is invalid: " + myHallmark + " for your address: " + peerHttpServer.myAddress);
+                LOG.error("Your hallmark is invalid: " + myHallmark + " for your address: " + peerHttpServer.getMyAddress());
                 throw new RuntimeException(e.toString(), e);
             }
         }
-        List<Peer.Service> servicesList = new ArrayList<>();
-        JSONObject json = new JSONObject();
-        if (peerHttpServer.myAddress != null) {
-            try {
-                URI uri = new URI("http://" + peerHttpServer.myAddress);
-                String host = uri.getHost();
-                int port = uri.getPort();
-                String announcedAddress;
-                if (port >= 0) {
-                    announcedAddress = peerHttpServer.myAddress;
-                } else {
-                    announcedAddress = host + (peerHttpServer.myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + peerHttpServer.myPeerServerPort : "");
-                }
-                if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
-                    throw new RuntimeException("Invalid announced address length: " + announcedAddress);
-                }
-                json.put("announcedAddress", announcedAddress);
-            } catch (URISyntaxException e) {
-                LOG.info("Your announce address is invalid: " + peerHttpServer.myAddress);
-                throw new RuntimeException(e.toString(), e);
-            }
-        }
-        if (myHallmark != null && myHallmark.length() > 0) {
-            json.put("hallmark", myHallmark);
-            servicesList.add(Peer.Service.HALLMARK);
-        }
-        json.put("application", Constants.APPLICATION);
-        json.put("version",Constants.VERSION.toString());
-        json.put("platform", peerHttpServer.myPlatform);
-        json.put("chainId", blockchainConfig.getChain().getChainId());
-        json.put("shareAddress", peerHttpServer.shareMyAddress);
-        if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
-            servicesList.add(Peer.Service.PRUNABLE);
-        }
-        if (API.openAPIPort > 0) {
-            json.put("apiPort", API.openAPIPort);
-            servicesList.add(Peer.Service.API);
-        }
-        if (API.openAPISSLPort > 0) {
-            json.put("apiSSLPort", API.openAPISSLPort);
-            servicesList.add(Peer.Service.API_SSL);
-        }
-
-        if (API.isOpenAPI) {
-            EnumSet<APIEnum> disabledAPISet = EnumSet.noneOf(APIEnum.class);
-
-            API.disabledAPIs.forEach(apiName -> {
-                APIEnum api = APIEnum.fromName(apiName);
-                if (api != null) {
-                    disabledAPISet.add(api);
-                }
-            });
-            API.disabledAPITags.forEach(apiTag -> {
-                for (APIEnum api : APIEnum.values()) {
-                    if (api.getHandler() != null && api.getHandler().getAPITags().contains(apiTag)) {
-                        disabledAPISet.add(api);
-                    }
-                }
-            });
-            json.put("disabledAPIs", APIEnum.enumSetToBase64String(disabledAPISet));
-
-            json.put("apiServerIdleTimeout", API.apiServerIdleTimeout);
-
-            if (API.apiServerCORS) {
-                servicesList.add(Peer.Service.CORS);
-            }
-        }
-
-        long services = 0;
-        for (Peer.Service service : servicesList) {
-            services |= service.getCode();
-        }
-        json.put("services", Long.toUnsignedString(services));
-        myServices = Collections.unmodifiableList(servicesList);
-        LOG.debug("My peer info:\n" + json.toJSONString());
-        myPeerInfo = json;
 
         final List<String> defaultPeers = blockchainConfig.getChain().getDefaultPeers();
         wellKnownPeers = blockchainConfig.getChain().getWellKnownPeers();
@@ -349,20 +274,21 @@ public final class Peers {
         if (useWebSockets && useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
-
+        
+        fillMyPeerInfo();
+        
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
 
         if (!propertiesHolder.isOffline()) {
-            ThreadPool.runBeforeStart("PeerLoader", new PeerLoaderThread(defaultPeers, unresolvedPeers), false);
+            ThreadPool.runBeforeStart("PeerLoader", new PeerLoaderThread(defaultPeers, unresolvedPeers,timeService), false);
         }
 
         ThreadPool.runAfterStart("UnresolvedPeersAnalyzer", new UnresolvedPeersAnalyzer(unresolvedPeers));
-  // -- above was static section      
-
+   
         // get main db data source
         TransactionalDataSource dataSource = lookupDataSource();
 
-        addListener(peer -> peersService.submit(() -> {
+        addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
                     dataSource.begin();
@@ -382,19 +308,98 @@ public final class Peers {
         }), Account.Event.BALANCE);
 
         if (! propertiesHolder.isOffline()) {
-            ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(), 20);
+            ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(timeService), 20);
             ThreadPool.scheduleThread("PeerUnBlacklisting", new PeerUnBlacklistingThread(timeService), 60);
             if (getMorePeers) {
-                ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(), 20);
+                ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(timeService), 20);
             }
         }
     }
+    
+    private static void fillMyPeerInfo(){
+          
+        List<Peer.Service> servicesList = new ArrayList<>();
+        if (peerHttpServer.getMyAddress() != null) {
+            try {
+                URI uri = new URI("http://" + peerHttpServer.getMyAddress());
+                String host = uri.getHost();
+                int port = uri.getPort();
+                String announcedAddress;
+                if (port >= 0) {
+                    announcedAddress = peerHttpServer.getMyAddress();
+                } else {
+                    announcedAddress = host + (peerHttpServer.myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + peerHttpServer.myPeerServerPort : "");
+                }
+                if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
+                    throw new RuntimeException("Invalid announced address length: " + announcedAddress);
+                }
+                myPeerInfo.put("announcedAddress", announcedAddress);
+            } catch (URISyntaxException e) {
+                LOG.info("Your announce address is invalid: " + peerHttpServer.getMyAddress());
+                throw new RuntimeException(e.toString(), e);
+            }
+        }
+        if (myHallmark != null && myHallmark.length() > 0) {
+            myPeerInfo.put("hallmark", myHallmark);
+            servicesList.add(Peer.Service.HALLMARK);
+        }
+        myPeerInfo.put("application", Constants.APPLICATION);
+        myPeerInfo.put("version",Constants.VERSION.toString());
+        myPeerInfo.put("platform", peerHttpServer.getMyPlatform());
+        myPeerInfo.put("chainId", blockchainConfig.getChain().getChainId());
+        myPeerInfo.put("shareAddress", peerHttpServer.shareMyAddress);
+        if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
+            servicesList.add(Peer.Service.PRUNABLE);
+        }
+        if (API.openAPIPort > 0) {
+            myPeerInfo.put("apiPort", API.openAPIPort);
+            servicesList.add(Peer.Service.API);
+        }
+        if (API.openAPISSLPort > 0) {
+            myPeerInfo.put("apiSSLPort", API.openAPISSLPort);
+            servicesList.add(Peer.Service.API_SSL);
+        }
 
+        if (API.isOpenAPI) {
+            EnumSet<APIEnum> disabledAPISet = EnumSet.noneOf(APIEnum.class);
+
+            API.disabledAPIs.forEach(apiName -> {
+                APIEnum api = APIEnum.fromName(apiName);
+                if (api != null) {
+                    disabledAPISet.add(api);
+                }
+            });
+            API.disabledAPITags.forEach(apiTag -> {
+                for (APIEnum api : APIEnum.values()) {
+                    if (api.getHandler() != null && api.getHandler().getAPITags().contains(apiTag)) {
+                        disabledAPISet.add(api);
+                    }
+                }
+            });
+            myPeerInfo.put("disabledAPIs", APIEnum.enumSetToBase64String(disabledAPISet));
+
+            myPeerInfo.put("apiServerIdleTimeout", API.apiServerIdleTimeout);
+
+            if (API.apiServerCORS) {
+                servicesList.add(Peer.Service.CORS);
+            }
+        }
+
+        long services = 0;
+        for (Peer.Service service : servicesList) {
+            services |= service.getCode();
+        }
+        myPeerInfo.put("services", Long.toUnsignedString(services));
+        myServices = Collections.unmodifiableList(servicesList);
+        LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
+      
+    }
+    
     public static void shutdown() {
         shutdown = true;
         peerHttpServer.shutdown();
         ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
-        ThreadPool.shutdownExecutor("peersService", peersService, 5);
+        ThreadPool.shutdownExecutor("peersService", peersExecutorService, 5);
     }
 
     public static void suspend() {
@@ -540,7 +545,7 @@ public final class Peers {
             return null;
         }
 
-        if (peerHttpServer.myAddress != null && peerHttpServer.myAddress.equalsIgnoreCase(announcedAddress)) {
+        if (peerHttpServer.getMyAddress() != null && peerHttpServer.getMyAddress().equalsIgnoreCase(announcedAddress)) {
             return null;
         }
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
@@ -654,8 +659,8 @@ public final class Peers {
                 }
 
                 if (!peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
-                        && peer.getBlockchainState() != Peer.BlockchainState.LIGHT_CLIENT) {
-                    Future<JSONObject> futureResponse = peersService.submit(() -> peer.send(jsonRequest,
+                        && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT) {
+                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> peer.send(jsonRequest,
                             blockchainConfig.getChain().getChainId()));
                     expectedResponses.add(futureResponse);
                 }
@@ -791,13 +796,13 @@ public final class Peers {
     }
 
     private static void checkBlockchainState() {
-        Peer.BlockchainState state = propertiesHolder.isLightClient()
-                ? Peer.BlockchainState.LIGHT_CLIENT
+        BlockchainState state = propertiesHolder.isLightClient()
+                ? BlockchainState.LIGHT_CLIENT
                 : (blockchainProcessor.isDownloading() || blockchain.getLastBlockTimestamp() < timeService.getEpochTime() - 600)
-                ? Peer.BlockchainState.DOWNLOADING :
+                ? BlockchainState.DOWNLOADING :
                         (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10) ?
-                                Peer.BlockchainState.FORK :
-                        Peer.BlockchainState.UP_TO_DATE;
+                                BlockchainState.FORK :
+                        BlockchainState.UP_TO_DATE;
         if (state != currentBlockchainState) {
             JSONObject json = new JSONObject(myPeerInfo);
             json.put("blockchainState", state.ordinal());
@@ -818,7 +823,7 @@ public final class Peers {
         return myPeerInfoResponse;
     }
 
-    public static Peer.BlockchainState getMyBlockchainState() {
+    public static BlockchainState getMyBlockchainState() {
         checkBlockchainState();
         return currentBlockchainState;
     }

@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,8 +21,10 @@ import org.slf4j.LoggerFactory;
 class PeerConnectingThread implements Runnable {
     
     private static final Logger LOG = LoggerFactory.getLogger(PeerConnectingThread.class);
+    private EpochTime timeService;
     
-    public PeerConnectingThread() {
+    public PeerConnectingThread(EpochTime timeService) {
+        this.timeService=timeService;
     }
 
     @Override
@@ -31,7 +34,7 @@ class PeerConnectingThread implements Runnable {
         }
         try {
             try {
-                final int now = Peers.timeService.getEpochTime();
+                final int now = timeService.getEpochTime();
                 if (!Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
                     List<Future<?>> futures = new ArrayList<>();
                     List<Peer> hallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != Peer.State.CONNECTED && now - peer.getLastConnectAttempt() > 600 && peer.providesService(Peer.Service.HALLMARK));
@@ -49,7 +52,7 @@ class PeerConnectingThread implements Runnable {
                             }
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
-                        connectSet.forEach((peer) -> futures.add(Peers.peersService.submit(() -> {
+                        connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
                             peer.connect(Peers.blockchainConfig.getChain().getChainId());
                             if (peer.getState() == Peer.State.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
@@ -64,7 +67,7 @@ class PeerConnectingThread implements Runnable {
                 }
                 Peers.peers.values().forEach((peer) -> {
                     if (peer.getState() == Peer.State.CONNECTED && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
-                        Peers.peersService.submit(() -> peer.connect(Peers.blockchainConfig.getChain().getChainId()));
+                        Peers.peersExecutorService.submit(() -> peer.connect(Peers.blockchainConfig.getChain().getChainId()));
                     }
                     if (peer.getLastInboundRequest() != 0 && now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
                         peer.setLastInboundRequest(0);
@@ -99,7 +102,7 @@ class PeerConnectingThread implements Runnable {
                 for (String wellKnownPeer : Peers.wellKnownPeers) {
                     PeerImpl peer = Peers.findOrCreatePeer(wellKnownPeer, true);
                     if (peer != null && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
-                        Peers.peersService.submit(() -> {
+                        Peers.peersExecutorService.submit(() -> {
                             Peers.addPeer(peer);
                             Peers.connectPeer(peer);
                         });
