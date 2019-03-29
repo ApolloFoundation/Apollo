@@ -121,7 +121,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final GlobalSync globalSync;
-    private final DerivedDbTablesRegistry dbTables;
+    private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
     private final PhasingPollService phasingPollService;
     private final TransactionValidator transactionValidator;
@@ -749,7 +749,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     private BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
-                                    GlobalSync globalSync, DerivedDbTablesRegistry dbTables,
+                                    GlobalSync globalSync, DerivedTablesRegistry dbTables,
                                     ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                     TransactionValidator transactionValidator,
                                     TransactionApplier transactionApplier,

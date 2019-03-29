@@ -8,11 +8,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Update records in specified tables so they point to snapshot block in main db
@@ -21,21 +24,25 @@ public class ReLinkDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(ReLinkDataCommand.class);
 
     private DataTransferManagementReceiver dataTransferManagement;
-    private List<String> tableNameList = new ArrayList<>();
-    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
-    private long snapshotBlockHeight = 0L;
+    private List<String> tableNameList;
+    private int commitBatchSize;
+    private long snapshotBlockHeight;
+    private Set<Long> dbIdsExclusionList;
 
     public ReLinkDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                             int commitBatchSize, long snapshotBlockHeight) {
-        this(dataTransferManagement, snapshotBlockHeight);
-        this.commitBatchSize = commitBatchSize;
+                             int commitBatchSize, long snapshotBlockHeight, List<String> tableNameList, Set<Long> dbIdsExlusionList) {
+        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
+        this.snapshotBlockHeight = snapshotBlockHeight;
+        this.commitBatchSize = commitBatchSize <= 0 ? DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
+        this.dbIdsExclusionList = dbIdsExlusionList == null ? Collections.emptySet() : dbIdsExlusionList;
+        this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
     }
 
     public ReLinkDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                             long snapshotBlockHeight) {
-        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
-        this.snapshotBlockHeight = snapshotBlockHeight;
-//        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
+                             long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+        this(dataTransferManagement,  null, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
+        //TODO move it to another class
+        tableNameList.add(TRANSACTION_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(TAGGED_DATA_TABLE_NAME);
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
@@ -47,11 +54,13 @@ public class ReLinkDataCommand implements DataMigrateOperation {
             DataTransferManagementReceiver dataTransferManagement,
             List<String> tableNameList,
             int commitBatchSize,
-            Long snapshotBlockHeight) {
-        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
-        this.tableNameList = Objects.requireNonNull(tableNameList, "tableNameList is NULL");
-        this.commitBatchSize = commitBatchSize;
-        this.snapshotBlockHeight = snapshotBlockHeight;
+            Long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+        this(dataTransferManagement, commitBatchSize, snapshotBlockHeight, tableNameList, dbIdsExclusionList);
+    }
+
+    public void addTable(String table) {
+        StringValidator.requireNonBlank(table);
+        tableNameList.add(table);
     }
 
     /**
@@ -61,7 +70,7 @@ public class ReLinkDataCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Update Linked Data Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight);
+                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, dbIdsExclusionList);
         return dataTransferManagement.relinkDataToSnapshotBlock(paramInfo);
     }
 

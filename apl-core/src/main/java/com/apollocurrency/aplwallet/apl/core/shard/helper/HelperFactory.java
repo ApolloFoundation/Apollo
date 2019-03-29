@@ -20,7 +20,9 @@ public interface HelperFactory<T> {
      * @param helperTableName table name
      * @return table specific helper class OR Empty
      */
-        Optional<T> createSelectInsertHelper(String helperTableName);
+     Optional<T> createSelectInsertHelper(String helperTableName);
+
+     Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName, boolean relink);
 
     /**
      * Create specified helper class. There are helpers used for deleting
