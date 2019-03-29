@@ -23,8 +23,10 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeSt
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,35 +45,39 @@ public class ShardMigrationExecutor {
     private DataTransferManagementReceiver managementReceiver;
     private ShardHashCalculator shardHashCalculator;
     private BlockIndexDao blockIndexDao;
+    private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
 
     @Inject
     public ShardMigrationExecutor(DataTransferManagementReceiver managementReceiver,
                                   javax.enterprise.event.Event<MigrateState> migrateStateEvent,
                                   ShardHashCalculator shardHashCalculator,
-                                  BlockIndexDao blockIndexDao) {
+                                  BlockIndexDao blockIndexDao,
+                                  ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor) {
         this.managementReceiver = Objects.requireNonNull(managementReceiver, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
         this.shardHashCalculator = Objects.requireNonNull(shardHashCalculator, "sharding hash calculator is NULL");
         this.blockIndexDao = Objects.requireNonNull(blockIndexDao, "blockIndexDao is NULL");
+        this.excludedTransactionDbIdExtractor = Objects.requireNonNull(excludedTransactionDbIdExtractor, "exluded transaction db_id extractor is NULL");
     }
 
     public void createAllCommands(int height) {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardInitTableSchemaVersion());
         this.addOperation(createShardSchemaCommand);
+        Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
 
-        CopyDataCommand copyDataCommand = new CopyDataCommand(managementReceiver, height);
+        CopyDataCommand copyDataCommand = new CopyDataCommand(managementReceiver, height, dbIds);
         this.addOperation(copyDataCommand);
 
         CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardAddConstraintsSchemaVersion());
         this.addOperation(createShardConstraintsCommand);
 
-        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height);
+        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
         this.addOperation(reLinkDataCommand);
 
         UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
-                (managementReceiver, height);
+                (managementReceiver, height, dbIds);
         this.addOperation(updateSecondaryIndexCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
@@ -82,6 +88,7 @@ public class ShardMigrationExecutor {
         if (hash == null) {
             throw new IllegalStateException("Cannot calculate shard hash");
         }
+
         log.debug("SHARD HASH = {}", hash.length);
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, hash);
         this.addOperation(finishShardingCommand);

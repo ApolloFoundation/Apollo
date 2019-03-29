@@ -30,6 +30,8 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
         super(TABLE_NAME, KEY_FACTORY);
     }
 
+
+
     @Override
     protected PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new PhasingPollResult(rs);

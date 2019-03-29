@@ -100,6 +100,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
+        boolean excludeRows = operationParams.dbIdsExclusionSet.isPresent();
         try (ResultSet rs = ps.executeQuery()) {
             log.trace("SELECT...from {} where DB_ID > {} AND DB_ID < {} LIMIT {}",
                     operationParams.tableName,
@@ -109,9 +110,11 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 // execute one time
                 extractMetaDataCreateInsert(targetConnect, rs);
                 formatBindValues(rs);// format readable values
-
+                rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
-
+                if (excludeRows && operationParams.dbIdsExclusionSet.get().contains(rs.getLong(BASE_COLUMN_NAME))) {
+                    continue;
+                }
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         Object object = rs.getObject(i + 1);
@@ -127,7 +130,6 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                     targetConnect.rollback();
                     throw e;
                 }
-                rows++;
             }
             totalSelectedRows += rows;
             totalProcessedCount += processedRows;

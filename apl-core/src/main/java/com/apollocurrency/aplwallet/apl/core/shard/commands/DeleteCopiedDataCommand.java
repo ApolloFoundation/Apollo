@@ -6,13 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(DeleteCopiedDataCommand.class);
@@ -20,7 +20,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
-    private long snapshotBlockHeight = 0L;
+    private long snapshotBlockHeight;
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
                                    int commitBatchSize, long snapshotBlockHeight) {
@@ -53,7 +53,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Delete Block/Transaction Data from main DB Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight);
+                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, null);
         return dataTransferManagement.deleteCopiedData(paramInfo);
     }
 

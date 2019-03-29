@@ -6,13 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Command copy block + transaction data from main into shard database.
@@ -23,20 +26,19 @@ public class CopyDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(CopyDataCommand.class);
 
     private DataTransferManagementReceiver dataTransferManagement;
-    private List<String> tableNameList = new ArrayList<>();
-    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
-    private long snapshotBlockHeight = 0L;
+    private List<String> tableNameList;
+    private int commitBatchSize;
+    private long snapshotBlockHeight;
+    private Set<Long> dbIdsExclusionList;
 
     public CopyDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                           int commitBatchSize, long snapshotBlockHeight) {
-        this(dataTransferManagement, snapshotBlockHeight);
-        this.commitBatchSize = commitBatchSize;
+                           int commitBatchSize, long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+        this(dataTransferManagement, null, commitBatchSize, snapshotBlockHeight, dbIdsExclusionList);
     }
 
     public CopyDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                           long snapshotBlockHeight) {
-        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
-        this.snapshotBlockHeight = snapshotBlockHeight;
+                           long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+        this(dataTransferManagement, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
     }
@@ -45,11 +47,17 @@ public class CopyDataCommand implements DataMigrateOperation {
             DataTransferManagementReceiver dataTransferManagement,
             List<String> tableNameList,
             int commitBatchSize,
-            Long snapshotBlockHeight) {
+            Long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
-        this.tableNameList = Objects.requireNonNull(tableNameList, "tableNameList is NULL");
+        this.tableNameList = tableNameList == null ? new ArrayList<>() :tableNameList;
         this.commitBatchSize = commitBatchSize;
         this.snapshotBlockHeight = snapshotBlockHeight;
+        this.dbIdsExclusionList = dbIdsExclusionList == null ? Collections.emptySet() : dbIdsExclusionList;
+    }
+
+    public void addTable(String table) {
+        StringValidator.requireNonBlank(table);
+        tableNameList.add(table);
     }
 
     /**
@@ -59,7 +67,7 @@ public class CopyDataCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Copy Shard Data Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight);
+                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, this.dbIdsExclusionList);
         return dataTransferManagement.copyDataToShard(paramInfo);
     }
 

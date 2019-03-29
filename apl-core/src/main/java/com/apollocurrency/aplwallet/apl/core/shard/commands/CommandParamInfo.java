@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Interface command parameters information.
@@ -28,4 +29,9 @@ public interface CommandParamInfo {
     byte[] getShardHash();
 
     void setShardHash(byte[] shardHash);
+
+    Set<Long> getDbIdExclusionSet();
+
+    void setDbIdExclusionSet(Set<Long> dbIdExclusionSet);
+
 }

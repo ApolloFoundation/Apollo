@@ -63,14 +63,14 @@ public class BlockDaoImpl implements BlockDao {
     private final Map<Long, Block> blockCache;
     private final SortedMap<Integer, Block> heightMap;
     private final Map<Long, Transaction> transactionCache;
-    private final DerivedDbTablesRegistry tablesRegistry;
+    private final DerivedTablesRegistry tablesRegistry;
     private DatabaseManager databaseManager;
     private TransactionDao transactionDao;
     private BlockIndexDao blockIndexDao;
 
 
     public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
-                        Map<Long, Transaction> transactionCache, DerivedDbTablesRegistry tablesRegistry, DatabaseManager databaseManager) {
+                        Map<Long, Transaction> transactionCache, DerivedTablesRegistry tablesRegistry, DatabaseManager databaseManager) {
         this.blockCacheSize = blockCacheSize;
         this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
         this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
@@ -80,7 +80,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Inject
-    public BlockDaoImpl(DerivedDbTablesRegistry derivedDbTablesRegistry, DatabaseManager databaseManager) {
+    public BlockDaoImpl(DerivedTablesRegistry derivedDbTablesRegistry, DatabaseManager databaseManager) {
         this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), derivedDbTablesRegistry, databaseManager);
     }
 
