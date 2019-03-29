@@ -93,11 +93,9 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 return null;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        catch (AplException.ValidationException e) {
+        } catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database, id = " + transactionId + ", does not pass validation!", e);
         }
     }
@@ -129,11 +127,9 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 return null;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        catch (AplException.ValidationException e) {
+        } catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database, full_hash = " + Convert.toHexString(fullHash)
                     + ", does not pass validation!", e);
         }
@@ -161,8 +157,7 @@ public class TransactionDaoImpl implements TransactionDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && rs.getInt("height") <= height;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -192,8 +187,7 @@ public class TransactionDaoImpl implements TransactionDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && Arrays.equals(rs.getBytes("full_hash"), fullHash) && rs.getInt("height") <= height;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -215,8 +209,7 @@ public class TransactionDaoImpl implements TransactionDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() ? rs.getBytes("full_hash") : null;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -296,8 +289,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
             return builder.build();
 
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -315,8 +307,7 @@ public class TransactionDaoImpl implements TransactionDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             return findBlockTransactions(con, blockId);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -333,11 +324,9 @@ public class TransactionDaoImpl implements TransactionDao {
                 }
                 return list;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        catch (AplException.ValidationException e) {
+        } catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database for block_id = " + Long.toUnsignedString(blockId)
                     + " does not pass validation!", e);
         }
@@ -366,8 +355,7 @@ public class TransactionDaoImpl implements TransactionDao {
                             rs.getBoolean("prunable_encrypted_message")));
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return result;
@@ -438,8 +426,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     }
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -452,8 +439,7 @@ public class TransactionDaoImpl implements TransactionDao {
              ResultSet rs = pstmt.executeQuery()) {
             rs.next();
             return rs.getInt(1);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
