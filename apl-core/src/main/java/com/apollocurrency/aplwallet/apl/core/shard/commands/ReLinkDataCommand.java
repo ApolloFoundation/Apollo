@@ -6,13 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Update records in specified tables so they point to snapshot block in main db
@@ -35,7 +35,7 @@ public class ReLinkDataCommand implements DataMigrateOperation {
                              long snapshotBlockHeight) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
+//        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(TAGGED_DATA_TABLE_NAME);
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);

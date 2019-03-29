@@ -6,18 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Singleton;
 
 @Singleton
 public class FullTextConfig {
 
-    private List<String> tableNames = new ArrayList<>();
+    private Set<String> tableNames = new HashSet<>();
     private String schema = "PUBLIC";
 
-    public void registerTable(String tableName) {
+    public synchronized void registerTable(String tableName) {
         StringValidator.requireNonBlank(tableName, "Table name");
         tableNames.add(tableName);
     }
@@ -27,10 +27,8 @@ public class FullTextConfig {
         this.schema = schema;
     }
 
-    public FullTextConfig() {}
-
-    public List<String> getTableNames() {
-        return Collections.unmodifiableList(tableNames);
+    public synchronized Set<String> getTableNames() {
+        return Collections.unmodifiableSet(tableNames);
     }
 
     public String getSchema() {

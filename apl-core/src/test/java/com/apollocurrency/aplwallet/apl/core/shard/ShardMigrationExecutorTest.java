@@ -14,8 +14,8 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -36,16 +35,21 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -55,6 +59,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
@@ -82,8 +87,9 @@ class ShardMigrationExecutorTest {
             BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             TransactionTestData.class, PropertyProducer.class,
-            GlobalSyncImpl.class, BlockIndexDao.class, ShardingHashCalculatorImpl.class,
-            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDaoJdbcImpl.class,
+            GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
+            DerivedDbTablesRegistry.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
+            ShardRecoveryDaoJdbcImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
             BlockImpl.class, ShardMigrationExecutor.class, FullTextConfig.class )
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -103,12 +109,20 @@ class ShardMigrationExecutorTest {
     @Inject
     private BlockIndexDao blockIndexDao;
     @Inject
+    private Blockchain blockchain;
+    @Inject
     private TransactionIndexDao transactionIndexDao;
 
     @BeforeAll
     static void setUpAll() {
         Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+    }
+
+    @BeforeEach
+    void setUp() {
+
+        blockchain.setLastBlock(new BlockTestData().BLOCK_11);
     }
 
     @AfterEach
@@ -144,10 +158,10 @@ class ShardMigrationExecutorTest {
         assertEquals(SECONDARY_INDEX_UPDATED, state);
 
         // check by secondary indexes
-        long blockIndexCount = blockIndexDao.countBlockIndexByShard(3L);
+        long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
-        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(3L);
-        assertEquals(5, trIndexCount);
+        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
+        assertEquals(7, trIndexCount);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, 8000L);
         state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
@@ -157,7 +171,6 @@ class ShardMigrationExecutorTest {
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, new byte[]{3,4,5,6,1});
         state = shardMigrationExecutor.executeOperation(finishShardingCommand);
         assertEquals(COMPLETED, state);
-
     }
 
     @Test

@@ -6,8 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -15,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -35,6 +35,7 @@ public final class PhasingOnly {
     
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     public static PhasingOnly get(long accountId) {
         return AccountRestrictions.phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.ByteClause("voting_model", DbClause.Op.NE, VoteWeighting.VotingModel.NONE.getCode())));
@@ -125,7 +126,7 @@ public final class PhasingOnly {
     }
 
     void checkTransaction(Transaction transaction) throws AplException.AccountControlException {
-        if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), PhasingPoll.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
+        if (maxFees > 0 && Math.addExact(transaction.getFeeATM(), phasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > maxFees) {
             throw new AplException.AccountControlException(String.format("Maximum total fees limit of %f %s exceeded", ((double) maxFees) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
         }
         if (transaction.getType() == Messaging.PHASING_VOTE_CASTING) {

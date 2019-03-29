@@ -2,12 +2,12 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
 /**
  * Calculate hash for shard data
  */
-public interface ShardingHashCalculator {
+public interface ShardHashCalculator {
     /**
      * Calculate hash for shard data from shardStartHeight to shardEndHeight
      * @param shardStartHeight height of data from which hash calculation will be started (inclusive)

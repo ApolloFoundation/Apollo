@@ -498,8 +498,7 @@ public final class Shuffler {
         }
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
-                    (short) 1440, attachment);
-            builder.timestamp(blockchain.getLastBlockTimestamp());
+                    (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             Transaction transaction = builder.build(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;

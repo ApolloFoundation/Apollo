@@ -243,7 +243,7 @@ public abstract class TransactionType {
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
-    public final boolean applyUnconfirmed(TransactionImpl transaction, Account senderAccount) {
+    public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
@@ -279,7 +279,7 @@ public abstract class TransactionType {
 
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
-    public final void undoUnconfirmed(TransactionImpl transaction, Account senderAccount) {
+    public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
                 transaction.getAmountATM(), transaction.getFeeATM());

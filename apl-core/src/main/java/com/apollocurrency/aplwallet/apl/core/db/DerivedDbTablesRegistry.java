@@ -3,8 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Singleton;
 
 /**
@@ -14,11 +15,11 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class DerivedDbTablesRegistry {
-    private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
+    private final Map<String, DerivedDbTable> derivedTables = new ConcurrentHashMap<>();
     public void registerDerivedTable(DerivedDbTable table) {
-        derivedTables.add(table);
+        derivedTables.putIfAbsent(table.toString(), table);
     } 
-    public List<DerivedDbTable> getDerivedTables() {
-        return derivedTables;
-    }     
+    public Collection<DerivedDbTable> getDerivedTables() {
+        return derivedTables.values();
+    }
   }

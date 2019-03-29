@@ -711,20 +711,10 @@ public class DesktopApplication extends Application {
                 System.exit(0);
             });
         }
-<<<<<<< HEAD
+
         */
         
-        /*private Alert reindexDbUI() throws SQLException {
-            FullTextTrigger.reindex(Db.getDb().getConnection());
-=======
 
-        private Alert reindexDbUI() throws SQLException {
-            FullTextSearchService searchService = CDI.current().select(FullTextSearchService.class).get();
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            searchService.reindexAll(dataSource.getConnection());
->>>>>>> develop
-            return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
-        }*/
 
 
         private Alert prepareAlert(Alert.AlertType alertType, String title, String contentText, int height, ButtonType... buttons) {

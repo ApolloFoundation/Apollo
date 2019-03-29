@@ -20,10 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -72,7 +71,7 @@ public interface Blockchain {
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
-    public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
+    List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
 
     List<Block> getBlocksAfter(long blockId, int limit);
 
@@ -104,9 +103,20 @@ public interface Blockchain {
 
     boolean hasTransaction(long transactionId, int height);
 
-//    boolean hasTransactionByFullHash(String fullHash);
+    boolean hasTransactionByFullHash(String fullHash);
+
+    boolean hasTransactionByFullHash(byte[] fullHash);
 
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
+
+    /**
+     * <p>Get transaction height by using fullHash restricted it by heightLimit parameter.</p>
+     * <p>This method will return height of transaction in blockchain, even if transaction currently not exist or not available</p>
+     * @param fullHash fullHash of transaction to retrieved
+     * @param heightLimit upper bound which should not be crossed by returned transaction height
+     * @return height of transaction or null when collision for hash occurred, transaction height greater than heightLimit or transaction with such hash not found
+     */
+    Integer getTransactionHeight(byte[] fullHash, int heightLimit);
 
     byte[] getFullHash(long transactionId);
 
@@ -129,11 +139,7 @@ public interface Blockchain {
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
 
-    List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
-
     DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
-
-    DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to);
 
     Set<Long> getBlockGenerators(int startHeight);
 
