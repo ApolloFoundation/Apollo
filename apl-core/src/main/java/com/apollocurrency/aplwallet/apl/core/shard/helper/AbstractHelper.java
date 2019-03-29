@@ -187,7 +187,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
                     && recoveryValue.getObjectName().equalsIgnoreCase(currentTableName)
                     && !isContain(recoveryValue.getProcessedObject(), currentTableName)) {
                 // process current table because it was not finished
-                this.lowerBoundIdValue = recoveryValue.getLastColumnValue() + 1; // last saved/processed value + 1
+                this.lowerBoundIdValue = recoveryValue.getLastColumnValue(); // last saved/processed value
                 log.debug("RESTORED object '{}' from = {}", operationParams.tableName, recoveryValue);
             } else {
                 // started next new table

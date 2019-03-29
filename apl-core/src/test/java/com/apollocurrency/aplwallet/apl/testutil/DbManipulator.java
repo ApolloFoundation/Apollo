@@ -33,7 +33,16 @@ public class DbManipulator {
     public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         Objects.requireNonNull(dbProperties, "dbProperties is NULL");
         this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder == null ? new PropertiesHolder() : propertiesHolder);
-        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/data.sql");
+
+        String dataScriptPath = null;
+        // sometimes it can be helpful to skip test data load
+        if (propertiesHolder.getBooleanProperty("apl.testData")) {
+            dataScriptPath = "db/data.sql";
+        } else {
+            // test data is not loaded
+            logger.warn("-->> test data is not loaded from : {}", "db/data.sql");
+        }
+        this.populator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", dataScriptPath);
     }
 
     public DbManipulator()  {

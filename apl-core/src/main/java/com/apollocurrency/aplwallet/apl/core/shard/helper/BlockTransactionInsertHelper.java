@@ -146,8 +146,8 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
         shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue);
-        sourceConnect.commit(); // commit recovery info
         targetConnect.commit(); // commit latest copied records if any
+        sourceConnect.commit(); // commit recovery info
         return rows != 0;// || paginateResultWrapper.lowerBoundColumnValue < paginateResultWrapper.upperBoundColumnValue;
     }
 

@@ -41,7 +41,6 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
@@ -49,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -59,7 +59,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,10 +71,22 @@ import javax.inject.Inject;
 class DataTransferManagementReceiverTest {
     private static final Logger log = getLogger(DataTransferManagementReceiverTest.class);
 
+    private static String BASE_SUB_DIR = "unit-test-db";
+    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
+
+/*  // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+    @RegisterExtension
+    DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
+    private static DbProperties baseDbProperties;
+    private static PropertiesHolder propertiesHolder;
+*/
+
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -86,9 +100,8 @@ class DataTransferManagementReceiverTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+//            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
-
-    private static PropertiesHolder propertiesHolder;
 
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
@@ -108,9 +121,30 @@ class DataTransferManagementReceiverTest {
         }
     }
 
+/*
+    // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+    @BeforeAll
+    static void setUpAll() {
+        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
+                null,
+                false,
+                null,
+                Constants.APPLICATION_DIR_NAME + ".properties",
+                Collections.emptyList());
+        propertiesHolder = new PropertiesHolder();
+        Properties properties = propertiesLoader.load();
+        properties.setProperty("apl.testData", "true");// true - load data.sql, false - do not load data.sql
+        propertiesHolder.init(properties);
+        DbConfig dbConfig = new DbConfig(propertiesHolder);
+        baseDbProperties = dbConfig.getDbConfig();
+    }
+*/
+
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
+        extension.getDatabaseManger().shutdown();
+        FileUtils.deleteQuietly(pathToDb.toFile()); // remove after every test
     }
 
     @Test
