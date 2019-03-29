@@ -217,9 +217,9 @@ public final class Peers {
         }
 
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
-        if (Peers.myHallmark != null && Peers.myHallmark.length() > 0) {
+        if (myHallmark != null && Peers.myHallmark.length() > 0) {
             try {
-                Hallmark hallmark = Hallmark.parseHallmark(Peers.myHallmark);
+                Hallmark hallmark = Hallmark.parseHallmark(myHallmark);
                 if (!hallmark.isValid()) {
                     throw new RuntimeException("Hallmark is not valid");
                 }
@@ -232,7 +232,7 @@ public final class Peers {
                     }
                 }
             } catch (RuntimeException e) {
-                LOG.error("Your hallmark is invalid: " + Peers.myHallmark + " for your address: " + peerHttpServer.myAddress);
+                LOG.error("Your hallmark is invalid: " + myHallmark + " for your address: " + peerHttpServer.myAddress);
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -258,8 +258,8 @@ public final class Peers {
                 throw new RuntimeException(e.toString(), e);
             }
         }
-        if (Peers.myHallmark != null && Peers.myHallmark.length() > 0) {
-            json.put("hallmark", Peers.myHallmark);
+        if (myHallmark != null && myHallmark.length() > 0) {
+            json.put("hallmark", myHallmark);
             servicesList.add(Peer.Service.HALLMARK);
         }
         json.put("application", Constants.APPLICATION);
@@ -362,7 +362,7 @@ public final class Peers {
         // get main db data source
         TransactionalDataSource dataSource = lookupDataSource();
 
-        Peers.addListener(peer -> peersService.submit(() -> {
+        addListener(peer -> peersService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
                     dataSource.begin();
@@ -377,14 +377,14 @@ public final class Peers {
 
         Account.addListener(account -> peers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                Peers.listeners.notify(peer, Event.WEIGHT);
+                listeners.notify(peer, Event.WEIGHT);
             }
         }), Account.Event.BALANCE);
 
         if (! propertiesHolder.isOffline()) {
             ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(), 20);
             ThreadPool.scheduleThread("PeerUnBlacklisting", new PeerUnBlacklistingThread(timeService), 60);
-            if (Peers.getMorePeers) {
+            if (getMorePeers) {
                 ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(), 20);
             }
         }
@@ -408,15 +408,15 @@ public final class Peers {
     }
 
     public static boolean addListener(Listener<Peer> listener, Event eventType) {
-        return Peers.listeners.addListener(listener, eventType);
+        return listeners.addListener(listener, eventType);
     }
 
     public static boolean removeListener(Listener<Peer> listener, Event eventType) {
-        return Peers.listeners.removeListener(listener, eventType);
+        return listeners.removeListener(listener, eventType);
     }
 
     static void notifyListeners(Peer peer, Event eventType) {
-        Peers.listeners.notify(peer, eventType);
+        listeners.notify(peer, eventType);
     }
 
     public static int getDefaultPeerPort() {
@@ -523,7 +523,7 @@ public final class Peers {
         }
 
         String host = inetAddress.getHostAddress();
-        if (Peers.cjdnsOnly && !host.substring(0,2).equals("fc")) {
+        if (cjdnsOnly && !host.substring(0,2).equals("fc")) {
             return null;
         }
         //re-add the [] to ipv6 addresses lost in getHostAddress() above
@@ -568,7 +568,7 @@ public final class Peers {
                         + ", removing old peer " + oldHost);
                 oldPeer = peers.remove(oldHost);
                 if (oldPeer != null) {
-                    Peers.notifyListeners(oldPeer, Event.REMOVE);
+                    notifyListeners(oldPeer, Event.REMOVE);
                 }
             }
         }
@@ -649,7 +649,7 @@ public final class Peers {
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
             for (final Peer peer : peers.values()) {
 
-                if (Peers.enableHallmarkProtection && peer.getWeight() < Peers.pushThreshold) {
+                if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
                     continue;
                 }
 
@@ -659,7 +659,7 @@ public final class Peers {
                             blockchainConfig.getChain().getChainId()));
                     expectedResponses.add(futureResponse);
                 }
-                if (expectedResponses.size() >= Peers.sendToPeersLimit - successful) {
+                if (expectedResponses.size() >= sendToPeersLimit - successful) {
                     for (Future<JSONObject> future : expectedResponses) {
                         try {
                             JSONObject response = future.get();
@@ -675,7 +675,7 @@ public final class Peers {
                     }
                     expectedResponses.clear();
                 }
-                if (successful >= Peers.sendToPeersLimit) {
+                if (successful >= sendToPeersLimit) {
                     return;
                 }
             }
@@ -689,14 +689,14 @@ public final class Peers {
     public static List<Peer> getPublicPeers(final Peer.State state, final boolean applyPullThreshold) {
         UUID chainId = blockchainConfig.getChain().getChainId();
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == state && chainId.equals(peer.getChainId()) && peer.getAnnouncedAddress() != null
-                && (!applyPullThreshold || !Peers.enableHallmarkProtection || peer.getWeight() >= Peers.pullThreshold));
+                && (!applyPullThreshold || !enableHallmarkProtection || peer.getWeight() >= pullThreshold));
     }
 
     public static Peer getWeightedPeer(List<Peer> selectedPeers) {
         if (selectedPeers.isEmpty()) {
             return null;
         }
-        if (! Peers.enableHallmarkProtection || ThreadLocalRandom.current().nextInt(3) == 0) {
+        if (! enableHallmarkProtection || ThreadLocalRandom.current().nextInt(3) == 0) {
             return selectedPeers.get(ThreadLocalRandom.current().nextInt(selectedPeers.size()));
         }
         long totalWeight = 0;
@@ -728,38 +728,24 @@ public final class Peers {
             URI uri = new URI("http://" + address);
             String host = uri.getHost();
             int port = uri.getPort();
-            return port > 0 && port != Peers.getDefaultPeerPort() ? host + ":" + port : host;
+            return port > 0 && port != getDefaultPeerPort() ? host + ":" + port : host;
         } catch (URISyntaxException e) {
             return null;
         }
     }
 
-    public static boolean isOldVersion(Version version, Version minVersion) {
-        if (version == null) {
-            return true;
-        }
-        return version.lessThan(minVersion);
-    }
-
-
-    public static boolean isNewVersion(Version version) {
-        if (version == null) {
-            return true;
-        }
-        return version.greaterThan(MAX_VERSION);
-    }
 
     public static boolean hasTooFewKnownPeers() {
-        return peers.size() < Peers.minNumberOfKnownPeers;
+        return peers.size() < minNumberOfKnownPeers;
     }
 
     public static boolean hasTooManyKnownPeers() {
-        return peers.size() > Peers.maxNumberOfKnownPeers;
+        return peers.size() > maxNumberOfKnownPeers;
     }
 
     static boolean hasEnoughConnectedPublicPeers(int limit) {
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
-                && (! Peers.enableHallmarkProtection || peer.getWeight() > 0), limit).size() >= limit;
+                && (! enableHallmarkProtection || peer.getWeight() > 0), limit).size() >= limit;
     }
 
     /**

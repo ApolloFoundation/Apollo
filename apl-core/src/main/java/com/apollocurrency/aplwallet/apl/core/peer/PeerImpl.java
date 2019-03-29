@@ -191,7 +191,7 @@ public final class PeerImpl implements Peer {
         this.version = version;
         isOldVersion = false;
         if (Constants.APPLICATION.equals(application)) {
-            isOldVersion = Peers.isOldVersion(version, Constants.MIN_VERSION);
+            isOldVersion = Version.isOldVersion(version, Constants.MIN_VERSION);
             if (isOldVersion) {
                 if (versionChanged) {
                     LOG.debug(String.format("Blacklisting %s version %s", host, version));
@@ -957,8 +957,8 @@ public final class PeerImpl implements Peer {
     @Override
     public boolean isApiConnectable() {
         return isOpenAPI() && state == Peer.State.CONNECTED
-                && !Peers.isOldVersion(version, Constants.MIN_PROXY_VERSION)
-                && !Peers.isNewVersion(version)
+                && !Version.isOldVersion(version, Constants.MIN_PROXY_VERSION)
+                && !Version.isNewVersion(version)
                 && blockchainState == Peer.BlockchainState.UP_TO_DATE;
     }
 
