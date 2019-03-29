@@ -68,14 +68,16 @@ import java.util.Set;
 import java.util.StringJoiner;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
 
-@Vetoed
+@Singleton
 public final class API {
     private static final Logger LOG = getLogger(API.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private PropertiesHolder propertiesHolder;
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
   
@@ -87,26 +89,37 @@ public final class API {
 
     private static Set<String> allowedBotHosts;
     private static List<NetworkAddress> allowedBotNets;
-    public static final int maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
-    static final boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
-    public static final int apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
-    public static final boolean apiServerCORS = propertiesHolder.getBooleanProperty("apl.apiServerCORS");
+    public static  int maxRecords;
+    static boolean enableAPIUPnP;
+    public static int apiServerIdleTimeout;
+    public static boolean apiServerCORS;
 
     private static Server apiServer;
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
-    //TODO: remove static context
-    private static final UPnP upnp = CDI.current().select(UPnP.class).get();
-    private static final JettyConnectorCreator jettyConnectorCreator = CDI.current().select(JettyConnectorCreator.class).get();
-
-
-    private API() {} // never
+ 
+    private final UPnP upnp;
+    private final JettyConnectorCreator jettyConnectorCreator;
+    final int port;
+    final int sslPort;
+    final String host;
+    final boolean enableAPIServer;
+    final int maxThreadPoolSize;
+    final int minThreadPoolSize;
+    final boolean enableSSL;
     
-    public static void init() {
-//    static {
-
-        List<String> disabled = new ArrayList<>(propertiesHolder.getStringListProperty("apl.disabledAPIs"));
+    @Inject
+    public API(PropertiesHolder propertiesHolder,UPnP upnp, JettyConnectorCreator jettyConnectorCreator){
+        this.propertiesHolder=propertiesHolder;
+        this.upnp=upnp;
+        this.jettyConnectorCreator=jettyConnectorCreator;
+        maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
+        enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
+        apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
+        apiServerCORS = propertiesHolder.getBooleanProperty("apl.apiServerCORS");
+        //
+            List<String> disabled = new ArrayList<>(propertiesHolder.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
         disabledAPIs = Collections.unmodifiableList(disabled);
         disabled = propertiesHolder.getStringListProperty("apl.disabledAPITags");
@@ -136,22 +149,37 @@ public final class API {
             allowedBotHosts = null;
             allowedBotNets = null;
         }
+//
+            port = propertiesHolder.getIntProperty("apl.apiServerPort");
+            sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
+            host = propertiesHolder.getStringProperty("apl.apiServerHost");
+            enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
+            maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");
+            minThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMinSize");
+            enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
+//
+            String localhost = "0.0.0.0".equals(host) || "127.0.0.1".equals(host) ? "localhost" : host;
+            try {
+                welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
+                serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
+            } catch (URISyntaxException e) {
+                LOG.info("Cannot resolve browser URI", e);
+            }
+            openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
+            openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
+            isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
+    }
+    
+    public final void start() {
 
-        boolean enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
 
         if (enableAPIServer) {
-
-            final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
-            final int sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
-            final String host = propertiesHolder.getStringProperty("apl.apiServerHost");
-            int maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");
-            int minThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMinSize");
+            
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
             threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
-            boolean enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
             
             //
             // Create the HTTP connector
@@ -167,17 +195,6 @@ public final class API {
             if (enableSSL) {
                 jettyConnectorCreator.addHttpSConnector(host, port, apiServer);
             }
-            
-            String localhost = "0.0.0.0".equals(host) || "127.0.0.1".equals(host) ? "localhost" : host;
-            try {
-                welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
-                serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
-            } catch (URISyntaxException e) {
-                LOG.info("Cannot resolve browser URI", e);
-            }
-            openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
-            openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
-            isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
 
             HandlerList apiHandlers = new HandlerList();
 
@@ -319,9 +336,7 @@ public final class API {
 
     }
 
-//    public static void init() {}
-
-    public static void shutdown() {
+    public final void shutdown() {
         if (apiServer != null) {
             try {
                 apiServer.stop();
@@ -339,8 +354,8 @@ public final class API {
     }
 
 
-    static boolean isAllowed(String remoteHost) {
-        if (API.allowedBotHosts == null || API.allowedBotHosts.contains(remoteHost)) {
+    public static boolean isAllowed(String remoteHost) {
+        if (allowedBotHosts == null || allowedBotHosts.contains(remoteHost)) {
             return true;
         }
         try {
@@ -358,7 +373,7 @@ public final class API {
 
     }
 
-    private static void disableHttpMethods(ServletContextHandler servletContext) {
+    private void disableHttpMethods(ServletContextHandler servletContext) {
         SecurityHandler securityHandler = servletContext.getSecurityHandler();
         if (securityHandler == null) {
             securityHandler = new ConstraintSecurityHandler();
@@ -367,7 +382,7 @@ public final class API {
         disableHttpMethods(securityHandler);
     }
 
-    private static void disableHttpMethods(SecurityHandler securityHandler) {
+    private void disableHttpMethods(SecurityHandler securityHandler) {
         if (securityHandler instanceof ConstraintSecurityHandler) {
             ConstraintSecurityHandler constraintSecurityHandler = (ConstraintSecurityHandler) securityHandler;
             for (String method : DISABLED_HTTP_METHODS) {
@@ -383,7 +398,7 @@ public final class API {
         }
     }
 
-    private static void disableHttpMethod(ConstraintSecurityHandler securityHandler, String httpMethod) {
+    private void disableHttpMethod(ConstraintSecurityHandler securityHandler, String httpMethod) {
         ConstraintMapping mapping = new ConstraintMapping();
         Constraint constraint = new Constraint();
         constraint.setName("Disable " + httpMethod);
@@ -400,7 +415,7 @@ public final class API {
         return welcomePageUri;
     }
 
-    public static URI getServerRootUri() {
+    public URI getServerRootUri() {
         return serverRootUri;
     }
 

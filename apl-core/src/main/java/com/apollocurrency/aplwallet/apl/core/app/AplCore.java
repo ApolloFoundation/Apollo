@@ -82,7 +82,8 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
-
+    private API apiServer;
+    
     public AplCore() {
     }
 
@@ -116,7 +117,7 @@ public final class AplCore {
     public void shutdown() {
         LOG.info("Shutting down...");
         AddOns.shutdown();
-        API.shutdown();
+        apiServer.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
         if (blockchainProcessor != null) {
@@ -162,7 +163,8 @@ public final class AplCore {
                 }                
 
                 //try to start API as early as possible
-                API.init();
+                apiServer = CDI.current().select(API.class).get();
+                apiServer.start();
 
 //                CDI.current().select(NtpTime.class).get().start();
 
