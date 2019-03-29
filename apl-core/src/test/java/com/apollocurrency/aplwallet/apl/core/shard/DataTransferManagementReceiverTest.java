@@ -71,10 +71,10 @@ import javax.inject.Inject;
 class DataTransferManagementReceiverTest {
     private static final Logger log = getLogger(DataTransferManagementReceiverTest.class);
 
+/*
+  // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
     private static String BASE_SUB_DIR = "unit-test-db";
     private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
-
-/*  // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
     @RegisterExtension
     DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
     private static DbProperties baseDbProperties;
@@ -143,8 +143,11 @@ class DataTransferManagementReceiverTest {
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
+/*
+        // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
         extension.getDatabaseManger().shutdown();
         FileUtils.deleteQuietly(pathToDb.toFile()); // remove after every test
+*/
     }
 
     @Test
