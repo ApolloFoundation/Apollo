@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
@@ -678,6 +679,25 @@ public class TestBase {
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.transaction,transaction);
         return getInstanse(PrunableMessageDTO.class);
+    }
+
+    /*
+     phasingQuorum is the number of "votes" needed for transaction approval
+    (required if phasingVotingModel >= 0, default 0):
+     0 for voting model -1
+     the number of accounts for model 0
+     total ATM for model 1
+     total ATU for models 2 and 3
+     the number of transactions for model 4  1 for model 5
+    */
+    public void phasing(long phasingFinishHeight, VoteWeighting.VotingModel votingModel, int phasingQuorum,Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding){
+        addParameters(Parameters.phased, true);
+        addParameters(Parameters.phasingFinishHeight, phasingFinishHeight);
+        addParameters(Parameters.votingModel, votingModel);
+        addParameters(Parameters.phasingQuorum, phasingQuorum);
+        addParameters(Parameters.phasingMinBalance, phasingMinBalance);
+        addParameters(Parameters.phasingMinBalanceModel, phasingMinBalanceModel);
+        addParameters(Parameters.phasingHolding, phasingHolding);
     }
 
     @AfterEach

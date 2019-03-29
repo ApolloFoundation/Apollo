@@ -72,6 +72,12 @@
             <version>5.4.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-core</artifactId>
+            <version>1.27.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

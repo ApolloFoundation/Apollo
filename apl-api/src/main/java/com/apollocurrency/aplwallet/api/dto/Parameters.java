@@ -1,6 +1,13 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 public enum Parameters {
+    phasingHolding,
+    phasingMinBalanceModel,
+    phasingMinBalance,
+    phasingQuorum,
+    votingModel,
+    phasingFinishHeight,
+    phased,
     wallet,
     includeTransactions,
     adminPassword,
