@@ -75,10 +75,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import org.slf4j.LoggerFactory;
 
 public final class Peers {
@@ -144,6 +141,8 @@ public final class Peers {
 
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
     static final boolean hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails");
+
+    private static final int sendTransactionsBatchSize = 10;
 
     private static JSONObject myPeerInfo;
     private static List<Peer.Service> myServices;
@@ -624,8 +623,6 @@ public final class Peers {
         request.put("requestType", "processBlock");
         sendToSomePeers(request);
     }
-
-    private static final int sendTransactionsBatchSize = 10;
 
     public static void sendToSomePeers(List<? extends Transaction> transactions) {
         int nextBatchStart = 0;

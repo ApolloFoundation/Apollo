@@ -8,8 +8,6 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.util.EnumSet;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
@@ -34,8 +32,6 @@ public class PeerHttpServer {
      private static final Logger LOG = getLogger(PeerHttpServer.class);
      
      static final int MAX_PLATFORM_LENGTH = 30;
-    
-     private PropertiesHolder propertiesHolder;
      boolean shareMyAddress;
      int myPeerServerPort;
      boolean enablePeerUPnP;    
@@ -46,7 +42,6 @@ public class PeerHttpServer {
     
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp) {
-        this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
         myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
