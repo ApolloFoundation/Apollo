@@ -93,7 +93,7 @@ public class BlockDeleteHelper extends AbstractHelper {
                     preparedInsertStatement.setObject(1, paginateResultWrapper.upperBoundColumnValue);
                     preparedInsertStatement.setObject(2, operationParams.batchCommitSize);
                     processedRows = preparedInsertStatement.executeUpdate();
-                    log.debug("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+                    log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                     log.error("Failed Deleting " + currentTableName, e);
