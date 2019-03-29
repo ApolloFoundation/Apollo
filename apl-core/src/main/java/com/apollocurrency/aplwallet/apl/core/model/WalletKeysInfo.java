@@ -102,15 +102,15 @@ public class WalletKeysInfo {
         paxObject.put("currency", "pax");
         paxObject.put("wallets", paxWallets);
 
-        JSONObject aplObject = new JSONObject();
-        List<JSONObject> aplWallets = new ArrayList<>();
-        aplWallets.add(getAplWalletKey().toJSON());
-        aplObject.put("currency", "apl");
-        aplObject.put("wallets", aplWallets);
+//        JSONObject aplObject = new JSONObject();
+//        List<JSONObject> aplWallets = new ArrayList<>();
+//        aplWallets.add(getAplWalletKey().toJSON());
+//        aplObject.put("currency", "apl");
+//        aplObject.put("wallets", aplWallets);
 
         currencies.add(ethObject);
         currencies.add(paxObject);
-        currencies.add(aplObject);
+//        currencies.add(aplObject);
 
         jsonObject.put("currencies", currencies);
 
