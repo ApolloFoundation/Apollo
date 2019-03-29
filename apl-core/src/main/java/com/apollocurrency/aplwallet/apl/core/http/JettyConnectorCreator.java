@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author alukin@gmail.com
  */
-@Singleton
+
 public class JettyConnectorCreator {
 
     private static final Logger LOG = LoggerFactory.getLogger(JettyConnectorCreator.class);

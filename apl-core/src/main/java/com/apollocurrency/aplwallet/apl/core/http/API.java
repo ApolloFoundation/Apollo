@@ -24,17 +24,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -69,7 +66,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.MultipartConfigElement;
@@ -80,7 +76,6 @@ public final class API {
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
   
@@ -106,6 +101,8 @@ public final class API {
     private static final JettyConnectorCreator jettyConnectorCreator = CDI.current().select(JettyConnectorCreator.class).get();
 
 
+    private API() {} // never
+    
     public static void init() {
 //    static {
 
@@ -141,9 +138,7 @@ public final class API {
         }
 
         boolean enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
-        if (blockchainConfig == null) {
-            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        }
+
         if (enableAPIServer) {
 
             final int port = propertiesHolder.getIntProperty("apl.apiServerPort");
@@ -350,7 +345,7 @@ public final class API {
         }
         try {
             BigInteger hostAddressToCheck = new BigInteger(InetAddress.getByName(remoteHost).getAddress());
-            for (NetworkAddress network : API.allowedBotNets) {
+            for (NetworkAddress network : allowedBotNets) {
                 if (network.contains(hostAddressToCheck)) {
                     return true;
                 }
@@ -409,6 +404,5 @@ public final class API {
         return serverRootUri;
     }
 
-    private API() {} // never
 
 }
