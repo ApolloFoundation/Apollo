@@ -61,11 +61,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,17 +92,16 @@ public final class Peers {
     static final int LOGGING_MASK_200_RESPONSES = 4;
     static volatile int communicationLoggingMask;
 
-    private static List<String> wellKnownPeers;
+    static List<String> wellKnownPeers;
     static Set<String> knownBlacklistedPeers;
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static DatabaseManager databaseManager;
-    private static PeerDb peerDb;
 
     static int connectTimeout;
     static int readTimeout;
@@ -128,13 +124,13 @@ public final class Peers {
     private static int maxNumberOfOutboundConnections;
     public static int maxNumberOfConnectedPublicPeers;
     private static int maxNumberOfKnownPeers;
-    private static int minNumberOfKnownPeers;
-    private static boolean enableHallmarkProtection;
+    static int minNumberOfKnownPeers;
+    static boolean enableHallmarkProtection;
     private static int pushThreshold;
     private static int pullThreshold;
     private static int sendToPeersLimit;
-    private static boolean usePeersDb;
-    private static boolean savePeers;
+    static boolean usePeersDb;
+    static boolean savePeers;
     static boolean ignorePeerAnnouncedAddress;
     static boolean cjdnsOnly;
     static final int MAX_APPLICATION_LENGTH = 20;
@@ -357,7 +353,7 @@ public final class Peers {
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
 
         if (!propertiesHolder.isOffline()) {
-            ThreadPool.runBeforeStart("PeerLoader", new PeerLoader(defaultPeers, unresolvedPeers), false);
+            ThreadPool.runBeforeStart("PeerLoader", new PeerLoaderThread(defaultPeers, unresolvedPeers), false);
         }
 
         ThreadPool.runAfterStart("UnresolvedPeersAnalyzer", new UnresolvedPeersAnalyzer(unresolvedPeers));
@@ -761,7 +757,7 @@ public final class Peers {
         return peers.size() > Peers.maxNumberOfKnownPeers;
     }
 
-    private static boolean hasEnoughConnectedPublicPeers(int limit) {
+    static boolean hasEnoughConnectedPublicPeers(int limit) {
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
                 && (! Peers.enableHallmarkProtection || peer.getWeight() > 0), limit).size() >= limit;
     }
@@ -840,322 +836,5 @@ public final class Peers {
         checkBlockchainState();
         return currentBlockchainState;
     }
-
-
-    private static class PeerLoader implements Runnable {
-
-        private final List<String> defaultPeers;
-        private final List<Future<String>> unresolvedPeers;
-
-        public PeerLoader(List<String> defaultPeers, List<Future<String>> unresolvedPeers) {
-            this.defaultPeers = defaultPeers;
-            this.unresolvedPeers = unresolvedPeers;
-        }
-        private final Set<PeerDb.Entry> entries = new HashSet<>();
-        private PeerDb peerDb;
-
-        @Override
-        public void run() {
-            LOG.trace("'Peer loader': thread starting...");
-            if (peerDb == null) peerDb = CDI.current().select(PeerDb.class).get();
-            final int now = timeService.getEpochTime();
-            wellKnownPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
-            if (usePeersDb) {
-                LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
-                defaultPeers.forEach(address -> entries.add(new PeerDb.Entry(address, 0, now)));
-                if (savePeers) {
-                    List<PeerDb.Entry> dbPeers = peerDb.loadPeers();
-                    dbPeers.forEach(entry -> {
-                        if (!entries.add(entry)) {
-                            // Database entries override entries from chains.json
-                            entries.remove(entry);
-                            entries.add(entry);
-                            LOG.trace("'Peer loader': Peer Loaded from db = {}", entry);
-                        }
-                    });
-                }
-            }
-            if (entries.size() > 0) {
-                LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
-            }
-            entries.forEach(entry -> {
-                Future<String> unresolvedAddress = peersService.submit(() -> {
-                    PeerImpl peer = Peers.findOrCreatePeer(entry.getAddress(), true);
-                    if (peer != null) {
-                        peer.setLastUpdated(entry.getLastUpdated());
-                        peer.setServices(entry.getServices());
-                        Peers.addPeer(peer);
-                        LOG.trace("'Peer loader': Put 'well known' Peer from db into 'Peers Map' = {}", entry);
-                        return null;
-                    }
-                    return entry.getAddress();
-                });
-                unresolvedPeers.add(unresolvedAddress);
-            });
-            LOG.trace("'Peer loader': thread finished. Peers [{}] =\n{}", Peers.getAllPeers().size());
-            Peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("'Peer loader': dump = {}", peerHost));
-        }
-    }
-
-    private static class PeerConnectingThread implements Runnable {
-
-        public PeerConnectingThread() {
-        }
-
-        @Override
-        public void run() {
-            if (shutdown || suspend) {
-                return;
-            }
-            try {
-                try {
-                    
-                    final int now = timeService.getEpochTime();
-                    if (!hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
-                        List<Future<?>> futures = new ArrayList<>();
-                        List<Peer> hallmarkedPeers = getPeers(peer -> !peer.isBlacklisted()
-                                && peer.getAnnouncedAddress() != null
-                                && peer.getState() != Peer.State.CONNECTED
-                                && now - peer.getLastConnectAttempt() > 600
-                                && peer.providesService(Peer.Service.HALLMARK));
-                        List<Peer> nonhallmarkedPeers = getPeers(peer -> !peer.isBlacklisted()
-                                && peer.getAnnouncedAddress() != null
-                                && peer.getState() != Peer.State.CONNECTED
-                                && now - peer.getLastConnectAttempt() > 600
-                                && !peer.providesService(Peer.Service.HALLMARK));
-                        if (!hallmarkedPeers.isEmpty() || !nonhallmarkedPeers.isEmpty()) {
-                            Set<PeerImpl> connectSet = new HashSet<>();
-                            for (int i = 0; i < 10; i++) {
-                                List<Peer> peerList;
-                                if (hallmarkedPeers.isEmpty()) {
-                                    peerList = nonhallmarkedPeers;
-                                } else if (nonhallmarkedPeers.isEmpty()) {
-                                    peerList = hallmarkedPeers;
-                                } else {
-                                    peerList = (ThreadLocalRandom.current().nextInt(2) == 0 ? hallmarkedPeers : nonhallmarkedPeers);
-                                }
-                                connectSet.add((PeerImpl)peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
-                            }
-                            connectSet.forEach(peer -> futures.add(peersService.submit(() -> {
-                                peer.connect(blockchainConfig.getChain().getChainId());
-                                if (peer.getState() == Peer.State.CONNECTED &&
-                                        enableHallmarkProtection && peer.getWeight() == 0 &&
-                                        hasTooManyOutboundConnections()) {
-                                    LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
-                                    peer.deactivate();
-                                }
-                                return null;
-                            })));
-                            for (Future<?> future : futures) {
-                                future.get();
-                            }
-                        }
-                    }
-                    
-                    peers.values().forEach(peer -> {
-                        if (peer.getState() == Peer.State.CONNECTED
-                                && now - peer.getLastUpdated() > 3600
-                                && now - peer.getLastConnectAttempt() > 600) {
-                            peersService.submit(()-> peer.connect(blockchainConfig.getChain().getChainId()));
-                        }
-                        if (peer.getLastInboundRequest() != 0 &&
-                                now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
-                            peer.setLastInboundRequest(0);
-                            notifyListeners(peer, Event.REMOVE_INBOUND);
-                        }
-                    });
-                    
-                    if (hasTooManyKnownPeers() && hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
-                        int initialSize = peers.size();
-                        for (PeerImpl peer : peers.values()) {
-                            if (now - peer.getLastUpdated() > 24 * 3600) {
-                                peer.remove();
-                            }
-                            if (hasTooFewKnownPeers()) {
-                                break;
-                            }
-                        }
-                        if (hasTooManyKnownPeers()) {
-                            PriorityQueue<PeerImpl> sortedPeers = new PriorityQueue<>(peers.values());
-                            int skipped = 0;
-                            while (skipped < Peers.minNumberOfKnownPeers) {
-                                if (sortedPeers.poll() == null) {
-                                    break;
-                                }
-                                skipped += 1;
-                            }
-                            while (!sortedPeers.isEmpty()) {
-                                sortedPeers.poll().remove();
-                            }
-                        }
-                        LOG.debug("Reduced peer pool size from " + initialSize + " to " + peers.size());
-                    }
-                    
-                    for (String wellKnownPeer : wellKnownPeers) {
-                        PeerImpl peer = findOrCreatePeer(wellKnownPeer, true);
-                        if (peer != null && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
-                            peersService.submit(() -> {
-                                addPeer(peer);
-                                connectPeer(peer);
-                            });
-                        }
-                    }
-                    
-                } catch (Exception e) {
-                    LOG.debug("Error connecting to peer", e);
-                }
-            } catch (Throwable t) {
-                LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
-                System.exit(1);
-            }
-            
-        }
-    }
-
-    private static class GetMorePeersThread implements Runnable {
-
-        public GetMorePeersThread() {
-        }
-        private final JSONStreamAware getPeersRequest;
-        {
-            JSONObject request = new JSONObject();
-            request.put("requestType", "getPeers");
-            request.put("chainId", blockchainConfig.getChain().getChainId());
-            getPeersRequest = JSON.prepareRequest(request);
-        }
-        private volatile boolean updatedPeer;
-
-        @Override
-        public void run() {
-            
-            try {
-                try {
-                    if (hasTooManyKnownPeers()) {
-                        return;
-                    }
-                    Peer peer = getAnyPeer(Peer.State.CONNECTED, true);
-                    if (peer == null) {
-                        return;
-                    }
-                    JSONObject response = peer.send(getPeersRequest, blockchainConfig.getChain().getChainId(), 10 * 1024 * 1024,
-                            false);
-                    if (response == null) {
-                        return;
-                    }
-                    JSONArray peers = (JSONArray)response.get("peers");
-                    Set<String> addedAddresses = new HashSet<>();
-                    if (peers != null) {
-                        JSONArray services = (JSONArray)response.get("services");
-                        boolean setServices = (services != null && services.size() == peers.size());
-                        int now = timeService.getEpochTime();
-                        for (int i=0; i<peers.size(); i++) {
-                            String announcedAddress = (String)peers.get(i);
-                            PeerImpl newPeer = findOrCreatePeer(announcedAddress, true);
-                            if (newPeer != null) {
-                                if (now - newPeer.getLastUpdated() > 24 * 3600) {
-                                    newPeer.setLastUpdated(now);
-                                    updatedPeer = true;
-                                }
-                                if (Peers.addPeer(newPeer) && setServices) {
-                                    newPeer.setServices(Long.parseUnsignedLong((String)services.get(i)));
-                                }
-                                addedAddresses.add(announcedAddress);
-                                if (hasTooManyKnownPeers()) {
-                                    break;
-                                }
-                            }
-                        }
-                        if (savePeers && updatedPeer) {
-                            updateSavedPeers();
-                            updatedPeer = false;
-                        }
-                    }
-                    
-                    JSONArray myPeers = new JSONArray();
-                    JSONArray myServices = new JSONArray();
-                    Peers.getAllPeers().forEach(myPeer -> {
-                        if (!myPeer.isBlacklisted() && myPeer.getAnnouncedAddress() != null
-                                && myPeer.getState() == Peer.State.CONNECTED && myPeer.shareAddress()
-                                && !addedAddresses.contains(myPeer.getAnnouncedAddress())
-                                && !myPeer.getAnnouncedAddress().equals(peer.getAnnouncedAddress())) {
-                            myPeers.add(myPeer.getAnnouncedAddress());
-                            myServices.add(Long.toUnsignedString(((PeerImpl) myPeer).getServices()));
-                        }
-                    });
-                    if (myPeers.size() > 0) {
-                        JSONObject request = new JSONObject();
-                        request.put("requestType", "addPeers");
-                        request.put("peers", myPeers);
-                        request.put("services", myServices);            // Separate array for backwards compatibility
-                        request.put("chainId", blockchainConfig.getChain().getChainId());
-                        peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(), 0, false);
-                    }
-                    
-                } catch (Exception e) {
-                    LOG.debug("Error requesting peers from a peer", e);
-                }
-            } catch (Throwable t) {
-                LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
-                System.exit(1);
-            }
-            
-        }
-
-        private void updateSavedPeers() {
-            int now = timeService.getEpochTime();
-            //
-            // Load the current database entries and map announced address to database entry
-            //
-            List<PeerDb.Entry> oldPeers = PeerDb.loadPeers();
-            Map<String, PeerDb.Entry> oldMap = new HashMap<>(oldPeers.size());
-            oldPeers.forEach(entry -> oldMap.put(entry.getAddress(), entry));
-            //
-            // Create the current peer map (note that there can be duplicate peer entries with
-            // the same announced address)
-            //
-            Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
-            UUID chainId = blockchainConfig.getChain().getChainId();
-            Peers.peers.values().forEach(peer -> {
-                if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted() && chainId.equals(peer.getChainId()) && now - peer.getLastUpdated() < 7*24*3600) {
-                    currentPeers.put(peer.getAnnouncedAddress(),
-                            new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
-                }
-            });
-            //
-            // Build toDelete and toUpdate lists
-            //
-            List<PeerDb.Entry> toDelete = new ArrayList<>(oldPeers.size());
-            oldPeers.forEach(entry -> {
-                if (currentPeers.get(entry.getAddress()) == null)
-                    toDelete.add(entry);
-            });
-            List<PeerDb.Entry> toUpdate = new ArrayList<>(currentPeers.size());
-            currentPeers.values().forEach(entry -> {
-                PeerDb.Entry oldEntry = oldMap.get(entry.getAddress());
-                if (oldEntry == null || entry.getLastUpdated() - oldEntry.getLastUpdated() > 24*3600)
-                    toUpdate.add(entry);
-            });
-            //
-            // Nothing to do if all of the lists are empty
-            //
-            if (toDelete.isEmpty() && toUpdate.isEmpty())
-                return;
-            //
-            // Update the peer database
-            //
-            TransactionalDataSource dataSource = lookupDataSource();
-            try {
-                dataSource.begin();
-                PeerDb.deletePeers(toDelete);
-                PeerDb.updatePeers(toUpdate);
-                dataSource.commit();
-            } catch (Exception e) {
-                dataSource.rollback();
-                throw e;
-            }
-        }
-    }
-
-
 
 }

@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
