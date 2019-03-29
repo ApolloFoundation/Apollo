@@ -106,7 +106,7 @@ public final class API {
     final int maxThreadPoolSize;
     final int minThreadPoolSize;
     final boolean enableSSL;
-    
+
     @Inject
     public API(PropertiesHolder propertiesHolder,UPnP upnp, JettyConnectorCreator jettyConnectorCreator){
         this.propertiesHolder=propertiesHolder;
@@ -183,7 +183,7 @@ public final class API {
             // Create the HTTP connector
             //
             if (!enableSSL || port != sslPort) {
-                jettyConnectorCreator.addHttpConnector(host, port, apiServer);
+                jettyConnectorCreator.addHttpConnector(host, port, apiServer, apiServerIdleTimeout);
                 LOG.info("API server using HTTP port " + port);
             }
             //
@@ -191,7 +191,7 @@ public final class API {
             //
 
             if (enableSSL) {
-                jettyConnectorCreator.addHttpSConnector(host, port, apiServer);
+                jettyConnectorCreator.addHttpSConnector(host, port, apiServer,apiServerIdleTimeout);
             }
 
             HandlerList apiHandlers = new HandlerList();

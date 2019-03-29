@@ -26,11 +26,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -95,25 +93,18 @@ public final class Peers {
     static List<String> wellKnownPeers;
     static Set<String> knownBlacklistedPeers;
 
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
-    static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static DatabaseManager databaseManager;
 
     static int connectTimeout;
     static int readTimeout;
     static int blacklistingPeriod;
     static boolean getMorePeers;
-    static final int MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
-    static final int MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
-    static final int MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
+    static int MAX_REQUEST_SIZE;
+    static int MAX_RESPONSE_SIZE;
+    static int MAX_MESSAGE_SIZE;
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
     static int webSocketIdleTimeout;
-    static final boolean useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
+    static boolean useProxy;
     static boolean isGzipEnabled;
 
 
@@ -136,7 +127,7 @@ public final class Peers {
     static final int MAX_APPLICATION_LENGTH = 20;
 
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
-    static final boolean hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails");
+    static  boolean hideErrorDetails;
 
     private static final int sendTransactionsBatchSize = 10;
 
@@ -145,8 +136,9 @@ public final class Peers {
     private static volatile BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
+    
     static boolean shutdown=false;
-    static boolean suspend;
+    static boolean suspend=false;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
     
@@ -160,26 +152,38 @@ public final class Peers {
     static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
     
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
+    
+
+    // TODO: YL remove static instance later
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private  static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();  
     
     private Peers() {} // never
- 
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
+
+
+    public static int getDefaultPeerPort() {
+        return propertiesHolder.getIntProperty("apl.networkPeerServerPort", Constants.DEFAULT_PEER_PORT);
     }
 
     public static void init() {
+        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
+        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
+        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
+        useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
+        hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails");
+        
         String myHost = null;
         int myPort = -1;
         if (peerHttpServer.getMyAddress() != null) {
             try {
                 URI uri = new URI("http://" + peerHttpServer.getMyAddress());
                 myHost = uri.getHost();
-                myPort = (uri.getPort() == -1 ? Peers.getDefaultPeerPort() : uri.getPort());
+                myPort = (uri.getPort() == -1 ? getDefaultPeerPort() : uri.getPort());
                 InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
                 boolean addrValid = false;
                 Enumeration<NetworkInterface> intfs = NetworkInterface.getNetworkInterfaces();
@@ -284,19 +288,13 @@ public final class Peers {
         }
 
         ThreadPool.runAfterStart("UnresolvedPeersAnalyzer", new UnresolvedPeersAnalyzer(unresolvedPeers));
-   
-        // get main db data source
-        TransactionalDataSource dataSource = lookupDataSource();
 
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    dataSource.begin();
                     PeerDb.updatePeer((PeerImpl)peer);
-                    dataSource.commit();
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
-                    dataSource.rollback();
                 }
             }
         }), Peers.Event.CHANGED_SERVICES);
@@ -314,6 +312,7 @@ public final class Peers {
                 ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(timeService), 20);
             }
         }
+        peerHttpServer.start();
     }
     
     private static void fillMyPeerInfo(){
@@ -424,9 +423,6 @@ public final class Peers {
         listeners.notify(peer, eventType);
     }
 
-    public static int getDefaultPeerPort() {
-        return propertiesHolder.getIntProperty("apl.networkPeerServerPort", Constants.DEFAULT_PEER_PORT);
-    }
 
     public static Collection<? extends Peer> getAllPeers() {
         return allPeers;

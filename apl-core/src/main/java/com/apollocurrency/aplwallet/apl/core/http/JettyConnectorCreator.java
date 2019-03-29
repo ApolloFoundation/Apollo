@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -37,9 +36,8 @@ public class JettyConnectorCreator {
         this.propertiesHolder = propertiesHolder;
     }
 
-    boolean addHttpConnector(String host, int port, Server apiServer) {
+    public boolean addHttpConnector(String host, int port, Server apiServer, int idleTimeout  ) {
         ServerConnector connector = null;
-        int apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
         HttpConfiguration configuration = new HttpConfiguration();
         configuration.setSendDateHeader(false);
         configuration.setSendServerVersion(false);
@@ -47,17 +45,16 @@ public class JettyConnectorCreator {
         connector = new ServerConnector(apiServer, new HttpConnectionFactory(configuration));
         connector.setPort(port);
         connector.setHost(host);
-        connector.setIdleTimeout(apiServerIdleTimeout);
+        connector.setIdleTimeout(idleTimeout);
         connector.setReuseAddress(true);
         apiServer.addConnector(connector);
         return true;
     }
 
-    boolean addHttpSConnector(String host, int port, Server apiServer) {
+    public boolean addHttpSConnector(String host, int port, Server apiServer, int idleTimeout ) {
 
         boolean res = true;
         ServerConnector connector = null;
-        int apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
         HttpConfiguration https_config = new HttpConfiguration();
         https_config.setSendDateHeader(false);
         https_config.setSendServerVersion(false);
@@ -82,7 +79,7 @@ public class JettyConnectorCreator {
                 new HttpConnectionFactory(https_config));
         connector.setPort(port);
         connector.setHost(host);
-        connector.setIdleTimeout(apiServerIdleTimeout);
+        connector.setIdleTimeout(idleTimeout);
         connector.setReuseAddress(true);
         apiServer.addConnector(connector);
         LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));

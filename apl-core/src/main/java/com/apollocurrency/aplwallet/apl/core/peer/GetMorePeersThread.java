@@ -27,18 +27,10 @@ import org.slf4j.LoggerFactory;
  */
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
-    private static DatabaseManager databaseManager;
     private EpochTime timeService;
      
     public GetMorePeersThread(EpochTime timeService) {
         this.timeService = timeService;
-    }
-    
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
     }
        
     private final JSONStreamAware getPeersRequest;
@@ -163,14 +155,11 @@ class GetMorePeersThread implements Runnable {
         //
         // Update the peer database
         //
-        TransactionalDataSource dataSource = lookupDataSource();
+
         try {
-            dataSource.begin();
             PeerDb.deletePeers(toDelete);
             PeerDb.updatePeers(toUpdate);
-            dataSource.commit();
         } catch (Exception e) {
-            dataSource.rollback();
             throw e;
         }
     }
