@@ -4,34 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import com.apollocurrency.aplwallet.apl.util.StringValidator;
-
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Singleton;
 
-@Singleton
-public class FullTextConfig {
+public interface FullTextConfig {
+    void registerTable(String tableName);
 
-    private Set<String> tableNames = new HashSet<>();
-    private String schema = "PUBLIC";
+    void setSchema(String schema);
 
-    public synchronized void registerTable(String tableName) {
-        StringValidator.requireNonBlank(tableName, "Table name");
-        tableNames.add(tableName);
-    }
+    Set<String> getTableNames();
 
-    public void setSchema(String schema) {
-        StringValidator.requireNonBlank(schema, "Schema");
-        this.schema = schema;
-    }
-
-    public synchronized Set<String> getTableNames() {
-        return Collections.unmodifiableSet(tableNames);
-    }
-
-    public String getSchema() {
-        return schema;
-    }
+    String getSchema();
 }

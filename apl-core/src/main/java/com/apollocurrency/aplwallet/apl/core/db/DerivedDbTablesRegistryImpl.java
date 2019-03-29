@@ -14,7 +14,7 @@ import javax.inject.Singleton;
  * @author al
  */
 @Singleton
-public class DerivedDbTablesRegistry {
+public class DerivedDbTablesRegistryImpl implements DerivedTablesRegistry {
     private final Map<String, DerivedDbTable> derivedTables = new ConcurrentHashMap<>();
     public void registerDerivedTable(DerivedDbTable table) {
         derivedTables.putIfAbsent(table.toString(), table);
@@ -22,4 +22,7 @@ public class DerivedDbTablesRegistry {
     public Collection<DerivedDbTable> getDerivedTables() {
         return derivedTables.values();
     }
-  }
+
+    public DerivedDbTablesRegistryImpl() {
+    }
+}

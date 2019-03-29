@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +21,14 @@ public class TrimService {
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     private final int maxRollback;
     private final DatabaseManager dbManager;
-    private final DerivedDbTablesRegistry dbTablesRegistry;
+    private final DerivedTablesRegistry dbTablesRegistry;
     private final GlobalSync globalSync;
     private volatile int lastTrimHeight;
 
 
     @Inject
     public TrimService(DatabaseManager databaseManager,
-                       DerivedDbTablesRegistry derivedDbTablesRegistry,
+                       DerivedTablesRegistry derivedDbTablesRegistry,
                        GlobalSync globalSync,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
     ) {

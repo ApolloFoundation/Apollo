@@ -30,8 +30,9 @@ import java.sql.Statement;
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class DerivedDbTable {
+
     private FullTextConfig fullTextConfig;
-    private DerivedDbTablesRegistry derivedDbTablesRegistry;
+    private DerivedTablesRegistry derivedDbTablesRegistry;
     
     protected final String table;
     protected DatabaseManager databaseManager;
@@ -42,7 +43,7 @@ public abstract class DerivedDbTable {
             fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
         }
         if(derivedDbTablesRegistry==null){
-            derivedDbTablesRegistry = CDI.current().select(DerivedDbTablesRegistry.class).get();
+            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
         }
     }
     

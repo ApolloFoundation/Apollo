@@ -17,13 +17,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.util.Objects;
-import java.util.Optional;
-
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -40,6 +33,14 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
 import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * {@inheritDoc}
@@ -167,8 +168,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
                 Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
                 if (paginationOperationHelper.isPresent()) {
+                    Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
                     TableOperationParams operationParams = new TableOperationParams(
-                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), targetDataSource.getDbIdentity());
+                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
 
                     BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
                     batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
@@ -232,7 +234,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
+                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName, true);
                 if (paginationOperationHelper.isPresent()) {
                     processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
                     paginationOperationHelper.get().reset();
@@ -262,7 +264,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                                          String tableName, long start,
                                          Optional<BatchedPaginationOperation> paginationOperationHelper) throws Exception {
         TableOperationParams operationParams = new TableOperationParams(
-                tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId);
+                tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId, Optional.ofNullable(paramInfo.getDbIdExclusionSet()));
 
         if (!paginationOperationHelper.isPresent()) { // should never happen from outside code, but better to play safe
             String error = "OperationHelper is NOT PRESENT... Fatal error in sharding code...";

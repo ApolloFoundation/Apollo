@@ -115,8 +115,11 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             while (rs.next()) {
                 // it called one time one first loop only
                 extractMetaDataCreateInsert(sourceConnect, rs);
-
+                rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                if (isTransactionTable && operationParams.dbIdsExclusionSet.isPresent() && operationParams.dbIdsExclusionSet.get().contains(paginateResultWrapper.lowerBoundColumnValue)) {
+                    continue;
+                }
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         // here we are skipping DB_ID latest column in ResultSet
@@ -138,7 +141,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                     sourceConnect.rollback();
                     throw e;
                 }
-                rows++;
+
             }
             totalSelectedRows += rows;
             totalProcessedCount += processedRows;

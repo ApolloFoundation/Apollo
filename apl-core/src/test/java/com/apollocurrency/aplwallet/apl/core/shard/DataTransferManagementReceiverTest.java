@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
@@ -43,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -68,7 +69,9 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 
 @EnableWeld
@@ -95,9 +98,9 @@ class DataTransferManagementReceiverTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            DerivedDbTablesRegistry.class,
+            DerivedDbTablesRegistryImpl.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
-            GlobalSyncImpl.class, FullTextConfig.class,
+            GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
             DataTransferManagementReceiverImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
@@ -186,7 +189,12 @@ class DataTransferManagementReceiverTest {
         List<String> tableNameList = new ArrayList<>();
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, 8000L);
+        TransactionTestData td = new TransactionTestData();
+        Set<Long> dbIds = new HashSet<>();
+        dbIds.add(td.DB_ID_0);
+        dbIds.add(td.DB_ID_3);
+        dbIds.add(td.DB_ID_10);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, 8000L, dbIds);
 
         state = managementReceiver.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
@@ -219,7 +227,7 @@ class DataTransferManagementReceiverTest {
         long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
         long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-        assertEquals(7, trIndexCount);
+        assertEquals(5, trIndexCount);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);
@@ -233,7 +241,6 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.addShardInfo(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
 // compare fullhashes
-        TransactionTestData td = new TransactionTestData();
         TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
         assertNotNull(index);
         byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());

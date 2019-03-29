@@ -5,15 +5,18 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Helper class is used for changing/updating linked table's records to point to snapshot Block record.
@@ -60,14 +63,43 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
         paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
-
-       try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
-            do {
-                ps.setLong(1, operationParams.snapshotBlockHeight);
-                ps.setLong(2, paginateResultWrapper.lowerBoundColumnValue);
-                ps.setLong(3, paginateResultWrapper.upperBoundColumnValue);
-                ps.setLong(4, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
+        try {
+            if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) && operationParams.dbIdsExclusionSet.isPresent()) {
+                Set<Long> dbIds = operationParams.dbIdsExclusionSet.get();
+                long blockId;
+                try (PreparedStatement ps = sourceConnect.prepareStatement("select id from block where height = ? ")) {
+                    ps.setLong(1, operationParams.snapshotBlockHeight);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            blockId = rs.getLong("id");
+                        } else {
+                            throw new IllegalStateException("Id of snapshot not found");
+                        }
+                    }
+                }
+                try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
+                    int counter = 0;
+                    for (long dbId : dbIds) {
+                        ps.setLong(1, blockId);
+                        ps.setLong(2, dbId);
+                        ps.addBatch();
+                        if (++counter % operationParams.batchCommitSize == 0) {
+                            ps.executeBatch();
+                        }
+                    }
+                    ps.executeBatch();
+                    log.debug("Relinked {} transactions to snapshot block at height {}", counter, operationParams.snapshotBlockHeight);
+                }
+            } else {
+                try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
+                    do {
+                        ps.setLong(1, operationParams.snapshotBlockHeight);
+                        ps.setLong(2, paginateResultWrapper.lowerBoundColumnValue);
+                        ps.setLong(3, paginateResultWrapper.upperBoundColumnValue);
+                        ps.setLong(4, operationParams.batchCommitSize);
+                    } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams.batchCommitSize));
+                }
+            }
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -118,7 +150,11 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
     }
 
     private void assignMainBottomTopSelectSql() {
-        sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID > ? AND DB_ID < ? limit ?";
+        if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+            sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set block_id = ? where db_id = ? ";
+        } else {
+            sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID > ? AND DB_ID < ? limit ?";
+        }
         log.trace(sqlToExecuteWithPaging);
         sqlSelectUpperBound = "select IFNULL(max(DB_ID), 0) as DB_ID from " + currentTableName + " WHERE HEIGHT <= ?";
         log.trace(sqlSelectUpperBound);
