@@ -1,12 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
 import com.apollocurrency.aplwallet.apl.exchange.model.Balances;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 
@@ -38,20 +36,21 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @io.swagger.annotations.ApiOperation(value = "Balances of cryptocurrency wallets", notes = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/BTC/PAX) balances", response = Balances.class, tags={  })
     @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = "Wallets balances", response = Balances.class),
+            @io.swagger.annotations.ApiResponse(code = 200, message = "Wallets balances", response = ExchangeBalances.class),
 
             @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response getBalances( @NotNull  @QueryParam("account") String account, @QueryParam("eth") String ethAddress, @QueryParam("pax") String paxAddress)
-            throws NotFoundException, ParameterException {
+    public Response getBalances(@QueryParam("eth") String ethAddress, @QueryParam("pax") String paxAddress)
+            throws NotFoundException {
 
-        long accountId = ParameterParser.getAccountId(account, "account", true);
-        Account userAccount = Account.getAccount(accountId);
+//        long accountId = ParameterParser.getAccountId(account, "account", true);
+//        Account userAccount = Account.getAccount(accountId);
+//
+//        if (userAccount == null) {
+//            return Response.ok(JSONResponses.unknownAccount(accountId)).build();
+//        }
 
-        if (userAccount == null) {
-            return Response.ok(JSONResponses.unknownAccount(accountId)).build();
-        }
 
-        return Response.ok(service.getBalances(userAccount,ethAddress, paxAddress).balanceToJson()).build();
+        return Response.ok(service.getBalances(ethAddress, paxAddress).balanceToJson()).build();
     }
 
 

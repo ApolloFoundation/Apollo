@@ -95,14 +95,21 @@ public class AplWalletKey extends BasicAccount {
 
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("account", id);
-        jsonObject.put("accountRS", Convert2.rsAccount(id));
+        jsonObject.put("currency", "apl");
+
+
+        JSONObject innerJsonObject = new JSONObject();
+
+        innerJsonObject.put("account", id);
+        innerJsonObject.put("accountRS", Convert2.rsAccount(id));
         if (publicKey != null) {
-            jsonObject.put("publicKey", Convert.toHexString(publicKey));
+            innerJsonObject.put("publicKey", Convert.toHexString(publicKey));
         }
         if (passphrase != null) {
-            jsonObject.put("passphrase", passphrase);
+            innerJsonObject.put("passphrase", passphrase);
         }
+
+        jsonObject.put("wallets", innerJsonObject);
         return jsonObject;
     }
 }

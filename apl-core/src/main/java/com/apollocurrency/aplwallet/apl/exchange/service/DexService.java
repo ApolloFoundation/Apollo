@@ -1,9 +1,11 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountService;
-import com.apollocurrency.aplwallet.apl.exchange.model.Balances;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
@@ -13,11 +15,25 @@ import java.util.List;
 
 @Singleton
 public class DexService {
+    private static final Logger LOG = LoggerFactory.getLogger(DexService.class);
 
-    private AccountService accountService = CDI.current().select(AccountService.class).get();
+    private EthereumWalletService ethereumWalletService = CDI.current().select(EthereumWalletService.class).get();
 
-    public Balances getBalances(Account account, String ethAddress, String paxAddress){
-        Balances balances = accountService.getAccountBalances(account, true, ethAddress, paxAddress);
+    public ExchangeBalances getBalances(String ethAddress, String paxAddress){
+
+        ExchangeBalances balances = new ExchangeBalances();
+        try{
+            if (!StringUtils.isBlank(ethAddress)) {
+                balances.setBalanceETH(ethereumWalletService.getBalanceWei(ethAddress));
+            }
+
+            if (!StringUtils.isBlank(paxAddress)) {
+                balances.setBalancePAX(ethereumWalletService.getPaxBalanceWei(paxAddress));
+            }
+        } catch (Exception ex){
+            LOG.error(ex.getMessage(), ex);
+        }
+
         return balances;
     }
 

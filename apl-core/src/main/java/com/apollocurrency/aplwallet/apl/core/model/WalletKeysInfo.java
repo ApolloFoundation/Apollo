@@ -10,6 +10,9 @@ import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WalletKeysInfo {
 
     private AplWalletKey aplWalletKey;
@@ -85,13 +88,36 @@ public class WalletKeysInfo {
 
     public JSONObject toJSON_v2() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("apl", getAplWalletKey().toJSON());
-        jsonObject.put("eth", getEthWalletKey().toJSON());
-        jsonObject.put("pax", getPaxWalletKey().toJSON());
+        List<JSONObject> currencies = new ArrayList<>();
+
+        JSONObject ethObject = new JSONObject();
+        List<JSONObject> ethWallets = new ArrayList<>();
+        ethWallets.add(getEthWalletKey().toJSON());
+        ethObject.put("currency", "eth");
+        ethObject.put("wallets", ethWallets);
+
+        JSONObject paxObject = new JSONObject();
+        List<JSONObject> paxWallets = new ArrayList<>();
+        paxWallets.add(getPaxWalletKey().toJSON());
+        paxObject.put("currency", "pax");
+        paxObject.put("wallets", paxWallets);
+
+        JSONObject aplObject = new JSONObject();
+        List<JSONObject> aplWallets = new ArrayList<>();
+        aplWallets.add(getAplWalletKey().toJSON());
+        aplObject.put("currency", "apl");
+        aplObject.put("wallets", aplWallets);
+
+        currencies.add(ethObject);
+        currencies.add(paxObject);
+        currencies.add(aplObject);
+
+        jsonObject.put("currencies", currencies);
 
         if (!StringUtils.isBlank(passphrase)) {
             jsonObject.put("passphrase", passphrase);
         }
+
         return jsonObject;
     }
 

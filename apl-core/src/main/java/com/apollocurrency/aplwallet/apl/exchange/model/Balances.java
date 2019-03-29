@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import org.json.simple.JSONObject;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 public class Balances {
@@ -18,9 +17,9 @@ public class Balances {
     private long guaranteedBalanceATM;
 
 
-    private BigInteger balanceETH = null;
-    private BigInteger balancePAX = null;
-    private BigInteger balanceBTC = null;
+//    private BigInteger balanceETH = null;
+//    private BigInteger balancePAX = null;
+//    private BigInteger balanceBTC = null;
 
     /**
      * Account RS
@@ -61,32 +60,6 @@ public class Balances {
         this.balanceATM = balanceATM;
     }
 
-    /**
-     * Ethereum account balance in wei
-     **/
-
-    @ApiModelProperty(value = "Ethereum account balance in wei")
-    @JsonProperty("balanceETH")
-    public BigInteger getBalanceETH() {
-        return balanceETH;
-    }
-    public void setBalanceETH(BigInteger balanceETH) {
-        this.balanceETH = balanceETH;
-    }
-
-    /**
-     * Bitcoin balance in satoshi
-     **/
-
-    @ApiModelProperty(value = "Bitcoin balance in satoshi")
-    @JsonProperty("balanceBTC")
-    public BigInteger getBalanceBTC() {
-        return balanceBTC;
-    }
-    public void setBalanceBTC(BigInteger balanceBTC) {
-        this.balanceBTC = balanceBTC;
-    }
-
     public long getUnconfirmedBalanceATM() {
         return unconfirmedBalanceATM;
     }
@@ -119,15 +92,6 @@ public class Balances {
         this.guaranteedBalanceATM = guaranteedBalanceATM;
     }
 
-    public BigInteger getBalancePAX() {
-        return balancePAX;
-    }
-
-    public void setBalancePAX(BigInteger balancePAX) {
-        this.balancePAX = balancePAX;
-    }
-
-
 
     @Override
     public boolean equals(Object o) {
@@ -140,15 +104,12 @@ public class Balances {
                 forgedBalanceATM == balances.forgedBalanceATM &&
                 effectiveBalanceAPL == balances.effectiveBalanceAPL &&
                 guaranteedBalanceATM == balances.guaranteedBalanceATM &&
-                Objects.equals(accountRS, balances.accountRS) &&
-                Objects.equals(balanceETH, balances.balanceETH) &&
-                Objects.equals(balancePAX, balances.balancePAX) &&
-                Objects.equals(balanceBTC, balances.balanceBTC);
+                Objects.equals(accountRS, balances.accountRS);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accountRS, account, balanceATM, unconfirmedBalanceATM, forgedBalanceATM, effectiveBalanceAPL, guaranteedBalanceATM, balanceETH, balancePAX, balanceBTC);
+        return Objects.hash(accountRS, account, balanceATM, unconfirmedBalanceATM, forgedBalanceATM, effectiveBalanceAPL, guaranteedBalanceATM);
     }
 
 
@@ -169,8 +130,6 @@ public class Balances {
         JSONObject json = new JSONObject();
 
         json.put("balanceATM", String.valueOf(getBalanceATM()));
-        json.put("balanceETH", String.valueOf(getBalanceETH()));
-        json.put("balancePAX", String.valueOf(getBalancePAX()));
         json.put("unconfirmedBalanceATM", String.valueOf(getUnconfirmedBalanceATM()));
         json.put("forgedBalanceATM", String.valueOf(getForgedBalanceATM()));
         json.put("effectiveBalanceAPL", getEffectiveBalanceAPL());

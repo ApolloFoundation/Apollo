@@ -73,10 +73,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
-        String ethAddress = req.getParameter("eth");
-        String paxAddress = req.getParameter("pax");
-
-        Balances balances = accountService.getAccountBalances(account, includeEffectiveBalance, ethAddress, paxAddress);
+        Balances balances = accountService.getAccountBalances(account, includeEffectiveBalance);
 
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
