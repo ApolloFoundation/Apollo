@@ -33,9 +33,13 @@ public class PeerHttpServer {
     
      private static final Logger LOG = getLogger(PeerHttpServer.class);
      
-     static final int MAX_PLATFORM_LENGTH = 30;
+     public static final int MAX_PLATFORM_LENGTH = 30;
+     public static final int DEFAULT_PEER_PORT=47874;
+     public static final int DEFAULT_PEER_PORT_TLS=48743;
      boolean shareMyAddress;
-     int myPeerServerPort;
+     private final int myPeerServerPort;
+     private final int myPeerServerPortTLS;
+     private final boolean useTLS;
      boolean enablePeerUPnP;    
      private final String myPlatform;
      private final String myAddress;
@@ -52,6 +56,10 @@ public class PeerHttpServer {
         return myPeerServerPort;
     }
 
+    public int getMyPeerServerPortTLS() {
+        return myPeerServerPortTLS;
+    }
+
     public String getMyPlatform() {
         return myPlatform;
     }
@@ -65,7 +73,9 @@ public class PeerHttpServer {
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator) {
         this.upnp = upnp;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
-        myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
+        myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort",DEFAULT_PEER_PORT);
+        myPeerServerPortTLS = propertiesHolder.getIntProperty("apl.myPeerServerPortTLS", DEFAULT_PEER_PORT_TLS);
+        useTLS=propertiesHolder.getBooleanProperty("apl.peerUseTLS");
         host = propertiesHolder.getStringProperty("apl.peerServerHost");
         String platform = propertiesHolder.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
         if (platform.length() > MAX_PLATFORM_LENGTH) {
@@ -82,6 +92,9 @@ public class PeerHttpServer {
             peerServer = new Server();
             
             conCreator.addHttpConnector(host, myPeerServerPort, peerServer, idleTimeout);
+            if(useTLS){
+                conCreator.addHttpSConnector(host, myPeerServerPort, peerServer, idleTimeout);
+            }
             
             ServletContextHandler ctxHandler = new ServletContextHandler();
             ctxHandler.setContextPath("/");

@@ -327,7 +327,7 @@ public final class Peers {
                 if (port >= 0) {
                     announcedAddress = peerHttpServer.getMyAddress();
                 } else {
-                    announcedAddress = host + (peerHttpServer.myPeerServerPort != Constants.DEFAULT_PEER_PORT ? ":" + peerHttpServer.myPeerServerPort : "");
+                    announcedAddress = host + (peerHttpServer.getMyPeerServerPort() != Constants.DEFAULT_PEER_PORT ? ":" + peerHttpServer.getMyPeerServerPort() : "");
                 }
                 if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                     throw new RuntimeException("Invalid announced address length: " + announcedAddress);
