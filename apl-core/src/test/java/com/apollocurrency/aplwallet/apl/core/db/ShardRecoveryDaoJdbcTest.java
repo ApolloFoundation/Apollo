@@ -225,7 +225,7 @@ class ShardRecoveryDaoJdbcTest {
 
         List<ShardRecovery> allResult = daoJdbc.getAllShardRecovery(connection);
         assertNotNull(allResult);
-        assertEquals(2, allResult.size());
+        assertEquals(1, allResult.size());
 
         long deleteResult = daoJdbc.hardDeleteShardRecovery(connection, saveResult);
         assertEquals(1, deleteResult);
