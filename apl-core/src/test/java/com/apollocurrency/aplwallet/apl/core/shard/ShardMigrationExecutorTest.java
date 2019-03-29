@@ -14,7 +14,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -38,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
@@ -70,8 +68,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -82,7 +78,6 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @EnableWeld
-@Execution(ExecutionMode.SAME_THREAD)
 class ShardMigrationExecutorTest {
 
     private static final String SHA_512 = "SHA-512";
@@ -96,14 +91,13 @@ class ShardMigrationExecutorTest {
     private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
+    WeldInitiator weld = WeldInitiator.from(
             BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
-            TransactionTestData.class, PropertyProducer.class,
+            PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
             DerivedDbTablesRegistryImpl.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
             ShardRecoveryDaoJdbcImpl.class,
-            FullTextConfig.class,
             ExcludedTransactionDbIdExtractor.class,
             PhasingPollServiceImpl.class,
             PhasingPollResultTable.class,
@@ -111,8 +105,7 @@ class ShardMigrationExecutorTest {
             PhasingPollVoterTable.class,
             PhasingPollLinkedTransactionTable.class,
             PhasingVoteTable.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, MigrateState.class,
-            BlockImpl.class, ShardMigrationExecutor.class, FullTextConfigImpl.class )
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class, FullTextConfigImpl.class )
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
@@ -136,6 +129,7 @@ class ShardMigrationExecutorTest {
 
     @BeforeAll
     static void setUpAll() {
+
         Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }

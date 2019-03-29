@@ -20,18 +20,13 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -41,13 +36,11 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -99,7 +92,7 @@ public class ShardHashCalculatorImplTest {
         jdbiHandleFactory.close();
     }
     @Test
-    public void testCalculateHashForAllBlocks() throws IOException {
+    void testCalculateHashForAllBlocks() throws IOException {
 
         byte[] merkleRoot1 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 1);
         byte[] merkleRoot2 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 1);
@@ -122,7 +115,7 @@ public class ShardHashCalculatorImplTest {
         }
     }
     @Test
-    public void testCalculateHashWhenNoBlocks() throws IOException {
+    void testCalculateHashWhenNoBlocks() throws IOException {
 
         byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_11.getHeight() + 1, td.BLOCK_11.getHeight() + 100_000);
 
@@ -130,37 +123,36 @@ public class ShardHashCalculatorImplTest {
     }
 
     @Test
-    public void testCalculateHashForMiddleBlocks() throws IOException {
+    void testCalculateHashForMiddleBlocks() throws IOException {
         byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_1.getHeight(), td.BLOCK_5.getHeight());
         assertArrayEquals(PARTIAL_MERKLE_ROOT_2_6, merkleRoot);
     }
     @Test
-    public void testCalculateHashForFirstBlocks() throws IOException {
+    void testCalculateHashForFirstBlocks() throws IOException {
 
         byte[] merkleRoot = shardHashCalculator.calculateHash(0, td.BLOCK_8.getHeight());
         assertArrayEquals(PARTIAL_MERKLE_ROOT_1_8, merkleRoot);
     }
     @Test
-    public void testCalculateHashForLastBlocks() throws IOException {
+    void testCalculateHashForLastBlocks() throws IOException {
 
         byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_6.getHeight(), td.BLOCK_11.getHeight() + 1000);
         assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }
     @Test
-    public void testCreateShardingHashCalculatorWithZeroBlockSelectLimit() throws IOException {
+    void testCreateShardingHashCalculatorWithZeroBlockSelectLimit() throws IOException {
         Assertions.assertThrows(IllegalArgumentException.class, () -> new ShardHashCalculatorImpl(mock(Blockchain.class), mock(BlockchainConfig.class), mock(ShardDao.class), 0));
     }
 
-    @Test
-    @Disabled
-    public void testCalculateShardingHashFromMainDb() {
-        DbProperties dbFileProperties = DbTestData.getDbFileProperties(Paths.get("unit-test-db").resolve(Constants.APPLICATION_DIR_NAME).toAbsolutePath().toString());
-        TransactionalDataSource transactionalDataSource = new TransactionalDataSource(dbFileProperties, new PropertiesHolder());
-        transactionalDataSource.init(new DbVersion() {
-            @Override
-            protected int update(int nextUpdate) {return 260;} //do not modify original db!!!
-        });
-        Mockito.doReturn(transactionalDataSource).when(databaseManager).getDataSource();
-        byte[] bytes = shardHashCalculator.calculateHash(0, 2_000_000);
-    }
+//    @Test
+//    public void testCalculateShardingHashFromMainDb() {
+//        DbProperties dbFileProperties = DbTestData.getDbFileProperties(Paths.get("unit-test-db").resolve(Constants.APPLICATION_DIR_NAME).toAbsolutePath().toString());
+//        TransactionalDataSource transactionalDataSource = new TransactionalDataSource(dbFileProperties, new PropertiesHolder());
+//        transactionalDataSource.init(new DbVersion() {
+//            @Override
+//            protected int update(int nextUpdate) {return 260;} //do not modify original db!!!
+//        });
+//        Mockito.doReturn(transactionalDataSource).when(databaseManager).getDataSource();
+//        byte[] bytes = shardHashCalculator.calculateHash(0, 2_000_000);
+//    }
 }
