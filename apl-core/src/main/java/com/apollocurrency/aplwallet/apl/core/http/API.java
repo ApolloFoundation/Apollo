@@ -66,8 +66,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
@@ -119,7 +117,7 @@ public final class API {
         apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
         apiServerCORS = propertiesHolder.getBooleanProperty("apl.apiServerCORS");
         //
-            List<String> disabled = new ArrayList<>(propertiesHolder.getStringListProperty("apl.disabledAPIs"));
+        List<String> disabled = new ArrayList<>(propertiesHolder.getStringListProperty("apl.disabledAPIs"));
         Collections.sort(disabled);
         disabledAPIs = Collections.unmodifiableList(disabled);
         disabled = propertiesHolder.getStringListProperty("apl.disabledAPITags");
@@ -418,6 +416,5 @@ public final class API {
     public URI getServerRootUri() {
         return serverRootUri;
     }
-
 
 }
