@@ -34,7 +34,7 @@ import okhttp3.Response;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopMode {
-    public static String logDir = ".";
+    public static String logDir = System.getProperty("user.home" + "/.apl-blockchain/apl-desktop");
     private static Logger LOG;
 
     private static DesktopSystemTray desktopSystemTray;
@@ -192,26 +192,30 @@ public class DesktopMode {
                     command = "apl-run-secure-transport";
                 }
             }
-                if (System.getProperty("os.name").toLowerCase().contains("win")) 
-                {
-                    ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
-                    // Some magic: Without Redirect Output will not work on Windows
-                        .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
-                        .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
-                    pb.start();
-                }
-                else
-                {
-                    command = "apl-start";
-                    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "./" + command + ".sh");
-                    pb.start();
-                }
-            
-            }            
-            catch (IOException e)
+            if (System.getProperty("os.name").toLowerCase().contains("win")) 
             {
-                LOG.debug(e.getMessage());
-        }/* catch (InterruptedException ex) {
+                ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
+                // Some magic: Without Redirect Output will not work on Windows
+                    .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
+                    .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
+                pb.start();
+            }
+            else
+            {
+                command = "apl-start";
+                LOG.debug("./" + command + ".sh");
+                ProcessBuilder pb = new ProcessBuilder("/bin/bash" , "./" + command + ".sh")
+                    .redirectOutput(new File("/dev/null"))
+                    .redirectError(new File("/dev/null"));
+                pb.start();;
+            }
+            
+        }            
+        catch (IOException e)
+        {
+            LOG.debug(e.getMessage());
+        }
+        /* catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
         }*/
     }

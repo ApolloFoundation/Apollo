@@ -11,9 +11,10 @@ unamestr=`uname`
 xdock=''
 
 if [[ "$unamestr" == 'Darwin' ]]; then
-  xdock=-Xdock:icon=./favicon.ico
+  xdock=-Xdock:icon=../favicon.ico
 fi
 # uncomment when GUI will start standalone
 # ${JAVA_CMD} $xdock  -jar ${MAIN_GUI_JAR}
 
-${JAVA_CMD} $xdock -jar ${MAIN_GUI_JAR}
+${JAVA_CMD} $xdock -jar ${MAIN_GUI_JAR} $@
+
