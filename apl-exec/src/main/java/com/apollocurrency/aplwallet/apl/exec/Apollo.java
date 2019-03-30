@@ -218,7 +218,6 @@ public class Apollo {
                 .recursiveScanPackages(BlockchainConfig.class)
                 .recursiveScanPackages(DatabaseManager.class)
                 .recursiveScanPackages(FullTextConfig.class)
-                .annotatedDiscoveryMode()
                 .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
