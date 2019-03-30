@@ -317,7 +317,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
-                if (blockchainProcessor.isDownloading()) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {

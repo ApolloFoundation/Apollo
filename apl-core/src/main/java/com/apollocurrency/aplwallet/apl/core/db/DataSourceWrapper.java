@@ -205,7 +205,7 @@ public class DataSourceWrapper implements DataSource {
             initialized = false;
             dataSource.close();
 //            dataSource.dispose();
-            log.info("Database shutdown completed");
+            log.trace("Database shutdown completed");
 
         } catch (SQLException e) {
             log.info(e.toString(), e);
