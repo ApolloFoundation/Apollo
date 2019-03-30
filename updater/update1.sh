@@ -86,7 +86,7 @@ tar -czf ${BKP_NAME} ${1}
         nohup ./bin/apl-run-desktop.sh 2>&1 >/dev/null
     else
         notify "Starting command line application..."
-        ./bin/apl-start.sh
+        ./bin/apl-start.sh -s
     fi
 
 else
