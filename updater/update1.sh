@@ -68,15 +68,16 @@ tar -czf ${BKP_NAME} ${1}
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
+
 # Install JRE
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
     cd $1 
-    chmod 755 *.sh
+    chmod 755 bin/*.sh
 
     cd $1 
-    chmod 755 *.sh
+    chmod 755 bin/*.sh
     
 #    ./replace_dbdir.sh
     
