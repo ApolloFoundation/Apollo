@@ -1,13 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 
 public interface TransactionDao {
 
@@ -23,7 +24,7 @@ public interface TransactionDao {
 
     boolean hasTransaction(long transactionId, int height);
 
-//    boolean hasTransactionByFullHash(byte[] fullHash);
+    boolean hasTransactionByFullHash(byte[] fullHash);
 
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
 
@@ -41,6 +42,8 @@ public interface TransactionDao {
 
     int getTransactionCount();
 
+    List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException;
+
 //    DbIterator<Transaction> getAllTransactions();
 
     DbIterator<Transaction> getTransactions(
@@ -54,7 +57,5 @@ public interface TransactionDao {
     int getTransactionCount(long accountId, byte type, byte subtype);
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
-
-    DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to);
 
 }

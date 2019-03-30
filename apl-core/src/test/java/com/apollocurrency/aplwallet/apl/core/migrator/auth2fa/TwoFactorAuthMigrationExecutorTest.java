@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.auth2fa;
 
-import com.apollocurrency.aplwallet.apl.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.migrator.AbstractMigrationExecutorTest;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;

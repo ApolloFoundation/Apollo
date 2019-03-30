@@ -22,6 +22,7 @@ public interface DataMigrateOperation {
     String BLOCK_TABLE_NAME = "BLOCK";
     String TRANSACTION_TABLE_NAME = "TRANSACTION";
 
+
     /**
      * Constant table names are used for step 4
      */

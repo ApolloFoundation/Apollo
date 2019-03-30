@@ -101,7 +101,7 @@ public class BlockchainConfigUpdater {
 
         HeightConfig latestConfig = getConfigAtHeight(height, inclusive);
         if (blockchainConfig.getCurrentConfig() != null) {
-            LOG.info("Update to {} at height {}", latestConfig, height);
+            LOG.debug("Update to {} at height {}", latestConfig, height);
             blockchainConfig.setCurrentConfig(latestConfig);
         } else {
             LOG.error("No configs at all! Proceed with old config {}", blockchainConfig.getCurrentConfig());

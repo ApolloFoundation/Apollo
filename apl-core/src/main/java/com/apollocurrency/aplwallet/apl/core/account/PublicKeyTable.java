@@ -4,27 +4,29 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
+import java.util.Objects;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
  * @author al
  */
+@Singleton
 public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
-    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");    
-    private static final PublicKeyTable publicKeyTable = new PublicKeyTable();
-    
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
+
+    private final Blockchain blockchain;
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
 
@@ -43,18 +45,15 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
         }
 
     }
-
-    
-    public static PublicKeyTable getInstance(){
-        return publicKeyTable;
-    }
     
     public static DbKey newKey(long id){
         return publicKeyDbKeyFactory.newKey(id);
     }
-    
-    protected PublicKeyTable() {
+
+    @Inject
+    public PublicKeyTable(Blockchain blockchain) {
         super("public_key", publicKeyDbKeyFactory, true, null);
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
     @Override

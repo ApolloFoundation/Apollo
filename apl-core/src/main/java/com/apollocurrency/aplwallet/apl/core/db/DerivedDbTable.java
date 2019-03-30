@@ -28,16 +28,14 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 public abstract class DerivedDbTable {
-    @Inject
-    FullTextConfig fullTextConfig;
-    @Inject
-    DerivedDbTablesRegistry derivedDbTablesRegistry;
+
+    private FullTextConfig fullTextConfig;
+    private DerivedTablesRegistry derivedDbTablesRegistry;
     
     protected final String table;
-    protected static DatabaseManager databaseManager;
+    protected DatabaseManager databaseManager;
     
     //TODO: fix injects and remove
     private void lookupCdi(){
@@ -45,7 +43,7 @@ public abstract class DerivedDbTable {
             fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
         }
         if(derivedDbTablesRegistry==null){
-            derivedDbTablesRegistry = CDI.current().select(DerivedDbTablesRegistry.class).get();
+            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
         }
     }
     
@@ -56,9 +54,7 @@ public abstract class DerivedDbTable {
         this.table = table;
         derivedDbTablesRegistry.registerDerivedTable(this);
         fullTextConfig.registerTable(table);
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
+        databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     public void rollback(int height) {
@@ -90,6 +86,10 @@ public abstract class DerivedDbTable {
 
     public void trim(int height, TransactionalDataSource dataSource) {
         //nothing to trim
+    }
+
+    public  DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
     public void createSearchIndex(Connection con) throws SQLException {

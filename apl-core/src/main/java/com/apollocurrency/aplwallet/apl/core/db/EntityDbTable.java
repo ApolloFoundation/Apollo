@@ -503,6 +503,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         }
     }
 
+    public KeyFactory<T> getDbKeyFactory() {
+        return dbKeyFactory;
+    }
+
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {

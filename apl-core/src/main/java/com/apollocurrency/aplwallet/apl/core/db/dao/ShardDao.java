@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -10,6 +8,8 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.List;
 
 /**
  * Shard management + retrieving interface
@@ -55,5 +55,15 @@ public interface ShardDao {
     @Transactional
     @SqlUpdate("DELETE FROM shard")
     int hardDeleteAllShards();
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = :height)")
+    @RegisterRowMapper(ShardRowMapper.class)
+    Shard getShardAtHeight(@Bind("height") int height);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = (SELECT MAX(block_height) FROM block_index) )")
+    @RegisterRowMapper(ShardRowMapper.class)
+    Shard getLastShard();
 
 }
