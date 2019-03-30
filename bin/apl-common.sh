@@ -3,10 +3,10 @@
 # Common parts for all Apollo scripts
 
 # base dir for data files, etc
-APPLICATION=".apl-blockchain"
+APPLICATION="${HOME}/.apl-blockchain"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-# "
+# 
 # SCRIPT_DIR=`dirname $SCRIPT`
 
 APL_TOP_DIR=`dirname $SCRIPT_DIR`

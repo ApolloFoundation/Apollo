@@ -11,7 +11,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M\(%line\) - %msg%n</pattern>
         </encoder>
     </appender>-->
-    <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.exec.LogDirPropertyDefiner">
+    <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.desktop.LogDirPropertyDefiner">
         <logDirectory>
             apollo
         </logDirectory>
@@ -30,7 +30,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.apollocurrency.aplwallet" level="info"/>
+    <logger name="com.apollocurrency.aplwallet" level="debug"/>
     <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
     <!--Uncomment next line to enable trim duration logging-->
     <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
