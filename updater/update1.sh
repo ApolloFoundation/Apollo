@@ -17,7 +17,7 @@ function notify
     fi
 }
 
-VERSION=$(head -n1 VERSION)
+VERSION=$(head -n1 ${2}/VERSION)
 
 if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
 then
