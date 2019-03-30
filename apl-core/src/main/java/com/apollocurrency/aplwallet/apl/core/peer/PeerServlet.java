@@ -79,74 +79,6 @@ public final class PeerServlet extends WebSocketServlet {
         map.put("processTransactions", new ProcessTransactions());
         peerRequestHandlers = Collections.unmodifiableMap(map);
     }
-
-    static final JSONStreamAware UNSUPPORTED_REQUEST_TYPE;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.UNSUPPORTED_REQUEST_TYPE);
-        UNSUPPORTED_REQUEST_TYPE = JSON.prepare(response);
-    }
-    private static final JSONStreamAware CONNECTION_TIMEOUT;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.CONNECTION_TIMEOUT);
-        CONNECTION_TIMEOUT = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware UNSUPPORTED_PROTOCOL;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.UNSUPPORTED_PROTOCOL);
-        UNSUPPORTED_PROTOCOL = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware UNKNOWN_PEER;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.UNKNOWN_PEER);
-        UNKNOWN_PEER = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware SEQUENCE_ERROR;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.SEQUENCE_ERROR);
-        SEQUENCE_ERROR = JSON.prepare(response);
-    }
-    private static final JSONStreamAware INCORRECT_CHAIN_ID;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.CHAIN_ID_ERROR);
-        INCORRECT_CHAIN_ID = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware MAX_INBOUND_CONNECTIONS;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.MAX_INBOUND_CONNECTIONS);
-        MAX_INBOUND_CONNECTIONS = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware DOWNLOADING;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.DOWNLOADING);
-        DOWNLOADING = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware LIGHT_CLIENT;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.LIGHT_CLIENT);
-        LIGHT_CLIENT = JSON.prepare(response);
-    }
-
-    static JSONStreamAware error(Exception e) {
-        JSONObject response = new JSONObject();
-        response.put("error", Peers.hideErrorDetails ? e.getClass().getName() : e.toString());
-        return response;
-    }
-
     
     /**
      * Configure the WebSocket factory
@@ -175,7 +107,7 @@ public final class PeerServlet extends WebSocketServlet {
         //
         PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
         if (peer == null) {
-            jsonResponse = UNKNOWN_PEER;
+            jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             jsonResponse = process(peer, req.getReader());
         }
@@ -232,7 +164,7 @@ public final class PeerServlet extends WebSocketServlet {
         String remoteAddress = socketAddress.getHostString();
         PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
         if (peer == null) {
-            jsonResponse = UNKNOWN_PEER;
+            jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
@@ -283,11 +215,11 @@ public final class PeerServlet extends WebSocketServlet {
             peer.updateDownloadedVolume(cr.getCount());
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
                 LOG.debug("Unsupported protocol " + request.get("protocol"));
-                return UNSUPPORTED_PROTOCOL;
+                return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = peerRequestHandlers.get((String)request.get("requestType"));
             if (peerRequestHandler == null) {
-                return UNSUPPORTED_REQUEST_TYPE;
+                return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 //            uncomment this to check requests from peers
             //            if (peerRequestHandler.isChainIdProtected()) {
@@ -307,28 +239,28 @@ public final class PeerServlet extends WebSocketServlet {
                     LOG.debug("Peer List =[{}], dumping...", Peers.getAllPeers().size());
                     Peers.getAllPeers().stream().forEach(peerHost -> LOG.debug("{}", peerHost));
                 }
-                return SEQUENCE_ERROR;
+                return PeerResponses.SEQUENCE_ERROR;
             }
             if (!peer.isInbound()) {
                 if (Peers.hasTooManyInboundPeers()) {
-                    return MAX_INBOUND_CONNECTIONS;
+                    return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
             peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (lookupBlockchainProcessor().isDownloading()) {
-                    return DOWNLOADING;
+                    return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
-                    return LIGHT_CLIENT;
+                    return PeerResponses.LIGHT_CLIENT;
                 }
             }
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException| ParseException |IOException e) {
             LOG.debug("Error processing POST request: " + e.toString());
             peer.blacklist(e);
-            return error(e);
+            return PeerResponses.error(e);
         }
     }
 

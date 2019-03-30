@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-final class Errors {
+public final class Errors {
 
     final static String BLACKLISTED = "Your peer is blacklisted";
     final static String END_OF_FILE = "Unexpected token END OF FILE at position 0.";

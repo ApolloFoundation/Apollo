@@ -670,8 +670,8 @@ public final class PeerImpl implements Peer {
         return getHost().compareTo(o.getHost());
     }
 
-
-    void connect(UUID targetChainId) {
+//TODO: 2phase connect with ws:// and wss://
+    public void connect(UUID targetChainId) {
         lastConnectAttempt = timeService.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && announcedAddress != null) {

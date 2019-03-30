@@ -41,7 +41,7 @@ public class GetTransactions extends PeerRequestHandler {
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {
         if (!propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
-            return PeerServlet.UNSUPPORTED_REQUEST_TYPE;
+            return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
         }
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();

@@ -45,7 +45,7 @@ final class ProcessTransactions extends PeerRequestHandler {
         } catch (RuntimeException | AplException.ValidationException e) {
             //LOG.debug("Failed to parse peer transactions: " + request.toJSONString());
             peer.blacklist(e);
-            return PeerServlet.error(e);
+            return PeerResponses.error(e);
         }
 
     }

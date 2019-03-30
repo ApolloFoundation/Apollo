@@ -94,7 +94,7 @@ final class GetMilestoneBlockIds extends PeerRequestHandler {
 
         } catch (RuntimeException e) {
             LOG.debug(e.toString());
-            return PeerServlet.error(e);
+            return PeerResponses.error(e);
         }
 
         return response;
