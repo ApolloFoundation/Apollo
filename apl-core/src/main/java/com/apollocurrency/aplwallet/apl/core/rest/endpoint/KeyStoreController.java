@@ -1,11 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,7 +62,12 @@ public class KeyStoreController {
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
         if(!keyStoreService.isAccountExist(accountId)){
-            return Response.status(Response.Status.BAD_REQUEST).entity("Key for this account is not exist.").build();
+            return Response.status(Response.Status.OK)
+                    .entity(JSON.toString(
+                            JSONResponses.vaultWalletError(accountId,
+                            "get account information", "Key for this account is not exist.")
+                    )
+            ).build();
         }
 
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
@@ -105,21 +112,33 @@ public class KeyStoreController {
                 } else if ("passPhrase".equals(item.getFieldName())){
                     passPhrase = IOUtils.toString(item.openStream());
                 } else {
-                   return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Failed to upload file. Unknown parameter: " + item.getFieldName()).build();
+                   return Response.status(Response.Status.OK)
+                           .entity(JSON.toString(
+                                   JSONResponses.vaultWalletError(0, "import",
+                                   "Failed to upload file. Unknown parameter: " + item.getFieldName())
+                                   )
+                           ).build();
                 }
             }
 
             if(passPhrase == null || keyStore == null || keyStore.length==0){
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("Parameter 'passPhrase' or 'keyStore' is null").build();
+                return Response.status(Response.Status.OK)
+                        .entity(JSON.toString(
+                                JSONResponses.vaultWalletError(0, "import",
+                                        "Parameter 'passPhrase' or 'keyStore' is null")
+                                )
+                        ).build();
             }
 
             fbWallet = FbWalletUtil.buildWallet(keyStore, passPhrase);
 
             if(fbWallet == null){
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("KeyStore or passPhrase is not valid.").build();
+                return Response.status(Response.Status.OK)
+                        .entity(JSON.toString(
+                                JSONResponses.vaultWalletError(0, "import",
+                                "KeyStore or passPhrase is not valid.")
+                                )
+                        ).build();
             }
 
             KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passPhrase, fbWallet);
@@ -127,7 +146,11 @@ public class KeyStoreController {
             if(status.isOK()){
                 return Response.status(200).build();
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Failed to upload file. " + status.message).build();
+                return Response.status(Response.Status.OK)
+                        .entity(JSON.toString(
+                                JSONResponses.vaultWalletError(0, "import", status.message)
+                                )
+                        ).build();
             }
         } catch (Exception ex){
             LOG.error(ex.getMessage(), ex);
@@ -154,7 +177,10 @@ public class KeyStoreController {
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
         if(!keyStoreService.isAccountExist(accountId)){
-            return Response.status(Response.Status.BAD_REQUEST).entity("Key for this account is not exist.").build();
+            return Response.status(Response.Status.OK)
+                            .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
+                                    "get account information", "Key for this account is not exist."))
+                            ).build();
         }
 
         File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
