@@ -4,6 +4,8 @@
 # second parameter is a update directory which contains unpacked jar for update
 # third parameter is a boolean flag, which indicates desktop mode
 
+APOLLO_JAR="Apollo.jar"
+
 unamestr=`uname`
 
 function notify
@@ -15,8 +17,9 @@ function notify
     fi
 }
 
+VERSION=$(head -n1 ${2}/VERSION)
 
-if  [ -d $1 ] && [ -d $2 ] && [ -n $3 ]
+if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
 then
     
     notify "Starting Apollo Updater"
@@ -24,17 +27,36 @@ then
 
     NEXT_WAIT_TIME=0
     
-    until [ $(ps aux | grep Apollo.jar | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
+    until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
 	notify "Waiting more time to stop Apollo Wallet..."
     done
     
+# it is always good idea to backup everything before removing
+NOW=`date +%Y-%m-%dT%H:%m:%S`
+BKP_NAME=${1}/../ApolloWallet-BKP-${NOW}.tar.gz 
+tar -czf ${BKP_NAME} ${1}
 
+# we sould remove "conf" dir because default configs are in resources now
+# and user's configs are in ~/.apl_blockchain
+    rm -rf $1/conf
+#may be we have to remove garbage    
+    rm -f $1/*.sh
+    rm -f $1/*.bat
+    rm -f $1/*.vbs
+    rm -rf $1/META-INF
+    rm -rf $1/html
+    rm -f $1/Apollo.jar
     
     notify "Copying update files...."
     cp -vRa $2/* $1
     
+    notify "Downloading deps...."
+    
+    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz
+    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
+    cp apollo-wallet-deps-${VERSION}/* $1/lib
     
     if [[ "$unamestr" == 'Darwin' ]]; then
 	mv "$1/ApolloWallet+Secure Transport.app" $1/../
@@ -52,34 +74,26 @@ then
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
+
 # Install JRE
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
-    if [[ "$unamestr" == 'Darwin' ]]; then
-	chmod 755 $1/jre/bin/* $1/jre/lib/lib*
-	chmod 755 $1/jre/lib/jspawnhelper $1/jre/lib/jli/* $1/jre/lib/lib*
-    elif [[ "$unamestr" == 'Linux' ]]; then
-	chmod 755 $1/jre/bin/*
-    fi
-
-
+    cd $1 
+    chmod 755 bin/*.sh
 
     cd $1 
-    chmod 755 *.sh
-
-    cd $1 
-    chmod 755 *.sh
+    chmod 755 bin/*.sh
     
 #    ./replace_dbdir.sh
     
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
-        ./start-desktop.sh
+        nohup ./bin/apl-run-desktop.sh 2>&1 >/dev/null
     else
         notify "Starting command line application..."
-        ./start.sh
+        ./bin/apl-start.sh -s
     fi
 
 else
