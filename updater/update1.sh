@@ -17,6 +17,7 @@ function notify
     fi
 }
 
+VERSION=$(head -n1 VERSION)
 
 if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
 then
@@ -51,6 +52,11 @@ tar -czf ${BKP_NAME} ${1}
     notify "Copying update files...."
     cp -vRa $2/* $1
     
+    notify "Downloading deps...."
+    
+    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz
+    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
+    cp apollo-wallet-deps-${VERSION}/* $1/lib
     
     if [[ "$unamestr" == 'Darwin' ]]; then
 	mv "$1/ApolloWallet+Secure Transport.app" $1/../
