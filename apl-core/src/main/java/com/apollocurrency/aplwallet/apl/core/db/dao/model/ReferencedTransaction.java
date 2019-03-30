@@ -10,20 +10,22 @@ public class ReferencedTransaction {
     private Long dbId;
     private Long transactionId;
     private Long referencedTransactionId;
+    private Integer height;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ReferencedTransaction)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         ReferencedTransaction that = (ReferencedTransaction) o;
         return Objects.equals(dbId, that.dbId) &&
                 Objects.equals(transactionId, that.transactionId) &&
-                Objects.equals(referencedTransactionId, that.referencedTransactionId);
+                Objects.equals(referencedTransactionId, that.referencedTransactionId) &&
+                Objects.equals(height, that.height);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dbId, transactionId, referencedTransactionId);
+        return Objects.hash(dbId, transactionId, referencedTransactionId, height);
     }
 
     public Long getDbId() {
@@ -50,9 +52,18 @@ public class ReferencedTransaction {
         this.referencedTransactionId = referencedTransactionId;
     }
 
-    public ReferencedTransaction(Long dbId, Long transactionId, Long referencedTransactionId) {
+    public Integer getHeight() {
+        return height;
+    }
+
+    public void setHeight(Integer height) {
+        this.height = height;
+    }
+
+    public ReferencedTransaction(Long dbId, Long transactionId, Long referencedTransactionId, Integer height) {
         this.dbId = dbId;
         this.transactionId = transactionId;
         this.referencedTransactionId = referencedTransactionId;
+        this.height = height;
     }
 }

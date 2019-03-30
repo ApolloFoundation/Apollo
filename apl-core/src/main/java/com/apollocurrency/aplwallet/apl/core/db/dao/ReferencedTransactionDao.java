@@ -15,13 +15,14 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReferencedTransactionDao {
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT referenced_transaction_id FROM referenced_transaction where transaction_id = :transactionId UNION " +
             "SELECT referenced_transaction_id FROM referenced_shard_transaction where transaction_id = :transactionId")
-    Long getReferencedTransactionIdFor(@Bind("transactionId") long transactionId);
+    Optional<Long> getReferencedTransactionIdFor(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT referenced_transaction_id FROM referenced_transaction UNION " +

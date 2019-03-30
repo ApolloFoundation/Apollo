@@ -27,7 +27,6 @@ public class ShardObserver {
 
     private BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
-    private DatabaseManager databaseManager;
     private ShardMigrationExecutor shardMigrationExecutor;
 
     private volatile boolean isSharding = false;
@@ -36,7 +35,6 @@ public class ShardObserver {
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig, DatabaseManager databaseManager, ShardMigrationExecutor shardMigrationExecutor) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
-        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.shardMigrationExecutor = Objects.requireNonNull(shardMigrationExecutor, "shard migration executor is NULL");
     }
 
@@ -50,7 +48,7 @@ public class ShardObserver {
     
     public synchronized boolean tryCreateShard() {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
-        boolean res = false;
+        CompletableFuture<Boolean> res = null;
         if (currentConfig.isShardingEnabled()) {
             int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
@@ -87,4 +85,29 @@ public class ShardObserver {
         }
         return res;
     }
+
+    public boolean performSharding(int minRollbackHeight) {
+        boolean result = false;
+        MigrateState state = MigrateState.INIT;
+        long start = System.currentTimeMillis();
+        log.info("Start sharding....");
+        try {
+            log.debug("Clean commands....");
+            shardMigrationExecutor.cleanCommands();
+            log.debug("Create all commands....");
+            shardMigrationExecutor.createAllCommands(minRollbackHeight);
+            log.debug("Start all commands....");
+            state = shardMigrationExecutor.executeAllOperations();
+            result = true;
+        } catch (Throwable t) {
+            log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
+        }
+        if (state != MigrateState.FAILED && state != MigrateState.INIT) {
+            log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);
+        } else {
+            log.info("FAILED sharding in {} secs", (System.currentTimeMillis() - start) / 1000);
+        }
+        return result;
+    }
+
 }
