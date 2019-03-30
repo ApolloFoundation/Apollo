@@ -149,7 +149,7 @@ public class KeyStoreController {
             }
     )
     public Response downloadKeyStore(@FormParam("account") String account,
-                                     @FormParam("passphrase") String passphraseReq) throws ParameterException, IOException {
+                                     @FormParam("passPhrase") String passphraseReq) throws ParameterException, IOException {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
