@@ -81,7 +81,7 @@ public class ShardMigrationExecutor {
         this.addOperation(updateSecondaryIndexCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
-                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE * 5, height);
+                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE, height);
         this.addOperation(deleteCopiedDataCommand);
 
         byte[] hash = calculateHash(height);

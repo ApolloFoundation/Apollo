@@ -26,12 +26,14 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
@@ -126,6 +128,8 @@ class ShardMigrationExecutorTest {
     private Blockchain blockchain;
     @Inject
     private TransactionIndexDao transactionIndexDao;
+    @Inject
+    private BlockDao blockDao;
 
     @BeforeAll
     static void setUpAll() {
@@ -155,22 +159,27 @@ class ShardMigrationExecutorTest {
         Set<Long> dbIds = new HashSet<>();
         dbIds.add(td.DB_ID_6);
         dbIds.add(td.DB_ID_10);
+        long snapshotBlockHeight = 8000L;
         CopyDataCommand copyDataCommand = new CopyDataCommand(
-                managementReceiver, 8000L, dbIds);
+                managementReceiver, snapshotBlockHeight, dbIds);
         state = shardMigrationExecutor.executeOperation(copyDataCommand);
 //        assertEquals(FAILED, state);
         assertEquals(DATA_COPIED_TO_SHARD, state);
+
+        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        long count = blockDao.getBlockCount(shardDataSource, 0, (int)snapshotBlockHeight);
+        assertEquals(8, count);
 
         createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardAddConstraintsSchemaVersion());
         state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
         assertEquals(SHARD_SCHEMA_FULL, state);
 
-        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver, 8000L, dbIds);
+        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver, snapshotBlockHeight, dbIds);
         state = shardMigrationExecutor.executeOperation(reLinkDataCommand);
         assertEquals(DATA_RELINKED_IN_MAIN, state);
 
-        UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(managementReceiver, 8000L, dbIds);
+        UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(managementReceiver, snapshotBlockHeight, dbIds);
         state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
 //        assertEquals(FAILED, state);
         assertEquals(SECONDARY_INDEX_UPDATED, state);
@@ -185,16 +194,17 @@ class ShardMigrationExecutorTest {
 
         assertEquals(td.TRANSACTION_0, tx); // check that transaction was ignored
 
-        DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, 8000L);
+        DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, snapshotBlockHeight);
         state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
 //        assertEquals(FAILED, state);
         assertEquals(DATA_REMOVED_FROM_MAIN, state);
 
+        count = blockDao.getBlockCount((int)snapshotBlockHeight, 105000);
+        assertEquals(5, count);
+
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, new byte[]{3,4,5,6,1});
         state = shardMigrationExecutor.executeOperation(finishShardingCommand);
         assertEquals(COMPLETED, state);
-
-
     }
 
     @Test

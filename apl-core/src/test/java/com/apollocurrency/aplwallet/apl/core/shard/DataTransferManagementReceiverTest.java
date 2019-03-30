@@ -29,20 +29,20 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
@@ -53,7 +53,6 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -64,9 +63,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -118,6 +115,8 @@ class DataTransferManagementReceiverTest {
     private BlockIndexDao blockIndexDao;
     @Inject
     private TransactionIndexDao transactionIndexDao;
+    @Inject
+    private BlockDao blockDao;
 
     private Path createPath(String fileName) {
         try {
@@ -140,7 +139,7 @@ class DataTransferManagementReceiverTest {
                 Collections.emptyList());
         propertiesHolder = new PropertiesHolder();
         Properties properties = propertiesLoader.load();
-        properties.setProperty("apl.testData", "true");// true - load data.sql, false - do not load data.sql
+        properties.setProperty("apl.testData", "false");// true - load data.sql, false - do not load data.sql
         propertiesHolder.init(properties);
         DbConfig dbConfig = new DbConfig(propertiesHolder);
         baseDbProperties = dbConfig.getDbConfig();
@@ -194,17 +193,21 @@ class DataTransferManagementReceiverTest {
         dbIds.add(td.DB_ID_0);
         dbIds.add(td.DB_ID_3);
         dbIds.add(td.DB_ID_10);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, 8000L, dbIds);
+        long snapshotBlockHeight = 8000L;
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
 
         state = managementReceiver.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
 //        assertEquals(MigrateState.FAILED, state);
 
+        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        long count = blockDao.getBlockCount(shardDataSource, 0, (int)snapshotBlockHeight);
+        assertEquals(8, count);
+
         state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_SCHEMA_FULL, state);
 
         tableNameList.clear();
-//        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
 //        tableNameList.add(TAGGED_DATA_TABLE_NAME); // ! skip in test
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
@@ -224,6 +227,7 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.updateSecondaryIndex(paramInfo);
         assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 //        assertEquals(MigrateState.FAILED, state);
+
         long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
         long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
@@ -236,6 +240,9 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.deleteCopiedData(paramInfo);
         assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
+
+        count = blockDao.getBlockCount((int)snapshotBlockHeight, 105000);
+        assertEquals(5, count);
 
         paramInfo.setShardHash("000000000".getBytes());
         state = managementReceiver.addShardInfo(paramInfo);

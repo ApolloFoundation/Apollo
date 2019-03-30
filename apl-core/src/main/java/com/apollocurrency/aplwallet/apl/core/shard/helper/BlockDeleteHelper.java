@@ -72,6 +72,7 @@ public class BlockDeleteHelper extends AbstractHelper {
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
                                     Connection sourceConnect, TableOperationParams operationParams)
             throws SQLException {
+        long start = System.currentTimeMillis();
         int rows = 0;
         int processedRows = 0;
         try (ResultSet rs = ps.executeQuery()) {
@@ -80,7 +81,8 @@ public class BlockDeleteHelper extends AbstractHelper {
                     // it's called one time only
                     rsmd = rs.getMetaData();
                     if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                        sqlInsertString.append("delete from BLOCK WHERE DB_ID < ? LIMIT ?");
+//                        sqlInsertString.append("delete from BLOCK WHERE DB_ID >= ? AND DB_ID < ? LIMIT ?");
+                        sqlInsertString.append("delete from BLOCK WHERE DB_ID = ?");
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
@@ -88,11 +90,17 @@ public class BlockDeleteHelper extends AbstractHelper {
                         log.trace("Precompiled delete = {}", sqlInsertString);
                     }
                 }
-
+                paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+/*
+                preparedInsertStatement.setObject(1, paginateResultWrapper.lowerBoundColumnValue);
+                preparedInsertStatement.addBatch();
+*/
+                rows++;
                 try {
-                    preparedInsertStatement.setObject(1, paginateResultWrapper.upperBoundColumnValue);
-                    preparedInsertStatement.setObject(2, operationParams.batchCommitSize);
-                    processedRows = preparedInsertStatement.executeUpdate();
+                    preparedInsertStatement.setObject(1, paginateResultWrapper.lowerBoundColumnValue);
+//                    preparedInsertStatement.setObject(2, paginateResultWrapper.upperBoundColumnValue);
+//                    preparedInsertStatement.setObject(3, operationParams.batchCommitSize);
+                    processedRows += preparedInsertStatement.executeUpdate();
                     log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
                     log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
@@ -100,13 +108,26 @@ public class BlockDeleteHelper extends AbstractHelper {
                     sourceConnect.rollback();
                     throw e;
                 }
-                rows++;
             }
-            totalSelectedRows += rows;
-            totalProcessedCount += processedRows;
         }
-        log.trace("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={}", currentTableName,
-                totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+/*
+        try {
+            int[] array = preparedInsertStatement.executeBatch();
+            totalSelectedRows += rows;
+            processedRows += array != null ? array.length : 0;
+            log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+        } catch (Exception e) {
+            log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
+            log.error("Failed Deleting " + currentTableName, e);
+            sourceConnect.rollback();
+            throw e;
+        }
+*/
+        totalSelectedRows += rows;
+        totalProcessedCount += processedRows;
+        log.debug("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={} in {}", currentTableName,
+                totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME,
+                paginateResultWrapper.lowerBoundColumnValue, System.currentTimeMillis() - start);
 
         if (rows == 1) {
             // in case we have only 1 RECORD selected, move lower bound

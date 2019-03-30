@@ -109,7 +109,6 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             while (rs.next()) {
                 // execute one time
                 extractMetaDataCreateInsert(targetConnect, rs);
-                formatBindValues(rs);// format readable values
                 rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
                 if (excludeRows && operationParams.dbIdsExclusionSet.get().contains(rs.getLong(BASE_COLUMN_NAME))) {
@@ -118,7 +117,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         Object object = rs.getObject(i + 1);
-                        columnValues.append(object).append(", ");
+                        formatBindValues(rs, i);// format readable values inside 'columnValues'
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                     processedRows += preparedInsertStatement.executeUpdate();
@@ -138,7 +137,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         log.trace("Total Records: selected = {}, inserted = {}, rows = {}, {}={}",
                 totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
         if (rows == 1) {
-            // in case we have only 1 RECORD selected, move lower bound
+            // in case we have only 1 RECORD selected, move lower bound to bigger value
             paginateResultWrapper.lowerBoundColumnValue += operationParams.batchCommitSize;
         }
 
@@ -149,7 +148,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
         targetConnect.commit(); // commit latest copied records if any
         shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue);
-        return rows != 0;// || paginateResultWrapper.lowerBoundColumnValue < paginateResultWrapper.upperBoundColumnValue;
+        return rows != 0;
     }
 
     private void extractMetaDataCreateInsert(Connection targetConnect, ResultSet rs) throws SQLException {
@@ -177,8 +176,8 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         }
     }
 
-    private void formatBindValues(ResultSet rs) throws SQLException {
-        for (int i = 0; i < numColumns; i++) {
+    private void formatBindValues(ResultSet rs, int i) throws SQLException {
+//        for (int i = 0; i < numColumns; i++) {
             java.util.Date d = null;
             switch (columnTypes[i]) {
                 case Types.BIGINT:
@@ -220,7 +219,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             if (i != columnTypes.length - 1) {
                 columnValues.append(",");
             }
-        }
+//        }
     }
 
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {

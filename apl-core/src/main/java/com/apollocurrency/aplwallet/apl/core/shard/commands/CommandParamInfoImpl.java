@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DEFAULT_COMMIT_BATCH_SIZE;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +15,7 @@ import java.util.Set;
 public class CommandParamInfoImpl implements CommandParamInfo {
 
     private List<String> tableNameList = Collections.emptyList(); // processed tables list
-    private int commitBatchSize = -1;
+    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private Long snapshotBlockHeight = -1L;
     private byte[] shardHash;
     private Set<Long> dbIdExclusionSet;
