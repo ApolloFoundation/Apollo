@@ -74,7 +74,7 @@ tar -czf ${BKP_NAME} ${1}
 	rm -rf "$1/ApolloWallet.app"
 
     fi
-exit 0
+
     if [[ "$unamestr" == 'Linux' ]]; then
 	chmod 755 $1/tor/tor
 	chmod 755 $1/secureTransport/securenodexchg
