@@ -59,7 +59,6 @@ tar -czf ${BKP_NAME} ${1}
     
     if [[ "$unamestr" == 'Darwin' ]]; then
         
-        rm -rf "$1/../ApolloWallet.app"
         cp -rf "$2/ApolloWallet.app" $1/../
         rm -rf "$1/../ApolloWallet+Secure Transport.app"
         cp -rf "$2/ApolloWallet+Secure Transport.app" $1/../
