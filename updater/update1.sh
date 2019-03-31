@@ -60,8 +60,10 @@ tar -czf ${BKP_NAME} ${1}
     
     
     if [[ "$unamestr" == 'Darwin' ]]; then
-	mv "$2/ApolloWallet+Secure Transport.app" $1/../
-	mv "$2/ApolloWallet+Tor.app" $1/../
+        rm -rf "$1./../ApolloWallet+Secure Transport.app"
+        mv "$2/ApolloWallet+Secure Transport.app" $1/../
+        rm -rf "$1./../ApolloWallet+Tor.app"
+        mv "$2/ApolloWallet+Tor.app" $1/../
 
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
