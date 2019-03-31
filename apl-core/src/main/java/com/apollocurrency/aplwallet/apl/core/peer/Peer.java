@@ -31,7 +31,7 @@ import org.json.simple.JSONStreamAware;
 public interface Peer extends Comparable<Peer> {
 
     enum State {
-        NON_CONNECTED, CONNECTED, DISCONNECTED
+        NON_CONNECTED, CONNECTED, CONNECTED_SECURE, DISCONNECTED
     }
 
     enum Service {
@@ -51,7 +51,23 @@ public interface Peer extends Comparable<Peer> {
             return code;
         }
     }
+    
+    enum TrustLevel{
+        NOT_TRUSTED(0),
+        REGISTERED(1),
+        TRUSTED(2),
+        SYSTEM_TRUSTED(3);
+        
+        private final int code;
 
+        private TrustLevel(int code) {
+            this.code = code;
+        }
+        
+        public long getCode() {
+            return code;
+        }
+    }
 
     boolean providesService(Service service);
 
@@ -130,4 +146,8 @@ public interface Peer extends Comparable<Peer> {
     JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect);
     
     public void connect(UUID targetChainId);
+    
+    public boolean isTrusted();
+    
+    public TrustLevel getTrustLevel();
 }

@@ -106,10 +106,9 @@ public final class Peers {
     static int webSocketIdleTimeout;
     static boolean useProxy;
     static boolean isGzipEnabled;
-
+    public static boolean useTLS;
 
     private static String myHallmark;
-   
     
     private static int maxNumberOfInboundConnections;
     private static int maxNumberOfOutboundConnections;
@@ -175,8 +174,8 @@ public final class Peers {
         MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
         MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
-        hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails");
-        
+        hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails",true);
+        useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS",true);
         String myHost = null;
         int myPort = -1;
         if (peerHttpServer.getMyAddress() != null) {

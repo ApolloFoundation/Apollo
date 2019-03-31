@@ -669,9 +669,23 @@ public final class PeerImpl implements Peer {
         }
         return getHost().compareTo(o.getHost());
     }
-
+    
+    @Override
+    public void connect(UUID targetChainId){
+        connectHttp(targetChainId);
+        if(Peers.useTLS){
+            if(getState()==State.CONNECTED){
+                reConnectHttpS(targetChainId);
+            }
+        }
+    }
+    
+    private void reConnectHttpS(UUID targetChainId){
+        
+    }
+    
 //TODO: 2phase connect with ws:// and wss://
-    public void connect(UUID targetChainId) {
+    public void connectHttp(UUID targetChainId) {
         lastConnectAttempt = timeService.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && announcedAddress != null) {
@@ -1002,5 +1016,16 @@ public final class PeerImpl implements Peer {
                 ", host='" + host + '\'' +
                 ", version='" + version + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean isTrusted() {
+        return  getTrustLevel().getCode() > Peer.TrustLevel.REGISTERED.getCode();                
+    }
+
+    @Override
+    public TrustLevel getTrustLevel() {
+        //TODO implement using Apollo ID 
+        return Peer.TrustLevel.NOT_TRUSTED;    
     }
 }
