@@ -84,14 +84,14 @@ public class ApolloFbWallet extends FbWallet {
     }
 
     public void addEthKey(EthWalletKey ethWalletKey){
-        createEthorEthTokenWallet(ethWalletKey, ETH_PRIVATE_KEY_ALIAS);
+        createEthOrEthTokenWallet(ethWalletKey, ETH_PRIVATE_KEY_ALIAS);
     }
 
     public void addPaxKey(EthWalletKey ethWalletKey){
-       createEthorEthTokenWallet(ethWalletKey, PAX_PRIVATE_KEY_ALIAS);
+       createEthOrEthTokenWallet(ethWalletKey, PAX_PRIVATE_KEY_ALIAS);
     }
 
-    private void createEthorEthTokenWallet(EthWalletKey ethWalletKey, String alias){
+    private void createEthOrEthTokenWallet(EthWalletKey ethWalletKey, String alias){
         DataRecord dr = new DataRecord();
         dr.alias = alias;
         dr.data = ethWalletKey.getCredentials().getEcKeyPair().getPrivateKey().toString(16);

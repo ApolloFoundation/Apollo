@@ -30,7 +30,7 @@ public class GenerateAccount extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String passphrase = request.getParameter("passphrase");
-        WalletKeysInfo aplWalletKey = Helper2FA.generateUserAccounts(passphrase);
+        WalletKeysInfo aplWalletKey = Helper2FA.generateUserWallet(passphrase);
         if (aplWalletKey != null) {
             aplWalletKey.getAplWalletKey().setPassphrase(passphrase);
             return aplWalletKey.toJSON();

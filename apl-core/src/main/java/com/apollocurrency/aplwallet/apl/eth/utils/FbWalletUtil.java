@@ -58,7 +58,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
             fbWallet.openStream(new ByteArrayInputStream(keyStore), key);
             return fbWallet;
         } catch (Exception ex){
-            LOG.error(ex.getMessage(), ex);
+            LOG.error(ex.getMessage(), ex.getCause().getMessage());
             return null;
         }
      }

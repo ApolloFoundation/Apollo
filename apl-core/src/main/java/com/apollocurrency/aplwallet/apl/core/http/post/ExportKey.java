@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * New export will export keystore file instead secret.
+ * Use com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController#importKeyStore(javax.servlet.http.HttpServletRequest)
  */
 @Deprecated
 public class ExportKey extends AbstractAPIRequestHandler {
@@ -38,7 +39,7 @@ public class ExportKey extends AbstractAPIRequestHandler {
         String passphrase = ParameterParser.getPassphrase(request, true);
         long accountId = ParameterParser.getAccountId(request, true);
 
-        byte [] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase, true);
+        byte [] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
         String secrethex = secretBytes != null ? Convert.toHexString(secretBytes) : null;
 
         JSONObject response = new JSONObject();

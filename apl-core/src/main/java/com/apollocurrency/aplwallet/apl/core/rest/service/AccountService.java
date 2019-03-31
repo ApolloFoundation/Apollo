@@ -8,6 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
+import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.Balances;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,5 +46,16 @@ public class AccountService {
         }
 
         return balances;
+    }
+
+    public ApolloFbWallet generateUserAccounts(byte[] secretApl) {
+
+        ApolloFbWallet apolloWallet = new ApolloFbWallet();
+        AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : new AplWalletKey(secretApl);
+
+        apolloWallet.addAplKey(aplAccount);
+        apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
+        apolloWallet.addPaxKey(AccountGeneratorUtil.generateEth());
+        return apolloWallet;
     }
 }

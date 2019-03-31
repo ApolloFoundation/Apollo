@@ -41,9 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class EthereumWalletService {
     private static final Logger log = getLogger(EthereumWalletService.class);
 
-//    @Inject
     private Web3j web3j = CDI.current().select(Web3j.class).get();
-//    @Inject
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
 

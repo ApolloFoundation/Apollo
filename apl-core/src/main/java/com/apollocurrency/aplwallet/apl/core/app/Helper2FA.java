@@ -10,10 +10,9 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -34,6 +33,7 @@ public class Helper2FA {
    private static final Logger LOG = LoggerFactory.getLogger(Helper2FA.class);
    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private static final KeyStoreService KEYSTORE = CDI.current().select(KeyStoreService.class).get();
+   private static final AccountService accountService = CDI.current().select(AccountService.class).get();
    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
 
      public static void init(DatabaseManager databaseManagerParam) {
@@ -46,7 +46,7 @@ public class Helper2FA {
     }
      
     public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) throws ParameterException {
-            findAplSecretBytes(accountId, passphrase, true);
+            findAplSecretBytes(accountId, passphrase);
             return service2FA.enable(accountId);
     }
     public static TwoFactorAuthDetails enable2FA(String secretPhrase) throws ParameterException {
@@ -55,7 +55,7 @@ public class Helper2FA {
 
 
     public static Status2FA disable2FA(long accountId, String passphrase, int code) throws ParameterException {
-        findAplSecretBytes(accountId, passphrase, true);
+        findAplSecretBytes(accountId, passphrase);
         Status2FA status2FA = service2FA.disable(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
@@ -93,7 +93,7 @@ public class Helper2FA {
         }
     }
 
-    public static byte[] findAplSecretBytes(long accountId, String passphrase, boolean isMandatory) throws ParameterException {
+    public static byte[] findAplSecretBytes(long accountId, String passphrase) throws ParameterException {
         ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
         String secret = fbWallet.getAplKeySecret();
 
@@ -111,7 +111,7 @@ public class Helper2FA {
     }
 
     public static Status2FA confirm2FA(long accountId, String passphrase, int code) throws ParameterException {
-        findAplSecretBytes(accountId, passphrase, true);
+        findAplSecretBytes(accountId, passphrase);
         Status2FA status2FA = service2FA.confirm(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
@@ -131,7 +131,7 @@ public class Helper2FA {
     }
 
     public static Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
-        byte[] secretBytes = findAplSecretBytes(accountId, passphrase, true);
+        findAplSecretBytes(accountId, passphrase);
         return service2FA.tryAuth(accountId, code);
     }
 
@@ -142,11 +142,11 @@ public class Helper2FA {
         return status2FA;
     }
 
-    public static WalletKeysInfo generateUserAccounts(String passphrase) throws ParameterException {
-         return generateUserAccounts(passphrase, null);
+    public static WalletKeysInfo generateUserWallet(String passphrase) throws ParameterException {
+         return generateUserWallet(passphrase, null);
     }
 
-    public static WalletKeysInfo generateUserAccounts(String passphrase, byte[] secretApl) throws ParameterException {
+    public static WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws ParameterException {
         if (passphrase == null) {
             if (passphraseGenerator == null) {
                 throw new RuntimeException("Either passphrase generator or passphrase required");
@@ -154,16 +154,12 @@ public class Helper2FA {
             passphrase = passphraseGenerator.generate();
         }
 
-        ApolloFbWallet apolloWallet = new ApolloFbWallet();
-        AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : new AplWalletKey(secretApl);
+        ApolloFbWallet apolloWallet = accountService.generateUserAccounts(secretApl);
 
-        apolloWallet.addAplKey(aplAccount);
-        apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
-        apolloWallet.addPaxKey(AccountGeneratorUtil.generateEth());
-        //throw Exception if OpenData null
+        long aplId = apolloWallet.getAplWalletKey().getId();
 
-        KeyStoreService.Status status = KEYSTORE.saveSecretKeyStore(passphrase, aplAccount.getId(), apolloWallet);
-        validateKeyStoreStatus(aplAccount.getId(), status, "generated");
+        KeyStoreService.Status status = KEYSTORE.saveSecretKeyStore(passphrase, aplId, apolloWallet);
+        validateKeyStoreStatus(aplId, status, "generated");
 
         WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
 
@@ -183,7 +179,7 @@ public class Helper2FA {
         if (passphrase == null) {
             passphrase = passphraseGenerator.generate();
         }
-        WalletKeysInfo walletKeysInfo = generateUserAccounts(passphrase, secretBytes);
+        WalletKeysInfo walletKeysInfo = generateUserWallet(passphrase, secretBytes);
         return walletKeysInfo;
     }
 

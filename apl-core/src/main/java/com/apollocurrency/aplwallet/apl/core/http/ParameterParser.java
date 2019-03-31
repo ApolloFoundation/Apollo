@@ -475,7 +475,7 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            byte[] secretBytes = Helper2FA.findAplSecretBytes(senderId, passphrase, isMandatory);
+            byte[] secretBytes = Helper2FA.findAplSecretBytes(senderId, passphrase);
             return secretBytes == null ? null : secretBytes;
         }
         if (isMandatory) {
@@ -535,7 +535,7 @@ public final class ParameterParser {
                         }
                     } else {
 
-                        byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase, isMandatory);
+                        byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
                         if (secretBytes != null) {
                             return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                         }

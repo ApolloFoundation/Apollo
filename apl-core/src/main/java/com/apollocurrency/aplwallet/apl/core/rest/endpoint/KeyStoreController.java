@@ -61,7 +61,7 @@ public class KeyStoreController {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
-        if(!keyStoreService.isAccountExist(accountId)){
+        if(!keyStoreService.isKeyStoreForAccountExist(accountId)){
             return Response.status(Response.Status.OK)
                     .entity(JSON.toString(
                             JSONResponses.vaultWalletError(accountId,
@@ -176,7 +176,7 @@ public class KeyStoreController {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
-        if(!keyStoreService.isAccountExist(accountId)){
+        if(!keyStoreService.isKeyStoreForAccountExist(accountId)){
             return Response.status(Response.Status.OK)
                             .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
                                     "get account information", "Key for this account is not exist."))

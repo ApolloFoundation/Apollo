@@ -166,7 +166,7 @@
         byte [] secretBytes = secretBytesDetails.getSecretBytes();
 
         try {
-            Helper2FA.generateUserAccounts(passphrase, secretBytes);
+            Helper2FA.generateUserWallet(passphrase, secretBytes);
         } catch (ParameterException e) {
             LOG.error(e.getMessage(), e);
            return false;
@@ -209,7 +209,7 @@
         Path path;
 
         try {
-            if(isNewVersionAccountExist(accountId)){
+            if(isNewVersionOfKeyStoreForAccountExist(accountId)){
                 return Status.DUPLICATE_FOUND;
             }
 
@@ -336,7 +336,7 @@
      }
 
      private Path makeTargetPathForNewAccount(long accountId) {
-         if (isNewVersionAccountExist(accountId)) {
+         if (isNewVersionOfKeyStoreForAccountExist(accountId)) {
              LOG.debug("Account already exist");
              return null;
          }
@@ -349,13 +349,13 @@
          return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.defaultRsAccount(accountId)));
      }
 
-     public boolean isNewVersionAccountExist(long accountId) {
+     public boolean isNewVersionOfKeyStoreForAccountExist(long accountId) {
          Path path = findKeyStorePathWithLatestVersion(accountId);
 
          return path != null && isStorageVersionLatest(path);
      }
 
-    public boolean isAccountExist(long accountId) {
+    public boolean isKeyStoreForAccountExist(long accountId) {
         Path path = findKeyStorePathWithLatestVersion(accountId);
 
         return path != null;

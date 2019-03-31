@@ -20,9 +20,6 @@ public class EthUtil {
         ECKeyPair ecKeyPair = ECKeyPair.create(privateKey);
         Credentials cs = Credentials.create(ecKeyPair);
 
-//        String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
-//        String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
-//        String addr = cs.getAddress();
         return new EthWalletKey(cs);
     }
 

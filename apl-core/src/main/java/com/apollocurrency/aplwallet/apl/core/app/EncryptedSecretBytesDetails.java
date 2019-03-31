@@ -8,7 +8,10 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.Arrays;
 import java.util.Objects;
 
-
+/**
+ * Use FbWallet
+ */
+@Deprecated
 public class EncryptedSecretBytesDetails {
     private byte[] encryptedSecretBytes;
     private String accountRS;

@@ -9,17 +9,17 @@
         </encoder>
     </appender>
 
-    <logger name="com.apollocurrency.aplwallet" level="INFO" additivity="false">
+    <logger name="com.apollocurrency.aplwallet" level="ERROR" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="org.jboss" level="INFO" additivity="false">
+    <logger name="org.jboss" level="ERROR" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="ch.qos.logback" level="INFO" additivity="false">
+    <logger name="ch.qos.logback" level="ERROR" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <root level="INFO">
+    <root level="ERROR">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

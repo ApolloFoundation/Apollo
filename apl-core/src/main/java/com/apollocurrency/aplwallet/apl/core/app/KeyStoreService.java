@@ -12,7 +12,12 @@ import java.io.File;
 
 public interface KeyStoreService {
 
-
+    /**
+     * Save encrypted by passphrase secretStore in the json format.
+     * @param passphrase - string, which consist of random words for encryption
+     * @param fbWallet - secret array of bytes which will be stored into keystore
+     * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
+     */
     Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet);
 
     /**
@@ -27,10 +32,14 @@ public interface KeyStoreService {
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
      * @param passphrase - string, which consist of random words for keySeed decryption
      * @param accountId - id of account, which keySeed should be decrypted
-     * @return decrypted SecretStore.
      */
     ApolloFbWallet getSecretStore(String passphrase, long accountId);
 
+    /**
+     * Return currency addresses of the user. (apl, eth, pax)
+     * @param passphrase - string, which consist of random words for keySeed decryption
+     * @param accountId - id of account, which keySeed should be decrypted
+     */
     WalletKeysInfo getWalletKeysInfo(String passphrase, long accountId);
 
     /**
@@ -43,11 +52,24 @@ public interface KeyStoreService {
     SecretBytesDetails getSecretBytesV0(String passphrase, long accountId);
 
 
+    /**
+     * Migrate old keyStore to the New
+     */
     boolean migrateOldKeyStorageToTheNew(String passphrase, long accountId);
 
-    boolean isNewVersionAccountExist(long accountId);
+    /**
+     * Check if new version of keyStore exist.
+     * @param accountId
+     * @return true if new version of keystore for account exist
+     */
+    boolean isNewVersionOfKeyStoreForAccountExist(long accountId);
 
-    boolean isAccountExist(long accountId);
+    /**
+     * Check if keyStore exist.
+     * @param accountId
+     * @return true if key store for account is exist
+     */
+    boolean isKeyStoreForAccountExist(long accountId);
 
     /**
      * Save encrypted by passphrase secretBytes to keystore
@@ -66,6 +88,12 @@ public interface KeyStoreService {
      */
      Status deleteKeyStore(String passphrase, long accountId);
 
+    /**
+     * Get Key Store as a file.
+     * @param accountId
+     * @param passphrase
+     * @return file.
+     */
     File getSecretStoreFile(Long accountId, String passphrase);
 
     enum Status {

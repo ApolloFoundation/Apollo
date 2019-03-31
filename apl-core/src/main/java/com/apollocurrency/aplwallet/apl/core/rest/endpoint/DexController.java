@@ -42,13 +42,13 @@ public class DexController {
     public Response getBalances(@QueryParam("eth") String ethAddress, @QueryParam("pax") String paxAddress)
             throws NotFoundException {
 
+        //Apl info don't use right now.
+
 //        long accountId = ParameterParser.getAccountId(account, "account", true);
 //        Account userAccount = Account.getAccount(accountId);
-//
 //        if (userAccount == null) {
 //            return Response.ok(JSONResponses.unknownAccount(accountId)).build();
 //        }
-
 
         return Response.ok(service.getBalances(ethAddress, paxAddress).balanceToJson()).build();
     }

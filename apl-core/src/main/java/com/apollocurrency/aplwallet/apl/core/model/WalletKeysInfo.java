@@ -102,6 +102,8 @@ public class WalletKeysInfo {
         paxObject.put("currency", "pax");
         paxObject.put("wallets", paxWallets);
 
+        //Apl info don't use right now.
+
 //        JSONObject aplObject = new JSONObject();
 //        List<JSONObject> aplWallets = new ArrayList<>();
 //        aplWallets.add(getAplWalletKey().toJSON());

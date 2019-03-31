@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.api.response;
 
-public class EthTransferResponce {
+public class EthTransferResponse {
 
     private String transactionHash;
 
-    public EthTransferResponce(String transactionHash) {
+    public EthTransferResponse(String transactionHash) {
         this.transactionHash = transactionHash;
     }
 
