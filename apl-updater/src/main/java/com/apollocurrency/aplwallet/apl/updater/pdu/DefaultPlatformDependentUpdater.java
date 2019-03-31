@@ -21,13 +21,13 @@ public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUp
     }
 
     @Override
-    Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException {
+    Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException {
         String[] cmdArray = new String[] {
                 runTool,
                 updateDirectory.resolve("updater").resolve(updateScriptPath).toAbsolutePath().toString(),
                 appDirectory.toAbsolutePath().toString(),
                 updateDirectory.toAbsolutePath().toString(),
-                String.valueOf(isDesktop)
+                String.valueOf(userMode)
         };
         return Runtime.getRuntime().exec(cmdArray, null, workingDirectory.toFile());
     }
