@@ -12,33 +12,42 @@ public class Shard {
     private Long shardId;
     private byte[] shardHash;
     private Long shardState;
+    private Long shardHeight;
 
     public Shard() {
     }
 
     public Shard copy() {
         byte[] shardHashCopy = Arrays.copyOf(shardHash, shardHash.length);
-        return new Shard(shardId, shardHashCopy);
+        return new Shard(shardId, shardHashCopy, shardHeight);
     }
 
-    public Shard(byte[] shardHash) {
+    public Shard(Long shardHeight) {
+        this.shardHeight = shardHeight;
+    }
+
+    public Shard(byte[] shardHash, Long shardHeight) {
         this.shardHash = shardHash;
+        this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash) {
+    public Shard(Long shardId, byte[] shardHash, Long shardHeight) {
         this.shardId = shardId;
         this.shardHash = shardHash;
+        this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, String shardHash) {
+    public Shard(Long shardId, String shardHash, Long shardHeight) {
         this.shardId = shardId;
         this.shardHash = Convert.parseHexString(shardHash);
+        this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardState) {
+    public Shard(Long shardId, byte[] shardHash, Long shardState, Long shardHeight) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
+        this.shardHeight = shardHeight;
     }
 
     @Override
@@ -47,12 +56,13 @@ public class Shard {
         if (o == null || getClass() != o.getClass()) return false;
         Shard shard = (Shard) o;
         return Objects.equals(shardId, shard.shardId) &&
-                Arrays.equals(shardHash, shard.shardHash);
+                Arrays.equals(shardHash, shard.shardHash) &&
+                Objects.equals(shardHeight, shard.shardHeight);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(shardId);
+        int result = Objects.hash(shardId, shardHeight);
         result = 31 * result + Arrays.hashCode(shardHash);
         return result;
     }
@@ -81,6 +91,14 @@ public class Shard {
         this.shardState = shardState;
     }
 
+    public Long getShardHeight() {
+        return shardHeight;
+    }
+
+    public void setShardHeight(Long shardHeight) {
+        this.shardHeight = shardHeight;
+    }
+
     public static ShardBuilder builder() {
         return new ShardBuilder();
     }
@@ -89,6 +107,7 @@ public class Shard {
         private Long shardId;
         private byte[] shardHash;
         private Long shardState;
+        private Long shardHeight;
 
         private ShardBuilder() {
         }
@@ -108,8 +127,13 @@ public class Shard {
             return this;
         }
 
+        public ShardBuilder shardHeight(Long shardHeight) {
+            this.shardHeight = shardHeight;
+            return this;
+        }
+
         public Shard build() {
-            return new Shard(shardId, shardHash, shardState);
+            return new Shard(shardId, shardHash, shardState, shardHeight);
         }
     }
 }

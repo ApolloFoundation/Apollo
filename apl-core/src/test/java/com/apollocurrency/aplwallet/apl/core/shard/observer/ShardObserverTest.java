@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,12 +43,19 @@ public class ShardObserverTest {
     DatabaseManager databaseManager;
     @Mock
     HeightConfig heightConfig;
+    @Mock
+    ShardDao shardDao;
+    @Mock
+    ShardRecoveryDao recoveryDao;
     private ShardObserver shardObserver;
 
     @BeforeEach
     void setUp() {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig, databaseManager, shardMigrationExecutor);
+        shardObserver = new ShardObserver(
+                blockchainProcessor, blockchainConfig,
+                databaseManager, shardMigrationExecutor,
+                shardDao, recoveryDao);
     }
 
     @Test
@@ -87,6 +96,7 @@ public class ShardObserverTest {
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+//        doReturn(new byte[]{1,2}).when(shardMigrationExecutor).calculateHash(DEFAULT_MIN_ROLLBACK_HEIGHT);
 
         boolean created = shardObserver.tryCreateShard();
 
@@ -99,6 +109,7 @@ public class ShardObserverTest {
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+//        doReturn(new byte[]{1,2}).when(shardMigrationExecutor).calculateHash(DEFAULT_MIN_ROLLBACK_HEIGHT);
         doThrow(new RuntimeException()).when(shardMigrationExecutor).executeAllOperations();
 
         boolean created = shardObserver.tryCreateShard();

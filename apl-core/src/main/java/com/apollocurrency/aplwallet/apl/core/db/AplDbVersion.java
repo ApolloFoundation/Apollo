@@ -689,43 +689,46 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
                 // SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY not null, shard_state BIGINT)");
+                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY, " +
+                        "shard_height BIGINT not null, shard_state BIGINT)");
             case 252:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 253:
-                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS shard_height_index on shard (shard_height DESC, shard_id)");
             case 254:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
+                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 255:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
             case 256:
-                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, block_id BIGINT NOT NULL)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
             case 257:
+                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, block_id BIGINT NOT NULL)");
+            case 258:
                 apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS fk_transaction_shard_index_block_id " +
                         "FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
-            case 258:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
             case 259:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
+            case 260:
                 apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
                         "referenced_transaction_id BIGINT NOT NULL)");
-            case 260:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
             case 261:
+                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
+            case 262:
                 apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS " +
                         "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
                         "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
-            case 262:
+            case 263:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
                         "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
-            case 263:
-                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
             case 264:
-                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
             case 265:
-                apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
             case 266:
-                return 266;
+                apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
+            case 267:
+                return 267;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

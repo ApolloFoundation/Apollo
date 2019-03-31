@@ -57,9 +57,9 @@ class ShardDataSourceCreateHelper {
     public ShardDataSourceCreateHelper createUninitializedDataSource() {
         if (shardId == null) {
             try (Connection con = databaseManager.getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID) + 1, 1) as shard_id FROM shard")) {
+                 PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")) {
                 try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
+                    if (rs.next()) {
                         shardId = rs.getLong("shard_id");
                     }
                 }

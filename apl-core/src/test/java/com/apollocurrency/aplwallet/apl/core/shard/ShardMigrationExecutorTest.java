@@ -37,8 +37,11 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
@@ -99,7 +102,7 @@ class ShardMigrationExecutorTest {
             PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
             DerivedDbTablesRegistryImpl.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
-            ShardRecoveryDaoJdbcImpl.class,
+            ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
             PhasingPollServiceImpl.class,
             PhasingPollResultTable.class,
@@ -130,6 +133,10 @@ class ShardMigrationExecutorTest {
     private TransactionIndexDao transactionIndexDao;
     @Inject
     private BlockDao blockDao;
+    @Inject
+    private ShardDao shardDao;
+    @Inject
+    private ShardRecoveryDao recoveryDao;
 
     @BeforeAll
     static void setUpAll() {
@@ -151,15 +158,22 @@ class ShardMigrationExecutorTest {
 
     @Test
     void executeAllOperations() throws IOException {
-        TransactionTestData td = new TransactionTestData();
+        long snapshotBlockHeight = 8000L;
+        // prepare an save Recovery + new Shard info
+        ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
+        recoveryDao.saveShardRecovery(recovery);
+        Shard newShard = new Shard(snapshotBlockHeight);
+        shardDao.saveShard(newShard);
+
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardInitTableSchemaVersion());
         MigrateState state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
         assertEquals(SHARD_SCHEMA_CREATED, state);
+
+        TransactionTestData td = new TransactionTestData();
         Set<Long> dbIds = new HashSet<>();
         dbIds.add(td.DB_ID_6);
         dbIds.add(td.DB_ID_10);
-        long snapshotBlockHeight = 8000L;
         CopyDataCommand copyDataCommand = new CopyDataCommand(
                 managementReceiver, snapshotBlockHeight, dbIds);
         state = shardMigrationExecutor.executeOperation(copyDataCommand);
@@ -202,7 +216,8 @@ class ShardMigrationExecutorTest {
         count = blockDao.getBlockCount((int)snapshotBlockHeight, 105000);
         assertEquals(5, count);
 
-        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, new byte[]{3,4,5,6,1});
+        byte[] shardHash = "000000000".getBytes();
+        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, shardHash);
         state = shardMigrationExecutor.executeOperation(finishShardingCommand);
         assertEquals(COMPLETED, state);
     }

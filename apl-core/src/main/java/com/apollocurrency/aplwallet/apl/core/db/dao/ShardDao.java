@@ -31,20 +31,20 @@ public interface ShardDao {
     long countShard();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(SHARD_ID) + 1, 1) as shard_id FROM shard")
+    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")
     long getNextShardId();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(SHARD_ID) + 1, 1) FROM shard")
+    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) FROM shard")
     long getMaxShardId();
 
     @Transactional
-    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash) VALUES (:shardId, :shardHash)")
+    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_height) VALUES (:shardId, :shardHash, :shardHeight)")
     @RegisterRowMapper(ShardRowMapper.class)
     int saveShard(@BindBean Shard shard);
 
     @Transactional
-    @SqlUpdate("UPDATE shard SET shard_hash =:shardHash where shard_id =:shardId")
+    @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_height =:shardHeight where shard_id =:shardId")
     @RegisterRowMapper(ShardRowMapper.class)
     int updateShard(@BindBean Shard shard);
 
@@ -57,12 +57,14 @@ public interface ShardDao {
     int hardDeleteAllShards();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = :height)")
+//    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = :height)")
+    @SqlQuery("SELECT * FROM shard WHERE shard_height =:height")
     @RegisterRowMapper(ShardRowMapper.class)
-    Shard getShardAtHeight(@Bind("height") int height);
+    Shard getShardAtHeight(@Bind("height") long height);
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = (SELECT MAX(block_height) FROM block_index) )")
+//    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = (SELECT MAX(block_height) FROM block_index) )")
+    @SqlQuery("SELECT * FROM shard WHERE shard_height = (SELECT MAX(shard_height) FROM shard)")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getLastShard();
 

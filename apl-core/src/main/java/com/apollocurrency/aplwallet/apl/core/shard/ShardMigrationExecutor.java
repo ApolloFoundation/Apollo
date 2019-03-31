@@ -88,7 +88,6 @@ public class ShardMigrationExecutor {
         if (hash == null) {
             throw new IllegalStateException("Cannot calculate shard hash");
         }
-
         log.debug("SHARD HASH = {}", hash.length);
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, hash);
         this.addOperation(finishShardingCommand);

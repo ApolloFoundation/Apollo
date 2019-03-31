@@ -11,6 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.slf4j.Logger;
@@ -29,15 +33,21 @@ public class ShardObserver {
     private BlockchainConfig blockchainConfig;
     private DatabaseManager databaseManager;
     private ShardMigrationExecutor shardMigrationExecutor;
+    private ShardDao shardDao;
+    private ShardRecoveryDao recoveryDao;
 
     private volatile boolean isSharding = false;
 
     @Inject
-    public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig, DatabaseManager databaseManager, ShardMigrationExecutor shardMigrationExecutor) {
+    public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
+                         DatabaseManager databaseManager, ShardMigrationExecutor shardMigrationExecutor,
+                         ShardDao shardDao, ShardRecoveryDao recoveryDao) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.shardMigrationExecutor = Objects.requireNonNull(shardMigrationExecutor, "shard migration executor is NULL");
+        this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
+        this.recoveryDao = Objects.requireNonNull(recoveryDao, "recoveryDao is NULL");
     }
 
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
@@ -62,6 +72,13 @@ public class ShardObserver {
                     MigrateState state = MigrateState.INIT;
                     long start = System.currentTimeMillis();
                     log.info("Start sharding....");
+
+                    // quick create records for new Shard and Recovery process for later use
+                    ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
+                    Shard newShard = new Shard((long)minRollbackHeight);
+                    shardDao.saveShard(newShard); // store shard with HEIGHT ONLY
+                    recoveryDao.saveShardRecovery(recovery); // store Recovery with INIT state
+
                     try {
                         log.debug("Clean commands....");
                         shardMigrationExecutor.cleanCommands();

@@ -94,6 +94,13 @@ class ShardDaoTest {
     }
 
     @Test
+    void testSave() {
+        Shard shard = new Shard(100L);
+        int insertCount = dao.saveShard(shard);
+        assertEquals(1, insertCount);
+    }
+
+    @Test
     void testInsert() {
         int insertCount = dao.saveShard(NOT_SAVED_SHARD);
 
@@ -155,8 +162,8 @@ class ShardDaoTest {
 
     @Test
     void testGetMaxShardId() {
-        long maxId = dao.getMaxShardId();
-        assertEquals(SHARDS.get(SHARDS.size() - 1).getShardId() + 1, maxId);
+        Long maxId = dao.getMaxShardId();
+        assertEquals(SHARDS.get(SHARDS.size() - 1).getShardId(), maxId);
     }
 
     @Test

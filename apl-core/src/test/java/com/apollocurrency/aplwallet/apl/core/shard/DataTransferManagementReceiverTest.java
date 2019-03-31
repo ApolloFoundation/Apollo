@@ -40,6 +40,10 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
@@ -94,7 +98,7 @@ class DataTransferManagementReceiverTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class,
+            JdbiHandleFactory.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
@@ -117,6 +121,10 @@ class DataTransferManagementReceiverTest {
     private TransactionIndexDao transactionIndexDao;
     @Inject
     private BlockDao blockDao;
+    @Inject
+    private ShardDao shardDao;
+    @Inject
+    private ShardRecoveryDao recoveryDao;
 
     private Path createPath(String fileName) {
         try {
@@ -182,6 +190,16 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
+        long snapshotBlockHeight = 8000L;
+
+        // prepare an save Recovery + new Shard info
+        ShardRecovery recovery = new ShardRecovery(state);
+        recoveryDao.saveShardRecovery(recovery);
+        byte[] shardHash = "000000000".getBytes();
+        Shard newShard = new Shard(shardHash, snapshotBlockHeight);
+        shardDao.saveShard(newShard);
+
+        // start sharding process
         state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
@@ -193,7 +211,6 @@ class DataTransferManagementReceiverTest {
         dbIds.add(td.DB_ID_0);
         dbIds.add(td.DB_ID_3);
         dbIds.add(td.DB_ID_10);
-        long snapshotBlockHeight = 8000L;
         CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
 
         state = managementReceiver.copyDataToShard(paramInfo);
@@ -244,9 +261,10 @@ class DataTransferManagementReceiverTest {
         count = blockDao.getBlockCount((int)snapshotBlockHeight, 105000);
         assertEquals(5, count);
 
-        paramInfo.setShardHash("000000000".getBytes());
+        paramInfo.setShardHash(shardHash);
         state = managementReceiver.addShardInfo(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
+
 // compare fullhashes
         TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
         assertNotNull(index);
