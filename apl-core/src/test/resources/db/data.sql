@@ -127,7 +127,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (20         ,-4081443370478530685, X'fc23d4474d90abeae5dd6d599381a75a2a06e61f91ff2249067a10e6515d202f', -1536976186224925700  , 15456),
 (30         ,-4081443370478530685, X'5ea0de6146ac28b8b64d4f7f1ccbd1c7b2e43397221ef7ed3fa10c4ec0581d43', -5176698353372716962  , 15456),
 ;
-INSERT into version values (265);
+INSERT into version values (270);
 INSERT INTO FTL.INDEXES (schema, table, columns)
                          VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 
