@@ -63,9 +63,9 @@ public class ReferencedTransactionService {
     }
 
 
-    private byte[] getReferencedFullHash(long traansactionId) {
+    private byte[] getReferencedFullHash(long transactionId) {
         byte[] hash = null;
-        Optional<Long> referencedTransactionId = referencedTransactionDao.getReferencedTransactionIdFor(traansactionId);
+        Optional<Long> referencedTransactionId = referencedTransactionDao.getReferencedTransactionIdFor(transactionId);
         if (referencedTransactionId.isPresent()) {
             hash = blockchain.getFullHash(referencedTransactionId.get());
         }
