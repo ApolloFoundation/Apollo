@@ -57,14 +57,16 @@ rem	oShell.Run "install_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34
 	Wscript.Echo "Root files were copied. Copy subfolders..."
 	CopySubfolders fso.GetFolder(objFolder)
 	Wscript.Echo "Subfolders were copied"
-	Shell.CurrentDirectory = WScript.Arguments(0)
+	Shell.CurrentDirectory = WScript.Arguments(0) & "\bin"
 	if  ("true" = LCase(WScript.Arguments(2))) Then
         
 		u = UpdateShortcut(Shell, fso, TorDesktopScriptPath, TorShortcutName)
 		u = UpdateShortcut(Shell, fso, TransportDesktopScriptPath, TransportShortcutName)
 		u = UpdateShortcut(Shell, fso, DesktopScriptPath, ApplicationShortcutName)
 		WScript.Echo "Start user mode application"
-		Shell.Run chr(34) & WScript.Arguments(0) & DesktopScriptPath & chr(34)
+		app = chr(34) & WScript.Arguments(0) & DesktopScriptPath & chr(34)
+		WScript.Echo app
+		Shell.Run app
     else
         WScript.Echo "Start service mode application"
 		Shell.Run chr(34) & WScript.Arguments(0) & ServiceScriptPath & chr(34)
@@ -138,7 +140,7 @@ Function UpdateShortcut(Shell, Fs, ScriptName, ShorcutName)
 			Set shortcut = Shell.CreateShortcut(path)
 			shortcut.TargetPath = WScript.Arguments(0) & ScriptName
 			shortcut.IconLocation = WScript.Arguments(0) & "\favicon.ico"
-			shortcut.WorkingDirectory = WScript.Arguments(0)
+			shortcut.WorkingDirectory = WScript.Arguments(0) & "\bin"
 			shortcut.WindowStyle = 4
 			shortcut.Save
 			WScript.Echo "Updated for " & path & " name = " & ShorcutName & " to " & ScriptName
