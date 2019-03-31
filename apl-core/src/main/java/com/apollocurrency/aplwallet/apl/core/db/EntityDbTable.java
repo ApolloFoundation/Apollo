@@ -57,12 +57,20 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         this(table, dbKeyFactory, false, fullTextSearchColumns);
     }
 
-    EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super(table);
+    public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
+        this(table, dbKeyFactory, false, "", init);
+    }
+
+    public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
+        super(table, init);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
         this.fullTextSearchColumns = fullTextSearchColumns;
+    }
+
+    EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        this(table, dbKeyFactory, multiversion, fullTextSearchColumns, true);
     }
 
      protected EntityDbTable(String table, boolean multiversion, KeyFactory<T> dbKeyFactory) {

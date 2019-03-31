@@ -23,6 +23,8 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -51,8 +53,9 @@ public class ReferencedTransactionServiceTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, BlockIndexDao.class, ReferencedTransactionDao.class,
+            JdbiHandleFactory.class, BlockIndexDao.class, ReferencedTransactionDaoImpl.class,
             GlobalSync.class,
+            FullTextConfigImpl.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)

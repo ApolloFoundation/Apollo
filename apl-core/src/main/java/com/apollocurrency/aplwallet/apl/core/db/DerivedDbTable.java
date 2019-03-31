@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class DerivedDbTable {
@@ -48,13 +49,24 @@ public abstract class DerivedDbTable {
     }
     
     // We should find better place for table init
-    protected DerivedDbTable(String table) {
-        lookupCdi();
+    protected DerivedDbTable(String table, boolean init) { // for CDI beans setUp 'false'
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
+        databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (init) {
+            init();
+        }
+    }
+    protected DerivedDbTable(String table) {
+        this(table, true);
+    }
+
+
+    @PostConstruct
+    public void init() {
+        lookupCdi();
         derivedDbTablesRegistry.registerDerivedTable(this);
         fullTextConfig.registerTable(table);
-        databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     public void rollback(int height) {
