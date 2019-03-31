@@ -626,7 +626,6 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS asset_delete_height_idx ON asset_delete (height)");
             case 230:
                 apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
-                        + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
                         + "referenced_transaction_id BIGINT NOT NULL)");
             case 231:
                 apply("CREATE INDEX IF NOT EXISTS referenced_transaction_referenced_transaction_id_idx ON referenced_transaction (referenced_transaction_id)");
@@ -706,26 +705,21 @@ public class AplDbVersion extends DbVersion {
             case 258:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
             case 259:
-                apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
-                        "referenced_transaction_id BIGINT NOT NULL)");
-            case 260:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
-            case 261:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS " +
-                        "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
-                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
-            case 262:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
                         "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
-            case 263:
+            case 260:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
-            case 264:
+            case 261:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
-            case 265:
+            case 262:
                 apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
-            case 266:
-                return 266;
+            case 263:
+                apply("ALTER TABLE referenced_transaction ADD COLUMN height INT NOT NULL");
+            case 264:
+                apply("ALTER TABLE referenced_transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_4B1");
+            case 265:
+                return 265;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

@@ -417,14 +417,6 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setShort(++i, index++);
                     pstmt.executeUpdate();
                 }
-                if (transaction.referencedTransactionFullHash() != null) {
-                    try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO referenced_transaction "
-                            + "(transaction_id, referenced_transaction_id) VALUES (?, ?)")) {
-                        pstmt.setLong(1, transaction.getId());
-                        pstmt.setLong(2, Convert.fullHashToId(transaction.referencedTransactionFullHash()));
-                        pstmt.executeUpdate();
-                    }
-                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

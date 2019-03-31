@@ -27,7 +27,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     };
 
     public PhasingPollResultTable() {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, KEY_FACTORY, false);
     }
 
 

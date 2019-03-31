@@ -31,7 +31,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
 
 
     public PhasingVoteTable() {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, KEY_FACTORY, false);
     }
 
     @Override

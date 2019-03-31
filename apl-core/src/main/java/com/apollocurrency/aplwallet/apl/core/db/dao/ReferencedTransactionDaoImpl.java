@@ -9,6 +9,7 @@ import org.jdbi.v3.core.Jdbi;
 
 import javax.inject.Singleton;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.Optional;
 
 @Singleton
 public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransaction> implements ReferencedTransactionDao {
-    private static final KeyFactory<ReferencedTransaction> KEY_FACTORY = new LongKeyFactory<ReferencedTransaction>() {
+    private static final KeyFactory<ReferencedTransaction> KEY_FACTORY = new LongKeyFactory<ReferencedTransaction>("transaction_id") {
         @Override
         public DbKey newKey(ReferencedTransaction referencedTransaction) {
             return new LongKey(referencedTransaction.getTransactionId());
@@ -25,7 +26,7 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     private static final String TABLE = "referenced_transaction";
 
     public ReferencedTransactionDaoImpl() {
-        super(TABLE, KEY_FACTORY);
+        super(TABLE, KEY_FACTORY, false);
     }
 
     private static final ReferencedTransactionRowMapper REFERENCED_ROW_MAPPER = new ReferencedTransactionRowMapper();
@@ -38,7 +39,12 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
 
     @Override
     protected void save(Connection con, ReferencedTransaction referencedTransaction) throws SQLException {
-        save(referencedTransaction);
+        try (PreparedStatement pstm = con.prepareStatement("INSERT INTO referenced_transaction (transaction_id, referenced_transaction_id, height) VALUES (?, ?, ?)")) {
+            pstm.setLong(1, referencedTransaction.getTransactionId());
+            pstm.setLong(2, referencedTransaction.getReferencedTransactionId());
+            pstm.setInt(3, referencedTransaction.getHeight());
+            pstm.executeUpdate();
+        }
     }
 
     @Override
@@ -66,11 +72,11 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     public int save(ReferencedTransaction referencedTransaction) {
         Jdbi jdbi = getDatabaseManager().getJdbi();
         return jdbi.withHandle(handle ->
-                handle.inTransaction()
-                handle.createUpdate("INSERT INTO referenced_transaction (transaction_id, referenced_transaction_id, height) VALUES (:transactionId, :referencedTransactionId, :height)")
-                        .bindBean(referencedTransaction)
-                        .execute()
-        );
+                handle.inTransaction(h ->
+                        h.createUpdate("INSERT INTO referenced_transaction (transaction_id, referenced_transaction_id, height) VALUES (:transactionId, :referencedTransactionId, :height)")
+                                .bindBean(referencedTransaction)
+                                .execute()
+                ));
     }
 
     @Override

@@ -19,26 +19,11 @@ import java.util.Optional;
 
 public interface ReferencedTransactionDao {
 
-    @Transactional(readOnly = true)
-    @SqlQuery("SELECT referenced_transaction_id FROM referenced_transaction where transaction_id = :transactionId UNION " +
-            "SELECT referenced_transaction_id FROM referenced_shard_transaction where transaction_id = :transactionId")
-    Optional<Long> getReferencedTransactionIdFor(@Bind("transactionId") long transactionId);
+    Optional<Long> getReferencedTransactionIdFor(long transactionId);
 
-    @Transactional(readOnly = true)
-    @SqlQuery("SELECT referenced_transaction_id FROM referenced_transaction UNION " +
-            "SELECT referenced_transaction_id FROM referenced_shard_transaction")
     List<Long> getAllReferencedTransactionIds();
 
-    @Transactional
-    @SqlUpdate("INSERT INTO referenced_transaction (transaction_id, referenced_transaction_id) VALUES (:transactionId, :referencedTransactionId)")
-    int save(@BindBean ReferencedTransaction referencedTransaction);
+    int save(ReferencedTransaction referencedTransaction);
 
-    @Transactional(readOnly = true)
-    @RegisterRowMapper(TransactionRowMapper.class)
-    @SqlQuery("SELECT transaction.* FROM transaction, referenced_transaction "
-            + "WHERE referenced_transaction.referenced_transaction_id = :transactionId "
-            + "AND referenced_transaction.transaction_id = transaction.id "
-            + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
-            + "OFFSET :from LIMIT :limit")
-    List<Transaction> getReferencingTransactions(@Bind("transactionId") long transactionId, @Bind("from") int from, @Bind("limit") Integer limit);
+    List<Transaction> getReferencingTransactions(long transactionId, int from, Integer limit);
 }
