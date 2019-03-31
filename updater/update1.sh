@@ -58,6 +58,9 @@ tar -czf ${BKP_NAME} ${1}
     
     
     if [[ "$unamestr" == 'Darwin' ]]; then
+        
+        rm -rf "$1/../ApolloWallet.app"
+        cp -rf "$2/ApolloWallet.app" $1/../
         rm -rf "$1/../ApolloWallet+Secure Transport.app"
         cp -rf "$2/ApolloWallet+Secure Transport.app" $1/../
         rm -rf "$1/../ApolloWallet+Tor.app"
@@ -102,10 +105,12 @@ tar -czf ${BKP_NAME} ${1}
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
-        nohup ./bin/apl-run-desktop.sh 2>&1 >/dev/null
+        cd bin
+        nohup ./apl-run-desktop.sh 2>&1 >/dev/null
     else
         notify "Starting command line application..."
-        ./bin/apl-start.sh -s
+        cd bin
+        ./apl-start.sh -s
     fi
 
 else
