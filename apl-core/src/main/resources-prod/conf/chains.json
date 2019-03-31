@@ -147,17 +147,21 @@
         }
       },
       {
-        "height": 1250000,
+        "height": 2249999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
-        "maxBalance": 10000000000,
+        "maxBalance": 30000000000,
         "consensusSettings": {
           "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
         }
       }
     ]

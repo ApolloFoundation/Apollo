@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
@@ -34,19 +35,17 @@ public class ShardObserverIntegrationTest {
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     ShardMigrationExecutor shardMigrationExecutor = mock(ShardMigrationExecutor.class);
     BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
-    DatabaseManager databaseManager = mock(DatabaseManager.class);
+    ShardRecoveryDao recoveryDao = mock(ShardRecoveryDao.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     ShardDao shardDao = mock(ShardDao.class);
-    ShardRecoveryDao recoveryDao = mock(ShardRecoveryDao.class);
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class, ShardDao.class, ShardRecoveryDao.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(shardMigrationExecutor, ShardMigrationExecutor.class))
             .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class))
-            .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
-            .addBeans(MockBean.of(shardDao, ShardDao.class))
             .addBeans(MockBean.of(recoveryDao, ShardRecoveryDao.class))
+            .addBeans(MockBean.of(shardDao, ShardDao.class))
             .build();
     @Inject
     Event<Block> blockEvent;
@@ -54,10 +53,9 @@ public class ShardObserverIntegrationTest {
     ShardObserver shardObserver;
 
     @Test
-    void testDoShardByEvent() throws InterruptedException {
+    void testDoShardByEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        CompletionStage<Block> blockCompletionStage = blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(mock(Block.class));
-        blockCompletionStage.toCompletableFuture().join();
+        blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(mock(Block.class));
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
 

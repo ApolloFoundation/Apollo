@@ -52,7 +52,7 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
 
     @Inject
     public PublicKeyTable(Blockchain blockchain) {
-        super("public_key", publicKeyDbKeyFactory, true, null);
+        super("public_key", publicKeyDbKeyFactory, true, null, false);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 

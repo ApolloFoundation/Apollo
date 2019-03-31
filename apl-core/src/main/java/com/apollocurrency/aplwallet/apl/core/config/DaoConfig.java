@@ -41,11 +41,6 @@ public class DaoConfig {
     }
 
     @Produces
-    private ReferencedTransactionDao referencedTransactionDao() {
-        return createDaoInterfaceProxy(ReferencedTransactionDao.class);
-    }
-
-    @Produces
     private ShardRecoveryDao shardRecoveryDao() {
         return createDaoInterfaceProxy(ShardRecoveryDao.class);
     }

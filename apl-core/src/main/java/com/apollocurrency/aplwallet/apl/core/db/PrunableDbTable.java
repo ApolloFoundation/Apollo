@@ -47,6 +47,10 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
+    public PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
+    }
+
     PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }

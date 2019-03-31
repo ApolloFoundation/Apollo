@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -62,11 +63,11 @@ public class ReferencedTransactionService {
     }
 
 
-    private byte[] getReferencedFullHash(long traansactionId) {
+    private byte[] getReferencedFullHash(long transactionId) {
         byte[] hash = null;
-        Long referencedTransactionId = referencedTransactionDao.getReferencedTransactionIdFor(traansactionId);
-        if (referencedTransactionId != null) {
-            hash = blockchain.getFullHash(referencedTransactionId);
+        Optional<Long> referencedTransactionId = referencedTransactionDao.getReferencedTransactionIdFor(transactionId);
+        if (referencedTransactionId.isPresent()) {
+            hash = blockchain.getFullHash(referencedTransactionId.get());
         }
         return hash;
     }

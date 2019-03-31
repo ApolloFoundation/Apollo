@@ -104,7 +104,7 @@ class ShardMigrationExecutorTest {
             DerivedDbTablesRegistryImpl.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
-            PhasingPollServiceImpl.class,
+            PhasingPollServiceImpl.class, FullTextConfigImpl.class,
             PhasingPollResultTable.class,
             PhasingPollTable.class,
             PhasingPollVoterTable.class,
@@ -147,13 +147,13 @@ class ShardMigrationExecutorTest {
 
     @BeforeEach
     void setUp() {
-
         blockchain.setLastBlock(new BlockTestData().BLOCK_11);
     }
 
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
+        extension.getDatabaseManger().shutdown();
     }
 
     @Test

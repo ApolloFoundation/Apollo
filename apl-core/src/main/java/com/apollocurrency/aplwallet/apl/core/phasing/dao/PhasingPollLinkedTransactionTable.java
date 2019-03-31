@@ -36,7 +36,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
 
     @Inject
     public PhasingPollLinkedTransactionTable(Blockchain blockchain) {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, false, KEY_FACTORY);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 

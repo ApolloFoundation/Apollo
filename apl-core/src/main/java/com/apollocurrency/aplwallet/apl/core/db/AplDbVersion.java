@@ -626,7 +626,6 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS asset_delete_height_idx ON asset_delete (height)");
             case 230:
                 apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
-                        + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
                         + "referenced_transaction_id BIGINT NOT NULL)");
             case 231:
                 apply("CREATE INDEX IF NOT EXISTS referenced_transaction_referenced_transaction_id_idx ON referenced_transaction (referenced_transaction_id)");
@@ -726,9 +725,15 @@ public class AplDbVersion extends DbVersion {
             case 265:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
             case 266:
-                apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
+                apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
             case 267:
-                return 267;
+                apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
+            case 268:
+                apply("ALTER TABLE IF EXISTS referenced_transaction ADD COLUMN IF NOT EXISTS height INT NOT NULL");
+            case 269:
+                apply("ALTER TABLE referenced_transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_4B1");
+            case 270:
+                return 270;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
