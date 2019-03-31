@@ -161,7 +161,6 @@ public class Helper2FA {
         apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
         apolloWallet.addPaxKey(AccountGeneratorUtil.generateEth());
         //throw Exception if OpenData null
-        apolloWallet.setOpenData(new byte[1]);
 
         KeyStoreService.Status status = KEYSTORE.saveSecretKeyStore(passphrase, aplAccount.getId(), apolloWallet);
         validateKeyStoreStatus(aplAccount.getId(), status, "generated");
