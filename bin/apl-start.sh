@@ -7,8 +7,12 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
  . ${DIR}/apl-common.sh
 
-if [ -e ~/${APPLICATION}/apl.pid ]; then
-    PID=`cat ~/${APPLICATION}/apl.pid`
+if [[ ! -d "${APPLICATION}" ]] ; then
+  mkdir -p  ${APPLICATION}
+fi
+
+if [ -e ${APPLICATION}/apl.pid ]; then
+    PID=`cat ${APPLICATION}/apl.pid`
     ps -p $PID > /dev/null
     STATUS=$?
     if [ $STATUS -eq 0 ]; then
@@ -18,5 +22,5 @@ if [ -e ~/${APPLICATION}/apl.pid ]; then
 fi
 
 nohup ${JAVA_CMD} -jar ${MAIN_JAR} $@ > /dev/null 2>&1 &
-echo $! > ~/${APPLICATION}/apl.pid
-cd - > /dev/null
+echo $! > ${APPLICATION}/apl.pid
+#cd - > /dev/null
