@@ -50,17 +50,19 @@ tar -czf ${BKP_NAME} ${1}
     rm -f $1/Apollo.jar
     
     notify "Copying update files...."
-    cp -vRa $2/* $1
+    #cp -vRa $2/* $1
+    for i in $(ls | grep -v .app); do cp -vR $i $1 ; done
+    for i in $(ls | grep -v .app); do echo "-vR $i $1" ; done
+    
+
     
     notify "Downloading deps...."
     
-    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz
-    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
-    cp apollo-wallet-deps-${VERSION}/* $1/lib
     
     if [[ "$unamestr" == 'Darwin' ]]; then
-	mv "$1/ApolloWallet+Secure Transport.app" $1/../
-	mv "$1/ApolloWallet+Tor.app" $1/../
+	mv "$2/ApolloWallet+Secure Transport.app" $1/../
+	mv "$2/ApolloWallet+Tor.app" $1/../
+
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/*.sh"
@@ -73,6 +75,11 @@ tar -czf ${BKP_NAME} ${1}
 	chmod 755 $1/secureTransport/securenodexchg
 	chmod 755 $1/secureTransport/runClient.sh
     fi
+
+
+    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz
+    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
+    cp apollo-wallet-deps-${VERSION}/* $1/lib
 
 
 # Install JRE
