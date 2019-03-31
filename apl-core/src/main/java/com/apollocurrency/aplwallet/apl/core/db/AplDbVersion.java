@@ -707,15 +707,6 @@ public class AplDbVersion extends DbVersion {
                         "FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
             case 259:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
-            case 260:
-                apply("CREATE TABLE IF NOT EXISTS referenced_shard_transaction (db_id BIGINT auto_increment NOT NULL, transaction_id BIGINT NOT NULL, " +
-                        "referenced_transaction_id BIGINT NOT NULL)");
-            case 261:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS pk_referenced_shard_transaction_db_id PRIMARY KEY(db_id)");
-            case 262:
-                apply("ALTER TABLE referenced_shard_transaction ADD CONSTRAINT IF NOT EXISTS " +
-                        "fk_referenced_shard_transaction_transaction_id_transaction_shard_index_transaction_id " +
-                        "FOREIGN KEY (transaction_id) REFERENCES transaction_shard_index (transaction_id) ON DELETE CASCADE");
             case 263:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +

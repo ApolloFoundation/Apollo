@@ -12,7 +12,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -30,11 +29,6 @@ class ShardDataSourceCreateHelperTest {
             .build();
 
     private ShardDataSourceCreateHelper createHelper;
-
-    @AfterAll
-    static void tearDown() {
-        extension.getDatabaseManger().shutdown();
-    }
 
     @Test
     void getShardId() {

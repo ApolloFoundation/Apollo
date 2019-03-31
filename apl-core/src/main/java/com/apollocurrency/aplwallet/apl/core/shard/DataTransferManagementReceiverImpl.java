@@ -420,7 +420,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                     "UPDATE SHARD SET SHARD_HASH = ?, SHARD_STATE = ? WHERE SHARD_ID = ?")) {
             preparedInsertStatement.setBytes(1, paramInfo.getShardHash());
 //            preparedInsertStatement.setLong(1, paramInfo.getSnapshotBlockHeight());
-            preparedInsertStatement.setInt(2, 100); // 100% full shard is present on current node
+            preparedInsertStatement.setLong(2, SHARD_PERCENTAGE_FULL); // 100% full shard is present on current node
             preparedInsertStatement.setLong(3, createdShardId.get());
             int result = preparedInsertStatement.executeUpdate();
             log.debug("Shard record is created = '{}'", result);

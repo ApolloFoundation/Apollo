@@ -61,6 +61,8 @@ class ShardDataSourceCreateHelper {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
                         shardId = rs.getLong("shard_id");
+                    } else {
+                        throw new IllegalStateException("Shard Id was not retrieved");
                     }
                 }
             } catch (SQLException e) {

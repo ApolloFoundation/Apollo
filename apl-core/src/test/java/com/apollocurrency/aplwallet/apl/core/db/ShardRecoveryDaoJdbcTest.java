@@ -53,11 +53,6 @@ class ShardRecoveryDaoJdbcTest {
         connection = extension.getDatabaseManger().getDataSource().getConnection();
     }
 
-    @AfterEach
-    void tearDown() {
-        extension.getDatabaseManger().shutdown();
-    }
-
     @Test
     void getShardRecoveryByUnknownId() {
         assertNotNull(daoJdbc);

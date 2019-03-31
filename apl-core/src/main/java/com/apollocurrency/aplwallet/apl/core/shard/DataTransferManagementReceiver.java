@@ -17,13 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 public interface DataTransferManagementReceiver {
 
     /**
-     * Common state overall shard migration process
+     * Downloading shard process in percent
      */
-    String PREVIOUS_MIGRATION_KEY = "SHARD_MIGRATION_STATUS";
-    /**
-     * Last processed table/object within shard migration process
-     */
-    String LAST_MIGRATION_OBJECT_NAME = "LAST_MIGRATION_OBJECT_NAME";
+    Long SHARD_PERCENTAGE_FULL = 100L;
 
     DatabaseManager getDatabaseManager();
 
