@@ -707,24 +707,24 @@ public class AplDbVersion extends DbVersion {
                         "FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
             case 259:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
-            case 263:
+            case 260:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
                         "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
-            case 264:
+            case 261:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
-            case 265:
+            case 262:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
-            case 266:
+            case 263:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS shard_recovery_id_state_object_idx unique (shard_recovery_id, state)");
-            case 267:
+            case 264:
                 apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
-            case 268:
+            case 265:
                 apply("ALTER TABLE IF EXISTS referenced_transaction ADD COLUMN IF NOT EXISTS height INT NOT NULL");
-            case 269:
+            case 266:
                 apply("ALTER TABLE referenced_transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_4B1");
-            case 270:
-                return 270;
+            case 267:
+                return 267;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
