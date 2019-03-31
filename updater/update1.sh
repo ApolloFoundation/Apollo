@@ -50,9 +50,7 @@ tar -czf ${BKP_NAME} ${1}
     rm -f $1/Apollo.jar
     
     notify "Copying update files...."
-    #cp -vRa $2/* $1
-    for i in $(ls | grep -v .app); do cp -vR $i $1 ; done
-    for i in $(ls | grep -v .app); do echo "-vR $i $1" ; done
+    cp -vRa $2/* $1
     
 
     
@@ -60,18 +58,23 @@ tar -czf ${BKP_NAME} ${1}
     
     
     if [[ "$unamestr" == 'Darwin' ]]; then
-        rm -rf "$1./../ApolloWallet+Secure Transport.app"
-        mv "$2/ApolloWallet+Secure Transport.app" $1/../
-        rm -rf "$1./../ApolloWallet+Tor.app"
-        mv "$2/ApolloWallet+Tor.app" $1/../
-
+        rm -rf "$1/../ApolloWallet+Secure Transport.app"
+        cp -rf "$2/ApolloWallet+Secure Transport.app" $1/../
+        rm -rf "$1/../ApolloWallet+Tor.app"
+        cp -rf "$2/ApolloWallet+Tor.app" $1/../
+        
+        
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
-	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/*.sh"
+	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/runClient.sh"
 	chmod 755 "$1/../ApolloWallet+Tor.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Tor.app/tor/bin/tor"
-    fi
+	rm -rf "$1/ApolloWallet+Secure Transport.app"
+	rm -rf "$1/ApolloWallet+Tor.app"
+	rm -rf "$1/ApolloWallet.app"
 
+    fi
+exit 0
     if [[ "$unamestr" == 'Linux' ]]; then
 	chmod 755 $1/tor/tor
 	chmod 755 $1/secureTransport/securenodexchg
