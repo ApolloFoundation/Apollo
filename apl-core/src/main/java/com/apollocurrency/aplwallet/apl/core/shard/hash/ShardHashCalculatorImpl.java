@@ -87,7 +87,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
         long startTime = System.currentTimeMillis();
         List<byte[]> blockSignatures = retrieveBlockSignatures(shardStartHeight, shardEndHeight);
         int blocks = blockSignatures.size();
-        log.info("Retrieved {} block signatures in {} ms", blocks, System.currentTimeMillis() - startTime);
+        log.trace("Retrieved {} block signatures in {} ms", blocks, System.currentTimeMillis() - startTime);
         if (blocks == 0) {
             return null;
         }
@@ -95,9 +95,9 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
         byte[] prevHash = getPrevShardHash(shardStartHeight - 1);
         blockSignatures.add(prevHash);
         byte[] hash = calculateMerkleRoot(blockSignatures);
-        log.info("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);
+        log.debug("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);
         long time = System.currentTimeMillis() - startTime;
-        log.info("Hash calculated in {}s, speed {} bpms", time / 1000, (shardEndHeight - shardStartHeight) / Math.max(time, 1));
+        log.debug("Hash calculated in {} s for [{}] blocks, speed {} bpms", time / 1000, blocks, (shardEndHeight - shardStartHeight) / Math.max(time, 1));
         return hash;
     }
 
