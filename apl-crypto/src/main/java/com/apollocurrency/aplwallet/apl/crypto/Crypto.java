@@ -50,19 +50,16 @@ public final class Crypto {
 
     private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
-    private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
-        @Override
-        protected SecureRandom initialValue() {
-            try {
-                SecureRandom secureRandom = useStrongSecureRandom ? SecureRandom.getInstanceStrong() : new SecureRandom();
-                secureRandom.nextBoolean();
-                return secureRandom;
-            } catch (NoSuchAlgorithmException e) {
-                LOG.error("No secure random provider available");
-                throw new RuntimeException(e.getMessage(), e);
-            }
+    private static final ThreadLocal<SecureRandom> secureRandom = ThreadLocal.withInitial(() -> {
+        try {
+            SecureRandom secureRandom = useStrongSecureRandom ? SecureRandom.getInstanceStrong() : new SecureRandom();
+            secureRandom.nextBoolean();
+            return secureRandom;
+        } catch (NoSuchAlgorithmException e) {
+            LOG.error("No secure random provider available");
+            throw new RuntimeException(e.getMessage(), e);
         }
-    };
+    });
 
     private Crypto() {} //never
 
@@ -403,7 +400,7 @@ public final class Crypto {
             
             return cryptogramm;
         }
-        
+
         
         
     }

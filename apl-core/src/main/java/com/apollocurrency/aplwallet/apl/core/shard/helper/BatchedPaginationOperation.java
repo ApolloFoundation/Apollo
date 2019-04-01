@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import java.sql.Connection;
 
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 
 /**
  * Helper Interface used for paginated selecting/deleteing records from main db source and streaming/inserting data into target/shard db.

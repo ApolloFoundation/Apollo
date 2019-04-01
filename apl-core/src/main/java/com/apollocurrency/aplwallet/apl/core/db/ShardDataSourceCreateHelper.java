@@ -20,13 +20,17 @@ import org.slf4j.Logger;
  *
  * @author yuriy.larin
  */
-class ShardDataSourceCreateHelper {
+public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
 
     private DatabaseManager databaseManager;
     private Long shardId;
     private String shardName;
     private TransactionalDataSource shardDb;
+
+    public ShardDataSourceCreateHelper(DatabaseManager databaseManager) {
+        this.databaseManager = databaseManager;
+    }
 
     public ShardDataSourceCreateHelper(DatabaseManager databaseManager, Long shardId) {
         this.databaseManager = databaseManager;
@@ -55,6 +59,22 @@ class ShardDataSourceCreateHelper {
      * @return helper class
      */
     public ShardDataSourceCreateHelper createUninitializedDataSource() {
+        checkGenerateShardName();
+        log.debug("Create new SHARD '{}'", shardName);
+        DbProperties shardDbProperties = null;
+        try {
+            shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
+                    .dbFileName(shardName) // change file name
+                    .dbUrl(null)  // nullify dbUrl intentionally!;
+                    .dbIdentity(shardId); // put shard related info
+        } catch (CloneNotSupportedException e) {
+            log.error("DbProperties cloning error", e);
+        }
+        shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
+        return this;
+    }
+
+    public String checkGenerateShardName() {
         if (shardId == null) {
             try (Connection con = databaseManager.getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")) {
@@ -71,17 +91,6 @@ class ShardDataSourceCreateHelper {
             log.debug("Selected SHARD_ID = {} from DB", shardId);
         }
         shardName = ShardNameHelper.getShardNameByShardId(shardId);
-        log.debug("Create new SHARD '{}'", shardName);
-        DbProperties shardDbProperties = null;
-        try {
-            shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
-                    .dbFileName(shardName) // change file name
-                    .dbUrl(null)  // nullify dbUrl intentionally!;
-                    .dbIdentity(shardId); // put shard related info
-        } catch (CloneNotSupportedException e) {
-            log.error("DbProperties cloning error", e);
-        }
-        shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
-        return this;
+        return shardName;
     }
 }

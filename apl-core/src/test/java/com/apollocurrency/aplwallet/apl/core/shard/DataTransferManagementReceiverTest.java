@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_BACKUPED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
@@ -17,9 +18,12 @@ import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOp
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -42,11 +46,11 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
@@ -56,6 +60,8 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.env.UserMode;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -68,6 +74,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -185,91 +192,103 @@ class DataTransferManagementReceiverTest {
 
     @Test
     void createShardDbDoAllOperations() throws IOException {
-        long start = System.currentTimeMillis();
-        MigrateState state = managementReceiver.getCurrentState();
-        assertNotNull(state);
-        assertEquals(MigrateState.INIT, state);
+        DirProvider dirProvider = mock(DirProvider.class);
+        doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
+        AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
+        try { //AplCoreRuntime will be loaded we should setUp to null values for another tests
+            long start = System.currentTimeMillis();
+            MigrateState state = managementReceiver.getCurrentState();
+            assertNotNull(state);
+            assertEquals(MigrateState.INIT, state);
 
-        int snapshotBlockHeight = 8000;
+            int snapshotBlockHeight = 8000;
 
-        // prepare an save Recovery + new Shard info
-        ShardRecovery recovery = new ShardRecovery(state);
-        recoveryDao.saveShardRecovery(recovery);
-        byte[] shardHash = "000000000".getBytes();
-        Shard newShard = new Shard(shardHash, snapshotBlockHeight);
-        shardDao.saveShard(newShard);
+            // prepare an save Recovery + new Shard info
+            ShardRecovery recovery = new ShardRecovery(state);
+            recoveryDao.saveShardRecovery(recovery);
+            byte[] shardHash = "000000000".getBytes();
+            Shard newShard = new Shard(shardHash, snapshotBlockHeight);
+            shardDao.saveShard(newShard);
 
-        // start sharding process
-        state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
-        assertEquals(SHARD_SCHEMA_CREATED, state);
+            state = managementReceiver.createBackup();
+            assertEquals(MAIN_DB_BACKUPED, state);
+            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-0000004.zip")));
 
-        List<String> tableNameList = new ArrayList<>();
-        tableNameList.add(BLOCK_TABLE_NAME);
-        tableNameList.add(TRANSACTION_TABLE_NAME);
-        TransactionTestData td = new TransactionTestData();
-        Set<Long> dbIds = new HashSet<>();
-        dbIds.add(td.DB_ID_0);
-        dbIds.add(td.DB_ID_3);
-        dbIds.add(td.DB_ID_10);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
+            // start sharding process
+            state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
+            assertEquals(SHARD_SCHEMA_CREATED, state);
 
-        state = managementReceiver.copyDataToShard(paramInfo);
-        assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
+            List<String> tableNameList = new ArrayList<>();
+            tableNameList.add(BLOCK_TABLE_NAME);
+            tableNameList.add(TRANSACTION_TABLE_NAME);
+            TransactionTestData td = new TransactionTestData();
+            Set<Long> dbIds = new HashSet<>();
+            dbIds.add(td.DB_ID_0);
+            dbIds.add(td.DB_ID_3);
+            dbIds.add(td.DB_ID_10);
+            CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
+
+            state = managementReceiver.copyDataToShard(paramInfo);
+            assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-        long count = blockDao.getBlockCount(shardDataSource, 0, (int)snapshotBlockHeight);
-        assertEquals(8, count);
+            TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            long count = blockDao.getBlockCount(shardDataSource, 0, (int) snapshotBlockHeight);
+            assertEquals(8, count);
 
-        state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
-        assertEquals(SHARD_SCHEMA_FULL, state);
+            state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+            assertEquals(SHARD_SCHEMA_FULL, state);
 
-        tableNameList.clear();
-        tableNameList.add(PUBLIC_KEY_TABLE_NAME);
+            tableNameList.clear();
+            tableNameList.add(PUBLIC_KEY_TABLE_NAME);
 //        tableNameList.add(TAGGED_DATA_TABLE_NAME); // ! skip in test
-        tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
-        tableNameList.add(DATA_TAG_TABLE_NAME);
-        tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
+            tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
+            tableNameList.add(DATA_TAG_TABLE_NAME);
+            tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
 
-        paramInfo.setTableNameList(tableNameList);
-        state = managementReceiver.relinkDataToSnapshotBlock(paramInfo);
-        assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
+            paramInfo.setTableNameList(tableNameList);
+            state = managementReceiver.relinkDataToSnapshotBlock(paramInfo);
+            assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-        tableNameList.clear();
-        tableNameList.add(BLOCK_INDEX_TABLE_NAME);
-        tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
+            tableNameList.clear();
+            tableNameList.add(BLOCK_INDEX_TABLE_NAME);
+            tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
 
-        paramInfo.setTableNameList(tableNameList);
-        state = managementReceiver.updateSecondaryIndex(paramInfo);
-        assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
+            paramInfo.setTableNameList(tableNameList);
+            state = managementReceiver.updateSecondaryIndex(paramInfo);
+            assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-        long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
-        assertEquals(8, blockIndexCount);
-        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-        assertEquals(5, trIndexCount);
+            long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
+            assertEquals(8, blockIndexCount);
+            long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
+            assertEquals(5, trIndexCount);
 
-        tableNameList.clear();
-        tableNameList.add(BLOCK_TABLE_NAME);
+            tableNameList.clear();
+            tableNameList.add(BLOCK_TABLE_NAME);
 
-        paramInfo.setTableNameList(tableNameList);
-        state = managementReceiver.deleteCopiedData(paramInfo);
-        assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
+            paramInfo.setTableNameList(tableNameList);
+            state = managementReceiver.deleteCopiedData(paramInfo);
+            assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-        count = blockDao.getBlockCount((int)snapshotBlockHeight, 105000);
-        assertEquals(5, count);
+            count = blockDao.getBlockCount((int) snapshotBlockHeight, 105000);
+            assertEquals(5, count);
 
-        paramInfo.setShardHash(shardHash);
-        state = managementReceiver.addShardInfo(paramInfo);
-        assertEquals(MigrateState.COMPLETED, state);
+            paramInfo.setShardHash(shardHash);
+            state = managementReceiver.addShardInfo(paramInfo);
+            assertEquals(MigrateState.COMPLETED, state);
 
 // compare fullhashes
-        TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
-        assertNotNull(index);
-        byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());
-        assertArrayEquals(td.TRANSACTION_1.getFullHash(), fullHash);
-        log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start)/1000 );
+            TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
+            assertNotNull(index);
+            byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());
+            assertArrayEquals(td.TRANSACTION_1.getFullHash(), fullHash);
+            log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start) / 1000);
+        }
+        finally {
+            AplCoreRuntime.getInstance().setup(null, null);
+        }
     }
 }

@@ -25,6 +25,8 @@ public interface DataTransferManagementReceiver {
 
     MigrateState getCurrentState();
 
+    MigrateState createBackup();
+
     MigrateState addOrCreateShard(DbVersion dbVersion);
 
     MigrateState copyDataToShard(CommandParamInfo paramInfo);

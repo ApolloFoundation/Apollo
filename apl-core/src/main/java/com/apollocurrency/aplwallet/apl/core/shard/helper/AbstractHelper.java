@@ -116,7 +116,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         // select DB_ID for target HEIGHT
         Long highDbIdValue = null;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectValueSql)) {
-            selectStatement.setInt(1, snapshotBlockHeight.intValue());
+            selectStatement.setInt(1, snapshotBlockHeight);
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
                 highDbIdValue = rs.getLong("DB_ID");
