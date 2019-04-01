@@ -30,6 +30,7 @@ then
 
 # For backwards compatibility
     if [ ! -f VERSION ]; then
+	echo "Runnung from updater directory...." >>/tmp/updater_ne_tuda
 	cd ..
     fi
 
