@@ -72,7 +72,6 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>./</classpathPrefix>
-                            <classpathPrefix>lib/</classpathPrefix>
                             <mainClass>com.apollocurrency.aplwallet.apl.tools.ApolloTools</mainClass>
                         </manifest>
                     </archive>
