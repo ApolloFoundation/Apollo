@@ -1,15 +1,14 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.api.dto.Account;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -36,6 +35,8 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class Apollo {
             "apl.enablePeerUPnP");
 
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
-    public static String logDir = ".";
+    public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
     private static Logger log;
 
@@ -182,7 +183,7 @@ public class Apollo {
         dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars));
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
-        logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
+        logDirPath = dirProvider.getLogsDir().toAbsolutePath();
 
         log = LoggerFactory.getLogger(Apollo.class);
         
