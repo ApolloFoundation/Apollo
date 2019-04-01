@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_BACKUPED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
@@ -198,6 +199,9 @@ class DataTransferManagementReceiverTest {
         byte[] shardHash = "000000000".getBytes();
         Shard newShard = new Shard(shardHash, snapshotBlockHeight);
         shardDao.saveShard(newShard);
+
+        state = managementReceiver.createBackup();
+        assertEquals(MAIN_DB_BACKUPED, state);
 
         // start sharding process
         state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());

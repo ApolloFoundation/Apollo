@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation;
@@ -75,7 +76,8 @@ public class ShardMigrationExecutor {
         Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
         if (backupDb) {
             log.info("Will backup db before sharding");
-
+            BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(managementReceiver);
+            this.addOperation(beforeShardCommand);
         }
         CopyDataCommand copyDataCommand = new CopyDataCommand(managementReceiver, height, dbIds);
         this.addOperation(copyDataCommand);

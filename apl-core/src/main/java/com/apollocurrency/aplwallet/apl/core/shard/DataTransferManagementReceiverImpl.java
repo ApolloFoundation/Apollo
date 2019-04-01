@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -85,6 +87,31 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
      * {@inheritDoc}
      */
     @Override
+    public MigrateState createBackup() {
+        long start = System.currentTimeMillis();
+        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
+                new ShardDataSourceCreateHelper(databaseManager);
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
+        String sql = String.format("BACKUP TO 'BACKUP-BEFORE-%s.zip'", nextShardName);
+        try (Connection con = sourceDataSource.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            int result = ps.executeUpdate();
+            log.debug("BACKUP by SQL={}, success = {}", sql, result);
+            state = MigrateState.MAIN_DB_BACKUPED;
+            loadAndRefreshRecovery(sourceDataSource);
+        } catch (SQLException e) {
+            log.error("ERROR on backup db before sharding, sql = " + sql, e);
+        }
+        log.debug("BACKUP db before shard ({}) in {} secs", state.name(),
+                (System.currentTimeMillis() - start)/1000);
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public MigrateState addOrCreateShard(DbVersion dbVersion) {
         long start = System.currentTimeMillis();
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
@@ -100,22 +127,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 state = MigrateState.SHARD_SCHEMA_CREATED;
             }
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
-            log.trace("Latest = {}", recovery);
-            if (recovery == null) {
-                // store new value or continue to next step
-                recovery = new ShardRecovery(state);
-                shardRecoveryDao.saveShardRecovery(sourceDataSource, recovery);
-            } else {
-                if (recovery.getState().getValue() < state.getValue()) {
-                    recovery.setState(state); // do not change previous state
-                    recovery.setObjectName(null);
-                    recovery.setColumnName(null);
-                    recovery.setProcessedObject(null);
-                    recovery.setLastColumnValue(null);
-                    shardRecoveryDao.updateShardRecovery(sourceDataSource, recovery);
-                }
-            }
+            loadAndRefreshRecovery(sourceDataSource);
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
@@ -124,6 +136,25 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
                 (System.currentTimeMillis() - start)/1000);
         return state;
+    }
+
+    private void loadAndRefreshRecovery(TransactionalDataSource sourceDataSource) {
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        log.trace("Latest = {}", recovery);
+        if (recovery == null) {
+            // store new value or continue to next step
+            recovery = new ShardRecovery(state);
+            shardRecoveryDao.saveShardRecovery(sourceDataSource, recovery);
+        } else {
+            if (recovery.getState().getValue() < state.getValue()) {
+                recovery.setState(state); // do not change previous state
+                recovery.setObjectName(null);
+                recovery.setColumnName(null);
+                recovery.setProcessedObject(null);
+                recovery.setLastColumnValue(null);
+                shardRecoveryDao.updateShardRecovery(sourceDataSource, recovery);
+            }
+        }
     }
 
     private void checkRequiredParameters(CommandParamInfo paramInfo) {

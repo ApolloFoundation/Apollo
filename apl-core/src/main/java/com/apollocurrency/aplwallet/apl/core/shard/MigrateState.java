@@ -15,53 +15,58 @@ public enum MigrateState {
     /**
      * shard schema is created with only initial tables , no constraints/indexes
      */
-    SHARD_SCHEMA_CREATED(1),
+    MAIN_DB_BACKUPED(1),
+
+    /**
+     * shard schema is created with only initial tables , no constraints/indexes
+     */
+    SHARD_SCHEMA_CREATED(2),
 
     /**
      * We started copying data (block + tr) from main into shard
      */
-    DATA_COPY_TO_SHARD_STARTED(2),
+    DATA_COPY_TO_SHARD_STARTED(3),
     /**
      * We finished copying data (block + tr) from main into shard
      */
-    DATA_COPIED_TO_SHARD(3),
+    DATA_COPIED_TO_SHARD(4),
 
     /**
      * Shard schema is updated with all constraints/indexes, so it's FULLY created now.
      */
-    SHARD_SCHEMA_FULL(4),
+    SHARD_SCHEMA_FULL(5),
 
     /**
      * We started updating several tables to link/reference to shard's snapshot block
      */
-    DATA_RELINK_STARTED(5),
+    DATA_RELINK_STARTED(6),
     /**
      * Several tables were processed and records were updated to reference shard's snapshot block
      */
-    DATA_RELINKED_IN_MAIN(6),
+    DATA_RELINKED_IN_MAIN(7),
 
     /**
      * We started updating block/tr secondary indexes with shard's block related info
      */
-    SECONDARY_INDEX_STARTED(7),
+    SECONDARY_INDEX_STARTED(8),
     /**
      * The block/tr secondary indexes were updated with shard related info
      */
-    SECONDARY_INDEX_UPDATED(8),
+    SECONDARY_INDEX_UPDATED(9),
 
     /**
      * We started deleting Block/tr data from main db after it has been copied to shard db
      */
-    DATA_REMOVE_STARTED(9),
+    DATA_REMOVE_STARTED(10),
     /**
      * Block/tr data were deleted from main db after it has been copied to shard db
      */
-    DATA_REMOVED_FROM_MAIN(10),
+    DATA_REMOVED_FROM_MAIN(11),
 
     /**
      * Shard record is inserted in main db and sharding process is completed
      */
-    COMPLETED(11),
+    COMPLETED(12),
     /**
      * Process failed at any step
      */
