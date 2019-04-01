@@ -112,6 +112,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             loadAndRefreshRecovery(sourceDataSource);
         } catch (SQLException e) {
             log.error("ERROR on backup db before sharding, sql = " + sql, e);
+            state = FAILED;
         }
         log.debug("BACKUP db before shard ({}) in {} secs", state.name(),
                 (System.currentTimeMillis() - start)/1000);
