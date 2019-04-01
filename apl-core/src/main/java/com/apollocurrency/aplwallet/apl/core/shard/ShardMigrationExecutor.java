@@ -48,10 +48,14 @@ public class ShardMigrationExecutor {
     private ShardHashCalculator shardHashCalculator;
     private BlockIndexDao blockIndexDao;
     private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
-    private final boolean backupDb;
+    private volatile boolean backupDb;
 
     public boolean backupDb() {
         return backupDb;
+    }
+
+    public void setBackupDb(boolean backupDb) {
+        this.backupDb = backupDb;
     }
 
     @Inject

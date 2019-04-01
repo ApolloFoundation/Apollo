@@ -11,12 +11,14 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELI
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINK_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -35,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
 import org.slf4j.Logger;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -93,11 +97,17 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 new ShardDataSourceCreateHelper(databaseManager);
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        String sql = String.format("BACKUP TO 'BACKUP-BEFORE-%s.zip'", nextShardName);
+        Path dbDir = AplCoreRuntime.getInstance().getDirProvider().getDbDir();
+        String backupName = String.format("BACKUP-BEFORE-%s.zip", nextShardName);
+        Path backupPath = dbDir.resolve(backupName);
+        String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
         try (Connection con = sourceDataSource.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            int result = ps.executeUpdate();
-            log.debug("BACKUP by SQL={}, success = {}", sql, result);
+            ps.executeUpdate();
+            if (!Files.exists(backupPath)) {
+                state = FAILED;
+            }
+            log.debug("BACKUP by SQL={} was successful", sql);
             state = MigrateState.MAIN_DB_BACKUPED;
             loadAndRefreshRecovery(sourceDataSource);
         } catch (SQLException e) {
