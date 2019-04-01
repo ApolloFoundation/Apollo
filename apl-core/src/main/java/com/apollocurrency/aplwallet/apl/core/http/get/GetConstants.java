@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -66,7 +67,9 @@ public final class GetConstants extends AbstractAPIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
-                BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
+                BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+
                 response.put("genesisBlockId", Long.toUnsignedString(blockchainProcessor.getGenesisBlockId()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
@@ -76,6 +79,8 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("coinSymbol", blockchainConfig.getCoinSymbol());
                 response.put("accountPrefix", blockchainConfig.getAccountPrefix());
                 response.put("projectName", blockchainConfig.getProjectName());
+
+                response.put("maxImportSecretFileLength", propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize"));
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
                 outer:

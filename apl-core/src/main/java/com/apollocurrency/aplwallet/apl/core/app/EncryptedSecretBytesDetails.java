@@ -8,19 +8,22 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.Arrays;
 import java.util.Objects;
 
-
+/**
+ * Use FbWallet
+ */
+@Deprecated
 public class EncryptedSecretBytesDetails {
     private byte[] encryptedSecretBytes;
     private String accountRS;
     private long account;
-    private byte version;
+    private Integer version;
     private byte[] nonce;
     private long timestamp;
 
     public EncryptedSecretBytesDetails() {
     }
 
-    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, long account, byte version, byte[] nonce, long timestamp) {
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, long account, Integer version, byte[] nonce, long timestamp) {
         this.encryptedSecretBytes = encryptedSecretBytes;
         this.accountRS = accountRS;
         this.account = account;
@@ -29,10 +32,10 @@ public class EncryptedSecretBytesDetails {
         this.timestamp = timestamp;
     }
 
-    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, byte version, byte[] nonce, long timestamp) {
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, Integer version, byte[] nonce, long timestamp) {
         this(encryptedSecretBytes, Convert.defaultRsAccount(account), version, nonce, timestamp);
     }
-    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, byte version, byte[] nonce, long timestamp) {
+    public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, Integer version, byte[] nonce, long timestamp) {
         this(encryptedSecretBytes, accountRS, Convert.parseAccountId(accountRS), version, nonce, timestamp);
     }
 
@@ -60,11 +63,11 @@ public class EncryptedSecretBytesDetails {
         this.account = account;
     }
 
-    public byte getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(byte version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 
@@ -90,7 +93,7 @@ public class EncryptedSecretBytesDetails {
         if (!(o instanceof EncryptedSecretBytesDetails)) return false;
         EncryptedSecretBytesDetails that = (EncryptedSecretBytesDetails) o;
         return account == that.account &&
-                version == that.version &&
+                Objects.equals(version, that.version) &&
                 timestamp == that.timestamp &&
                 Arrays.equals(encryptedSecretBytes, that.encryptedSecretBytes) &&
                 Objects.equals(accountRS, that.accountRS) &&

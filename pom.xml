@@ -23,7 +23,7 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>   
+        </repository>
         <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
         <repository>
             <id>apl</id>
@@ -37,7 +37,7 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
-<!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
+        <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
 <!--
      Tt is a whole mess at the moment. commented out. Please!!! Integration test
@@ -60,7 +60,7 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-        <web-wallet.version>2.4.0</web-wallet.version>
+        <web-wallet.version>2.4.1</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 
@@ -219,7 +219,7 @@
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <type>jar</type>
                 <version>${bcprov.version}</version>
-            </dependency>        
+            </dependency>
             
             <!--Logging-->
             <dependency>
@@ -826,7 +826,7 @@
                 <configuration>
                     <showDeprecation>false</showDeprecation>
                 </configuration>
-            </plugin>     
+            </plugin>
         </plugins>
     </build>
 

@@ -20,6 +20,56 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Search;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
@@ -54,7 +104,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -246,7 +295,10 @@ public final class ParameterParser {
     }
 
     public static long getAccountId(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
-        String paramValue = Convert.emptyToNull(req.getParameter(name));
+        return getAccountId(Convert.emptyToNull(req.getParameter(name)), name, isMandatory);
+    }
+
+    public static long getAccountId(String paramValue, String name, boolean isMandatory) throws ParameterException {
         if (paramValue == null) {
             if (isMandatory) {
                 throw new ParameterException(missing(name));
@@ -474,8 +526,8 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            SecretBytesDetails secretBytes = Helper2FA.findSecretBytes(senderId, passphrase, isMandatory);
-            return secretBytes == null ? null : secretBytes.getSecretBytes();
+            byte[] secretBytes = Helper2FA.findAplSecretBytes(senderId, passphrase);
+            return secretBytes == null ? null : secretBytes;
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
@@ -533,9 +585,10 @@ public final class ParameterParser {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-                        SecretBytesDetails secretBytesDetails = Helper2FA.findSecretBytes(accountId, passphrase, isMandatory);
-                        if (secretBytesDetails != null && secretBytesDetails.getSecretBytes() != null) {
-                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytesDetails.getSecretBytes()));
+
+                        byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
+                        if (secretBytes != null) {
+                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                         }
                     }
                 } else {
@@ -604,6 +657,12 @@ public final class ParameterParser {
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
         return elGamal.elGamalDecrypt(secretPhrase);
+    }
+    public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
+        if (StringUtils.isBlank(passphrase) && isMandatory) {
+            throw new ParameterException(JSONResponses.missing(passphrase));
+        }
+        return elGamal.elGamalDecrypt(passphrase);
     }
 
     public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {

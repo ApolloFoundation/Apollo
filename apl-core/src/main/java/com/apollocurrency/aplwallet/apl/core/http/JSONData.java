@@ -133,10 +133,18 @@ public final class JSONData {
         json.put("percentage", String.format("%.4f%%", 100D * account.getBalanceATM() / totalAmount));
     }
 
+    /**
+     * Use com.apollocurrency.aplwallet.apl.core.rest.service.AccountService#getAccountBalances(com.apollocurrency.aplwallet.apl.core.account.Account, boolean, java.lang.String, java.lang.String)
+     */
+    @Deprecated
     public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
         return accountBalance(account, includeEffectiveBalance, blockchain.getHeight());
     }
 
+    /**
+     * Use com.apollocurrency.aplwallet.apl.core.rest.service.AccountService#getAccountBalances(com.apollocurrency.aplwallet.apl.core.account.Account, boolean, java.lang.String, java.lang.String)
+     */
+    @Deprecated
     public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
