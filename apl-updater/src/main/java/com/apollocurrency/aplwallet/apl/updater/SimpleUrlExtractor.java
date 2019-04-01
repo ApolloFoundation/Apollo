@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.updater.decryption.DoubleDecryptor;
 import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -34,7 +33,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
     }
     public SimpleUrlExtractor(DoubleDecryptor decryptor) {
         this.decryptor = decryptor;
-        this.certificatePairsProvider = new FileSystemCertificatePairsProvider(Paths.get(defaultCertificatesDirectory));
+        this.certificatePairsProvider = new FileSystemCertificatePairsProvider(defaultCertificatesDirectory);
     }
 
 
