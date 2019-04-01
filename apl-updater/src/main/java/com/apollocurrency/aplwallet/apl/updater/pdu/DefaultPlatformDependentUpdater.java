@@ -24,7 +24,7 @@ public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUp
     Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException {
         String[] cmdArray = new String[] {
                 runTool,
-                updateDirectory.resolve("updater").resolve(updateScriptPath).toAbsolutePath().toString(),
+                updateDirectory.resolve(updateScriptPath).toAbsolutePath().toString(), //path to update script should include all subfolders
                 appDirectory.toAbsolutePath().toString(),
                 updateDirectory.toAbsolutePath().toString(),
                 String.valueOf(userMode)
