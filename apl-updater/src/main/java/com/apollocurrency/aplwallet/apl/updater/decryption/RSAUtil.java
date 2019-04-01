@@ -16,6 +16,9 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -69,7 +72,6 @@ public class RSAUtil {
         return result;
     }
 
-
     public static byte[] encrypt(PrivateKey privateKey, byte[] message) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
@@ -101,8 +103,15 @@ public class RSAUtil {
 
     public static PrivateKey getPrivateKey(String path) throws IOException, GeneralSecurityException, URISyntaxException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
-        PEMParser pem = new PEMParser(new InputStreamReader(UpdaterUtil.getResource(path).openStream()));
-        Object keyObject = pem.readObject();
+        URL resource = UpdaterUtil.getResource(path);
+        Object keyObject = null;
+        if (resource == null) {
+            PEMParser   pem = new PEMParser(new InputStreamReader(Files.newInputStream(Paths.get(path))));
+            keyObject = pem.readObject();
+        } else {
+            PEMParser pem = new PEMParser(new InputStreamReader(resource.openStream()));
+            keyObject = pem.readObject();
+        }
         byte[] privateKeyEncoded;
         if (keyObject instanceof PEMKeyPair) {
             PEMKeyPair pair = (PEMKeyPair) keyObject;

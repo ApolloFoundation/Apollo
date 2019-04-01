@@ -51,15 +51,15 @@ public class UpdaterUtil {
             certificates.add(certificate2_1);
             certificates.add(certificate2_2);
             certificates.add(certificate2_3);
-            certificatePairs.add(new CertificatePair(certificate1_1, certificate2_1));
-            certificatePairs.add(new CertificatePair(certificate1_1, certificate2_2));
-            certificatePairs.add(new CertificatePair(certificate1_1, certificate2_3));
-            certificatePairs.add(new CertificatePair(certificate1_2, certificate2_1));
-            certificatePairs.add(new CertificatePair(certificate1_2, certificate2_2));
-            certificatePairs.add(new CertificatePair(certificate1_2, certificate2_3));
-            certificatePairs.add(new CertificatePair(certificate1_3, certificate2_1));
-            certificatePairs.add(new CertificatePair(certificate1_3, certificate2_2));
-            certificatePairs.add(new CertificatePair(certificate1_3, certificate2_3));
+            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_1));
+            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_2));
+            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_3));
+            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_1));
+            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_2));
+            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_3));
+            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_1));
+            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_2));
+            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_3));
         }
         catch (CertificateException | IOException | URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
@@ -98,7 +98,9 @@ public class UpdaterUtil {
     public static Certificate readCertificate(String certificateFileName) throws CertificateException, IOException, URISyntaxException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
-        return cf.generateCertificate(getResource(certificateFileName).openStream());
+        URL resource = getResource(certificateFileName);
+        System.out.println(resource);
+        return cf.generateCertificate(resource.openStream());
     }
 
     public static Certificate readCertificate(Path certificatePath) throws CertificateException, IOException {
@@ -221,7 +223,7 @@ public class UpdaterUtil {
     }
 
     public static URL getResource(String resource) {
-            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+            ClassLoader contextClassLoader = UpdaterUtil.class.getClassLoader();
             return contextClassLoader.getResource(resource);
     }
 

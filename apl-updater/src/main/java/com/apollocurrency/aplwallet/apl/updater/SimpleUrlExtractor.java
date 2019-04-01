@@ -42,17 +42,20 @@ public class SimpleUrlExtractor implements UrlExtractor {
         Set<UpdaterUtil.CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
         for (UpdaterUtil.CertificatePair pair : certPairs) {
             try {
+                LOG.info("Data {}", encryptedUrlBytes.length);
                 byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
                         pair.getFirstCertificate().getPublicKey(),
                         pair.getSecondCertificate().getPublicKey()
                 );
                 String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
+                LOG.info("Decrypted string: {}" ,decryptedUrl);
                 if (urlPattern.matcher(decryptedUrl).matches()) {
                     LOG.debug("Decrypted url using: " + pair);
                     return decryptedUrl;
                 }
             }
-            catch (GeneralSecurityException ignored) {
+            catch (GeneralSecurityException e) {
+                LOG.info("Decr error", e);
             }
         }
         return null;
