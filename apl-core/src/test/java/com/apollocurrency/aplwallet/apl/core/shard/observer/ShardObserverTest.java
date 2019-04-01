@@ -44,13 +44,18 @@ public class ShardObserverTest {
     @Mock
     HeightConfig heightConfig;
     @Mock
-    ShardRecoveryDao shardRecoveryDao;
+    ShardDao shardDao;
+    @Mock
+    ShardRecoveryDao recoveryDao;
     private ShardObserver shardObserver;
 
     @BeforeEach
     void setUp() {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig, shardMigrationExecutor, shardRecoveryDao);
+        shardObserver = new ShardObserver(
+                blockchainProcessor, blockchainConfig,
+                shardMigrationExecutor,
+                shardDao, recoveryDao);
     }
 
     @Test
@@ -91,6 +96,7 @@ public class ShardObserverTest {
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+//        doReturn(new byte[]{1,2}).when(shardMigrationExecutor).calculateHash(DEFAULT_MIN_ROLLBACK_HEIGHT);
 
         boolean created = shardObserver.tryCreateShardAsync().get();
 
@@ -103,6 +109,7 @@ public class ShardObserverTest {
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+//        doReturn(new byte[]{1,2}).when(shardMigrationExecutor).calculateHash(DEFAULT_MIN_ROLLBACK_HEIGHT);
         doThrow(new RuntimeException()).when(shardMigrationExecutor).executeAllOperations();
 
         CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();

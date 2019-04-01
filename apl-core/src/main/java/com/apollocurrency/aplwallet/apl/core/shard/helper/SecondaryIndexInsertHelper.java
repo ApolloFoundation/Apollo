@@ -53,7 +53,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_shard_id_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_shard_id_idx");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            executeUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint fk_transaction_shard_index_block_id");
+            executeUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint IF EXISTS fk_transaction_shard_index_block_id");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_index_shard_1_idx");
         }
 

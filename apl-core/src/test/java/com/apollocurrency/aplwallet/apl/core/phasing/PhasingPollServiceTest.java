@@ -286,7 +286,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testCountVotesForPollWithLinkedTransactions() {
-        blockchain.setLastBlock(new BlockTestData().BLOCK_11);
+        BlockTestData blockTestData = new BlockTestData();
+        blockchain.setLastBlock(blockTestData.BLOCK_11);
         long votes = phasingPollService.countVotes(ptd.POLL_3);
 
         assertEquals(2, votes);
@@ -294,7 +295,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
-        blockchain.setLastBlock(new BlockTestData().BLOCK_11);
+        BlockTestData blockTestData = new BlockTestData();
+        blockchain.setLastBlock(blockTestData.BLOCK_11);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = phasingPollService.countVotes(ptd.POLL_3);
 

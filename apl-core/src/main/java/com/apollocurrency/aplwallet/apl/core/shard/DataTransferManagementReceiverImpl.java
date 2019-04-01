@@ -170,7 +170,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 if (paginationOperationHelper.isPresent()) {
                     Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
                     TableOperationParams operationParams = new TableOperationParams(
-                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
+                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
+                            targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
 
                     BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
                     batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
@@ -417,10 +418,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
         try (Connection sourceConnect = sourceDataSource.begin();
             PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(
-                    "insert into SHARD (SHARD_ID, SHARD_HASH, SHARD_STATE) values (?, ?, ?)")) {
-            preparedInsertStatement.setLong(1, createdShardId.get());
-            preparedInsertStatement.setBytes(2, paramInfo.getShardHash());
-            preparedInsertStatement.setInt(3, 100); // 100% full shard is present on current node
+                    "UPDATE SHARD SET SHARD_HASH = ?, SHARD_STATE = ? WHERE SHARD_ID = ?")) {
+            preparedInsertStatement.setBytes(1, paramInfo.getShardHash());
+//            preparedInsertStatement.setLong(1, paramInfo.getSnapshotBlockHeight());
+            preparedInsertStatement.setLong(2, SHARD_PERCENTAGE_FULL); // 100% full shard is present on current node
+            preparedInsertStatement.setLong(3, createdShardId.get());
             int result = preparedInsertStatement.executeUpdate();
             log.debug("Shard record is created = '{}'", result);
             state = COMPLETED;

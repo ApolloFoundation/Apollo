@@ -29,18 +29,24 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
@@ -73,14 +79,26 @@ import javax.inject.Inject;
 class DataTransferManagementReceiverTest {
     private static final Logger log = getLogger(DataTransferManagementReceiverTest.class);
 
+/*
+  // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+    private static String BASE_SUB_DIR = "unit-test-db";
+    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
+    @RegisterExtension
+    DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
+    private static DbProperties baseDbProperties;
+    private static PropertiesHolder propertiesHolder;
+*/
+
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class,
+            JdbiHandleFactory.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
@@ -90,9 +108,8 @@ class DataTransferManagementReceiverTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+//            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
-
-    private static PropertiesHolder propertiesHolder;
 
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
@@ -102,6 +119,12 @@ class DataTransferManagementReceiverTest {
     private BlockIndexDao blockIndexDao;
     @Inject
     private TransactionIndexDao transactionIndexDao;
+    @Inject
+    private BlockDao blockDao;
+    @Inject
+    private ShardDao shardDao;
+    @Inject
+    private ShardRecoveryDao recoveryDao;
 
     private Path createPath(String fileName) {
         try {
@@ -112,10 +135,33 @@ class DataTransferManagementReceiverTest {
         }
     }
 
+/*
+    // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+    @BeforeAll
+    static void setUpAll() {
+        PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
+                null,
+                false,
+                null,
+                Constants.APPLICATION_DIR_NAME + ".properties",
+                Collections.emptyList());
+        propertiesHolder = new PropertiesHolder();
+        Properties properties = propertiesLoader.load();
+        properties.setProperty("apl.testData", "false");// true - load data.sql, false - do not load data.sql
+        propertiesHolder.init(properties);
+        DbConfig dbConfig = new DbConfig(propertiesHolder);
+        baseDbProperties = dbConfig.getDbConfig();
+    }
+*/
 
     @AfterEach
     void tearDown() {
         jdbiHandleFactory.close();
+/*
+        // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+        extension.getDatabaseManger().shutdown();
+        FileUtils.deleteQuietly(pathToDb.toFile()); // remove after every test
+*/
     }
 
     @Test
@@ -144,6 +190,16 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
+        int snapshotBlockHeight = 8000;
+
+        // prepare an save Recovery + new Shard info
+        ShardRecovery recovery = new ShardRecovery(state);
+        recoveryDao.saveShardRecovery(recovery);
+        byte[] shardHash = "000000000".getBytes();
+        Shard newShard = new Shard(shardHash, snapshotBlockHeight);
+        shardDao.saveShard(newShard);
+
+        // start sharding process
         state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
@@ -155,17 +211,20 @@ class DataTransferManagementReceiverTest {
         dbIds.add(td.DB_ID_0);
         dbIds.add(td.DB_ID_3);
         dbIds.add(td.DB_ID_10);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, 8000L, dbIds);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
 
         state = managementReceiver.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
 //        assertEquals(MigrateState.FAILED, state);
 
+        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        long count = blockDao.getBlockCount(shardDataSource, 0, (int)snapshotBlockHeight);
+        assertEquals(8, count);
+
         state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
         assertEquals(SHARD_SCHEMA_FULL, state);
 
         tableNameList.clear();
-//        tableNameList.add(GENESIS_PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
 //        tableNameList.add(TAGGED_DATA_TABLE_NAME); // ! skip in test
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
@@ -185,6 +244,7 @@ class DataTransferManagementReceiverTest {
         state = managementReceiver.updateSecondaryIndex(paramInfo);
         assertEquals(MigrateState.SECONDARY_INDEX_UPDATED, state);
 //        assertEquals(MigrateState.FAILED, state);
+
         long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         assertEquals(8, blockIndexCount);
         long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
@@ -198,9 +258,13 @@ class DataTransferManagementReceiverTest {
         assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-        paramInfo.setShardHash("000000000".getBytes());
+        count = blockDao.getBlockCount((int)snapshotBlockHeight, 105000);
+        assertEquals(5, count);
+
+        paramInfo.setShardHash(shardHash);
         state = managementReceiver.addShardInfo(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
+
 // compare fullhashes
         TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
         assertNotNull(index);
