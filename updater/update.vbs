@@ -36,7 +36,7 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	Shell.Run "taskkill /f /im ""java.exe""", , True
 rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
 	Shell.CurrentDirectory = WScript.Arguments(1)
-rem	oShell.Run "install_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34), 1, True
+	oShell.Run "install_libs.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34), 1, True
 
 	WScript.Echo "Copy update files"
 
