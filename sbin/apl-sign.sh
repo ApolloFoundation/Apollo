@@ -15,5 +15,5 @@ SCRIPT=`realpath -s $0`
 DIR=`dirname $SCRIPT`
  . ${DIR}/../bin/apl-common.sh
 
-${JAVA_CMD}  -jar ${APL_TOOLS_JAR} signtx -json
+${JAVA_CMD}  -jar ${APL_TOOLS_JAR} signtx --json $@
 exit $?
