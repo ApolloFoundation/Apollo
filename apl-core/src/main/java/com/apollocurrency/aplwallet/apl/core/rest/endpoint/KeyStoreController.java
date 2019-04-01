@@ -1,10 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -40,6 +43,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 public class KeyStoreController {
 
     private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
+    private final Helper2FA helper2FA = CDI.current().select(Helper2FA.class).get();
     private PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private Integer maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");
 
@@ -162,7 +166,7 @@ public class KeyStoreController {
 
     @POST
     @Path("/download")
-    @Produces(MediaType.WILDCARD)
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Export keystore container. (file)",
             tags = {"keyStore"},
             responses = {
@@ -172,7 +176,7 @@ public class KeyStoreController {
             }
     )
     public Response downloadKeyStore(@FormParam("account") String account,
-                                     @FormParam("passPhrase") String passphraseReq) throws ParameterException, IOException {
+                                     @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
@@ -183,10 +187,21 @@ public class KeyStoreController {
                             ).build();
         }
 
+        try {
+            if(helper2FA.isEnabled2FA(accountId)){
+                int code2FA = ParameterParser.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
+                Status2FA status2FA = helper2FA.auth2FA(passphraseStr, accountId, code2FA);
+                if(!status2FA.OK.equals(status2FA)) {
+                    return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.error2FA(status2FA, accountId))).build();
+                }
+            }
+        } catch (ParameterException ex){
+           return Response.status(Response.Status.OK).entity(JSON.toString(ex.getErrorResponse())).build();
+        }
+
         File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
 
-        Response.ResponseBuilder response = Response.ok(FileUtils.readFileToByteArray(keyStore));
-        response.header("Content-disposition", "attachment; filename="+ keyStore.getName());
+        Response.ResponseBuilder response = Response.ok(new ExportKeyStore(FileUtils.readFileToByteArray(keyStore), keyStore.getName()).toJSON());
         return response.build();
     }
 
