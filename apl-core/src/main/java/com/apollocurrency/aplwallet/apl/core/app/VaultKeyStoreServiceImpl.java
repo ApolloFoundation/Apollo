@@ -48,7 +48,7 @@
      private Integer version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
-     private NtpTime ntpTime;
+     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
 
     @Inject
     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath")Path keystoreDir) {
@@ -61,7 +61,6 @@
          }
          this.version = version;
          this.keystoreDirPath = keystoreDir;
-         this.ntpTime = CDI.current().select(NtpTime.class).get();
          if (!Files.exists(keystoreDirPath)) {
              try {
                  Files.createDirectories(keystoreDirPath);

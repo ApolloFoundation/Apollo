@@ -52,7 +52,7 @@ public class EthereumWalletService {
         try {
             balance = getTokenBalance(paxContractAddress, accountAddress);
         } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage(), e.getCause().getMessage());
         }
         return balance;
     }

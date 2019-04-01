@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Search;
-import org.apache.commons.lang3.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -608,7 +608,7 @@ public final class ParameterParser {
         return API.elGamalDecrypt(secretPhrase);
     }
     public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
-        if (StringUtils.isEmpty(passphrase) && isMandatory) {
+        if (StringUtils.isBlank(passphrase) && isMandatory) {
             throw new ParameterException(JSONResponses.missing(passphrase));
         }
         return API.elGamalDecrypt(passphrase);

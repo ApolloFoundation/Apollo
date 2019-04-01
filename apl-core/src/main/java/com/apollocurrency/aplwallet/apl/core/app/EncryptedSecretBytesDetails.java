@@ -93,7 +93,7 @@ public class EncryptedSecretBytesDetails {
         if (!(o instanceof EncryptedSecretBytesDetails)) return false;
         EncryptedSecretBytesDetails that = (EncryptedSecretBytesDetails) o;
         return account == that.account &&
-                version.equals(that.version) &&
+                Objects.equals(version, that.version) &&
                 timestamp == that.timestamp &&
                 Arrays.equals(encryptedSecretBytes, that.encryptedSecretBytes) &&
                 Objects.equals(accountRS, that.accountRS) &&

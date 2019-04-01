@@ -26,12 +26,16 @@ public class DexService {
             if (!StringUtils.isBlank(ethAddress)) {
                 balances.setBalanceETH(ethereumWalletService.getBalanceWei(ethAddress));
             }
+        } catch (Exception ex){
+            LOG.error(ex.getMessage(), ex.getCause().getMessage());
+        }
 
+        try{
             if (!StringUtils.isBlank(paxAddress)) {
                 balances.setBalancePAX(ethereumWalletService.getPaxBalanceWei(paxAddress));
             }
         } catch (Exception ex){
-            LOG.error(ex.getMessage(), ex);
+            LOG.error(ex.getMessage(), ex.getCause().getMessage());
         }
 
         return balances;
