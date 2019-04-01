@@ -12,6 +12,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -228,6 +229,11 @@ class ShardMigrationExecutorTest {
         MigrateState state = shardMigrationExecutor.executeAllOperations();
 //        assertEquals(FAILED, state);
         assertEquals(COMPLETED, state);
+    }
+
+    @Test
+    void testWithBackup() {
+        assertFalse(shardMigrationExecutor.backupDb());
     }
 
     private Path getTempFilePath(String fileName) {

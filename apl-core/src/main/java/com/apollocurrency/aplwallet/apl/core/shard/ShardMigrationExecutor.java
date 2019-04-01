@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DEFAULT_COMMIT_BATCH_SIZE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
@@ -46,18 +47,25 @@ public class ShardMigrationExecutor {
     private ShardHashCalculator shardHashCalculator;
     private BlockIndexDao blockIndexDao;
     private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
+    private final boolean backupDb;
+
+    public boolean backupDb() {
+        return backupDb;
+    }
 
     @Inject
     public ShardMigrationExecutor(DataTransferManagementReceiver managementReceiver,
                                   javax.enterprise.event.Event<MigrateState> migrateStateEvent,
                                   ShardHashCalculator shardHashCalculator,
                                   BlockIndexDao blockIndexDao,
-                                  ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor) {
+                                  ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
+                                  @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.managementReceiver = Objects.requireNonNull(managementReceiver, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
         this.shardHashCalculator = Objects.requireNonNull(shardHashCalculator, "sharding hash calculator is NULL");
         this.blockIndexDao = Objects.requireNonNull(blockIndexDao, "blockIndexDao is NULL");
         this.excludedTransactionDbIdExtractor = Objects.requireNonNull(excludedTransactionDbIdExtractor, "exluded transaction db_id extractor is NULL");
+        this.backupDb = backupDb;
     }
 
     public void createAllCommands(int height) {
@@ -65,7 +73,10 @@ public class ShardMigrationExecutor {
                 new ShardInitTableSchemaVersion());
         this.addOperation(createShardSchemaCommand);
         Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
+        if (backupDb) {
+            log.info("Will backup db before sharding");
 
+        }
         CopyDataCommand copyDataCommand = new CopyDataCommand(managementReceiver, height, dbIds);
         this.addOperation(copyDataCommand);
 
