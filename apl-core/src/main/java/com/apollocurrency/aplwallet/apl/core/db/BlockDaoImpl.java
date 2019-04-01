@@ -359,6 +359,33 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
+    public Long getBlockCount(int from, int to) {
+        // select from main db
+        return getBlockCount(null, from, to);
+    }
+
+    @Override
+    public Long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
+        if (dataSource == null) {
+            // select from main db
+            dataSource = databaseManager.getDataSource();
+        }
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) as blockCount FROM block WHERE height >= ? AND height < ?");
+            pstmt.setInt(1, from);
+            pstmt.setInt(2, to);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("blockCount");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return 0L;
+    }
+
+    @Override
     public int getBlockCount(long accountId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();

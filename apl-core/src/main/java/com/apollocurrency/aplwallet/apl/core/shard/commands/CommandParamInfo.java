@@ -22,9 +22,9 @@ public interface CommandParamInfo {
 
     void setCommitBatchSize(int commitBatchSize);
 
-    Long getSnapshotBlockHeight();
+    Integer getSnapshotBlockHeight();
 
-    void setSnapshotBlockHeight(Long snapshotBlockHeight);
+    void setSnapshotBlockHeight(Integer snapshotBlockHeight);
 
     byte[] getShardHash();
 

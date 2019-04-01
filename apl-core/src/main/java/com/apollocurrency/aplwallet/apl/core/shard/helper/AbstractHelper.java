@@ -18,7 +18,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import org.slf4j.Logger;
 
@@ -110,7 +109,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         return upperBoundIdValue;
     }
 
-    private Long selectUpperDbId(Connection sourceConnect, Long snapshotBlockHeight, String selectValueSql) throws SQLException {
+    private Long selectUpperDbId(Connection sourceConnect, Integer snapshotBlockHeight, String selectValueSql) throws SQLException {
         Objects.requireNonNull(sourceConnect, "source connection is NULL");
         Objects.requireNonNull(snapshotBlockHeight, "snapshot Block Height is NULL");
         Objects.requireNonNull(selectValueSql, "selectValueSql is NULL");
@@ -187,7 +186,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
                     && recoveryValue.getObjectName().equalsIgnoreCase(currentTableName)
                     && !isContain(recoveryValue.getProcessedObject(), currentTableName)) {
                 // process current table because it was not finished
-                this.lowerBoundIdValue = recoveryValue.getLastColumnValue() + 1; // last saved/processed value + 1
+                this.lowerBoundIdValue = recoveryValue.getLastColumnValue(); // last saved/processed value
                 log.debug("RESTORED object '{}' from = {}", operationParams.tableName, recoveryValue);
             } else {
                 // started next new table

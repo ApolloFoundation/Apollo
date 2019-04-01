@@ -91,7 +91,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
             }
             try {
                 TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-                shardDb.init(new AplDbVersion());
+                shardDb.init(new ShardInitTableSchemaVersion());
                 connectedShardDataSourceMap.put(shardId, shardDb);
             } catch (Exception e) {
                 log.error("Error opening shard db by name = " + shardName, e);
@@ -139,7 +139,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
                 new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
-        shardDb.init(new AplDbVersion());
+        shardDb.init(new ShardInitTableSchemaVersion());
         connectedShardDataSourceMap.put(shardDataSourceCreateHelper.getShardId(), shardDb);
         log.debug("new SHARD '{}' is CREATED", shardDataSourceCreateHelper.getShardName());
         return shardDb;

@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DEFAULT_COMMIT_BATCH_SIZE;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -13,15 +15,15 @@ import java.util.Set;
 public class CommandParamInfoImpl implements CommandParamInfo {
 
     private List<String> tableNameList = Collections.emptyList(); // processed tables list
-    private int commitBatchSize = -1;
-    private Long snapshotBlockHeight = -1L;
+    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
+    private Integer snapshotBlockHeight = -1;
     private byte[] shardHash;
     private Set<Long> dbIdExclusionSet;
 
     public CommandParamInfoImpl() {
     }
 
-    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Long snapshotBlockHeight, Set<Long> dbIdExclusionSet) {
+    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, Set<Long> dbIdExclusionSet) {
         this.shardHash = new byte[0];
         this.tableNameList = tableNameList;
         this.commitBatchSize = commitBatchSize;
@@ -29,7 +31,7 @@ public class CommandParamInfoImpl implements CommandParamInfo {
         this.dbIdExclusionSet = dbIdExclusionSet == null ? Collections.emptySet() : dbIdExclusionSet;
     }
 
-    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Long snapshotBlockHeight, byte[] shardHash, Set<Long> dbIdExclusionSet) {
+    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, byte[] shardHash, Set<Long> dbIdExclusionSet) {
         this(tableNameList, commitBatchSize, snapshotBlockHeight, dbIdExclusionSet);
         this.shardHash = shardHash;
     }
@@ -64,11 +66,11 @@ public class CommandParamInfoImpl implements CommandParamInfo {
         this.commitBatchSize = commitBatchSize;
     }
 
-    public Long getSnapshotBlockHeight() {
+    public Integer getSnapshotBlockHeight() {
         return snapshotBlockHeight;
     }
 
-    public void setSnapshotBlockHeight(Long snapshotBlockHeight) {
+    public void setSnapshotBlockHeight(Integer snapshotBlockHeight) {
         this.snapshotBlockHeight = snapshotBlockHeight;
     }
 

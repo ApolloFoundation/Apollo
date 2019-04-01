@@ -81,14 +81,13 @@ public class ShardMigrationExecutor {
         this.addOperation(updateSecondaryIndexCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
-                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE * 5, height);
+                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE, height);
         this.addOperation(deleteCopiedDataCommand);
 
         byte[] hash = calculateHash(height);
         if (hash == null) {
             throw new IllegalStateException("Cannot calculate shard hash");
         }
-
         log.debug("SHARD HASH = {}", hash.length);
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, hash);
         this.addOperation(finishShardingCommand);
