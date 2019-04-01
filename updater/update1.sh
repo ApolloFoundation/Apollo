@@ -30,6 +30,7 @@ then
 
 # For backwards compatibility
     if [ ! -f VERSION ]; then
+	echo "Runnung from updater directory...." >>/tmp/updater_ne_tuda
 	cd ..
     fi
 
@@ -50,7 +51,8 @@ tar -czf ${BKP_NAME} ${1}
     rm -rf $1/conf/apl-default.properties
     rm -rf $1/conf/testnet.properties
     rm -rf $1/conf/updater.properties
-    
+    mv $1/conf/apl.properties $1/conf/apl-blockchain.properties
+
 #may be we have to remove garbage    
     rm -f $1/*.sh
     rm -f $1/*.bat
