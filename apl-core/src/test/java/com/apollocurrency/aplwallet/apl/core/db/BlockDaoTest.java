@@ -69,7 +69,6 @@ class BlockDaoTest {
         assertEquals(8, count);
 
         count = blockDao.getBlockCount(extension.getDatabaseManger().getDataSource(), BlockTestData.BLOCK_7_HEIGHT, BlockTestData.BLOCK_11_HEIGHT);
-        assertEquals(4
-                , count);
+        assertEquals(4, count);
     }
 }

@@ -28,16 +28,16 @@ public class CopyDataCommand implements DataMigrateOperation {
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList;
     private int commitBatchSize;
-    private long snapshotBlockHeight;
+    private int snapshotBlockHeight;
     private Set<Long> dbIdsExclusionList;
 
     public CopyDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                           int commitBatchSize, long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+                           int commitBatchSize, int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
         this(dataTransferManagement, null, commitBatchSize, snapshotBlockHeight, dbIdsExclusionList);
     }
 
     public CopyDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                           long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+                           int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
         this(dataTransferManagement, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
@@ -47,7 +47,7 @@ public class CopyDataCommand implements DataMigrateOperation {
             DataTransferManagementReceiver dataTransferManagement,
             List<String> tableNameList,
             int commitBatchSize,
-            Long snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
+            int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.tableNameList = tableNameList == null ? new ArrayList<>() :tableNameList;
         this.commitBatchSize = commitBatchSize;

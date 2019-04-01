@@ -64,7 +64,7 @@ public class ShardObserver {
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
                 // quick create records for new Shard and Recovery process for later use
                 shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
-                shardDao.saveShard(new Shard((long)minRollbackHeight)); // store shard with HEIGHT ONLY
+                shardDao.saveShard(new Shard(minRollbackHeight)); // store shard with HEIGHT ONLY
                 res = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight));
             }
         }

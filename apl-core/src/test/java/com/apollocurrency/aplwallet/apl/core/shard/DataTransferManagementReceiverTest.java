@@ -190,7 +190,7 @@ class DataTransferManagementReceiverTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        long snapshotBlockHeight = 8000L;
+        int snapshotBlockHeight = 8000;
 
         // prepare an save Recovery + new Shard info
         ShardRecovery recovery = new ShardRecovery(state);

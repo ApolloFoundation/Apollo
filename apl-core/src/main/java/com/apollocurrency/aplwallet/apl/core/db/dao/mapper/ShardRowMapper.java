@@ -19,7 +19,7 @@ public class ShardRowMapper implements RowMapper<Shard> {
                 .id(rs.getLong("shard_id"))
                 .shardHash(rs.getBytes("shard_hash"))
                 .shardState(rs.getLong("shard_state"))
-                .shardHeight(rs.getLong("shard_height"))
+                .shardHeight(rs.getInt("shard_height"))
                 .build();
     }
 }

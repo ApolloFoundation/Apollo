@@ -158,7 +158,7 @@ class ShardMigrationExecutorTest {
 
     @Test
     void executeAllOperations() throws IOException {
-        long snapshotBlockHeight = 8000L;
+        int snapshotBlockHeight = 8000;
         // prepare an save Recovery + new Shard info
         ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
         recoveryDao.saveShardRecovery(recovery);

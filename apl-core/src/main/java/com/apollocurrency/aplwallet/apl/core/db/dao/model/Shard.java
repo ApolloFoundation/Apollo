@@ -12,7 +12,7 @@ public class Shard {
     private Long shardId;
     private byte[] shardHash;
     private Long shardState;
-    private Long shardHeight;
+    private Integer shardHeight;
 
     public Shard() {
     }
@@ -22,28 +22,28 @@ public class Shard {
         return new Shard(shardId, shardHashCopy, shardHeight);
     }
 
-    public Shard(Long shardHeight) {
+    public Shard(Integer shardHeight) {
         this.shardHeight = shardHeight;
     }
 
-    public Shard(byte[] shardHash, Long shardHeight) {
+    public Shard(byte[] shardHash, Integer shardHeight) {
         this.shardHash = shardHash;
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardHeight) {
+    public Shard(Long shardId, byte[] shardHash, Integer shardHeight) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, String shardHash, Long shardHeight) {
+    public Shard(Long shardId, String shardHash, Integer shardHeight) {
         this.shardId = shardId;
         this.shardHash = Convert.parseHexString(shardHash);
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardState, Long shardHeight) {
+    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
@@ -91,11 +91,11 @@ public class Shard {
         this.shardState = shardState;
     }
 
-    public Long getShardHeight() {
+    public Integer getShardHeight() {
         return shardHeight;
     }
 
-    public void setShardHeight(Long shardHeight) {
+    public void setShardHeight(Integer shardHeight) {
         this.shardHeight = shardHeight;
     }
 
@@ -107,7 +107,7 @@ public class Shard {
         private Long shardId;
         private byte[] shardHash;
         private Long shardState;
-        private Long shardHeight;
+        private Integer shardHeight;
 
         private ShardBuilder() {
         }
@@ -127,7 +127,7 @@ public class Shard {
             return this;
         }
 
-        public ShardBuilder shardHeight(Long shardHeight) {
+        public ShardBuilder shardHeight(Integer shardHeight) {
             this.shardHeight = shardHeight;
             return this;
         }

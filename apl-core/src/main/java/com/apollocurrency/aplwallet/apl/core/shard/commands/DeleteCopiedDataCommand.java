@@ -20,16 +20,16 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
-    private long snapshotBlockHeight;
+    private int snapshotBlockHeight;
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                                   int commitBatchSize, long snapshotBlockHeight) {
+                                   int commitBatchSize, int snapshotBlockHeight) {
         this(dataTransferManagement, snapshotBlockHeight);
         this.commitBatchSize = commitBatchSize;
     }
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                                   long snapshotBlockHeight) {
+                                   int snapshotBlockHeight) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         tableNameList.add(BLOCK_TABLE_NAME);
@@ -39,7 +39,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
             DataTransferManagementReceiver dataTransferManagement,
             List<String> tableNameList,
             int commitBatchSize,
-            Long snapshotBlockHeight) {
+            int snapshotBlockHeight) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.tableNameList = Objects.requireNonNull(tableNameList, "tableNameList is NULL");
         this.commitBatchSize = commitBatchSize;

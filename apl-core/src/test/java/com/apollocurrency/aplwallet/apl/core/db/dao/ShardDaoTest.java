@@ -95,7 +95,7 @@ class ShardDaoTest {
 
     @Test
     void testSave() {
-        Shard shard = new Shard(100L);
+        Shard shard = new Shard(100);
         int insertCount = dao.saveShard(shard);
         assertEquals(1, insertCount);
     }

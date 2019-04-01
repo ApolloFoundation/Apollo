@@ -689,7 +689,7 @@ public class AplDbVersion extends DbVersion {
             case 251:
                 // SHARDING meta-info inside main database
                 apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY, " +
-                        "shard_height BIGINT not null, shard_state BIGINT)");
+                        "shard_height INT not null, shard_state BIGINT)");
             case 252:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 253:

@@ -170,7 +170,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 if (paginationOperationHelper.isPresent()) {
                     Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
                     TableOperationParams operationParams = new TableOperationParams(
-                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
+                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
+                            targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
 
                     BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
                     batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
