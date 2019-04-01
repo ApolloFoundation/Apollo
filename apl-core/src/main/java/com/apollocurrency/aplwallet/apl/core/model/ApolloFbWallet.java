@@ -24,6 +24,8 @@ public class ApolloFbWallet extends FbWallet {
     public static final String ETH_PRIVATE_KEY_ALIAS = "eth_priv";
     public static final String PAX_PRIVATE_KEY_ALIAS = "pax_priv";
 
+    private static final Integer HEXADECIMAL = 16;
+
 
 
     public String getAplKeySecret(){
@@ -94,12 +96,12 @@ public class ApolloFbWallet extends FbWallet {
     private void createEthOrEthTokenWallet(EthWalletKey ethWalletKey, String alias){
         DataRecord dr = new DataRecord();
         dr.alias = alias;
-        dr.data = ethWalletKey.getCredentials().getEcKeyPair().getPrivateKey().toString(16);
+        dr.data = ethWalletKey.getCredentials().getEcKeyPair().getPrivateKey().toString(HEXADECIMAL);
         dr.encoding = "HEX";
         KeyRecord kr = new KeyRecord();
         kr.alias = dr.alias;
         kr.keyType = KeyTypes.ETHEREUM;
-        kr.publicKey = ethWalletKey.getCredentials().getEcKeyPair().getPublicKey().toString(16);
+        kr.publicKey = ethWalletKey.getCredentials().getEcKeyPair().getPublicKey().toString(HEXADECIMAL);
         this.addData(dr);
         this.addKey(kr);
     }

@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public class Balances {
 
-    private String accountRS = null;
+    private String accountRS;
     private long account;
     private long balanceATM;
     private long unconfirmedBalanceATM;
