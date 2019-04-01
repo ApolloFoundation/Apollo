@@ -8,6 +8,7 @@ APOLLO_JAR="Apollo.jar"
 
 unamestr=`uname`
 
+
 function notify
 {
     if [[ "$unamestr" == 'Darwin' ]]; then
@@ -26,7 +27,12 @@ then
     notify "Stopping Apollo Wallet"
 
     NEXT_WAIT_TIME=0
-    
+
+# For backwards compatibility
+    if [ ! -f VERSION ]; then
+	cd ..
+    fi
+
     until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
@@ -40,7 +46,11 @@ tar -czf ${BKP_NAME} ${1}
 
 # we sould remove "conf" dir because default configs are in resources now
 # and user's configs are in ~/.apl_blockchain
-    rm -rf $1/conf
+    rm -rf $1/conf/certs
+    rm -rf $1/conf/apl-default.properties
+    rm -rf $1/conf/testnet.properties
+    rm -rf $1/conf/updater.properties
+    
 #may be we have to remove garbage    
     rm -f $1/*.sh
     rm -f $1/*.bat
