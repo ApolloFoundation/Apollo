@@ -26,6 +26,11 @@ import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import org.apache.commons.lang3.ArrayUtils;
+//TODO: how to read from resources
+//       ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+//        try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {
+//            // rerad from is;
+//        }
 
 public class UpdaterUtil {
     public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
@@ -95,6 +100,7 @@ public class UpdaterUtil {
         Path directoryPath = loadResourcePath(directory);
         return findFiles(directoryPath, prefix, suffix);
     }
+    
     public static Set<Path> findFiles(Path directory, String prefix, String suffix) throws IOException {
 
         return Files.walk(directory, 1)
