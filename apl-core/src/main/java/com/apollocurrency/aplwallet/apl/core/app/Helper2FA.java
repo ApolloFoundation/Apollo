@@ -96,7 +96,7 @@ public class Helper2FA {
 
     public static byte[] findAplSecretBytes(long accountId, String passphrase) throws ParameterException {
         ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
-        String secret = fbWallet.getAplKeySecret();
+        String secret = fbWallet != null ? fbWallet.getAplKeySecret() : null;
 
         return Convert.parseHexString(secret);
     }
@@ -132,8 +132,9 @@ public class Helper2FA {
     }
 
     public static Status2FA auth2FA(String passphrase, long accountId, int code) throws ParameterException {
-        findAplSecretBytes(accountId, passphrase);
-        return service2FA.tryAuth(accountId, code);
+        byte[] bytes = findAplSecretBytes(accountId, passphrase);
+
+        return bytes == null ? Status2FA.INTERNAL_ERROR : service2FA.tryAuth(accountId, code);
     }
 
     public static Status2FA auth2FA(String secretPhrase, int code) throws ParameterException {
