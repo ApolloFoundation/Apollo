@@ -24,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -73,11 +72,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
-import javax.enterprise.inject.spi.CDI;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     
     private final String host;
     private final PeerWebSocket webSocket;
@@ -109,17 +106,24 @@ public final class PeerImpl implements Peer {
     private volatile long services;
     private volatile BlockchainState blockchainState;
     private AtomicReference<UUID> chainId = new AtomicReference<>();
+    
+    private final boolean isLightClient;
+    private final BlockchainConfig blockchainConfig;
+    private final Blockchain blockchain;
+    private volatile EpochTime timeService;
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
-
-    PeerImpl(String host, String announcedAddress) {
+    PeerImpl(String host, 
+            String announcedAddress,
+            BlockchainConfig blockchainConfig,
+            Blockchain blockchain,
+            EpochTime timeService,
+            PropertiesHolder propertiesHolder
+    ) {
         this.host = host;
         this.announcedAddress = announcedAddress;
         try {
-            this.port = new URI("http://" + announcedAddress).getPort();
+            this.port = getURI(false).getPort();
         } catch (URISyntaxException ignore) {}
         this.state = State.NON_CONNECTED;
         this.shareAddress = true;
@@ -128,6 +132,10 @@ public final class PeerImpl implements Peer {
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         this.apiServerIdleTimeout = API.apiServerIdleTimeout;
         this.blockchainState = BlockchainState.UP_TO_DATE;
+        this.blockchainConfig=blockchainConfig;
+        this.blockchain = blockchain;
+        this.timeService=timeService;
+        isLightClient=propertiesHolder.isLightClient();
     }
 
     @Override
@@ -331,7 +339,7 @@ public final class PeerImpl implements Peer {
         this.announcedAddress = announcedAddress;
         if (announcedAddress != null) {
             try {
-                this.port = new URI("http://" + announcedAddress).getPort();
+                this.port = getURI(false).getPort();
             } catch (URISyntaxException e) {
                 this.port = -1;
             }
@@ -342,7 +350,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public int getPort() {
-        return port <= 0 ? Peers.getDefaultPeerPort() : port;
+           return port <= 0 ? Peers.getDefaultPeerPort() : port;
     }
 
     @Override
@@ -490,7 +498,17 @@ public final class PeerImpl implements Peer {
     public JSONObject send(final JSONStreamAware request, UUID chainId) {
         return send(request, chainId, Peers.MAX_RESPONSE_SIZE, false);
     }
-
+    
+    public HttpURLConnection connectMeHTTP(boolean useHTTPS){
+        HttpURLConnection connection = null;
+        return connection;
+    }
+    
+    public boolean connectMeWS(boolean useHTTPS){
+       boolean res = false; 
+       return res; 
+    }
+    
     @Override
     public JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize, boolean firstConnect) {
         if (LOG.isTraceEnabled()) {
@@ -500,14 +518,14 @@ public final class PeerImpl implements Peer {
                 request.writeJSONString(out);
                 reqAsString = out.toString();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.warn("IOExeception wile writing Peer request", e);
             }
             LOG.trace("SEND() Request = '{}'\n, host='{}', firstConnect='{}'", reqAsString, host, firstConnect);
         }
         if (!firstConnect && !targetChainId.equals(this.chainId.get()) ) {
             LOG.debug("Unable to send request to peer {} with chainId {}, expected {}",host, this.chainId.get() == null ? "null" : this.chainId.get(),
                     targetChainId);
-            connect(targetChainId);
+            handshake(targetChainId);
             return null;
         }
         JSONObject response = null;
@@ -623,7 +641,7 @@ public final class PeerImpl implements Peer {
                 deactivate();
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error")) && request != Peers.getMyPeerInfoRequest()) {
                     LOG.debug("Sequence error, reconnecting to " + host);
-                    connect(targetChainId);
+                    handshake(targetChainId);
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
                             response.toJSONString() + ", request was: " + JSON.toString(request) +
@@ -670,27 +688,23 @@ public final class PeerImpl implements Peer {
         return getHost().compareTo(o.getHost());
     }
     
-    @Override
-    public void connect(UUID targetChainId){
-        connectHttp(targetChainId);
-        if(Peers.useTLS){
-            if(getState()==State.CONNECTED){
-                reConnectHttpS(targetChainId);
-            }
+    public URI getURI(boolean useTLS) throws URISyntaxException{
+        String prefix;
+        if(useTLS){
+           prefix="http://"; 
+        }else{
+           prefix="https://";             
         }
+        return new URI(prefix + announcedAddress);
     }
     
-    private void reConnectHttpS(UUID targetChainId){
-        
-    }
-    
-//TODO: 2phase connect with ws:// and wss://
-    public void connectHttp(UUID targetChainId) {
+    @Override   
+    public void handshake(UUID targetChainId) {
         lastConnectAttempt = timeService.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && announcedAddress != null) {
                 try {
-                    URI uri = new URI("http://" + announcedAddress);
+                    URI uri = getURI(false);
                     InetAddress inetAddress = InetAddress.getByName(uri.getHost());
                     if (!inetAddress.equals(InetAddress.getByName(host))) {
                         LOG.debug("Connect: announced address " + announcedAddress + " now points to " + inetAddress.getHostAddress() + ", replacing peer " + host);
@@ -698,7 +712,7 @@ public final class PeerImpl implements Peer {
                         PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, announcedAddress, true);
                         if (newPeer != null) {
                             Peers.addPeer(newPeer);
-                            newPeer.connect(targetChainId);
+                            newPeer.handshake(targetChainId);
                         }
                         return;
                     }
@@ -797,7 +811,7 @@ public final class PeerImpl implements Peer {
             return true;
         }
         try {
-            URI uri = new URI("http://" + newAnnouncedAddress);
+            URI uri = getURI(false);
             int announcedPort = uri.getPort() == -1 ? Peers.getDefaultPeerPort() : uri.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
@@ -818,7 +832,7 @@ public final class PeerImpl implements Peer {
     }
 
     boolean analyzeHallmark(final String hallmarkString) {
-        if (propertiesHolder.isLightClient()) {
+        if (isLightClient) {
             return true;
         }
 

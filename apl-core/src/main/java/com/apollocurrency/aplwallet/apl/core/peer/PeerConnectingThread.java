@@ -53,7 +53,7 @@ class PeerConnectingThread implements Runnable {
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
                         connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
-                            peer.connect(Peers.blockchainConfig.getChain().getChainId());
+                            peer.handshake(Peers.blockchainConfig.getChain().getChainId());
                             if (peer.getState() == Peer.State.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
                                 peer.deactivate();
@@ -67,7 +67,7 @@ class PeerConnectingThread implements Runnable {
                 }
                 Peers.peers.values().forEach((peer) -> {
                     if (peer.getState() == Peer.State.CONNECTED && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
-                        Peers.peersExecutorService.submit(() -> peer.connect(Peers.blockchainConfig.getChain().getChainId()));
+                        Peers.peersExecutorService.submit(() -> peer.handshake(Peers.blockchainConfig.getChain().getChainId()));
                     }
                     if (peer.getLastInboundRequest() != 0 && now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
                         peer.setLastInboundRequest(0);

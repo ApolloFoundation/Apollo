@@ -533,7 +533,7 @@ public final class Peers {
 
         PeerImpl peer;
         if ((peer = peers.get(host)) != null) {
-            LOG.debug("Return existing peer from map {}", peer);
+            LOG.debug("Returning existing peer from map {}", peer);
             return peer;
         }
         if (!create) {
@@ -546,7 +546,7 @@ public final class Peers {
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
             return null;
         }
-        peer = new PeerImpl(host, announcedAddress);
+        peer = new PeerImpl(host, announcedAddress,blockchainConfig, blockchain, timeService,propertiesHolder);
         return peer;
     }
 
@@ -611,7 +611,7 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        ((PeerImpl)peer).connect(blockchainConfig.getChain().getChainId());
+        peer.handshake(blockchainConfig.getChain().getChainId());
     }
 
     public static void sendToSomePeers(Block block) {
