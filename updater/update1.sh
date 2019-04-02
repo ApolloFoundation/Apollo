@@ -103,7 +103,8 @@ then
     curl https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
     tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
     cp apollo-wallet-deps-${VERSION}/* $1/lib
-
+    
+    rm -rf apollo-wallet-deps-${VERSION}*
 
 # Install JRE
 #    notify "Installing Java Runtime..."
