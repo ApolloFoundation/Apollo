@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
 public class MigratorUtil {
     public static Path getLegacyHomeDir() {
@@ -19,7 +20,7 @@ public class MigratorUtil {
                 homeDirPath = Paths.get(System.getProperty("user.home"), ".apollo");
             }
         } else {
-            homeDirPath = Paths.get("");
+            homeDirPath = DirProvider.getBinDir();
         }
         return homeDirPath;
     }
