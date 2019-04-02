@@ -30,7 +30,7 @@ then
 
 # For backwards compatibility
     if [ ! -f VERSION ]; then
-	echo "Runnung from updater directory...." >>/tmp/updater_ne_tuda
+#	echo "Runnung from updater directory...." >>/tmp/updater_ne_tuda
 	cd ..
     fi
 
@@ -41,9 +41,9 @@ then
     done
     
 # it is always good idea to backup everything before removing
-NOW=`date +%Y-%m-%dT%H:%m:%S`
-BKP_NAME=${1}/../ApolloWallet-BKP-${NOW}.tar.gz 
-tar -czf ${BKP_NAME} ${1}
+#NOW=`date +%Y-%m-%dT%H:%m:%S`
+#BKP_NAME=${1}/../ApolloWallet-BKP-${NOW}.tar.gz 
+#tar -czf ${BKP_NAME} ${1}
 
 # we sould remove "conf" dir because default configs are in resources now
 # and user's configs are in ~/.apl_blockchain
