@@ -47,13 +47,13 @@ then
 
 # we sould remove "conf" dir because default configs are in resources now
 # and user's configs are in ~/.apl_blockchain
-    if [ ! -f $1/conf/apl.properties ]; then
+    if [ -f $1/conf/apl.properties ]; then
 	rm -rf $1/conf/apl-default.properties
         rm -rf $1/conf/testnet.properties
 	rm -rf $1/conf/updater.properties
 	cp $1/conf/apl.properties $1/conf/apl-blockchain.properties
 	cp $1/conf/apl.properties $1/conf/apl.properties.backup
-	cat $1/conf/apl.properties | grep -v "#" | grep apl.dbDir= | sed s/dbDir/customDbDir/ | >> $1/conf/apl-blockchain.properties
+	cat $1/conf/apl.properties | grep -v "#" | grep apl.dbDir= | sed s/dbDir/customDbDir/ >> $1/conf/apl-blockchain.properties
         rm $1/conf/apl.properties
     fi
 
