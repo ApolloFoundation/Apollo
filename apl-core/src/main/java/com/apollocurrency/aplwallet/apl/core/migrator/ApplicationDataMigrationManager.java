@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.migrator.auth2fa.TwoFactorAuthMigra
 import com.apollocurrency.aplwallet.apl.core.migrator.db.DbMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.keystore.VaultKeystoreMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +33,17 @@ public class ApplicationDataMigrationManager {
     private TwoFactorAuthMigrationExecutor twoFactorAuthMigrationExecutor;
     @Inject
     private PublicKeyMigrator publicKeyMigrator;
+    @Inject
+    private PropertiesHolder propertiesHolder;
 
     public void executeDataMigration() {
         try {
-            dbMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getDbDir().resolve(Constants.APPLICATION_DIR_NAME));
+            String customDbDir = propertiesHolder.getStringProperty("apl.customDbDir");
+            String fileName = Constants.APPLICATION_DIR_NAME;
+            if (!StringUtils.isBlank(customDbDir)) {
+                fileName = propertiesHolder.getStringProperty("apl.dbName");
+            }
+            dbMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getDbDir().resolve(fileName));
             twoFactorAuthMigrationExecutor.performMigration(AplCoreRuntime.getInstance().get2FADir());
             vaultKeystoreMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getVaultKeystoreDir());
 

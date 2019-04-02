@@ -118,6 +118,10 @@ public abstract class AbstractDirProvider implements DirProvider {
 
     @Override
     public Path getFullTextSearchIndexDir() {
-        return getDbDir().resolve(applicationName);
+        if (dbDir != null) {
+            return getDbDir().resolve("apl"); // for old clusters
+        } else {
+            return getDbDir().resolve(applicationName);
+        }
     }
 }
