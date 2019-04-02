@@ -30,6 +30,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import org.jdbi.v3.core.ConnectionException;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
@@ -179,10 +180,9 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new BigIntegerArgumentFactory());
 
         log.debug("Attempting to open Jdbi handler to database..");
-        try {
-            Integer result = jdbi.withHandle(handle ->
-                    handle.createQuery("select X from dual;")
-                            .mapTo(Integer.class).findOnly());
+        try (Handle handle = jdbi.open()) {
+            Integer result = handle.createQuery("select X from dual;")
+                    .mapTo(Integer.class).findOnly();
             log.debug("check SQL result ? = {}", result);
         } catch (ConnectionException e) {
             log.error("Error on opening database connection", e);

@@ -12,12 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
 import javax.enterprise.inject.Vetoed;
-import org.apache.commons.lang3.tuple.Pair;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 

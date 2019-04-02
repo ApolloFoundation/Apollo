@@ -221,9 +221,8 @@ public class Apollo {
                 .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
-  //TODO:  turn it on periodically in development process
-  // to check CDI errors
-                .devMode()
+//TODO:  turn it on periodically in development processto check CDI errors
+//                .devMode() // enable for dev only
                 .build();
 
         // init config holders

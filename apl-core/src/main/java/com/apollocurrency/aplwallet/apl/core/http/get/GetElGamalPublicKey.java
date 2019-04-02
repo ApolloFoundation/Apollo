@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import javax.servlet.http.HttpServletRequest;
 
 
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
