@@ -35,6 +35,7 @@ then
     fi
 
     until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
+	kill $(ps -ef | grep apl-de | awk '{ print $2 }')
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
 	notify "Waiting more time to stop Apollo Wallet..."
