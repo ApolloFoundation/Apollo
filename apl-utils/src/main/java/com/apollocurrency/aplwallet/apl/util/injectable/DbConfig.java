@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
@@ -22,11 +21,11 @@ public class DbConfig {
 
     @Produces
     public DbProperties getDbConfig() {
-        String customDbDir = propertiesHolder.getStringProperty("apl.customDbDir");
+//        String customDbDir = propertiesHolder.getStringProperty("apl.customDbDir");
         String dbFileName = Constants.APPLICATION_DIR_NAME;
-        if (!StringUtils.isBlank(customDbDir)) {
-            dbFileName = propertiesHolder.getStringProperty("apl.dbName");
-        }
+//        if (!StringUtils.isBlank(customDbDir)) {
+//            dbFileName = propertiesHolder.getStringProperty("apl.dbName");
+//        }
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         DbProperties dbProperties = new DbProperties()
                 .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))

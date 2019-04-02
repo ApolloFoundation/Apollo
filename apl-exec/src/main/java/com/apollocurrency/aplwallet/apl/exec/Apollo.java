@@ -245,7 +245,7 @@ public class Apollo {
         String customDbDir = properties.getProperty("apl.customDbDir");
         if (customDbDir != null) {
             Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();
-            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString()).normalize();
+            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
             System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
             return customDbPath.toAbsolutePath().toString();
         }
