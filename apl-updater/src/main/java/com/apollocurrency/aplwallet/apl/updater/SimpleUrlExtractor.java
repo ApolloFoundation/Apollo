@@ -41,19 +41,21 @@ public class SimpleUrlExtractor implements UrlExtractor {
     @Override
     public String extract(byte[] encryptedUrlBytes, Pattern urlPattern) {
         Set<CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
-        for (CertificatePair pair : certPairs) {
-            try {
-                byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
-                        pair.getFirstCertificate().getPublicKey(),
-                        pair.getSecondCertificate().getPublicKey()
-                );
-                String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
-                if (urlPattern.matcher(decryptedUrl).matches()) {
-                    LOG.debug("Decrypted url using: " + pair);
-                    return decryptedUrl;
+        if (certPairs != null) {
+            for (CertificatePair pair : certPairs) {
+                try {
+                    byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
+                            pair.getFirstCertificate().getPublicKey(),
+                            pair.getSecondCertificate().getPublicKey()
+                    );
+                    String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
+                    if (urlPattern.matcher(decryptedUrl).matches()) {
+                        LOG.debug("Decrypted url using: " + pair);
+                        return decryptedUrl;
+                    }
                 }
-            }
-            catch (GeneralSecurityException ignored) {
+                catch (GeneralSecurityException ignored) {
+                }
             }
         }
         return null;
