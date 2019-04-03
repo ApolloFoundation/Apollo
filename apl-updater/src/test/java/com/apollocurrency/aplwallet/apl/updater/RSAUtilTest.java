@@ -102,12 +102,12 @@ public class RSAUtilTest {
 
         PublicKey pubKey2 = getPublicKeyFromCertificate("certs/2_2.crt");
         PrivateKey privateKey2 = getPrivateKey("certs/2_2.key");
-        Set<UpdaterUtil.CertificatePair> pairs = new HashSet<>();
+        Set<CertificatePair> pairs = new HashSet<>();
         String expectedMessage = "http://apollocurrency/ApolloWallet-1.0.8.jar";
         DoubleByteArrayTuple doubleEncryptedBytes = RSAUtil.doubleEncrypt(privateKey1, privateKey2, expectedMessage.getBytes());
         Certificate c1 = UpdaterUtil.readCertificate("certs/1_2.crt");
         Certificate c2 = UpdaterUtil.readCertificate("certs/2_2.crt");
-        pairs.add(new UpdaterUtil.CertificatePair(c1, c2));
+        pairs.add(new CertificatePair(c1, c2));
         SimpleUrlExtractor extractor = new SimpleUrlExtractor(new RSADoubleDecryptor(), pairs);
         byte[] bytes = UpdaterUtil.concatArrays(doubleEncryptedBytes.getFirst(), doubleEncryptedBytes.getSecond());
         extractor.extract(bytes, Pattern.compile("http://apollocurrency/ApolloWallet-1.0.8.jar"));
