@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -24,7 +26,6 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,40 +36,48 @@ import java.util.stream.Stream;
 //        }
 
 public class UpdaterUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(UpdaterUtil.class);
+
     static Set<CertificatePair> certificatePairs = new HashSet<>();
     static Set<Certificate> certificates = new HashSet<>();
-    static {
+
+    public static void init(boolean useDebugCerts) {
         try {
-            Certificate certificate1_1 = readCertificate("certs/1_1.crt");
-            Certificate certificate1_2 = readCertificate("certs/1_2.crt");
-            Certificate certificate1_3 = readCertificate("certs/1_3.crt");
-            Certificate certificate2_1 = readCertificate("certs/2_1.crt");
-            Certificate certificate2_2 = readCertificate("certs/2_2.crt");
-            Certificate certificate2_3 = readCertificate("certs/2_3.crt");
-            certificates.add(certificate1_1);
-            certificates.add(certificate1_2);
-            certificates.add(certificate1_3);
-            certificates.add(certificate2_1);
-            certificates.add(certificate2_2);
-            certificates.add(certificate2_3);
-            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_1));
-            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_2));
-            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_3));
-            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_1));
-            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_2));
-            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_3));
-            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_1));
-            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_2));
-            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_3));
-        }
-        catch (CertificateException | IOException | URISyntaxException e) {
+            if (!useDebugCerts) {
+
+                Certificate certificate1_1 = readCertificate("certs/1_1.crt");
+                Certificate certificate1_2 = readCertificate("certs/1_2.crt");
+                Certificate certificate1_3 = readCertificate("certs/1_3.crt");
+                Certificate certificate2_1 = readCertificate("certs/2_1.crt");
+                Certificate certificate2_2 = readCertificate("certs/2_2.crt");
+                Certificate certificate2_3 = readCertificate("certs/2_3.crt");
+                certificates.add(certificate1_1);
+                certificates.add(certificate1_2);
+                certificates.add(certificate1_3);
+                certificates.add(certificate2_1);
+                certificates.add(certificate2_2);
+                certificates.add(certificate2_3);
+                certificatePairs.add(new CertificatePair(certificate2_1, certificate1_1));
+                certificatePairs.add(new CertificatePair(certificate2_1, certificate1_2));
+                certificatePairs.add(new CertificatePair(certificate2_1, certificate1_3));
+                certificatePairs.add(new CertificatePair(certificate2_2, certificate1_1));
+                certificatePairs.add(new CertificatePair(certificate2_2, certificate1_2));
+                certificatePairs.add(new CertificatePair(certificate2_2, certificate1_3));
+                certificatePairs.add(new CertificatePair(certificate2_3, certificate1_1));
+                certificatePairs.add(new CertificatePair(certificate2_3, certificate1_2));
+                certificatePairs.add(new CertificatePair(certificate2_3, certificate1_3));
+            } else {
+                Certificate certificate1_1 = readCertificate("debug-certs/1_1.crt");
+                Certificate certificate2_1 = readCertificate("debug-certs/2_1.crt");
+                certificates.add(certificate1_1);
+                certificates.add(certificate2_1);
+                certificatePairs.add(new CertificatePair(certificate2_1, certificate1_1));
+            }
+        } catch (CertificateException | IOException | URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    static void init() {
-        //force init of certificates
-    }
     public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
                                                              String secondCertificatePrefix, String certificateSuffix) throws IOException,
             CertificateException {
@@ -99,7 +108,7 @@ public class UpdaterUtil {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
         URL resource = getResource(certificateFileName);
-        System.out.println(resource);
+        LOG.debug("Loaded resource: {}", resource);
         return cf.generateCertificate(resource.openStream());
     }
 
@@ -107,6 +116,7 @@ public class UpdaterUtil {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return cf.generateCertificate(Files.newInputStream(certificatePath));
     }
+
     public static String getStringRepresentation(Certificate cert) {
         return ((cert instanceof X509Certificate) ?
                 ((X509Certificate) cert).getSubjectX500Principal().toString() : cert.toString());
@@ -148,65 +158,15 @@ public class UpdaterUtil {
     }
 
     public static DoubleByteArrayTuple split(byte[] arr) {
-        byte[] first = ArrayUtils.subarray(arr, 0,arr.length / 2);
+        byte[] first = ArrayUtils.subarray(arr, 0, arr.length / 2);
         byte[] second = ArrayUtils.subarray(arr, arr.length / 2, arr.length);
         return new DoubleByteArrayTuple(first,
                 second);
     }
 
-    private UpdaterUtil(){}
+    private UpdaterUtil() {}
 
-    public static class CertificatePair {
-        private Certificate firstCertificate;
-        private Certificate secondCertificate;
 
-        @Override
-        public String toString() {
-            return "CertificatePair{" +
-                    "firstCertificate=" + getStringRepresentation(firstCertificate) +
-                    ", secondCertificate=" + getStringRepresentation(secondCertificate) +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof CertificatePair)) return false;
-            CertificatePair that = (CertificatePair) o;
-            return Objects.equals(firstCertificate, that.firstCertificate) &&
-                    Objects.equals(secondCertificate, that.secondCertificate);
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(firstCertificate, secondCertificate);
-        }
-
-        public Certificate getFirstCertificate() {
-            return firstCertificate;
-        }
-
-        public void setFirstCertificate(Certificate firstCertificate) {
-            this.firstCertificate = firstCertificate;
-        }
-
-        public Certificate getSecondCertificate() {
-            return secondCertificate;
-        }
-
-        public void setSecondCertificate(Certificate secondCertificate) {
-            this.secondCertificate = secondCertificate;
-        }
-
-        public CertificatePair() {
-        }
-
-        public CertificatePair(Certificate firstCertificate, Certificate secondCertificate) {
-            this.firstCertificate = firstCertificate;
-            this.secondCertificate = secondCertificate;
-        }
-    }
 
     public static Stream<Path> walk(String path) {
         try {
@@ -223,8 +183,8 @@ public class UpdaterUtil {
     }
 
     public static URL getResource(String resource) {
-            ClassLoader contextClassLoader = UpdaterUtil.class.getClassLoader();
-            return contextClassLoader.getResource(resource);
+        ClassLoader contextClassLoader = UpdaterUtil.class.getClassLoader();
+        return contextClassLoader.getResource(resource);
     }
 
     private static Stream<Path> safeWalkJar(String path, URI uri) throws Exception {

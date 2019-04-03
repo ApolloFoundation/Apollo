@@ -19,7 +19,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
 
     private String defaultCertificatesDirectory = UpdaterConstants.CERTIFICATE_DIRECTORY;
     private CertificatePairsProvider certificatePairsProvider;
-    private Set<UpdaterUtil.CertificatePair> certificatePairs;
+    private Set<CertificatePair> certificatePairs;
     private DoubleDecryptor decryptor;
 
     public SimpleUrlExtractor(DoubleDecryptor decryptor, CertificatePairsProvider certificatePairsProvider) {
@@ -27,7 +27,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
         this.certificatePairsProvider = certificatePairsProvider;
     }
 
-    public SimpleUrlExtractor(DoubleDecryptor decryptor, Set<UpdaterUtil.CertificatePair> certificatePairs) {
+    public SimpleUrlExtractor(DoubleDecryptor decryptor, Set<CertificatePair> certificatePairs) {
         this.decryptor = decryptor;
         this.certificatePairs = certificatePairs;
     }
@@ -39,23 +39,23 @@ public class SimpleUrlExtractor implements UrlExtractor {
 
     @Override
     public String extract(byte[] encryptedUrlBytes, Pattern urlPattern) {
-        Set<UpdaterUtil.CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
-        for (UpdaterUtil.CertificatePair pair : certPairs) {
-            try {
-                LOG.info("Data {}", encryptedUrlBytes.length);
-                byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
-                        pair.getFirstCertificate().getPublicKey(),
-                        pair.getSecondCertificate().getPublicKey()
-                );
-                String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
-                LOG.info("Decrypted string: {}" ,decryptedUrl);
-                if (urlPattern.matcher(decryptedUrl).matches()) {
-                    LOG.debug("Decrypted url using: " + pair);
-                    return decryptedUrl;
+        Set<CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
+        if (certPairs != null) {
+            for (CertificatePair pair : certPairs) {
+                try {
+                    byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
+                            pair.getFirstCertificate().getPublicKey(),
+                            pair.getSecondCertificate().getPublicKey()
+                    );
+                    String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
+                    if (urlPattern.matcher(decryptedUrl).matches()) {
+                        LOG.debug("Decrypted url using: " + pair);
+                        return decryptedUrl;
+                    }
                 }
-            }
-            catch (GeneralSecurityException e) {
-                LOG.info("Decr error", e);
+                catch (GeneralSecurityException e) {
+                    LOG.info("Unable to decrypt using: {}", pair);
+                }
             }
         }
         return null;
