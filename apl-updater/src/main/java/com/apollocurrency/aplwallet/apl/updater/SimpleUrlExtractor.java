@@ -20,7 +20,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
 
     private String defaultCertificatesDirectory = UpdaterConstants.CERTIFICATE_DIRECTORY;
     private CertificatePairsProvider certificatePairsProvider;
-    private Set<UpdaterUtil.CertificatePair> certificatePairs;
+    private Set<CertificatePair> certificatePairs;
     private DoubleDecryptor decryptor;
 
     public SimpleUrlExtractor(DoubleDecryptor decryptor, CertificatePairsProvider certificatePairsProvider) {
@@ -28,7 +28,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
         this.certificatePairsProvider = certificatePairsProvider;
     }
 
-    public SimpleUrlExtractor(DoubleDecryptor decryptor, Set<UpdaterUtil.CertificatePair> certificatePairs) {
+    public SimpleUrlExtractor(DoubleDecryptor decryptor, Set<CertificatePair> certificatePairs) {
         this.decryptor = decryptor;
         this.certificatePairs = certificatePairs;
     }
@@ -40,8 +40,8 @@ public class SimpleUrlExtractor implements UrlExtractor {
 
     @Override
     public String extract(byte[] encryptedUrlBytes, Pattern urlPattern) {
-        Set<UpdaterUtil.CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
-        for (UpdaterUtil.CertificatePair pair : certPairs) {
+        Set<CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
+        for (CertificatePair pair : certPairs) {
             try {
                 byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
                         pair.getFirstCertificate().getPublicKey(),

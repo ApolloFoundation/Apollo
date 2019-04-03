@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -24,7 +26,6 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,6 +36,8 @@ import java.util.stream.Stream;
 //        }
 
 public class UpdaterUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(UpdaterUtil.class);
+
     static Set<CertificatePair> certificatePairs = new HashSet<>();
     static Set<Certificate> certificates = new HashSet<>();
 
@@ -105,7 +108,7 @@ public class UpdaterUtil {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
         URL resource = getResource(certificateFileName);
-        System.out.println(resource);
+        LOG.debug("Loaded resource: {}", resource);
         return cf.generateCertificate(resource.openStream());
     }
 
@@ -162,57 +165,7 @@ public class UpdaterUtil {
 
     private UpdaterUtil() {}
 
-    public static class CertificatePair {
-        private Certificate firstCertificate;
-        private Certificate secondCertificate;
 
-        @Override
-        public String toString() {
-            return "CertificatePair{" +
-                    "firstCertificate=" + getStringRepresentation(firstCertificate) +
-                    ", secondCertificate=" + getStringRepresentation(secondCertificate) +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof CertificatePair)) return false;
-            CertificatePair that = (CertificatePair) o;
-            return Objects.equals(firstCertificate, that.firstCertificate) &&
-                    Objects.equals(secondCertificate, that.secondCertificate);
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(firstCertificate, secondCertificate);
-        }
-
-        public Certificate getFirstCertificate() {
-            return firstCertificate;
-        }
-
-        public void setFirstCertificate(Certificate firstCertificate) {
-            this.firstCertificate = firstCertificate;
-        }
-
-        public Certificate getSecondCertificate() {
-            return secondCertificate;
-        }
-
-        public void setSecondCertificate(Certificate secondCertificate) {
-            this.secondCertificate = secondCertificate;
-        }
-
-        public CertificatePair() {
-        }
-
-        public CertificatePair(Certificate firstCertificate, Certificate secondCertificate) {
-            this.firstCertificate = firstCertificate;
-            this.secondCertificate = secondCertificate;
-        }
-    }
 
     public static Stream<Path> walk(String path) {
         try {

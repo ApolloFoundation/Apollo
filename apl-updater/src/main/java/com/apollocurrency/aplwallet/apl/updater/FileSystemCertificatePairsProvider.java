@@ -45,7 +45,7 @@ public class FileSystemCertificatePairsProvider implements CertificatePairsProvi
     }
 
     @Override
-    public Set<UpdaterUtil.CertificatePair> getPairs() {
+    public Set<CertificatePair> getPairs() {
         try {
             return UpdaterUtil.buildCertificatePairs(certificateDir.toAbsolutePath().toString(), firstCertificatePrefix, secondCertificatePrefix, certificateSuffix);
         }
