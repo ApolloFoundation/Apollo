@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.updater.pdu;
 import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -58,7 +57,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }, "UpdaterShutdownThread").start();
     }
 
-    abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException;
+    abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException;
 
     private void shutdownAndRunScript(Path updateDirectory) {
         Thread scriptRunner = new Thread(() -> {
@@ -85,7 +84,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         try {
             LOG.debug("Starting platform dependent script");
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    RuntimeEnvironment.getInstance().isDesktopApplicationEnabled());
+                    !RuntimeEnvironment.getInstance().isServiceMode());
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {

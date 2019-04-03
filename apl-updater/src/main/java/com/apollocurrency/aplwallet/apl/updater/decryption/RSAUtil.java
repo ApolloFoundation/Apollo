@@ -4,18 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.updater.decryption;
 
-import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.slf4j.Logger;
 
-import javax.crypto.Cipher;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -24,9 +27,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.loadResource;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.crypto.Cipher;
 
 
 public class RSAUtil {
@@ -71,7 +72,6 @@ public class RSAUtil {
         return result;
     }
 
-
     public static byte[] encrypt(PrivateKey privateKey, byte[] message) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
@@ -103,9 +103,15 @@ public class RSAUtil {
 
     public static PrivateKey getPrivateKey(String path) throws IOException, GeneralSecurityException, URISyntaxException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
-        File file = loadResource(path);
-        PEMParser pem = new PEMParser(new FileReader(file));
-        Object keyObject = pem.readObject();
+        URL resource = UpdaterUtil.getResource(path);
+        Object keyObject = null;
+        if (resource == null) {
+            PEMParser   pem = new PEMParser(new InputStreamReader(Files.newInputStream(Paths.get(path))));
+            keyObject = pem.readObject();
+        } else {
+            PEMParser pem = new PEMParser(new InputStreamReader(resource.openStream()));
+            keyObject = pem.readObject();
+        }
         byte[] privateKeyEncoded;
         if (keyObject instanceof PEMKeyPair) {
             PEMKeyPair pair = (PEMKeyPair) keyObject;
@@ -122,7 +128,7 @@ public class RSAUtil {
 
 
     public static PublicKey getPublicKeyFromCertificate(String filename) throws CertificateException, IOException, URISyntaxException {
-        Certificate certificate = UpdaterUtil.readCertificate(loadResource(filename).toPath());
+        Certificate certificate = UpdaterUtil.readCertificate(filename);
         return certificate.getPublicKey();
     }
 

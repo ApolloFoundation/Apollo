@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.updater.decryption.DoubleDecryptor;
 import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -34,7 +33,7 @@ public class SimpleUrlExtractor implements UrlExtractor {
     }
     public SimpleUrlExtractor(DoubleDecryptor decryptor) {
         this.decryptor = decryptor;
-        this.certificatePairsProvider = new FileSystemCertificatePairsProvider(Paths.get(defaultCertificatesDirectory));
+        this.certificatePairsProvider = new FileSystemCertificatePairsProvider(defaultCertificatesDirectory);
     }
 
 
@@ -43,17 +42,20 @@ public class SimpleUrlExtractor implements UrlExtractor {
         Set<UpdaterUtil.CertificatePair> certPairs = certificatePairs != null ? certificatePairs : certificatePairsProvider.getPairs();
         for (UpdaterUtil.CertificatePair pair : certPairs) {
             try {
+                LOG.info("Data {}", encryptedUrlBytes.length);
                 byte[] urlBytes = decryptor.decrypt(encryptedUrlBytes,
                         pair.getFirstCertificate().getPublicKey(),
                         pair.getSecondCertificate().getPublicKey()
                 );
                 String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
+                LOG.info("Decrypted string: {}" ,decryptedUrl);
                 if (urlPattern.matcher(decryptedUrl).matches()) {
                     LOG.debug("Decrypted url using: " + pair);
                     return decryptedUrl;
                 }
             }
-            catch (GeneralSecurityException ignored) {
+            catch (GeneralSecurityException e) {
+                LOG.info("Decr error", e);
             }
         }
         return null;

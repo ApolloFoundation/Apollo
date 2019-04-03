@@ -6,13 +6,18 @@ package com.apollocurrency.aplwallet.apl.updater.pdu;
 
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUpdater {
     private String runTool;
     private String updateScriptPath;
+        private static final Logger LOG = LoggerFactory.getLogger(DefaultPlatformDependentUpdater.class);
 
     public DefaultPlatformDependentUpdater(String runTool, String updateScriptPath, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
         super(updaterMediator, updateInfo);
@@ -21,14 +26,16 @@ public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUp
     }
 
     @Override
-    Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException {
+    Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException {
         String[] cmdArray = new String[] {
                 runTool,
-                updateDirectory.resolve("updater").resolve(updateScriptPath).toAbsolutePath().toString(),
+                updateDirectory.resolve(updateScriptPath).toAbsolutePath().toString(), //path to update script should include all subfolders
                 appDirectory.toAbsolutePath().toString(),
                 updateDirectory.toAbsolutePath().toString(),
-                String.valueOf(isDesktop)
+                String.valueOf(userMode)
         };
-        return Runtime.getRuntime().exec(cmdArray, null, workingDirectory.toFile());
+        LOG.info("Runscript params {}", Arrays.toString(cmdArray));
+        LOG.info("Working directory {}", workingDirectory.toFile().getPath());
+        return Runtime.getRuntime().exec(cmdArray, null, DirProvider.getBinDir().toAbsolutePath().toFile());
     }
 }

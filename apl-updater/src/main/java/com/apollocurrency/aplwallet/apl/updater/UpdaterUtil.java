@@ -5,11 +5,15 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
+import org.apache.commons.lang3.ArrayUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,55 +22,85 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.stream.Stream;
+//TODO: how to read from resources
+//       ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+//        try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {
+//            // rerad from is;
+//        }
 
 public class UpdaterUtil {
-    public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
-     String secondCertificatePrefix, String certificateSuffix) {
+    static Set<CertificatePair> certificatePairs = new HashSet<>();
+    static Set<Certificate> certificates = new HashSet<>();
+    static {
         try {
-            return buildCertificatePairs(loadResourcePath(certificateDirectory), firstCertificatePrefix, secondCertificatePrefix, certificateSuffix);
+            Certificate certificate1_1 = readCertificate("certs/1_1.crt");
+            Certificate certificate1_2 = readCertificate("certs/1_2.crt");
+            Certificate certificate1_3 = readCertificate("certs/1_3.crt");
+            Certificate certificate2_1 = readCertificate("certs/2_1.crt");
+            Certificate certificate2_2 = readCertificate("certs/2_2.crt");
+            Certificate certificate2_3 = readCertificate("certs/2_3.crt");
+            certificates.add(certificate1_1);
+            certificates.add(certificate1_2);
+            certificates.add(certificate1_3);
+            certificates.add(certificate2_1);
+            certificates.add(certificate2_2);
+            certificates.add(certificate2_3);
+            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_1));
+            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_2));
+            certificatePairs.add(new CertificatePair(certificate2_1, certificate1_3));
+            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_1));
+            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_2));
+            certificatePairs.add(new CertificatePair(certificate2_2, certificate1_3));
+            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_1));
+            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_2));
+            certificatePairs.add(new CertificatePair(certificate2_3, certificate1_3));
         }
-        catch (IOException | CertificateException | URISyntaxException e) {
+        catch (CertificateException | IOException | URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
-    public static Set<CertificatePair> buildCertificatePairs(Path certificateDirectory, String firstCertificatePrefix,
+
+    static void init() {
+        //force init of certificates
+    }
+    public static Set<CertificatePair> buildCertificatePairs(String certificateDirectory, String firstCertificatePrefix,
                                                              String secondCertificatePrefix, String certificateSuffix) throws IOException,
             CertificateException {
-        Set<CertificatePair> certificatePairs = new HashSet<>();
-        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
-                secondCertificatePrefix, certificateSuffix));
-        Set<Certificate> secondDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
-                firstCertificatePrefix, certificateSuffix));
-        for (Certificate firstCertificate : firstDecryptionCertificates) {
-            for (Certificate secondCertificate : secondDecryptionCertificates) {
-                certificatePairs.add(new CertificatePair(firstCertificate, secondCertificate));
-            }
-        }
+//        Set<CertificatePair> certificatePairs = new HashSet<>();
+//        Set<Certificate> firstDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
+//                secondCertificatePrefix, certificateSuffix));
+//        Set<Certificate> secondDecryptionCertificates = readCertificates(findFiles(certificateDirectory,
+//                firstCertificatePrefix, certificateSuffix));
+//        for (Certificate firstCertificate : firstDecryptionCertificates) {
+//            for (Certificate secondCertificate : secondDecryptionCertificates) {
+//                certificatePairs.add(new CertificatePair(firstCertificate, secondCertificate));
+//            }
+//        }
         return certificatePairs;
     }
 
     public static Set<Certificate> readCertificates(Set<Path> certificateFilesPaths) throws CertificateException, IOException {
-        Iterator<Path> iterator = certificateFilesPaths.iterator();
-        Set<Certificate> certificates = new HashSet<>();
-        while (iterator.hasNext()) {
-            Path certificateFilePath = iterator.next();
-            certificates.add(readCertificate(certificateFilePath));
-        }
+//        Iterator<Path> iterator = certificateFilesPaths.iterator();
+//        Set<Certificate> certificates = new HashSet<>();
+//        while (iterator.hasNext()) {
+//            Path certificateFilePath = iterator.next();
+//            certificates.add(readCertificate(certificateFilePath));
+//        }
         return certificates;
     }
 
     public static Certificate readCertificate(String certificateFileName) throws CertificateException, IOException, URISyntaxException {
-        Path certificateFilePath = loadResourcePath(certificateFileName);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        return cf.generateCertificate(Files.newInputStream(certificateFilePath));
+
+        URL resource = getResource(certificateFileName);
+        System.out.println(resource);
+        return cf.generateCertificate(resource.openStream());
     }
 
     public static Certificate readCertificate(Path certificatePath) throws CertificateException, IOException {
@@ -83,18 +117,15 @@ public class UpdaterUtil {
     }
 
     public static Set<Certificate> readCertificates(String directory, String suffix, String... prefixes) {
-        try {
-            return readCertificates(findFiles(directory, suffix, prefixes));
-        }
-        catch (CertificateException | IOException | URISyntaxException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return certificates;
+        //        try {
+//            return readCertificates(findFiles(directory, suffix, prefixes));
+//        }
+//        catch (CertificateException | IOException  e) {
+//            throw new RuntimeException(e.toString(), e);
+//        }
     }
 
-    public static Set<Path> findFiles(String directory, String prefix, String suffix) throws IOException, URISyntaxException {
-        Path directoryPath = loadResourcePath(directory);
-        return findFiles(directoryPath, prefix, suffix);
-    }
     public static Set<Path> findFiles(Path directory, String prefix, String suffix) throws IOException {
 
         return Files.walk(directory, 1)
@@ -105,13 +136,9 @@ public class UpdaterUtil {
     }
 
 
-    public static Set<Path> findFiles(String directory, String suffix, String... prefixes) throws URISyntaxException, IOException {
-        Path directoryPath = loadResourcePath(directory);
-        return findFiles(directoryPath, suffix, prefixes);
-    }
 
-    public static Set<Path> findFiles(Path directory, String suffix, String... prefixes) throws IOException {
-        return Files.walk(directory, 1)
+    public static Set<Path> findFiles(String directory, String suffix, String... prefixes) {
+        return walk(directory)
                 .filter(filePath -> {
                     String fileName = filePath.getFileName().toString();
                     return fileName.endsWith(suffix)
@@ -181,22 +208,39 @@ public class UpdaterUtil {
         }
     }
 
-    public static File loadResource(String fileName) {
+    public static Stream<Path> walk(String path) {
         try {
-            return new File(RSAUtil.class.getClassLoader().getResource(fileName).toURI());
+            URL url = getResource(path);
+            if ("jar".equals(url.toURI().getScheme())) {
+                return safeWalkJar(path, url.toURI());
+            } else {
+                return Files.walk(Paths.get(url.toURI()));
+            }
         }
         catch (Exception e) {
-            File file = Paths.get(fileName).toFile();
-            if (file.exists()) {
-                return file;
-            } else {
-                throw new RuntimeException("Cannot load resource " + fileName, e);
-            }
+            throw new RuntimeException(e.toString(), e);
         }
     }
 
-    public static Path loadResourcePath(String fileName) throws URISyntaxException {
-        return loadResource(fileName).toPath();
+    public static URL getResource(String resource) {
+            ClassLoader contextClassLoader = UpdaterUtil.class.getClassLoader();
+            return contextClassLoader.getResource(resource);
+    }
+
+    private static Stream<Path> safeWalkJar(String path, URI uri) throws Exception {
+        try (FileSystem fs = getFileSystem(uri)) {
+            return Files.walk(fs.getPath(path));
+        }
+    }
+
+
+    private static FileSystem getFileSystem(URI uri) throws IOException {
+
+        try {
+            return FileSystems.getFileSystem(uri);
+        } catch (FileSystemNotFoundException e) {
+            return FileSystems.newFileSystem(uri, Collections.<String, String>emptyMap());
+        }
     }
 
     public static byte[] concatArrays(byte[] arr1, byte[] arr2) {
