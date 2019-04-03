@@ -32,8 +32,8 @@ ADD . /apl
 # repo has
 ADD contrib/docker_start.sh /docker_start.sh
 # set apl to listen on all interfaces
-RUN echo 'apl.allowedBotHosts=*' >> /apl/conf/apl.properties
-RUN echo 'apl.apiServerHost=0.0.0.0' >> /apl/conf/apl.properties
+RUN echo 'apl.allowedBotHosts=*' >> /apl/conf/apl-blockchain.properties
+RUN echo 'apl.apiServerHost=0.0.0.0' >> /apl/conf/apl-blockchain.properties
 RUN chmod +x /docker_start.sh
 
 RUN cd /apl; ./compile.sh
