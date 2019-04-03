@@ -23,8 +23,8 @@ echo "${ECHO_PREFIX} Apollo wallet libraries installed in directory: ${APL_LIB_D
 
 #determine version
 
-if [ -f ${APL_TOP_DIR}/VERSION ]
-    APL_VERSION=$(cat {APL_TOP_DIR}/VERSION)
+if [ -f ${APL_TOP_DIR}/VERSION ] ; then
+    APL_VERSION=$(cat ${APL_TOP_DIR}/VERSION)
 else 
     vers=`ls ${APL_LIB_DIR}/apl-utils*`
     vers=`basename $vers`
