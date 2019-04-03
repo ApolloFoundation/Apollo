@@ -36,10 +36,14 @@ if exist "%APL_TOP%\apl-exec-*.jar" (
 	set APL_LIB=%APL_TOP%\apl-exec\target\lib
 )
 
-
 @echo APL_LIB = %APL_LIB%
-@REM calculate version by parsing path
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B "%APL_LIB%\apl-tools*"') do set "APL_VER=%%k.%%l.%%m"
+if exist %APL_TOP%\VERSION (
+    set VERSION=<%APL_TOP%\VERSION
+)
+else (
+    @REM calculate version by parsing path
+    for /f tokens^=2-5^ delims^=.-_^" %%j in ('dir /B "%APL_LIB%\apl-tools*"') do set "APL_VER=%%k.%%l.%%m"
+)
 
 set APL_GUI_MAIN=%APL_LIB%\apl-desktop-%APL_VER%.jar
 

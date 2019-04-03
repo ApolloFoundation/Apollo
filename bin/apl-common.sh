@@ -6,7 +6,7 @@
 APPLICATION="${HOME}/.apl-blockchain"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-# 
+# " 
 # SCRIPT_DIR=`dirname $SCRIPT`
 
 APL_TOP_DIR=`dirname $SCRIPT_DIR`
@@ -22,12 +22,17 @@ fi
 echo "${ECHO_PREFIX} Apollo wallet libraries installed in directory: ${APL_LIB_DIR}"
 
 #determine version
-vers=`ls ${APL_LIB_DIR}/apl-utils*`
-vers=`basename $vers`
-vers=${vers##apl-utils-}
-APL_VERSION=${vers%%.jar}
-echo "${ECHO_PREFIX} Apollo verions is: ${APL_VERSION}"
 
+if [ -f ${APL_TOP_DIR}/VERSION ]
+    APL_VERSION=$(cat {APL_TOP_DIR}/VERSION)
+else 
+    vers=`ls ${APL_LIB_DIR}/apl-utils*`
+    vers=`basename $vers`
+    vers=${vers##apl-utils-}
+    APL_VERSION=${vers%%.jar}
+fi
+
+echo "${ECHO_PREFIX} Apollo verions is: ${APL_VERSION}"
 APL_TOOLS_JAR=${APL_LIB_DIR}/apl-tools-${APL_VERSION}.jar
 
 MAIN_JAR=${APL_TOP_DIR}/apl-exec-${APL_VERSION}.jar
