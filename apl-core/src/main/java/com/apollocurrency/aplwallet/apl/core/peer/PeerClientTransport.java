@@ -15,9 +15,10 @@ import org.json.simple.JSONStreamAware;
  * @author alukin@gmail.com
  */
 public class PeerClientTransport implements Closeable {
-    private WeakReference<PeerImpl> peerWR;
+    private final WeakReference<PeerImpl> peerWR;
     private PeerWebSocket ws;
     private HttpURLConnection httpConnection;
+    private boolean isSecure;
     
     public PeerClientTransport(PeerImpl peer) {
         peerWR=new WeakReference<>(peer);
@@ -27,9 +28,18 @@ public class PeerClientTransport implements Closeable {
         boolean res = false;
         PeerImpl  peer = peerWR.get();
         if(peer!=null){
-            
+            if(Peers.useWebSockets){
+                res = connectWebSockets();
+            }
+            if(!res){
+                res = connectHttpsOrHttp();
+            }                
         }
         return res;
+    }
+
+    public boolean isIsSecure() {
+        return isSecure;
     }
     
     public JSONObject sendAndGetResponse(final JSONStreamAware request, int maxResponseSize){
@@ -38,6 +48,70 @@ public class PeerClientTransport implements Closeable {
 
     @Override
     public void close() throws IOException {
-        
+        if(ws!=null){
+            ws.close();
+            ws=null;
+        }
+        if(httpConnection!=null){
+            httpConnection.disconnect();
+            httpConnection=null;
+        }                
     }
+    
+    private boolean connectWebSockets(){
+        boolean res;
+        if(!(res=connectWSS())){
+            res = connectWS();
+            isSecure = false;
+        }
+        return res;
+    }
+    
+    private boolean connectHttpsOrHttp(){
+        boolean res;
+        if(!(res=connectHTTPS())){
+            res = connectHTTP();
+            isSecure = false;
+        }
+        return res;        
+    }
+    /** 
+     * try to connect using secure web sockets
+     */ 
+    private boolean connectWSS() {
+       boolean res = false;
+       if(res){
+           isSecure=true;
+       }
+       return res;
+    }
+    /** 
+     * try to connect using insecure web sockets
+     */ 
+    private boolean connectWS() {
+       boolean res = false;
+       isSecure=false;
+       return res;
+    }
+    
+    /** 
+     * try to connect using secure https
+     */ 
+    private boolean connectHTTPS() {
+       boolean res = false;
+       if(res){
+           isSecure=true;
+       }
+       return res;
+    }
+    /** 
+     * try to connect using issecure http
+     */ 
+    private boolean connectHTTP() {
+       boolean res = false;
+       isSecure=false;
+       return res;
+    }
+    
+    
 }
