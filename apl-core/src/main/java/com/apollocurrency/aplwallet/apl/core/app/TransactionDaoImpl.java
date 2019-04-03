@@ -671,6 +671,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    @Override
     public List<Transaction> getTransactions(int fromDbId, int toDbId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();

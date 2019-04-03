@@ -49,7 +49,6 @@ import org.mockito.Mockito;
 class BlockDaoTest {
 
     @RegisterExtension
-//    DbExtension extension = new DbExtension();
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
