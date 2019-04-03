@@ -116,6 +116,7 @@ public class ChainsConfigLoaderTest {
         expectedChains.put(CHAIN2.getChainId(), CHAIN2);
         Assertions.assertEquals(expectedChains, actualChains);
     }
+
     @Test
     void testLoadFromUserDefinedLocation() throws IOException {
         Chain secondChain = CHAIN1.copy();
@@ -131,6 +132,7 @@ public class ChainsConfigLoaderTest {
         Map<UUID, Chain> expectedChains = chainsToWrite.stream().collect(Collectors.toMap(Chain::getChainId, Function.identity()));
         Assertions.assertEquals(expectedChains, actualChains);
     }
+
     @Test
     void testLoadConfigWhichWasNotFound() throws IOException {
         String wrongFileName = CONFIG_NAME + ".wrongName";

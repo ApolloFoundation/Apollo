@@ -17,7 +17,7 @@ import javax.enterprise.inject.spi.CDI;
 /**
  * Account ledger table
  */
-public class AccountLedgerTable extends DerivedDbTable {
+public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
     private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         /**
          * Create the account ledger table
@@ -40,7 +40,8 @@ public class AccountLedgerTable extends DerivedDbTable {
             }
         }
 
-        /**
+
+    /**
          * Trim the account ledger table
          *
          * @param   height                  Trim height

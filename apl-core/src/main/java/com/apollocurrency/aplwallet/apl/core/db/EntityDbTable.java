@@ -81,9 +81,11 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
          this.fullTextSearchColumns = "";
     }
 
+    //TODO remove DbKey completely from 'load' method.
     protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
 
-    protected abstract void save(Connection con, T t) throws SQLException;
+    //TODO dao implementations should not know anything about Blockchain and other services
+    protected abstract void save(Connection con, T t, int height) throws SQLException;
 
     protected String defaultSort() {
         return defaultSort;
@@ -458,7 +460,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         }
     }
 
-    public final void insert(T t) {
+    public final void insert(T t, int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -483,7 +485,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                     pstmt.executeUpdate();
                 }
             }
-            save(con, t);
+            save(con, t, height);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

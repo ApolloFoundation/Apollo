@@ -30,7 +30,7 @@ import java.sql.Statement;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class DerivedDbTable {
+public abstract class DerivedDbTable<T> {
 
     private FullTextConfig fullTextConfig;
     private DerivedTablesRegistry derivedDbTablesRegistry;
@@ -82,6 +82,8 @@ public abstract class DerivedDbTable {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
+
 
     public void truncate() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
