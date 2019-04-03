@@ -5,15 +5,14 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.28.0</version>
+        <version>1.27.15</version>
     </parent>
 
-    <artifactId>apl-tools</artifactId>
-    <name>apl-tools</name>
+    <artifactId>apl-updater</artifactId>
+    <name>apl-updater</name>
     <packaging>jar</packaging>
     
     <dependencies>
-
         <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-crypto</artifactId>
@@ -23,18 +22,17 @@
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-utils</artifactId>
             <version>${project.version}</version>
-        </dependency>   
+        </dependency> 
         <dependency>
             <groupId>com.apollocurrency</groupId>
-            <artifactId>apl-updater</artifactId>
+            <artifactId>apl-core</artifactId>
             <version>${project.version}</version>
-        </dependency>   
-        <!-- command line arguments processing -->        
-        <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-        </dependency>                  
-        <!-- unit tests -->
+        </dependency>                         
+         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>       
+<!-- unit tests -->
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
@@ -50,10 +48,20 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
@@ -63,21 +71,8 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
+
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>./</classpathPrefix>
-                            <mainClass>com.apollocurrency.aplwallet.apl.tools.ApolloTools</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-<!--            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
@@ -101,7 +96,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>           -->
+            </plugin>
         </plugins>
     </build>
 </project>
