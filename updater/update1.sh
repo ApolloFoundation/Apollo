@@ -34,8 +34,9 @@ then
 	cd ..
     fi
 
+    kill $(ps -ef | grep apl-de | awk '{ print $2 }')
+
     until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
-	kill $(ps -ef | grep apl-de | awk '{ print $2 }')
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
 	notify "Waiting more time to stop Apollo Wallet..."
@@ -64,7 +65,11 @@ then
     rm -f $1/*.vbs
     rm -rf $1/META-INF
     rm -rf $1/html
-    rm -f $1/Apollo.jar
+    rm -rf $1/bin/*
+    rm -rf $1/sbin/*
+    rm -rf $1/lib/*
+    rm -rf $1/webui/*
+    rm -rf $1/*.jar
     
     notify "Copying update files...."
     cp -vRa $2/* $1
