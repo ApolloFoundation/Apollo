@@ -4,21 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import org.junit.Ignore;
+import java.nio.file.Paths;
+import javax.xml.bind.DatatypeConverter;
 
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
@@ -78,7 +79,7 @@ public class DownloaderTest {
         @Override
         public Path download(String uri) throws IOException {
             try {
-                return UpdaterUtil.loadResourcePath(uri);
+                return Paths.get(UpdaterUtil.getResource(uri).toURI());
             } catch (URISyntaxException e) {
                 e.printStackTrace();
                 throw new IOException("can't load resource");
