@@ -1,10 +1,7 @@
 # Apollo Blockchain Platform 
-<<<<<<< HEAD
 
 Apollo is being being developed by the Apollo Foundation and supporting members of the community.
-=======
-Apollo is being developed by the Apollo Foundation and supporting members of the community.
->>>>>>> master
+
 
 ## Requirements
 Java 11 is required to run the desktop clients.
