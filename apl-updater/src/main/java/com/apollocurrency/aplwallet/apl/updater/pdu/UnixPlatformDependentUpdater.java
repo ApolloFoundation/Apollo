@@ -17,8 +17,8 @@ public class UnixPlatformDependentUpdater extends DefaultPlatformDependentUpdate
     }
 
     @Override
-    Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean isDesktop) throws IOException {
-        Process process = super.runCommand(updateDirectory, workingDirectory, appDirectory, isDesktop);
+    Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException {
+        Process process = super.runCommand(updateDirectory, workingDirectory, appDirectory, userMode);
         try {
             process.waitFor();
             return process;

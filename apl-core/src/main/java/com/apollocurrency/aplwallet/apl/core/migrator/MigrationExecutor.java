@@ -49,12 +49,14 @@ public abstract class MigrationExecutor {
 
     private static final String MIGRATION_REQUIRED_TEMPLATE = "%sMigrationRequired-%d";
     private static final String DELETE_AFTER_MIGRATION_TEMPLATE = "apl.migrator.%s.deleteAfterMigration";
+    private static final String DO_MIGRATION_TEMPLATE = "apl.migrator.%s.migrate";
     private static final int ATTEMPT = 0;
     private static DatabaseManager databaseManager;
 
     protected PropertiesHolder holder;
     protected BlockchainConfig config;
     private String migrationRequiredPropertyName;
+    private String doMigrationPropertyName;
     private String deleteAfterMigrationPropertyName;
     private String migrationItemName;
     private boolean autoCleanup;
@@ -70,6 +72,7 @@ public abstract class MigrationExecutor {
         this.holder = holder;
         this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
+        this.doMigrationPropertyName = String.format(DO_MIGRATION_TEMPLATE, migrationItemName);
         this.migrationItemName = migrationItemName;
         if (databaseManager == null) {
             if (databaseManagerParam != null) {
@@ -128,7 +131,7 @@ public abstract class MigrationExecutor {
     protected void beforeMigration() {}
 
     private boolean isMigrationRequired() {
-        return parseBooleanProperty(migrationRequiredPropertyName, true);
+        return parseBooleanProperty(migrationRequiredPropertyName, true) && holder.getBooleanProperty(doMigrationPropertyName, true);
     }
     private boolean isCleanupRequired() {
         return holder.getBooleanProperty(deleteAfterMigrationPropertyName, true);

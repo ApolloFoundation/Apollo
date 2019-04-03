@@ -16,9 +16,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.xml.bind.DatatypeConverter;
 
 public class DownloaderTest {
@@ -78,12 +76,13 @@ public class DownloaderTest {
 
         @Override
         public Path download(String uri) throws IOException {
-            try {
-                return Paths.get(UpdaterUtil.getResource(uri).toURI());
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                throw new IOException("can't load resource");
-            }
+//            try {
+//                return UpdaterUtil.loadResourcePath(uri);
+//            } catch (URISyntaxException e) {
+//                e.printStackTrace();
+//                throw new IOException("can't load resource");
+//            }
+            return null;
         }
 
     }

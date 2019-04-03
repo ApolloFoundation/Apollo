@@ -4,11 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-
-import java.security.PrivateKey;
-import java.security.PublicKey;
-
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
@@ -17,13 +12,21 @@ import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPri
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 
 public class RSAUtilTest {
@@ -90,5 +93,23 @@ public class RSAUtilTest {
                 pubKey2, pubKey1));
         Assert.assertNotNull(url);
         Assert.assertEquals(expectedMessage, url);
+    }
+
+    @Test
+    void testDecryptUrlEx() throws Exception {
+        PublicKey pubKey1 = getPublicKeyFromCertificate("certs/1_2.crt");
+        PrivateKey privateKey1 = getPrivateKey("certs/1_2.key");
+
+        PublicKey pubKey2 = getPublicKeyFromCertificate("certs/2_2.crt");
+        PrivateKey privateKey2 = getPrivateKey("certs/2_2.key");
+        Set<UpdaterUtil.CertificatePair> pairs = new HashSet<>();
+        String expectedMessage = "http://apollocurrency/ApolloWallet-1.0.8.jar";
+        DoubleByteArrayTuple doubleEncryptedBytes = RSAUtil.doubleEncrypt(privateKey1, privateKey2, expectedMessage.getBytes());
+        Certificate c1 = UpdaterUtil.readCertificate("certs/1_2.crt");
+        Certificate c2 = UpdaterUtil.readCertificate("certs/2_2.crt");
+        pairs.add(new UpdaterUtil.CertificatePair(c1, c2));
+        SimpleUrlExtractor extractor = new SimpleUrlExtractor(new RSADoubleDecryptor(), pairs);
+        byte[] bytes = UpdaterUtil.concatArrays(doubleEncryptedBytes.getFirst(), doubleEncryptedBytes.getSecond());
+        extractor.extract(bytes, Pattern.compile("http://apollocurrency/ApolloWallet-1.0.8.jar"));
     }
 }

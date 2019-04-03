@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -26,6 +24,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -146,6 +145,7 @@ public class UpdaterUtil {
     }
 
 
+
     public static Set<Path> findFiles(String directory, String suffix, String... prefixes) {
         return walk(directory)
                 .filter(filePath -> {
@@ -197,8 +197,7 @@ public class UpdaterUtil {
 
         try {
             return FileSystems.getFileSystem(uri);
-        }
-        catch (FileSystemNotFoundException e) {
+        } catch (FileSystemNotFoundException e) {
             return FileSystems.newFileSystem(uri, Collections.<String, String>emptyMap());
         }
     }
