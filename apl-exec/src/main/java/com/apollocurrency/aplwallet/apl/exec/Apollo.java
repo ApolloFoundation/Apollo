@@ -129,13 +129,13 @@ public class Apollo {
         }
     }
 
-    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, String customDbDir) {
+    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
-                StringUtils.isBlank(customDbDir) ? StringUtils.isBlank(args.dbDir) ? vars.dbDir  : args.dbDir : customDbDir,
+                customDirLocations.getDbDir().isEmpty()    ? StringUtils.isBlank(args.dbDir) ? vars.dbDir  : args.dbDir : customDirLocations.getDbDir().get(),
                 StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
-                StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
-                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile
+                customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
+                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile,
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir
         );
     }
     /**
@@ -192,7 +192,8 @@ public class Apollo {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
-        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars, getCustomDbPath(chainId, props)));
+        CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
+        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars, customDirLocations));
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
@@ -258,7 +259,7 @@ public class Apollo {
     }
 
     private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
-        String customDbDir = properties.getProperty("apl.customDbDir");
+        String customDbDir = properties.getProperty(CustomDirLocations.DB_DIR_PROPERTY_NAME);
         if (customDbDir != null) {
             Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();
             Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();

@@ -10,12 +10,15 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Objects;
 
@@ -94,7 +97,7 @@ public abstract class MigrationExecutor {
             new OptionDAO(databaseManager).set(migrationRequiredPropertyName, "false");
             if (migratedPaths != null && !migratedPaths.isEmpty()) {
                 if (autoCleanup) {
-                    performAfterMigrationCleanup();
+                    performAfterMigrationCleanup(toPath);
                 }
                 LOG.info("{} migrated successfully", migrationItemName);
             } else {
@@ -107,14 +110,33 @@ public abstract class MigrationExecutor {
         return autoCleanup;
     }
 
-    public void performAfterMigrationCleanup() throws IOException {
+    public void performAfterMigrationCleanup(Path targetPath) throws IOException {
         if (migratedPaths != null) {
             if (isCleanupRequired()) {
                 for (Path migratedPath : migratedPaths) {
-                    FileUtils.deleteDirectory(migratedPath.toFile());
+                      delete(migratedPath, targetPath);
                 }
             }
         }
+    }
+
+    private void delete(Path path, Path excluded) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (!file.startsWith(excluded)) {
+                    Files.delete(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (!excluded.startsWith(dir)) {
+                    Files.delete(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     protected abstract Migrator getMigrator();
