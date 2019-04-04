@@ -5,10 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -30,10 +26,13 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import javax.inject.Inject;
 
 @EnableWeld
 class BlockchainTest {
@@ -120,14 +119,14 @@ class BlockchainTest {
         assertNotNull(block);
         assertEquals(blockTestData.BLOCK_0.getId(), block.getId());
     }
-
-    @Disabled // doesn't work
-    @Test
-    void getLastBlock() {
-        Block block = blockchain.getLastBlock();
-        assertNotNull(block);
-        assertEquals(blockTestData.BLOCK_11.getId(), block.getId());
-    }
+// DISABLED tests still creates Weld container and do not shutdown it!!!
+//    @Disabled // doesn't work
+//    @Test
+//    void getLastBlock() {
+//        Block block = blockchain.getLastBlock();
+//        assertNotNull(block);
+//        assertEquals(blockTestData.BLOCK_11.getId(), block.getId());
+//    }
 
 
 }
