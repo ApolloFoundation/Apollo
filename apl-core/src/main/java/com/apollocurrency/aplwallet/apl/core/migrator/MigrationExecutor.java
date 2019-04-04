@@ -102,7 +102,7 @@ public abstract class MigrationExecutor {
             new OptionDAO(databaseManager).set(migrationRequiredPropertyName, "false");
             if (migratedPaths != null && !migratedPaths.isEmpty()) {
                 if (autoCleanup) {
-                    performAfterMigrationCleanup();
+                    performAfterMigrationCleanup(toPath);
                 }
                 LOG.info("{} migrated successfully", migrationItemName);
             } else {
@@ -110,15 +110,20 @@ public abstract class MigrationExecutor {
             }
         }
     }
+
     public boolean isAutoCleanup() {
         return autoCleanup;
     }
 
-    public void performAfterMigrationCleanup() throws IOException {
+    public void performAfterMigrationCleanup(Path targetPath) throws IOException {
         if (migratedPaths != null) {
             if (isCleanupRequired()) {
                 for (Path migratedPath : migratedPaths) {
-                    FileUtils.deleteDirectory(migratedPath.toFile());
+                    if (!migratedPath.equals(targetPath)) {
+                        FileUtils.deleteDirectory(migratedPath.toFile());
+                    } else {
+                        LOG.warn("Skip deletion of migrated target path {}", targetPath);
+                    }
                 }
             }
         }
