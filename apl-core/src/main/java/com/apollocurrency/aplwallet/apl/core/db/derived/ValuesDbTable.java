@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
-public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
+public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
 
     private final boolean multiversion;
     protected final KeyFactory<T> dbKeyFactory;

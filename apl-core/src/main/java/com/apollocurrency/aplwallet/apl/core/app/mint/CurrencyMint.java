@@ -99,12 +99,12 @@ public final class CurrencyMint {
     private static final VersionedEntityDbTable<CurrencyMint> currencyMintTable = new VersionedEntityDbTable<CurrencyMint>("currency_mint", currencyMintDbKeyFactory) {
 
         @Override
-        protected CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyMint(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyMint currencyMint) throws SQLException {
+        public void save(Connection con, CurrencyMint currencyMint) throws SQLException {
             currencyMint.save(con);
         }
 

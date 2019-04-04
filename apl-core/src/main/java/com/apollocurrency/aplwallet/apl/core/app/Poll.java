@@ -95,12 +95,12 @@ public final class Poll extends AbstractPoll {
     private final static EntityDbTable<Poll> pollTable = new EntityDbTable<Poll>("poll", pollDbKeyFactory, "name,description") {
 
         @Override
-        protected Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Poll(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Poll poll) throws SQLException {
+        public void save(Connection con, Poll poll) throws SQLException {
             poll.save(con);
         }
     };

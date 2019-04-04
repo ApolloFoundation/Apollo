@@ -178,12 +178,12 @@ public final class Shuffling {
     private static final VersionedEntityDbTable<Shuffling> shufflingTable = new VersionedEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
 
         @Override
-        protected Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Shuffling(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Shuffling shuffling) throws SQLException {
+        public void save(Connection con, Shuffling shuffling) throws SQLException {
             shuffling.save(con);
         }
 

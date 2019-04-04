@@ -68,12 +68,12 @@ public final class Trade {
     private static final EntityDbTable<Trade> tradeTable = new EntityDbTable<Trade>("trade", tradeDbKeyFactory) {
 
         @Override
-        protected Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Trade(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Trade trade) throws SQLException {
+        public void save(Connection con, Trade trade) throws SQLException {
             trade.save(con);
         }
 

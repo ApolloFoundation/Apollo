@@ -129,12 +129,12 @@ public final class DigitalGoodsStore {
         private static final VersionedEntityDbTable<Tag> tagTable = new VersionedEntityDbTable<Tag>("tag", tagDbKeyFactory) {
 
             @Override
-            protected Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Tag(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Tag tag) throws SQLException {
+            public void save(Connection con, Tag tag) throws SQLException {
                 tag.save(con);
             }
 
@@ -253,12 +253,12 @@ public final class DigitalGoodsStore {
         private static final VersionedEntityDbTable<Goods> goodsTable = new VersionedEntityDbTable<Goods>("goods", goodsDbKeyFactory, "name,description,tags") {
 
             @Override
-            protected Goods load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Goods load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Goods(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Goods goods) throws SQLException {
+            public void save(Connection con, Goods goods) throws SQLException {
                 goods.save(con);
             }
 
@@ -466,12 +466,12 @@ public final class DigitalGoodsStore {
         private static final VersionedEntityDbTable<Purchase> purchaseTable = new VersionedEntityDbTable<Purchase>("purchase", purchaseDbKeyFactory) {
 
             @Override
-            protected Purchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Purchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Purchase(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Purchase purchase) throws SQLException {
+            public void save(Connection con, Purchase purchase) throws SQLException {
                 purchase.save(con);
             }
 

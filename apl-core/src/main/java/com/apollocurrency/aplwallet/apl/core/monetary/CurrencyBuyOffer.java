@@ -47,12 +47,12 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
     private static final VersionedEntityDbTable<CurrencyBuyOffer> buyOfferTable = new VersionedEntityDbTable<CurrencyBuyOffer>("buy_offer", buyOfferDbKeyFactory) {
 
         @Override
-        protected CurrencyBuyOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyBuyOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyBuyOffer(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyBuyOffer buy) throws SQLException {
+        public void save(Connection con, CurrencyBuyOffer buy) throws SQLException {
             buy.save(con, table);
         }
 

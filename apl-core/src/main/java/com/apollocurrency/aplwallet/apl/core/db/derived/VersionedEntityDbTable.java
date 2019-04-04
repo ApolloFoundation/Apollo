@@ -55,7 +55,8 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 
-    public final boolean delete(T t) {
+    @Override
+    public boolean delete(T t) {
         return delete(t, false);
     }
 

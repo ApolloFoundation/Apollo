@@ -132,12 +132,12 @@ public final class PhasingPoll extends AbstractPoll {
     private static final EntityDbTable<PhasingPoll> phasingPollTable = new EntityDbTable<PhasingPoll>("phasing_poll", phasingPollDbKeyFactory) {
 
         @Override
-        protected PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PhasingPoll(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PhasingPoll poll) throws SQLException {
+        public void save(Connection con, PhasingPoll poll) throws SQLException {
             poll.save(con);
         }
 
@@ -234,12 +234,12 @@ public final class PhasingPoll extends AbstractPoll {
     private static final EntityDbTable<PhasingPollResult> resultTable = new EntityDbTable<PhasingPollResult>("phasing_poll_result", resultDbKeyFactory) {
 
         @Override
-        protected PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PhasingPollResult(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
+        public void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
             phasingPollResult.save(con);
         }
     };

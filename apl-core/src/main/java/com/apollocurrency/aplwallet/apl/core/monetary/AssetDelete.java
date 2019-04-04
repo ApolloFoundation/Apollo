@@ -58,12 +58,12 @@ public final class AssetDelete {
     private static final EntityDbTable<AssetDelete> assetDeleteTable = new EntityDbTable<AssetDelete>("asset_delete", deleteDbKeyFactory) {
 
         @Override
-        protected AssetDelete load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public AssetDelete load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new AssetDelete(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, AssetDelete assetDelete) throws SQLException {
+        public void save(Connection con, AssetDelete assetDelete) throws SQLException {
             assetDelete.save(con);
         }
 

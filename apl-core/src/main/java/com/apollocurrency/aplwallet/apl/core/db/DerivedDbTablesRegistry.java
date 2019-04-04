@@ -6,25 +6,27 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 
 /**
- * This is regitry for tables that is used in BlockchainProcessorImpl for 
+ * This is registry for tables that is used in BlockchainProcessorImpl for
  * quite mysterious purposes...
  * @author al
  */
 
 public class DerivedDbTablesRegistry {
-     private final List<DerivedDbTable> derivedTables = new CopyOnWriteArrayList<>();
+     private final List<DerivedTableInterface> derivedTables = new CopyOnWriteArrayList<>();
      private static DerivedDbTablesRegistry instance = new DerivedDbTablesRegistry();
      
     public static DerivedDbTablesRegistry getInstance(){
         return instance;
-    } 
-    public void registerDerivedTable(DerivedDbTable table) {
+    }
+
+    public void registerDerivedTable(DerivedTableInterface table) {
         derivedTables.add(table);
-    } 
-    public List<DerivedDbTable> getDerivedTables() {
+    }
+
+    public List<DerivedTableInterface> getDerivedTables() {
         return derivedTables;
     }     
   }

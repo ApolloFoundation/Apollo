@@ -44,12 +44,12 @@ public class AccountInfoTable extends VersionedEntityDbTable<AccountInfo> {
     }
 
     @Override
-    protected AccountInfo load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountInfo load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountInfo(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountInfo accountInfo) throws SQLException {
+    public void save(Connection con, AccountInfo accountInfo) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info " + "(account_id, name, description, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountInfo.accountId);

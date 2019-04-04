@@ -70,12 +70,12 @@ public final class Currency {
     private static final VersionedEntityDbTable<Currency> currencyTable = new VersionedEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
  
         @Override
-        protected Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Currency(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Currency currency) throws SQLException {
+        public void save(Connection con, Currency currency) throws SQLException {
             currency.save(con);
         }
 
@@ -132,12 +132,12 @@ public final class Currency {
     private static final VersionedEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
 
         @Override
-        protected CurrencySupply load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencySupply load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencySupply(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencySupply currencySupply) throws SQLException {
+        public void save(Connection con, CurrencySupply currencySupply) throws SQLException {
             currencySupply.save(con);
         }
 

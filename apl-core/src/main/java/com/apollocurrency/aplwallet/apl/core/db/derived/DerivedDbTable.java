@@ -32,7 +32,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class DerivedDbTable {
+public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
     protected final String table;
     protected static DatabaseManager databaseManager;
@@ -48,6 +48,7 @@ public abstract class DerivedDbTable {
         }
     }
 
+    @Override
     public void rollback(int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -62,6 +63,7 @@ public abstract class DerivedDbTable {
         }
     }
 
+    @Override
     public void truncate() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -75,14 +77,17 @@ public abstract class DerivedDbTable {
         }
     }
 
+    @Override
     public void trim(int height) {
         //nothing to trim
     }
 
+    @Override
     public void createSearchIndex(Connection con) throws SQLException {
         //implemented in EntityDbTable only
     }
 
+    @Override
     public boolean isPersistent() {
         return false;
     }

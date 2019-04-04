@@ -54,12 +54,12 @@ public final class ExchangeRequest {
     private static final EntityDbTable<ExchangeRequest> exchangeRequestTable = new EntityDbTable<ExchangeRequest>("exchange_request", exchangeRequestDbKeyFactory) {
 
         @Override
-        protected ExchangeRequest load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public ExchangeRequest load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new ExchangeRequest(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, ExchangeRequest exchangeRequest) throws SQLException {
+        public void save(Connection con, ExchangeRequest exchangeRequest) throws SQLException {
             exchangeRequest.save(con);
         }
 

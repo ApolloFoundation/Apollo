@@ -40,12 +40,12 @@ public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
     }
 
     @Override
-    protected AccountLease load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountLease load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountLease(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountLease accountLease) throws SQLException {
+    public void save(Connection con, AccountLease accountLease) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_lease " + "(lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, " + "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest) " + "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountLease.lessorId);

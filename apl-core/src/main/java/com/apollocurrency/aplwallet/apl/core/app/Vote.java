@@ -46,12 +46,12 @@ public final class Vote {
     private static final EntityDbTable<Vote> voteTable = new EntityDbTable<Vote>("vote", voteDbKeyFactory) {
 
         @Override
-        protected Vote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Vote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Vote(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Vote vote) throws SQLException {
+        public void save(Connection con, Vote vote) throws SQLException {
             vote.save(con);
         }
 

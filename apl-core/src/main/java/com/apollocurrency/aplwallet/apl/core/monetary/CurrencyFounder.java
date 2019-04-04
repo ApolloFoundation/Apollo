@@ -56,12 +56,12 @@ public class CurrencyFounder {
     private static final VersionedEntityDbTable<CurrencyFounder> currencyFounderTable = new VersionedEntityDbTable<CurrencyFounder>("currency_founder", currencyFounderDbKeyFactory) {
 
         @Override
-        protected CurrencyFounder load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyFounder load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyFounder(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyFounder currencyFounder) throws SQLException {
+        public void save(Connection con, CurrencyFounder currencyFounder) throws SQLException {
             currencyFounder.save(con);
         }
 

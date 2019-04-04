@@ -42,7 +42,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class EntityDbTable<T> extends DerivedDbTable {
+public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
 
     public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
@@ -79,9 +79,9 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
          this.fullTextSearchColumns = "";
     }
 
-    protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
+//    protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
 
-    protected abstract void save(Connection con, T t) throws SQLException;
+//    protected abstract void save(Connection con, T t) throws SQLException;
 
     protected String defaultSort() {
         return defaultSort;
@@ -218,7 +218,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
-                t = load(con, rs, dbKey);
+                t = (T)load(con, rs, dbKey);
                 if (doCache) {
                     dataSource.getCache(table).put(dbKey, t);
                 }
@@ -299,7 +299,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
-                t = load(connection, rs, dbKey);
+                t = (T) load(connection, rs, dbKey);
                 if (doCache) {
                     dataSource.getCache(table).put(dbKey, t);
                 }

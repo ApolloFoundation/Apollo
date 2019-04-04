@@ -71,12 +71,12 @@ public final class Exchange {
     private static final EntityDbTable<Exchange> exchangeTable = new EntityDbTable<Exchange>("exchange", exchangeDbKeyFactory) {
 
         @Override
-        protected Exchange load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Exchange load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Exchange(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Exchange exchange) throws SQLException {
+        public void save(Connection con, Exchange exchange) throws SQLException {
             exchange.save(con);
         }
 

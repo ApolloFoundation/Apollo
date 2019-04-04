@@ -52,12 +52,12 @@ public final class AccountRestrictions {
     static final VersionedEntityDbTable<PhasingOnly> phasingControlTable = new VersionedEntityDbTable<PhasingOnly>("account_control_phasing", phasingControlDbKeyFactory) {
 
         @Override
-        protected PhasingOnly load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PhasingOnly load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PhasingOnly(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PhasingOnly phasingOnly) throws SQLException {
+        public void save(Connection con, PhasingOnly phasingOnly) throws SQLException {
             phasingOnly.save(con);
         }
     };

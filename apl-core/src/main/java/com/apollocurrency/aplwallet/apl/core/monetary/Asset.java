@@ -60,12 +60,12 @@ public final class Asset {
     private static final VersionedEntityDbTable<Asset> assetTable = new VersionedEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
 
         @Override
-        protected Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Asset(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Asset asset) throws SQLException {
+        public void save(Connection con, Asset asset) throws SQLException {
             asset.save(con);
         }
 

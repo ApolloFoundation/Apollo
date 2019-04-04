@@ -43,12 +43,12 @@ public class AccountCurrencyTable extends VersionedEntityDbTable<AccountCurrency
     }
 
     @Override
-    protected AccountCurrency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountCurrency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountCurrency(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
+    public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountCurrency.accountId);

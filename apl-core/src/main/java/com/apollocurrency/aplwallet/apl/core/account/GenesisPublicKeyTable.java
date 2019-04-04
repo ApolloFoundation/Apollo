@@ -57,12 +57,12 @@ import javax.enterprise.inject.spi.CDI;
     }
 
     @Override
-    protected PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new PublicKey(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, PublicKey publicKey) throws SQLException {
+    public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.height = blockchain.getHeight();
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;

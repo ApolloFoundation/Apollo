@@ -122,12 +122,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", unconfirmedTransactionDbKeyFactory) {
 
         @Override
-        protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new UnconfirmedTransaction(rs);
         }
 
         @Override
-        protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+        public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
             unconfirmedTransaction.save(con);
             if (transactionCache.size() < maxUnconfirmedTransactions) {
                 transactionCache.put(unconfirmedTransaction.getDbKey(), unconfirmedTransaction);

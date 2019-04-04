@@ -108,12 +108,12 @@ public final class Alias {
     private static final VersionedEntityDbTable<Alias> aliasTable = new VersionedEntityDbTable<Alias>("alias", aliasDbKeyFactory) {
 
         @Override
-        protected Alias load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Alias load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Alias(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Alias alias) throws SQLException {
+        public void save(Connection con, Alias alias) throws SQLException {
             alias.save(con);
         }
 
@@ -136,12 +136,12 @@ public final class Alias {
     private static final VersionedEntityDbTable<Offer> offerTable = new VersionedEntityDbTable<Offer>("alias_offer", offerDbKeyFactory) {
 
         @Override
-        protected Offer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Offer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Offer(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Offer offer) throws SQLException {
+        public void save(Connection con, Offer offer) throws SQLException {
             offer.save(con);
         }
 

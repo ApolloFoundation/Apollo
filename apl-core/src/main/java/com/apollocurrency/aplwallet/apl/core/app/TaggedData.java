@@ -77,12 +77,12 @@ public class TaggedData {
             "tagged_data", taggedDataKeyFactory, "name,description,tags") {
 
         @Override
-        protected TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new TaggedData(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, TaggedData taggedData) throws SQLException {
+        public void save(Connection con, TaggedData taggedData) throws SQLException {
             taggedData.save(con);
         }
 
@@ -165,12 +165,12 @@ public class TaggedData {
             "tagged_data_timestamp", timestampKeyFactory) {
 
         @Override
-        protected Timestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Timestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Timestamp(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Timestamp timestamp) throws SQLException {
+        public void save(Connection con, Timestamp timestamp) throws SQLException {
             timestamp.save(con);
         }
 
@@ -188,12 +188,12 @@ public class TaggedData {
         private static final VersionedPersistentDbTable<Tag> tagTable = new VersionedPersistentDbTable<Tag>("data_tag", tagDbKeyFactory) {
 
             @Override
-            protected Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Tag(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Tag tag) throws SQLException {
+            public void save(Connection con, Tag tag) throws SQLException {
                 tag.save(con);
             }
 

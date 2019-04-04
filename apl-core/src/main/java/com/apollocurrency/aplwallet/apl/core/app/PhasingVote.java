@@ -46,12 +46,12 @@ public class PhasingVote {
     private static final EntityDbTable<PhasingVote> phasingVoteTable = new EntityDbTable<PhasingVote>("phasing_vote", phasingVoteDbKeyFactory) {
 
         @Override
-        protected PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PhasingVote(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PhasingVote vote) throws SQLException {
+        public void save(Connection con, PhasingVote vote) throws SQLException {
             vote.save(con);
         }
 

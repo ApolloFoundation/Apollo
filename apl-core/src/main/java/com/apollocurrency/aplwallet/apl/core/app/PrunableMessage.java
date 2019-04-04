@@ -65,12 +65,12 @@ public final class PrunableMessage {
     private static final PrunableDbTable<PrunableMessage> prunableMessageTable = new PrunableDbTable<PrunableMessage>("prunable_message", prunableMessageKeyFactory) {
 
         @Override
-        protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PrunableMessage(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PrunableMessage prunableMessage) throws SQLException {
+        public void save(Connection con, PrunableMessage prunableMessage) throws SQLException {
             prunableMessage.save(con);
         }
 
