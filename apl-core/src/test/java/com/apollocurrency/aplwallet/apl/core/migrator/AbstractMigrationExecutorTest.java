@@ -102,6 +102,53 @@ public abstract class AbstractMigrationExecutorTest {
         Assertions.assertEquals(1, paths.size());
         Assertions.assertEquals(destDir.toPath(), paths.get(0));
     }
+
+    @Test
+    public void testPerformMigrationToSelfWithDeletion() throws IOException {
+
+        initProperties(true);
+
+        File srcFolder = folder.newFolder();
+        Files.createFile(srcFolder.toPath().resolve("1"));
+        Files.createFile(srcFolder.toPath().resolve("2"));
+
+        File destDir = srcFolder;
+        MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
+                propertiesHolder));
+        Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
+        executor.performMigration(destDir.toPath());
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
+        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
+        List<Path> paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
+        Assertions.assertEquals(1, paths.size());
+        Assertions.assertEquals(destDir.toPath(), paths.get(0));
+    }
+
+    @Test
+    public void testPerformMigrationToInnerFolderWithDeletion() throws IOException {
+
+        initProperties(true);
+
+        File srcFolder = folder.newFolder();
+        Files.createFile(srcFolder.toPath().resolve("1"));
+        Files.createFile(srcFolder.toPath().resolve("2"));
+        File destDir = srcFolder.toPath().resolve("dest").toFile();
+        MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
+                propertiesHolder));
+        Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
+        executor.performMigration(destDir.toPath());
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
+        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
+        List<Path> paths = Files.list(srcFolder.toPath()).collect(Collectors.toList());
+        Assertions.assertEquals(paths.size(), 1);
+        paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
+        Assertions.assertEquals(paths.size(), 1);
+        Assertions.assertEquals(paths.get(0), srcFolder.toPath());
+    }
+
+
     @Test
     public void testPerformMigrationWithoutDeletion() throws IOException {
         initProperties(false);

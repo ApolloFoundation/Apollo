@@ -33,8 +33,7 @@ public class CmdLineArgs {
     public String updateAttachmentFile = "";
 
     //    TODO cleanup apl-default.properties
-    @Parameter(names = {"--2fa-dir"}, description = "Load/Save 2FA keys to/form specified directory. Note that this parameter will not work " +
-            "when you do not set apl.store2FAInFileSystem=true in apl-default.properties")
+    @Parameter(names = {"--2fa-dir"}, description = "Load/Save 2FA keys to/form specified directory. Note that this parameter will not work when you do not set apl.store2FAInFileSystem=true in apl-default.properties")
     public String twoFactorAuthDir = "";
     @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile = "";

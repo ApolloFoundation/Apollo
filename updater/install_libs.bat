@@ -5,7 +5,7 @@ del /S /F /Q %1\sbin
 del /S /F /Q %1\*.jar
 
 
-curl -o %1\libs.zip -k https://s3.amazonaws.com/updates.apollowallet.org/libs/ApolloWallet-%VERSION%-libs.zip
+curl --retry 100 -o %1\libs.zip -k https://s3.amazonaws.com/updates.apollowallet.org/libs/ApolloWallet-%VERSION%-libs.zip
 unzip -o %1\libs.zip -d %1
 
 del /S /F /Q %1\lib
