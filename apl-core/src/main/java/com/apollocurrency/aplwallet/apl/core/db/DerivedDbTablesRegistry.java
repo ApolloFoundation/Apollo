@@ -5,7 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 
 /**
  * This is regitry for tables that is used in BlockchainProcessorImpl for 

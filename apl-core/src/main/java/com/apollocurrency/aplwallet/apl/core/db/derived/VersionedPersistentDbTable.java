@@ -18,7 +18,9 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.db.derived;
+
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 
 public abstract class VersionedPersistentDbTable<T> extends VersionedPrunableDbTable<T> {
 

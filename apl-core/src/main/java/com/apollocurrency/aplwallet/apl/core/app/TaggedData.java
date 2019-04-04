@@ -42,10 +42,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedPrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.slf4j.Logger;
 

@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account.ControlType;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import org.slf4j.Logger;
 
 public final class AccountRestrictions {

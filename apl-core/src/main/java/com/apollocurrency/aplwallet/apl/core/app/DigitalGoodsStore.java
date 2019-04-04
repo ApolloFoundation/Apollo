@@ -39,8 +39,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.Search;
@@ -552,7 +552,7 @@ public final class DigitalGoodsStore {
             }
 
             @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            public int set(PreparedStatement pstmt, int index) throws SQLException {
                 return index;
             }
 
@@ -568,7 +568,7 @@ public final class DigitalGoodsStore {
             }
 
             @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            public int set(PreparedStatement pstmt, int index) throws SQLException {
                 pstmt.setLong(index++, value);
                 return index;
             }
@@ -587,7 +587,7 @@ public final class DigitalGoodsStore {
             }
 
             @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            public int set(PreparedStatement pstmt, int index) throws SQLException {
                 pstmt.setLong(index++, sellerId);
                 pstmt.setLong(index++, buyerId);
                 return index;
