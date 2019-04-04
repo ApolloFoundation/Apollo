@@ -90,6 +90,7 @@ public class AuthorityCheckerImpl implements AuthorityChecker {
             }
             if (caCertificate == null) {
                 Path path = downloadCACertificate(caCertificateUrl);
+                LOG.info("Downloaded ca certificate from " + caCertificateUrl);
                 caCertificate = readCertificate(path);
             }
             intermediateCertificate.verify(caCertificate.getPublicKey());

@@ -28,6 +28,10 @@ public class CmdLineArgs {
     public String dbDir = "";
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
+
+    @Parameter(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
+    public String updateAttachmentFile = "";
+
     //    TODO cleanup apl-default.properties
     @Parameter(names = {"--2fa-dir"}, description = "Load/Save 2FA keys to/form specified directory. Note that this parameter will not work " +
             "when you do not set apl.store2FAInFileSystem=true in apl-default.properties")

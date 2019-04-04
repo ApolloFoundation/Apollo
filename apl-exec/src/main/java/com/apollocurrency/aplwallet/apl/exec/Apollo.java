@@ -7,13 +7,14 @@ import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -43,9 +44,12 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
 
@@ -62,7 +66,7 @@ public class Apollo {
             "apl.enablePeerUPnP");
 
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
-    public static String logDir = ".";
+    public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
     private static Logger log;
 
@@ -84,12 +88,13 @@ public class Apollo {
         core.init();
     }
 
-    private void initUpdater() {
+    private void initUpdater(String attachmentFilePath, boolean debug) {
         if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
         UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
-        updaterCore.init();
+
+        updaterCore.init(attachmentFilePath, debug);
     }
 
     private void initAppStatusMsg() {
@@ -124,9 +129,9 @@ public class Apollo {
         }
     }
 
-    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
+    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, String customDbDir) {
         return new PredefinedDirLocations(
-                StringUtils.isBlank(args.dbDir)            ? vars.dbDir            : args.dbDir,
+                StringUtils.isBlank(customDbDir) ? StringUtils.isBlank(args.dbDir) ? vars.dbDir  : args.dbDir : customDbDir,
                 StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
                 StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
                 StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
@@ -185,11 +190,12 @@ public class Apollo {
 // init application data dir provider
 
         Map<UUID, Chain> chains = chainsConfigLoader.load();
-        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();        
-        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars));
+        UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
+        Properties props = propertiesLoader.load();
+        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars, getCustomDbPath(chainId, props)));
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
-        logDir = dirProvider.getLogsDir().toAbsolutePath().toString();
+        logDirPath = dirProvider.getLogsDir().toAbsolutePath();
 
         log = LoggerFactory.getLogger(Apollo.class);
         
@@ -227,18 +233,17 @@ public class Apollo {
 
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        app.propertiesHolder.init(propertiesLoader.load());
+        app.propertiesHolder.init(props);
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
-
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
             app.initAppStatusMsg();
             app.initCore();
             app.launchDesktopApplication();
-            app.initUpdater();
+            app.initUpdater(args.updateAttachmentFile, args.debug);
 /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
@@ -250,6 +255,17 @@ public class Apollo {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
+    }
+
+    private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
+        String customDbDir = properties.getProperty("apl.customDbDir");
+        if (customDbDir != null) {
+            Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();
+            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
+            System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
+            return customDbPath.toAbsolutePath().toString();
+        }
+        return null;
     }
 
 }

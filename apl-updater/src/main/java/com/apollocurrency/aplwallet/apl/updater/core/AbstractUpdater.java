@@ -6,23 +6,22 @@ package com.apollocurrency.aplwallet.apl.updater.core;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
-import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
+import com.apollocurrency.aplwallet.apl.util.Platform;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractUpdater implements Updater {
     private static final Logger LOG = getLogger(AbstractUpdater.class);
@@ -41,9 +40,9 @@ public abstract class AbstractUpdater implements Updater {
 
     public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait) {
         this.updateData = updateData;
-        this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getId(), updateData.getTransaction().getHeight() + blocksWait,
-                updateData.getTransaction().getHeight(), getLevel(),
-                ((UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion());
+        this.updateInfo = new UpdateInfo(true,updateData.getTransactionId(),
+                 getLevel(),
+                ((UpdateAttachment) updateData.getAttachment()).getAppVersion());
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;
         this.blocksWait = blocksWait;
@@ -53,9 +52,8 @@ public abstract class AbstractUpdater implements Updater {
     public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait,
                            PlatformDependentUpdaterFactory pduFactory) {
         this.updateData = updateData;
-        this.updateInfo = new UpdateInfo(true,updateData.getTransaction().getId(), updateData.getTransaction().getHeight() + blocksWait,
-                updateData.getTransaction().getHeight(), getLevel(),
-                ((UpdateAttachment) updateData.getTransaction().getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
+        this.updateInfo = new UpdateInfo(true,updateData.getTransactionId(), getLevel(),
+                ((UpdateAttachment) updateData.getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;
         this.blocksWait = blocksWait;
@@ -73,7 +71,7 @@ public abstract class AbstractUpdater implements Updater {
         updaterMediator.suspendBlockchain();
         if (tryUpdate()) {
             LOG.info("{} was installed successfully");
-            updaterService.update(new UpdateTransaction(updateData.getTransaction(), true));
+            updaterService.update(new UpdateTransaction(updateData.getTransactionId(), true));
             updateInfo.setUpdateState(UpdateInfo.UpdateState.FINISHED);
             return UpdateInfo.UpdateState.FINISHED;
         } else {
@@ -87,7 +85,7 @@ public abstract class AbstractUpdater implements Updater {
     }
 
     protected boolean tryUpdate() {
-        UpdateAttachment attachment = (UpdateAttachment) updateData.getTransaction().getAttachment();
+        UpdateAttachment attachment = updateData.getAttachment();
         LOG.info("Update to version: " + attachment.getAppVersion());
         //Downloader downloads update package
         Path path = updaterService.tryDownload(updateData.getDecryptedUrl(), attachment.getHash());
