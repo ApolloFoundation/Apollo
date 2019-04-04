@@ -125,8 +125,8 @@ public class Apollo {
                 customDirLocations.getDbDir().isEmpty()    ? StringUtils.isBlank(args.dbDir) ? vars.dbDir  : args.dbDir : customDirLocations.getDbDir().get(),
                 StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile
+                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile,
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir
         );
     }
     /**
