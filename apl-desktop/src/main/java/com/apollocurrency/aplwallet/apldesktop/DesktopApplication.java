@@ -440,6 +440,7 @@ public class DesktopApplication extends Application {
             webEngine.setCreatePopupHandler(
                     config -> {
                         LOG.info("popup request from webEngine");
+                        LOG.info(webEngine.getLocation());
                         return invisible.getEngine();
                     });
 
@@ -514,7 +515,7 @@ public class DesktopApplication extends Application {
             }
         }
 
-        @SuppressWarnings("WeakerAccess")
+     //   @SuppressWarnings("WeakerAccess")
         public void popupHandlerURLChange(String newValue) {
             LOG.info("popup request for " + newValue);
             Platform.runLater(() -> {
@@ -549,16 +550,17 @@ public class DesktopApplication extends Application {
                     params.put(keyValuePair[0], keyValuePair[1]);
                 }
             }
-            String requestType = params.get("requestType");
-            if (DOWNLOAD_REQUEST_TYPES.contains(requestType)) {
-                download(requestType, params);
+            
+            if (newValue.startsWith("blob:")) {
+                download(newValue);
             } else {
-                LOG.info(String.format("requestType %s is not a download request", requestType));
+                LOG.info(String.format("requestType %s is not a download request"));
             }
         }
 
-        private void download(String requestType, Map<String, String> params) {
-            //TODO: Rewrite download function
+        private void download(String requestType) { //, Map<String, String> params) {
+            LOG.info("I want to download file");
+//TODO: Rewrite download function
             /*    long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
             TaggedData taggedData = TaggedData.getData(transactionId);
             boolean retrieve = "true".equals(params.get("retrieve"));
