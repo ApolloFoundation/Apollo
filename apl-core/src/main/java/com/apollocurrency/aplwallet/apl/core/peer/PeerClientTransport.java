@@ -105,7 +105,7 @@ public class PeerClientTransport implements Closeable {
        return res;
     }
     /** 
-     * try to connect using issecure http
+     * try to connect using insecure http
      */ 
     private boolean connectHTTP() {
        boolean res = false;
