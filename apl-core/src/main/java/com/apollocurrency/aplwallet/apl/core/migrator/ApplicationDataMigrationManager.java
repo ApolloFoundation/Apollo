@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import javax.inject.Inject;
 
 /**
@@ -42,18 +43,21 @@ public class ApplicationDataMigrationManager {
 //            if (!StringUtils.isBlank(customDbDir)) {
 //                fileName = propertiesHolder.getStringProperty("apl.dbName");
 //            }
-            dbMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getDbDir().resolve(fileName));
-            twoFactorAuthMigrationExecutor.performMigration(AplCoreRuntime.getInstance().get2FADir());
-            vaultKeystoreMigrationExecutor.performMigration(AplCoreRuntime.getInstance().getVaultKeystoreDir());
+            Path targetDbPath = AplCoreRuntime.getInstance().getDbDir().resolve(fileName);
+            dbMigrationExecutor.performMigration(targetDbPath);
+            Path target2FADir = AplCoreRuntime.getInstance().get2FADir();
+            twoFactorAuthMigrationExecutor.performMigration(target2FADir);
+            Path targetKeystoreDir = AplCoreRuntime.getInstance().getVaultKeystoreDir();
+            vaultKeystoreMigrationExecutor.performMigration(targetKeystoreDir);
 
             if (!dbMigrationExecutor.isAutoCleanup()) {
-                dbMigrationExecutor.performAfterMigrationCleanup();
+                dbMigrationExecutor.performAfterMigrationCleanup(targetDbPath);
             }
             if (!vaultKeystoreMigrationExecutor.isAutoCleanup()) {
-                vaultKeystoreMigrationExecutor.performAfterMigrationCleanup();
+                vaultKeystoreMigrationExecutor.performAfterMigrationCleanup(targetKeystoreDir);
             }
             if (!twoFactorAuthMigrationExecutor.isAutoCleanup()) {
-                twoFactorAuthMigrationExecutor.performAfterMigrationCleanup();
+                twoFactorAuthMigrationExecutor.performAfterMigrationCleanup(target2FADir);
             }
             publicKeyMigrator.migrate();
         }
