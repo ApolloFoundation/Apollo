@@ -512,9 +512,13 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
                 dataSource = databaseManager.getDataSource();
             }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
-        } else {
+        }
+        // nothing to do here
+/*
+        else {
             super.trim(height, dataSource);
         }
+*/
     }
 
     public KeyFactory<T> getDbKeyFactory() {

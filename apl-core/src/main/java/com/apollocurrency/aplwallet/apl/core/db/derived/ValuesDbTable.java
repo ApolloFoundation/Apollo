@@ -141,9 +141,13 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
                 dataSource = databaseManager.getDataSource();
             }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
-        } else {
+        }
+        // nothing to do here
+/*
+        else {
             super.trim(height, dataSource);
         }
+*/
     }
 
     @Override
