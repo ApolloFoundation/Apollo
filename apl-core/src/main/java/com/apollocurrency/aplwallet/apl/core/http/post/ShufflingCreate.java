@@ -33,19 +33,13 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class ShufflingCreate extends CreateTransaction {
 
-    private static class ShufflingCreateHolder {
-        private static final ShufflingCreate INSTANCE = new ShufflingCreate();
-    }
-
-    public static ShufflingCreate getInstance() {
-        return ShufflingCreateHolder.INSTANCE;
-    }
-
-    private ShufflingCreate() {
+    public ShufflingCreate() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
                 "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }

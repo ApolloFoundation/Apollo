@@ -32,18 +32,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class RetrievePrunedTransaction extends AbstractAPIRequestHandler {
 
-    private static class RetrievePrunedTransactionHolder {
-        private static final RetrievePrunedTransaction INSTANCE = new RetrievePrunedTransaction();
-    }
-
-    public static RetrievePrunedTransaction getInstance() {
-        return RetrievePrunedTransactionHolder.INSTANCE;
-    }
-
-    private RetrievePrunedTransaction() {
+    public RetrievePrunedTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
     }
 

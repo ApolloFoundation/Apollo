@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccountBlocks extends AbstractAPIRequestHandler {
 
-    private static class GetAccountBlocksHolder {
-        private static final GetAccountBlocks INSTANCE = new GetAccountBlocks();
-    }
-
-    public static GetAccountBlocks getInstance() {
-        return GetAccountBlocksHolder.INSTANCE;
-    }
-
-    private GetAccountBlocks() {
+    public GetAccountBlocks() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "timestamp", "firstIndex", "lastIndex", "includeTransactions");
     }
 

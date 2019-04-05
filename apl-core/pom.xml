@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.27.2</version>
+        <version>1.30.0</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -31,7 +31,6 @@
         <dependency>
             <groupId>io.firstbridge</groupId>
             <artifactId>cryptolib</artifactId>
-            <version>${fbcrypto.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -231,6 +230,14 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-sqlobject</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>

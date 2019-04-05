@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MONITOR_ALREADY_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * Start a funding monitor
@@ -67,17 +68,10 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
  * APL amounts are specified with 8 decimal places.  Asset and Currency decimal places
  * are determined by the asset or currency definition.
  */
+@Vetoed
 public final class StartFundingMonitor extends AbstractAPIRequestHandler {
 
-    private static class StartFundingMonitorHolder {
-        private static final StartFundingMonitor INSTANCE = new StartFundingMonitor();
-    }
-
-    public static StartFundingMonitor getInstance() {
-        return StartFundingMonitorHolder.INSTANCE;
-    }
-
-    private StartFundingMonitor() {
+    public StartFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
                 "interval", "secretPhrase", "account", "passphrase");
     }

@@ -12,17 +12,11 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public class GenerateAccount extends AbstractAPIRequestHandler {
-    private static class GenerateAccountHolder {
-        private static final GenerateAccount INSTANCE = new GenerateAccount();
-    }
-
-    public static GenerateAccount getInstance() {
-        return GenerateAccountHolder.INSTANCE;
-    }
-    protected GenerateAccount() {
+    public GenerateAccount() {
         super(new APITag[] {APITag.ACCOUNTS}, "passphrase");
 
     }

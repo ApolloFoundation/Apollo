@@ -37,18 +37,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetTaggedDataExtendTransactionsHolder {
-        private static final GetTaggedDataExtendTransactions INSTANCE = new GetTaggedDataExtendTransactions();
-    }
-
-    public static GetTaggedDataExtendTransactions getInstance() {
-        return GetTaggedDataExtendTransactionsHolder.INSTANCE;
-    }
-
-    private GetTaggedDataExtendTransactions() {
+    public GetTaggedDataExtendTransactions() {
         super(new APITag[] {APITag.DATA}, "transaction");
     }
 

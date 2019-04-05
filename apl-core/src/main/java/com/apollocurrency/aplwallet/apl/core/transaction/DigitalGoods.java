@@ -65,7 +65,7 @@ public abstract class DigitalGoods extends TransactionType {
     public static final TransactionType LISTING = new DigitalGoods() {
         private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
                 return attachment.getName().length() + attachment.getDescription().length();
             }
@@ -418,7 +418,7 @@ public abstract class DigitalGoods extends TransactionType {
     public static final TransactionType DELIVERY = new DigitalGoods() {
         private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
                 return attachment.getGoodsDataLength() - 16;
             }

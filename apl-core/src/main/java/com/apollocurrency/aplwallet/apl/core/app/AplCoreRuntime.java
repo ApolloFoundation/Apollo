@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.Vetoed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * Runtime environment for AplCores (singleton)
  * @author alukin@gmail.com
  */
+@Vetoed
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
     public final static String WEB_UI_DIR="webui";
@@ -44,7 +46,7 @@ public class AplCoreRuntime {
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-    
+   @Vetoed 
     private static class AplCoreRuntimeHolder {
         private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
     } 

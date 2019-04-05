@@ -29,22 +29,17 @@ import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetPollVotes extends AbstractAPIRequestHandler {
-    private static class GetPollVotesHolder {
-        private static final GetPollVotes INSTANCE = new GetPollVotes();
-    }
 
-    public static GetPollVotes getInstance() {
-        return GetPollVotesHolder.INSTANCE;
-    }
-
-    private GetPollVotes() {
+    public GetPollVotes() {
         super(new APITag[] {APITag.VS}, "poll", "firstIndex", "lastIndex", "includeWeights");
     }
 

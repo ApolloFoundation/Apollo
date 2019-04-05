@@ -31,18 +31,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetAskOrder extends AbstractAPIRequestHandler {
 
-    private static class GetAskOrderHolder {
-        private static final GetAskOrder INSTANCE = new GetAskOrder();
-    }
-
-    public static GetAskOrder getInstance() {
-        return GetAskOrderHolder.INSTANCE;
-    }
-
-    private GetAskOrder() {
+    public GetAskOrder() {
         super(new APITag[] {APITag.AE}, "order");
     }
 

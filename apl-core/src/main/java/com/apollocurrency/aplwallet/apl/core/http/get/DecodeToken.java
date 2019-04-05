@@ -31,18 +31,12 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WEBSITE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TOKEN;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_WEBSITE;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DecodeToken extends AbstractAPIRequestHandler {
 
-    private static class DecodeTokenHolder {
-        private static final DecodeToken INSTANCE = new DecodeToken();
-    }
-
-    public static DecodeToken getInstance() {
-        return DecodeTokenHolder.INSTANCE;
-    }
-
-    private DecodeToken() {
+    public DecodeToken() {
         super(new APITag[] {APITag.TOKENS}, "website", "token");
     }
 

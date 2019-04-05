@@ -20,32 +20,56 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 
 public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
+    private FullTextConfig fullTextConfig;
+    private DerivedTablesRegistry derivedDbTablesRegistry;
+
     protected final String table;
-    protected static DatabaseManager databaseManager;
+    protected DatabaseManager databaseManager;
+
+    //TODO: fix injects and remove
+    private void lookupCdi(){
+        if(fullTextConfig==null){
+            fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
+        }
+        if(derivedDbTablesRegistry==null){
+            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
+        }
+    }
 
     // We should find better place for table init
-    protected DerivedDbTable(String table) {
+    protected DerivedDbTable(String table, boolean init) { // for CDI beans setUp 'false'
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        DerivedDbTablesRegistry.getInstance().registerDerivedTable(this);
-        FullTextConfig.getInstance().registerTable(table);
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if (init) {
+            init();
         }
+    }
+    protected DerivedDbTable(String table) {
+        this(table, true);
+    }
+
+
+    @PostConstruct
+    public void init() {
+        lookupCdi();
+        derivedDbTablesRegistry.registerDerivedTable(this);
+        fullTextConfig.registerTable(table);
     }
 
     @Override
@@ -77,20 +101,30 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
+/*
     @Override
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         //nothing to trim
     }
+*/
 
+    public  DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
+/*
     @Override
     public void createSearchIndex(Connection con) throws SQLException {
         //implemented in EntityDbTable only
     }
+*/
 
+/*
     @Override
     public boolean isPersistent() {
         return false;
     }
+*/
 
     @Override
     public final String toString() {

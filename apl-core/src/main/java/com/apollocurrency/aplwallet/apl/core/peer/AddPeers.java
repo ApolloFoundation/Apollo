@@ -21,21 +21,15 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-final class AddPeers extends PeerServlet.PeerRequestHandler {
+@Vetoed
+final class AddPeers extends PeerRequestHandler {
 
-    private static class AddPeersHolder {
-        private static final AddPeers INSTANCE = new AddPeers();
-    }
-
-    public static AddPeers getInstance() {
-        return AddPeersHolder.INSTANCE;
-    }
-
-    private AddPeers() {}
+    public AddPeers() {}
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {

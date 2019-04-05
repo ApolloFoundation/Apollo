@@ -55,34 +55,11 @@ import java.util.List;
 
 public final class DigitalGoodsStore {
 
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public enum Event {
         GOODS_LISTED, GOODS_DELISTED, GOODS_PRICE_CHANGE, GOODS_QUANTITY_CHANGE,
         PURCHASE, DELIVERY, REFUND, FEEDBACK
-    }
-
-//    static {
-    private static void initListener() {
-        blockchainProcessor.addListener(block -> {
-            if (block.getHeight() == 0) {
-                return;
-            }
-            List<Purchase> expiredPurchases = new ArrayList<>();
-            try (DbIterator<Purchase> iterator = Purchase.getExpiredPendingPurchases(block)) {
-                while (iterator.hasNext()) {
-                    expiredPurchases.add(iterator.next());
-                }
-            }
-            for (Purchase purchase : expiredPurchases) {
-                Account buyer = Account.getAccount(purchase.getBuyerId());
-                buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
-                        Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM()));
-                Goods.getGoods(purchase.getGoodsId()).changeQuantity(purchase.getQuantity());
-                purchase.setPending(false);
-            }
-        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
     }
 
     private static final Listeners<Goods,Event> goodsListeners = new Listeners<>();
@@ -106,7 +83,6 @@ public final class DigitalGoodsStore {
     }
 
     static void init() {
-        initListener();
         Tag.init();
         Goods.init();
         Purchase.init();
@@ -405,7 +381,7 @@ public final class DigitalGoodsStore {
             return quantity;
         }
 
-        private void changeQuantity(int deltaQuantity) {
+        public void changeQuantity(int deltaQuantity) {
             if (quantity == 0 && deltaQuantity > 0) {
                 Tag.add(this);
             }
@@ -670,7 +646,7 @@ public final class DigitalGoodsStore {
             return purchase == null || ! purchase.isPending() ? null : purchase;
         }
 
-        private static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
+        public static DbIterator<Purchase> getExpiredPendingPurchases(Block block) {
             final int timestamp = block.getTimestamp();
             Blockchain bc = blockchain;
             long privBlockId = block.getPreviousBlockId();
@@ -805,7 +781,7 @@ public final class DigitalGoodsStore {
             return isPending;
         }
 
-        private void setPending(boolean isPending) {
+        public void setPending(boolean isPending) {
             this.isPending = isPending;
             purchaseTable.insert(this);
         }

@@ -32,15 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAlias extends AbstractAPIRequestHandler {
 
-    private static class GetAliasHolder {
-        private static final GetAlias INSTANCE = new GetAlias();
-    }
-
-    public static GetAlias getInstance() {
-        return GetAliasHolder.INSTANCE;
-    }
-
-    private GetAlias() {
+    public GetAlias() {
         super(new APITag[] {APITag.ALIASES}, "alias", "aliasName");
     }
 

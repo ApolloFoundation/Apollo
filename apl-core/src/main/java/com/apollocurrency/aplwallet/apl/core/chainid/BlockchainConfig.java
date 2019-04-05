@@ -38,7 +38,7 @@ public class BlockchainConfig {
 
     public BlockchainConfig() {}
 
-    void updateChain(Chain chain, int maxPrunableLifetime) {
+    public void updateChain(Chain chain, int maxPrunableLifetime) {
 
         Objects.requireNonNull(chain, "Chain cannot be null");
         setFields(chain, maxPrunableLifetime);
@@ -135,7 +135,11 @@ public class BlockchainConfig {
         return chain;
     }
 
-    void setCurrentConfig(HeightConfig currentConfig) {
+    /**
+     * For UNIT TEST only!
+     * @param currentConfig
+     */
+    public void setCurrentConfig(HeightConfig currentConfig) {
         this.currentConfig = currentConfig;
     }
 }

@@ -32,6 +32,10 @@ public abstract class VersionedPersistentDbTable<T> extends VersionedPrunableDbT
         super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
+    public VersionedPersistentDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
+    }
+
     protected VersionedPersistentDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }

@@ -36,21 +36,15 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+@Vetoed
 public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
         private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
 
-    private static class DownloadPrunableMessageHolder {
-        private static final DownloadPrunableMessage INSTANCE = new DownloadPrunableMessage();
-    }
-
-    public static DownloadPrunableMessage getInstance() {
-        return DownloadPrunableMessageHolder.INSTANCE;
-    }
-
-    private DownloadPrunableMessage() {
+    public DownloadPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save", "account", "passphrase");
     }
 

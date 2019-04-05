@@ -1,9 +1,12 @@
 package com.apollocurrency.aplwallet.apl.util;
 
+import javax.enterprise.inject.Vetoed;
+
 /**
  *
  * @author al
  */
+@Vetoed
 public class AppStatus {
     private static AppStatusUpdater updater;
     
@@ -33,7 +36,7 @@ public class AppStatus {
     public static void setUpdater(AppStatusUpdater u){
         updater=u;
     }
-    
+    @Vetoed
     private static class AppStatusHolder {
         private static final AppStatus INSTANCE = new AppStatus();
     }

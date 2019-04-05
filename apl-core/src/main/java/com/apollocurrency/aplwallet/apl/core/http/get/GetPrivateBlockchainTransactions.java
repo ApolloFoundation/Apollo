@@ -18,24 +18,17 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetPrivateBlockchainTransactionsHolder {
-        private static final GetPrivateBlockchainTransactions INSTANCE = new GetPrivateBlockchainTransactions();
-    }
-
-    public static GetPrivateBlockchainTransactions getInstance() {
-        return GetPrivateBlockchainTransactionsHolder.INSTANCE;
-    }
-
-    private GetPrivateBlockchainTransactions() {
+    public GetPrivateBlockchainTransactions() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS},  "height", "firstIndex", "lastIndex", "type", "subtype", "publicKey",
                 "secretPhrase");
     }

@@ -21,9 +21,9 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -32,17 +32,11 @@ import org.json.simple.JSONStreamAware;
 /**
  * Get the transactions
  */
-public class GetTransactions extends PeerServlet.PeerRequestHandler {
+@Vetoed
+public class GetTransactions extends PeerRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static class GetTransactionsHolder {
-        private static final GetTransactions INSTANCE = new GetTransactions();
-    }
 
-    public static GetTransactions getInstance() {
-        return GetTransactionsHolder.INSTANCE;
-    }
-
-    private GetTransactions() {}
+    public GetTransactions() {}
 
     @Override
     JSONStreamAware processRequest(JSONObject request, Peer peer) {

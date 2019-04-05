@@ -5,65 +5,44 @@
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.config.AdaptiveForgingSettings;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
-import com.apollocurrency.aplwallet.apl.util.env.config.Consensus;
+import com.apollocurrency.aplwallet.apl.util.env.config.ConsensusSettings;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 public class HeightConfig {
-    private final int maxNumberOfTransactions;
+    private final BlockchainProperties bp;
+    private final BlockTimeScaledConfig blockTimeScaledConfig;
     private final int maxPayloadLength;
-    private final long maxBalanceApl;
     private final long maxBalanceAtm;
-    private final int blockTime;
     private final long initialBaseTarget;
     private final long maxBaseTarget;
     private final long minBaseTarget;
-    private final int minBlockTimeLimit;
-    private final int maxBlockTimeLimit;
-    private final boolean isAdaptiveForgingEnabled;
-    private final int adaptiveBlockTime;
-    private final Consensus.Type consensusType;
-    private final int numberOfTransactionsInAdaptiveBlock;
-    
+
     public HeightConfig(BlockchainProperties bp) {
-        this.maxNumberOfTransactions = bp.getMaxNumberOfTransactions();
-        this.maxBalanceApl = bp.getMaxBalance();
-        this.blockTime = bp.getBlockTime();
-        this.maxPayloadLength = maxNumberOfTransactions * Constants.MIN_TRANSACTION_SIZE;
-        this.maxBalanceAtm = maxBalanceApl * Constants.ONE_APL;
-        this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(blockTime * maxBalanceApl)).longValue();
+        Objects.requireNonNull(bp, "Blockchain properties cannot be null");
+
+        this.bp = bp;
+        this.maxPayloadLength = bp.getMaxNumberOfTransactions() * Constants.MIN_TRANSACTION_SIZE;
+        this.maxBalanceAtm = bp.getMaxBalance() * Constants.ONE_APL;
+        this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(bp.getBlockTime() * bp.getMaxBalance())).longValue();
         this.maxBaseTarget = initialBaseTarget *  50;
         this.minBaseTarget = initialBaseTarget * 9 / 10;
-        this.minBlockTimeLimit = bp.getMinBlockTimeLimit();
-        this.maxBlockTimeLimit = bp.getMaxBlockTimeLimit();
-        AdaptiveForgingSettings adaptiveForgingSettings = bp.getConsensus().getAdaptiveForgingSettings();
-        this.isAdaptiveForgingEnabled = adaptiveForgingSettings.isEnabled();
-        this.adaptiveBlockTime = adaptiveForgingSettings.getAdaptiveBlockTime();
-        this.numberOfTransactionsInAdaptiveBlock = adaptiveForgingSettings.getNumberOfTransactions();
-        this.consensusType = bp.getConsensus().getType();
+        this.blockTimeScaledConfig = new BlockTimeScaledConfig(bp.getBlockTime());
     }
 
-    public int getMaxNumberOfTransactions() {
-        return maxNumberOfTransactions;
-    }
+    public int getReferencedTransactionHeightSpan() {return blockTimeScaledConfig.getReferencedTransactionHeightSpan();}
 
     public int getMaxPayloadLength() {
         return maxPayloadLength;
     }
 
-    public long getMaxBalanceAPL() {
-        return maxBalanceApl;
-    }
 
     public long getMaxBalanceATM() {
         return maxBalanceAtm;
     }
 
-    public int getBlockTime() {
-        return blockTime;
-    }
 
     public long getInitialBaseTarget() {
         return initialBaseTarget;
@@ -77,41 +56,67 @@ public class HeightConfig {
         return minBaseTarget;
     }
 
-    public int getMinBlockTimeLimit() {
-        return minBlockTimeLimit;
-    }
+    public int getHeight() {return bp.getHeight();}
 
-    public int getMaxBlockTimeLimit() {
-        return maxBlockTimeLimit;
+    public int getMaxNumberOfTransactions() {return bp.getMaxNumberOfTransactions();}
+
+    public int getBlockTime() {return bp.getBlockTime();}
+
+    public long getMaxBalanceAPL() {return bp.getMaxBalance();}
+
+    public int getMaxBlockTimeLimit() {return bp.getMaxBlockTimeLimit();}
+
+    public int getMinBlockTimeLimit() {return bp.getMinBlockTimeLimit();}
+
+    public String getShardingDigestAlgorithm() {return bp.getShardingSettings().getDigestAlgorithm();}
+
+    public ConsensusSettings.Type getConsensusType() {return bp.getConsensusSettings().getType();}
+
+    public int getAdaptiveBlockTime() {return bp.getConsensusSettings().getAdaptiveForgingSettings().getAdaptiveBlockTime();}
+
+    public int getNumberOfTransactionsInAdaptiveBlock() {
+        return bp.getConsensusSettings().getAdaptiveForgingSettings().getNumberOfTransactions();
     }
 
     public boolean isAdaptiveForgingEnabled() {
-        return isAdaptiveForgingEnabled;
+        return bp.getConsensusSettings().getAdaptiveForgingSettings().isEnabled();
     }
 
-    public int getAdaptiveBlockTime() {
-        return adaptiveBlockTime;
+    public boolean isShardingEnabled() {
+        return bp.getShardingSettings().isEnabled();
     }
 
-    public Consensus.Type getConsensusType() {
-        return consensusType;
+    public int getShardingFrequency() {
+        return bp.getShardingSettings().getFrequency();
     }
 
-    public int getNumberOfTransactionsInAdaptiveBlock() {
-        return numberOfTransactionsInAdaptiveBlock;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof HeightConfig)) return false;
+        HeightConfig that = (HeightConfig) o;
+        return maxPayloadLength == that.maxPayloadLength &&
+                maxBalanceAtm == that.maxBalanceAtm &&
+                initialBaseTarget == that.initialBaseTarget &&
+                maxBaseTarget == that.maxBaseTarget &&
+                minBaseTarget == that.minBaseTarget &&
+                Objects.equals(bp, that.bp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(bp, maxPayloadLength, maxBalanceAtm, initialBaseTarget, maxBaseTarget, minBaseTarget);
     }
 
     @Override
     public String toString() {
         return "HeightConfig{" +
-                "blockTime=" + blockTime +
+                "bp=" + bp +
+                ", maxPayloadLength=" + maxPayloadLength +
+                ", maxBalanceAtm=" + maxBalanceAtm +
                 ", initialBaseTarget=" + initialBaseTarget +
-                ", minBlockTimeLimit=" + minBlockTimeLimit +
-                ", maxBlockTimeLimit=" + maxBlockTimeLimit +
-                ", isAdaptiveForgingEnabled=" + isAdaptiveForgingEnabled +
-                ", adaptiveBlockTime=" + adaptiveBlockTime +
-                ", consensusType=" + consensusType +
-                ", numberOfTransactionsInAdaptiveBlock=" + numberOfTransactionsInAdaptiveBlock +
+                ", maxBaseTarget=" + maxBaseTarget +
+                ", minBaseTarget=" + minBaseTarget +
                 '}';
     }
 }

@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.TypeLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
@@ -60,11 +62,12 @@ public class TaggedData {
         }
 
     };
+    private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
@@ -524,7 +527,8 @@ public class TaggedData {
 
     public static void add(TransactionImpl transaction, TaggedDataUpload attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
-            TaggedData taggedData = taggedDataTable.get(transaction.getDbKey());
+            DbKey dbKey = keyFactory.newKey(transaction.getId());
+            TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());

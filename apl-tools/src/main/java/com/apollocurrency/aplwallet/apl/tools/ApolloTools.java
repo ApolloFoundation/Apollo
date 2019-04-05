@@ -3,14 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
-import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
-import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
-import com.apollocurrency.aplwallet.apl.tools.impl.HeightMonitor;
-import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
-import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
-import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.ConstantsCmd;
@@ -18,10 +10,18 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.PubKeyCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
+import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
+import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
+import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
+import com.apollocurrency.aplwallet.apl.tools.impl.HeightMonitor;
+import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
+import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
@@ -31,6 +31,10 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -40,9 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main entry point to all Apollo tools. This is Swiss Army Knife for all Apollo
@@ -92,15 +93,13 @@ public class ApolloTools {
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
-                com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                Constants.APPLICATION_DIR_NAME + ".properties",
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
-                com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                "chains.json");
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir);
         chains = chainsConfigLoader.load();
         activeChain = ChainUtils.getActiveChain(chains);
         // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);

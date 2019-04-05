@@ -23,19 +23,8 @@ package com.apollocurrency.aplwallet.apldesktop;
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.awt.*;
-
-
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
-
-
-//import com.apollocurrency.aplwallet.apl.core.app.Db;
-
-
-//import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-//import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -59,9 +48,10 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-import netscape.javascript.JSObject;
+//import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
@@ -73,12 +63,16 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+//import netscape.javascript.JSObject;
+
+//import com.apollocurrency.aplwallet.apl.core.app.Db;
+//import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+//import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -333,7 +327,7 @@ public class DesktopApplication extends Application {
         private static volatile WebEngine webEngine;
         private static volatile WebEngine webEngine2;
         private static MainApplication instance = new MainApplication();
-        private JSObject ars;
+//        private JSObject ars;
         private volatile long updateTime;
         private JavaScriptBridge javaScriptBridge;
       
@@ -400,16 +394,18 @@ public class DesktopApplication extends Application {
                             LOG.debug("loadWorker state change ignored");
                             return;
                         }
+/*
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         javaScriptBridge = new JavaScriptBridge(this); // Must be a member variable to prevent gc
                         window.setMember("java", javaScriptBridge);
                         Locale locale = Locale.getDefault();
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
+*/
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
 //TODO: Get Blockchain config from API
-                        //mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
-                        mainStage.setTitle("Apollo" + " Desktop - " + webEngine.getLocation());
+//                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
+//                        mainStage.setTitle("Apollo" + " Desktop - " + webEngine.getLocation());
 
                        // updateClientState("Desktop Wallet started");
 /*                       
@@ -440,6 +436,7 @@ public class DesktopApplication extends Application {
             webEngine.setCreatePopupHandler(
                     config -> {
                         LOG.info("popup request from webEngine");
+                        LOG.info(webEngine.getLocation());
                         return invisible.getEngine();
                     });
 
@@ -514,7 +511,7 @@ public class DesktopApplication extends Application {
             }
         }
 
-        @SuppressWarnings("WeakerAccess")
+     //   @SuppressWarnings("WeakerAccess")
         public void popupHandlerURLChange(String newValue) {
             LOG.info("popup request for " + newValue);
             Platform.runLater(() -> {
@@ -549,16 +546,17 @@ public class DesktopApplication extends Application {
                     params.put(keyValuePair[0], keyValuePair[1]);
                 }
             }
-            String requestType = params.get("requestType");
-            if (DOWNLOAD_REQUEST_TYPES.contains(requestType)) {
-                download(requestType, params);
+            
+            if (newValue.startsWith("blob:")) {
+                download(newValue);
             } else {
-                LOG.info(String.format("requestType %s is not a download request", requestType));
+                LOG.info(String.format("requestType %s is not a download request"));
             }
         }
 
-        private void download(String requestType, Map<String, String> params) {
-            //TODO: Rewrite download function
+        private void download(String requestType) { //, Map<String, String> params) {
+            LOG.info("I want to download file");
+//TODO: Rewrite download function
             /*    long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
             TaggedData taggedData = TaggedData.getData(transactionId);
             boolean retrieve = "true".equals(params.get("retrieve"));
@@ -715,20 +713,10 @@ public class DesktopApplication extends Application {
                 System.exit(0);
             });
         }
-<<<<<<< HEAD
+
         */
         
-        /*private Alert reindexDbUI() throws SQLException {
-            FullTextTrigger.reindex(Db.getDb().getConnection());
-=======
 
-        private Alert reindexDbUI() throws SQLException {
-            FullTextSearchService searchService = CDI.current().select(FullTextSearchService.class).get();
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            searchService.reindexAll(dataSource.getConnection());
->>>>>>> develop
-            return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
-        }*/
 
 
         private Alert prepareAlert(Alert.AlertType alertType, String title, String contentText, int height, ButtonType... buttons) {

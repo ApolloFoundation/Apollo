@@ -4,20 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import javax.sql.DataSource;
-
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
-import com.apollocurrency.aplwallet.apl.core.db.DbTest;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
+import javax.sql.DataSource;
 
-public class DbUtilsTest extends DbTest {
+public class DbUtilsTest {
     private static final TableData CURRENCY_TABLE_DATA = new TableData(
             0,
             "currency",
@@ -41,9 +40,11 @@ public class DbUtilsTest extends DbTest {
             Arrays.asList(Types.BIGINT, Types.VARBINARY, Types.BOOLEAN),
             Collections.emptyList());
 
+    @RegisterExtension
+    DbExtension dbExtension = new DbExtension();
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {
-        DataSource db = getDataSource();
+        DataSource db = dbExtension.getDatabaseManger().getDataSource();
         try (Connection con = db.getConnection()) {
             TableData result = DbUtils.getTableData(con, "currency", "PUBLIC");
             Assertions.assertEquals(CURRENCY_TABLE_DATA, result);
@@ -52,7 +53,7 @@ public class DbUtilsTest extends DbTest {
 
     @Test
     public void testGetDbInfoForNonIndexedTable() throws SQLException {
-        DataSource db = getDataSource();
+        DataSource db = dbExtension.getDatabaseManger().getDataSource();
         try (Connection con = db.getConnection()) {
             TableData result = DbUtils.getTableData(con, "two_factor_auth", "PUBLIC");
             Assertions.assertEquals(TWO_FACTOR_AUTH_TABLE_DATA, result);

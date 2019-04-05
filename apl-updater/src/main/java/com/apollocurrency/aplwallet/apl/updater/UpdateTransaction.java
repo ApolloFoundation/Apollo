@@ -5,32 +5,30 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-
-import java.util.Objects;
 
 public class UpdateTransaction {
     private Transaction transaction;
+    private Long transactionId;
     private boolean updated;
 
-    public UpdateTransaction(Transaction transaction, boolean updated) {
+    public UpdateTransaction(Transaction transaction, Long transactionId, boolean updated) {
         this.transaction = transaction;
+        this.updated = updated;
+        this.transactionId = transactionId;
+    }
+
+    public UpdateTransaction(Long transactionId, boolean updated) {
+        this.transactionId = transactionId;
         this.updated = updated;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UpdateTransaction)) return false;
-        UpdateTransaction that = (UpdateTransaction) o;
-        return updated == that.updated &&
-                Objects.equals(transaction, that.transaction);
+    public Long getTransactionId() {
+        return transactionId;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(transaction, updated);
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
     }
 
     public Transaction getTransaction() {

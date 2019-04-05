@@ -60,10 +60,11 @@ public abstract class DbVersion {
                     throw new RuntimeException("Invalid version table");
                 }
                 rs.close();
-                log.info("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
+                log.debug("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
             } catch (SQLException e) {
                 log.info("Initializing an empty database");
                 stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL)");
+                con.commit();
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();
             }
@@ -89,22 +90,24 @@ public abstract class DbVersion {
             stmt = con.createStatement();
             try {
                 if (sql != null) {
-                    log.debug("Will apply sql:\n" + sql);
+                    log.trace("Will apply sql:\n" + sql);
                     stmt.executeUpdate(sql);
                 }
                 stmt.executeUpdate("UPDATE version SET next_update = next_update + 1");
                 con.commit();
             } catch (Exception e) {
+                log.error("Incremental update error, rolling back", e);
                 DbUtils.rollback(con);
                 throw e;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Database error executing " + sql, e);
+            log.error("Apply error for SQL = '" + sql + "'", e);
+            throw new RuntimeException("Database error executing: " + sql, e);
         } finally {
             DbUtils.close(stmt, con);
         }
     }
 
-    protected abstract void update(int nextUpdate);
+    protected abstract int update(int nextUpdate);
 
 }
