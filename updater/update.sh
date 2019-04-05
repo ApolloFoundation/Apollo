@@ -2,7 +2,7 @@
 # This script is used by Updater for Linux and MacOS to update application directory
 # first parameter is a current directory, where wallet is executing now (directory, which we should update)
 # second parameter is a update directory which contains unpacked jar for update
-# third parameter is a boolean flag, which indicates desktop mode
+# third parameter is a boolean flag, which indicates user mode
 
  
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"

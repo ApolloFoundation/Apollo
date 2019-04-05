@@ -4,29 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import javax.sql.DataSource;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
-
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 
 public class UpdaterDbTest {
        private static final DbManipulator manipulator = new DbManipulator();
@@ -58,7 +57,7 @@ public class UpdaterDbTest {
     @Test
     public void testSaveUpdateTransaction() throws Exception {
         repository.clear();
-        repository.save(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
+        repository.save(new UpdateTransaction(-4081443370478530685L, false));
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(Update.CRITICAL, transaction.getType());
@@ -72,7 +71,7 @@ public class UpdaterDbTest {
 
     @Test
     public void testClearAndSaveUpdateTransaction() {
-        repository.clearAndSave(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
+        repository.clearAndSave(new UpdateTransaction(-4081443370478530685L, false));
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         Assert.assertEquals(-4081443370478530685L, transaction.getId());
@@ -82,7 +81,7 @@ public class UpdaterDbTest {
 
     @Test(expected = RuntimeException.class)
     public void testSaveTwoUpdateTransactions() {
-        repository.save(new UpdateTransaction(new SimpleTransaction(-4081443370478530685L, null), false));
+        repository.save(new UpdateTransaction(-4081443370478530685L, false));
         UpdateTransaction last = repository.getLast();
     }
     private class MockUpdaterMediator extends UpdaterMediatorImpl {

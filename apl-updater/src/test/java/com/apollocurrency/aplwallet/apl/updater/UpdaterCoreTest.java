@@ -12,17 +12,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
-import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -36,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +38,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 @RunWith(MockitoJUnitRunner.class)
+
 public class UpdaterCoreTest {
 
     private UpdateAttachment attachment = UpdateAttachment.getAttachment(
@@ -78,13 +78,13 @@ public class UpdaterCoreTest {
     public void testInitNotUpdatedTransaction() throws Exception {
         SimpleTransaction mockTransaction = new SimpleTransaction(0, Update.CRITICAL);
         mockTransaction.setAttachment(attachment);
-        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
+        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
-        when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(mockTransaction, decryptedUrl));
+        when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
 
-        spy.init();
+        spy.init(null, false);
         TimeUnit.SECONDS.sleep(2);
         verify(spy, times(1)).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
@@ -96,9 +96,9 @@ public class UpdaterCoreTest {
     public void testInitNotUpdatedMinorTransaction() throws Exception {
         SimpleTransaction mockTransaction = new SimpleTransaction(0, Update.MINOR);
         mockTransaction.setAttachment(attachment);
-        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
+        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
-        when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(mockTransaction, decryptedUrl));
+        when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
 
@@ -127,7 +127,7 @@ public class UpdaterCoreTest {
     @Test
     public void testInitNotUpdatedNullUpdateData() throws Exception {
         Transaction mockTransaction = new SimpleTransaction(1L, Update.MINOR);
-        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, false);
+        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
@@ -145,7 +145,7 @@ public class UpdaterCoreTest {
     public void testInitUpdatedCriticalUpdateGreaterUpdateVersion() throws Exception {
         SimpleTransaction mockTransaction = new SimpleTransaction(1L, Update.CRITICAL);
         mockTransaction.setAttachment(attachment);
-        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, true);
+        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
@@ -166,7 +166,7 @@ public class UpdaterCoreTest {
     public void testInitUpdatedNonCriticalUpdateGreaterUpdateVersion() throws Exception {
         SimpleTransaction mockTransaction = new SimpleTransaction(1L, Update.IMPORTANT);
         mockTransaction.setAttachment(attachment);
-        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, true);
+        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
@@ -183,7 +183,7 @@ public class UpdaterCoreTest {
     public void testInitUpdatedAllUpdatesLesserOrEqualUpdateVersion() throws Exception {
         SimpleTransaction mockTransaction = new SimpleTransaction(1L, Update.IMPORTANT);
         mockTransaction.setAttachment(attachment);
-        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction, true);
+        UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
         UpdaterCore spy = spy(updaterCore);
@@ -202,10 +202,10 @@ public class UpdaterCoreTest {
     public void testStartMinorUpdate() throws InterruptedException {
         SimpleTransaction mockTransaction = new SimpleTransaction(3L, Update.MINOR);
         mockTransaction.setAttachment(attachment);
-        UpdateData updateData = new UpdateData(mockTransaction, decryptedUrl);
+        UpdateData updateData = new UpdateData(attachment, mockTransaction.getId(), decryptedUrl);
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
                 transactionVerifier);
-        doReturn(new UpdateTransaction(mockTransaction, false)).when(updaterService).getLast();
+        doReturn(new UpdateTransaction(mockTransaction.getId(), false)).when(updaterService).getLast();
         doReturn(updateData).when(transactionVerifier).process(mockTransaction);
         UpdaterCore spy = spy(updaterCore);
 
