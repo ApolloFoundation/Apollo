@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 
 import java.sql.Connection;
@@ -33,7 +33,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
 
 
     @Override
-    protected PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new PhasingPollResult(rs);
     }
 
@@ -42,7 +42,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     }
 
     @Override
-    protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
+    public void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
         phasingPollResult.save(con);
     }
 };

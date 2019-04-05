@@ -20,7 +20,8 @@ public class UpdaterConstants {
     static {
         updaterProperties = new Properties();
         //TODO: check it, there's no "conf" directory anymore
-        try (InputStream is = UpdaterConstants.class.getClassLoader().getResourceAsStream("conf/updater.properties")) {
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {
             updaterProperties.load(is);
         }
         catch (Throwable e) {

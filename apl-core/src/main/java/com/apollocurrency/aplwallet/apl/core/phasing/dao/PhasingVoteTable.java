@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 
 import java.sql.Connection;
@@ -35,12 +35,12 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     }
 
     @Override
-    protected PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new PhasingVote(rs);
     }
 
     @Override
-    protected void save(Connection con, PhasingVote vote) throws SQLException {
+    public void save(Connection con, PhasingVote vote) throws SQLException {
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_vote (vote_id, transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?, ?)")) {

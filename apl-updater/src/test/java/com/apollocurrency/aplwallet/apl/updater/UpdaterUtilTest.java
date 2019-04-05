@@ -56,10 +56,10 @@ public class UpdaterUtilTest {
         createCertificateMocksForFiles(certificateFactoryMock, files);
 
         // Call tested method
-        Set<UpdaterUtil.CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
+        Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
 
         Assert.assertNotNull(result);
-        for(UpdaterUtil.CertificatePair pair : result) {
+        for(CertificatePair pair : result) {
             System.out.println("pair: [" + pair.getFirstCertificate().toString() + ", " + pair.getSecondCertificate().toString() + "]");
         }
 
@@ -142,8 +142,8 @@ public class UpdaterUtilTest {
      * @param second
      * @return
      */
-    private static boolean containsPair(Set<UpdaterUtil.CertificatePair> pairs, String first, String second) {
-        for(UpdaterUtil.CertificatePair pair : pairs) {
+    private static boolean containsPair(Set<CertificatePair> pairs, String first, String second) {
+        for(CertificatePair pair : pairs) {
             if( pair.getFirstCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + first) &&
                 pair.getSecondCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + second)) {
                 return true;

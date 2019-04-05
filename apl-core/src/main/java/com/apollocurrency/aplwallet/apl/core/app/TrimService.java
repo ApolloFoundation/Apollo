@@ -4,17 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
+
+import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class TrimService {
@@ -65,7 +65,7 @@ public class TrimService {
         lastTrimHeight = Math.max(height - maxRollback, 0);
         long onlyTrimTime = 0;
         if (lastTrimHeight > 0) {
-            for (DerivedDbTable table : dbTablesRegistry.getDerivedTables()) {
+            for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
                 globalSync.readLock();
                 try {
                     if (dataSource == null) {

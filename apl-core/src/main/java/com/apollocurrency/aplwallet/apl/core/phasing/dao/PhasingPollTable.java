@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -46,7 +46,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
 
     @Override
-    protected PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new PhasingPoll(rs);
     }
 
@@ -55,7 +55,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    protected void save(Connection con, PhasingPoll poll) throws SQLException {
+    public void save(Connection con, PhasingPoll poll) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll (id, account_id, "
                 + "finish_height, whitelist_size, voting_model, quorum, min_balance, holding_id, "
                 + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {

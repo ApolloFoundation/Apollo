@@ -6,18 +6,18 @@ package com.apollocurrency.aplwallet.apl.updater.repository;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.slf4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.inject.Inject;
 
 public class UpdaterDbRepository implements UpdaterRepository {
     private static final Logger LOG = getLogger(UpdaterDbRepository.class);
@@ -55,7 +55,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
                 Transaction tr = updaterMediator.loadTransaction(connection, rs);
                 boolean updated = rs.getBoolean("updated");
                 checkInconsistency(rs);
-                return new UpdateTransaction(tr, updated);
+                return new UpdateTransaction(tr,tr.getId(), updated);
             }
         }
         catch (SQLException | AplException.NotValidException e) {
@@ -79,7 +79,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
     public void save(Connection connection, UpdateTransaction transaction) {
 
         try (PreparedStatement pstm = connection.prepareStatement("INSERT INTO update_status (transaction_id, updated) values (?, ?)")) {
-            pstm.setLong(1, transaction.getTransaction().getId());
+            pstm.setLong(1, transaction.getTransactionId());
             pstm.setBoolean(2, transaction.isUpdated());
             int i = pstm.executeUpdate();
             if (i != 1) {
@@ -97,7 +97,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstm = connection.prepareStatement("UPDATE update_status SET updated = ? WHERE transaction_id = ?")) {
             pstm.setBoolean(1, transaction.isUpdated());
-            pstm.setLong(2, transaction.getTransaction().getId());
+            pstm.setLong(2, transaction.getTransactionId());
         }
         catch (SQLException e) {
             LOG.error(e.toString(), e);

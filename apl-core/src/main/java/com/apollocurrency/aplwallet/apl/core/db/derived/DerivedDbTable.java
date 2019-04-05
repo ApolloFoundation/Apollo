@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
@@ -101,25 +102,33 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
+/*
+    @Override
     @Override
     public void trim(int height, TransactionalDataSource dataSource) {
 
         //nothing to trim
     }
+*/
 
     public  DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
 
+/*
     @Override
     public void createSearchIndex(Connection con) throws SQLException {
         //implemented in EntityDbTable only
     }
+*/
 
+/*
     @Override
     public boolean isPersistent() {
         return false;
     }
+*/
 
     @Override
     public final String toString() {

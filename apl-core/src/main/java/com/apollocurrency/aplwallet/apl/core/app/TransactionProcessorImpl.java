@@ -26,6 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -126,12 +127,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", keyFactory) {
 
                     @Override
-                    protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                    public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                         return new UnconfirmedTransaction(rs);
                     }
 
                     @Override
-                    protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+                    public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
                         unconfirmedTransaction.save(con);
                         if (transactionCache.size() < maxUnconfirmedTransactions) {
                             DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());

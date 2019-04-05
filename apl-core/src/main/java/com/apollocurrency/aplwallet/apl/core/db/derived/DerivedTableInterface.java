@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 /**
  * Common derived interface functions. It supports rollback, truncate, trim.
@@ -17,11 +18,13 @@ public interface DerivedTableInterface<T> {
 
     void truncate();
 
-    void trim(int height);
+    void trim(int height, TransactionalDataSource dataSource);
 
-    void createSearchIndex(Connection con) throws SQLException;
+    default void createSearchIndex(Connection con) throws SQLException {}
 
-    boolean isPersistent();
+    default boolean isPersistent() {
+        return false;
+    }
 
     default T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {return null;}
 

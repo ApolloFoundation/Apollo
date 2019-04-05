@@ -27,7 +27,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
             String fileVersion = folders[folders.length - 1].split("_")[0].substring(1);
             return Integer.valueOf(fileVersion);
         } catch (Exception ex){
-            LOG.warn(ex.getMessage(), ex);
+            LOG.warn(ex.getMessage());
             return null;
         }
      }
@@ -41,7 +41,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
 
              return path.substring(beginIndex + 3);
          } catch (Exception ex){
-             LOG.warn(ex.getMessage(), ex);
+             LOG.warn(ex.getMessage());
              return null;
          }
      }
@@ -58,7 +58,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
             fbWallet.openStream(new ByteArrayInputStream(keyStore), key);
             return fbWallet;
         } catch (Exception ex){
-            LOG.error(ex.getMessage(), ex.getCause().getMessage());
+            LOG.error(ex.getMessage());
             return null;
         }
      }
