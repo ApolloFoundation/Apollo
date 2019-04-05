@@ -40,7 +40,7 @@ public class DGSPurchase {
     private boolean hasFeedbackNotes;
     private List<EncryptedData> feedbackNotes;
     private boolean hasPublicFeedbacks;
-    List<DGSFeedback> dgsFeedbacks
+    List<DGSFeedback> dgsFeedbacks;
     private List<String> publicFeedbacks;
     private long discountATM;
     private long refundATM;

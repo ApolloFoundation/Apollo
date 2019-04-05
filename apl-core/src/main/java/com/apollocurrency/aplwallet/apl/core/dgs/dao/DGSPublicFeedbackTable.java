@@ -6,7 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 
 import java.sql.Connection;
@@ -16,15 +17,15 @@ import java.sql.SQLException;
 import javax.inject.Singleton;
 
 @Singleton
-public class DGSPublicFeedbackTable extends VersionedValuesDbTable<DGSPurchase, String> {
-    private static final LongKeyFactory<DGSPurchase> KEY_FACTORY = new LongKeyFactory<>("id") {
+public class DGSPublicFeedbackTable extends VersionedValuesDbTable<DGSPublicFeedback> {
+    private static final LongKeyFactory<DGSPublicFeedback> KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
-        public DbKey newKey(DGSPurchase purchase) {
-            if (purchase.getDbKey() == null) {
-                DbKey dbKey = newKey(purchase.getId());
-                purchase.setDbKey(dbKey);
+        public DbKey newKey(DGSPublicFeedback publicFeedback) {
+            if (publicFeedback.getDbKey() == null) {
+                DbKey dbKey = newKey(publicFeedback.getId());
+                publicFeedback.setDbKey(dbKey);
             }
-            return purchase.getDbKey();
+            return publicFeedback.getDbKey();
         }
 
     };
@@ -35,18 +36,21 @@ public class DGSPublicFeedbackTable extends VersionedValuesDbTable<DGSPurchase, 
     }
 
     @Override
-    protected String load(Connection connection, ResultSet rs) throws SQLException {
-        return rs.getString("public_feedback");
+    protected DGSPublicFeedback load(Connection connection, ResultSet rs) throws SQLException {
+        String feedback = rs.getString("public_feedback");
+        int height = rs.getInt("height");
+        long purchaseId = rs.getLong("id");
+        return new DGSPublicFeedback(feedback, purchaseId, height);
     }
 
     @Override
-    protected void save(Connection con, DGSPurchase purchase, String publicFeedback, int height) throws SQLException {
+    protected void save(Connection con,  DGSPublicFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
                 + "height, latest) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, purchase.getId());
-            pstmt.setString(++i, publicFeedback);
-            pstmt.setInt(++i, height);
+            pstmt.setLong(++i, feedback.getId());
+            pstmt.setString(++i, feedback.getFeedback());
+            pstmt.setInt(++i, feedback.getHeight());
             pstmt.executeUpdate();
         }
     }
