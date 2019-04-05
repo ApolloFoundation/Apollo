@@ -1,11 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 /**
  * Common derived interface functions. It supports rollback, truncate, trim.
@@ -20,7 +20,9 @@ public interface DerivedTableInterface<T> {
 
     void trim(int height, TransactionalDataSource dataSource);
 
-    default void createSearchIndex(Connection con) throws SQLException {}
+    void trim(int height);
+
+    void createSearchIndex(Connection con) throws SQLException;
 
     default boolean isPersistent() {
         return false;
@@ -28,7 +30,9 @@ public interface DerivedTableInterface<T> {
 
     default T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {return null;}
 
-    default void save(Connection con, T entity) throws SQLException {throw new UnsupportedOperationException("unsupported save");}
+    default void insert(T t, int height) throws SQLException {
+        throw new UnsupportedOperationException("unsupported save");
+    }
 
     default boolean delete(T t) {return false;}
 

@@ -64,6 +64,8 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         this(table, true);
     }
 
+    @Override
+    public void trim(int height, TransactionalDataSource dataSource) {}
 
     @PostConstruct
     public void init() {

@@ -54,7 +54,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
 
     protected abstract V load(Connection con, ResultSet rs) throws SQLException;
 
-    protected abstract void save(Connection con, T t, V v, int height) throws SQLException;
+    protected abstract void save(Connection con, T t, V v) throws SQLException;
 
     protected void clearCache() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();

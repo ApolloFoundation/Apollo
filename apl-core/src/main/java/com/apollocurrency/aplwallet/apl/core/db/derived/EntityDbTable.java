@@ -87,12 +87,6 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
          this.fullTextSearchColumns = "";
     }
 
-    //TODO remove DbKey completely from 'load' method.
-//    protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
-
-    //TODO dao implementations should not know anything about Blockchain and other services
-//    protected abstract void save(Connection con, T t) throws SQLException;
-
     protected String defaultSort() {
         return defaultSort;
     }
@@ -466,6 +460,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
+    protected abstract void save(Connection con, T entity, int height) throws SQLException;
+
     public final void insert(T t, int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -523,9 +519,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
 */
     }
 
-    public KeyFactory<T> getDbKeyFactory() {
-        return dbKeyFactory;
+    public void trim(int height) {
+        trim(height, databaseManager.getDataSource());
     }
+
 
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {

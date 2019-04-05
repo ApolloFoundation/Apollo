@@ -42,7 +42,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     }
 
     @Override
-    public void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
+    protected void save(Connection con, PhasingPollResult phasingPollResult, int height) throws SQLException {
         phasingPollResult.save(con);
     }
 };
