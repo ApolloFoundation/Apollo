@@ -48,26 +48,25 @@ public class EthereumWalletService {
     private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
 
     public BigInteger getPaxBalanceWei(String accountAddress){
-        BigInteger balance = null;
-        try {
-            balance = getTokenBalance(paxContractAddress, accountAddress);
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage(), e.getCause().getMessage());
-        }
-        return balance;
+        return getTokenBalance(paxContractAddress, accountAddress);
     }
 
     public BigDecimal getPaxBalanceEther(String address) {
         return Web3jUtils.weiToEther(getPaxBalanceWei(address));
     }
 
-    private BigInteger getTokenBalance(String contractAddress, String userAddress) throws ExecutionException, InterruptedException {
-        Function function = balanceOf(userAddress);
-        String responseValue = callSmartContractFunction(function, contractAddress, userAddress);
+    private BigInteger getTokenBalance(String contractAddress, String userAddress) {
+        BigInteger balance = null;
+        try {
+            Function function = balanceOf(userAddress);
+            String responseValue = callSmartContractFunction(function, contractAddress, userAddress);
 
-        List<Type> response = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
+            List<Type> response = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
 
-        BigInteger balance = (BigInteger)response.get(0).getValue();
+            balance = (BigInteger) response.get(0).getValue();
+        } catch (Exception ex){
+            log.error(ex.getMessage());
+        }
 
         return balance;
     }
@@ -109,17 +108,17 @@ public class EthereumWalletService {
 
     public BigInteger getBalanceWei(String accountAddress){
     // send asynchronous requests to get balance
-        EthGetBalance ethGetBalance = null;
+        BigInteger wei = null;
         try {
-            ethGetBalance = web3j
+            EthGetBalance ethGetBalance = web3j
                     .ethGetBalance(accountAddress, DefaultBlockParameterName.LATEST)
                     .sendAsync()
                     .get();
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage(), e);
-        }
 
-        BigInteger wei = ethGetBalance.getBalance();
+            wei = ethGetBalance.getBalance();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
 
         return wei;
     }
