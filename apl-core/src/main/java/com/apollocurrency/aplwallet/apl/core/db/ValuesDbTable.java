@@ -50,7 +50,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
 
     protected abstract V load(Connection con, ResultSet rs) throws SQLException;
 
-    protected abstract void save(Connection con, T t, V v) throws SQLException;
+    protected abstract void save(Connection con, T t, V v, int height) throws SQLException;
 
     protected void clearCache() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -94,7 +94,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
         }
     }
 
-    public final void insert(T t, List<V> values) {
+    public final void insert(T t, List<V> values, int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -113,7 +113,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
                 }
             }
             for (V v : values) {
-                save(con, t, v);
+                save(con, t, v, height);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -142,8 +142,4 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
         }
     }
 
-    @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-        super.createSearchIndex(con);
-    }
 }

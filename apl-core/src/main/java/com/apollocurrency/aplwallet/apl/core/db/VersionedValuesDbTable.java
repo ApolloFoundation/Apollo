@@ -20,11 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,11 +32,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
         super(table, dbKeyFactory, true);
     }
 
-    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
-        super(table, dbKeyFactory, multiversion);
-    }
-
-    public final boolean delete(T t) {
+    public final boolean delete(T t, int height) {
         if (t == null) {
             return false;
         }
@@ -50,8 +41,6 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
             throw new IllegalStateException("Not in transaction");
         }
         DbKey dbKey = dbKeyFactory.newKey(t);
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        int height = blockchain.getHeight();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
                      + " AND height < ? LIMIT 1")) {
@@ -72,7 +61,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
                         return false;
                     }
                     for (V v : values) {
-                        save(con, t, v);
+                        save(con, t, v, height);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {

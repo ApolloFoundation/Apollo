@@ -50,7 +50,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     }
 
     @Override
-    protected void save(Connection con, PhasingPoll poll, byte[] linkedFullHash) throws SQLException {
+    protected void save(Connection con, PhasingPoll poll, byte[] linkedFullHash, int height) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (transaction_id, "
                 + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;

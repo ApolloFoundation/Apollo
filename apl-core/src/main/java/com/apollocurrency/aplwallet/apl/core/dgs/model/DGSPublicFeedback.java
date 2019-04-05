@@ -4,11 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+
 import java.util.Objects;
 
 public class DGSPublicFeedback {
     private String feedback;
     private Long id;
+    private DbKey dbKey;
+
+    public DbKey getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
+    }
 
     public DGSPublicFeedback(String feedback, Long id) {
         this.feedback = feedback;
