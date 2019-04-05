@@ -54,7 +54,8 @@ public final class DGSDelivery extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+//        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+        DGSPurchase purchase = ParameterParser.getPurchase(req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }

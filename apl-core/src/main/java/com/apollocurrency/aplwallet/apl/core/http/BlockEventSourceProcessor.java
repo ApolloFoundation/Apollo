@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -76,7 +77,8 @@ public class BlockEventSourceProcessor implements Runnable {
         }
         JSONArray purchasesJSON = new JSONArray();
 
-        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {
+//        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {
+        try (DbIterator<DGSPurchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {
             while (purchases.hasNext()) {
                 purchasesJSON.add(JSONData.purchase(purchases.next()));
             }

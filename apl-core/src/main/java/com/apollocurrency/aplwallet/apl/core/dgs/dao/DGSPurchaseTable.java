@@ -4,14 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSPurchaseMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,12 +40,12 @@ public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
     }
 
     @Override
-    protected DGSPurchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public DGSPurchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return MAPPER.map(rs, null);
     }
 
     @Override
-    protected void save(Connection con, DGSPurchase purchase, int height) throws SQLException {
+    public void save(Connection con, DGSPurchase purchase) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
                 + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, "
                 + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) KEY (id, height) "
@@ -65,7 +68,8 @@ public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
             pstmt.setBoolean(++i, purchase.hasPublicFeedbacks());
             pstmt.setLong(++i, purchase.getDiscountATM());
             pstmt.setLong(++i, purchase.getRefundATM());
-            pstmt.setInt(++i, height);
+            Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+            pstmt.setInt(++i, blockchain.getHeight()); // TODO: YL review later
             pstmt.executeUpdate();
         }
     }

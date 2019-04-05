@@ -28,12 +28,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
@@ -309,29 +312,41 @@ public class TaggedData {
 
     }
 
-    private static final LongKeyFactory<Long> extendDbKeyFactory = new LongKeyFactory<Long>("id") {
+//    private static final LongKeyFactory<Long> extendDbKeyFactory = new LongKeyFactory<Long>("id") {
+    private static final KeyFactory<TaggedData> extendDbKeyFactory = new KeyFactory<TaggedData>(
+            "id", null, null ) { // TODO: YL review
 
         @Override
-        public DbKey newKey(Long taggedDataId) {
-            return newKey(taggedDataId.longValue());
+        public DbKey newKey(TaggedData taggedData) {
+//        public DbKey newKey(Long taggedDataId) {
+//            return newKey(taggedDataId.longValue());
+            return newKey(taggedData);
+        }
+        @Override
+        public DbKey newKey(ResultSet rs) throws SQLException {
+            return new TaggedData(rs, null).dbKey;
+        }
+};
+
+//    private static final VersionedValuesDbTable<Long, Long> extendTable = new VersionedValuesDbTable<Long, Long>("tagged_data_extend", extendDbKeyFactory) {
+    private static final VersionedValuesDbTable<TaggedData> extendTable = new VersionedValuesDbTable<TaggedData>("tagged_data_extend", extendDbKeyFactory) {
+
+        @Override
+        public TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+//            return rs.getLong("extend_id");
+            return new TaggedData(rs, dbKey); // TODO: YL check here
         }
 
-    };
-
-    private static final VersionedValuesDbTable<Long, Long> extendTable = new VersionedValuesDbTable<Long, Long>("tagged_data_extend", extendDbKeyFactory) {
-
         @Override
-        protected Long load(Connection con, ResultSet rs) throws SQLException {
-            return rs.getLong("extend_id");
-        }
-
-        @Override
-        protected void save(Connection con, Long taggedDataId, Long extendId) throws SQLException {
+        public void save(Connection con, TaggedData taggedData) throws SQLException {
+//        protected void save(Connection con, Long taggedDataId, Long extendId) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data_extend (id, extend_id, "
                     + "height, latest) VALUES (?, ?, ?, TRUE)")) {
                 int i = 0;
-                pstmt.setLong(++i, taggedDataId);
-                pstmt.setLong(++i, extendId);
+//                pstmt.setLong(++i, taggedDataId);
+//                pstmt.setLong(++i, extendId);
+                pstmt.setLong(++i, taggedData.id);
+//                pstmt.setLong(++i, taggedData.extendId); // TODO: YL replace by 'sql join' here ???
                 pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
@@ -352,7 +367,8 @@ public class TaggedData {
     }
 
     public static List<Long> getExtendTransactionIds(long taggedDataId) {
-        return extendTable.get(extendDbKeyFactory.newKey(taggedDataId));
+//        return extendTable.get(extendDbKeyFactory.newKey(taggedDataId));
+        return Collections.emptyList(); // TODO: YL review
     }
 
     public static DbIterator<TaggedData> getData(String channel, long accountId, int from, int to) {
@@ -550,9 +566,10 @@ public class TaggedData {
             timestamp.timestamp = timestamp.timestamp + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.timestamp);
         }
         timestampTable.insert(timestamp);
-        List<Long> extendTransactionIds = extendTable.get(dbKey);
-        extendTransactionIds.add(transaction.getId());
-        extendTable.insert(taggedDataId, extendTransactionIds);
+        // TODO: YL review
+//        List<Long> extendTransactionIds = extendTable.get(dbKey);
+//        extendTransactionIds.add(transaction.getId());
+//        extendTable.insert(taggedDataId, extendTransactionIds);
         if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {

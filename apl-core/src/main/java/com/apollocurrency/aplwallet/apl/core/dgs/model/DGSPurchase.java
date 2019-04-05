@@ -10,7 +10,9 @@ import com.apollocurrency.aplwallet.apl.core.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DGSPurchase {
@@ -40,12 +42,23 @@ public class DGSPurchase {
     private boolean hasFeedbackNotes;
     private List<EncryptedData> feedbackNotes;
     private boolean hasPublicFeedbacks;
-    List<DGSFeedback> dgsFeedbacks
+    private List<DGSFeedback> dgsFeedbacks = Collections.emptyList();
     private List<String> publicFeedbacks;
     private long discountATM;
     private long refundATM;
 
-    private DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment, long sellerId, int lastBlockchainTimestamp) {
+    public DGSPurchase(ResultSet rs, DbKey dbKey) {
+        // TODO: YL implement here
+        throw new RuntimeException("implement constructor from RSet");
+    }
+
+    public DGSPurchase(ResultSet rs, DbKey dbKey, DGSFeedback dgsFeedback) {
+        // TODO: YL implement here
+        throw new RuntimeException("implement constructor from RSet");
+    }
+
+    public DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment,
+                        long sellerId, int lastBlockchainTimestamp,  List<DGSFeedback> dgsFeedbackList) {
         this.id = transaction.getId();
         this.buyerId = transaction.getSenderId();
         this.goodsId = attachment.getGoodsId();
@@ -56,9 +69,14 @@ public class DGSPurchase {
         this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
         this.timestamp = lastBlockchainTimestamp;
         this.isPending = true;
+        this.dgsFeedbacks = dgsFeedbackList;
     }
 
-    public DGSPurchase(long id, long buyerId, long goodsId, long sellerId, int quantity, long priceATM, int deadline, EncryptedData note, int timestamp, boolean isPending, EncryptedData encryptedGoods, boolean goodsIsText, EncryptedData refundNote, boolean hasFeedbackNotes, List<EncryptedData> feedbackNotes, boolean hasPublicFeedbacks, List<String> publicFeedbacks, long discountATM, long refundATM) {
+    public DGSPurchase(long id, long buyerId, long goodsId, long sellerId, int quantity, long priceATM, int deadline,
+                       EncryptedData note, int timestamp, boolean isPending, EncryptedData encryptedGoods,
+                       boolean goodsIsText, EncryptedData refundNote, boolean hasFeedbackNotes,
+                       List<EncryptedData> feedbackNotes, boolean hasPublicFeedbacks,
+                       List<String> publicFeedbacks, long discountATM, long refundATM) {
         this.id = id;
         this.buyerId = buyerId;
         this.goodsId = goodsId;
@@ -78,6 +96,14 @@ public class DGSPurchase {
         this.publicFeedbacks = publicFeedbacks;
         this.discountATM = discountATM;
         this.refundATM = refundATM;
+    }
+
+    public List<DGSFeedback> getDgsFeedbacks() {
+        return dgsFeedbacks;
+    }
+
+    public void setDgsFeedbacks(List<DGSFeedback> dgsFeedbacks) {
+        this.dgsFeedbacks = dgsFeedbacks;
     }
 
     public int getDeadline() {

@@ -22,6 +22,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import javax.enterprise.inject.spi.CDI;
 
@@ -64,7 +65,8 @@ public final class DigitalGoodsStore {
 
     private static final Listeners<Goods,Event> goodsListeners = new Listeners<>();
 
-    private static final Listeners<Purchase,Event> purchaseListeners = new Listeners<>();
+//    private static final Listeners<Purchase,Event> purchaseListeners = new Listeners<>();
+    private static final Listeners<DGSPurchase,Event> purchaseListeners = new Listeners<>();
 
     public static boolean addGoodsListener(Listener<Goods> listener, Event eventType) {
         return goodsListeners.addListener(listener, eventType);
@@ -74,18 +76,21 @@ public final class DigitalGoodsStore {
         return goodsListeners.removeListener(listener, eventType);
     }
 
-    public static boolean addPurchaseListener(Listener<Purchase> listener, Event eventType) {
+//    public static boolean addPurchaseListener(Listener<Purchase> listener, Event eventType) {
+    public static boolean addPurchaseListener(Listener<DGSPurchase> listener, Event eventType) {
         return purchaseListeners.addListener(listener, eventType);
     }
 
-    public static boolean removePurchaseListener(Listener<Purchase> listener, Event eventType) {
+//    public static boolean removePurchaseListener(Listener<Purchase> listener, Event eventType) {
+    public static boolean removePurchaseListener(Listener<DGSPurchase> listener, Event eventType) {
         return purchaseListeners.removeListener(listener, eventType);
     }
 
     static void init() {
         Tag.init();
         Goods.init();
-        Purchase.init();
+//        Purchase.init();
+//        DGSPurchase.init(); // TODO: YL review
     }
 
     public static final class Tag {
@@ -490,8 +495,9 @@ public final class DigitalGoodsStore {
                 && attachment.getQuantity() <= goods.getQuantity()
                 && attachment.getPriceATM() == goods.getPriceATM()) {
             goods.changeQuantity(-attachment.getQuantity());
-            Purchase purchase = new Purchase(transaction, attachment, goods.getSellerId());
-            Purchase.purchaseTable.insert(purchase);
+//            Purchase purchase = new Purchase(transaction, attachment, goods.getSellerId());
+            DGSPurchase purchase = new DGSPurchase(transaction, attachment, goods.getSellerId(), 0, null); // TODO: YL review
+//            DGSPurchase.purchaseTable.insert(purchase);
             purchaseListeners.notify(purchase, Event.PURCHASE);
         } else {
             Account buyer = Account.getAccount(transaction.getSenderId());
@@ -502,7 +508,8 @@ public final class DigitalGoodsStore {
     }
 
     public static void deliver(Transaction transaction, DigitalGoodsDelivery attachment) {
-        Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
+//        Purchase purchase = Purchase.getPendingPurchase(attachment.getPurchaseId());
+        DGSPurchase purchase = new DGSPurchase(null, null); // TODO: YL review and fix
         purchase.setPending(false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
         Account buyer = Account.getAccount(purchase.getBuyerId());
@@ -520,6 +527,8 @@ public final class DigitalGoodsStore {
 
     public static void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
                        EncryptedMessageAppendix encryptedMessage) {
+        // TODO: YL review and fix
+/*
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         Account seller = Account.getAccount(sellerId);
         seller.addToBalanceATM(event, eventId, -refundATM);
@@ -530,9 +539,12 @@ public final class DigitalGoodsStore {
         }
         purchase.setRefundATM(refundATM);
         purchaseListeners.notify(purchase, Event.REFUND);
+*/
     }
 
     public static void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
+        // TODO: YL review and fix
+/*
         Purchase purchase = Purchase.purchaseTable.get(Purchase.purchaseDbKeyFactory.newKey(purchaseId));
         if (encryptedMessage != null) {
             purchase.addFeedbackNote(encryptedMessage.getEncryptedData());
@@ -541,6 +553,7 @@ public final class DigitalGoodsStore {
             purchase.addPublicFeedback(Convert.toString(message.getMessage()));
         }
         purchaseListeners.notify(purchase, Event.FEEDBACK);
+*/
     }
 
 

@@ -4,10 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
@@ -15,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DGSService {
@@ -77,7 +82,8 @@ public class DGSService {
     }
 
     public  DGSPurchase getDGSPurchase(long purchaseId) {
-        return purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
+//        return purchaseTable.get(purchaseDbKeyFactory.newKey(purchaseId));
+        return purchaseTable.get(new LongKey(purchaseId)); // TODO: YL review and fix
     }
 
     public  DbIterator<DGSPurchase> getPendingSellerDGSPurchases(final long sellerId, int from, int to) {
@@ -99,44 +105,48 @@ public class DGSService {
 
     public static DbIterator<DGSPurchase> getExpiredPendingDGSPurchases(Block block) {
         final int timestamp = block.getTimestamp();
-        Blockchain bc = blockchain;
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();;
         long privBlockId = block.getPreviousBlockId();
-        Block privBlock = bc.getBlock(privBlockId);
+        Block privBlock = blockchain.getBlock(privBlockId);
 
         final int previousTimestamp = privBlock.getTimestamp();
 
         DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
                 .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
                 .and(new DbClause.BooleanClause("pending", true));
-        return purchaseTable.getManyBy(dbClause, 0, -1);
+//        return purchaseTable.getManyBy(dbClause, 0, -1);
+        return null; // TODO: YL review and fix
     }
 
 
     public void setPending(DGSPurchase purchase, boolean isPending) {
         purchase.setPending(isPending);
-        purchaseTable.insert(purchase, blockchain.getHeight());
+        purchaseTable.insert(purchase/*, blockchain.getHeight()*/);
     }
 
     private void setEncryptedGoods(DGSPurchase purchase, EncryptedData encryptedGoods, boolean goodsIsText) {
         purchase.setEncryptedGoods(encryptedGoods, goodsIsText);
-        purchaseTable.insert(purchase, blockchain.getHeight());
+        purchaseTable.insert(purchase/*, blockchain.getHeight()*/);
     }
 
 
     private void setRefundNote(DGSPurchase purchase, EncryptedData refundNote) {
         purchase.setRefundNote(refundNote);
-        purchaseTable.insert(purchase, blockchain.getHeight());
+        purchaseTable.insert(purchase/*, blockchain.getHeight()*/);
     }
 
     public List<EncryptedData> getFeedbackNotes(DGSPurchase dgsPurchase) {
         if (!dgsPurchase.hasFeedbackNotes()) {
             return null;
         }
-        List<DGSFeedback> dgsFeedbacks = feedbackTable.get(dgsPurchase.getDbKey());
-
-        return feedbackNotes;
+        // TODO: YL review and fix
+//        List<DGSFeedback> dgsFeedbacks = feedbackTable.get(dgsPurchase.getDbKey());
+//        return feedbackNotes;
+        return Collections.emptyList();
     }
 
+    // TODO: YL review and fix
+/*
     private void addFeedbackNote(EncryptedData feedbackNote) {
         if (getFeedbackNotes() == null) {
             feedbackNotes = new ArrayList<>();
@@ -190,7 +200,6 @@ public class DGSService {
         this.refundATM = refundATM;
         purchaseTable.insert(this);
     }
-
-}
+*/
 
 }

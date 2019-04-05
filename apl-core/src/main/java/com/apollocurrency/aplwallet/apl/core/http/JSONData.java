@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -56,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
@@ -597,8 +599,9 @@ public final class JSONData {
         json.put("timestamp", goods.getTimestamp());
         json.put("hasImage", goods.hasImage());
         if (includeCounts) {
-            json.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), false, true));
-            json.put("numberOfPublicFeedbacks", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), true, true));
+            // TODO: YL review
+//            json.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), false, true));
+//            json.put("numberOfPublicFeedbacks", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), true, true));
         }
         return json;
     }
@@ -694,7 +697,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject pollResults(Poll poll, List<Poll.OptionResult> results, VoteWeighting voteWeighting) {
+    public static JSONObject pollResults(Poll poll, List<PollOptionResult> results, VoteWeighting voteWeighting) {
         JSONObject json = new JSONObject();
         json.put("poll", Long.toUnsignedString(poll.getId()));
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
@@ -716,7 +719,7 @@ public final class JSONData {
         json.put("options", options);
 
         JSONArray resultsJson = new JSONArray();
-        for (Poll.OptionResult option : results) {
+        for (PollOptionResult option : results) {
             JSONObject optionJSON = new JSONObject();
             if (option != null) {
                 optionJSON.put("result", String.valueOf(option.getResult()));
@@ -831,7 +834,8 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject purchase(DigitalGoodsStore.Purchase purchase) {
+//    public static JSONObject purchase(DigitalGoodsStore.Purchase purchase) {
+    public static JSONObject purchase(DGSPurchase purchase) {
         JSONObject json = new JSONObject();
         json.put("purchase", Long.toUnsignedString(purchase.getId()));
         json.put("goods", Long.toUnsignedString(purchase.getGoodsId()));

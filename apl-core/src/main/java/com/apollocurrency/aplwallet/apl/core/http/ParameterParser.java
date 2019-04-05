@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
@@ -485,8 +486,10 @@ public final class ParameterParser {
         return null;
     }
 
-    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
+//    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
+    public static DGSPurchase getPurchase(HttpServletRequest req) throws ParameterException {
+//        DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
+        DGSPurchase purchase = null;// TODO: YL review and fix
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }

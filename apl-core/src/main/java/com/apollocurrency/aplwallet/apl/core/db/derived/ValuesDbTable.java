@@ -27,11 +27,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
-public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
+//public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
+public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
 
     private final boolean multiversion;
     protected final KeyFactory<T> dbKeyFactory;
@@ -52,16 +54,38 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         this.dbKeyFactory = dbKeyFactory;
     }
 
-    protected abstract V load(Connection con, ResultSet rs) throws SQLException;
+//    protected abstract T load(Connection con, ResultSet rs) throws SQLException;
 
-    protected abstract void save(Connection con, T t, V v) throws SQLException;
+//    protected abstract void save(Connection con, T t, V v) throws SQLException;
 
     protected void clearCache() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.clearCache(table);
     }
 
-    public final List<V> get(DbKey dbKey) {
+//    public final List<V> get(DbKey dbKey) {
+    public final List<T> get(DbKey dbKey) {
+        List<T> values;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (dataSource.isInTransaction()) {
+            values = (List<T>) dataSource.getCache(table).get(dbKey);
+            if (values != null) {
+                return values;
+            }
+        }
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+                     + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
+            dbKey.setPK(pstmt);
+            values = get(con, pstmt);
+            if (dataSource.isInTransaction()) {
+                dataSource.getCache(table).put(dbKey, values);
+            }
+            return values;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+/*
         List<V> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (dataSource.isInTransaction()) {
@@ -82,14 +106,16 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+*/
     }
 
-    private List<V> get(Connection con, PreparedStatement pstmt) {
+//    private List<V> get(Connection con, PreparedStatement pstmt) {
+    private List<T> get(Connection con, PreparedStatement pstmt) {
         try {
-            List<V> result = new ArrayList<>();
+            List<T> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(load(con, rs));
+                    result.add(load(con, rs, null)); // TODO: YL review DbKey = NULL
                 }
             }
             return result;
@@ -98,7 +124,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         }
     }
 
-    public final void insert(T t, List<V> values, int height) {
+    public final void insert(T t) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -107,7 +133,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        dataSource.getCache(table).put(dbKey, values);
+//        dataSource.getCache(table).put(dbKey, values);
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
@@ -116,9 +142,9 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
                     pstmt.executeUpdate();
                 }
             }
-            for (V v : values) {
-                save(con, t, v, height);
-            }
+//            for (V v : values) {
+                save(con, t);
+//            }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

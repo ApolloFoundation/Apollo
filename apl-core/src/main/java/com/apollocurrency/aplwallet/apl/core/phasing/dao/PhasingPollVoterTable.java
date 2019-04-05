@@ -24,7 +24,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PhasingPollVoterTable extends ValuesDbTable<PhasingPoll, Long> {
+public class PhasingPollVoterTable extends ValuesDbTable<PhasingPoll/*, Long*/> {
     private static final String TABLE_NAME = "phasing_poll_voter";
     private static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("transaction_id") {
         @Override
@@ -41,22 +41,27 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPoll, Long> {
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
-    public List<Long> get(long pollId) {
-        return get(KEY_FACTORY.newKey(pollId));
+//    public List<Long> get(long pollId) {
+    public PhasingPoll get(long pollId) {
+//        return get(KEY_FACTORY.newKey(pollId));
+        return get(KEY_FACTORY.newKey(pollId)).get(0);
     }
 
     @Override
-    protected Long load(Connection con, ResultSet rs) throws SQLException {
-        return rs.getLong("voter_id");
+    public PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+//    protected Long load(Connection con, ResultSet rs) throws SQLException {
+//        return rs.getLong("voter_id");
+        return new PhasingPoll(rs);
     }
 
     @Override
-    protected void save(Connection con, PhasingPoll poll, Long accountId) throws SQLException {
+    public void save(Connection con, PhasingPoll poll/*, Long accountId*/) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_voter (transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, poll.getId());
-            pstmt.setLong(++i, accountId);
+//            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, poll.getAccountId());
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }

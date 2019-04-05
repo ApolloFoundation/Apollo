@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
@@ -33,8 +35,10 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +49,8 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 public abstract class Messaging extends TransactionType {
+    private static final Logger log = getLogger(Messaging.class);
+
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
@@ -480,7 +486,12 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
-            Poll.addPoll(transaction, attachment);
+            try {
+                Poll.addPoll(transaction, attachment);
+            } catch (SQLException e) {
+                log.error("Add Poll error", e);
+                throw new RuntimeException(e); // TODO: YL review later
+            }
         }
 
         @Override

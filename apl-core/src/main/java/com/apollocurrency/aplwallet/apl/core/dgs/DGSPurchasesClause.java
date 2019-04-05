@@ -17,9 +17,7 @@ public class DGSPurchasesClause extends DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             return index;
         }
-
-    }
 }
