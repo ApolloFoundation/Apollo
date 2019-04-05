@@ -218,7 +218,7 @@
                     <csvSummary>true</csvSummary>
                     <csvSummaryFile>${project.build.finalName}-checksums.csv</csvSummaryFile>
                 </configuration>
-            </plugin>                                                  
+            </plugin>
         </plugins>
     </build>
 </project>
