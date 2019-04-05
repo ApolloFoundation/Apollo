@@ -47,7 +47,7 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
     public UpdateData process(Transaction transaction) {
         if (updaterMediator.isUpdateTransaction(transaction)) {
             LOG.debug("Processing update transaction " + transaction.getId());
-            process(transaction.getAttachment(), transaction.getId());
+            return process(transaction.getAttachment(), transaction.getId());
         }
         return null;
     }

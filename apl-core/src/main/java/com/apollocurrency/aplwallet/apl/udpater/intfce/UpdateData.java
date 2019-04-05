@@ -18,8 +18,8 @@ public class UpdateData {
         this.decryptedUrl = decryptedUrl;
     }
 
-    public boolean isAutomaticUpdate() {
-        return attachment instanceof MinorUpdate;
+    public boolean isAutomaticUpdate() { // update is automatic for Important and Critical update types
+        return !(attachment instanceof MinorUpdate);
     }
     public UpdateAttachment getAttachment() {
         return attachment;
