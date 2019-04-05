@@ -55,10 +55,6 @@
         <fileSet>
             <directory>${project.build.directory}/classes/conf/</directory>
             <outputDirectory>doc</outputDirectory>
-            <includes>
-                <include>apl-blockchain.properties</include>
-                <include>chains.json</include>
-            </includes>
         </fileSet>
 
     </fileSets> 
