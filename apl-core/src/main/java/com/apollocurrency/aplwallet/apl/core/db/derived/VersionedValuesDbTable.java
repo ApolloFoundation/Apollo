@@ -20,10 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -33,14 +30,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 
 public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
-
+    private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 
-    public final boolean delete(T t, int height) {
+    public final boolean delete(T t) {
         if (t == null) {
             return false;
         }
@@ -53,6 +51,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
+            int height = blockchain.getHeight();
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
@@ -69,7 +68,7 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
                         return false;
                     }
                     for (V v : values) {
-                        save(con, t, v, height);
+                        save(con, t, v);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {

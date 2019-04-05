@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
 
@@ -98,7 +98,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         }
     }
 
-    public final void insert(T t, List<V> values, int height) {
+    public final void insert(T t, List<V> values) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -117,7 +117,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
                 }
             }
             for (V v : values) {
-                save(con, t, v, height);
+                save(con, t, v);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

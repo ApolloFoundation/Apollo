@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,12 +25,15 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PhasingPollVoterTable extends ValuesDbTable<PhasingPoll, Long> {
+public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
     private static final String TABLE_NAME = "phasing_poll_voter";
-    private static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("transaction_id") {
+    private static final LongKeyFactory<PhasingPollVoter> KEY_FACTORY = new LongKeyFactory<PhasingPollVoter>("transaction_id") {
         @Override
-        public DbKey newKey(PhasingPoll poll) {
-            return new LongKey(poll.getId());
+        public DbKey newKey(PhasingPollVoter poll) {
+            if (poll.getDbKey() == null) {
+                poll.setDbKey(new LongKey(poll.getPollId()));
+            }
+            return poll.getDbKey();
         }
     };
     private final Blockchain blockchain;
@@ -46,17 +50,20 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPoll, Long> {
     }
 
     @Override
-    protected Long load(Connection con, ResultSet rs) throws SQLException {
-        return rs.getLong("voter_id");
+    protected PhasingPollVoter load(Connection con, ResultSet rs) throws SQLException {
+        long pollId = rs.getInt("transaction_id");
+        long voterId = rs.getLong("voter_id");
+        int height = rs.getInt("height");
+        return new PhasingPollVoter(pollId, voterId, height);
     }
 
     @Override
-    protected void save(Connection con, PhasingPoll poll, Long accountId) throws SQLException {
+    protected void save(Connection con, PhasingPollVoter voter) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_voter (transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?)")) {
             int i = 0;
-            pstmt.setLong(++i, poll.getId());
-            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, voter.getPollId());
+            pstmt.setLong(++i, voter.getVoterId());
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }

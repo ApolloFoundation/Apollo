@@ -460,9 +460,9 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    protected abstract void save(Connection con, T entity, int height) throws SQLException;
+    protected abstract void save(Connection con, T entity) throws SQLException;
 
-    public final void insert(T t, int height) {
+    public final void insert(T t) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -487,7 +487,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
                     pstmt.executeUpdate();
                 }
             }
-            save(con, t, height);
+            save(con, t);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

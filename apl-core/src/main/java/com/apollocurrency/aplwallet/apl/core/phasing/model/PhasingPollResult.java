@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Objects;
 
 public class PhasingPollResult {
@@ -24,12 +20,6 @@ public class PhasingPollResult {
         this.height = height;
     }
 
-    public PhasingPollResult(ResultSet rs) throws SQLException {
-        this.id = rs.getLong("id");
-        this.result = rs.getLong("result");
-        this.approved = rs.getBoolean("approved");
-        this.height = rs.getInt("height");
-    }
 
     public PhasingPollResult(long id, long result, boolean approved, int height) {
         this.id = id;
@@ -38,17 +28,6 @@ public class PhasingPollResult {
         this.height = height;
     }
 
-    public void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
-                + "result, approved, height) VALUES (?, ?, ?, ?)")) {
-            int i = 0;
-            pstmt.setLong(++i, id);
-            pstmt.setLong(++i, result);
-            pstmt.setBoolean(++i, approved);
-            pstmt.setInt(++i, height);
-            pstmt.executeUpdate();
-        }
-    }
 
     public long getId() {
         return id;

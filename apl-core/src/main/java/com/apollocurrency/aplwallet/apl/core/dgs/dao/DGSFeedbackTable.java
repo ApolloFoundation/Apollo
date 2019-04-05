@@ -5,11 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
@@ -19,7 +17,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import javax.inject.Singleton;
 
 @Singleton
