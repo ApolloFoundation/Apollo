@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.util.Objects;
 
 public class DGSFeedback {
+    private DbKey dbKey;
     private Long purchaseId;
     private Integer height;
     private EncryptedData feedbackEncryptedData;
@@ -19,6 +21,14 @@ public class DGSFeedback {
 
     public void setPurchaseId(Long purchaseId) {
         this.purchaseId = purchaseId;
+    }
+
+    public DbKey getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
     }
 
     public Integer getHeight() {

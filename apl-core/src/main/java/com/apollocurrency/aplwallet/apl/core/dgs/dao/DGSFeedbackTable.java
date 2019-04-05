@@ -17,15 +17,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import javax.inject.Singleton;
 
 @Singleton
-public class DGSFeedbackTable extends VersionedValuesDbTable<DGSPurchase/*, DGSFeedback*/> {
-    private static final LongKeyFactory<DGSPurchase> KEY_FACTORY = new LongKeyFactory<>("id") {
+public class DGSFeedbackTable extends VersionedValuesDbTable<DGSFeedback> {
+    private static final LongKeyFactory<DGSFeedback> KEY_FACTORY = new LongKeyFactory<DGSFeedback>("id") {
         @Override
-        public DbKey newKey(DGSPurchase purchase) {
-            return new LongKey(purchase.getId());
+        public DbKey newKey(DGSFeedback feedback) {
+            if (feedback.getDbKey() == null) {
+                feedback.setDbKey(new LongKey(feedback.getPurchaseId()));
+            }
+            return feedback.getDbKey();
         }
     };
     private static final String TABLE_NAME = "purchase_feedback";
@@ -46,14 +48,14 @@ public class DGSFeedbackTable extends VersionedValuesDbTable<DGSPurchase/*, DGSF
     }
 
     @Override
-    public void save(Connection con, DGSPurchase purchase/*, DGSFeedback feedback, int height*/) throws SQLException {
+    public void save(Connection con, DGSFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
                 + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, purchase.getId());
+            pstmt.setLong(++i, feedback.getPurchaseId());
 //            i = EncryptedDataUtil.setEncryptedData(pstmt, feedback.getFeedbackEncryptedData(), ++i);
-            i = EncryptedDataUtil.setEncryptedData(pstmt, purchase.getDgsFeedbacks().get(0).getFeedbackEncryptedData(), ++i);
-//            pstmt.setInt(i, height);
+            i = EncryptedDataUtil.setEncryptedData(pstmt, feedback.getFeedbackEncryptedData(), ++i);
+//            pstmt.setInt(i, feedback.getHeight());
             pstmt.executeUpdate();
 
         }

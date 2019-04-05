@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.inject.Singleton;
@@ -22,6 +23,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     private static final LongKeyFactory<PhasingPollResult> KEY_FACTORY = new LongKeyFactory<PhasingPollResult>("id") {
         @Override
         public DbKey newKey(PhasingPollResult phasingPollResult) {
+            if (phasingPollResult)
             return new LongKey(phasingPollResult.getId());
         }
     };
@@ -34,7 +36,11 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
 
     @Override
     public PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new PhasingPollResult(rs);
+        long id = rs.getLong("id");
+        long result = rs.getLong("result");
+        boolean approved = rs.getBoolean("approved");
+        int height = rs.getInt("height");
+        return new PhasingPollResult(id, result, approved, height);
     }
 
     public PhasingPollResult get(long id) {
@@ -42,7 +48,15 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     }
 
     @Override
-    protected void save(Connection con, PhasingPollResult phasingPollResult, int height) throws SQLException {
-        phasingPollResult.save(con);
+    protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
+                + "result, approved, height) VALUES (?, ?, ?, ?)")) {
+            int i = 0;
+            pstmt.setLong(++i, phasingPollResult.getId());
+            pstmt.setLong(++i, phasingPollResult.getResult());
+            pstmt.setBoolean(++i, phasingPollResult.isApproved());
+            pstmt.setInt(++i, phasingPollResult.getHeight());
+            pstmt.executeUpdate();
+        }
     }
 };

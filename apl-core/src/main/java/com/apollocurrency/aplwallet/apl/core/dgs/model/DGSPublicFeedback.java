@@ -11,6 +11,7 @@ import java.util.Objects;
 public class DGSPublicFeedback {
     private String feedback;
     private Long id;
+    private int height;
     private DbKey dbKey;
 
     public DbKey getDbKey() {
@@ -21,9 +22,18 @@ public class DGSPublicFeedback {
         this.dbKey = dbKey;
     }
 
-    public DGSPublicFeedback(String feedback, Long id) {
+    public DGSPublicFeedback(String feedback, Long id, int height) {
         this.feedback = feedback;
         this.id = id;
+        this.height = height;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     @Override
