@@ -8,8 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedPersistentDbTable;
-
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPersistentDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,7 +44,7 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
         }
 
     }
-    
+
     public static DbKey newKey(long id){
         return publicKeyDbKeyFactory.newKey(id);
     }
@@ -57,12 +56,12 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
     }
 
     @Override
-    protected PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public PublicKey load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new PublicKey(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, PublicKey publicKey) throws SQLException {
+    public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.height = blockchain.getHeight();
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;

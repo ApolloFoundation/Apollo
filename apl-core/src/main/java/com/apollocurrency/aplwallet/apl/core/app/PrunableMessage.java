@@ -43,7 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 
 
 public final class PrunableMessage {
@@ -71,12 +71,12 @@ public final class PrunableMessage {
     private static final PrunableDbTable<PrunableMessage> prunableMessageTable = new PrunableDbTable<PrunableMessage>("prunable_message", prunableMessageKeyFactory) {
 
         @Override
-        protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PrunableMessage(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PrunableMessage prunableMessage) throws SQLException {
+        public void save(Connection con, PrunableMessage prunableMessage) throws SQLException {
             prunableMessage.save(con);
         }
 

@@ -33,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -222,12 +222,12 @@ public abstract class Order {
         private static final VersionedEntityDbTable<Ask> askOrderTable = new VersionedEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
 
             @Override
-            protected Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Ask(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Ask ask) throws SQLException {
+            public void save(Connection con, Ask ask) throws SQLException {
                 ask.save(con, table);
             }
 
@@ -343,12 +343,12 @@ public abstract class Order {
         private static final VersionedEntityDbTable<Bid> bidOrderTable = new VersionedEntityDbTable<Bid>("bid_order", bidOrderDbKeyFactory) {
 
             @Override
-            protected Bid load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Bid load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Bid(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Bid bid) throws SQLException {
+            public void save(Connection con, Bid bid) throws SQLException {
                 bid.save(con, table);
             }
 

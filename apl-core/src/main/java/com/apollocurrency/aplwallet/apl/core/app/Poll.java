@@ -32,9 +32,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -102,12 +102,12 @@ public final class Poll extends AbstractPoll {
     private final static EntityDbTable<Poll> pollTable = new EntityDbTable<Poll>("poll", pollDbKeyFactory, "name,description") {
 
         @Override
-        protected Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Poll(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Poll poll) throws SQLException {
+        public void save(Connection con, Poll poll) throws SQLException {
             poll.save(con);
         }
     };

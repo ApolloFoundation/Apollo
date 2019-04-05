@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -69,12 +69,12 @@ public final class Trade {
     private static final EntityDbTable<Trade> tradeTable = new EntityDbTable<Trade>("trade", tradeDbKeyFactory) {
 
         @Override
-        protected Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Trade(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Trade trade) throws SQLException {
+        public void save(Connection con, Trade trade) throws SQLException {
             trade.save(con);
         }
 

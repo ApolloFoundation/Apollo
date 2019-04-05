@@ -18,8 +18,10 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.db.derived;
 
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
@@ -30,14 +32,14 @@ import java.sql.Statement;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class DerivedDbTable<T> {
+public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
     private FullTextConfig fullTextConfig;
     private DerivedTablesRegistry derivedDbTablesRegistry;
-    
+
     protected final String table;
     protected DatabaseManager databaseManager;
-    
+
     //TODO: fix injects and remove
     private void lookupCdi(){
         if(fullTextConfig==null){
@@ -47,7 +49,7 @@ public abstract class DerivedDbTable<T> {
             derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
         }
     }
-    
+
     // We should find better place for table init
     protected DerivedDbTable(String table, boolean init) { // for CDI beans setUp 'false'
         StringValidator.requireNonBlank(table, "Table name");
@@ -69,6 +71,7 @@ public abstract class DerivedDbTable<T> {
         fullTextConfig.registerTable(table);
     }
 
+    @Override
     public void rollback(int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -85,6 +88,7 @@ public abstract class DerivedDbTable<T> {
 
 
 
+    @Override
     public void truncate() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -97,8 +101,9 @@ public abstract class DerivedDbTable<T> {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
+    @Override
     public void trim(int height, TransactionalDataSource dataSource) {
+
         //nothing to trim
     }
 
@@ -106,10 +111,12 @@ public abstract class DerivedDbTable<T> {
         return databaseManager;
     }
 
+    @Override
     public void createSearchIndex(Connection con) throws SQLException {
         //implemented in EntityDbTable only
     }
 
+    @Override
     public boolean isPersistent() {
         return false;
     }

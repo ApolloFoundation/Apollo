@@ -42,14 +42,12 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -74,12 +72,12 @@ public final class Currency {
     private static final VersionedEntityDbTable<Currency> currencyTable = new VersionedEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
  
         @Override
-        protected Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Currency(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Currency currency) throws SQLException {
+        public void save(Connection con, Currency currency) throws SQLException {
             currency.save(con);
         }
 
@@ -136,12 +134,12 @@ public final class Currency {
     private static final VersionedEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
 
         @Override
-        protected CurrencySupply load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencySupply load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencySupply(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencySupply currencySupply) throws SQLException {
+        public void save(Connection con, CurrencySupply currencySupply) throws SQLException {
             currencySupply.save(con);
         }
 

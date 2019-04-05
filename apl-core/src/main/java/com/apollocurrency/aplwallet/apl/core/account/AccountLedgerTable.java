@@ -7,7 +7,7 @@ import static com.apollocurrency.aplwallet.apl.core.account.AccountLedger.proper
 import static com.apollocurrency.aplwallet.apl.core.account.AccountLedger.trimKeep;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

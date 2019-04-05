@@ -9,8 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,7 +55,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    protected Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         long id = rs.getLong("id");
         Account res = new Account(id);
         res.dbKey = dbKey;
@@ -73,7 +72,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    protected void save(Connection con, Account account) throws SQLException {
+    public void save(Connection con, Account account) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, account.id);

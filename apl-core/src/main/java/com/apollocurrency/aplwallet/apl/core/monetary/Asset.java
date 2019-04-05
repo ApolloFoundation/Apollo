@@ -37,7 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,12 +61,12 @@ public final class Asset {
     private static final VersionedEntityDbTable<Asset> assetTable = new VersionedEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
 
         @Override
-        protected Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Asset(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Asset asset) throws SQLException {
+        public void save(Connection con, Asset asset) throws SQLException {
             asset.save(con);
         }
 

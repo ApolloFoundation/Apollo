@@ -18,7 +18,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -26,6 +26,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
@@ -36,7 +42,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class EntityDbTable<T> extends DerivedDbTable {
+public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
 
     public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
@@ -82,10 +88,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     //TODO remove DbKey completely from 'load' method.
-    protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
+//    protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
 
     //TODO dao implementations should not know anything about Blockchain and other services
-    protected abstract void save(Connection con, T t, int height) throws SQLException;
+//    protected abstract void save(Connection con, T t) throws SQLException;
 
     protected String defaultSort() {
         return defaultSort;
@@ -222,7 +228,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
-                t = load(con, rs, dbKey);
+                t = (T)load(con, rs, dbKey);
                 if (doCache) {
                     dataSource.getCache(table).put(dbKey, t);
                 }
@@ -303,7 +309,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
-                t = load(connection, rs, dbKey);
+                t = (T) load(connection, rs, dbKey);
                 if (doCache) {
                     dataSource.getCache(table).put(dbKey, t);
                 }

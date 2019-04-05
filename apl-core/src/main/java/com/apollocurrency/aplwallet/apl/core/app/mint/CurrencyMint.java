@@ -25,13 +25,12 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
@@ -100,12 +99,12 @@ public final class CurrencyMint {
     private static final VersionedEntityDbTable<CurrencyMint> currencyMintTable = new VersionedEntityDbTable<CurrencyMint>("currency_mint", currencyMintDbKeyFactory) {
 
         @Override
-        protected CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyMint(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyMint currencyMint) throws SQLException {
+        public void save(Connection con, CurrencyMint currencyMint) throws SQLException {
             currencyMint.save(con);
         }
 
