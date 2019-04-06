@@ -315,7 +315,7 @@ public final class Peers {
     }
     
     private static void fillMyPeerInfo(){
-          
+        myPeerInfo = new JSONObject();
         List<Peer.Service> servicesList = new ArrayList<>();
         if (peerHttpServer.getMyAddress() != null) {
             try {
