@@ -34,18 +34,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PEER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PEER;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class BlacklistAPIProxyPeer extends AbstractAPIRequestHandler {
 
-    private static class BlacklistAPIProxyPeerHolder {
-        private static final BlacklistAPIProxyPeer INSTANCE = new BlacklistAPIProxyPeer();
-    }
-
-    public static BlacklistAPIProxyPeer getInstance() {
-        return BlacklistAPIProxyPeerHolder.INSTANCE;
-    }
-
-    private BlacklistAPIProxyPeer() {
+    public BlacklistAPIProxyPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");
     }
 

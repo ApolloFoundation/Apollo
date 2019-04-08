@@ -26,21 +26,15 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAvailableToSell extends AbstractAPIRequestHandler {
 
-    private static class GetAvailableToSellHolder {
-        private static final GetAvailableToSell INSTANCE = new GetAvailableToSell();
-    }
-
-    public static GetAvailableToSell getInstance() {
-        return GetAvailableToSellHolder.INSTANCE;
-    }
-
-    private GetAvailableToSell() {
+    public GetAvailableToSell() {
         super(new APITag[] {APITag.MS}, "currency", "units");
     }
 

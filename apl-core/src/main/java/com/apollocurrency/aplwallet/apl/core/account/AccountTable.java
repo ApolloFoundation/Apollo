@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -87,11 +88,11 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         if (height <= Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height);
+        super.trim(height, dataSource);
     }
 
     @Override

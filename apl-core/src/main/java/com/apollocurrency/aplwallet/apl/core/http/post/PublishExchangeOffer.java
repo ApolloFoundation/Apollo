@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -62,17 +63,10 @@ import javax.servlet.http.HttpServletRequest;
  * Only one exchange offer is allowed per account. Publishing a new exchange offer when another exchange offer exists
  * for the account, removes the existing exchange offer and publishes the new exchange offer
  */
+@Vetoed
 public final class PublishExchangeOffer extends CreateTransaction {
 
-    private static class PublishExchangeOfferHolder {
-        private static final PublishExchangeOffer INSTANCE = new PublishExchangeOffer();
-    }
-
-    public static PublishExchangeOffer getInstance() {
-        return PublishExchangeOfferHolder.INSTANCE;
-    }
-
-    private PublishExchangeOffer() {
+    public PublishExchangeOffer() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",
                 "totalBuyLimit", "totalSellLimit", "initialBuySupply", "initialSellSupply", "expirationHeight");
     }

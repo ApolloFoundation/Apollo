@@ -39,19 +39,13 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class DGSDelivery extends CreateTransaction {
 
-    private static class DGSDeliveryHolder {
-        private static final DGSDelivery INSTANCE = new DGSDelivery();
-    }
-
-    public static DGSDelivery getInstance() {
-        return DGSDeliveryHolder.INSTANCE;
-    }
-
-    private DGSDelivery() {
+    public DGSDelivery() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "purchase", "discountATM", "goodsToEncrypt", "goodsIsText", "goodsData", "goodsNonce");
     }

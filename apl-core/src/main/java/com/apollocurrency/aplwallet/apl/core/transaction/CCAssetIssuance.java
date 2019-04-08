@@ -28,7 +28,7 @@ class CCAssetIssuance extends ColoredCoins {
     public CCAssetIssuance() {
     }
     private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
-        public int getSize(TransactionImpl transaction, Appendix appendage) {
+        public int getSize(Transaction transaction, Appendix appendage) {
             ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
             return attachment.getDescription().length();
         }

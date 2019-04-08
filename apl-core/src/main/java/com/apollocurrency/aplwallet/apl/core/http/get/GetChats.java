@@ -11,23 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Chat;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetChats extends AbstractAPIRequestHandler {
 
-    private static class GetChatsHolder {
-        private static final GetChats INSTANCE = new GetChats();
-    }
-
-    public static GetChats getInstance() {
-        return GetChatsHolder.INSTANCE;
-    }
-
-    private GetChats() {
+    public GetChats() {
         super(new APITag[] {APITag.MESSAGES, APITag.ACCOUNTS}, "account", "firstIndex", "lastIndex");
     }
 

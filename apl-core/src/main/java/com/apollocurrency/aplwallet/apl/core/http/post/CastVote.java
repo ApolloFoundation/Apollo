@@ -35,19 +35,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_VOTE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_FINISHED;
+import javax.enterprise.inject.Vetoed;
 
-
+@Vetoed
 public final class CastVote extends CreateTransaction {
 
-    private static class CastVoteHolder {
-        private static final CastVote INSTANCE = new CastVote();
-    }
-
-    public static CastVote getInstance() {
-        return CastVoteHolder.INSTANCE;
-    }
-
-    private CastVote() {
+    public CastVote() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION}, "poll", "vote00", "vote01", "vote02");
     }
 

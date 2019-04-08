@@ -30,18 +30,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HALLMARK;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HALLMARK;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DecodeHallmark extends AbstractAPIRequestHandler {
 
-    private static class DecodeHallmarkHolder {
-        private static final DecodeHallmark INSTANCE = new DecodeHallmark();
-    }
-
-    public static DecodeHallmark getInstance() {
-        return DecodeHallmarkHolder.INSTANCE;
-    }
-
-    private DecodeHallmark() {
+    public DecodeHallmark() {
         super(new APITag[] {APITag.TOKENS}, "hallmark");
     }
 

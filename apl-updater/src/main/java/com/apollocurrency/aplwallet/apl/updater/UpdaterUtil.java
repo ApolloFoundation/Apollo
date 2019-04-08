@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.Vetoed;
 import java.util.stream.Stream;
 //TODO: how to read from resources
 //       ClassLoader classloader = Thread.currentThread().getContextClassLoader();
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 //            // rerad from is;
 //        }
 
+@Vetoed
 public class UpdaterUtil {
     private static final Logger LOG = LoggerFactory.getLogger(UpdaterUtil.class);
 

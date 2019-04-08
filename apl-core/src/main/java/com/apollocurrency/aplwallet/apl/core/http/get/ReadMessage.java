@@ -43,22 +43,16 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+@Vetoed
 public final class ReadMessage extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(ReadMessage.class);
 
-    private static class ReadMessageHolder {
-        private static final ReadMessage INSTANCE = new ReadMessage();
-    }
-
-    public static ReadMessage getInstance() {
-        return ReadMessageHolder.INSTANCE;
-    }
-
-    private ReadMessage() {
+    public ReadMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
     }
 

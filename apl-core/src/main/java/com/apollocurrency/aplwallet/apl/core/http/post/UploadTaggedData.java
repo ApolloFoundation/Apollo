@@ -21,26 +21,19 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class UploadTaggedData extends CreateTransaction {
 
-    private static class UploadTaggedDataHolder {
-        private static final UploadTaggedData INSTANCE = new UploadTaggedData();
-    }
-
-    public static UploadTaggedData getInstance() {
-        return UploadTaggedDataHolder.INSTANCE;
-    }
-
-    private UploadTaggedData() {
+    public UploadTaggedData() {
         super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION},
                 "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }

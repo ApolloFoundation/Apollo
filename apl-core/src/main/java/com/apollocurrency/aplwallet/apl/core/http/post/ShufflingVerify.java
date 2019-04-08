@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class ShufflingVerify extends CreateTransaction {
 
-    private static class ShufflingVerifyHolder {
-        private static final ShufflingVerify INSTANCE = new ShufflingVerify();
-    }
-
-    public static ShufflingVerify getInstance() {
-        return ShufflingVerifyHolder.INSTANCE;
-    }
-
-    private ShufflingVerify() {
+    public ShufflingVerify() {
         super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "shufflingStateHash");
     }
 

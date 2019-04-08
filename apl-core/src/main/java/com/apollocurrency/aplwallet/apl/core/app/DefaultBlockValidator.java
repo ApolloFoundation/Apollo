@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 @Singleton

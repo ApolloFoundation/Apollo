@@ -36,18 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_OFFER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_OFFER;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExchangesByOffer extends AbstractAPIRequestHandler {
 
-    private static class GetExchangesByOfferHolder {
-        private static final GetExchangesByOffer INSTANCE = new GetExchangesByOffer();
-    }
-
-    public static GetExchangesByOffer getInstance() {
-        return GetExchangesByOfferHolder.INSTANCE;
-    }
-
-    private GetExchangesByOffer() {
+    public GetExchangesByOffer() {
         super(new APITag[] {APITag.MS}, "offer", "includeCurrencyInfo", "firstIndex", "lastIndex");
     }
 

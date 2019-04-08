@@ -39,12 +39,12 @@
         <module>apl-updater</module>
         <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
-        <!--
-             Tt is a whole mess at the moment. commented out. Please!!! Integration test
-             SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
-             ant it MUST use REST API only!
-        -->
-        <!--        <module>apl-tests</module> -->
+<!--
+     Tt is a whole mess at the moment. commented out. Please!!! Integration test
+     SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
+     ant it MUST use REST API only!
+-->
+<!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
@@ -54,9 +54,9 @@
         <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>11</java.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
@@ -65,8 +65,10 @@
         <servlet-api.version>3.1.0</servlet-api.version>
 
         <!--Crypto-->
+
         <fbcrypto.version>1.2.7</fbcrypto.version>
         <bcprov.version>1.61</bcprov.version>
+
 
         <!--QR-code-->
         <zxing.version>3.3.0</zxing.version>
@@ -80,7 +82,7 @@
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.9.6</jackson.version>
+        <jackson.version>2.9.8</jackson.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -102,7 +104,7 @@
         <!-- TODO: cleanup -->
         <jetty.version>9.4.12.v20180830</jetty.version>
         <bitlet.version>0.1.4</bitlet.version>
-        <weld.version>3.0.5.Final</weld.version>
+        <weld.version>3.1.0.Final</weld.version>
         <weld-junit5.version>1.3.1.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
         <resteasy.version>3.6.3.Final</resteasy.version>
@@ -118,15 +120,15 @@
 
     </properties>
 
-    <!-- We have following profiles: prod, dev, debug
-         1. prod: profile for production network with appropriate resources
-         2. dev:  profile for development, contains resources for man testnet
-             Default profile:  debug
-             Resources for profiles:
-                 dev:  resources-dev
-                 prod: resources-prod
-                 debug: the same as dev but without zip assembly
-    -->
+<!-- We have following profiles: prod, dev, debug
+     1. prod: profile for production network with appropriate resources
+     2. dev:  profile for development, contains resources for man testnet
+         Default profile:  debug
+         Resources for profiles:
+             dev:  resources-dev
+             prod: resources-prod
+             debug: the same as dev but without zip assembly
+-->
     <profiles>
         <!-- The Configuration of the development profile -->
         <profile>
@@ -393,13 +395,13 @@
                 <artifactId>jta</artifactId>
                 <version>1.1</version>
             </dependency>
-            <!--
-                        <dependency>
-                            <groupId>com.atomikos</groupId>
-                            <artifactId>transactions-jta</artifactId>
-                            <version>4.0.6</version>
-                        </dependency>
-            -->
+<!--
+            <dependency>
+                <groupId>com.atomikos</groupId>
+                <artifactId>transactions-jta</artifactId>
+                <version>4.0.6</version>
+            </dependency>
+-->
 
             <!--2fa api-->
             <dependency>
@@ -741,14 +743,14 @@
                         <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                     <dependencies>
-                        <!--
-                                                JDK 11
-                                                <dependency>
-                                                    <groupId>org.ow2.asm</groupId>
-                                                    <artifactId>asm</artifactId>
-                                                    <version>6.2</version>
-                                                </dependency>
-                        -->
+<!--
+                        JDK 11
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>6.2</version>
+                        </dependency>
+-->
                         <dependency>
                             <groupId>org.apache.maven.wagon</groupId>
                             <artifactId>wagon-webdav-jackrabbit</artifactId>

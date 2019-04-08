@@ -35,20 +35,13 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class SellAlias extends CreateTransaction {
 
-    private static class SellAliasHolder {
-        private static final SellAlias INSTANCE = new SellAlias();
-    }
-
-    public static SellAlias getInstance() {
-        return SellAliasHolder.INSTANCE;
-    }
-
-    private SellAlias() {
+    public SellAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceATM");
     }
 

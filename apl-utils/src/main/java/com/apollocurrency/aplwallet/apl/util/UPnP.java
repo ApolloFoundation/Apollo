@@ -24,16 +24,17 @@ import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.slf4j.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
 import java.net.InetAddress;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Forward ports using the UPnP protocol.
  */
-@ApplicationScoped
+@Singleton
 public class UPnP {
     private static final Logger LOG = getLogger(UPnP.class);
 
@@ -50,19 +51,10 @@ public class UPnP {
     
     public static int TIMEOUT=1500; //1,5 secons
 
-//TODO: refactor core, remove from static context, make injectable
-//and then remove singleton boilerplate    
-    private static class UPnPHolder {
 
-        private static final UPnP INSTANCE = new UPnP();
-    }
-    
-    public static UPnP getInstance(){
-        return UPnPHolder.INSTANCE;
-    }
     
 //TODO: Inject with properties    
-//    @Inject  
+    @Inject  
     public UPnP() {
     }
 

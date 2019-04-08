@@ -31,6 +31,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The EventWait API will wait for one of the server events
@@ -99,16 +100,8 @@ import java.util.List;
  * <li>Transaction string identifier for a Transaction event</li>
  * </ul>
  */
+@Vetoed
 public class EventWait extends AbstractAPIRequestHandler {
-
-    /** EventWait instance */
-    private static class EventWaitHolder {
-        private static final EventWait INSTANCE = new EventWait();
-    }
-
-    public static EventWait getInstance() {
-        return EventWaitHolder.INSTANCE;
-    }
 
     /** Incorrect timeout */
     private static final JSONObject incorrectTimeout = new JSONObject();
@@ -127,7 +120,7 @@ public class EventWait extends AbstractAPIRequestHandler {
     /**
      * Create the EventWait instance
      */
-    private EventWait() {
+    public EventWait() {
         super(new APITag[] {APITag.INFO}, "timeout");
     }
 

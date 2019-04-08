@@ -20,21 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,8 +45,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 public final class Shuffler {
     private static final Logger LOG = getLogger(Shuffler.class);
@@ -56,6 +60,7 @@ public final class Shuffler {
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static BlockchainProcessor blockchainProcessor;
 
     private static BlockchainProcessor lookupBlockchainProcessor() {
@@ -68,7 +73,7 @@ public final class Shuffler {
     public static Shuffler addOrGetShuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
         String hash = Convert.toHexString(shufflingFullHash);
         long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             Map<Long, Shuffler> map = shufflingsMap.get(hash);
             if (map == null) {
@@ -115,38 +120,38 @@ public final class Shuffler {
             }
             return shuffler;
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     public static List<Shuffler> getAllShufflers() {
         List<Shuffler> shufflers = new ArrayList<>();
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             shufflingsMap.values().forEach(shufflerMap -> shufflers.addAll(shufflerMap.values()));
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return shufflers;
     }
 
     public static List<Shuffler> getShufflingShufflers(byte[] shufflingFullHash) {
         List<Shuffler> shufflers = new ArrayList<>();
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 shufflers.addAll(shufflerMap.values());
             }
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return shufflers;
     }
 
     public static List<Shuffler> getAccountShufflers(long accountId) {
         List<Shuffler> shufflers = new ArrayList<>();
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             shufflingsMap.values().forEach(shufflerMap -> {
                 Shuffler shuffler = shufflerMap.get(accountId);
@@ -155,48 +160,48 @@ public final class Shuffler {
                 }
             });
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return shufflers;
     }
 
     public static Shuffler getShuffler(long accountId, byte[] shufflingFullHash) {
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 return shufflerMap.get(accountId);
             }
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return null;
     }
 
     public static Shuffler stopShuffler(long accountId, byte[] shufflingFullHash) {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
                 return shufflerMap.remove(accountId);
             }
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
         return null;
     }
 
     public static void stopAllShufflers() {
-        blockchain.writeLock();
+        globalSync.writeLock();
         try {
             shufflingsMap.clear();
         } finally {
-            blockchain.writeUnlock();
+            globalSync.writeUnlock();
         }
     }
 
     private static Shuffler getRecipientShuffler(long recipientId) {
-        blockchain.readLock();
+        globalSync.readLock();
         try {
             for (Map<Long,Shuffler> shufflerMap : shufflingsMap.values()) {
                 for (Shuffler shuffler : shufflerMap.values()) {
@@ -207,7 +212,7 @@ public final class Shuffler {
             }
             return null;
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
     }
 
@@ -275,29 +280,37 @@ public final class Shuffler {
         Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_DONE);
 
         Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_CANCELLED);
+    }
 
-        lookupBlockchainProcessor().addListener(block -> {
+    @Singleton
+    public static class ShufflerObserver {
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             Set<String> expired = expirations.get(block.getHeight());
             if (expired != null) {
                 expired.forEach(shufflingsMap::remove);
                 expirations.remove(block.getHeight());
             }
-        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+        }
+        public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
 
-        lookupBlockchainProcessor().addListener(block -> shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
-            if (shuffler.failedTransaction != null) {
-                try {
-                    transactionProcessor.broadcast(shuffler.failedTransaction);
-                    shuffler.failedTransaction = null;
-                    shuffler.failureCause = null;
-                } catch (AplException.ValidationException ignore) {
+            shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
+                if (shuffler.failedTransaction != null) {
+                    try {
+                        transactionProcessor.broadcast(shuffler.failedTransaction);
+                        shuffler.failedTransaction = null;
+                        shuffler.failureCause = null;
+                    }
+                    catch (AplException.ValidationException ignore) {
+                    }
                 }
-            }
-        })), BlockchainProcessor.Event.AFTER_BLOCK_ACCEPT);
+            }));
+        }
 
-        lookupBlockchainProcessor().addListener(block -> stopAllShufflers(), BlockchainProcessor.Event.RESCAN_BEGIN);
-
+        public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            stopAllShufflers();
+        }
     }
+
 
     private static Map<Long, Shuffler> getShufflers(Shuffling shuffling) {
         return shufflingsMap.get(Convert.toHexString(shuffling.getFullHash()));
@@ -485,8 +498,7 @@ public final class Shuffler {
         }
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
-                    (short) 1440, attachment);
-            builder.timestamp(blockchain.getLastBlockTimestamp());
+                    (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             Transaction transaction = builder.build(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;

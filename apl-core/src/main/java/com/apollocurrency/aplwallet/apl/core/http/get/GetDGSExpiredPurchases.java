@@ -27,23 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSExpiredPurchases extends AbstractAPIRequestHandler {
 
-    private static class GetDGSExpiredPurchasesHolder {
-        private static final GetDGSExpiredPurchases INSTANCE = new GetDGSExpiredPurchases();
-    }
-
-    public static GetDGSExpiredPurchases getInstance() {
-        return GetDGSExpiredPurchasesHolder.INSTANCE;
-    }
-
-    private GetDGSExpiredPurchases() {
+    public GetDGSExpiredPurchases() {
         super(new APITag[] {APITag.DGS}, "seller", "firstIndex", "lastIndex");
     }
 

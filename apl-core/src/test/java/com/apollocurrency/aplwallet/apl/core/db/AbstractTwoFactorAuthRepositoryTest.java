@@ -4,12 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT1;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT2;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT3;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY1;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY2;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ENTITY3;
+import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -33,55 +28,62 @@ public abstract class AbstractTwoFactorAuthRepositoryTest {
 
     @Test
     public void testGet() {
-        TwoFactorAuthEntity entity = repository.get(ACCOUNT1.getId());
-        assertEquals(ENTITY1, entity);
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        TwoFactorAuthEntity entity = repository.get(td.ACCOUNT1.getId());
+        assertEquals(td.ENTITY1, entity);
     }
 
     @Test
     public void testGetNotFound() {
-
-        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        TwoFactorAuthEntity entity = repository.get(td.ACCOUNT3.getId());
         assertNull(entity);
     }
 
     @Test
     public void testAdd() {
-        boolean saved = repository.add(ENTITY3);
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
+        boolean saved = repository.add(td.ENTITY3);
         assertTrue(saved);
-        TwoFactorAuthEntity entity = repository.get(ACCOUNT3.getId());
-        assertEquals(ENTITY3, entity);
+        TwoFactorAuthEntity entity = repository.get(td.ACCOUNT3.getId());
+        assertEquals(td.ENTITY3, entity);
 
     }
 
     @Test
     public void testAddAlreadyExist() {
-        boolean saved = repository.add(ENTITY2);
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
+        boolean saved = repository.add(td.ENTITY2);
         assertFalse(saved);
     }
 
     @Test
     public void testUpdate() {
-        TwoFactorAuthEntity entity = new TwoFactorAuthEntity(ENTITY2.getAccount(), ENTITY2.getSecret(), false);
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
+        TwoFactorAuthEntity entity = new TwoFactorAuthEntity(td.ENTITY2.getAccount(), td.ENTITY2.getSecret(), false);
         boolean saved = repository.update(entity);
         assertTrue(saved);
-        assertEquals(repository.get(ACCOUNT2.getId()), entity);
+        assertEquals(repository.get(td.ACCOUNT2.getId()), entity);
     }
     @Test
     public void testUpdateNotExist() {
-        TwoFactorAuthEntity entity = new TwoFactorAuthEntity(ENTITY3.getAccount(), ENTITY3.getSecret(), false);
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
+        TwoFactorAuthEntity entity = new TwoFactorAuthEntity(td.ENTITY3.getAccount(), td.ENTITY3.getSecret(), false);
         boolean saved = repository.update(entity);
         assertFalse(saved);
     }
 
     @Test
     public void testDelete() {
-        boolean deleted = repository.delete(ACCOUNT1.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
+        boolean deleted = repository.delete(td.ACCOUNT1.getId());
         assertTrue(deleted);
     }
 
     @Test
     public void testDeleteNothingToDelete() {
-        boolean deleted = repository.delete(ACCOUNT3.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                        
+        boolean deleted = repository.delete(td.ACCOUNT3.getId());
         assertFalse(deleted);
     }
 }

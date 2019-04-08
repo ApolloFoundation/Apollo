@@ -1,40 +1,67 @@
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
+    private static final Logger log = getLogger(AbstractConfigLoader.class);
+
     public static final String DEFAULT_CONFIG_DIR = "conf";
     private ConfigDirProvider dirProvider;
     private boolean ignoreResources;
-    private String configDir = "";
+    private boolean ignoreUserConfig;
+    private String configDir;
     private T config;
     private String resourceName;
 
+    public AbstractConfigLoader(boolean ignoreResources, String configDir, String resourceName) {
+        this(null, ignoreResources, configDir, resourceName);
+    }
+
     public AbstractConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String configDir, String resourceName) {
         StringValidator.requireNonBlank(resourceName, "Resource name is blank or empty");
-
-        this.dirProvider = dirProvider;
-        if (!StringUtils.isBlank(configDir)) {
-            this.configDir = configDir;
+        this.ignoreUserConfig = dirProvider == null && StringUtils.isBlank(configDir);
+        if (ignoreUserConfig && ignoreResources) {
+                throw new IllegalArgumentException("No locations for config loading provided. Resources and user defined configs ignored");
         }
+        this.dirProvider = dirProvider;
         this.ignoreResources = ignoreResources;
+        this.configDir = configDir;
         this.resourceName = resourceName;
     }
 
+    public AbstractConfigLoader(String resourceName) {
+        this(null, false, resourceName);
+    }
+
+    public AbstractConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String resourceName) {
+        this(dirProvider, ignoreResources, null, resourceName);
+    }
+
+    @Override
     public T load() {
         if (!ignoreResources) {
             loadFromResources();
+        } else {
+            System.out.println("Will ignore resources!");
         }
-        loadFromUserDefinedDirectory();
+        if (!ignoreUserConfig) {
+            loadFromUserDefinedDirectory();
+        } else {
+            System.out.println("Will ignore user defined config!");
+        }
         return config;
     }
 
@@ -50,7 +77,8 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
             config = merge(config, defaultConfig);
         }
         catch (IOException e) {
-            System.err.println("Can not find resource: " + fn);
+            System.err.println("Can not load resource: " + fn);
+            e.printStackTrace();
         }
     }
 
@@ -69,7 +97,13 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
                 T userConfig = read(is);
                 config = merge(config, userConfig);
             }
-            catch (Exception ignored) {
+            catch (FileNotFoundException ignored) {
+//                log.warn("File not found in searched dir: " + p, ignored); // if you need stacktrace
+                log.error("File not found in searched dir: {}", p); // no stacktrace
+//                System.out.println("File not found: " + p);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

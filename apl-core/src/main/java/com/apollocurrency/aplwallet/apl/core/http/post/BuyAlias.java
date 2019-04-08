@@ -32,19 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_NOTFORSALE;
+import javax.enterprise.inject.Vetoed;
 
-
+@Vetoed
 public final class BuyAlias extends CreateTransaction {
 
-    private static class BuyAliasHolder {
-        private static final BuyAlias INSTANCE = new BuyAlias();
-    }
-
-    public static BuyAlias getInstance() {
-        return BuyAliasHolder.INSTANCE;
-    }
-
-    private BuyAlias() {
+    public BuyAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "amountATM");
     }
 

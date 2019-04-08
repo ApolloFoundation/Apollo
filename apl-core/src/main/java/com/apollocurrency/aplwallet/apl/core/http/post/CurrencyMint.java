@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,17 +52,10 @@ import javax.servlet.http.HttpServletRequest;
  * Use the {@link GetMintingTarget} transaction to retrieve the current hash target and then calculate the hash offline
  * by following the procedure used in {@link com.apollocurrency.aplwallet.apl.CurrencyMint#mintCurrency}<br>
  */
+@Vetoed
 public final class CurrencyMint extends CreateTransaction {
 
-    private static class CurrencyMintHolder {
-        private static final CurrencyMint INSTANCE = new CurrencyMint();
-    }
-
-    public static CurrencyMint getInstance() {
-        return CurrencyMintHolder.INSTANCE;
-    }
-
-    private CurrencyMint() {
+    public CurrencyMint() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");
     }
 

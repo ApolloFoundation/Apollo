@@ -11,19 +11,13 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public class GetUpdateStatus extends AbstractAPIRequestHandler {
 
-    private static class GetUpdateStatusHolder {
-        private static final GetUpdateStatus INSTANCE = new GetUpdateStatus();
-    }
-
-    public static GetUpdateStatus getInstance() {
-        return GetUpdateStatusHolder.INSTANCE;
-    }
-
-    private GetUpdateStatus() {
+    public GetUpdateStatus() {
         super(new APITag[] {APITag.UPDATE});
     }
 

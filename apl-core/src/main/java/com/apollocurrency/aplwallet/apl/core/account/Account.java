@@ -20,6 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -42,7 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
@@ -62,6 +66,10 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 /**
  * Used as global access point to all interactions with account and public keys
@@ -84,7 +92,8 @@ public final class Account {
     static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static DatabaseManager databaseManager;
-
+    private static GlobalSync sync;
+    private static PublicKeyTable publicKeyTable;
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
            
     
@@ -103,26 +112,58 @@ public final class Account {
     long activeLesseeId;
     Set<ControlType> controls;
 
-    public static void init(DatabaseManager databaseManagerParam, 
+    public static void init(DatabaseManager databaseManagerParam,
                             PropertiesHolder propertiesHolder,
                             BlockchainProcessor blockchainProcessorParam,
                             BlockchainConfig blockchainConfigParam,
-                            Blockchain blockchainParam
-                            )
-    {
+                            Blockchain blockchainParam,
+                            GlobalSync globalSync,
+                            PublicKeyTable pkTable
+    ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
         blockchainConfig = blockchainConfigParam;
         blockchain = blockchainParam;
-        
-        if(propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
-            publicKeyCache =  new ConcurrentHashMap<>();
+        publicKeyTable = pkTable;
+        sync = globalSync;
+
+        if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+            publicKeyCache = new ConcurrentHashMap<>();
         }
-//from static section
-        blockchainProcessor.addListener(block -> {
+        }
+
+
+    @Singleton
+    public static class AccountObserver {
+
+        public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            if (publicKeyCache != null) {
+                publicKeyCache.clear();
+            }
+        }
+
+        public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+            if (publicKeyCache != null) {
+                publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
+                block.getTransactions().forEach(transaction -> {
+                    publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
+                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
+                        publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
+                    }
+                    if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
+                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
+                        for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
+                            publicKeyCache.remove(AccountTable.newKey(Account.getId(publicKey)));
+                        }
+                    }
+                });
+            }
+        }
+
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
-            try (DbIterator<AccountLease> leases = AccountLeaseTable.getLeaseChangingAccounts(height)) {
+            try (DbIterator<AccountLease> leases = AccountLeaseTable.getInstance().getLeaseChangingAccounts(height)) {
                 while (leases.hasNext()) {
                     changingLeases.add(leases.next());
                 }
@@ -156,30 +197,7 @@ public final class Account {
                 }
                 lessor.save();
             }
-        }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-
-        if (publicKeyCache != null) {
-
-            blockchainProcessor.addListener(block -> {
-                publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
-                block.getTransactions().forEach(transaction -> {
-                    publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                        publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
-                    }
-                    if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                        for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                            publicKeyCache.remove(AccountTable.newKey(Account.getId(publicKey)));
-                        }
-                    }
-                });
-            }, BlockchainProcessor.Event.BLOCK_POPPED);
-
-            blockchainProcessor.addListener(block -> publicKeyCache.clear(), BlockchainProcessor.Event.RESCAN_BEGIN);
-
         }
-
     }
 
 
@@ -233,7 +251,7 @@ public final class Account {
     }
 
     public static int getCount() {
-        return PublicKeyTable.getInstance().getCount() + GenesisPublicKeyTable.getInstance().getCount();
+        return publicKeyTable.getCount() + GenesisPublicKeyTable.getInstance().getCount();
     }
 
     public static int getActiveLeaseCount() {
@@ -359,8 +377,8 @@ public final class Account {
                     publicKey = GenesisPublicKeyTable.getInstance().newEntity(dbKey);
                     GenesisPublicKeyTable.getInstance().insert(publicKey);
                 } else {
-                    publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
-                    PublicKeyTable.getInstance().insert(publicKey);
+                    publicKey = publicKeyTable.newEntity(dbKey);
+                    publicKeyTable.insert(publicKey);
                 }
             }
             account.publicKey = publicKey;
@@ -369,7 +387,7 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey);
+        PublicKey publicKey = publicKeyTable.get(dbKey);
         if (publicKey == null) {
             publicKey = GenesisPublicKeyTable.getInstance().get(dbKey);
         }
@@ -377,7 +395,7 @@ public final class Account {
     }
     
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
-        PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey, cache);
+        PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
             publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, cache);
         }
@@ -385,7 +403,7 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey, int height) {
-        PublicKey publicKey = PublicKeyTable.getInstance().get(dbKey, height);
+        PublicKey publicKey = publicKeyTable.get(dbKey, height);
         if (publicKey == null) {
             publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, height);
         }
@@ -411,7 +429,7 @@ public final class Account {
         DbKey dbKey = PublicKeyTable.newKey(accountId);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
-            publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
+            publicKey = publicKeyTable.newEntity(dbKey);
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
@@ -512,7 +530,7 @@ public final class Account {
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        blockchain.readLock();
+        sync.readLock();
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
@@ -521,7 +539,7 @@ public final class Account {
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
         finally {
-            blockchain.readUnlock();
+            sync.readUnlock();
         }
     }
 
@@ -586,7 +604,7 @@ public final class Account {
     }
 
     public long getGuaranteedBalanceATM(final int numberOfConfirmations, final int currentHeight) {
-        blockchain.readLock();
+        sync.readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockchainProcessor.getMinRollbackHeight()
@@ -612,7 +630,7 @@ public final class Account {
             }
         }
         finally {
-            blockchain.readUnlock();
+            sync.readUnlock();
         }
     }
 
@@ -770,21 +788,21 @@ public final class Account {
     public void apply(byte[] key, boolean isGenesis) {
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
-            publicKey = PublicKeyTable.getInstance().newEntity(dbKey);
+            publicKey = publicKeyTable.newEntity(dbKey);
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
                 GenesisPublicKeyTable.getInstance().insert(publicKey);
             } else {
-               PublicKeyTable.getInstance().insert(publicKey);
+               publicKeyTable.insert(publicKey);
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.height >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
-                PublicKeyTable.getInstance().insert(publicKey);
+                publicKeyTable.insert(publicKey);
             }
         }
         if (publicKeyCache != null) {

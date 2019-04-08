@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class CancelBidOrder extends CreateTransaction {
 
-    private static class CancelBidOrderHolder {
-        private static final CancelBidOrder INSTANCE = new CancelBidOrder();
-    }
-
-    public static CancelBidOrder getInstance() {
-        return CancelBidOrderHolder.INSTANCE;
-    }
-
-    private CancelBidOrder() {
+    public CancelBidOrder() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "order");
     }
 

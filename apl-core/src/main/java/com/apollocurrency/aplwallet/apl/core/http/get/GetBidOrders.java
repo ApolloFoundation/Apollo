@@ -20,41 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetBidOrders extends AbstractAPIRequestHandler {
 
-    private static class GetBidOrdersHolder {
-        private static final GetBidOrders INSTANCE = new GetBidOrders();
-    }
-
-    public static GetBidOrders getInstance() {
-        return GetBidOrdersHolder.INSTANCE;
-    }
-
-    private GetBidOrders() {
+    public GetBidOrders() {
         super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
     }
-
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -66,7 +57,7 @@ public final class GetBidOrders extends AbstractAPIRequestHandler {
         long[] cancellations = null;
         if (showExpectedCancellations) {
             Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.BID_ORDER_CANCELLATION;
-            List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+            List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
             cancellations = new long[transactions.size()];
             for (int i = 0; i < transactions.size(); i++) {
                 ColoredCoinsOrderCancellationAttachment attachment = (ColoredCoinsOrderCancellationAttachment) transactions.get(i).getAttachment();

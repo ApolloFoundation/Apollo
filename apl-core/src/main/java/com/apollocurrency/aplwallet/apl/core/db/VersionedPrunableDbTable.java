@@ -38,6 +38,10 @@ public abstract class VersionedPrunableDbTable<T> extends PrunableDbTable<T> {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
+    public VersionedPrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
+    }
+
     public final boolean delete(T t) {
         throw new UnsupportedOperationException("Versioned prunable tables cannot support delete");
     }

@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -33,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetTransaction extends AbstractAPIRequestHandler {
 
-    private static class GetTransactionHolder {
-        private static final GetTransaction INSTANCE = new GetTransaction();
-    }
-
-    public static GetTransaction getInstance() {
-        return GetTransactionHolder.INSTANCE;
-    }
-
-    private GetTransaction() {
+    public GetTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "includePhasingResult");
     }
 

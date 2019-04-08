@@ -208,7 +208,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
                 long startDeleteDeletedTime = System.currentTimeMillis();
 //                int totalDeleteDeleted = deleteDeletedOldAlgo(pstmtDeleteDeleted, height);
                 int totalDeleteDeleted = deleteDeletedNewAlgo(pstmtSelectDeleteDeletedIds, pstmtSelectDeleteDeletedCandidates, pstmtDeletedById,
-                        dbKeyFactory, height);
+                        dbKeyFactory, height, dataSource);
                 LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
@@ -224,7 +224,8 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
     private static int deleteDeletedNewAlgo(PreparedStatement pstmtSelectDeleteDeletedIds,
                                             PreparedStatement pstmtSelectDeleteDeletedCandidates,
                                             PreparedStatement pstmtDeletedById, KeyFactory dbKeyFactory,
-                                            int height) throws SQLException {
+                                            int height,
+                                            TransactionalDataSource dataSource) throws SQLException {
         int deleted = 0;
         pstmtSelectDeleteDeletedIds.setInt(1, height);
         Set<DbKey> ids = new HashSet<>();
@@ -234,7 +235,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             }
         }
         pstmtSelectDeleteDeletedCandidates.setInt(1, height);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+
         try (ResultSet candidatesRs = pstmtSelectDeleteDeletedCandidates.executeQuery()) {
             while (candidatesRs.next()) {
                 DbKey dbKey = dbKeyFactory.newKey(candidatesRs);
@@ -251,17 +252,17 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         return deleted;
     }
 
-    private static int deleteDeletedOldAlgo(PreparedStatement pstm, int height) throws SQLException {
-        int deleted;
-        int totalDeleted = 0;
-        pstm.setInt(1, height);
-        pstm.setInt(2, height);
-        do {
-            deleted = pstm.executeUpdate();
-            totalDeleted += deleted;
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            dataSource.commit(false);
-        } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
-        return totalDeleted;
-    }
+//    private  int deleteDeletedOldAlgo(PreparedStatement pstm, int height) throws SQLException {
+//        int deleted;
+//        int totalDeleted = 0;
+//        pstm.setInt(1, height);
+//        pstm.setInt(2, height);
+//        do {
+//            deleted = pstm.executeUpdate();
+//            totalDeleted += deleted;
+//            TransactionalDataSource dataSource = databaseManager.getDataSource();
+//            dataSource.commit(false);
+//        } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());
+//        return totalDeleted;
+//    }
 }

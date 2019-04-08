@@ -34,21 +34,14 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class GenerateFileToken extends AbstractAPIRequestHandler {
 
-    private static class GenerateFileTokenHolder {
-        private static final GenerateFileToken INSTANCE = new GenerateFileToken();
-    }
-
-    public static GenerateFileToken getInstance() {
-        return GenerateFileTokenHolder.INSTANCE;
-    }
-
-    private GenerateFileToken() {
+   public GenerateFileToken() {
         super("file", new APITag[] {APITag.TOKENS}, "secretPhrase", "account", "passphrase");
     }
 

@@ -36,18 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELTA_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELTA_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DGSQuantityChange extends CreateTransaction {
 
-    private static class DGSQuantityChangeHolder {
-        private static final DGSQuantityChange INSTANCE = new DGSQuantityChange();
-    }
-
-    public static DGSQuantityChange getInstance() {
-        return DGSQuantityChangeHolder.INSTANCE;
-    }
-
-    private DGSQuantityChange() {
+    public DGSQuantityChange() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "goods", "deltaQuantity");
     }

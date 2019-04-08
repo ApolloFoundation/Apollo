@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import javax.enterprise.inject.Vetoed;
+import java.util.Optional;
 
 @Vetoed
 public final class DbProperties implements Cloneable {
@@ -21,6 +22,7 @@ public final class DbProperties implements Cloneable {
     private int loginTimeout;
     private int defaultLockTimeout;
     private int maxMemoryRows;
+    private Optional<Long> dbIdentity = Optional.empty();
 
     public long getMaxCacheSize() {
         return maxCacheSize;
@@ -68,6 +70,10 @@ public final class DbProperties implements Cloneable {
 
     public int getMaxMemoryRows() {
         return maxMemoryRows;
+    }
+
+    public Optional<Long> getDbIdentity() {
+        return dbIdentity;
     }
 
     public DbProperties maxCacheSize(int maxCacheSize) {
@@ -130,6 +136,14 @@ public final class DbProperties implements Cloneable {
         return this;
     }
 
+    public DbProperties dbIdentity(long shardIdOrTempId) {
+        if (shardIdOrTempId == 0) {
+            return this;
+        }
+        this.dbIdentity = Optional.of(shardIdOrTempId);
+        return this;
+    }
+
     public DbProperties deepCopy() throws CloneNotSupportedException {
         DbProperties clonedObj = (DbProperties) super.clone();
         clonedObj.maxCacheSize = this.maxCacheSize;
@@ -158,6 +172,7 @@ public final class DbProperties implements Cloneable {
         clonedObj.loginTimeout = this.loginTimeout;
         clonedObj.defaultLockTimeout = this.defaultLockTimeout;
         clonedObj.maxMemoryRows = this.maxMemoryRows;
+        clonedObj.dbIdentity = Optional.empty();
         return clonedObj;
     }
 

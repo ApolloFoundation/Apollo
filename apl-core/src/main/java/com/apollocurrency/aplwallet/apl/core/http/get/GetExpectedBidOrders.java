@@ -20,37 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedBidOrdersHolder {
-        private static final GetExpectedBidOrders INSTANCE = new GetExpectedBidOrders();
-    }
-
-    public static GetExpectedBidOrders getInstance() {
-        return GetExpectedBidOrdersHolder.INSTANCE;
-    }
-
-    private GetExpectedBidOrders() {
+    public GetExpectedBidOrders() {
         super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
     }
 
@@ -59,7 +51,6 @@ public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
         ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment)o2.getAttachment();
         return Long.compare(a2.getPriceATM(), a1.getPriceATM());
     };
-
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -73,7 +64,7 @@ public final class GetExpectedBidOrders extends AbstractAPIRequestHandler {
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 
-        List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         if (sortByPrice) {
             Collections.sort(transactions, priceComparator);
         }

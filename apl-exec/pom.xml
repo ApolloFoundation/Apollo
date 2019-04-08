@@ -96,7 +96,7 @@
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>./</classpathPrefix>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass> com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
+                            <mainClass>com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -117,7 +117,7 @@
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>                            
                         </configuration>
                     </execution>
-                    <!-- Unpack 2 webUI components -->                    
+<!-- Unpack 2 webUI components -->
                     <execution>
                         <id>unpack</id>
                         <phase>package</phase>
@@ -150,7 +150,7 @@
                     </execution>                    
                 </executions>
             </plugin>
-            <!-- create cross-platform zip distribution -->            
+<!-- create cross-platform zip distribution -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>

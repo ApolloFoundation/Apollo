@@ -8,20 +8,14 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public class GetTotalSupply extends AbstractAPIRequestHandler {
-    private static class GetTotalAmountHolder {
-        private static final GetTotalSupply INSTANCE = new GetTotalSupply();
-    }
-
-    public static GetTotalSupply getInstance() {
-        return GetTotalAmountHolder.INSTANCE;
-    }
-    private GetTotalSupply() {
+    public GetTotalSupply() {
         super(new APITag[] {APITag.INFO, APITag.ACCOUNTS});
     }
 

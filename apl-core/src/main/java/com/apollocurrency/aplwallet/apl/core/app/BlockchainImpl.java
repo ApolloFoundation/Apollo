@@ -20,91 +20,65 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class BlockchainImpl implements Blockchain {
 
     private BlockDao blockDao;
-    private TransactionDao transactionDao;// = CDI.current().select(TransactionDaoImpl.class).get();
-    private BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
-    private EpochTime timeService; // = CDI.current().select(EpochTime.class).get();
-    private PropertiesHolder propertiesHolder; // = CDI.current().select(PropertiesHolder.class).get();
+    private TransactionDao transactionDao;
+    private BlockchainConfig blockchainConfig;
+    private EpochTime timeService;
+    private PropertiesHolder propertiesHolder;
+    private TransactionIndexDao transactionIndexDao;
 
-    public BlockchainImpl() {        
+    public BlockchainImpl() {
     }
-    
+
     @Inject
-    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService, PropertiesHolder propertiesHolder) {
+    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
+                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
+        this.transactionIndexDao = transactionIndexDao;
     }
-    
 
-    private final ReadWriteUpdateLock lock = new ReadWriteUpdateLock();
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
 
     private BlockDao lookupBlockDao() {
-        if (blockDao == null){
+        if (blockDao == null) {
             blockDao = CDI.current().select(BlockDaoImpl.class).get();
         }
         return blockDao;
     }
 
-    @Override
-    public void readLock() {
-        lock.readLock().lock();
-    }
-
-    @Override
-    public void readUnlock() {
-        lock.readLock().unlock();
-    }
-
-    @Override
-    public void updateLock() {
-        lock.updateLock().lock();
-    }
-
-    @Override
-    public void updateUnlock() {
-        lock.updateLock().unlock();
-    }
-
-    public void writeLock() {
-        lock.writeLock().lock();
-    }
-
-    public void writeUnlock() {
-        lock.writeLock().unlock();
-    }
 
     @Override
     public Block getLastBlock() {
@@ -150,10 +124,12 @@ public class BlockchainImpl implements Blockchain {
         return lastBlock.get().getId() == blockId || lookupBlockDao().hasBlock(blockId);
     }
 
+/*
     @Override
     public DbIterator<Block> getAllBlocks() {
         return lookupBlockDao().getAllBlocks();
     }
+*/
 
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
@@ -163,10 +139,12 @@ public class BlockchainImpl implements Blockchain {
         return lookupBlockDao().getBlocks(calculatedFrom, calculatedTo);
     }
 
+/*
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp) {
         return getBlocks(accountId, timestamp, 0, -1);
     }
+*/
 
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
@@ -198,17 +176,19 @@ public class BlockchainImpl implements Blockchain {
         return lookupBlockDao().getBlockCount(accountId);
     }
 
+/*
     @Override
     public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
         return lookupBlockDao().getBlocks(con, pstmt);
     }
+*/
 
     @Override
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
         // Check the block cache
         lookupBlockDao();
         List<Long> result = new ArrayList<>(blockDao.getBlockCacheSize());
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
                 Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
@@ -225,6 +205,12 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight) {
+        lookupBlockDao();
+        return blockDao.getBlockSignaturesFrom(fromHeight, toHeight);
+    }
+
+    @Override
     public List<Block> getBlocksAfter(long blockId, int limit) {
         if (limit <= 0) {
             return Collections.emptyList();
@@ -232,7 +218,7 @@ public class BlockchainImpl implements Blockchain {
         // Check the block cache
         lookupBlockDao();
         List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
                 Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
@@ -256,7 +242,7 @@ public class BlockchainImpl implements Blockchain {
         // Check the block cache
         lookupBlockDao();
         List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
-        synchronized(blockDao.getBlockCache()) {
+        synchronized (blockDao.getBlockCache()) {
             Block block = blockDao.getBlockCache().get(blockId);
             if (block != null) {
                 Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
@@ -353,27 +339,72 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public boolean hasTransaction(long transactionId) {
-        return transactionDao.hasTransaction(transactionId);
+        return transactionDao.hasTransaction(transactionId) || transactionIndexDao.getByTransactionId(transactionId) != null;
     }
 
     @Override
     public boolean hasTransaction(long transactionId, int height) {
-        return transactionDao.hasTransaction(transactionId, height);
+        boolean hasTransaction = transactionDao.hasTransaction(transactionId, height);
+        if (!hasTransaction) {
+            Integer transactionHeight = transactionIndexDao.getTransactionHeightByTransactionId(transactionId);
+            hasTransaction = transactionHeight != null && transactionHeight <= height;
+        }
+        return hasTransaction;
     }
+
 
     @Override
     public boolean hasTransactionByFullHash(String fullHash) {
-        return transactionDao.hasTransactionByFullHash(Convert.parseHexString(fullHash));
+        return hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
+    public boolean hasTransactionByFullHash(byte[] fullHash) {
+        return transactionDao.hasTransactionByFullHash(fullHash) || hasShardTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    }
+
+    private boolean hasShardTransactionByFullHash(byte[] fullHash, int height) {
+        long id = Convert.fullHashToId(fullHash);
+        TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(id);
+        byte[] hash = getTransactionIndexFullHash(transactionIndex);
+        return Arrays.equals(hash, fullHash)
+                && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
+    }
+
+
+    @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
-        return transactionDao.hasTransactionByFullHash(fullHash, height);
+        return transactionDao.hasTransactionByFullHash(fullHash, height) || hasShardTransactionByFullHash(fullHash, height);
+    }
+
+    @Override
+    public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
+        Transaction transaction = transactionDao.findTransactionByFullHash(fullHash, heightLimit);
+        Integer txHeight = null;
+        if (transaction != null) {
+            txHeight = transaction.getHeight();
+        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)){
+            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.fullHashToId(fullHash));
+        }
+        return txHeight;
     }
 
     @Override
     public byte[] getFullHash(long transactionId) {
-        return transactionDao.getFullHash(transactionId);
+        byte[] fullHash = transactionDao.getFullHash(transactionId);
+        if (fullHash == null) {
+            TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(transactionId);
+            fullHash = getTransactionIndexFullHash(transactionIndex);
+        }
+        return fullHash;
+    }
+
+    private byte[] getTransactionIndexFullHash(TransactionIndex transactionIndex) {
+        byte[] fullHash = null;
+        if (transactionIndex != null) {
+            fullHash = Convert.toFullHash(transactionIndex.getTransactionId(), transactionIndex.getPartialTransactionHash());
+        }
+        return fullHash;
     }
 
     @Override
@@ -386,11 +417,14 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.getTransactionCount();
     }
 
+/*
     @Override
     public DbIterator<Transaction> getAllTransactions() {
         return transactionDao.getAllTransactions();
     }
+*/
 
+/*
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
                                                        boolean includeExpiredPrunable) {
@@ -399,11 +433,12 @@ public class BlockchainImpl implements Blockchain {
                 blockTimestamp, false, false, false,
                 0, -1, includeExpiredPrunable, false, true);
     }
+*/
 
     @Override
     public DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                                   int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                                   int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
 
         int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
@@ -436,44 +471,6 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.findPrunableTransactions(con, minTimestamp, maxTimestamp);
     }
 
-    //phased transactions
-    @Override
-    public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
-        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
-        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        List<Transaction> result = new ArrayList<>();
-        readLock();
-        try {
-            try (DbIterator<Transaction> phasedTransactions = PhasingPoll.getFinishingTransactions(getHeight() + 1)) {
-                for (Transaction phasedTransaction : phasedTransactions) {
-                    try {
-                        phasedTransaction.validate();
-                        if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
-                            result.add(phasedTransaction);
-                        }
-                    } catch (AplException.ValidationException ignore) {
-                    }
-                }
-            }
-
-            blockchainProcessor.selectUnconfirmedTransactions(duplicates, getLastBlock(), -1).forEach(
-                    unconfirmedTransaction -> {
-                        Transaction transaction = unconfirmedTransaction.getTransaction();
-                        if (transaction.getPhasing() == null && filter.test(transaction)) {
-                            result.add(transaction);
-                        }
-                    }
-            );
-        } finally {
-            readUnlock();
-        }
-        return result;
-    }
-
-    @Override
-    public DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to) {
-        return transactionDao.getReferencingTransactions(transactionId, from, to);
-    }
 
     @Override
     public Set<Long> getBlockGenerators(int startHeight) {

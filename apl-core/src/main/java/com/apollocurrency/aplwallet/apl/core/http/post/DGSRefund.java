@@ -37,19 +37,13 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class DGSRefund extends CreateTransaction {
 
-    private static class DGSRefundHolder {
-        private static final DGSRefund INSTANCE = new DGSRefund();
-    }
-
-    public static DGSRefund getInstance() {
-        return DGSRefundHolder.INSTANCE;
-    }
-
-    private DGSRefund() {
+    public DGSRefund() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "purchase", "refundATM");
     }

@@ -19,6 +19,9 @@
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -47,8 +50,12 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
+@Vetoed
 public final class Poll extends AbstractPoll {
     private static final Logger LOG = getLogger(Poll.class);
 
@@ -232,11 +239,16 @@ public final class Poll extends AbstractPoll {
     }
 
     public static void init() {
-        if (Poll.isPollsProcessing) {
-            blockchainProcessor.addListener(block -> {
+
+    }
+
+    @Singleton
+    public static class PollObserver {
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            if (Poll.isPollsProcessing) {
                 int height = block.getHeight();
                 Poll.checkPolls(height);
-            }, BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+            }
         }
     }
 
@@ -264,7 +276,7 @@ public final class Poll extends AbstractPoll {
     private final byte maxRangeValue;
     private final int timestamp;
 
-    private Poll(Transaction transaction, MessagingPollCreation attachment) {
+    public Poll(Transaction transaction, MessagingPollCreation attachment) {
         super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
         this.dbKey = pollDbKeyFactory.newKey(this.id);
         this.name = attachment.getPollName();
@@ -277,7 +289,7 @@ public final class Poll extends AbstractPoll {
         this.timestamp = blockchain.getLastBlockTimestamp();
     }
 
-    private Poll(ResultSet rs, DbKey dbKey) throws SQLException {
+    public Poll(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
         this.dbKey = dbKey;
         this.name = rs.getString("name");
@@ -288,19 +300,6 @@ public final class Poll extends AbstractPoll {
         this.minRangeValue = rs.getByte("min_range_value");
         this.maxRangeValue = rs.getByte("max_range_value");
         this.timestamp = rs.getInt("timestamp");
-    }
-
-    private Poll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting, DbKey dbKey, String name, String description, String[] options, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue, int timestamp) {
-        super(id, accountId, finishHeight, voteWeighting);
-        this.dbKey = dbKey;
-        this.name = name;
-        this.description = description;
-        this.options = options;
-        this.minNumberOfOptions = minNumberOfOptions;
-        this.maxNumberOfOptions = maxNumberOfOptions;
-        this.minRangeValue = minRangeValue;
-        this.maxRangeValue = maxRangeValue;
-        this.timestamp = timestamp;
     }
 
     private void save(Connection con) throws SQLException {

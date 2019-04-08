@@ -36,22 +36,24 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.Vetoed;
 import org.slf4j.Logger;
 
+@Vetoed
 public class APIProxy {
     private static final Logger LOG = getLogger(APIProxy.class);
 
     public static final Set<String> NOT_FORWARDED_REQUESTS;
-
+    
+    @Vetoed
     private static class APIProxyHolder {
         private static final APIProxy INSTANCE = new APIProxy();
     }
+    
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();

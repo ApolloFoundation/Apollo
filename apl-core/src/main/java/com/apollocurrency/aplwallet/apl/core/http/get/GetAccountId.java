@@ -29,20 +29,14 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class GetAccountId extends AbstractAPIRequestHandler {
 
-    private static class GetAccountIdHolder {
-        private static final GetAccountId INSTANCE = new GetAccountId();
-    }
-
-    public static GetAccountId getInstance() {
-        return GetAccountIdHolder.INSTANCE;
-    }
-
-    private GetAccountId() {
+    public GetAccountId() {
         super(new APITag[] {APITag.ACCOUNTS}, "secretPhrase", "publicKey");
     }
 

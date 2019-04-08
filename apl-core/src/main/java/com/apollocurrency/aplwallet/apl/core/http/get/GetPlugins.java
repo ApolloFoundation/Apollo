@@ -39,18 +39,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetPlugins extends AbstractAPIRequestHandler {
 
-    private static class GetPluginsHolder {
-        private static final GetPlugins INSTANCE = new GetPlugins();
-    }
-
-    public static GetPlugins getInstance() {
-        return GetPluginsHolder.INSTANCE;
-    }
-
-    private GetPlugins() {
+    public GetPlugins() {
         super(new APITag[] {APITag.INFO});
     }
 
@@ -84,8 +78,12 @@ public final class GetPlugins extends AbstractAPIRequestHandler {
     protected boolean requireBlockchain() {
         return false;
     }
-
+    
+@Vetoed
     private static class PluginDirListing extends SimpleFileVisitor<Path> {
+
+        public PluginDirListing() {
+        }
 
         private final List<Path> directories = new ArrayList<>();
 

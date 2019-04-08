@@ -28,10 +28,11 @@ public class TwoFactorAuthFileSystemRepositoryTest extends AbstractTwoFactorAuth
         repositoryPath = Files.createTempDirectory("test2faFSrepository");
         repository = new TwoFactorAuthFileSystemRepository(repositoryPath);
         setRepository(repository);
-        String confirmedAccount = Convert.defaultRsAccount(TwoFactorAuthTestData.ENTITY1.getAccount());
-        String unconfirmedAccount = Convert.defaultRsAccount(TwoFactorAuthTestData.ENTITY2.getAccount());
-        JSON.writeJson(repositoryPath.resolve(confirmedAccount), TwoFactorAuthTestData.ENTITY1);
-        JSON.writeJson(repositoryPath.resolve(unconfirmedAccount), TwoFactorAuthTestData.ENTITY2);
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        String confirmedAccount = Convert.defaultRsAccount(td.ENTITY1.getAccount());
+        String unconfirmedAccount = Convert.defaultRsAccount(td.ENTITY2.getAccount());
+        JSON.writeJson(repositoryPath.resolve(confirmedAccount), td.ENTITY1);
+        JSON.writeJson(repositoryPath.resolve(unconfirmedAccount), td.ENTITY2);
     }
     public static void deleteDir(Path dir, Predicate<Path> deleteFilter) throws IOException {
         Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {

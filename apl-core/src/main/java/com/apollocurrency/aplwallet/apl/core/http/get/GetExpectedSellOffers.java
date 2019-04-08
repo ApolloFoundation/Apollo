@@ -20,36 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedSellOffersHolder {
-        private static final GetExpectedSellOffers INSTANCE = new GetExpectedSellOffers();
-    }
-
-    public static GetExpectedSellOffers getInstance() {
-        return GetExpectedSellOffersHolder.INSTANCE;
-    }
-
-    private GetExpectedSellOffers() {
+    public GetExpectedSellOffers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "sortByRate");
     }
 
@@ -77,7 +70,7 @@ public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 
-        List<? extends Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         if (sortByRate) {
             Collections.sort(transactions, rateComparator);
         }

@@ -47,7 +47,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
-    private static FullTextSearchService fullText = CDI.current().select(FullTextSearchService.class).get();
+    private static FullTextSearchService fullText;
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -57,12 +57,20 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
         this(table, dbKeyFactory, false, fullTextSearchColumns);
     }
 
-    EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super(table);
+    public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
+        this(table, dbKeyFactory, false, "", init);
+    }
+
+    public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
+        super(table, init);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
         this.fullTextSearchColumns = fullTextSearchColumns;
+    }
+
+    EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
+        this(table, dbKeyFactory, multiversion, fullTextSearchColumns, true);
     }
 
      protected EntityDbTable(String table, boolean multiversion, KeyFactory<T> dbKeyFactory) {
@@ -492,19 +500,28 @@ public abstract class EntityDbTable<T> extends DerivedDbTable {
     }
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, TransactionalDataSource dataSource) {
         if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            if (dataSource == null) {
+                dataSource = databaseManager.getDataSource();
+            }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         } else {
-            super.trim(height);
+            super.trim(height, dataSource);
         }
+    }
+
+    public KeyFactory<T> getDbKeyFactory() {
+        return dbKeyFactory;
     }
 
     @Override
     public final void createSearchIndex(Connection con) throws SQLException {
         if (fullTextSearchColumns != null) {
             log.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
+            if (fullText == null) {
+                fullText = CDI.current().select(FullTextSearchService.class).get();
+            }
             fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }

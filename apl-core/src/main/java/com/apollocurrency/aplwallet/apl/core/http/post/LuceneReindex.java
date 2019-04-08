@@ -29,20 +29,15 @@ import org.json.simple.JSONStreamAware;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class LuceneReindex extends AbstractAPIRequestHandler {
     private final FullTextSearchService fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
-    private static class LuceneReindexHolder {
-        private static final LuceneReindex INSTANCE = new LuceneReindex();
-    }
 
-    public static LuceneReindex getInstance() {
-        return LuceneReindexHolder.INSTANCE;
-    }
-
-    private LuceneReindex() {
+    public LuceneReindex() {
         super(new APITag[] {APITag.DEBUG});
     }
 

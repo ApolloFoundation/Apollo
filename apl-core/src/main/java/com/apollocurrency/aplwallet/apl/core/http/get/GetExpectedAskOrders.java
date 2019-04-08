@@ -20,40 +20,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedAskOrdersHolder {
-        private static final GetExpectedAskOrders INSTANCE = new GetExpectedAskOrders();
-    }
-
-    public static GetExpectedAskOrders getInstance() {
-        return GetExpectedAskOrdersHolder.INSTANCE;
-    }
-
-    private GetExpectedAskOrders() {
+    public GetExpectedAskOrders() {
         super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
     }
-
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
         ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment)o1.getAttachment();
         ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment)o2.getAttachment();
@@ -73,7 +64,7 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 
-        List<Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+        List<Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         if (sortByPrice) {
             Collections.sort(transactions, priceComparator);
         }
