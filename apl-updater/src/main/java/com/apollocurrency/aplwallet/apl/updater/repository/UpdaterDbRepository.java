@@ -122,12 +122,12 @@ public class UpdaterDbRepository implements UpdaterRepository {
         boolean isInTransaction = dataSource.isInTransaction();
         Connection con = null;
         try {
-            con = dataSource.getConnection();
             if (!isInTransaction) dataSource.begin();
-            else con = dataSource.getConnection();
+            con = dataSource.getConnection();
             clear(con);
             save(con, transaction);
-            dataSource.commit();
+            dataSource.commit(!isInTransaction); // do not close connection when you did not start this transaction
+
         }
         catch (SQLException e) {
             dataSource.rollback();
