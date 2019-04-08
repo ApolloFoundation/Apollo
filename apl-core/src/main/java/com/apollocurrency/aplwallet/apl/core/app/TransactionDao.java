@@ -54,6 +54,8 @@ public interface TransactionDao {
 
     DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
+    List<Transaction> getTransactions(int fromDbId, int toDbId);
+
     int getTransactionCount(long accountId, byte type, byte subtype);
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);

@@ -62,7 +62,7 @@ public abstract class DbVersion {
                 rs.close();
                 log.debug("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
             } catch (SQLException e) {
-                log.info("Initializing an empty database");
+                log.debug("Initializing an empty database");
                 stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL)");
                 con.commit();
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");

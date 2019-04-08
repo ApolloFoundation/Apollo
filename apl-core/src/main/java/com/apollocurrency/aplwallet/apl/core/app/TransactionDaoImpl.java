@@ -22,6 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -41,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import ucar.unidata.geoloc.vertical.VTfromExistingData;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -60,12 +64,28 @@ public class TransactionDaoImpl implements TransactionDao {
 
     private final DatabaseManager databaseManager;
     private final BlockDao blockDao;
+    private TransactionIndexDao transactionIndexDao;
+    private BlockIndexDao blockIndexDao;
 
     @Inject
     public TransactionDaoImpl(BlockDao blockDao, DatabaseManager databaseManager) {
         Objects.requireNonNull(blockDao);
         this.blockDao = blockDao;
         this.databaseManager = databaseManager;
+    }
+
+    private TransactionIndexDao lookupTransactionIndexDao() {
+        if (transactionIndexDao == null) {
+            this.transactionIndexDao = CDI.current().select(TransactionIndexDao.class).get();
+        }
+        return transactionIndexDao;
+    }
+
+    private BlockIndexDao lookupBlockIndexDao() {
+        if (blockIndexDao == null) {
+            this.blockIndexDao = CDI.current().select(BlockIndexDao.class).get();
+        }
+        return blockIndexDao;
     }
 
     @Override
@@ -83,7 +103,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -98,6 +118,19 @@ public class TransactionDaoImpl implements TransactionDao {
         } catch (AplException.ValidationException e) {
             throw new RuntimeException("Transaction already in database, id = " + transactionId + ", does not pass validation!", e);
         }
+    }
+
+    private TransactionalDataSource getDataSourceWithSharding(long transactionId) {
+        TransactionalDataSource dataSource;
+        Long shardId = lookupTransactionIndexDao().getShardIdByTransactionId(transactionId);
+        if (shardId != null) {
+            // shard data source
+            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
+        } else {
+            // default data source
+            dataSource = databaseManager.getDataSource();
+        }
+        return dataSource;
     }
 
     @Override
@@ -117,7 +150,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -150,7 +183,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -180,7 +213,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -202,7 +235,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -294,6 +327,19 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    private TransactionalDataSource getDataSourceWithShardingByBlockId(long blockId) {
+        TransactionalDataSource dataSource;
+        Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
+        if (shardId != null) {
+            // shard data source
+            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
+        } else {
+            // default data source
+            dataSource = databaseManager.getDataSource();
+        }
+        return dataSource;
+    }
+
     @Override
     public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
@@ -304,7 +350,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         // Search the database
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = getDataSourceWithShardingByBlockId(blockId);
         try (Connection con = dataSource.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {
@@ -625,6 +671,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    @Override
     public List<Transaction> getTransactions(int fromDbId, int toDbId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();

@@ -1,35 +1,28 @@
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.app;
 
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_ID;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_TIMESTAMP;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_TIMESTAMP;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -46,7 +39,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 @EnableWeld
-class BlockDaoTest {
+class TransactionDaoTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
@@ -70,8 +63,9 @@ class BlockDaoTest {
     @Inject
     private  JdbiHandleFactory jdbiHandleFactory;
     @Inject
-    private BlockDao blockDao;
-    private BlockTestData testData;
+    private TransactionDao dao;
+    private TransactionTestData testData;
+    private BlockTestData blockTestData;
 
     private Path createPath(String fileName) {
         try {
@@ -84,7 +78,8 @@ class BlockDaoTest {
 
     @BeforeEach
     void setUp() {
-        testData = new BlockTestData();
+        testData = new TransactionTestData();
+        blockTestData = new BlockTestData();
     }
 
     @AfterEach
@@ -94,83 +89,69 @@ class BlockDaoTest {
 
     @Test
     void findByBlockId() {
-        Block block = blockDao.findBlock(BLOCK_0_ID);
-        assertEquals(block.getId(), BLOCK_0_ID);
+        List<Transaction> transactions = dao.findBlockTransactions(BLOCK_0_ID);
+        assertNotNull(transactions);
+        assertEquals(2, transactions.size());
     }
 
     @Test
-    void findLastBlock() {
-        Block block = blockDao.findLastBlock();
-        assertEquals(block.getId(), BLOCK_11_ID);
+    void findTransactionId() {
+        Transaction transaction = dao.findTransaction(testData.TRANSACTION_0.getId());
+        assertNotNull(transaction);
+        assertEquals(testData.TRANSACTION_0.getId(), transaction.getId());
     }
 
     @Test
-    void hasLastBlockFromTo() {
-        boolean isBlock = blockDao.hasBlock(testData.BLOCK_3.getId(), BLOCK_3_HEIGHT);
-        assertTrue(isBlock);
+    void findTransactionIdHeight() {
+        Transaction transaction = dao.findTransaction(testData.TRANSACTION_1.getId(), testData.TRANSACTION_1.getHeight());
+        assertNotNull(transaction);
+        assertEquals(testData.TRANSACTION_1.getId(), transaction.getId());
     }
 
     @Test
-    void hasLastBlock() {
-        boolean isBlock = blockDao.hasBlock(testData.BLOCK_3.getId());
-        assertTrue(isBlock);
+    void findTransactionByFullHash() {
+        Transaction transaction = dao.findTransactionByFullHash(testData.TRANSACTION_5.getFullHash(), testData.TRANSACTION_5.getHeight());
+        assertNotNull(transaction);
+        assertEquals(testData.TRANSACTION_5.getId(), transaction.getId());
     }
 
     @Test
-    void findLastBlockTimestamp() {
-        Block block = blockDao.findLastBlock(BLOCK_7_TIMESTAMP);
-        assertEquals(block.getTimestamp(), BLOCK_7_TIMESTAMP);
+    void hasTransactionBy() {
+        boolean isFound = dao.hasTransaction(testData.TRANSACTION_5.getId(), testData.TRANSACTION_5.getHeight());
+        assertTrue(isFound);
     }
 
     @Test
-    void findBlockAtHeight() {
-        Block block = blockDao.findBlockAtHeight(BLOCK_7_HEIGHT);
-        assertEquals(block.getTimestamp(), BLOCK_7_TIMESTAMP);
+    void hasTransactionByFullHash() {
+        boolean isFound = dao.hasTransactionByFullHash(testData.TRANSACTION_5.getFullHash(), testData.TRANSACTION_5.getHeight());
+        assertTrue(isFound);
     }
 
     @Test
-    void findBlockCountRange() {
-        Long count = blockDao.getBlockCount(BLOCK_0_HEIGHT, BLOCK_7_HEIGHT);
-        assertEquals(7L , count.longValue());
+    void getFullHash() {
+        byte[] fullHash = dao.getFullHash(testData.TRANSACTION_5.getId());
+        assertNotNull(fullHash);
+        assertArrayEquals(testData.TRANSACTION_5.getFullHash(), fullHash);
     }
 
     @Test
-    void getBlocksRange() {
-        DbIterator<Block> result = blockDao.getBlocks(BLOCK_7_HEIGHT, BLOCK_0_HEIGHT);
+    void getTransactionCount() {
+        int count = dao.getTransactionCount();
+        assertEquals(13, count);
+    }
+
+    @Test
+    void getTransactionsFromDbToDb() {
+        List<Transaction> result = dao.getTransactions((int)testData.DB_ID_0, (int)testData.DB_ID_9);
         assertNotNull(result);
-        int count = 0;
-        while (result.hasNext()) {
-            result.next();
-            count++;
-        }
+        assertEquals(9, result.size());
+    }
+
+    @Test
+    void getTransactionsFromAccount() {
+        int count = dao.getTransactionCount(9211698109297098287L, (byte)0, (byte)0);
         assertEquals(8, count);
     }
 
-    @Test
-    void getBlocksRangeAccountId() {
-        DbIterator<Block> result = blockDao.getBlocks(4363726829568989435L, GENESIS_BLOCK_TIMESTAMP, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT);
-        assertNotNull(result);
-        int count = 0;
-        while (result.hasNext()) {
-            result.next();
-            count++;
-        }
-        assertEquals(2, count);
-    }
 
-    @Test
-    void getGenerators() {
-        Set<Long> count = blockDao.getBlockGenerators(BLOCK_0_HEIGHT);
-        assertNotNull(count);
-        assertEquals(2 , count.size());
-    }
-
-    @Test
-    void countByHeight() {
-        long count = blockDao.getBlockCount(GENESIS_BLOCK_HEIGHT, BlockTestData.BLOCK_7_HEIGHT);
-        assertEquals(8, count);
-
-        count = blockDao.getBlockCount(extension.getDatabaseManger().getDataSource(), BlockTestData.BLOCK_7_HEIGHT, BlockTestData.BLOCK_11_HEIGHT);
-        assertEquals(4, count);
-    }
 }
