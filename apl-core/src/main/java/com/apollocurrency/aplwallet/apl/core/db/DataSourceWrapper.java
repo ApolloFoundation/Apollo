@@ -156,6 +156,7 @@ public class DataSourceWrapper implements DataSource {
         config.setPassword(dbPassword);
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
+        log.debug("Creating DataSource pool, path = {}", dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
 /*
@@ -171,6 +172,7 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        log.debug("Before starting Db schema init {}...", dbVersion);
         dbVersion.init(this);
 
         log.debug("Attempting to create Jdbi instance...");
