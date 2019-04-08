@@ -28,9 +28,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Vetoed;
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.util.stream.Stream;
+import org.apache.commons.lang3.ArrayUtils;
+//TODO: how to read from resources
+//       ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+//        try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {
+//            // rerad from is;
+//        }
 
 @Vetoed
 public class UpdaterUtil {
