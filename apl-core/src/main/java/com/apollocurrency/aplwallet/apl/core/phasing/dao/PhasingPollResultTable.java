@@ -23,8 +23,10 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     private static final LongKeyFactory<PhasingPollResult> KEY_FACTORY = new LongKeyFactory<PhasingPollResult>("id") {
         @Override
         public DbKey newKey(PhasingPollResult phasingPollResult) {
-            if (phasingPollResult)
-            return new LongKey(phasingPollResult.getId());
+            if (phasingPollResult.isApproved()) {// TODO: YL review and fix
+                return new LongKey(phasingPollResult.getId());
+            }
+            return new LongKey(-1); // TODO: YL review and fix
         }
     };
 
@@ -48,7 +50,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     }
 
     @Override
-    protected void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
+    public void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
                 + "result, approved, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;

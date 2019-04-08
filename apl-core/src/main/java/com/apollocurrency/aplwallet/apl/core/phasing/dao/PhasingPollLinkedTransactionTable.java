@@ -42,7 +42,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     }
 
     @Override
-    protected PhasingPollLinkedTransaction load(Connection con, ResultSet rs) throws SQLException {
+    public PhasingPollLinkedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         int height = rs.getInt("height");
         long pollId = rs.getLong("transaction_id");
         long linkedTransactionId = rs.getLong("linked_transaction_id");
@@ -50,22 +50,18 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
         return new PhasingPollLinkedTransaction(pollId, linkedTransactionId, fullHash, height);
     }
 
-//    public List<PhasingPollLinkedTransaction> get(long id) {
-    public PhasingPoll get(long id) {
-//        return get(KEY_FACTORY.newKey(id));
-        return get(KEY_FACTORY.newKey(id)).get(0);
+    public List<PhasingPollLinkedTransaction> get(long id) {
+        return get(KEY_FACTORY.newKey(id));
     }
 
     @Override
-    protected void save(Connection con, PhasingPollLinkedTransaction linkedTransaction) throws SQLException {
+    public void save(Connection con, PhasingPollLinkedTransaction linkedTransaction) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (transaction_id, "
                 + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, linkedTransaction.getPollId());
-//            pstmt.setBytes(++i, linkedTransaction.getFullHash());
-            pstmt.setBytes(++i, poll.getLinkedFullHashes().get(0));
-//            pstmt.setLong(++i, linkedTransaction.getTransactionId());
-            pstmt.setLong(++i, Convert.fullHashToId(poll.getLinkedFullHashes().get(0)));
+            pstmt.setBytes(++i, linkedTransaction.getFullHash());
+            pstmt.setLong(++i, linkedTransaction.getTransactionId());
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }

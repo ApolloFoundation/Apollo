@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 
 import java.sql.Connection;
@@ -45,14 +44,12 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
-//    public List<Long> get(long pollId) {
-    public PhasingPoll get(long pollId) {
-//        return get(KEY_FACTORY.newKey(pollId));
-        return get(KEY_FACTORY.newKey(pollId)).get(0);
+    public List<PhasingPollVoter> get(long pollId) {
+        return get(KEY_FACTORY.newKey(pollId));
     }
 
     @Override
-    protected PhasingPollVoter load(Connection con, ResultSet rs) throws SQLException {
+    public PhasingPollVoter load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         long pollId = rs.getInt("transaction_id");
         long voterId = rs.getLong("voter_id");
         int height = rs.getInt("height");
@@ -60,13 +57,12 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
     }
 
     @Override
-    protected void save(Connection con, PhasingPollVoter voter) throws SQLException {
+    public void save(Connection con, PhasingPollVoter voter) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_voter (transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, voter.getPollId());
-//            pstmt.setLong(++i, voter.getVoterId());
-            pstmt.setLong(++i, poll.getAccountId());
+            pstmt.setLong(++i, voter.getVoterId());
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }

@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -32,13 +33,13 @@ import java.sql.SQLException;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
+public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
     private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 
-    public final boolean delete(T t) {
+    public boolean delete(T t) {
         if (t == null) {
             return false;
         }
@@ -64,13 +65,12 @@ public abstract class VersionedValuesDbTable<T, V> extends ValuesDbTable<T, V> {
                             return true;
                         }
                     }
-                    List<T> values = get(dbKey);
-//                    T values = get(dbKey); // TODO: YL review and fix
+                    List<T> values = get(dbKey); // TODO: YL review and fix
                     if (values.isEmpty()) {
                         return false;
                     }
-                    for (V v : values) {
-                        save(con, t, v);
+                    for (T v : values) { // TODO: YL review and fix
+                        save(con, v);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {

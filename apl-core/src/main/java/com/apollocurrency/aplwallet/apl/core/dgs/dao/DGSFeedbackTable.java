@@ -38,13 +38,12 @@ public class DGSFeedbackTable extends VersionedValuesDbTable<DGSFeedback> {
     }
 
     @Override
-    public DGSPurchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public DGSFeedback load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         byte[] data = rs.getBytes("feedback_data");
         byte[] nonce = rs.getBytes("feedback_nonce");
         long id = rs.getLong("id");
         int height = rs.getInt("height");
-//        return new DGSFeedback(id, height, new EncryptedData(data, nonce));
-        return new DGSPurchase(rs, dbKey, new DGSFeedback(id, height, new EncryptedData(data, nonce)));
+        return new DGSFeedback(id, height, new EncryptedData(data, nonce));
     }
 
     @Override

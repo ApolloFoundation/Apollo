@@ -47,7 +47,7 @@ public class DGSPublicFeedbackTable extends VersionedValuesDbTable<DGSPublicFeed
     }
 
     @Override
-    protected void save(Connection con,  DGSPublicFeedback feedback) throws SQLException {
+    public void save(Connection con,  DGSPublicFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
                 + "height, latest) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;

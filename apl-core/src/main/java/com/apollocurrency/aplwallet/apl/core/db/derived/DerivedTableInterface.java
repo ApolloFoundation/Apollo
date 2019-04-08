@@ -32,7 +32,7 @@ public interface DerivedTableInterface<T> {
 
     default void save(Connection con, T entity) throws SQLException {throw new UnsupportedOperationException("unsupported save");}
 
-    default void insert(T t, int height) throws SQLException {
+    default void insert(T t) throws SQLException {
         throw new UnsupportedOperationException("unsupported save");
     }
 

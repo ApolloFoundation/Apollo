@@ -31,22 +31,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
+public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
 
     private final boolean multiversion;
-    protected final KeyFactory<T> dbKeyFactory;
+    protected final KeyFactory<V> dbKeyFactory;
 
-    protected ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
+    protected ValuesDbTable(String table, KeyFactory<V> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
+    ValuesDbTable(String table, KeyFactory<V> dbKeyFactory, boolean multiversion) {
         super(table);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
     }
 
-    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
+    public ValuesDbTable(String table, boolean init,  KeyFactory<V> dbKeyFactory) {
         super(table, init);
         this.multiversion = false;
         this.dbKeyFactory = dbKeyFactory;
@@ -61,29 +61,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         dataSource.clearCache(table);
     }
 
-//    public final List<V> get(DbKey dbKey) {
-    public final List<T> get(DbKey dbKey) {
-        List<T> values;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        if (dataSource.isInTransaction()) {
-            values = (List<T>) dataSource.getCache(table).get(dbKey);
-            if (values != null) {
-                return values;
-            }
-        }
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
-                     + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
-            dbKey.setPK(pstmt);
-            values = get(con, pstmt);
-            if (dataSource.isInTransaction()) {
-                dataSource.getCache(table).put(dbKey, values);
-            }
-            return values;
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-/*
+    public final List<V> get(DbKey dbKey) {
         List<V> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (dataSource.isInTransaction()) {
@@ -104,13 +82,11 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-*/
     }
 
-//    private List<V> get(Connection con, PreparedStatement pstmt) {
-    private List<T> get(Connection con, PreparedStatement pstmt) {
+    private List<V> get(Connection con, PreparedStatement pstmt) {
         try {
-            List<T> result = new ArrayList<>();
+            List<V> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     result.add(load(con, rs, null)); // TODO: YL review DbKey = NULL
@@ -122,12 +98,12 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         }
     }
 
-    public final void insert(T t, List<V> values) {
+    public final void insert(List<V> values) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(t);
+        DbKey dbKey = dbKeyFactory.newKey(values.get(0)); // TODO: YL review and fix
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
@@ -141,7 +117,8 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
                 }
             }
             for (V v : values) {
-                save(con, t, v);
+//                save(con, t, v);
+                save(con, v); // TODO: YL review and fix
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

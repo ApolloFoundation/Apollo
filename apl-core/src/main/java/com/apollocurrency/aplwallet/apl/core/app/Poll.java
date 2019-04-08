@@ -228,12 +228,16 @@ public final class Poll extends AbstractPoll {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             if (Poll.isPollsProcessing) {
                 int height = block.getHeight();
-                Poll.checkPolls(height);
+                try {
+                    Poll.checkPolls(height);
+                } catch (SQLException e) {
+                    LOG.error("Poll Observer error", e);
+                }
             }
         }
     }
 
-    private static void checkPolls(int currentHeight) {
+    private static void checkPolls(int currentHeight) throws SQLException {
         try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
             for (Poll poll : polls) {
                 try {
