@@ -542,19 +542,6 @@
                 <artifactId>mockito-junit-jupiter</artifactId>
                 <version>${mockito.version}</version>
             </dependency>
-            <!--Tests-->
-            <dependency>
-                <groupId>net.javacrumbs.json-unit</groupId>
-                <artifactId>json-unit-core</artifactId>
-                <version>${json-unit.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.javacrumbs.json-unit</groupId>
-                <artifactId>json-unit-fluent</artifactId>
-                <version>${json-unit.version}</version>
-                <scope>test</scope>
-            </dependency>
-
             <!-- Desktop JAVAFX libraries -->
             <dependency>
                 <groupId>org.openjfx</groupId>

@@ -1596,7 +1596,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     dataSource.begin();
                     scan(height, validate, shutdown);
-                    dataSource.commit(false);
+                    dataSource.commit();
                 } catch (Exception e) {
                     dataSource.rollback(false);
                     throw e;

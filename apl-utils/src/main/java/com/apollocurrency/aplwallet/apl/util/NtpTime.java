@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 
 @Singleton
@@ -56,10 +57,9 @@ public class NtpTime {
         return System.currentTimeMillis() + timeOffset;
     }
 
-    public NtpTime() {
-        setTimeDrift();
-    }
+    public NtpTime() {}
 
+    @PostConstruct
     public void start() {
         Runnable timeUpdate = this::setTimeDrift;
         ThreadPool.scheduleThread("NTP Update", timeUpdate, REFRESH_FREQUENCY, TimeUnit.SECONDS);
