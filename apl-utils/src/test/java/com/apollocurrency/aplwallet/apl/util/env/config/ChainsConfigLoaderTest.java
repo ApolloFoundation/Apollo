@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 public class ChainsConfigLoaderTest {
     private static UUID chainId1 = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
     private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
-
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES1 = Arrays.asList(
         new BlockchainProperties(0, 255, 60, 67, 53, 30000000000L),
             new BlockchainProperties(2000, 300, 2, 4, 1,  30000000000L, new ConsensusSettings(ConsensusSettings.Type.POS,
@@ -61,7 +60,10 @@ public class ChainsConfigLoaderTest {
             "Batman's chain", "BTM",
             "BTM", "I am batman!", "data/batman-genesis.json", BLOCKCHAIN_PROPERTIES2);
 
+    private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
+            "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3));
     private static final String CONFIG_NAME = "test-chains.json";
+    private static final String OLD_CONFIG_NAME = "old-chains.json";
 
     private Path tempRootPath;
 
@@ -95,6 +97,14 @@ public class ChainsConfigLoaderTest {
                 Function.identity()));
         Assertions.assertNotNull(loadedChains);
         Assertions.assertEquals(expectedChains, loadedChains);
+    }
+
+    @Test
+    public void testLoadOldConfig() {
+        ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(false, null, OLD_CONFIG_NAME);
+        Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
+        Assertions.assertEquals(1, loadedChains.size());
+        Assertions.assertEquals(Map.of(CHAIN3.getChainId(), CHAIN3), loadedChains);
     }
 
     @Test
