@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.db.cdi.transaction;
 
-import static org.apache.uima.UIMAFramework.getLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;

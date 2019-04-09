@@ -201,16 +201,6 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        
-        <!-- Apache Tika libs-->
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.j256.two-factor-auth</groupId>
             <artifactId>two-factor-auth</artifactId>
@@ -260,6 +250,28 @@
             <groupId>org.ethereum</groupId>
             <artifactId>ethereumj-core</artifactId>
             <version>1.7.2-RELEASE</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-context</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-orm</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-tx</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.madgag.spongycastle</groupId>
+                    <artifactId>prov</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.ethereum</groupId>
+                    <artifactId>rocksdbjni</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

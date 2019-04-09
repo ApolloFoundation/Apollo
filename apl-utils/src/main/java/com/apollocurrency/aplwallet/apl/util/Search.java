@@ -61,7 +61,7 @@ public final class Search {
         }
         return list.toArray(new String[list.size()]);
     }
-
+//TODO: remove apache tika, use something lighter
     public static String detectMimeType(byte[] data, String filename) {
         Tika tika = new Tika();
         return tika.detect(data, filename);
