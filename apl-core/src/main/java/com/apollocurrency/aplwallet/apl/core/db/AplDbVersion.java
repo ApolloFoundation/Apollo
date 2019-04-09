@@ -688,10 +688,6 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS genesis_public_key_height_idx on genesis_public_key(height)");
             case 251:
                 apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
-            case 252:
-                // SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY, " +
-                        "shard_height INT not null, shard_state BIGINT)");
             case 253:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 254:
@@ -729,8 +725,16 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE phasing_poll ADD finish_time INT NOT NULL DEFAULT -1;");
             case 269 :
                 apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
-            case 270 :
-                return 270;
+            case 270:
+                apply("ALTER TABLE phasing_poll ADD finish_time INT NOT NULL DEFAULT -1;");
+            case 271 :
+                apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
+            case 272:
+                apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY, transaction_id BIGINT NOT NULL, type TINYINT NOT NULL," +
+                        "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL," +
+                        " pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL)");
+            case 273 :
+                return 273;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

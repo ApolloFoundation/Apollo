@@ -1,16 +1,30 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
-import com.apollocurrency.aplwallet.apl.exchange.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.model.Balances;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -28,8 +42,17 @@ import java.math.BigDecimal;
 @Singleton
 public class DexController {
 
-    @Inject
     private DexService service = CDI.current().select(DexService.class).get();
+    private DexOfferTransactionCreator dexOfferTransactionCreator;
+
+    @Inject
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator) {
+        this.service = service;
+        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+    }
+
+    public DexController() {
+    }
 
     @GET
     @Path("/balance")
@@ -67,6 +90,39 @@ public class DexController {
         return Response.ok(service.getHistory(account,pair,type)).build();
     }
 
+    @POST
+    @Path("/offer")
+    @Produces(MediaType.APPLICATION_JSON)
+    @io.swagger.annotations.ApiOperation(value = "create offer", response = ExchangeOrder.class, tags={  })
+    @io.swagger.annotations.ApiResponses(value = {
+            @io.swagger.annotations.ApiResponse(code = 200, message = "OK", response = Response.class),
+
+            @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
+    public Response createOffer(@QueryParam("orderID") Long orderID, @Context HttpServletRequest req)
+            throws NotFoundException {
+
+        DexOffer offer = new DexOffer();
+        offer.setTransactionId(1L);
+        offer.setType(OfferType.BUY);
+        offer.setAccountId(1L);
+        offer.setOfferAmount(100L);
+        offer.setOfferCurrency(DexCurrencies.APL);
+        offer.setPairCurrency(DexCurrencies.ETH);
+        offer.setPairRate(new BigDecimal("0.12"));
+        offer.setFinishTime(12);
+//        service.saveOffer(offer);
+
+        Account account = ParameterParser.getSenderAccount(req);
+        DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
+
+        try {
+            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, dexOfferAttachment);
+            return Response.ok(JSON.toString(response)).build();
+        } catch (AplException.InsufficientBalanceException e) {
+            return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+        }
+    }
+
     @GET
     @Path("/offers")
     @Produces(MediaType.APPLICATION_JSON)
@@ -88,8 +144,9 @@ public class DexController {
             @io.swagger.annotations.ApiResponse(code = 200, message = "Order", response = ExchangeOrder.class),
 
             @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response dexGetOrderOrderIDGet(@QueryParam("orderID") Long orderID, @Context SecurityContext securityContext)
+    public Response dexGetOrderByOrderID(@QueryParam("orderID") Long orderID, @Context SecurityContext securityContext)
             throws NotFoundException {
+
         return Response.ok(service.getOrderByID(orderID)).build();
     }
 

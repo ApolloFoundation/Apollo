@@ -1,13 +1,15 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -17,10 +19,22 @@ import java.util.List;
 public class DexService {
     private static final Logger LOG = LoggerFactory.getLogger(DexService.class);
 
-    private EthereumWalletService ethereumWalletService = CDI.current().select(EthereumWalletService.class).get();
+    private EthereumWalletService ethereumWalletService;
+    private DexOfferDao dexOfferDao;
+
+    @Inject
+    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao) {
+        this.ethereumWalletService = ethereumWalletService;
+        this.dexOfferDao = dexOfferDao;
+    }
+
+
+
+    public void saveOffer (DexOffer offer){
+        dexOfferDao.save(offer);
+    }
 
     public ExchangeBalances getBalances(String ethAddress, String paxAddress){
-
         ExchangeBalances balances = new ExchangeBalances();
         try{
             if (!StringUtils.isBlank(ethAddress)) {
