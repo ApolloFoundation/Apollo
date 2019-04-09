@@ -108,6 +108,16 @@ public class ChainsConfigLoaderTest {
     }
 
     @Test
+    void testLoadOldConfigWithNew() throws IOException {
+        Path oldConfigFile = tempRootPath.resolve("test-chains.json");
+        JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(oldConfigFile.toFile(), Arrays.asList(CHAIN3));
+        ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(false, tempRootPath.toAbsolutePath().toString(), CONFIG_NAME);
+        Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
+        Assertions.assertEquals(2, loadedChains.size());
+        Assertions.assertEquals(Map.of(CHAIN3.getChainId(), CHAIN3, CHAIN1.getChainId(), CHAIN1), loadedChains);
+    }
+
+    @Test
     void testLoadAndSaveConfig() throws IOException {
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
