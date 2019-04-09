@@ -263,6 +263,14 @@
                     <groupId>org.springframework</groupId>
                     <artifactId>spring-tx</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.madgag.spongycastle</groupId>
+                    <artifactId>prov</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.ethereum</groupId>
+                    <artifactId>rocksdbjni</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 

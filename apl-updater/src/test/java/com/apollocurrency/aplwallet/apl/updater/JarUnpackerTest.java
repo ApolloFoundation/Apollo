@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 import java.io.IOException;
@@ -25,17 +26,18 @@ import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class JarUnpackerTest {
+class JarUnpackerTest {
     private Path tempDirectory;
     private Path tempJar;
     private Path unpackedFile;
-    @Before
+
+    @BeforeEach
     public void setUp() throws IOException {
         tempDirectory = Files.createTempDirectory("unpack");
         tempJar = Files.createTempFile(tempDirectory, "test", ".jar");
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         Files.deleteIfExists(tempJar);
         Files.deleteIfExists(tempDirectory);
@@ -43,6 +45,7 @@ public class JarUnpackerTest {
             deleteDir(unpackedFile, path -> true);
         }
     }
+
     @Test
     public void testUnpack() throws IOException {
             try (
@@ -64,7 +67,7 @@ public class JarUnpackerTest {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                         Path unpackedFile = finalUnpackedFile.relativize(file);
-                        Assert.assertTrue(files.containsKey(unpackedFile.toString().replaceAll("\\\\", "/")));
+                        assertTrue(files.containsKey(unpackedFile.toString().replaceAll("\\\\", "/")));
                         return FileVisitResult.CONTINUE;
                     }
                 });
