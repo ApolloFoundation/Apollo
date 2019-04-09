@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -13,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
@@ -30,30 +33,31 @@ import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(MockitoJUnitRunner.class)
-
+@Disabled
+@ExtendWith(MockitoExtension.class)
 public class UpdaterCoreTest {
 
-    private UpdateAttachment attachment = UpdateAttachment.getAttachment(
-            Platform.current(),
-            Architecture.current(),
-            new DoubleByteArrayTuple(new byte[0], new byte[0]),
-            new Version("1.0.8"),
-            new byte[0],
-            (byte) 0);
+    private UpdateAttachment attachment;
+
+    @Mock
+    private PropertiesHolder propertiesHolder;
+    @Mock
+    private DbProperties dbProperties;
     @Mock
     private UpdaterMediator updaterMediatorInstance;
     @Mock
@@ -64,11 +68,21 @@ public class UpdaterCoreTest {
     private UpdaterFactory updaterFactory;
     @Mock
     private UpdateTransactionVerifier transactionVerifier;
+    @Mock
+    UpdaterMediator updaterMediator;
 
     private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
+        when(updaterMediator.getDataSource()).thenReturn(new TransactionalDataSource(dbProperties, propertiesHolder));
+        attachment = UpdateAttachment.getAttachment(
+                Platform.current(),
+                Architecture.current(),
+                new DoubleByteArrayTuple(new byte[0], new byte[0]),
+                new Version("1.0.8"),
+                new byte[0],
+                (byte) 0);
 
     }
 
@@ -158,8 +172,8 @@ public class UpdaterCoreTest {
         verify(updaterMediatorInstance, times(1)).suspendBlockchain();
         verify(updaterMediatorInstance, never()).addUpdateListener(any(Listener.class));
         UpdateInfo updateInfo = spy.getUpdateInfo();
-        Assert.assertEquals(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL, updateInfo.getUpdateState());
-        Assert.assertEquals(Level.CRITICAL, updateInfo.getLevel());
+        assertEquals(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL, updateInfo.getUpdateState());
+        assertEquals(Level.CRITICAL, updateInfo.getLevel());
     }
 
     @Test
@@ -211,13 +225,13 @@ public class UpdaterCoreTest {
 
         boolean started = spy.startAvailableUpdate();
 
-        Assert.assertTrue(started);
+        assertTrue(started);
         TimeUnit.SECONDS.sleep(1);
         Mockito.verify(updaterMediatorInstance, times(1)).suspendBlockchain();
         Mockito.verify(updaterMediatorInstance, times(1)).resumeBlockchain();
         UpdateInfo updateInfo = updaterCore.getUpdateInfo();
-        Assert.assertEquals(updateInfo.getLevel(), Level.MINOR);
-        Assert.assertEquals(updateInfo.getUpdateState(), UpdateInfo.UpdateState.FAILED_REQUIRED_START);
+        assertEquals(updateInfo.getLevel(), Level.MINOR);
+        assertEquals(updateInfo.getUpdateState(), UpdateInfo.UpdateState.FAILED_REQUIRED_START);
 
     }
 
