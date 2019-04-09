@@ -764,7 +764,7 @@ public class TransactionImpl implements Transaction {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
             return builder;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
             throw e;
         }
@@ -907,7 +907,7 @@ public class TransactionImpl implements Transaction {
                 builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
             }
             return builder;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse transaction: " + transactionData.toJSONString());
             throw e;
         }

@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import java.io.IOException;
 
-public abstract class AplException extends Exception {
+public abstract class AplException extends RuntimeException {
 
     protected AplException() {
         super();

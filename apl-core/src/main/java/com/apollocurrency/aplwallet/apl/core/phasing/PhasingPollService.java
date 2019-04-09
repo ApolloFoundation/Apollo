@@ -40,7 +40,9 @@ public interface PhasingPollService {
 
     PhasingPoll getPoll(long id);
 
-    DbIterator<Transaction> getFinishingTransactions(int height);
+    List<Transaction> getFinishingTransactions(int height);
+
+    List<Transaction> getFinishingTransactionsByTime(int time);
 
     DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
 

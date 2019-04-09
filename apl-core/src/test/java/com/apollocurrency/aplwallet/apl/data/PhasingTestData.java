@@ -38,10 +38,10 @@ public class PhasingTestData {
 
     public PhasingTestData() {
         td = new TransactionTestData();
-        POLL_1 = new PhasingPoll(td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0, POLL_1_VOTER_1}, td.TRANSACTION_8.getFullHash(), 10000, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
-        POLL_2 = new PhasingPoll(td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
-        POLL_3 = new PhasingPoll(td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e"),td.TRANSACTION_11.getFullHash(), td.NOT_SAVED_TRANSACTION.getFullHash()});
-        POLL_4 = new PhasingPoll(td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0}, td.TRANSACTION_11.getFullHash(), 18000, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
+        POLL_1 = new PhasingPoll(td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0, POLL_1_VOTER_1}, td.TRANSACTION_8.getFullHash(), 10000, -1, (byte) 0, 1,  0, 0, (byte) 0, null, (byte) 0, null);
+        POLL_2 = new PhasingPoll(td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500,-1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
+        POLL_3 = new PhasingPoll(td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000,-1, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e"),td.TRANSACTION_11.getFullHash(), td.NOT_SAVED_TRANSACTION.getFullHash()});
+        POLL_4 = new PhasingPoll(td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0}, td.TRANSACTION_11.getFullHash(), 18000,-1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
 
         SHARD_RESULT_0 = new PhasingPollResult(100, 1, true, 300);
         RESULT_0 = new PhasingPollResult(td.TRANSACTION_0.getId(), 1, true, 1500);
@@ -49,8 +49,8 @@ public class PhasingTestData {
         RESULT_2 = new PhasingPollResult(POLL_2.getId(), 0, false, 9500);
         POLL_1_VOTE_0 = new PhasingVote(POLL_1.getId(), POLL_1_VOTER_0, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(POLL_1.getId(), POLL_1_VOTER_1, td.TRANSACTION_10.getId());
-        NEW_POLL_PARAMS     = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
-        NEW_POLL_APPENDIX = new PhasingAppendix(20000, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
+        NEW_POLL_PARAMS = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
+        NEW_POLL_APPENDIX = new PhasingAppendix(20000,-1, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
         NEW_POLL = new PhasingPoll(td.TRANSACTION_10, NEW_POLL_APPENDIX);
         NEW_VOTE_TX = td.TRANSACTION_3;
         NEW_VOTE = new PhasingVote(POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());

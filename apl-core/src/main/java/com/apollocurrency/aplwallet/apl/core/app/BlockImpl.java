@@ -344,7 +344,7 @@ public final class BlockImpl implements Block {
                 throw new AplException.NotValidException("Invalid block signature");
             }
             return block;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse block: " + blockData.toJSONString());
             LOG.debug("Exception: " + e.getMessage());
             throw e;

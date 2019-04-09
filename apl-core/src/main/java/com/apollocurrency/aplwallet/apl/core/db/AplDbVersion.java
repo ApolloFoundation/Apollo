@@ -726,7 +726,11 @@ public class AplDbVersion extends DbVersion {
             case 267:
                 apply("ALTER TABLE referenced_transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_4B1");
             case 268:
-                return 268;
+                apply("ALTER TABLE phasing_poll ADD finish_time INT NOT NULL DEFAULT -1;");
+            case 269 :
+                apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
+            case 270 :
+                return 270;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

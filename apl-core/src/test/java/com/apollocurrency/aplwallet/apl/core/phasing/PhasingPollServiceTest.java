@@ -226,7 +226,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetFinishingTransactions() {
-        List<Transaction> finishingTransactions = CollectionUtil.toList(phasingPollService.getFinishingTransactions(ptd.POLL_2.getFinishHeight()));
+        List<Transaction> finishingTransactions = phasingPollService.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
         assertEquals(Arrays.asList(ttd.TRANSACTION_7), finishingTransactions);
     }
@@ -234,7 +234,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetFinishingTransactionsWhenNoTransactionsAtHeight() {
-        List<Transaction> finishingTransactions = CollectionUtil.toList(phasingPollService.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1));
+        List<Transaction> finishingTransactions = phasingPollService.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1);
 
         assertTrue(finishingTransactions.isEmpty(), "No transactions should be found at height");
     }

@@ -108,7 +108,7 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
                     break;
                 }
             }
-        } catch (RuntimeException | AplException.NotValidException e) {
+        } catch (RuntimeException e) {
             log.debug("Failed to parse block: " + e.toString(), e);
             peer.blacklist(e);
             stop = start + blockList.size();

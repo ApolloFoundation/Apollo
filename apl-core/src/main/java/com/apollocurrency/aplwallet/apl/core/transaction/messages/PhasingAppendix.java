@@ -4,16 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
@@ -25,12 +28,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
@@ -63,6 +68,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private final int finishHeight;
+    private final int finishTime;
     private final PhasingParams params;
     private final byte[][] linkedFullHashes;
     private final byte[] hashedSecret;
@@ -71,6 +77,7 @@ public class PhasingAppendix extends AbstractAppendix {
     public PhasingAppendix(ByteBuffer buffer) {
         super(buffer);
         finishHeight = buffer.getInt();
+        finishTime = buffer.getInt();
         params = new PhasingParams(buffer);
 
         byte linkedFullHashesSize = buffer.get();
@@ -96,6 +103,7 @@ public class PhasingAppendix extends AbstractAppendix {
     public PhasingAppendix(JSONObject attachmentData) {
         super(attachmentData);
         finishHeight = ((Long) attachmentData.get("phasingFinishHeight")).intValue();
+        finishTime = ((Long) attachmentData.get("phasingFinishTime")).intValue();
         params = new PhasingParams(attachmentData);
         JSONArray linkedFullHashesJson = (JSONArray) attachmentData.get("phasingLinkedFullHashes");
         if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0) {
@@ -116,8 +124,10 @@ public class PhasingAppendix extends AbstractAppendix {
         }
     }
 
-    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
+    public PhasingAppendix(int finishHeight, int finishTime, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
+
         this.finishHeight = finishHeight;
+        this.finishTime = finishTime;
         this.params = phasingParams;
         this.linkedFullHashes = Convert.nullToEmpty(linkedFullHashes);
         this.hashedSecret = hashedSecret != null ? hashedSecret : Convert.EMPTY_BYTE;
@@ -131,12 +141,13 @@ public class PhasingAppendix extends AbstractAppendix {
 
     @Override
     int getMySize() {
-        return 4 + params.getMySize() + 1 + 32 * linkedFullHashes.length + 1 + hashedSecret.length + 1;
+        return 4 + params.getMySize() + 1 + 32 * linkedFullHashes.length + 1 + hashedSecret.length + 1 + 4;
     }
 
     @Override
     void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(finishHeight);
+        buffer.putInt(finishTime);
         params.putMyBytes(buffer);
         buffer.put((byte) linkedFullHashes.length);
         for (byte[] hash : linkedFullHashes) {
@@ -150,6 +161,7 @@ public class PhasingAppendix extends AbstractAppendix {
     @Override
     void putMyJSON(JSONObject json) {
         json.put("phasingFinishHeight", finishHeight);
+        json.put("phasingFinishTime", finishTime);
         params.putMyJSON(json);
         if (linkedFullHashes.length > 0) {
             JSONArray linkedFullHashesJson = new JSONArray();
@@ -167,6 +179,9 @@ public class PhasingAppendix extends AbstractAppendix {
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         params.validate();
+
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
         int currentHeight = blockchain.getHeight();
         if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
@@ -211,10 +226,35 @@ public class PhasingAppendix extends AbstractAppendix {
             }
         }
 
-        if (finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
-                || finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
-            throw new AplException.NotCurrentlyValidException("Invalid finish height " + finishHeight);
+        validateFinishHeightAndTime(finishHeight, finishTime);
+    }
+
+    public void validateFinishHeightAndTime(Integer height, Integer time) throws ParameterException{
+        if(height == null || time == null){
+            throw new AplException.NotCurrentlyValidException("PhasingFinishHeight and PhasingFinishTime shouldn't be null.");
         }
+
+        if((height != -1 && time != -1) || (height == -1 && time == -1)){
+            throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
+        }
+
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        EpochTime timeService = CDI.current().select(EpochTime.class).get();
+        Block lastBlock = blockchain.getLastBlock();
+        int lastBlockHeight = lastBlock.getHeight();
+        int currentTime = timeService.getEpochTime();
+
+        if (time == -1 &&
+                (height <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
+                        height >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
+            throw new AplException.NotCurrentlyValidException("Invalid finish height " + height);
+        }
+
+
+        if (height == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC){
+                throw new AplException.NotCurrentlyValidException("Invalid finish time " + time);
+        }
+
     }
 
     private void checkLinkedTransaction(byte[] hash, int currentHeight, int transactionHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
@@ -251,6 +291,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private void release(Transaction transaction) {
+
         Account senderAccount = Account.getAccount(transaction.getSenderId());
         Account recipientAccount = transaction.getRecipientId() == 0 ? null : Account.getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
@@ -258,6 +299,9 @@ public class PhasingAppendix extends AbstractAppendix {
                 appendage.apply(transaction, senderAccount, recipientAccount);
             }
         });
+
+        TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+
         transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
         LOG.debug("Transaction " + transaction.getStringId() + " has been released");
     }
@@ -267,12 +311,18 @@ public class PhasingAppendix extends AbstractAppendix {
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                 transaction.getAmountATM());
-        transactionProcessor
-                .notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
+
+        TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+
+        transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
         LOG.debug("Transaction " + transaction.getStringId() + " has been rejected");
     }
 
-    public void countVotes(Transaction transaction) {
+    /**
+     * Recalculate Account balance. (Method "release();")
+     * @param transaction
+     */
+    public void countVotesAndRelease(Transaction transaction) {
         if (phasingPollService.getResult(transaction.getId()) != null) {
             return;
         }
@@ -315,6 +365,10 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public int getFinishHeight() {
         return finishHeight;
+    }
+
+    public int getFinishTime() {
+        return finishTime;
     }
 
     public long getQuorum() {

@@ -210,7 +210,7 @@ public final class APIServlet extends HttpServlet {
             }
         } catch (ParameterException e) {
             response = e.getErrorResponse();
-        } catch (AplException | RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Error processing API request", e);
             JSONObject json = new JSONObject();
             JSONData.putException(json, e);

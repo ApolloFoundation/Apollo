@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -82,7 +81,7 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
             Peers.sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.ValidationException|RuntimeException e) {
+        } catch (RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

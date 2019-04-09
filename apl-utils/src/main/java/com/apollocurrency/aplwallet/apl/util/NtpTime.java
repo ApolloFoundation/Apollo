@@ -51,7 +51,10 @@ public class NtpTime {
              client.close();
         }
     }
-    
+
+    /**
+     * @return current time in Millis.
+     */
     public long getTime() {
         return System.currentTimeMillis() + timeOffset;
     }
