@@ -42,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import ucar.unidata.geoloc.vertical.VTfromExistingData;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
