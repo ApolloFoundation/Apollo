@@ -439,45 +439,6 @@
                 <version>${tika.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.tika</groupId>
-                <artifactId>tika-parsers</artifactId>
-                <version>${tika.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.cxf</groupId>
-                        <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>jcl-over-slf4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.bouncycastle</groupId>
-                        <artifactId>bcprov-jdk15on</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.bouncycastle</groupId>
-                        <artifactId>bcmail-jdk15on</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.opengis</groupId>
-                        <artifactId>geoapi</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.sis.core</groupId>
-                        <artifactId>sis-metadata</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.sis.storage</groupId>
-                        <artifactId>sis-netcdf</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.sis.core</groupId>
-                        <artifactId>sis-utility</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>org.bitlet</groupId>
                 <artifactId>weupnp</artifactId>
                 <version>${bitlet.version}</version>
@@ -564,12 +525,6 @@
             </dependency>
 
             <!--TEST frameworks-->
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${junit.version}</version>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
