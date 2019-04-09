@@ -58,7 +58,12 @@ then
 	cat $1/conf/apl.properties | grep -v "#" | grep apl.dbDir= | sed s/dbDir/customDbDir/ >> $1/conf/apl-blockchain.properties
         rm $1/conf/apl.properties
     fi
-
+    
+    if [ -f $1/conf/chains.json ]; then
+	cp -f $1/conf/chains.json $1/conf/chains.json.backup
+	rm -f $1/conf/chains.json
+    fi
+    
 #may be we have to remove garbage    
     rm -f $1/*.sh
     rm -f $1/*.bat
