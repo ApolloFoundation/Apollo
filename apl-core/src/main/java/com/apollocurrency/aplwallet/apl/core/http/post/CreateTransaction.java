@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
@@ -113,7 +114,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
     }
 
-    public PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
+    public PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
         Blockchain blockchain = lookupBlockchain();
 
         int phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
@@ -157,7 +158,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
-        return new PhasingAppendix(phasingFinishHeight, phasingFinishTime, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+        return new PhasingAppendixV2(phasingFinishHeight, phasingFinishTime, phasingParams, linkedFullHashes, hashedSecret, algorithm);
     }
 
     public PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {

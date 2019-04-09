@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 public class PhasingTestData {
@@ -31,7 +32,7 @@ public class PhasingTestData {
     public final PhasingVote POLL_1_VOTE_1;
     public final PhasingPoll NEW_POLL;
     public final PhasingParams NEW_POLL_PARAMS;
-    public final PhasingAppendix NEW_POLL_APPENDIX;
+    public final PhasingAppendixV2 NEW_POLL_APPENDIX;
     public final Transaction NEW_VOTE_TX;
     public final PhasingVote NEW_VOTE;
     public final PhasingVote NEW_LINKED_TX_VOTE;
@@ -50,7 +51,7 @@ public class PhasingTestData {
         POLL_1_VOTE_0 = new PhasingVote(POLL_1.getId(), POLL_1_VOTER_0, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(POLL_1.getId(), POLL_1_VOTER_1, td.TRANSACTION_10.getId());
         NEW_POLL_PARAMS = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
-        NEW_POLL_APPENDIX = new PhasingAppendix(20000,-1, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
+        NEW_POLL_APPENDIX = new PhasingAppendixV2(20000,-1, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
         NEW_POLL = new PhasingPoll(td.TRANSACTION_10, NEW_POLL_APPENDIX);
         NEW_VOTE_TX = td.TRANSACTION_3;
         NEW_VOTE = new PhasingVote(POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());

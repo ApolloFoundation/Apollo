@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -310,7 +311,7 @@ public class TransactionDaoImpl implements TransactionDao {
                 builder.appendix(new EncryptToSelfMessageAppendix(buffer));
             }
             if (rs.getBoolean("phased")) {
-                builder.appendix(new PhasingAppendix(buffer));
+                builder.appendix(PhasingAppendixFactory.build(buffer));
             }
             if (rs.getBoolean("has_prunable_message")) {
                 builder.appendix(new PrunablePlainMessageAppendix(buffer));

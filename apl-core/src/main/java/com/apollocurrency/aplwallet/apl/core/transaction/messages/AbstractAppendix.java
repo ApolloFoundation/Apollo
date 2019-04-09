@@ -21,11 +21,11 @@ public abstract class AbstractAppendix implements Appendix {
     private final byte version;
 
     AbstractAppendix(JSONObject attachmentData) {
-        version = ((Long) attachmentData.get("version." + getAppendixName())).byteValue();
+        this.version = ((Long) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
     AbstractAppendix(ByteBuffer buffer) {
-        version = buffer.get();
+        this.version = buffer.get();
     }
 
     AbstractAppendix(int version) {

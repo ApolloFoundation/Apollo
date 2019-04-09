@@ -40,7 +40,7 @@ class PhasingAppendixTest {
     private int lastBlockHeight = 1000;
     private int currentTime = 11000;
 
-    private PhasingAppendix phasingAppendix = new PhasingAppendix(-1, 360, new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3}), null, null, Byte.MIN_VALUE);
+    private PhasingAppendix phasingAppendix = new PhasingAppendixV2(-1, 360, new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3}), null, null, Byte.MIN_VALUE);
 
 
     @WeldSetup

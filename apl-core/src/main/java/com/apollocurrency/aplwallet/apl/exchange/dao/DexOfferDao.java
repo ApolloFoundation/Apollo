@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import org.slf4j.Logger;
 

@@ -39,11 +39,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
-    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final String appendixName = "Phasing";
+
+    public static final String appendixName = "Phasing";
+    public static final byte VERSION = 1;
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
@@ -60,24 +61,19 @@ public class PhasingAppendix extends AbstractAppendix {
         return fee;
     };
 
-    public static PhasingAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PhasingAppendix(attachmentData);
-    }
-
     private final int finishHeight;
-    private final int finishTime;
     private final PhasingParams params;
     private final byte[][] linkedFullHashes;
     private final byte[] hashedSecret;
     private final byte algorithm;
 
     public PhasingAppendix(ByteBuffer buffer) {
-        super(buffer);
+        this(buffer, VERSION);
+    }
+
+    public PhasingAppendix(ByteBuffer buffer, byte version) {
+        super(version);
         finishHeight = buffer.getInt();
-        finishTime = buffer.getInt();
         params = new PhasingParams(buffer);
 
         byte linkedFullHashesSize = buffer.get();
@@ -102,8 +98,9 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public PhasingAppendix(JSONObject attachmentData) {
         super(attachmentData);
-        finishHeight = ((Long) attachmentData.get("phasingFinishHeight")).intValue();
-        finishTime = ((Long) attachmentData.get("phasingFinishTime")).intValue();
+        Long phasingFinishHeight = (Long) attachmentData.get("phasingFinishHeight");
+
+        this.finishHeight = phasingFinishHeight != null ? phasingFinishHeight.intValue() : -1;
         params = new PhasingParams(attachmentData);
         JSONArray linkedFullHashesJson = (JSONArray) attachmentData.get("phasingLinkedFullHashes");
         if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0) {
@@ -124,10 +121,8 @@ public class PhasingAppendix extends AbstractAppendix {
         }
     }
 
-    public PhasingAppendix(int finishHeight, int finishTime, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
-
+    public PhasingAppendix(int finishHeight, PhasingParams phasingParams, byte[][] linkedFullHashes, byte[] hashedSecret, byte algorithm) {
         this.finishHeight = finishHeight;
-        this.finishTime = finishTime;
         this.params = phasingParams;
         this.linkedFullHashes = Convert.nullToEmpty(linkedFullHashes);
         this.hashedSecret = hashedSecret != null ? hashedSecret : Convert.EMPTY_BYTE;
@@ -141,13 +136,12 @@ public class PhasingAppendix extends AbstractAppendix {
 
     @Override
     int getMySize() {
-        return 4 + params.getMySize() + 1 + 32 * linkedFullHashes.length + 1 + hashedSecret.length + 1 + 4;
+        return 4 + params.getMySize() + 1 + 32 * linkedFullHashes.length + 1 + hashedSecret.length + 1;
     }
 
     @Override
     void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(finishHeight);
-        buffer.putInt(finishTime);
         params.putMyBytes(buffer);
         buffer.put((byte) linkedFullHashes.length);
         for (byte[] hash : linkedFullHashes) {
@@ -161,7 +155,6 @@ public class PhasingAppendix extends AbstractAppendix {
     @Override
     void putMyJSON(JSONObject json) {
         json.put("phasingFinishHeight", finishHeight);
-        json.put("phasingFinishTime", finishTime);
         params.putMyJSON(json);
         if (linkedFullHashes.length > 0) {
             JSONArray linkedFullHashesJson = new JSONArray();
@@ -178,6 +171,12 @@ public class PhasingAppendix extends AbstractAppendix {
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        generalValidation(transaction);
+
+        validateFinishHeight(this.finishHeight);
+    }
+
+    public void generalValidation(Transaction transaction){
         params.validate();
 
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -225,8 +224,18 @@ public class PhasingAppendix extends AbstractAppendix {
                 throw new AplException.NotValidException("HashedSecretAlgorithm can only be used with VotingModel.HASH");
             }
         }
+    }
 
-        validateFinishHeightAndTime(finishHeight, finishTime);
+    public void validateFinishHeight(Integer finishHeight) throws ParameterException{
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        Block lastBlock = blockchain.getLastBlock();
+        int currentHeight = lastBlock.getHeight();
+
+        if (finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
+                || finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
+            throw new AplException.NotCurrentlyValidException("Invalid finish height " + finishHeight);
+        }
+
     }
 
     public void validateFinishHeightAndTime(Integer height, Integer time) throws ParameterException{
@@ -367,10 +376,6 @@ public class PhasingAppendix extends AbstractAppendix {
         return finishHeight;
     }
 
-    public int getFinishTime() {
-        return finishTime;
-    }
-
     public long getQuorum() {
         return params.getQuorum();
     }
@@ -397,5 +402,9 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public PhasingParams getParams() {
         return params;
+    }
+
+    public byte getVERSION() {
+        return VERSION;
     }
 }

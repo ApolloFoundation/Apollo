@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
@@ -34,7 +35,9 @@ public class PhasingPoll extends AbstractPoll {
     public PhasingPoll(Transaction transaction, PhasingAppendix appendix) {
         super(transaction.getId(), transaction.getSenderId(), appendix.getFinishHeight(), appendix.getVoteWeighting());
         this.quorum = appendix.getQuorum();
-        this.finishTime = appendix.getFinishTime();
+        if(appendix instanceof PhasingAppendixV2) {
+            this.finishTime = ((PhasingAppendixV2)appendix).getFinishTime();
+        }
         this.whitelist = appendix.getWhitelist();
         this.hashedSecret = appendix.getHashedSecret();
         this.algorithm = appendix.getAlgorithm();

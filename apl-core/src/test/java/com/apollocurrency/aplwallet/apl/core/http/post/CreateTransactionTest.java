@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
@@ -73,7 +73,7 @@ class CreateTransactionTest {
 
         SendMoney createTransaction = new SendMoney();
 
-        PhasingAppendix phasingAppendix = createTransaction.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = createTransaction.parsePhasing(request);
 
         assertEquals(lastBlockHeight + 300, phasingAppendix.getFinishHeight());
         assertEquals(-1, phasingAppendix.getFinishTime());
@@ -142,7 +142,7 @@ class CreateTransactionTest {
 
         SendMoney createTransaction = new SendMoney();
 
-        PhasingAppendix phasingAppendix = createTransaction.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = createTransaction.parsePhasing(request);
 
         assertEquals(-1, phasingAppendix.getFinishHeight());
         assertEquals(currentTime + 360, phasingAppendix.getFinishTime());
@@ -196,7 +196,7 @@ class CreateTransactionTest {
         Mockito.when(request.getParameter("phasingVotingModel")).thenReturn("-1");
 
         SendMoney createTransaction = new SendMoney();
-        PhasingAppendix phasingAppendix = createTransaction.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = createTransaction.parsePhasing(request);
 
         assertEquals(-1, phasingAppendix.getFinishHeight());
         assertEquals(currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC, phasingAppendix.getFinishTime());
@@ -212,7 +212,7 @@ class CreateTransactionTest {
 
 
         SendMoney createTransaction = new SendMoney();
-        PhasingAppendix phasingAppendix = createTransaction.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = createTransaction.parsePhasing(request);
 
         assertEquals(-1, phasingAppendix.getFinishHeight());
         assertEquals(currentTime, phasingAppendix.getFinishTime());
