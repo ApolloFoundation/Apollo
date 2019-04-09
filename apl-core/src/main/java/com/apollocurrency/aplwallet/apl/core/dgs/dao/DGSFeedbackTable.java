@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSFeedbackMapper;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.sql.Connection;
@@ -31,23 +31,21 @@ public class DGSFeedbackTable extends VersionedValuesDbTable<DGSFeedback> {
         }
     };
     private static final String TABLE_NAME = "purchase_feedback";
-
+    private static final DGSFeedbackMapper MAPPER = new DGSFeedbackMapper();
 
     public DGSFeedbackTable() {
         super(TABLE_NAME, KEY_FACTORY);
     }
 
     @Override
-    protected DGSFeedback load(Connection con, ResultSet rs) throws SQLException {
-        byte[] data = rs.getBytes("feedback_data");
-        byte[] nonce = rs.getBytes("feedback_nonce");
-        long id = rs.getLong("id");
-        int height = rs.getInt("height");
-        return new DGSFeedback(id, height, new EncryptedData(data, nonce));
+    public DGSFeedback load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        DGSFeedback dgsFeedback = MAPPER.map(rs, null);
+        dgsFeedback.setDbKey(dbKey);
+        return dgsFeedback;
     }
 
     @Override
-    protected void save(Connection con, DGSFeedback feedback) throws SQLException {
+    public void save(Connection con, DGSFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
                 + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;

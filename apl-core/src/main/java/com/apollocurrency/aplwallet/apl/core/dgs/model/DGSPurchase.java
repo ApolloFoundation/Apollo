@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
@@ -44,6 +43,7 @@ public class DGSPurchase {
     private List<String> publicFeedbacks;
     private long discountATM;
     private long refundATM;
+    private int height;
 
     private DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment, long sellerId, int lastBlockchainTimestamp) {
         this.id = transaction.getId();
@@ -223,4 +223,43 @@ public class DGSPurchase {
         this.refundATM = refundATM;
     }
 
+    public int getHeight() {
+        return height;
+    }
+
+    public void setGoodsIsText(boolean goodsIsText) {
+        this.goodsIsText = goodsIsText;
+    }
+
+    public void setHasFeedbackNotes(boolean hasFeedbackNotes) {
+        this.hasFeedbackNotes = hasFeedbackNotes;
+    }
+
+    public void setHasPublicFeedbacks(boolean hasPublicFeedbacks) {
+        this.hasPublicFeedbacks = hasPublicFeedbacks;
+    }
+
+    public List<DGSFeedback> getDgsFeedbacks() {
+        return dgsFeedbacks;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public void setEncryptedGoods(EncryptedData encryptedGoods) {
+        this.encryptedGoods = encryptedGoods;
+    }
+
+    public void setFeedbackNotes(List<EncryptedData> feedbackNotes) {
+        this.feedbackNotes = feedbackNotes;
+    }
+
+    public void setDgsFeedbacks(List<DGSFeedback> dgsFeedbacks) {
+        this.dgsFeedbacks = dgsFeedbacks;
+    }
+
+    public void setPublicFeedbacks(List<String> publicFeedbacks) {
+        this.publicFeedbacks = publicFeedbacks;
+    }
 }

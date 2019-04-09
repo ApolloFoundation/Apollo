@@ -22,6 +22,8 @@ public interface DerivedTableInterface<T> {
 
     void trim(int height);
 
+    void trim(int height);
+
     void createSearchIndex(Connection con) throws SQLException;
 
     default boolean isPersistent() {

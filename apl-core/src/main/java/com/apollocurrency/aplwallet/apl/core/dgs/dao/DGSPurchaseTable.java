@@ -16,7 +16,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.inject.Singleton;
 
+@Singleton
 public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
     private static final LongKeyFactory<DGSPurchase> KEY_FACTORY = new LongKeyFactory<DGSPurchase>("id") {
         @Override
@@ -36,7 +38,7 @@ public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
     }
 
     @Override
-    protected DGSPurchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public DGSPurchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return MAPPER.map(rs, null);
     }
 
@@ -64,7 +66,7 @@ public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
             pstmt.setBoolean(++i, purchase.hasPublicFeedbacks());
             pstmt.setLong(++i, purchase.getDiscountATM());
             pstmt.setLong(++i, purchase.getRefundATM());
-            pstmt.setInt(++i, height);
+            pstmt.setInt(++i, purchase.getHeight());
             pstmt.executeUpdate();
         }
     }

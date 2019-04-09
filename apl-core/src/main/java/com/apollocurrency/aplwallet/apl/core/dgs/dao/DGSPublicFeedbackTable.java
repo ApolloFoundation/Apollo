@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSPublicFeedbackMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 
@@ -35,12 +36,12 @@ public class DGSPublicFeedbackTable extends VersionedValuesDbTable<DGSPublicFeed
         super(TABLE_NAME, KEY_FACTORY);
     }
 
+    private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper();
     @Override
-    protected DGSPublicFeedback load(Connection connection, ResultSet rs) throws SQLException {
-        String feedback = rs.getString("public_feedback");
-        int height = rs.getInt("height");
-        long purchaseId = rs.getLong("id");
-        return new DGSPublicFeedback(feedback, purchaseId, height);
+    public DGSPublicFeedback load(Connection connection, ResultSet rs, DbKey dbKey) throws SQLException {
+        DGSPublicFeedback publicFeedback = MAPPER.map(rs, null);
+        publicFeedback.setDbKey(dbKey);
+        return publicFeedback;
     }
 
     @Override
