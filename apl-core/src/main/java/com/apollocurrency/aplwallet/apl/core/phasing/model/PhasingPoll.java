@@ -25,7 +25,7 @@ import java.util.Objects;
 public class PhasingPoll extends AbstractPoll {
 
     private long[] whitelist;
-    private int finishTime;
+    private int finishTime = -1;
     private final long quorum;
     private final byte[] hashedSecret;
     private final byte algorithm;

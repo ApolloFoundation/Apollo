@@ -64,7 +64,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     protected void save(Connection con, PhasingPoll poll) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll (id, account_id, "
                 + "finish_height,  finish_time, whitelist_size, voting_model, quorum, min_balance, holding_id, "
-                + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, poll.getId());
             pstmt.setLong(++i, poll.getAccountId());
