@@ -29,23 +29,17 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDataTagsLike extends AbstractAPIRequestHandler {
 
-    private static class GetDataTagsLikeHolder {
-        private static final GetDataTagsLike INSTANCE = new GetDataTagsLike();
-    }
-
-    public static GetDataTagsLike getInstance() {
-        return GetDataTagsLikeHolder.INSTANCE;
-    }
-
-    private GetDataTagsLike() {
+    public GetDataTagsLike() {
         super(new APITag[] {APITag.DATA, APITag.SEARCH}, "tagPrefix", "firstIndex", "lastIndex");
     }
 

@@ -42,8 +42,8 @@ import java.util.Map;
 
 public interface Transaction {
 
-    static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment)attachment);
+    static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
+        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment)attachment, timestamp);
     }
 
     static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
@@ -84,6 +84,8 @@ public interface Transaction {
 
         Builder ecBlockHeight(int height);
 
+        Builder dbId(long dbId);
+
         Builder ecBlockId(long blockId);
 
         Transaction build() throws AplException.NotValidException;
@@ -92,7 +94,11 @@ public interface Transaction {
 
     }
 
+    void setFeeATM(long feeATM);
+
     long getId();
+
+    long getDbId();
 
     String getStringId();
 
@@ -145,8 +151,6 @@ public interface Transaction {
     Attachment getAttachment();
 
     boolean verifySignature();
-
-    void validate() throws AplException.ValidationException;
 
     byte[] getBytes();
 

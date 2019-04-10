@@ -20,22 +20,15 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+//import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 import java.awt.*;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -70,7 +63,7 @@ public class JavaScriptBridge {
         });
     }
 
-    @SuppressWarnings("unused")
+/*    @SuppressWarnings("unused")
     public String readContactsFile() {
         String fileName = "contacts.json";
         byte[] bytes;
@@ -94,7 +87,7 @@ public class JavaScriptBridge {
             response.put("type", "2");
             return JSON.toJSONString(response);
         }
-    }
+    }*/
 
     public String getAdminPassword() {
         return API.adminPassword;

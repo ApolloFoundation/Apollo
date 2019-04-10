@@ -29,23 +29,17 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public class GetPolls extends AbstractAPIRequestHandler {
 
-    private static class GetPollsHolder {
-        private static final GetPolls INSTANCE = new GetPolls();
-    }
-
-    public static GetPolls getInstance() {
-        return GetPollsHolder.INSTANCE;
-    }
-
-    private GetPolls() {
+    public GetPolls() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.VS}, "account", "firstIndex", "lastIndex", "timestamp", "includeFinished", "finishedOnly");
     }
 

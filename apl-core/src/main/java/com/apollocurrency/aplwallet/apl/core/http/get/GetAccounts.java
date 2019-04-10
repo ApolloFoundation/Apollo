@@ -10,19 +10,13 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public class GetAccounts extends AbstractAPIRequestHandler {
-    private static class GetAccountsHolder {
-        private static final GetAccounts INSTANCE = new GetAccounts();
-    }
-
-    public static GetAccounts getInstance() {
-        return GetAccountsHolder.INSTANCE;
-    }
-    private GetAccounts() {
+    public GetAccounts() {
         super(new APITag[] {APITag.INFO}, "numberOfAccounts");
     }
 

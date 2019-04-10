@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -29,25 +28,21 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public class GetCurrencyPhasedTransactions extends AbstractAPIRequestHandler {
-    private static class GetCurrencyPhasedTransactionsHolder {
-        private static final GetCurrencyPhasedTransactions INSTANCE = new GetCurrencyPhasedTransactions();
-    }
 
-    public static GetCurrencyPhasedTransactions getInstance() {
-        return GetCurrencyPhasedTransactionsHolder.INSTANCE;
-    }
-
-    private GetCurrencyPhasedTransactions() {
+    public GetCurrencyPhasedTransactions() {
         super(new APITag[]{APITag.MS, APITag.PHASING}, "currency", "account", "withoutWhitelist", "firstIndex", "lastIndex");
     }
-
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long currencyId = ParameterParser.getUnsignedLong(req, "currency", true);
@@ -57,7 +52,7 @@ public class GetCurrencyPhasedTransactions extends AbstractAPIRequestHandler {
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = PhasingPoll.getHoldingPhasedTransactions(currencyId, VoteWeighting.VotingModel.CURRENCY,
+        try (DbIterator<? extends Transaction> iterator = phasingPollService.getHoldingPhasedTransactions(currencyId, VoteWeighting.VotingModel.CURRENCY,
                 accountId, withoutWhitelist, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();

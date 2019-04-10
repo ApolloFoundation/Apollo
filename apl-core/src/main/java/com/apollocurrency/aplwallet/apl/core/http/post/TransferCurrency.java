@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_CURRENCY;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class TransferCurrency extends CreateTransaction {
 
-    private static class TransferCurrencyHolder {
-        private static final TransferCurrency INSTANCE = new TransferCurrency();
-    }
-
-    public static TransferCurrency getInstance() {
-        return TransferCurrencyHolder.INSTANCE;
-    }
-
-    private TransferCurrency() {
+    public TransferCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "units");
     }
 

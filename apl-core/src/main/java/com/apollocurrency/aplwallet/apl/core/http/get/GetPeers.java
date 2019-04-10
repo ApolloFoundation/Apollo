@@ -33,18 +33,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetPeers extends AbstractAPIRequestHandler {
 
-    private static class GetPeersHolder {
-        private static final GetPeers INSTANCE = new GetPeers();
-    }
-
-    public static GetPeers getInstance() {
-        return GetPeersHolder.INSTANCE;
-    }
-
-    private GetPeers() {
+    public GetPeers() {
         super(new APITag[] {APITag.NETWORK}, "active", "state", "service", "service", "service", "includePeerInfo");
     }
 

@@ -25,34 +25,36 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountService;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.exchange.model.Balances;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccount extends AbstractAPIRequestHandler {
 
-    private static class GetAccountHolder {
-        private static final GetAccount INSTANCE = new GetAccount();
-    }
-
-    public static GetAccount getInstance() {
-        return GetAccountHolder.INSTANCE;
-    }
-
-    private GetAccount() {
+    public GetAccount() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
     }
+
+    private AccountService accountService = CDI.current().select(AccountService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -63,7 +65,9 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
-        JSONObject response = JSONData.accountBalance(account, includeEffectiveBalance);
+        Balances balances = accountService.getAccountBalances(account, includeEffectiveBalance);
+
+        JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
         response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
         byte[] publicKey = Account.getPublicKey(account.getId());

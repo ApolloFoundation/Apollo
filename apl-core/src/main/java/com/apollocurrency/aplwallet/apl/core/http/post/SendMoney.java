@@ -24,21 +24,15 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class SendMoney extends CreateTransaction {
 
-    private static class SendMoneyHolder {
-        private static final SendMoney INSTANCE = new SendMoney();
-    }
-
-    public static SendMoney getInstance() {
-        return SendMoneyHolder.INSTANCE;
-    }
-
-    private SendMoney() {
+    public SendMoney() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");
     }
 

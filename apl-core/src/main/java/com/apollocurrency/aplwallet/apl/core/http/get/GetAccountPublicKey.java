@@ -27,22 +27,16 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAccountPublicKey extends AbstractAPIRequestHandler {
 
-    private static class GetAccountPublicKeyHolder {
-        private static final GetAccountPublicKey INSTANCE = new GetAccountPublicKey();
-    }
-
-    public static GetAccountPublicKey getInstance() {
-        return GetAccountPublicKeyHolder.INSTANCE;
-    }
-
-    private GetAccountPublicKey() {
+    public GetAccountPublicKey() {
         super(new APITag[] {APITag.ACCOUNTS}, "account");
     }
 

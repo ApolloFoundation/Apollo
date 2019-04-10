@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,17 +52,10 @@ import javax.servlet.http.HttpServletRequest;
  * at all.
  * For every match between buyer and seller an exchange record is saved, exchange records can be retrieved using the {@link GetExchanges} API
  */
+@Vetoed
 public final class CurrencySell extends CreateTransaction {
 
-    private static class CurrencySellHolder {
-        private static final CurrencySell INSTANCE = new CurrencySell();
-    }
-
-    public static CurrencySell getInstance() {
-        return CurrencySellHolder.INSTANCE;
-    }
-
-    private CurrencySell() {
+    public CurrencySell() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units");
     }
 

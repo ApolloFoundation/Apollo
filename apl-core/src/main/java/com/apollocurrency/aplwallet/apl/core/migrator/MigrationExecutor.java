@@ -4,21 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Objects;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * <p>Provides main algorithm of data migration. </p>
@@ -42,42 +44,38 @@ import javax.enterprise.inject.spi.CDI;
  *         }
  *      }
  * </pre>
- *
  */
 public abstract class MigrationExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(MigrationExecutor.class);
 
     private static final String MIGRATION_REQUIRED_TEMPLATE = "%sMigrationRequired-%d";
     private static final String DELETE_AFTER_MIGRATION_TEMPLATE = "apl.migrator.%s.deleteAfterMigration";
+    private static final String DO_MIGRATION_TEMPLATE = "apl.migrator.%s.migrate";
     private static final int ATTEMPT = 0;
-    private static DatabaseManager databaseManager;
+    private DatabaseManager databaseManager;
 
     protected PropertiesHolder holder;
     protected BlockchainConfig config;
     private String migrationRequiredPropertyName;
+    private String doMigrationPropertyName;
     private String deleteAfterMigrationPropertyName;
     private String migrationItemName;
     private boolean autoCleanup;
 
-//    set up by perfomMigration method to perform cleanup in future
+    //    set up by perfomMigration method to perform cleanup in future
     private List<Path> migratedPaths;
 
-    public MigrationExecutor(PropertiesHolder holder, DatabaseManager databaseManagerParam, String migrationItemName, boolean autoCleanup) {
+    public MigrationExecutor(PropertiesHolder holder, DatabaseManager databaseManager, String migrationItemName, boolean autoCleanup) {
         Objects.requireNonNull(holder, "Properties holder cannot be null");
         StringValidator.requireNonBlank(migrationItemName, "Option prefix cannot be null or blank");
-
+        Objects.requireNonNull(databaseManager, " Database manager cannot be null");
         this.autoCleanup = autoCleanup;
         this.holder = holder;
         this.migrationRequiredPropertyName = String.format(MIGRATION_REQUIRED_TEMPLATE, migrationItemName, ATTEMPT);
         this.deleteAfterMigrationPropertyName = String.format(DELETE_AFTER_MIGRATION_TEMPLATE, migrationItemName);
+        this.doMigrationPropertyName = String.format(DO_MIGRATION_TEMPLATE, migrationItemName);
         this.migrationItemName = migrationItemName;
-        if (databaseManager == null) {
-            if (databaseManagerParam != null) {
-                databaseManager = databaseManagerParam;
-            } else {
-                databaseManager = CDI.current().select(DatabaseManager.class).get();
-            }
-        }
+        this.databaseManager = databaseManager;
     }
 
     public void setAutoCleanup(boolean autoCleanup) {
@@ -99,7 +97,7 @@ public abstract class MigrationExecutor {
             new OptionDAO(databaseManager).set(migrationRequiredPropertyName, "false");
             if (migratedPaths != null && !migratedPaths.isEmpty()) {
                 if (autoCleanup) {
-                    performAfterMigrationCleanup();
+                    performAfterMigrationCleanup(toPath);
                 }
                 LOG.info("{} migrated successfully", migrationItemName);
             } else {
@@ -107,18 +105,38 @@ public abstract class MigrationExecutor {
             }
         }
     }
+
     public boolean isAutoCleanup() {
         return autoCleanup;
     }
 
-    public void performAfterMigrationCleanup() throws IOException {
+    public void performAfterMigrationCleanup(Path targetPath) throws IOException {
         if (migratedPaths != null) {
             if (isCleanupRequired()) {
                 for (Path migratedPath : migratedPaths) {
-                    FileUtils.deleteDirectory(migratedPath.toFile());
+                      delete(migratedPath, targetPath);
                 }
             }
         }
+    }
+
+    private void delete(Path path, Path excluded) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (!file.startsWith(excluded)) {
+                    Files.delete(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (!excluded.startsWith(dir)) {
+                    Files.delete(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     protected abstract Migrator getMigrator();
@@ -128,8 +146,9 @@ public abstract class MigrationExecutor {
     protected void beforeMigration() {}
 
     private boolean isMigrationRequired() {
-        return parseBooleanProperty(migrationRequiredPropertyName, true);
+        return parseBooleanProperty(migrationRequiredPropertyName, true) && holder.getBooleanProperty(doMigrationPropertyName, true);
     }
+
     private boolean isCleanupRequired() {
         return holder.getBooleanProperty(deleteAfterMigrationPropertyName, true);
     }

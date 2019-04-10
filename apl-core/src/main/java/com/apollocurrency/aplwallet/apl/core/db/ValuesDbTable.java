@@ -42,6 +42,12 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
         this.multiversion = multiversion;
     }
 
+    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
+        super(table, init);
+        this.multiversion = false;
+        this.dbKeyFactory = dbKeyFactory;
+    }
+
     protected abstract V load(Connection con, ResultSet rs) throws SQLException;
 
     protected abstract void save(Connection con, T t, V v) throws SQLException;
@@ -125,12 +131,14 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable {
     }
 
     @Override
-    public final void trim(int height) {
+    public final void trim(int height, TransactionalDataSource dataSource) {
         if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            if (dataSource == null) {
+                dataSource = databaseManager.getDataSource();
+            }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         } else {
-            super.trim(height);
+            super.trim(height, dataSource);
         }
     }
 

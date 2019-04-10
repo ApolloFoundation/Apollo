@@ -9,24 +9,20 @@ import org.json.simple.JSONObject;
 public class UpdateInfo implements Cloneable{
     private long id;
     private boolean isUpdate;
-    private int estimatedHeight;
-    private int receivedHeight;
     private Level level;
     private Version version;
     private UpdateState updateState = UpdateState.NONE;
     private DownloadInfo downloadInfo = new DownloadInfo();
 
-    public UpdateInfo(boolean isUpdate, long id, int estimatedHeight, int receivedHeight, Level level, Version version, UpdateState updateState) {
+    public UpdateInfo(boolean isUpdate, long id, Level level, Version version, UpdateState updateState) {
         this.isUpdate = isUpdate;
         this.id = id;
-        this.estimatedHeight = estimatedHeight;
-        this.receivedHeight = receivedHeight;
         this.level = level;
         this.version = version;
         this.updateState = updateState;
     }
-    public UpdateInfo(boolean isUpdate, long id, int estimatedHeight, int receivedHeight, Level level, Version version) {
-        this(isUpdate, id,estimatedHeight, receivedHeight, level, version, UpdateState.NONE);
+    public UpdateInfo(boolean isUpdate, long id, Level level, Version version) {
+        this(isUpdate, id, level, version, UpdateState.NONE);
     }
 
     public UpdateInfo() {
@@ -52,22 +48,6 @@ public class UpdateInfo implements Cloneable{
         isUpdate = update;
     }
 
-    public synchronized int getEstimatedHeight() {
-        return estimatedHeight;
-    }
-
-    public synchronized void setEstimatedHeight(int estimatedHeight) {
-        this.estimatedHeight = estimatedHeight;
-    }
-
-    public synchronized int getReceivedHeight() {
-        return receivedHeight;
-    }
-
-    public synchronized void setReceivedHeight(int receivedHeight) {
-        this.receivedHeight = receivedHeight;
-    }
-
     public synchronized Level getLevel() {
         return level;
     }
@@ -90,8 +70,6 @@ public class UpdateInfo implements Cloneable{
         if (isUpdate()) {
             result.put("level", level);
             result.put("availableVersion", version.toString());
-            result.put("estimatedUpdateHeight", estimatedHeight);
-            result.put("receivedHeight", receivedHeight);
             result.put("downloadStatus", downloadInfo.getDownloadStatus());
             result.put("downloadState", downloadInfo.getDownloadState());
             result.put("updateState", updateState);

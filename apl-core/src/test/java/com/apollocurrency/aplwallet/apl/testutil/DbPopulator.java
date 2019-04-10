@@ -63,8 +63,10 @@ public class DbPopulator {
 
     public void populateDb() {
         try {
-            Path dataDbPath = Paths.get(getClass().getClassLoader().getResource(dataScriptPath).toURI());
-            loadSqlAndExecute(dataDbPath);
+            if (dataScriptPath != null && !dataScriptPath.isEmpty()) {
+                Path dataDbPath = Paths.get(getClass().getClassLoader().getResource(dataScriptPath).toURI());
+                loadSqlAndExecute(dataDbPath);
+            }
         }
         catch (URISyntaxException | IOException e) {
             throw new RuntimeException("Unable to load sql commands", e);

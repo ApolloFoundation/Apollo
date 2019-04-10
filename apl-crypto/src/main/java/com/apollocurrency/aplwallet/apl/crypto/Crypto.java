@@ -22,6 +22,17 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
+import io.firstbridge.cryptolib.CryptoNotValidException;
+import io.firstbridge.cryptolib.FBCryptoParams;
+import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
+import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -34,29 +45,21 @@ import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
 
     private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
-    private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
-        @Override
-        protected SecureRandom initialValue() {
-            try {
-                SecureRandom secureRandom = useStrongSecureRandom ? SecureRandom.getInstanceStrong() : new SecureRandom();
-                secureRandom.nextBoolean();
-                return secureRandom;
-            } catch (NoSuchAlgorithmException e) {
-                LOG.error("No secure random provider available");
-                throw new RuntimeException(e.getMessage(), e);
-            }
+    private static final ThreadLocal<SecureRandom> secureRandom = ThreadLocal.withInitial(() -> {
+        try {
+            SecureRandom secureRandom = useStrongSecureRandom ? SecureRandom.getInstanceStrong() : new SecureRandom();
+            secureRandom.nextBoolean();
+            return secureRandom;
+        } catch (NoSuchAlgorithmException e) {
+            LOG.error("No secure random provider available");
+            throw new RuntimeException(e.getMessage(), e);
         }
-    };
+    });
 
     private Crypto() {} //never
 
@@ -325,6 +328,81 @@ public final class Crypto {
 
     public static boolean isCanonicalSignature(byte[] signature) {
         return Curve25519.isCanonicalSignature(signature);
+    }
+    
+    public static FBElGamalKeyPair getElGamalKeyPair() {
+       
+            try {
+                FBCryptoParams params = FBCryptoParams.createDefault();
+                AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+                instanceOfAlice.setCurveParameters();
+                return instanceOfAlice.generateOwnKeys();
+            } catch (CryptoNotValidException ex) {
+                LOG.debug(ex.getLocalizedMessage());
+            }
+            
+            return null;
+        
+        
+    }
+
+    public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
+    {
+        try
+        {
+            if (cryptogramm.length() < 450) return cryptogramm;
+            int sha256length = 64;
+            int elGamalCryptogrammLength = 393;
+            String sha256hash = cryptogramm.substring(cryptogramm.length() - sha256length);
+            int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
+            String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
+            String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
+            
+            FBCryptoParams params = FBCryptoParams.createDefault();
+            AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+            instanceOfAlice.setCurveParameters();
+        
+            FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
+            String M2 = aesKey.substring(262);
+            cryptogram1.setM2( new BigInteger(M2, 16)); 
+            
+            String M1_X = aesKey.substring(0, 131);
+            String M1_Y = aesKey.substring(131, 262);
+            org.bouncycastle.math.ec.ECPoint.Fp _M1 = 
+            instanceOfAlice.extrapolateECPoint(
+                    new BigInteger(M1_X, 16),
+                    new BigInteger(M1_Y, 16));
+
+            // setting M1 to the instance of cryptogram
+            cryptogram1.setM1(_M1);
+            BigInteger pKey = keyPair.getPrivateKey();
+            
+            BigInteger restored = BigInteger.ZERO;
+               
+            restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
+            String keyStr = restored.toString(16);
+            
+            byte[] IVC = null;
+            byte[] key = null;
+            IVC = Convert.parseHexString(IVCiphered);
+            key = Convert.parseHexString(keyStr);
+            
+
+            byte[] plain = aesGCMDecrypt(IVC, key);
+            //TODO:
+            // Add passphrase encryption verification bolow
+            
+            return new String(plain);
+        }
+        catch (Exception e)
+        {
+            LOG.debug(e.getMessage());
+            
+            return cryptogramm;
+        }
+
+        
+        
     }
 
 }

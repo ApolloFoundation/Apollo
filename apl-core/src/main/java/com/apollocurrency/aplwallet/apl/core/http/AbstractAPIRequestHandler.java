@@ -18,15 +18,16 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public abstract class AbstractAPIRequestHandler {
 
     private List<String> parameters;
@@ -82,6 +83,7 @@ public abstract class AbstractAPIRequestHandler {
         if (is2FAProtected()) {
             parameters.add("code2FA");
         }
+        parameters.add("elgamal");
         this.parameters = Collections.unmodifiableList(parameters);
         this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
         this.fileParameter = fileParameter;

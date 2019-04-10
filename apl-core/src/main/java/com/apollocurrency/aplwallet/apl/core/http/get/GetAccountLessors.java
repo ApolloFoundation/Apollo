@@ -31,21 +31,15 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class GetAccountLessors extends AbstractAPIRequestHandler {
 
-    private static class GetAccountLessorsHolder {
-        private static final GetAccountLessors INSTANCE = new GetAccountLessors();
-    }
-
-    public static GetAccountLessors getInstance() {
-        return GetAccountLessorsHolder.INSTANCE;
-    }
-
-    private GetAccountLessors() {
+    public GetAccountLessors() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "height");
     }
 

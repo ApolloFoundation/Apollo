@@ -37,18 +37,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DownloadTaggedData extends AbstractAPIRequestHandler {
 
-    private static class DownloadTaggedDataHolder {
-        private static final DownloadTaggedData INSTANCE = new DownloadTaggedData();
-    }
-
-    public static DownloadTaggedData getInstance() {
-        return DownloadTaggedDataHolder.INSTANCE;
-    }
-
-    private DownloadTaggedData() {
+    public DownloadTaggedData() {
         super(new APITag[] {APITag.DATA}, "transaction", "retrieve");
     }
 

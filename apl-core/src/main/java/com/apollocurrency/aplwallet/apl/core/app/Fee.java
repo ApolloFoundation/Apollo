@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 
 public interface Fee {
 
-    long getFee(TransactionImpl transaction, Appendix appendage);
+    long getFee(Transaction transaction, Appendix appendage);
 
     Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_APL);
 
@@ -44,7 +44,7 @@ public interface Fee {
         }
 
         @Override
-        public long getFee(TransactionImpl transaction, Appendix appendage) {
+        public long getFee(Transaction transaction, Appendix appendage) {
             return fee;
         }
 
@@ -72,7 +72,7 @@ public interface Fee {
 
         // the first size unit is free if constantFee is 0
         @Override
-        public final long getFee(TransactionImpl transaction, Appendix appendage) {
+        public final long getFee(Transaction transaction, Appendix appendage) {
             int size = getSize(transaction, appendage) - 1;
             if (size < 0) {
                 return constantFee;
@@ -80,7 +80,7 @@ public interface Fee {
             return Math.addExact(constantFee, Math.multiplyExact((long) (size / unitSize), feePerSize));
         }
 
-        public abstract int getSize(TransactionImpl transaction, Appendix appendage);
+        public abstract int getSize(Transaction transaction, Appendix appendage);
 
     }
 

@@ -29,23 +29,17 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAssetDeletes extends AbstractAPIRequestHandler {
 
-    private static class GetAssetDeletesHolder {
-        private static final GetAssetDeletes INSTANCE = new GetAssetDeletes();
-    }
-
-    public static GetAssetDeletes getInstance() {
-        return GetAssetDeletesHolder.INSTANCE;
-    }
-
-    private GetAssetDeletes() {
+    public GetAssetDeletes() {
         super(new APITag[] {APITag.AE}, "asset", "account", "firstIndex", "lastIndex", "timestamp", "includeAssetInfo");
     }
 

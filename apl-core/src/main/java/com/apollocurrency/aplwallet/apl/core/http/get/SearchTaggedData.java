@@ -28,23 +28,17 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class SearchTaggedData extends AbstractAPIRequestHandler {
 
-    private static class SearchTaggedDataHolder {
-        private static final SearchTaggedData INSTANCE = new SearchTaggedData();
-    }
-
-    public static SearchTaggedData getInstance() {
-        return SearchTaggedDataHolder.INSTANCE;
-    }
-
-    private SearchTaggedData() {
+    public SearchTaggedData() {
         super(new APITag[] {APITag.DATA, APITag.SEARCH}, "query", "tag", "channel", "account", "firstIndex", "lastIndex", "includeData");
     }
 

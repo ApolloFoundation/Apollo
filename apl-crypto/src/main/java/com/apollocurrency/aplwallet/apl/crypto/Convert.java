@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -129,6 +130,45 @@ public final class Convert {
         return result;
     }
 
+    public static byte[] concat(byte[]... arrs) {
+        Objects.requireNonNull(arrs, "Arrs cannot be null");
+
+        int length = 0;
+        for (byte[] arr : arrs) {
+            length += arr.length;
+        }
+        byte[] result = new byte[length];
+        int offset = 0;
+        for (byte[] arr : arrs) {
+            System.arraycopy(arr, 0, result, offset, arr.length);
+            offset += arr.length;
+        }
+        return result;
+    }
+
+    public static byte[] reverse(byte[] bytes) {
+        byte[] reversed = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            reversed[i] = bytes[bytes.length - i - 1];
+        }
+        return reversed;
+    }
+
+    public static byte[] toFullHash(long id, byte[] partialHash) {
+        Objects.requireNonNull(partialHash, "partialHash should not be null");
+        byte[] bytes = Convert.longToBytes(id);
+        byte[] firstPartOfHash = Convert.reverse(bytes); //reverse bytes according to order in Convert.fullHashToId
+        return Convert.concat(firstPartOfHash, partialHash);
+    }
+    public static byte[] reverseSelf(byte[] bytes) {
+        for (int i = 0; i < bytes.length / 2; i++) {
+            byte temp = bytes[i];
+            bytes[i] = bytes[bytes.length - i - 1];
+            bytes[bytes.length - i - 1] = temp;
+        }
+        return bytes;
+    }
+
     public static long bytesToLong(byte[] b) {
         int longSize = Long.BYTES;
         long result = 0;
@@ -151,6 +191,15 @@ public final class Convert {
         BigInteger bigInteger = new BigInteger(1, new byte[] {hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
         return bigInteger.longValue();
     }
+
+    public static byte[] toPartialHash(byte[] hash) {
+        Objects.requireNonNull(hash, "Hash should not be null");
+        if (hash.length != 32) {
+            throw new IllegalArgumentException("Invalid hash length");
+        }
+        return Arrays.copyOfRange(hash, 8, hash.length);
+    }
+
 
 
     public static String emptyToNull(String s) {

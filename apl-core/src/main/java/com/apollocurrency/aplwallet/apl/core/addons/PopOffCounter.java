@@ -20,30 +20,35 @@
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+@Vetoed
 public final class PopOffCounter implements AddOn {
     private static final Logger LOG = getLogger(PopOffCounter.class);
 
-    private volatile int numberOfPopOffs = 0;
-    private BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private AtomicInteger numberOfPopOffs = new AtomicInteger();
 
     @Override
     public void init() {
-        blockchainProcessor.addListener(block -> numberOfPopOffs += 1, BlockchainProcessor.Event.BLOCK_POPPED);
+    }
+
+    public void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        numberOfPopOffs.incrementAndGet();
     }
 
     @Override

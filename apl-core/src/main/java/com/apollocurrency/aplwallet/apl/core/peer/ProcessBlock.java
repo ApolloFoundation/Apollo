@@ -26,22 +26,16 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-final class ProcessBlock extends PeerServlet.PeerRequestHandler {
+@Vetoed
+final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
 
-    private static class ProcessBlockHolder {
-        private static final ProcessBlock INSTANCE = new ProcessBlock();
-    }
-
-    public static ProcessBlock getInstance() {
-        return ProcessBlockHolder.INSTANCE;
-    }
-
-    private ProcessBlock() {}
+    public ProcessBlock() {}
 
     @Override
     JSONStreamAware processRequest(final JSONObject request, final Peer peer) {

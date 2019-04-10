@@ -64,7 +64,7 @@ public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
     public static int getAccountLeaseCount() {
         return accountLeaseTable.getCount();
     }
-    static DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
+    DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {

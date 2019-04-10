@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.h2.api.Trigger;
@@ -18,6 +18,9 @@ import java.util.Iterator;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 
+/**
+ * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
+ */
 public class FullTextTrigger implements Trigger, TransactionCallback {
         private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
     /**
@@ -26,22 +29,16 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
     private static DatabaseManager databaseManager;
-
     /**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
      */
-    private FullTextSearchEngine ftl;
+    private static FullTextSearchEngine ftl = CDI.current().select(FullTextSearchEngine.class).get();
     private TableData tableData;
 
 
-    private TableData readTableData(String schema, String tableName) throws SQLException {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        try (Connection con = databaseManager.getDataSource().getConnection()) {
-            return DbUtils.getTableData(con, tableName, schema);
-        }
+    private TableData readTableData(Connection connection, String schema, String tableName) throws SQLException {
+         return DbUtils.getTableData(connection, tableName, schema);
     }
 
     /**
@@ -58,8 +55,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
             throws SQLException {
-        this.tableData = readTableData(schema, table);
-        this.ftl = CDI.current().select(FullTextSearchEngine.class).get();
+        this.tableData = readTableData(conn, schema, table);
     }
 
     /**
@@ -91,10 +87,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         //
         // Commit the change immediately if we are not in a transaction
         //
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = lookupDatabaseManager().getDataSource();
         if (!dataSource.isInTransaction()) {
             try {
                 ftl.commitRow(oldRow, newRow, tableData);
@@ -115,6 +108,13 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         // Register our transaction callback
         //
         dataSource.registerCallback(this);
+    }
+
+    private DatabaseManager lookupDatabaseManager() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager;
     }
 
     /**

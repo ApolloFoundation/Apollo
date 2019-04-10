@@ -508,7 +508,7 @@ public final class JSONResponses {
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware unknownAccount(long id) {
+    public static JSONStreamAware unknownAccount(long id) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
         response.put("errorDescription", "Unknown account");

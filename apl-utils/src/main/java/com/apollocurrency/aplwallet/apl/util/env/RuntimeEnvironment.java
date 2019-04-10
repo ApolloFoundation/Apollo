@@ -24,7 +24,9 @@ import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
 
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class RuntimeEnvironment {
 
     public static final String RUNTIME_MODE_ARG = "apl.runtime.mode";
@@ -123,6 +125,7 @@ public class RuntimeEnvironment {
     }
 
     public boolean isDesktopEnabled() {
+       
         return "desktop".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && !isHeadless();
     }
 

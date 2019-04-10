@@ -1,0 +1,211 @@
+#**********************************************#
+# Copyright (c) Apollo Foundation 2017-2019    #
+#**********************************************#
+
+# Apollo DEX API Annotations
+
+swagger: '2.0'
+info:
+  title: Apollo DEX API
+  description: Apollo decentralized exchange module API
+  version: "1.0.0"
+# Apollo wallet URL
+host: apollowallet.org
+# array of all schemes that your API supports
+schemes:
+- https
+# will be prefixed to all paths
+basePath: /apl?requestType=
+produces:
+- application/json
+paths:
+
+  /dex/widthraw:
+    post:
+      summary: Widthraw cryptocurrency
+      description: dexWidthraw endpoint provides transfer of Ethereum
+      parameters:
+      - name: account
+        in: query
+        required: true
+        type: string
+      - name: secretPhrase
+        in: query
+        description: Secret Phrase
+        required: true
+        type: string
+      - name: amount
+        in: query
+        description: Amount in Wei, satoshi, etc...
+        required: true
+        type: number
+      - name: address
+        in: query
+        required: true
+        type: string
+      - name: cryptocurrency
+        in: query
+        required: true
+        type: string
+
+      responses:
+        200:
+          description: Wallets balances
+          schema:
+            $ref: "#/definitions/TransactionDetails"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /dex/offers:
+    get:
+      summary: Get exchange offers
+      description: dexGetOffers endpoint list of opened pending exchange orders
+      parameters:
+      - name: account
+        in: query
+        required: false
+        type: string
+      - name: pair
+        in: query
+        required: false
+        type: string
+      - name: type
+        in: query
+        required: false
+        type: string
+      - name: minAskPrice
+        in: query
+        required: false
+        type: number
+      - name: maxBidPrice
+        in: query
+        required: false
+        type: number
+
+      responses:
+        200:
+          description: Exchange offers
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Orders"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /dex/history:
+    get:
+      summary: get trading history for certain account
+      description: get trading history for certain account
+      parameters:
+      - name: account
+        in: query
+        required: true
+        type: string
+      - name: pair
+        in: query
+        required: false
+        type: string
+      - name: type
+        in: query
+        required: false
+        type: string
+      responses:
+        200:
+          description: Wallets balances
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Orders"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /dex/order:
+    get:
+      summary: get Order By Id
+      description: extract one order by OrderID
+      parameters:
+      - name: orderID
+        in: path
+        type: number
+        required: true
+      responses:
+        200:
+          description: Order
+          schema:
+            $ref: "#/definitions/Orders"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  Balances:
+    type: object
+    properties:
+      accountRS:
+        type: string
+        description: Account RS
+      account:
+        type: number
+        description: Account Number
+      balanceATM:
+        type: number
+        description: Apollo account balance in Atoms
+      balanceETH:
+        type: number
+        description: Ethereum account balance in wei
+      balanceBTC:
+        type: number
+        description: Bitcoin balance in satoshi
+  Error:
+    type: object
+    properties:
+      errorDescription:
+        type: string
+        description: Error description
+      errorCode:
+        type: number
+        description: Error Code
+  TransactionDetails:
+    type: object
+
+  Orders:
+    type: object
+    properties:
+      orderId:
+        type: number
+        description: Order Id
+      orderType:
+        type: string
+        description: Type of pending order - buy or sell
+      pair:
+        type: string
+        description: Currency Pair (exchange direction) (APLBTC, APLETH)
+      rate:
+        type: number
+        description: Exchange rate
+      amountAPL:
+        type: number
+        description: Amount of APL to exchange
+      amount:
+        type: numberbcprov.version
+        description: Amount of Satoshi, wei, or PAX to exchange
+      status:
+        type: string
+        description: Order status from enum - [OPENED, EXECUTED, CANCELLED etc...]
+      openTime:
+        type: string
+        description: Order placement time
+      transaction:
+        type: number
+        description: Order Placement transaction id
+      execTransaction:
+        type: number
+        description: Order execution/cancellation transaction id
+

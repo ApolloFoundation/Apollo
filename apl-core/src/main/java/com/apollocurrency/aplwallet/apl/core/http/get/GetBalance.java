@@ -26,21 +26,15 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetBalance extends AbstractAPIRequestHandler {
 
-    private static class GetBalanceHolder {
-        private static final GetBalance INSTANCE = new GetBalance();
-    }
-
-    public static GetBalance getInstance() {
-        return GetBalanceHolder.INSTANCE;
-    }
-
-    private GetBalance() {
+    public GetBalance() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeEffectiveBalance", "height");
     }
 

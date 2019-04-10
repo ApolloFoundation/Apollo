@@ -31,6 +31,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>The GetInboundPeers API will return a list of inbound peers.
@@ -54,21 +55,15 @@ import java.util.List;
  * <li>errorDescription - API error description</li>
  * </ul>
  */
+
+@Vetoed
 public final class GetInboundPeers extends AbstractAPIRequestHandler {
 
-    /** GetInboundPeers instance */
-    private static class GetInboundPeersHolder {
-        private static final GetInboundPeers INSTANCE = new GetInboundPeers();
-    }
-
-    public static GetInboundPeers getInstance() {
-        return GetInboundPeersHolder.INSTANCE;
-    }
 
     /**
      * Create the GetInboundPeers instance
      */
-    private GetInboundPeers() {
+    public GetInboundPeers() {
         super(new APITag[] {APITag.NETWORK}, "includePeerInfo");
     }
 

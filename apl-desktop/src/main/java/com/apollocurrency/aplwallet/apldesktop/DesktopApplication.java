@@ -23,32 +23,16 @@ package com.apollocurrency.aplwallet.apldesktop;
 import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import java.awt.*;
-
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
-import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
@@ -64,9 +48,10 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-import netscape.javascript.JSObject;
+//import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
@@ -75,18 +60,19 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.enterprise.inject.spi.CDI;
-import javax.net.ssl.HttpsURLConnection;
+
+//import netscape.javascript.JSObject;
+
+//import com.apollocurrency.aplwallet.apl.core.app.Db;
+//import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
+//import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -95,33 +81,37 @@ public class DesktopApplication extends Application {
     private static final SplashScreen SPLASH_SCREEN = SplashScreen.getInstance();
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
     private static final boolean ENABLE_JAVASCRIPT_DEBUGGER = false;
-    private static volatile boolean isLaunched;
     private static volatile boolean isSplashScreenLaunched = false;
     private static volatile Stage mainStage;
-    private static OptionDAO optionDAO = new OptionDAO();
+    //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
-    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static String APIUrl;
+    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+
+//    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+//    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        
 
     public static void refreshMainApplication() {
         MainApplication.refresh();
     }
     
     private static String getUrl() {
-        String url = API.getWelcomePageUri().toString();
+        /*/TODO: use default URL from config
+        String url = "http://localhost:7876/";//API.getWelcomePageUri().toString();
+        
         if (url.startsWith("https")) {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
         }
 //TODO:  WTF?
-//        String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
+        //String defaultAccount = aplGlobalObjects.getStringProperty("apl.defaultDesktopAccount");
          String defaultAccount = "";
         if (defaultAccount != null && !defaultAccount.isEmpty() && !defaultAccount.equals("")) {
             url += "?account=" + defaultAccount;
-        }
-        return url;
+        }*/
+        return APIUrl;
     }
 
     public static void shutdownSplashScreen() {
@@ -135,31 +125,37 @@ public class DesktopApplication extends Application {
 
     //rewrite (start on existing stage)
     public static void launch() {
-        if (!isLaunched) {
-            isLaunched = true;
-            Application.launch(DesktopApplication.class);
-            return;
-        }
+        Application.launch(DesktopApplication.class);
+            
+     
         if (mainStage != null) {
             Platform.runLater(() -> showStage(false));
         }
     }
-
-    public static void recoverDbUI() {
+    
+    //TODO: Recover DB in core
+    /*public static void recoverDbUI() {
         DB_RECOVERING_UI.tryToRecoverDB();
-    }
+    }*/
 
-    public static void startDesktopApplication() {
+    public static void startDesktopApplication(String APIlocation) {
+        APIUrl = APIlocation;
+
         if (isSplashScreenLaunched) {
             shutdownSplashScreen();
         }
+        shutdownSplashScreen();
+
         Platform.runLater(MAIN_APPLICATION::startDesktopApplication);
-        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
+
+//TODO:: make with changelog
+        /*        if (!Constants.VERSION.toString().equals(optionDAO.get("Previous launch APP Version")))
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
             optionDAO.set("Previous launch APP Version", Constants.VERSION.toString());
             
-        }
+        }*/
+
     }
 
     //start javaFx splash screen
@@ -331,7 +327,7 @@ public class DesktopApplication extends Application {
         private static volatile WebEngine webEngine;
         private static volatile WebEngine webEngine2;
         private static MainApplication instance = new MainApplication();
-        private JSObject ars;
+//        private JSObject ars;
         private volatile long updateTime;
         private JavaScriptBridge javaScriptBridge;
       
@@ -398,15 +394,18 @@ public class DesktopApplication extends Application {
                             LOG.debug("loadWorker state change ignored");
                             return;
                         }
+/*
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         javaScriptBridge = new JavaScriptBridge(this); // Must be a member variable to prevent gc
                         window.setMember("java", javaScriptBridge);
                         Locale locale = Locale.getDefault();
                         String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
                         window.setMember("javaFxLanguage", language);
+*/
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
-
-                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
+//TODO: Get Blockchain config from API
+//                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
+//                        mainStage.setTitle("Apollo" + " Desktop - " + webEngine.getLocation());
 
                        // updateClientState("Desktop Wallet started");
 /*                       
@@ -437,13 +436,16 @@ public class DesktopApplication extends Application {
             webEngine.setCreatePopupHandler(
                     config -> {
                         LOG.info("popup request from webEngine");
+                        LOG.info(webEngine.getLocation());
                         return invisible.getEngine();
                     });
 
             webEngine.load(getUrl());
 
             Scene scene = new Scene(browser);
-            String address = API.getServerRootUri().toString();
+            //TODO: 
+            //String address = API.getServerRootUri().toString();
+            String address = "http://localhost:7876/";
             mainStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
             mainStage.initStyle(StageStyle.DECORATED);
             mainStage.setScene(scene);
@@ -469,7 +471,7 @@ public class DesktopApplication extends Application {
             webEngine2.load(changelogUrl.toString());
 
             Scene scene = new Scene(browser);
-            String address = API.getServerRootUri().toString();
+            String address = "http://localhost:7876/";//TODO: Make it right API.getServerRootUri().toString();
             changelogStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
             changelogStage.initStyle(StageStyle.DECORATED);
             changelogStage.setScene(scene);
@@ -509,7 +511,7 @@ public class DesktopApplication extends Application {
             }
         }
 
-        @SuppressWarnings("WeakerAccess")
+     //   @SuppressWarnings("WeakerAccess")
         public void popupHandlerURLChange(String newValue) {
             LOG.info("popup request for " + newValue);
             Platform.runLater(() -> {
@@ -544,21 +546,24 @@ public class DesktopApplication extends Application {
                     params.put(keyValuePair[0], keyValuePair[1]);
                 }
             }
-            String requestType = params.get("requestType");
-            if (DOWNLOAD_REQUEST_TYPES.contains(requestType)) {
-                download(requestType, params);
+            
+            if (newValue.startsWith("blob:")) {
+                download(newValue);
             } else {
-                LOG.info(String.format("requestType %s is not a download request", requestType));
+                LOG.info(String.format("requestType %s is not a download request"));
             }
         }
 
-        private void download(String requestType, Map<String, String> params) {
-            long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
+        private void download(String requestType) { //, Map<String, String> params) {
+            LOG.info("I want to download file");
+//TODO: Rewrite download function
+            /*    long transactionId = Convert.parseUnsignedLong(params.get("transaction"));
             TaggedData taggedData = TaggedData.getData(transactionId);
             boolean retrieve = "true".equals(params.get("retrieve"));
             if (requestType.equals("downloadTaggedData")) {
                 if (taggedData == null && retrieve) {
-                    try {
+                    //TODO: Do something with tagged data
+                    /*try {
                         if (blockchainProcessor.restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned transaction data not currently available from any peer");
                             return;
@@ -567,7 +572,7 @@ public class DesktopApplication extends Application {
                     catch (IllegalArgumentException e) {
                         growl("Pruned transaction data cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
-                    }
+                    }*//*
                     taggedData = TaggedData.getData(transactionId);
                 }
                 if (taggedData == null) {
@@ -583,7 +588,8 @@ public class DesktopApplication extends Application {
             } else if (requestType.equals("downloadPrunableMessage")) {
                 PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 if (prunableMessage == null && retrieve) {
-                    try {
+                    //TODO: Do something with tagged data
+                    /*try {
                         if (blockchainProcessor.restorePrunedTransaction(transactionId) == null) {
                             growl("Pruned message not currently available from any peer");
                             return;
@@ -592,7 +598,7 @@ public class DesktopApplication extends Application {
                     catch (IllegalArgumentException e) {
                         growl("Pruned message cannot be restored using desktop wallet without full blockchain. Use Web Wallet instead");
                         return;
-                    }
+                    }*//*
                     prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
                 }
                 String secretPhrase = params.get("secretPhrase");
@@ -626,6 +632,7 @@ public class DesktopApplication extends Application {
                 }
                 downloadFile(data, "" + transactionId);
             }
+                    */
         }
 
         private void downloadFile(byte[] data, String filename) {
@@ -676,7 +683,8 @@ public class DesktopApplication extends Application {
             return instance;
         }
 
-        public void tryToRecoverDB() {
+        //TODO: Reindex in core
+        /*public void tryToRecoverDB() {
             new JFXPanel(); // prepare JavaFX toolkit and environment
             Platform.runLater(() -> {
                 Alert alert = prepareAlert(Alert.AlertType.ERROR, "Db initialization failed", "Db was crashed! Do you want to recover db?", 180, new ButtonType("Yes", ButtonBar.ButtonData.YES), new ButtonType("No", ButtonBar.ButtonData.NO));
@@ -706,12 +714,9 @@ public class DesktopApplication extends Application {
             });
         }
 
-        private Alert reindexDbUI() throws SQLException {
-            FullTextSearchService searchService = CDI.current().select(FullTextSearchService.class).get();
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            searchService.reindexAll(dataSource.getConnection());
-            return prepareAlert(Alert.AlertType.INFORMATION, "DB was re-indexed", "Db was re-indexed successfully! Please restart the wallet. Note: If wallet still failed after successful re-indexing, click on \"Remove db\" button", 180, new ButtonType("OK", ButtonBar.ButtonData.OK_DONE), new ButtonType("Remove db", ButtonBar.ButtonData.APPLY));
-        }
+        */
+        
+
 
 
         private Alert prepareAlert(Alert.AlertType alertType, String title, String contentText, int height, ButtonType... buttons) {
@@ -727,7 +732,8 @@ public class DesktopApplication extends Application {
             return alert;
         }
 
-        private Alert deleteDbAndHandleException() {
+        //TODO: recover DB in core
+/*        private Alert deleteDbAndHandleException() {
 
             Alert alert;
             try {
@@ -739,6 +745,7 @@ public class DesktopApplication extends Application {
                 alert = prepareAlert(Alert.AlertType.ERROR, "Db was not recovered", "Cannot recover db. Try to manually delete db folder.", 180);
             }
             return alert;
-        }
+        }*/
     }
+        
 }

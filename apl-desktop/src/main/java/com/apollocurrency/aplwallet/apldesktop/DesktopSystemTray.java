@@ -23,23 +23,14 @@ package com.apollocurrency.aplwallet.apldesktop;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import org.slf4j.Logger;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -50,17 +41,18 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.swing.*;
 
 public class DesktopSystemTray {
     private static final Logger LOG = getLogger(DesktopSystemTray.class);
 
     public static final int DELAY = 1000;
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    //private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    //private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
+    //private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
+    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+
 
     private SystemTray tray;
     private final JFrame wrapper = new JFrame();
@@ -175,7 +167,8 @@ public class DesktopSystemTray {
     }
 
     private void displayStatus() {
-        Block lastBlock = blockchain.getLastBlock();
+        //TODO: getLastBlock using API
+        //Block lastBlock = blockchain.getLastBlock();
         Collection<Generator> allGenerators = Generator.getAllGenerators();
 
         StringBuilder generators = new StringBuilder();
@@ -199,28 +192,32 @@ public class DesktopSystemTray {
         addLabelRow(statusPanel, "Installation");
         addDataRow(statusPanel, "Application", Constants.APPLICATION);
         addDataRow(statusPanel, "Version", Constants.VERSION.toString());
-        addDataRow(statusPanel, "Network", blockchainConfig.getChain().getName());
-        addDataRow(statusPanel, "Working offline", "" + propertiesHolder.isOffline());
+        //addDataRow(statusPanel, "Network", blockchainConfig.getChain().getName());
+        addDataRow(statusPanel, "Network", "Apollo default");
 
+        //addDataRow(statusPanel, "Working offline", "" + propertiesHolder.isOffline());
+        addDataRow(statusPanel, "Working offline", "" + "false");        
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
         addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).toAbsolutePath()));
 //        addDataRow(statusPanel, "Database URL", dataSource == null ? "unavailable" : dataSource.getUrl());
         addEmptyRow(statusPanel);
-
+/*
+        TODO: dosplay last Block in status
         if (lastBlock != null) {
             addLabelRow(statusPanel, "Last Block");
             addDataRow(statusPanel, "Height", String.valueOf(lastBlock.getHeight()));
             addDataRow(statusPanel, "Timestamp", String.valueOf(lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Time", String.valueOf(new Date(Convert2.fromEpochTime(lastBlock.getTimestamp()))));
-            addDataRow(statusPanel, "Seconds passed", String.valueOf(timeService.getEpochTime() - lastBlock.getTimestamp()));
+            //TODO: take from api
+            //addDataRow(statusPanel, "Seconds passed", String.valueOf(timeService.getEpochTime() - lastBlock.getTimestamp()));
             addDataRow(statusPanel, "Forging", String.valueOf(allGenerators.size() > 0));
             if (allGenerators.size() > 0) {
                 addDataRow(statusPanel, "Forging accounts", generators.toString());
             }
         }
-
+*/
         addEmptyRow(statusPanel);
         addLabelRow(statusPanel, "Environment");
         addDataRow(statusPanel, "Number of peers", String.valueOf(Peers.getAllPeers().size()));

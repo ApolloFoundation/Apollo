@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,17 +45,10 @@ import javax.servlet.http.HttpServletRequest;
  * Constraints
  * <p>This transaction is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE} and is already active.<br>
  */
+@Vetoed
 public final class CurrencyReserveClaim extends CreateTransaction {
 
-    private static class CurrencyReserveClaimHolder {
-        private static final CurrencyReserveClaim INSTANCE = new CurrencyReserveClaim();
-    }
-
-    public static CurrencyReserveClaim getInstance() {
-        return CurrencyReserveClaimHolder.INSTANCE;
-    }
-
-    private CurrencyReserveClaim() {
+    public CurrencyReserveClaim() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");
     }
 

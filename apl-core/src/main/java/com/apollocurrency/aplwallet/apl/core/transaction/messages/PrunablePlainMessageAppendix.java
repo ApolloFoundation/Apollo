@@ -32,7 +32,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
-        public int getSize(TransactionImpl transaction, Appendix appendix) {
+        public int getSize(Transaction transaction, Appendix appendix) {
             return appendix.getFullSize();
         }
     };

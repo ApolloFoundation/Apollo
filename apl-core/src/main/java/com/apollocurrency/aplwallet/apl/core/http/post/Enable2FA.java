@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -15,20 +14,14 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public class Enable2FA extends AbstractAPIRequestHandler {
-    private Enable2FA() {
+    public Enable2FA() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
-    }
-
-    private static class Enable2FAHolder {
-        private static final Enable2FA INSTANCE = new Enable2FA();
-    }
-
-    public static Enable2FA getInstance() {
-        return Enable2FAHolder.INSTANCE;
     }
 
     @Override

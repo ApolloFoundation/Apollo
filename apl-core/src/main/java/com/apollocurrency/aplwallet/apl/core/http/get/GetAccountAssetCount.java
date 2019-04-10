@@ -32,15 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountAssetCount extends AbstractAPIRequestHandler {
 
-    private static class GetAccountAssetCountHolder {
-        private static final GetAccountAssetCount INSTANCE = new GetAccountAssetCount();
-    }
-
-    public static GetAccountAssetCount getInstance() {
-        return GetAccountAssetCountHolder.INSTANCE;
-    }
-
-    private GetAccountAssetCount() {
+    public GetAccountAssetCount() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "height");
     }
 

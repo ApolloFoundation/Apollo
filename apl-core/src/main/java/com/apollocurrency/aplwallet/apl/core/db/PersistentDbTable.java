@@ -30,6 +30,10 @@ public abstract class PersistentDbTable<T> extends EntityDbTable<T> {
         super(table, dbKeyFactory, false, fullTextSearchColumns);
     }
 
+    public PersistentDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
+    }
+
     PersistentDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
     }

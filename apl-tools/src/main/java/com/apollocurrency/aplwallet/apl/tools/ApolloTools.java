@@ -3,14 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
-import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
-import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
-import com.apollocurrency.aplwallet.apl.tools.impl.HeightMonitor;
-import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
-import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
-import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CompactDbCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.ConstantsCmd;
@@ -18,10 +12,18 @@ import com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.PubKeyCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.SignTxCmd;
 import com.apollocurrency.aplwallet.apl.tools.cmdline.UpdaterUrlCmd;
+import com.apollocurrency.aplwallet.apl.tools.impl.CompactDatabase;
+import com.apollocurrency.aplwallet.apl.tools.impl.ConstantsExporter;
+import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
+import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
+import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.HeightMonitor;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
@@ -31,6 +33,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -40,9 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main entry point to all Apollo tools. This is Swiss Army Knife for all Apollo
@@ -52,10 +54,10 @@ import org.slf4j.LoggerFactory;
  */
 public class ApolloTools {
 
-    private static final Logger log = LoggerFactory.getLogger(ApolloTools.class);
+    private static Logger log;
     private static final CmdLineArgs args = new CmdLineArgs();
     private static final CompactDbCmd compactDb = new CompactDbCmd();
-    private static final HeightMonitorCmd heightMonitor = new HeightMonitorCmd();
+    private static final HeightMonitorCmd heightMonitorCmd = new HeightMonitorCmd();
     private static final PubKeyCmd pubkey = new PubKeyCmd();
     private static final SignTxCmd signtx = new SignTxCmd();
     private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
@@ -92,15 +94,13 @@ public class ApolloTools {
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
-                com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                Constants.APPLICATION_DIR_NAME + ".properties",
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
-                com.apollocurrency.aplwallet.apl.util.StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                "chains.json");
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir);
         chains = chainsConfigLoader.load();
         activeChain = ChainUtils.getActiveChain(chains);
         // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);
@@ -145,11 +145,17 @@ public class ApolloTools {
     }
 
     private int heightMonitor() {
-//TODO: command line parameters        
-        HeightMonitor hm = HeightMonitor.create(null, null, null);
-        hm.start();
-        //TODO: exit code        
-        return 0;
+        try {
+            String peerFile = heightMonitorCmd.peerFile;
+            List<String> peerIps = Files.readAllLines(Paths.get(peerFile));
+            HeightMonitor hm = new HeightMonitor(peerIps, heightMonitorCmd.intervals, heightMonitorCmd.frequency, heightMonitorCmd.port);
+            hm.start();
+            Runtime.getRuntime().addShutdownHook(new Thread(hm::stop));
+            return 0;
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private int pubkey() {
@@ -189,11 +195,12 @@ public class ApolloTools {
 
 
     public static void main(String[] argv) {
+        log = getLogger(ApolloTools.class);
         toolsApp = new ApolloTools();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
                 .addCommand(CompactDbCmd.CMD, compactDb)
-                .addCommand(HeightMonitorCmd.CMD, heightMonitor)
+                .addCommand(HeightMonitorCmd.CMD, heightMonitorCmd)
                 .addCommand(PubKeyCmd.CMD, pubkey)
                 .addCommand(SignTxCmd.CMD, signtx)
                 .addCommand(UpdaterUrlCmd.CMD, urlcmd)
@@ -219,7 +226,7 @@ public class ApolloTools {
             toolsApp.readConfigs();
             System.exit(toolsApp.compactDB());
         } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
-            System.exit(toolsApp.heightMonitor());
+            toolsApp.heightMonitor();
         } else if (jc.getParsedCommand().equalsIgnoreCase(PubKeyCmd.CMD)) {
             System.exit(toolsApp.pubkey());
         } else if (jc.getParsedCommand().equalsIgnoreCase(SignTxCmd.CMD)) {

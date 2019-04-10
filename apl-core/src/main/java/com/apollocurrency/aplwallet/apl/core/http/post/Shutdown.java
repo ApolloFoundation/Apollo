@@ -22,22 +22,16 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class Shutdown extends AbstractAPIRequestHandler {
 
-    private static class ShutdownHolder {
-        private static final Shutdown INSTANCE = new Shutdown();
-    }
-
-    public static Shutdown getInstance() {
-        return ShutdownHolder.INSTANCE;
-    }
-
-    private Shutdown() {
+    public Shutdown() {
         super(new APITag[] {APITag.DEBUG}, "scan");
     }
 

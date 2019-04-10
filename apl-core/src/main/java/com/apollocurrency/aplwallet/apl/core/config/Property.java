@@ -22,6 +22,6 @@ import javax.inject.Qualifier;
 @Retention(RUNTIME)
 @Target({TYPE, METHOD, FIELD, PARAMETER})
 public @interface Property {
-    @Nonbinding String name() default "";
+    @Nonbinding String value() default "";
     @Nonbinding String defaultValue() default "";
 }

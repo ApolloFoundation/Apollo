@@ -4,21 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
-import org.junit.Ignore;
+import javax.xml.bind.DatatypeConverter;
 
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
@@ -34,7 +35,7 @@ public class DownloaderTest {
     /**
      * test with failing download scenario
      */
-    @Ignore
+
     @Test
     public void testTryDownloadWithInvalidUrl() {
 
@@ -42,25 +43,24 @@ public class DownloaderTest {
         Downloader downloader = new DownloaderImpl(downloadInfo, 1, 10, (path, hash) -> true, new ThrowingDownloadExecutor());
 
         Path result = downloader.tryDownload("unknow.url", new byte[0]);
-        Assert.assertNull(result);
-        Assert.assertEquals(downloadInfo.getDownloadState(), DownloadInfo.DownloadState.FINISHED);
-        Assert.assertEquals(downloadInfo.getDownloadStatus(), DownloadInfo.DownloadStatus.FAIL);
+        assertNull(result);
+        assertEquals(downloadInfo.getDownloadState(), DownloadInfo.DownloadState.FINISHED);
+        assertEquals(downloadInfo.getDownloadStatus(), DownloadInfo.DownloadStatus.FAIL);
 
     }
 
     /**
      * test with successful download scenario
      */
-    @Ignore
-    @Test
+    @Disabled
     public void testTryDownloadWithSignedValidPayload() {
         DownloadInfo downloadInfo = new DownloadInfo();
         Downloader downloader = new DownloaderImpl(downloadInfo, 1, 10, (path, hash) -> true, new ResourceDownloadExecutor());
         Path result = downloader.tryDownload("testDownloaderPayload.txt", new byte[0]);
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(downloadInfo.getDownloadState(), DownloadInfo.DownloadState.FINISHED);
-        Assert.assertEquals(downloadInfo.getDownloadStatus(), DownloadInfo.DownloadStatus.OK);
+        assertNotNull(result);
+        assertEquals(downloadInfo.getDownloadState(), DownloadInfo.DownloadState.FINISHED);
+        assertEquals(downloadInfo.getDownloadStatus(), DownloadInfo.DownloadStatus.OK);
 
     }
 
@@ -77,12 +77,13 @@ public class DownloaderTest {
 
         @Override
         public Path download(String uri) throws IOException {
-            try {
-                return UpdaterUtil.loadResourcePath(uri);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                throw new IOException("can't load resource");
-            }
+//            try {
+//                return UpdaterUtil.loadResourcePath(uri);
+//            } catch (URISyntaxException e) {
+//                e.printStackTrace();
+//                throw new IOException("can't load resource");
+//            }
+            return null;
         }
 
     }
