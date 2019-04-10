@@ -45,7 +45,7 @@ public class NtpTime {
             timeOffset = offsetValue;
         }
         catch (IOException e ) {
-            LOG.error(e.getMessage(), e);
+            LOG.warn(e.getMessage(), e);
             timeOffset = 0;
         }
     }
