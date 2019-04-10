@@ -104,7 +104,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static DatabaseManager databaseManager;
+    private DatabaseManager databaseManager;
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
 
@@ -152,7 +152,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (blockchainConfigUpdater == null) blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         return blockchainConfigUpdater;
     }
-    private static TransactionalDataSource lookupDataSource() {
+    private TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
@@ -753,7 +753,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                     TransactionValidator transactionValidator,
                                     TransactionApplier transactionApplier,
-                                    TrimService trimService) {
+                                    TrimService trimService, DatabaseManager databaseManager) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -763,6 +763,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.transactionValidator = transactionValidator;
         this.transactionApplier = transactionApplier;
         this.referencedTransactionService = referencedTransactionService;
+        this.databaseManager = databaseManager;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -927,8 +928,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public int restorePrunedData() {
         TransactionalDataSource dataSource = lookupDataSource();
-        try (Connection con = dataSource.getConnection()) {
-            dataSource.begin();
+        try (Connection con = dataSource.begin()) {
             int now = timeService.getEpochTime();
             int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
             int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
@@ -1079,8 +1079,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = lookupDataSource();
-        dataSource.begin();
-        try (Connection con = dataSource.getConnection()) {
+        Connection con = dataSource.begin();
+        try {
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
@@ -1089,7 +1089,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 table.createSearchIndex(con);
             }
             blockchain.commit(genesisBlock);
-            dataSource.commit(false);
+            dataSource.commit();
         } catch (SQLException e) {
             dataSource.rollback();
             log.info(e.getMessage());
@@ -1105,8 +1105,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             Block previousLastBlock = null;
             TransactionalDataSource dataSource = lookupDataSource();
+            dataSource.begin();
             try {
-                dataSource.begin();
                 previousLastBlock = lookupBlockhain().getLastBlock();
 
                 validator.validate(block, previousLastBlock, curTime);
@@ -1133,13 +1133,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 addBlock(block);
                 accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 blockchain.commit(block);
-                dataSource.commit();
+                dataSource.commit(false);
             } catch (Exception e) {
-                dataSource.rollback();
+                dataSource.rollback(false); // do not close current transaction
                 log.error("PushBlock, error:", e);
-                popOffTo(previousLastBlock);
+                popOffTo(previousLastBlock); // do in current transaction
                 blockchain.setLastBlock(previousLastBlock);
                 throw e;
+            } finally {
+                dataSource.commit(); // finally close transaction
             }
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
         } finally {
@@ -1147,7 +1149,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
 
         if (block.getTimestamp() >= curTime - 600) {
-            log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), block.getId(),
+            log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), Long.toUnsignedString(block.getId()),
                     Convert2.rsAccount(block.getGeneratorId()));
             Peers.sendToSomePeers(block);
         }
@@ -1349,56 +1351,62 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingLong(Transaction::getId);
 
     public List<Block> popOffTo(Block commonBlock) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         globalSync.writeLock();
-        TransactionalDataSource dataSource = lookupDataSource();
         try {
             if (!dataSource.isInTransaction()) {
                 try {
                     dataSource.begin();
-                    return popOffTo(commonBlock);
-                } catch (Exception e){
-                    dataSource.rollback();
-                    log.error("popOff error", e);
+                    return popOffToInTransaction(commonBlock);
+                } finally {
+                    dataSource.commit();
                 }
+            } else {
+                return popOffToInTransaction(commonBlock);
             }
-            if (commonBlock.getHeight() < getMinRollbackHeight()) {
-                log.info("Rollback to height " + commonBlock.getHeight() + " not supported, will do a full rescan");
-                popOffWithRescan(commonBlock.getHeight() + 1);
-                return Collections.emptyList();
-            }
-            if (! lookupBlockhain().hasBlock(commonBlock.getId())) {
-                log.debug("Block " + commonBlock.getStringId() + " not found in blockchain, nothing to pop off");
-                return Collections.emptyList();
-            }
-            List<Block> poppedOffBlocks = new ArrayList<>();
-            try {
-                Block block = lookupBlockhain().getLastBlock();
-                ((BlockImpl)block).loadTransactions();
-                log.debug("Rollback from block " + block.getStringId() + " at height " + block.getHeight()
-                        + " to " + commonBlock.getStringId() + " at " + commonBlock.getHeight());
-                while (block.getId() != commonBlock.getId() && block.getHeight() > 0) {
-                    poppedOffBlocks.add(block);
-                    block = popLastBlock();
-                }
-                long rollbackStartTime = System.currentTimeMillis();
-                for (DerivedDbTable table : dbTables.getDerivedTables()) {
-                    table.rollback(commonBlock.getHeight());
-                }
-                log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
-                dataSource.clearCache();
-                dataSource.commit();
-            } catch (RuntimeException e) {
-                log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
-                dataSource.rollback();
-                Block lastBlock = blockchain.findLastBlock();
-                lookupBlockhain().setLastBlock(lastBlock);
-                popOffTo(lastBlock);
-                throw e;
-            }
-            return poppedOffBlocks;
         } finally {
             globalSync.writeUnlock();
         }
+    }
+
+    public List<Block> popOffToInTransaction(Block commonBlock) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (commonBlock.getHeight() < getMinRollbackHeight()) {
+            log.info("Rollback to height " + commonBlock.getHeight() + " not supported, will do a full rescan");
+            popOffWithRescan(commonBlock.getHeight() + 1);
+            return Collections.emptyList();
+        }
+        if (!lookupBlockhain().hasBlock(commonBlock.getId())) {
+            log.debug("Block " + commonBlock.getStringId() + " not found in blockchain, nothing to pop off");
+            return Collections.emptyList();
+        }
+        List<Block> poppedOffBlocks = new ArrayList<>();
+        try {
+            Block block = lookupBlockhain().getLastBlock();
+            ((BlockImpl) block).loadTransactions();
+            log.debug("Rollback from block " + block.getStringId() + " at height " + block.getHeight()
+                    + " to " + commonBlock.getStringId() + " at " + commonBlock.getHeight());
+            while (block.getId() != commonBlock.getId() && block.getHeight() > 0) {
+                poppedOffBlocks.add(block);
+                block = popLastBlock();
+            }
+            long rollbackStartTime = System.currentTimeMillis();
+            for (DerivedDbTable table : dbTables.getDerivedTables()) {
+                table.rollback(commonBlock.getHeight());
+            }
+            log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
+            dataSource.clearCache();
+            dataSource.commit(false); // should happen definately, otherwise
+        }
+        catch (RuntimeException e) {
+            log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
+            dataSource.rollback(false);
+            Block lastBlock = blockchain.findLastBlock();
+            lookupBlockhain().setLastBlock(lastBlock);
+            popOffToInTransaction(lastBlock);
+            throw e;
+        }
+        return poppedOffBlocks;
     }
 
     private Block popLastBlock() {
@@ -1598,7 +1606,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(height, validate, shutdown);
                     dataSource.commit();
                 } catch (Exception e) {
-                    dataSource.rollback(false);
+                    dataSource.rollback();
                     throw e;
                 }
                 return;
