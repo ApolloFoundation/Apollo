@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 
-import java.math.BigDecimal;
-
 public class DexOffer{
     private long id;
     private long transactionId;
@@ -15,11 +13,10 @@ public class DexOffer{
 
     private OfferType type;
     private DexCurrencies offerCurrency;
-    private long offerAmount;
+    private Long offerAmount;
 
     private DexCurrencies pairCurrency;
-    private BigDecimal pairRate;
-    //TODO change it
+    private Long pairRate;
     private int finishTime;
 
     public DexOffer() {
@@ -32,8 +29,8 @@ public class DexOffer{
         this.offerCurrency = DexCurrencies.getType(dexOfferAttachment.getOfferCurrency());
         this.offerAmount = dexOfferAttachment.getOfferAmount();
         this.pairCurrency = DexCurrencies.getType(dexOfferAttachment.getPairCurrency());
-        this.pairRate = getPairRate();
-        this.finishTime = getFinishTime();
+        this.pairRate = dexOfferAttachment.getPairRate();
+        this.finishTime = dexOfferAttachment.getFinishTime();
     }
 
     public long getId() {
@@ -92,11 +89,12 @@ public class DexOffer{
         this.pairCurrency = pairCurrency;
     }
 
-    public BigDecimal getPairRate() {
+
+    public Long getPairRate() {
         return pairRate;
     }
 
-    public void setPairRate(BigDecimal pairRate) {
+    public void setPairRate(Long pairRate) {
         this.pairRate = pairRate;
     }
 

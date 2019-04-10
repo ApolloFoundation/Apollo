@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
-import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
@@ -19,6 +19,8 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import io.swagger.annotations.ApiParam;
+import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
@@ -96,21 +98,27 @@ public class DexController {
     @io.swagger.annotations.ApiOperation(value = "create offer", response = ExchangeOrder.class, tags={  })
     @io.swagger.annotations.ApiResponses(value = {
             @io.swagger.annotations.ApiResponse(code = 200, message = "OK", response = Response.class),
-
             @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response createOffer(@QueryParam("orderID") Long orderID, @Context HttpServletRequest req)
+    public Response createOffer(@ApiParam(value = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("orderType") Byte orderType,
+                                @ApiParam(value = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
+                                @ApiParam(value = "Offered currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("offerCurrency") Byte offerCurrency,
+                                @ApiParam(value = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
+                                @ApiParam(value = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
+                                @ApiParam(value = "Finish time of this offer.", required = true) @FormParam("finishTime") Integer finishTime,
+                                @Context HttpServletRequest req)
             throws NotFoundException {
 
         DexOffer offer = new DexOffer();
-        offer.setTransactionId(1L);
-        offer.setType(OfferType.BUY);
-        offer.setAccountId(1L);
-        offer.setOfferAmount(100L);
-        offer.setOfferCurrency(DexCurrencies.APL);
-        offer.setPairCurrency(DexCurrencies.ETH);
-        offer.setPairRate(new BigDecimal("0.12"));
-        offer.setFinishTime(12);
-//        service.saveOffer(offer);
+        offer.setType(OfferType.getType(orderType));
+        offer.setOfferAmount(offerAmount);
+        offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
+        offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
+        offer.setPairRate(pairRate);
+        offer.setFinishTime(finishTime);
+
+        if(offer.getOfferCurrency().equals(offer.getPairCurrency())){
+            return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
+        }
 
         Account account = ParameterParser.getSenderAccount(req);
         DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);

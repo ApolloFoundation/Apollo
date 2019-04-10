@@ -37,7 +37,7 @@ public class DexOfferDao {
             pstmt.setInt(++i, dexOffer.getOfferCurrency().ordinal());
             pstmt.setLong(++i, dexOffer.getOfferAmount());
             pstmt.setInt(++i, dexOffer.getPairCurrency().ordinal());
-            pstmt.setBigDecimal(++i, dexOffer.getPairRate());
+            pstmt.setLong(++i, dexOffer.getPairRate());
             pstmt.setInt(++i, dexOffer.getFinishTime());
 
             pstmt.executeUpdate();
