@@ -120,7 +120,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
     @Override
     public void clearAndSave(UpdateTransaction transaction) {
         boolean isInTransaction = dataSource.isInTransaction();
-        Connection con = null;
+        Connection con;
         try {
             if (!isInTransaction) dataSource.begin();
             con = dataSource.getConnection();
@@ -130,7 +130,7 @@ public class UpdaterDbRepository implements UpdaterRepository {
 
         }
         catch (SQLException e) {
-            dataSource.rollback();
+            dataSource.rollback(!isInTransaction);
             LOG.error(e.toString(), e);
             throw new RuntimeException(e.toString(), e);
         }
