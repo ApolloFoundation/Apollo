@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
+import com.apollocurrency.aplwallet.api.dto.DexOfferDto;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 
@@ -32,6 +33,21 @@ public class DexOffer{
         this.pairRate = dexOfferAttachment.getPairRate();
         this.finishTime = dexOfferAttachment.getFinishTime();
     }
+
+    //TODO discuss about this approach
+    public DexOfferDto toDto(){
+        DexOfferDto dexOfferDto = new DexOfferDto();
+
+        dexOfferDto.accountId = this.getAccountId();
+        dexOfferDto.type = this.getType().ordinal();
+        dexOfferDto.offerCurrency = this.getOfferCurrency().ordinal();
+        dexOfferDto.offerAmount = this.getOfferAmount();
+        dexOfferDto.pairCurrency = this.getPairCurrency().ordinal();
+        dexOfferDto.finishTime = this.getFinishTime();
+
+        return dexOfferDto;
+    }
+
 
     public long getId() {
         return id;

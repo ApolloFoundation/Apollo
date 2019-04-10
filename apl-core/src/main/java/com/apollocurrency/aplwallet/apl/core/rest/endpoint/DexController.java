@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
@@ -23,7 +24,6 @@ import io.swagger.annotations.ApiParam;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -39,20 +39,25 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("/dex")
 @Singleton
 public class DexController {
 
-    private DexService service = CDI.current().select(DexService.class).get();
+    private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
+    private EpochTime epochTime;
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator) {
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime) {
         this.service = service;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.epochTime = epochTime;
     }
 
+    //For DI
     public DexController() {
     }
 
@@ -99,22 +104,23 @@ public class DexController {
     @io.swagger.annotations.ApiResponses(value = {
             @io.swagger.annotations.ApiResponse(code = 200, message = "OK", response = Response.class),
             @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response createOffer(@ApiParam(value = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("orderType") Byte orderType,
+    public Response createOffer(@ApiParam(value = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("offerType") Byte offerType,
                                 @ApiParam(value = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
                                 @ApiParam(value = "Offered currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("offerCurrency") Byte offerCurrency,
                                 @ApiParam(value = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
                                 @ApiParam(value = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
-                                @ApiParam(value = "Finish time of this offer.", required = true) @FormParam("finishTime") Integer finishTime,
-                                @Context HttpServletRequest req)
-            throws NotFoundException {
+                                @ApiParam(value = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
+                                @Context HttpServletRequest req) throws NotFoundException {
+        Integer currentTime = epochTime.getEpochTime();
+        //TODO add amountOfTime validation.
 
         DexOffer offer = new DexOffer();
-        offer.setType(OfferType.getType(orderType));
+        offer.setType(OfferType.getType(offerType));
         offer.setOfferAmount(offerAmount);
         offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
         offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
         offer.setPairRate(pairRate);
-        offer.setFinishTime(finishTime);
+        offer.setFinishTime(currentTime + amountOfTime);
 
         if(offer.getOfferCurrency().equals(offer.getPairCurrency())){
             return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
@@ -139,9 +145,23 @@ public class DexController {
             @io.swagger.annotations.ApiResponse(code = 200, message = "Exchange offers", response = ExchangeOrder.class, responseContainer = "List"),
 
             @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response getOffers(  @QueryParam("account") String account,  @QueryParam("pair") String pair,  @QueryParam("type") String type,  @QueryParam("minAskPrice") BigDecimal minAskPrice,  @QueryParam("maxBidPrice") BigDecimal maxBidPrice,@Context SecurityContext securityContext)
-            throws NotFoundException {
-        return Response.ok(service.getOffers(account,pair,type,minAskPrice,maxBidPrice)).build();
+    public Response getOffers(  @ApiParam(value = "Type of the offer. (BUY = 0 /SELL = 1)", required = true) @QueryParam("orderType") Byte orderType,
+                                @ApiParam(value = "Criteria by Offered currency. (APL=0, ETH=1, PAX=2)", required = true) @QueryParam("offerCurrency") Byte offerCurrency,
+                                @ApiParam(value = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @QueryParam("pairCurrency") Byte pairCurrency,
+                                @ApiParam(value = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
+                                @ApiParam(value = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
+                                @Context SecurityContext securityContext) throws NotFoundException {
+
+        OfferType type = OfferType.getType(orderType);
+        DexCurrencies offerCur = DexCurrencies.getType(offerCurrency);
+        DexCurrencies pairCur = DexCurrencies.getType(pairCurrency);
+
+        List<DexOffer> offers = service.getOffers(type, offerCur, pairCur, minAskPrice, maxBidPrice);
+
+        return Response.ok(offers.stream()
+                .map(o -> o.toDto())
+                .collect(Collectors.toList())
+        ).build();
     }
 
     @GET
