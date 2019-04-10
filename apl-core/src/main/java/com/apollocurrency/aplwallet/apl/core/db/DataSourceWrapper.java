@@ -22,12 +22,18 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
+import org.jdbi.v3.core.ConnectionException;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.h2.H2DatabasePlugin;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
 import java.io.PrintWriter;
@@ -120,7 +126,7 @@ public class DataSourceWrapper implements DataSource {
         String dbUrl = dbProperties.getDbUrl();
         if (StringUtils.isBlank(dbUrl)) {
             String dbFileName = dbProperties.getDbFileName();
-            dbUrl = String.format("jdbc:%s:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
+            dbUrl = String.format("jdbc:%s:file:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
         }
         if (!dbUrl.contains("MV_STORE=")) {
             dbUrl += ";MV_STORE=FALSE";
@@ -129,6 +135,7 @@ public class DataSourceWrapper implements DataSource {
             dbUrl += ";CACHE_SIZE=" + maxCacheSize;
         }
         this.dbUrl = dbUrl;
+        dbProperties.dbUrl(dbUrl);
         this.dbUsername = dbProperties.getDbUsername();
         this.dbPassword = dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
@@ -141,7 +148,7 @@ public class DataSourceWrapper implements DataSource {
      * Constructor creates internal DataSource.
      * @param dbVersion database version related information
      */
-    public void init(DbVersion dbVersion) {
+    public Jdbi init(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -149,6 +156,7 @@ public class DataSourceWrapper implements DataSource {
         config.setPassword(dbPassword);
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
+        log.debug("Creating DataSource pool, path = {}", dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
 /*
@@ -164,9 +172,27 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        log.debug("Before starting Db schema init {}...", dbVersion);
         dbVersion.init(this);
+
+        log.debug("Attempting to create Jdbi instance...");
+        Jdbi jdbi = Jdbi.create(dataSource);
+        jdbi.installPlugin(new SqlObjectPlugin());
+        jdbi.installPlugin(new H2DatabasePlugin());
+        jdbi.registerArgument(new BigIntegerArgumentFactory());
+
+        log.debug("Attempting to open Jdbi handler to database..");
+        try (Handle handle = jdbi.open()) {
+            Integer result = handle.createQuery("select X from dual;")
+                    .mapTo(Integer.class).findOnly();
+            log.debug("check SQL result ? = {}", result);
+        } catch (ConnectionException e) {
+            log.error("Error on opening database connection", e);
+            throw e;
+        }
         initialized = true;
         shutdown = false;
+        return jdbi;
     }
 
     public void shutdown() {
@@ -181,7 +207,7 @@ public class DataSourceWrapper implements DataSource {
             initialized = false;
             dataSource.close();
 //            dataSource.dispose();
-            log.info("Database shutdown completed");
+            log.trace("Database shutdown completed");
 
         } catch (SQLException e) {
             log.info(e.toString(), e);

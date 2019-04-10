@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class PopOff extends AbstractAPIRequestHandler {
 
-    private static class PopOffHolder {
-        private static final PopOff INSTANCE = new PopOff();
-    }
-
-    public static PopOff getInstance() {
-        return PopOffHolder.INSTANCE;
-    }
-
-    private PopOff() {
+    public PopOff() {
         super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "keepTransactions");
     }
 

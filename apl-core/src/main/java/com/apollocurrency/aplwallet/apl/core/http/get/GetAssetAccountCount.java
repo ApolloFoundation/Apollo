@@ -25,22 +25,16 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAssetAccountCount extends AbstractAPIRequestHandler {
 
-    private static class GetAssetAccountCountHolder {
-        private static final GetAssetAccountCount INSTANCE = new GetAssetAccountCount();
-    }
-
-    public static GetAssetAccountCount getInstance() {
-        return GetAssetAccountCountHolder.INSTANCE;
-    }
-
-    private GetAssetAccountCount() {
+    public GetAssetAccountCount() {
         super(new APITag[] {APITag.AE}, "asset", "height");
     }
 

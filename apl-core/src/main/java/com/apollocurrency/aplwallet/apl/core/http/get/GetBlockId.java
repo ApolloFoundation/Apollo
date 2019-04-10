@@ -30,18 +30,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HEIGHT;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetBlockId extends AbstractAPIRequestHandler {
 
-    private static class GetBlockIdHolder {
-        private static final GetBlockId INSTANCE = new GetBlockId();
-    }
-
-    public static GetBlockId getInstance() {
-        return GetBlockIdHolder.INSTANCE;
-    }
-
-    private GetBlockId() {
+    public GetBlockId() {
         super(new APITag[] {APITag.BLOCKS}, "height");
     }
 

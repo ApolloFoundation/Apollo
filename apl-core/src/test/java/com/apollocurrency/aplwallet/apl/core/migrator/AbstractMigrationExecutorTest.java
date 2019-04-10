@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 import java.io.File;
@@ -34,6 +34,7 @@ public abstract class AbstractMigrationExecutorTest {
     private final String migrationProp;
     private final String path;
     private final String pathProp;
+    private TemporaryFolderExtension folder;
 
     public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp ) {
         this.deleteProp = deleteProp;
@@ -45,13 +46,12 @@ public abstract class AbstractMigrationExecutorTest {
     private static PropertiesHolder propertiesHolder  = new PropertiesHolder();
     private static Properties properties = new Properties();
     private DatabaseManager databaseManager;
-    @Rule
-    private TemporaryFolder folder = new TemporaryFolder();
+
 
     @BeforeEach
     public void setUp() throws IOException {
-        folder.create();
-        databaseManager = new DatabaseManager(DbTestData.DB_MEM_PROPS, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder);
+        folder = getTempFolder();
     }
 
     @AfterEach
@@ -61,6 +61,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     public abstract MigrationExecutor getExecutor(DatabaseManager databaseManager, PropertiesHolder propertiesHolder);
 
+    public abstract TemporaryFolderExtension getTempFolder();
     @Test
     public void testMigrationDirectories() {
         initProperties(true);
@@ -85,7 +86,6 @@ public abstract class AbstractMigrationExecutorTest {
     public void testPerformMigration() throws IOException {
 
         initProperties(true);
-
         File srcFolder = folder.newFolder();
         Files.createFile(srcFolder.toPath().resolve("1"));
         Files.createFile(srcFolder.toPath().resolve("2"));
@@ -98,7 +98,7 @@ public abstract class AbstractMigrationExecutorTest {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
         Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
-        List<Path> paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
+        List<Path> paths = Files.list(folder.getRoot().toPath()).filter(Files::exists).collect(Collectors.toList());
         Assertions.assertEquals(1, paths.size());
         Assertions.assertEquals(destDir.toPath(), paths.get(0));
     }

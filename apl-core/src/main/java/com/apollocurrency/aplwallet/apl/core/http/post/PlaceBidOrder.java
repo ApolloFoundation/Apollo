@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class PlaceBidOrder extends CreateTransaction {
 
-    private static class PlaceBidOrderHolder {
-        private static final PlaceBidOrder INSTANCE = new PlaceBidOrder();
-    }
-
-    public static PlaceBidOrder getInstance() {
-        return PlaceBidOrderHolder.INSTANCE;
-    }
-
-    private PlaceBidOrder() {
+    public PlaceBidOrder() {
         super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "quantityATU", "priceATM");
     }
 

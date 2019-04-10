@@ -30,20 +30,14 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class GetSharedKey extends AbstractAPIRequestHandler {
 
-    private static class GetSharedKeyHolder {
-        private static final GetSharedKey INSTANCE = new GetSharedKey();
-    }
-
-    public static GetSharedKey getInstance() {
-        return GetSharedKeyHolder.INSTANCE;
-    }
-
-    private GetSharedKey() {
+    public GetSharedKey() {
         super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce", "passphrase", "participantAccount");
     }
 

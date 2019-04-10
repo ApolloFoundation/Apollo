@@ -34,18 +34,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_CURRENCY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetCurrency extends AbstractAPIRequestHandler {
 
-    private static class GetCurrencyHolder {
-        private static final GetCurrency INSTANCE = new GetCurrency();
-    }
-
-    public static GetCurrency getInstance() {
-        return GetCurrencyHolder.INSTANCE;
-    }
-
-    private GetCurrency() {
+    public GetCurrency() {
         super(new APITag[] {APITag.MS}, "currency", "code", "includeCounts");
     }
 

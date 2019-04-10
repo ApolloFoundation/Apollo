@@ -8,9 +8,11 @@ import org.slf4j.Logger;
 
 import java.io.InputStream;
 import java.util.Properties;
+import javax.enterprise.inject.Vetoed;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Vetoed
 public class UpdaterConstants {
     private static final Logger LOG = getLogger(UpdaterConstants.class);
     private static final Properties updaterProperties;

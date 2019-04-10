@@ -37,15 +37,15 @@ import javax.servlet.http.HttpServletRequest;
 
 public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 
-    private static class GetAccountCurrenciesHolder {
-        private static final GetAccountCurrencies INSTANCE = new GetAccountCurrencies();
-    }
+//    private static class GetAccountCurrenciesHolder {
+//        private static final GetAccountCurrencies INSTANCE = new GetAccountCurrencies();
+//    }
+//
+//    public static GetAccountCurrencies getInstance() {
+//        return GetAccountCurrenciesHolder.INSTANCE;
+//    }
 
-    public static GetAccountCurrencies getInstance() {
-        return GetAccountCurrenciesHolder.INSTANCE;
-    }
-
-    private GetAccountCurrencies() {
+    public GetAccountCurrencies() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.MS}, "account", "currency", "height", "includeCurrencyInfo");
     }
 

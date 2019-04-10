@@ -29,21 +29,15 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class GetPrunableMessages extends AbstractAPIRequestHandler {
 
-    private static class GetPrunableMessagesHolder {
-        private static final GetPrunableMessages INSTANCE = new GetPrunableMessages();
-    }
-
-    public static GetPrunableMessages getInstance() {
-        return GetPrunableMessagesHolder.INSTANCE;
-    }
-
-    private GetPrunableMessages() {
+    public GetPrunableMessages() {
         super(new APITag[] {APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp", "passphrase");
     }
 

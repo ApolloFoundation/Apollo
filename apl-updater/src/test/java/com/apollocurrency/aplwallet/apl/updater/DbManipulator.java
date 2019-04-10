@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import javax.sql.DataSource;
-import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 

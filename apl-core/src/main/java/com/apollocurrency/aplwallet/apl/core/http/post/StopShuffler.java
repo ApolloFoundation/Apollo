@@ -31,21 +31,14 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class StopShuffler extends AbstractAPIRequestHandler {
 
-    private static class StopShufflerHolder {
-        private static final StopShuffler INSTANCE = new StopShuffler();
-    }
-
-    public static StopShuffler getInstance() {
-        return StopShufflerHolder.INSTANCE;
-    }
-
-    private StopShuffler() {
+    public StopShuffler() {
         super(new APITag[] {APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
     }
 

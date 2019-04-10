@@ -33,18 +33,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetCurrencies extends AbstractAPIRequestHandler {
 
-    private static class GetCurrenciesHolder {
-        private static final GetCurrencies INSTANCE = new GetCurrencies();
-    }
-
-    public static GetCurrencies getInstance() {
-        return GetCurrenciesHolder.INSTANCE;
-    }
-
-    private GetCurrencies() {
+    public GetCurrencies() {
         super(new APITag[] {APITag.MS}, "currencies", "currencies", "currencies", "includeCounts"); // limit to 3 for testing
     }
 

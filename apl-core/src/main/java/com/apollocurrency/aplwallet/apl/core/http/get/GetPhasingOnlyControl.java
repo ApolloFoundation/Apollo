@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.post.SetPhasingOnlyControl;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
@@ -54,17 +55,10 @@ import javax.servlet.http.HttpServletRequest;
  * @see SetPhasingOnlyControl
  * 
  */
+@Vetoed
 public final class GetPhasingOnlyControl extends AbstractAPIRequestHandler {
 
-    private static class GetPhasingOnlyControlHolder {
-        private static final GetPhasingOnlyControl INSTANCE = new GetPhasingOnlyControl();
-    }
-
-    public static GetPhasingOnlyControl getInstance() {
-        return GetPhasingOnlyControlHolder.INSTANCE;
-    }
-    
-    private GetPhasingOnlyControl() {
+    public GetPhasingOnlyControl() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account");
     }
 

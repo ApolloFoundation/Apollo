@@ -31,18 +31,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class RSConvert extends AbstractAPIRequestHandler {
 
-    private static class RSConvertHolder {
-        private static final RSConvert INSTANCE = new RSConvert();
-    }
-
-    public static RSConvert getInstance() {
-        return RSConvertHolder.INSTANCE;
-    }
-
-    private RSConvert() {
+    public RSConvert() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.UTILS}, "account");
     }
 

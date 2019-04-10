@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetLastExchanges extends AbstractAPIRequestHandler {
 
-    private static class GetLastExchangesHolder {
-        private static final GetLastExchanges INSTANCE = new GetLastExchanges();
-    }
-
-    public static GetLastExchanges getInstance() {
-        return GetLastExchangesHolder.INSTANCE;
-    }
-
-    private GetLastExchanges() {
+    public GetLastExchanges() {
         super(new APITag[] {APITag.MS}, "currencies", "currencies", "currencies"); // limit to 3 for testing
     }
 

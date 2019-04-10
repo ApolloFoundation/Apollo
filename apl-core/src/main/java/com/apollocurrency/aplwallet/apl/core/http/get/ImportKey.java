@@ -12,6 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
+import org.apache.commons.lang3.tuple.Pair;
+import org.json.simple.JSONObject;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -21,15 +24,9 @@ import javax.servlet.http.HttpServletRequest;
  * Use com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController#importKeyStore
  */
 @Deprecated
+@Vetoed
 public class ImportKey extends AbstractAPIRequestHandler {
-    private static class ImportKeyHolder {
-        private static final ImportKey INSTANCE = new ImportKey();
-    }
-
-    public static ImportKey getInstance() {
-        return ImportKeyHolder.INSTANCE;
-    }
-    private ImportKey() {
+    public ImportKey() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL}, "secretBytes", "passphrase");
     }
 

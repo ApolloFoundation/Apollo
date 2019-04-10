@@ -36,18 +36,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetBlockchainTransactionsHolder {
-        private static final GetBlockchainTransactions INSTANCE = new GetBlockchainTransactions();
-    }
-
-    public static GetBlockchainTransactions getInstance() {
-        return GetBlockchainTransactionsHolder.INSTANCE;
-    }
-
-    private GetBlockchainTransactions() {
+    public GetBlockchainTransactions() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",
                 "firstIndex", "lastIndex", "numberOfConfirmations", "withMessage", "phasedOnly", "nonPhasedOnly",
                 "includeExpiredPrunable", "includePhasingResult", "executedOnly");

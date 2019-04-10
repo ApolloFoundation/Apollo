@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
@@ -52,18 +53,10 @@ import javax.servlet.http.HttpServletRequest;
  * the total supply is distributed between the founders based on their proportional investment<br>
  * The list of founders and their ATM investment can be obtained using the {@link GetCurrencyFounders} API.
  */
-
+@Vetoed
 public final class CurrencyReserveIncrease extends CreateTransaction {
 
-    private static class CurrencyReserveIncreaseHolder {
-        private static final CurrencyReserveIncrease INSTANCE = new CurrencyReserveIncrease();
-    }
-
-    public static CurrencyReserveIncrease getInstance() {
-        return CurrencyReserveIncreaseHolder.INSTANCE;
-    }
-
-    private CurrencyReserveIncrease() {
+    public CurrencyReserveIncrease() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "amountPerUnitATM");
     }
 

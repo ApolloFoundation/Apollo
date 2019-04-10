@@ -1,0 +1,70 @@
+[
+  {
+    "chainId": "ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1",
+    "isTestnet": true,
+    "active": false,
+    "defaultPeers": [
+      "51.15.1.1",
+      "51.15.0.0"
+    ],
+    "wellKnownPeers": [],
+    "blacklistedPeers": [],
+    "name": "1",
+    "description": "2",
+    "symbol": "3",
+    "prefix": "4",
+    "project": "5",
+    "genesisLocation": "6",
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS"
+        }
+      },
+      {
+        "height": 2000,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+      },
+      {
+        "height": 42300,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensus":
+        {
+          "type": "POS",
+          "adaptiveForgingSettings":
+          {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true
+        }
+      }
+    ]
+  }
+]

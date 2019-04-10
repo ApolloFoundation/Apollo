@@ -22,12 +22,29 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -40,28 +57,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * EventListener listens for peer, block, transaction and account ledger events as
@@ -130,11 +131,11 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     }
 
     /** Block events - update API comments for EventRegister and EventWait if changed */
-    public static final List<BlockchainProcessor.Event> blockEvents = new ArrayList<>();
+    public static final List<BlockEventType> blockEvents = new ArrayList<>();
     static {
-        blockEvents.add(BlockchainProcessor.Event.BLOCK_GENERATED);
-        blockEvents.add(BlockchainProcessor.Event.BLOCK_POPPED);
-        blockEvents.add(BlockchainProcessor.Event.BLOCK_PUSHED);
+        blockEvents.add(BlockEventType.BLOCK_GENERATED);
+        blockEvents.add(BlockEventType.BLOCK_POPPED);
+        blockEvents.add(BlockEventType.BLOCK_PUSHED);
     }
 
     /** Transaction events - update API comments for EventRegister and EventWait if changed */
@@ -649,7 +650,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
             Enum<? extends Enum> event = eventRegistration.getEvent();
             if (event instanceof Peers.Event) {
                 eventHandler = new PeerEventHandler(eventRegistration);
-            } else if (event instanceof BlockchainProcessor.Event) {
+            } else if (event instanceof BlockEventType) {
                 eventHandler = new BlockEventHandler(eventRegistration);
             } else if (event instanceof TransactionProcessor.Event) {
                 eventHandler = new TransactionEventHandler(eventRegistration);
@@ -894,7 +895,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void addListener() {
-                blockchainProcessor.addListener(this, (BlockchainProcessor.Event)event);
+//                blockchainProcessor.addListener(this, (BlockEventType)event);
             }
 
             /**
@@ -902,7 +903,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void removeListener() {
-                blockchainProcessor.removeListener(this, (BlockchainProcessor.Event)event);
+//                blockchainProcessor.removeListener(this,(BlockEventType)event);
             }
 
             /**

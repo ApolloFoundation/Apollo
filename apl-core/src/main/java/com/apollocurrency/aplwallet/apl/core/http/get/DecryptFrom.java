@@ -33,22 +33,16 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+@Vetoed
 public final class DecryptFrom extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DecryptFrom.class);
 
-    private static class DecryptFromHolder {
-        private static final DecryptFrom INSTANCE = new DecryptFrom();
-    }
-
-    public static DecryptFrom getInstance() {
-        return DecryptFromHolder.INSTANCE;
-    }
-
-    private DecryptFrom() {
+    public DecryptFrom() {
         super(new APITag[] {APITag.MESSAGES}, "participantAccount", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage",
                 "secretPhrase");
     }

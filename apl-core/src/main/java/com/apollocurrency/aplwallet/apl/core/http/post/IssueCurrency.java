@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 /**
@@ -90,17 +91,10 @@ import org.json.simple.JSONStreamAware;
  * @see com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType
  * @see com.apollocurrency.aplwallet.apl.crypto.HashFunction
  */
+@Vetoed
 public final class IssueCurrency extends CreateTransaction {
 
-    private static class IssueCurrencyHolder {
-        private static final IssueCurrency INSTANCE = new IssueCurrency();
-    }
-
-    public static IssueCurrency getInstance() {
-        return IssueCurrencyHolder.INSTANCE;
-    }
-
-    private IssueCurrency() {
+    public IssueCurrency() {
         super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION},
                 "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
                 "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");

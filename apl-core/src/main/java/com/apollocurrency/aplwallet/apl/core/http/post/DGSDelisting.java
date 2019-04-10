@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class DGSDelisting extends CreateTransaction {
 
-    private static class DGSDelistingHolder {
-        private static final DGSDelisting INSTANCE = new DGSDelisting();
-    }
-
-    public static DGSDelisting getInstance() {
-        return DGSDelistingHolder.INSTANCE;
-    }
-
-    private DGSDelisting() {
+    public DGSDelisting() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION}, "goods");
     }
 

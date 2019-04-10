@@ -30,18 +30,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class LongConvert extends AbstractAPIRequestHandler {
 
-    private static class LongConvertHolder {
-        private static final LongConvert INSTANCE = new LongConvert();
-    }
-
-    public static LongConvert getInstance() {
-        return LongConvertHolder.INSTANCE;
-    }
-
-    private LongConvert() {
+    public LongConvert() {
         super(new APITag[] {APITag.UTILS}, "id");
     }
 

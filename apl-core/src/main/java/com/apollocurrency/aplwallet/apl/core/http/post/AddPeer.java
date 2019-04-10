@@ -33,18 +33,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PEER;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class AddPeer extends AbstractAPIRequestHandler {
 
-    private static class AddPeerHolder {
-        private static final AddPeer INSTANCE = new AddPeer();
-    }
-
-    public static AddPeer getInstance() {
-        return AddPeerHolder.INSTANCE;
-    }
-    
-    private AddPeer() {
+    public AddPeer() {
         super(new APITag[] {APITag.NETWORK}, "peer");
     }
 

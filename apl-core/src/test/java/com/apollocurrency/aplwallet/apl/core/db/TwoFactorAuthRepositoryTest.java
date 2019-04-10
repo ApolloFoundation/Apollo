@@ -4,32 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 
 public class TwoFactorAuthRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {
-    private static DbManipulator manipulator = new DbManipulator();
 
-    static {
-            manipulator.init();
-    }
-
+    @RegisterExtension
+    static DbExtension dbExtension = new DbExtension();
     public TwoFactorAuthRepositoryTest() {
 
-        super(new TwoFactorAuthRepositoryImpl(manipulator.getDataSource()));
+        super(new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManger().getDataSource()));
     }
-
-    @AfterAll
-    public static void shutdown() throws Exception {
-        manipulator.shutdown();
-    }
-
-    @BeforeEach
-    public void setUp() throws Exception {
-        manipulator.populate();
-    }
-
-
 }

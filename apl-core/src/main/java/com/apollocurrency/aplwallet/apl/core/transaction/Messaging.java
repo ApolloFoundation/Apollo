@@ -4,20 +4,18 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -34,18 +32,20 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteC
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.json.simple.JSONObject;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public abstract class Messaging extends TransactionType {
-    
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
 
@@ -122,7 +122,7 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
                 return attachment.getAliasName().length() + attachment.getAliasURI().length();
             }
@@ -429,14 +429,14 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType POLL_CREATION = new Messaging() {
         private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
                 return numOptions <= 19 ? 0 : numOptions - 19;
             }
         };
         private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingPollCreation attachment = (MessagingPollCreation) appendage;
                 int size = attachment.getPollName().length() + attachment.getPollDescription().length();
                 for (String option : ((MessagingPollCreation) appendage).getPollOptions()) {
@@ -669,7 +669,7 @@ public abstract class Messaging extends TransactionType {
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                 }
-                PhasingPoll poll = PhasingPoll.getPoll(phasedTransactionId);
+                PhasingPoll poll = phasingPollService.getPoll(phasedTransactionId);
                 if (poll == null) {
                     throw new AplException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId) + ", or phasing is finished");
                 }
@@ -712,7 +712,7 @@ public abstract class Messaging extends TransactionType {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
-                PhasingVote.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
             }
         }
 
@@ -724,7 +724,7 @@ public abstract class Messaging extends TransactionType {
     public static final Messaging ACCOUNT_INFO = new Messaging() {
         private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
                 return attachment.getName().length() + attachment.getDescription().length();
             }
@@ -792,7 +792,7 @@ public abstract class Messaging extends TransactionType {
     public static final Messaging ACCOUNT_PROPERTY = new Messaging() {
         private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
                 return attachment.getValue().length();
             }

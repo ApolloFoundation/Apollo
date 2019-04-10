@@ -29,7 +29,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -43,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 
-import java.security.KeyPair;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -90,6 +88,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -100,10 +99,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.jboss.weld.environment.servlet.Listener;
 
+@Vetoed
 public final class API {
     private static final Logger LOG = getLogger(API.class);
 
@@ -138,7 +136,7 @@ public final class API {
     private static URI welcomePageUri;
     private static URI serverRootUri;
     //TODO: remove static context
-    private static final UPnP upnp = UPnP.getInstance(); 
+    private static final UPnP upnp = CDI.current().select(UPnP.class).get();
 
 //TODO: remove this as soon as Al Gamal is ready!    
     private static Thread serverKeysGenerator = new Thread(() -> {
@@ -310,7 +308,8 @@ public final class API {
                 String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
                 apiHandler.setWelcomeFiles(wellcome);
             }
-
+            //add Weld listener
+            apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
                     null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
@@ -487,7 +486,7 @@ public final class API {
         }
     }
 
-
+@Vetoed
     private static class PasswordCount {
         private int count;
         private int time;
