@@ -66,6 +66,15 @@ public class ShardingSettings {
     }
 
     @Override
+    public String toString() {
+        return "ShardingSettings{" +
+                "enabled=" + enabled +
+                ", frequency=" + frequency +
+                ", digestAlgorithm='" + digestAlgorithm + '\'' +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(enabled, frequency, digestAlgorithm);
     }
