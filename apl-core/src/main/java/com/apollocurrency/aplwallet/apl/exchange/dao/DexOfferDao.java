@@ -64,6 +64,7 @@ public class DexOfferDao {
                         "offer.OFFER_CURRENCY = ? AND offer.PAIR_CURRENCY= ? " +
                         " ORDER BY offer.pair_rate")) {
 
+
             pstmt.setInt(1, dexOfferDBRequest.getCurrentTime());
             pstmt.setInt(2, dexOfferDBRequest.getType().ordinal());
             pstmt.setInt(3, dexOfferDBRequest.getOfferCur().ordinal());
@@ -93,7 +94,7 @@ public class DexOfferDao {
             dexOffer.setOfferCurrency(DexCurrencies.getType(rs.getInt("offer_currency")));
             dexOffer.setOfferAmount(rs.getLong("offer_amount"));
             dexOffer.setPairCurrency(DexCurrencies.getType(rs.getInt("pair_currency")));
-            dexOffer.setPairRate(rs.getLong("pair_currency"));
+            dexOffer.setPairRate(rs.getLong("pair_rate"));
             dexOffer.setFinishTime(rs.getInt("finish_time"));
 
         } catch (SQLException e){
