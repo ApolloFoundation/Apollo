@@ -83,9 +83,9 @@ public final class GetTrades extends AbstractAPIRequestHandler {
         return response;
     }
 
-    @Override
-    protected boolean startDbTransaction() {
-        return true;
-    }
+//    @Override
+//    protected boolean startDbTransaction() {
+//        return true;
+//    }
 
 }

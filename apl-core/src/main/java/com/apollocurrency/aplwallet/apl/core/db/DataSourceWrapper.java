@@ -240,9 +240,11 @@ public class DataSourceWrapper implements DataSource {
 //        int activeConnections = dataSource.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            log.debug("Used/Maximum connections from Pool '{}'/'{}'",
+            log.debug("Used/Maximum connections from Pool '{}'/'{}' Tread: {}",
 //                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
-                    jmxBean.getActiveConnections(), jmxBean.getTotalConnections());
+                    jmxBean.getActiveConnections(), 
+                    jmxBean.getTotalConnections(), 
+                    Thread.currentThread().getName());
         }
         return con;
     }
