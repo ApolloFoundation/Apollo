@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 
 import javax.inject.Singleton;
 
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import org.slf4j.Logger;
@@ -106,6 +107,7 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block findBlock(long blockId) {
         // Check the block cache
@@ -160,11 +162,13 @@ public class BlockDaoImpl implements BlockDao {
         return dataSource;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId) {
         return hasBlock(blockId, Integer.MAX_VALUE);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId, int height) {
         // Check the block cache
@@ -188,6 +192,7 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public long findBlockIdAtHeight(int height) {
         // Check the cache
@@ -223,6 +228,7 @@ public class BlockDaoImpl implements BlockDao {
         return heightMap;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block findBlockAtHeight(int height) {
         // Check the cache

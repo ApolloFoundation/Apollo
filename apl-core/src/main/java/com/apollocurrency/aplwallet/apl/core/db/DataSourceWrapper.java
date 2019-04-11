@@ -156,6 +156,7 @@ public class DataSourceWrapper implements DataSource {
         config.setPassword(dbPassword);
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
+        config.setLeakDetectionThreshold(120000); // 2 minutes
         log.debug("Creating DataSource pool, path = {}", dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
