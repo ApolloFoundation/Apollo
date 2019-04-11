@@ -118,6 +118,10 @@ public class DataSourceWrapper implements DataSource {
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
+    public HikariPoolMXBean getJmxBean() {
+        return jmxBean;
+    }
+
     public DataSourceWrapper(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
@@ -156,6 +160,7 @@ public class DataSourceWrapper implements DataSource {
         config.setPassword(dbPassword);
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
+        config.setLeakDetectionThreshold(120_000); // 2 minutes
         log.debug("Creating DataSource pool, path = {}", dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
@@ -240,9 +245,11 @@ public class DataSourceWrapper implements DataSource {
 //        int activeConnections = dataSource.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            log.debug("Used/Maximum connections from Pool '{}'/'{}'",
+            log.debug("Used/Maximum connections from Pool '{}'/'{}' Tread: {}",
 //                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
-                    jmxBean.getActiveConnections(), jmxBean.getTotalConnections());
+                    jmxBean.getActiveConnections(), 
+                    jmxBean.getTotalConnections(), 
+                    Thread.currentThread().getName());
         }
         return con;
     }
