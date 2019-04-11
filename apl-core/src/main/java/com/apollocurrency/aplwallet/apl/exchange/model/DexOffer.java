@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 
 public class DexOffer{
-    private long id;
-    private long transactionId;
-    private long accountId;
+    private Long id;
+    private Long transactionId;
+    private Long accountId;
 
     private OfferType type;
     private DexCurrencies offerCurrency;
@@ -18,7 +18,7 @@ public class DexOffer{
 
     private DexCurrencies pairCurrency;
     private Long pairRate;
-    private int finishTime;
+    private Integer finishTime;
 
     public DexOffer() {
     }
@@ -50,27 +50,27 @@ public class DexOffer{
     }
 
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public long getTransactionId() {
+    public Long getTransactionId() {
         return transactionId;
     }
 
-    public void setTransactionId(long transactionId) {
+    public void setTransactionId(Long transactionId) {
         this.transactionId = transactionId;
     }
 
-    public long getAccountId() {
+    public Long getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(long accountId) {
+    public void setAccountId(Long accountId) {
         this.accountId = accountId;
     }
 
@@ -90,11 +90,11 @@ public class DexOffer{
         this.offerCurrency = offerCurrency;
     }
 
-    public long getOfferAmount() {
+    public Long getOfferAmount() {
         return offerAmount;
     }
 
-    public void setOfferAmount(long offerAmount) {
+    public void setOfferAmount(Long offerAmount) {
         this.offerAmount = offerAmount;
     }
 
@@ -106,7 +106,6 @@ public class DexOffer{
         this.pairCurrency = pairCurrency;
     }
 
-
     public Long getPairRate() {
         return pairRate;
     }
@@ -115,11 +114,11 @@ public class DexOffer{
         this.pairRate = pairRate;
     }
 
-    public int getFinishTime() {
+    public Integer getFinishTime() {
         return finishTime;
     }
 
-    public void setFinishTime(int finishTime) {
+    public void setFinishTime(Integer finishTime) {
         this.finishTime = finishTime;
     }
 }

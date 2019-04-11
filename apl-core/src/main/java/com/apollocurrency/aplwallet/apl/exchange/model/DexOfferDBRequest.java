@@ -7,46 +7,48 @@ import java.math.BigDecimal;
 
 public class DexOfferDBRequest {
 
-    private OfferType type;
+    private Integer type;
+    private Long accountId;
     private Integer currentTime;
-    private DexCurrencies offerCur;
-    private DexCurrencies pairCur;
+    private Integer offerCur;
+    private Integer pairCur;
     private BigDecimal minAskPrice;
     private BigDecimal maxBidPrice;
 
-    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, BigDecimal minAskPrice, BigDecimal maxBidPrice) {
-        this.type = type;
+    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, Long accountId, BigDecimal minAskPrice, BigDecimal maxBidPrice) {
+        this.type = type != null ? type.ordinal() : null;
         this.currentTime = currentTime;
-        this.offerCur = offerCur;
-        this.pairCur = pairCur;
+        this.offerCur = offerCur != null ? offerCur.ordinal() : null;
+        this.pairCur = pairCur != null ? pairCur.ordinal() : null;
         this.minAskPrice = minAskPrice;
         this.maxBidPrice = maxBidPrice;
+        this.accountId = accountId;
     }
 
     public DexOfferDBRequest() {
     }
 
-    public OfferType getType() {
+    public Integer getType() {
         return type;
     }
 
-    public void setType(OfferType type) {
+    public void setType(Integer type) {
         this.type = type;
     }
 
-    public DexCurrencies getOfferCur() {
+    public Integer getOfferCur() {
         return offerCur;
     }
 
-    public void setOfferCur(DexCurrencies offerCur) {
+    public void setOfferCur(Integer offerCur) {
         this.offerCur = offerCur;
     }
 
-    public DexCurrencies getPairCur() {
+    public Integer getPairCur() {
         return pairCur;
     }
 
-    public void setPairCur(DexCurrencies pairCur) {
+    public void setPairCur(Integer pairCur) {
         this.pairCur = pairCur;
     }
 
@@ -72,5 +74,13 @@ public class DexOfferDBRequest {
 
     public void setCurrentTime(Integer currentTime) {
         this.currentTime = currentTime;
+    }
+
+    public Long getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(Long accountId) {
+        this.accountId = accountId;
     }
 }
