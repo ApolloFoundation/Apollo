@@ -118,6 +118,10 @@ public class DataSourceWrapper implements DataSource {
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
+    public HikariPoolMXBean getJmxBean() {
+        return jmxBean;
+    }
+
     public DataSourceWrapper(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
@@ -156,7 +160,7 @@ public class DataSourceWrapper implements DataSource {
         config.setPassword(dbPassword);
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
-        config.setLeakDetectionThreshold(120000); // 2 minutes
+        config.setLeakDetectionThreshold(120_000); // 2 minutes
         log.debug("Creating DataSource pool, path = {}", dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
