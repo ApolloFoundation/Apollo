@@ -254,4 +254,7 @@ public class DataSourceWrapper implements DataSource {
         return dbUrl;
     }
 
+    protected HikariPoolMXBean getJmxBean() {
+        return jmxBean;
+    }
 }
