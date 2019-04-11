@@ -44,6 +44,7 @@ public class DexOffer{
         dexOfferDto.offerAmount = this.getOfferAmount();
         dexOfferDto.pairCurrency = this.getPairCurrency().ordinal();
         dexOfferDto.finishTime = this.getFinishTime();
+        dexOfferDto.pairRate = this.getPairRate();
 
         return dexOfferDto;
     }

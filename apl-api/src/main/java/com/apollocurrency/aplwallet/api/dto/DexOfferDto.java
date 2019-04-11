@@ -11,6 +11,7 @@ public class DexOfferDto {
     public Integer type;
     public Integer offerCurrency;
     public Long offerAmount;
+    public Long pairRate;
 
     public Integer pairCurrency;
     public Integer finishTime;
