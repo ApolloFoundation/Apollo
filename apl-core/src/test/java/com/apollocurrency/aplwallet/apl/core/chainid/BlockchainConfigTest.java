@@ -41,6 +41,8 @@ public class BlockchainConfigTest {
             bp3
     );
 
+
+
     private static final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(),
             "test",
