@@ -167,7 +167,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                     int blocksDiff2 = getBlockDiff(lastMutualBlock, blocksToCompare.get(0).getHeight());
                     int milestoneHeight = getMilestoneHeight(lastMutualBlock);
                     currentMaxBlocksDiff = Math.max(blocksDiff1, currentMaxBlocksDiff);
-                    log.info(String.format("%5d %5d %-12.12s %-12.12s %9d %7d %7d", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight()));
+                    log.info(String.format("%5d %5d %-16.16s %-16.16s %9d %7d %7d", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight()));
                     networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, blocksToCompare.get(0).getHeight()));
                 }
             }
