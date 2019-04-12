@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
 import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
 import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.HeightMonitor;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
@@ -148,9 +149,9 @@ public class ApolloTools {
         try {
             String peerFile = heightMonitorCmd.peerFile;
             List<String> peerIps = Files.readAllLines(Paths.get(peerFile));
-            HeightMonitor hm = new HeightMonitor(peerIps, heightMonitorCmd.intervals, heightMonitorCmd.frequency, heightMonitorCmd.port);
-            hm.start();
-            Runtime.getRuntime().addShutdownHook(new Thread(hm::stop));
+            HeightMonitor hm = new HeightMonitor(heightMonitorCmd.frequency);
+            HeightMonitorConfig config = new HeightMonitorConfig(peerIps, heightMonitorCmd.intervals, heightMonitorCmd.port);
+            hm.start(config);
             return 0;
         }
         catch (IOException e) {
