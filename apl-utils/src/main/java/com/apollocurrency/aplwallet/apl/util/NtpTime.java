@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -45,8 +46,8 @@ public class NtpTime {
 
             timeOffset = offsetValue;
         }
-        catch (SocketTimeoutException e) {
-            LOG.warn(e.getMessage() + " will keep prev offset " + timeOffset, e);
+        catch (SocketTimeoutException | UnknownHostException e) {
+            LOG.warn(e.getMessage() + ". Keep prev offset: " + timeOffset, e);
         }
         catch (IOException e) {
             LOG.warn(e.getMessage(), e);
