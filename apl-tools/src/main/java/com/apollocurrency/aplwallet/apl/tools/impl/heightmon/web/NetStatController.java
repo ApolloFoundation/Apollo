@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.web;
 
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.HeightMonitorService;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerInfo;
 
 import java.net.UnknownHostException;
 import javax.inject.Inject;
@@ -41,7 +42,7 @@ public class NetStatController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addPeer(@NotNull @QueryParam("ip") String ip) {
         try {
-            return Response.ok(heightMonitorService.addPeer(ip)).build();
+            return Response.ok(heightMonitorService.addPeer(new PeerInfo(ip))).build();
         }
         catch (UnknownHostException e) {
             return Response.status(422).build();

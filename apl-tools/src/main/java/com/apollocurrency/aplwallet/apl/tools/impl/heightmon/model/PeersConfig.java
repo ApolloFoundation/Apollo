@@ -5,6 +5,9 @@
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class PeersConfig {
@@ -33,7 +36,8 @@ public class PeersConfig {
         this.defaultPort = defaultPort;
     }
 
-    public PeersConfig(List<PeerInfo> peersInfo) {
+    @JsonCreator
+    public PeersConfig(@JsonProperty("peersInfo") List<PeerInfo> peersInfo) {
         this(peersInfo, DEFAULT_PORT);
     }
 }

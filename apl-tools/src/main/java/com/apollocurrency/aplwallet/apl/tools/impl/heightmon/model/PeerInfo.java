@@ -4,32 +4,35 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
-import java.net.InetAddress;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.net.UnknownHostException;
 import java.util.Objects;
 
 public class PeerInfo {
-    private InetAddress address;
+    private String host;
     private String schema;
     private Integer port;
     private static final String DEFAULT_SCHEMA = "http";
 
-    public PeerInfo(String host) throws UnknownHostException {
+    @JsonCreator
+    public PeerInfo(@JsonProperty("host") String host) throws UnknownHostException {
         this(host, DEFAULT_SCHEMA, null);
     }
 
     public PeerInfo(String host, String schema, Integer port) throws UnknownHostException {
-        this.address = InetAddress.getByName(host);
+        this.host = host;
         this.schema = schema;
         this.port = port;
     }
 
     public String getHost() {
-        return address.getHostName();
+        return host;
     }
 
     public void setHost(String host) throws UnknownHostException {
-        this.address = InetAddress.getByName(host);
+        this.host = host;
     }
 
     public String getSchema() {

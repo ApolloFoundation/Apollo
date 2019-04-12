@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -46,8 +48,8 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final List<Integer> DEFAULT_PERIODS = List.of(1, 2, 4, 6, 8, 12, 24, 48, 96);
-    private static final int CONNECT_TIMEOUT = 3_000;
-    private static final int IDLE_TIMEOUT = 2_000;
+    private static final int CONNECT_TIMEOUT = 5_000;
+    private static final int IDLE_TIMEOUT = 5_000;
     private static final int BLOCKS_TO_RETRIEVE = 1000;
     private static final String URL_FORMAT = "%s://%s:%d/apl";
     private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
@@ -61,6 +63,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private List<MaxBlocksDiffCounter> maxBlocksDiffCounters;
     private int port;
     private List<String> peerApiUrls;
+    private ExecutorService executor;
 
     public HeightMonitorServiceImpl() {}
 
@@ -69,6 +72,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         client = createHttpClient();
         try {
             client.start();
+            executor = Executors.newFixedThreadPool(30);
         }
         catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
@@ -82,6 +86,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         this.peers = Collections.synchronizedList(peersConfig.getPeersInfo().stream().peek(this::setDefaultPortIfNull).collect(Collectors.toList()));
         this.maxBlocksDiffCounters = createMaxBlocksDiffCounters(config.getMaxBlocksDiffPeriods() == null ? DEFAULT_PERIODS : config.getMaxBlocksDiffPeriods());
         this.peerApiUrls = this.peers.stream().map(this::createUrl).collect(Collectors.toList());
+
     }
 
     private PeerInfo setDefaultPortIfNull(PeerInfo peerInfo) {
@@ -114,6 +119,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     public void shutdown() {
         try {
             client.stop();
+            executor.shutdownNow();
         }
         catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
@@ -188,7 +194,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         Map<String, List<Block>> peerBlocks = new HashMap<>();
         List<CompletableFuture<List<Block>>> getBlocksRequests = new ArrayList<>();
         for (String peerUrl : peerApiUrls) {
-            getBlocksRequests.add(CompletableFuture.supplyAsync(() -> getBlocksList(peerUrl)));
+            getBlocksRequests.add(CompletableFuture.supplyAsync(() -> getBlocksList(peerUrl), executor));
         }
         for (int i = 0; i < getBlocksRequests.size(); i++) {
             String host = peers.get(i).getHost();
