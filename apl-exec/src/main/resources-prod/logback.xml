@@ -24,7 +24,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.apollocurrency.aplwallet" level="DEBUG" additivity="false"/>
+    <logger name="com.apollocurrency.aplwallet" level="INFO"/>
     <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
     <!--Uncomment next line to enable trim duration logging-->
     <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
@@ -35,7 +35,7 @@
     <logger name="jdbc.connection" level="info" additivity="false"/>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>
     <logger name="com.zaxxer" level="warn" additivity="false"/>
-    <root level="severe">
+    <root level="warn">
         <appender-ref ref="console" />
         <appender-ref ref="file" />
     </root>
