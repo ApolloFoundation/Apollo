@@ -11,10 +11,21 @@ public class PeerDiffStat {
     private int diff2;
     private String peer1;
     private String peer2;
+    private int milestoneHeight;
     private int height1;
     private int height2;
 
     public PeerDiffStat() {
+    }
+
+    public PeerDiffStat(int diff1, int diff2, String peer1, String peer2, int milestoneHeight, int height1, int height2) {
+        this.diff1 = diff1;
+        this.diff2 = diff2;
+        this.peer1 = peer1;
+        this.peer2 = peer2;
+        this.milestoneHeight = milestoneHeight;
+        this.height1 = height1;
+        this.height2 = height2;
     }
 
     public int getDiff1() {
@@ -31,15 +42,6 @@ public class PeerDiffStat {
 
     public void setDiff2(int diff2) {
         this.diff2 = diff2;
-    }
-
-    public PeerDiffStat(int diff1, int diff2, String peer1, String peer2, int height1, int height2) {
-        this.diff1 = diff1;
-        this.diff2 = diff2;
-        this.peer1 = peer1;
-        this.peer2 = peer2;
-        this.height1 = height1;
-        this.height2 = height2;
     }
 
     public String getPeer1() {
@@ -74,6 +76,14 @@ public class PeerDiffStat {
         this.height2 = height2;
     }
 
+    public int getMilestoneHeight() {
+        return milestoneHeight;
+    }
+
+    public void setMilestoneHeight(int milestoneHeight) {
+        this.milestoneHeight = milestoneHeight;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -81,6 +91,7 @@ public class PeerDiffStat {
         PeerDiffStat that = (PeerDiffStat) o;
         return diff1 == that.diff1 &&
                 diff2 == that.diff2 &&
+                milestoneHeight == that.milestoneHeight &&
                 height1 == that.height1 &&
                 height2 == that.height2 &&
                 Objects.equals(peer1, that.peer1) &&
@@ -89,6 +100,6 @@ public class PeerDiffStat {
 
     @Override
     public int hashCode() {
-        return Objects.hash(diff1, diff2, peer1, peer2, height1, height2);
+        return Objects.hash(diff1, diff2, peer1, peer2, milestoneHeight, height1, height2);
     }
 }

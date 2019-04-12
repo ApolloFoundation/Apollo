@@ -14,11 +14,12 @@ public class PeerInfo {
     private String host;
     private String schema;
     private Integer port;
-    private static final String DEFAULT_SCHEMA = "http";
+    private static final String HTTP = "http";
+    private static final String HTTPS = "https";
 
     @JsonCreator
     public PeerInfo(@JsonProperty("host") String host) throws UnknownHostException {
-        this(host, DEFAULT_SCHEMA, null);
+        this(host, HTTP, null);
     }
 
     public PeerInfo(String host, String schema, Integer port) throws UnknownHostException {
@@ -41,6 +42,13 @@ public class PeerInfo {
 
     public void setSchema(String schema) {
         this.schema = schema;
+        if (port == null) {
+            if (HTTP.equalsIgnoreCase(schema)) {
+                port = 80;
+            } else if (HTTPS.equalsIgnoreCase(schema)) {
+                port = 443;
+            }
+        }
     }
 
     public Integer getPort() {

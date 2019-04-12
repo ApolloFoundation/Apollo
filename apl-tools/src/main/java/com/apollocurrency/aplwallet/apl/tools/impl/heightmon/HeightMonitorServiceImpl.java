@@ -148,7 +148,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     public NetworkStats updateStats() {
         log.info("===========================================");
         Map<String, List<Block>> peerBlocks = getPeersBlocks();
-        log.info(String.format("%5.5s %5.5s %-12.12s %-12.12s %7.7s %7.7s", "diff1","diff2", "peer1", "peer2", "height1", "height2"));
+        log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2"));
         int currentMaxBlocksDiff = -1;
         NetworkStats networkStats = new NetworkStats();
         for (int i = 0; i < peers.size(); i++) {
@@ -165,9 +165,10 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                     int lastHeight = targetBlocks.get(0).getHeight();
                     int blocksDiff1 = getBlockDiff(lastMutualBlock, lastHeight);
                     int blocksDiff2 = getBlockDiff(lastMutualBlock, blocksToCompare.get(0).getHeight());
+                    int milestoneHeight = getMilestoneHeight(lastMutualBlock);
                     currentMaxBlocksDiff = Math.max(blocksDiff1, currentMaxBlocksDiff);
-                    log.info(String.format("%5d %5d %-12.12s %-12.12s %7d %7d", blocksDiff1, blocksDiff2, host1, host2, lastHeight, blocksToCompare.get(0).getHeight()));
-                    networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, blocksToCompare.get(0).getHeight()));
+                    log.info(String.format("%5d %5d %-12.12s %-12.12s %9d %7d %7d", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight()));
+                    networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, blocksToCompare.get(0).getHeight()));
                 }
             }
         }
@@ -179,6 +180,14 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         }
         lastStats.set(networkStats);
         return networkStats;
+    }
+
+    private int getMilestoneHeight(Block lastMutualBlock) {
+        if (lastMutualBlock != null) {
+            return lastMutualBlock.getHeight();
+        } else {
+            return -1;
+        }
     }
 
     private int getBlockDiff(Block lastMutualBlock, int lastHeight) {
