@@ -11,10 +11,10 @@
         </logDirectory>
     </define>
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>apl.log</file>
+        <file>${LOGDIR}/apl.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>apl-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+            <fileNamePattern>${LOGDIR}/apl-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
             <maxFileSize>100MB</maxFileSize>
             <totalSizeCap>3GB</totalSizeCap>
