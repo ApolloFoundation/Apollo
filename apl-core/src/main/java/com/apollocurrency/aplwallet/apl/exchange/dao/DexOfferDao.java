@@ -32,7 +32,7 @@ public interface DexOfferDao {
             "AND (:type is NULL OR offer.type = :type) " +
             "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
             "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
-            "ORDER BY offer.pair_rate"
+            "ORDER BY offer.pair_rate DESC"
     )
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffers(@BindBean DexOfferDBRequest dexOfferDBRequest);
