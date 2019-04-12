@@ -4,28 +4,32 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Objects;
+
 public class PeerInfo {
-    private String host;
+    private InetAddress address;
     private String schema;
     private Integer port;
     private static final String DEFAULT_SCHEMA = "http";
 
-    public PeerInfo(String host) {
+    public PeerInfo(String host) throws UnknownHostException {
         this(host, DEFAULT_SCHEMA, null);
     }
 
-    public PeerInfo(String host, String schema, Integer port) {
-        this.host = host;
+    public PeerInfo(String host, String schema, Integer port) throws UnknownHostException {
+        this.address = InetAddress.getByName(host);
         this.schema = schema;
         this.port = port;
     }
 
     public String getHost() {
-        return host;
+        return address.getHostName();
     }
 
-    public void setHost(String host) {
-        this.host = host;
+    public void setHost(String host) throws UnknownHostException {
+        this.address = InetAddress.getByName(host);
     }
 
     public String getSchema() {
@@ -42,5 +46,20 @@ public class PeerInfo {
 
     public void setPort(Integer port) {
         this.port = port;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PeerInfo)) return false;
+        PeerInfo peerInfo = (PeerInfo) o;
+        return Objects.equals(getHost(), peerInfo.getHost()) &&
+                Objects.equals(schema, peerInfo.schema) &&
+                Objects.equals(port, peerInfo.port);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getHost(), schema, port);
     }
 }

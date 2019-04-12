@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.tools;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
@@ -19,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
 import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.HeightMonitor;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeersConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
@@ -34,9 +36,11 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -148,9 +152,11 @@ public class ApolloTools {
     private int heightMonitor() {
         try {
             String peerFile = heightMonitorCmd.peerFile;
-            List<String> peerIps = Files.readAllLines(Paths.get(peerFile));
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+            PeersConfig peersConfig = objectMapper.readValue(new File(peerFile), PeersConfig.class);
             HeightMonitor hm = new HeightMonitor(heightMonitorCmd.frequency);
-            HeightMonitorConfig config = new HeightMonitorConfig(peerIps, heightMonitorCmd.intervals, heightMonitorCmd.port);
+            HeightMonitorConfig config = new HeightMonitorConfig(peersConfig, heightMonitorCmd.intervals, heightMonitorCmd.port);
             hm.start(config);
             return 0;
         }

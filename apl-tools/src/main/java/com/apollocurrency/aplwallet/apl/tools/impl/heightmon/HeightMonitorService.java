@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerInfo;
 
 import java.net.UnknownHostException;
 
@@ -16,5 +17,5 @@ public interface HeightMonitorService {
 
     void setUp(HeightMonitorConfig config);
 
-    boolean addPeer(String ip) throws UnknownHostException;
+    boolean addPeer(PeerInfo peerInfo) throws UnknownHostException;
 }
