@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -144,7 +145,7 @@ public class DexController {
     public Response getOffers(  @ApiParam(value = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
                                 @ApiParam(value = "Criteria by Offered currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Byte offerCurrency,
                                 @ApiParam(value = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
-                                @ApiParam(value = "User account id.") @QueryParam("accountId") Long accountId,
+                                @ApiParam(value = "User account id.") @QueryParam("accountId") String accountIdStr,
                                 @ApiParam(value = "Return offers available for now.", defaultValue = "false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
                                 @ApiParam(value = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @ApiParam(value = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
@@ -153,6 +154,7 @@ public class DexController {
         DexCurrencies offerCur = null;
         DexCurrencies pairCur = null;
         Integer currentTime = null;
+        Long accountId = null;
 
         //Validate
         try {
@@ -167,6 +169,9 @@ public class DexController {
             }
             if (isAvailableForNow) {
                 currentTime = epochTime.getEpochTime();
+            }
+            if(!StringUtils.isBlank(accountIdStr)){
+                accountId = Long.parseUnsignedLong(accountIdStr);
             }
         } catch (Exception ex){
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
