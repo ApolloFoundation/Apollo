@@ -26,10 +26,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
@@ -48,6 +48,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
@@ -75,11 +76,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import org.slf4j.LoggerFactory;
 
 public final class Peers {
     private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
@@ -538,7 +535,6 @@ public final class Peers {
 
         PeerImpl peer;
         if ((peer = peers.get(host)) != null) {
-            LOG.debug("Return existing peer from map {}", peer);
             return peer;
         }
         if (!create) {
@@ -590,19 +586,11 @@ public final class Peers {
             // put new or replace previous
             if (!peers.containsKey(peer.getHost())) {
                 peers.put(peer.getHost(), (PeerImpl) peer);
-                if (peer.getVersion() == null) {
-                    LOG.warn("Added incorrect Peer = {}", peer);
-                }
             } else {
                 peers.replace(peer.getHost(), (PeerImpl) peer);
-                if (peer.getVersion() == null) {
-                    LOG.warn("Replaced by incorrect Peer = {}", peer);
-                }
             }
             listeners.notify(peer, Event.NEW_PEER);
             return true;
-        } else {
-            LOG.trace("NOT added, attempt to PUT incorrect = {}", peer);
         }
         return false;
     }

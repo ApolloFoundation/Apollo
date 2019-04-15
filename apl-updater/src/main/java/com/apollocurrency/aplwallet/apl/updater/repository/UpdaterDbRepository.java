@@ -120,17 +120,17 @@ public class UpdaterDbRepository implements UpdaterRepository {
     @Override
     public void clearAndSave(UpdateTransaction transaction) {
         boolean isInTransaction = dataSource.isInTransaction();
-        Connection con = null;
+        Connection con;
         try {
-            con = dataSource.getConnection();
             if (!isInTransaction) dataSource.begin();
-            else con = dataSource.getConnection();
+            con = dataSource.getConnection();
             clear(con);
             save(con, transaction);
-            dataSource.commit();
+            dataSource.commit(!isInTransaction); // do not close connection when you did not start this transaction
+
         }
         catch (SQLException e) {
-            dataSource.rollback();
+            dataSource.rollback(!isInTransaction);
             LOG.error(e.toString(), e);
             throw new RuntimeException(e.toString(), e);
         }

@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -106,7 +107,8 @@ public class RSAUtil {
         URL resource = UpdaterUtil.getResource(path);
         Object keyObject = null;
         if (resource == null) {
-            PEMParser   pem = new PEMParser(new InputStreamReader(Files.newInputStream(Paths.get(path))));
+            Path pathToFile = Paths.get(path);
+            PEMParser   pem = new PEMParser(new InputStreamReader(Files.newInputStream(pathToFile)));
             keyObject = pem.readObject();
         } else {
             PEMParser pem = new PEMParser(new InputStreamReader(resource.openStream()));

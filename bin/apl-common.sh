@@ -41,7 +41,6 @@ if [ -r ${MAIN_JAR} ]; then
     echo -n
 else
     MAIN_JAR=${APL_TOP_DIR}/apl-exec/target/apl-exec-${APL_VERSION}.jar
-    MAIN_GUI_JAR=${APL_TOP_DIR}/apl-desktop/target/apl-desktop-${APL_VERSION}.jar
 fi
 echo "${ECHO_PREFIX} Apollo main jar path: ${MAIN_JAR}"
 

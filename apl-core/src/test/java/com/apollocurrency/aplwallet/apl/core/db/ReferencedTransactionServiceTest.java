@@ -22,11 +22,12 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -41,13 +42,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Path;
+
 @EnableWeld
 public class ReferencedTransactionServiceTest {
     @Inject
     private JdbiHandleFactory jdbiHandleFactory;
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension();
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    @RegisterExtension
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     HeightConfig config = Mockito.mock(HeightConfig.class);
     @WeldSetup
@@ -69,6 +75,14 @@ public class ReferencedTransactionServiceTest {
     @Inject
     ReferencedTransactionService service;
 
+    private Path createPath(String fileName) {
+        try {
+            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
     @AfterEach
     void cleanup() {

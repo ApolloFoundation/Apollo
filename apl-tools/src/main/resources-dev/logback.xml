@@ -10,7 +10,7 @@
         <file>${LOGDIR}/height-monitor.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- rollover monthly -->
-            <fileNamePattern>${HEIGHT_MONITOR_LOGDIR}/height-monitor-logs-%d{yyyy-MM}_%i.gz</fileNamePattern>
+            <fileNamePattern>${LOGDIR}/height-monitor-%d{yyyy-MM}_%i.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
             <maxFileSize>100MB</maxFileSize>
             <totalSizeCap>3GB</totalSizeCap>
@@ -20,9 +20,9 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.apollocurrency.aplwallet" level="debug"/>
+    <logger name="com.apollocurrency.aplwallet" level="debug" additivity="true"/>
     <logger name="org.eclipse.jetty" level="off"/>
-    <root level="severe">
+    <root level="INFO">
         <appender-ref ref="console" />
         <appender-ref ref="file-height-monitor" />
     </root>

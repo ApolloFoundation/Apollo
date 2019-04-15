@@ -56,6 +56,7 @@ public class UPnP {
 //TODO: Inject with properties    
     @Inject  
     public UPnP() {
+        init();
     }
 
     /**

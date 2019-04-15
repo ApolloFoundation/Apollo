@@ -20,6 +20,41 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_DESCRIPTION;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILENAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PROPERTY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_RECIPIENT_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION_BYTES_OR_JSON;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ALIAS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ASSET;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -58,10 +93,6 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,46 +101,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_DESCRIPTION;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILENAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PROPERTY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_RECIPIENT_PUBLIC_KEY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION_BYTES_OR_JSON;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ALIAS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ASSET;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final int DEFAULT_LAST_INDEX = 250;
 
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
@@ -674,11 +675,11 @@ public final class ParameterParser {
     }
 
     public static int getLastIndex(HttpServletRequest req) {
-        int lastIndex = Integer.MAX_VALUE;
+        int lastIndex = DEFAULT_LAST_INDEX;
         try {
             lastIndex = Integer.parseInt(req.getParameter("lastIndex"));
             if (lastIndex < 0) {
-                lastIndex = Integer.MAX_VALUE;
+                lastIndex = DEFAULT_LAST_INDEX;
             }
         } catch (NumberFormatException ignored) {}
         if (!API.checkPassword(req)) {

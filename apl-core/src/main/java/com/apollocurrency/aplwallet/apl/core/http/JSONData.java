@@ -418,8 +418,10 @@ public final class JSONData {
             }
         }
         catch (SQLException e) {
-            DbUtils.close(con);
+            DbUtils.close(con);                        
             throw new RuntimeException(e.toString(), e);
+        }finally{
+            DbUtils.close(con);            
         }
     }
 

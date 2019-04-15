@@ -438,8 +438,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             }
             return getCount(pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);
+            DbUtils.close(con);            
             throw new RuntimeException(e.toString(), e);
+        }finally{
+            DbUtils.close(con);            
         }
     }
 

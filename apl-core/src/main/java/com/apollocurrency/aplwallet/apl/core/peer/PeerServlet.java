@@ -20,18 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -50,6 +38,18 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
@@ -302,10 +302,10 @@ public final class PeerServlet extends WebSocketServlet {
                 peer.setState(Peer.State.CONNECTED);
             }
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
-                    LOG.debug("Peer List =[{}], dumping...", Peers.getAllPeers().size());
-                    Peers.getAllPeers().stream().forEach(peerHost -> LOG.debug("{}", peerHost));
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
+                    LOG.trace("Peer List =[{}], dumping...", Peers.getAllPeers().size());
+                    Peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("{}", peerHost));
                 }
                 return SEQUENCE_ERROR;
             }

@@ -5,11 +5,12 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.updater.util.JarGenerator;
-import org.junit.Assert;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ import java.nio.file.Path;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-@Disabled
+
 public class AuthorityCheckerImplTest {
     @Test
     public void testVerifyCertificates() throws Exception {
@@ -30,7 +31,7 @@ public class AuthorityCheckerImplTest {
         AuthorityChecker correctAuthorityChecker = new AuthorityCheckerImpl(certificate, ".crt", "intermediate.crt",
                 "1_", "2_");
         boolean verified = correctAuthorityChecker.verifyCertificates("certs");
-        Assert.assertTrue(verified);
+        assertTrue(verified);
     }
 
     private static Certificate loadRootCert() throws CertificateException, IOException, URISyntaxException {
@@ -48,7 +49,7 @@ public class AuthorityCheckerImplTest {
 
         boolean isVerified = incorrectAuthorityChecker.verifyCertificates("certs");
 
-        Assert.assertFalse(isVerified);
+        assertFalse(isVerified);
     }
 
     @Test

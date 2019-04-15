@@ -1,38 +1,38 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.migrator;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class PublicKeyMigrator {
     private static final Logger LOG = getLogger(PublicKeyMigrator.class);
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static DatabaseManager databaseManager;
+    private PropertiesHolder propertiesHolder;
+    private DatabaseManager databaseManager;
 
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
+    @Inject
+    public PublicKeyMigrator(PropertiesHolder propertiesHolder, DatabaseManager databaseManager) {
+        this.propertiesHolder = propertiesHolder;
+        this.databaseManager = databaseManager;
     }
 
     public void migrate() {
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         Connection con;
         boolean isInTransaction = false;
         // start transaction or use already started
@@ -44,11 +44,8 @@ public class PublicKeyMigrator {
             }
             con = dataSource.getConnection();
 
-            try (Statement stmt = con.createStatement();
-                 PreparedStatement selectGenesisKeysStatement = con.prepareStatement((
-                         "SELECT * FROM public_key where DB_ID between ? AND ?"));
-            ) {
-                int totalNumberOfGenesisKeys = 0;
+            try (Statement stmt = con.createStatement()) {
+                int totalNumberOfGenesisKeys;
                 try (ResultSet rs = stmt.executeQuery("SELECT count(*) from public_key where height = 0")) {
                     rs.next();
                     totalNumberOfGenesisKeys = rs.getInt(1);
@@ -86,18 +83,11 @@ public class PublicKeyMigrator {
                     dataSource.commit(false);
                 } while (deleted == propertiesHolder.BATCH_COMMIT_SIZE());
             }
-            dataSource.commit();
+            dataSource.commit(!isInTransaction);
         }
         catch (SQLException e) {
-            dataSource.rollback();
+            dataSource.rollback(!isInTransaction);
             throw new RuntimeException(e.toString(), e);
         }
-/*
-        finally {
-            if (!isInTransaction) {
-                Db.getDb().endTransaction();
-            }
-        }
-*/
     }
 }
