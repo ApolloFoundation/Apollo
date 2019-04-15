@@ -345,6 +345,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized (blockDao.getBlockCache()) {
