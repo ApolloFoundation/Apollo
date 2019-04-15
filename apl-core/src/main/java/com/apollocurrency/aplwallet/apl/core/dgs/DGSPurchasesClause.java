@@ -11,14 +11,13 @@ import java.sql.SQLException;
 
 public class DGSPurchasesClause extends DbClause {
 
-        public DGSPurchasesClause(String clause, boolean withPublicFeedbacksOnly, boolean completedOnly) {
-            super(clause + (completedOnly ? " AND goods IS NOT NULL " : " ")
-                    + (withPublicFeedbacksOnly ? " AND has_public_feedbacks = TRUE " : " "));
-        }
+    public DGSPurchasesClause(String clause, boolean withPublicFeedbacksOnly, boolean completedOnly) {
+        super(clause + (completedOnly ? " AND goods IS NOT NULL " : " ")
+                + (withPublicFeedbacksOnly ? " AND has_public_feedbacks = TRUE " : " "));
+    }
 
-        @Override
-        public int set(PreparedStatement pstmt, int index) throws SQLException {
-            return index;
-        }
-
+    @Override
+    public int set(PreparedStatement pstmt, int index) throws SQLException {
+        return index;
+    }
 }

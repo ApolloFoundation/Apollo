@@ -42,7 +42,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     }
 
     @Override
-    protected PhasingPollLinkedTransaction load(Connection con, ResultSet rs) throws SQLException {
+    public PhasingPollLinkedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         int height = rs.getInt("height");
         long pollId = rs.getLong("transaction_id");
         long linkedTransactionId = rs.getLong("linked_transaction_id");
@@ -55,7 +55,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     }
 
     @Override
-    protected void save(Connection con, PhasingPollLinkedTransaction linkedTransaction) throws SQLException {
+    public void save(Connection con, PhasingPollLinkedTransaction linkedTransaction) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (transaction_id, "
                 + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;

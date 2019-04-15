@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -101,6 +102,7 @@ public class BlockchainProperties {
         return minBlockTimeLimit;
     }
 
+    @JsonAlias("consensus") //backward compatibility
     public void setConsensusSettings(ConsensusSettings consensusSettings) {
         this.consensusSettings = consensusSettings;
     }

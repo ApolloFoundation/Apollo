@@ -5,12 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.PublicKeyMigrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.auth2fa.TwoFactorAuthMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.db.DbMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.keystore.VaultKeystoreMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +32,7 @@ public class ApplicationDataMigrationManager {
     @Inject
     private PublicKeyMigrator publicKeyMigrator;
     @Inject
-    private PropertiesHolder propertiesHolder;
+    private ReferencedTransactionMigrator referencedTransactionMigrator;
 
     public void executeDataMigration() {
         try {
@@ -60,6 +58,7 @@ public class ApplicationDataMigrationManager {
                 twoFactorAuthMigrationExecutor.performAfterMigrationCleanup(target2FADir);
             }
             publicKeyMigrator.migrate();
+            referencedTransactionMigrator.migrate();
         }
         catch (IOException e) {
             LOG.error("Fatal error. Cannot proceed data migration", e);

@@ -8,15 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSFeedbackMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
-import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
@@ -39,9 +39,9 @@ public class DGSFeedbackTable extends VersionedValuesDbTable<DGSFeedback> {
 
     @Override
     public DGSFeedback load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        DGSFeedback dgsFeedback = MAPPER.map(rs, null);
-        dgsFeedback.setDbKey(dbKey);
-        return dgsFeedback;
+        DGSFeedback feedback = MAPPER.map(rs, null);
+        feedback.setDbKey(dbKey);
+        return feedback;
     }
 
     @Override
@@ -53,7 +53,10 @@ public class DGSFeedbackTable extends VersionedValuesDbTable<DGSFeedback> {
             i = EncryptedDataUtil.setEncryptedData(pstmt, feedback.getFeedbackEncryptedData(), ++i);
             pstmt.setInt(i, feedback.getHeight());
             pstmt.executeUpdate();
-
         }
+    }
+
+    public List<DGSFeedback> get(long id) {
+        return get(KEY_FACTORY.newKey(id));
     }
 }

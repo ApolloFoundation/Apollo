@@ -19,7 +19,7 @@ public final class SellerBuyerDGSPurchasesClause extends DGSPurchasesClause {
     }
 
     @Override
-    protected int set(PreparedStatement pstmt, int index) throws SQLException {
+    public int set(PreparedStatement pstmt, int index) throws SQLException {
         pstmt.setLong(index++, sellerId);
         pstmt.setLong(index++, buyerId);
         return index;

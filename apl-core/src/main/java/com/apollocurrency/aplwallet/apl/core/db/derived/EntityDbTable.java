@@ -438,8 +438,10 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             }
             return getCount(pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);
+            DbUtils.close(con);            
             throw new RuntimeException(e.toString(), e);
+        }finally{
+            DbUtils.close(con);            
         }
     }
 
@@ -460,7 +462,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    protected abstract void save(Connection con, T entity) throws SQLException;
+//    protected abstract void save(Connection con, T entity) throws SQLException;
 
     public final void insert(T t) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();

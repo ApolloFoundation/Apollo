@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -31,6 +32,9 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.jdbi.v3.core.ConnectionException;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +66,7 @@ public class DbMigrationExecutorTest {
     
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
-            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class,
+            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
             FullTextConfigImpl.class, EpochTime.class, NtpTime.class)
@@ -77,6 +81,10 @@ public class DbMigrationExecutorTest {
     private DbManipulator manipulator;
     @Inject
     private DatabaseManager databaseManager;
+    @Inject
+    JdbiHandleFactory jdbiHandleFactory;
+    @Inject
+    Jdbi jdbi;
 
     private Path createTempDir() {
         try {
@@ -116,7 +124,7 @@ public class DbMigrationExecutorTest {
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
         DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(
-                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
+                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider, jdbiHandleFactory);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -124,6 +132,10 @@ public class DbMigrationExecutorTest {
         Assertions.assertNotNull(dbMigrated);
         Assertions.assertEquals("false", dbMigrated);
         Assertions.assertTrue(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
+        Assertions.assertThrows(ConnectionException.class, () -> jdbi.open());
+        Handle handle = jdbiHandleFactory.open();
+        handle.execute("select 1");
+        jdbiHandleFactory.close();
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor
                 .getHeight(targetDbPath.toAbsolutePath().toString());
@@ -133,7 +145,7 @@ public class DbMigrationExecutorTest {
     @Test
     public void testDbMigration() throws IOException {
         DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(
-                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider);
+                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider, jdbiHandleFactory);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -141,9 +153,14 @@ public class DbMigrationExecutorTest {
         Assertions.assertNotNull(dbMigrated);
         Assertions.assertEquals("false", dbMigrated);
         Assertions.assertFalse(Files.exists(h2DbInfoExtractor.getPath(pathToDbForMigration.toAbsolutePath().toString())));
+        Assertions.assertThrows(ConnectionException.class, () -> jdbi.open());
+        Handle handle = jdbiHandleFactory.open();
+        handle.execute("select 1");
+        jdbiHandleFactory.close();
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
         BlockTestData btd = new BlockTestData();
         Assertions.assertEquals(btd.BLOCK_11.getHeight(), migratedHeight);
+
     }
 }

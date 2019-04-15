@@ -35,12 +35,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -56,6 +56,12 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
@@ -71,9 +77,9 @@ import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -416,8 +422,10 @@ public final class JSONData {
             }
         }
         catch (SQLException e) {
-            DbUtils.close(con);
+            DbUtils.close(con);                        
             throw new RuntimeException(e.toString(), e);
+        }finally{
+            DbUtils.close(con);            
         }
     }
 
@@ -581,7 +589,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject goods(DigitalGoodsStore.Goods goods, boolean includeCounts) {
+    public static JSONObject goods(DGSGoods goods, boolean includeCounts) {
         JSONObject json = new JSONObject();
         json.put("goods", Long.toUnsignedString(goods.getId()));
         json.put("name", goods.getName());
@@ -597,13 +605,14 @@ public final class JSONData {
         json.put("timestamp", goods.getTimestamp());
         json.put("hasImage", goods.hasImage());
         if (includeCounts) {
-            json.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), false, true));
-            json.put("numberOfPublicFeedbacks", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), true, true));
+            // TODO: YL review
+//            json.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), false, true));
+//            json.put("numberOfPublicFeedbacks", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), true, true));
         }
         return json;
     }
 
-    public static JSONObject tag(DigitalGoodsStore.Tag tag) {
+    public static JSONObject tag(DGSTag tag) {
         JSONObject json = new JSONObject();
         json.put("tag", tag.getTag());
         json.put("inStockCount", tag.getInStockCount());
@@ -694,7 +703,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject pollResults(Poll poll, List<Poll.OptionResult> results, VoteWeighting voteWeighting) {
+    public static JSONObject pollResults(Poll poll, List<PollOptionResult> results, VoteWeighting voteWeighting) {
         JSONObject json = new JSONObject();
         json.put("poll", Long.toUnsignedString(poll.getId()));
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
@@ -716,7 +725,7 @@ public final class JSONData {
         json.put("options", options);
 
         JSONArray resultsJson = new JSONArray();
-        for (Poll.OptionResult option : results) {
+        for (PollOptionResult option : results) {
             JSONObject optionJSON = new JSONObject();
             if (option != null) {
                 optionJSON.put("result", String.valueOf(option.getResult()));
@@ -831,11 +840,12 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject purchase(DigitalGoodsStore.Purchase purchase) {
+//    public static JSONObject purchase(DigitalGoodsStore.Purchase purchase) {
+    public static JSONObject purchase(DGSService service, DGSPurchase purchase) {
         JSONObject json = new JSONObject();
         json.put("purchase", Long.toUnsignedString(purchase.getId()));
         json.put("goods", Long.toUnsignedString(purchase.getGoodsId()));
-        DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(purchase.getGoodsId());
+        DGSGoods goods = service.getGoods(purchase.getGoodsId());
         json.put("name", goods.getName());
         json.put("hasImage", goods.hasImage());
         putAccount(json, "seller", purchase.getSellerId());
@@ -852,17 +862,17 @@ public final class JSONData {
             json.put("goodsData", encryptedData(purchase.getEncryptedGoods()));
             json.put("goodsIsText", purchase.goodsIsText());
         }
-        if (purchase.getFeedbackNotes() != null) {
+        if (purchase.getFeedbacks() != null) {
             JSONArray feedbacks = new JSONArray();
-            for (EncryptedData encryptedData : purchase.getFeedbackNotes()) {
-                feedbacks.add(0, encryptedData(encryptedData));
+            for (DGSFeedback feedback : purchase.getFeedbacks()) {
+                feedbacks.add(0, encryptedData(feedback.getFeedbackEncryptedData()));
             }
             json.put("feedbackNotes", feedbacks);
         }
         if (purchase.getPublicFeedbacks() != null) {
             JSONArray publicFeedbacks = new JSONArray();
-            for (String publicFeedback : purchase.getPublicFeedbacks()) {
-                publicFeedbacks.add(0, publicFeedback);
+            for (DGSPublicFeedback publicFeedback : purchase.getPublicFeedbacks()) {
+                publicFeedbacks.add(0, publicFeedback.getFeedback());
             }
             json.put("publicFeedbacks", publicFeedbacks);
         }

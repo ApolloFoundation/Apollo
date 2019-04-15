@@ -31,30 +31,30 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
+public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
 
     private final boolean multiversion;
-    protected final KeyFactory<T> dbKeyFactory;
+    protected final KeyFactory<V> dbKeyFactory;
 
-    protected ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
+    protected ValuesDbTable(String table, KeyFactory<V> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
+    ValuesDbTable(String table, KeyFactory<V> dbKeyFactory, boolean multiversion) {
         super(table);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
     }
 
-    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
+    public ValuesDbTable(String table, boolean init,  KeyFactory<V> dbKeyFactory) {
         super(table, init);
         this.multiversion = false;
         this.dbKeyFactory = dbKeyFactory;
     }
 
-    protected abstract V load(Connection con, ResultSet rs) throws SQLException;
+//    protected abstract T load(Connection con, ResultSet rs) throws SQLException;
 
-    protected abstract void save(Connection con, T t, V v) throws SQLException;
+//    protected abstract void save(Connection con, T t, V v) throws SQLException;
 
     protected void clearCache() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -89,7 +89,7 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
             List<V> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(load(con, rs));
+                    result.add(load(con, rs, null)); // TODO: YL review DbKey = NULL
                 }
             }
             return result;
@@ -98,16 +98,16 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
         }
     }
 
-    public final void insert(T t, List<V> values) {
+    public final void insert(List<V> values) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(t);
+        DbKey dbKey = dbKeyFactory.newKey(values.get(0)); // TODO: YL review and fix
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        dataSource.getCache(table).put(dbKey, values);
+//        dataSource.getCache(table).put(dbKey, values);
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
@@ -117,7 +117,8 @@ public abstract class ValuesDbTable<T,V> extends DerivedDbTable<T> {
                 }
             }
             for (V v : values) {
-                save(con, t, v);
+//                save(con, t, v);
+                save(con, v); // TODO: YL review and fix
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

@@ -11,8 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSTagMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
@@ -43,7 +45,19 @@ public class DGSTagTable extends VersionedEntityDbTable<DGSTag> {
 
     @Override
     public void save(Connection con, DGSTag tag) throws SQLException {
-        tag.save(con);
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
+                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")) {
+            int i = 0;
+            pstmt.setString(++i, tag.getTag());
+            pstmt.setInt(++i, tag.getInStockCount());
+            pstmt.setInt(++i, tag.getTotalCount());
+            pstmt.setInt(++i, tag.getHeight());
+            pstmt.executeUpdate();
+        }
+    }
+
+    public DGSTag get(String tagValue) {
+        return get(KEY_FACTORY.newKey(tagValue));
     }
 
     @Override

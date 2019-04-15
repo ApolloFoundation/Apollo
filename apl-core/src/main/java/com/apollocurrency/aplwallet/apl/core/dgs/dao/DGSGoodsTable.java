@@ -73,5 +73,8 @@ public class DGSGoodsTable extends VersionedEntityDbTable<DGSGoods> {
         return " ORDER BY timestamp DESC, id ASC ";
     }
 
+    public DGSGoods get(long purchaseId) {
+        return get(KEY_FACTORY.newKey(purchaseId));
+    }
 }
 

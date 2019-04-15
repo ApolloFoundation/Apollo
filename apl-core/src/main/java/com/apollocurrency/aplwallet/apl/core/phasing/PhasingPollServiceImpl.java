@@ -167,7 +167,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
         if (phasingPoll.getLinkedFullHashes() == null) {
-            List<byte[]> linkedFullHashes = linkedTransactionTable.get(phasingPoll.getId());
+            List<byte[]> linkedFullHashes = null; /*linkedTransactionTable.get(phasingPoll.getId());*/
             phasingPoll.setLinkedFullHashes(linkedFullHashes);
             return linkedFullHashes;
         } else {

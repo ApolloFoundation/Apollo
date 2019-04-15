@@ -23,6 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -51,11 +53,11 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
     }
 
     @Override
-    public boolean delete(T t, int height) {
-        return delete(t, height, false);
+    public boolean delete(T t) {
+        return delete(t, false);
     }
 
-    public final boolean delete(T t, int height, boolean keepInCache) {
+    public final boolean delete(T t, boolean keepInCache) {
         if (t == null) {
             return false;
         }
@@ -63,19 +65,20 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         DbKey dbKey = dbKeyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table
                      + dbKeyFactory.getPKClause() + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
-            pstmtCount.setInt(i, height);
+            pstmtCount.setInt(i, blockchain.getHeight());
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
                         dbKey.setPK(pstmt);
                         pstmt.executeUpdate();
-                        save(con, t, height);
+                        save(con, t);
                         pstmt.executeUpdate(); // delete after the save
                     }
                     return true;

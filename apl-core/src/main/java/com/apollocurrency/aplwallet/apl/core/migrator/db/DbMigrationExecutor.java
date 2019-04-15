@@ -4,8 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -30,16 +31,18 @@ public class DbMigrationExecutor extends MigrationExecutor {
     private FullTextSearchService fullTextSearchProvider;
     private DbInfoExtractor dbInfoExtractor;
     private DatabaseManager databaseManager;
+    private JdbiHandleFactory jdbiHandleFactory;
 
     @Inject
     public DbMigrationExecutor(PropertiesHolder propertiesHolder, LegacyDbLocationsProvider dbLocationsProvider,
-                               DbInfoExtractor dbInfoExtractor, DatabaseManager databaseManager, FullTextSearchService fullTextSearchProvider) {
+                               DbInfoExtractor dbInfoExtractor, DatabaseManager databaseManager, FullTextSearchService fullTextSearchProvider, JdbiHandleFactory jdbiHandleFactory) {
         super(propertiesHolder, databaseManager, "db", true);
         this.legacyDbLocationsProvider = Objects.requireNonNull(dbLocationsProvider, "Legacy db locations provider cannot be null");
         this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
         this.fullTextSearchProvider = Objects.requireNonNull(fullTextSearchProvider, "Fulltext search service cannot be null");
         this.dbInfoExtractor = Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
         this.databaseManager = databaseManager;
+        this.jdbiHandleFactory = Objects.requireNonNull(jdbiHandleFactory, "Jdbi handle factory cannot be null");
     }
 
     @Override
@@ -51,6 +54,7 @@ public class DbMigrationExecutor extends MigrationExecutor {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        jdbiHandleFactory.setJdbi(databaseManager.getJdbi());
     }
 
     @Override

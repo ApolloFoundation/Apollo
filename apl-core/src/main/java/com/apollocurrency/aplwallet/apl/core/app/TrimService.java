@@ -44,19 +44,19 @@ public class TrimService {
 
     public void trimDerivedTables(int height) {
         TransactionalDataSource dataSource = dbManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
         try {
-            if (!dataSource.isInTransaction()) {
+            if (!inTransaction) {
                 dataSource.begin();
             }
             long startTime = System.currentTimeMillis();
             doTrimDerivedTables(height, dataSource);
             log.debug("Total trim time: " + (System.currentTimeMillis() - startTime));
-            dataSource.commit();
-
+            dataSource.commit(!inTransaction);
         }
         catch (Exception e) {
             log.info(e.toString(), e);
-            dataSource.rollback();
+            dataSource.rollback(!inTransaction);
             throw e;
         }
     }

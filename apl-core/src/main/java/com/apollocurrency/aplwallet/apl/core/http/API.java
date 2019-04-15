@@ -99,6 +99,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.jboss.weld.environment.servlet.Listener;
 
 @Vetoed
 public final class API {
@@ -307,7 +308,8 @@ public final class API {
                 String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
                 apiHandler.setWelcomeFiles(wellcome);
             }
-
+            //add Weld listener
+            apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
                     null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
@@ -425,7 +427,12 @@ public final class API {
                 }
 
           //  }, true);
-
+          if(enableAPIUPnP){
+              if(!upnp.isInited()){
+                upnp.init();
+              }
+              upnp.addPort(port);
+          }
         } else {
             apiServer = null;
             disableAdminPassword = false;

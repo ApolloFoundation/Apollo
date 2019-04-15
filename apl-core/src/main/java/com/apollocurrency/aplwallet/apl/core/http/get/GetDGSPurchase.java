@@ -23,23 +23,25 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+
+import java.util.Arrays;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetDGSPurchase extends AbstractAPIRequestHandler {
@@ -48,12 +50,13 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
     public GetDGSPurchase() {
         super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey", "account", "passphrase");
     }
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
-        JSONObject response = JSONData.purchase(purchase);
+        DGSPurchase purchase = ParameterParser.getPurchase(req);
+        JSONObject response = JSONData.purchase(service, purchase);
 
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
         long accountId = ParameterParser.getAccountId(req, false);

@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
+import javax.enterprise.inject.spi.CDI;
+
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -39,11 +43,13 @@ public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
 
     @Override
     public DGSPurchase load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return MAPPER.map(rs, null);
+        DGSPurchase purchase = MAPPER.map(rs, null);
+        purchase.setDbKey(dbKey);
+        return purchase;
     }
 
     @Override
-    protected void save(Connection con, DGSPurchase purchase) throws SQLException {
+    public void save(Connection con, DGSPurchase purchase) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
                 + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, "
                 + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) KEY (id, height) "
@@ -62,13 +68,17 @@ public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
             i = EncryptedDataUtil.setEncryptedData(pstmt, purchase.getEncryptedGoods(), ++i);
             pstmt.setBoolean(i, purchase.isGoodsIsText());
             i = EncryptedDataUtil.setEncryptedData(pstmt, purchase.getRefundNote(), ++i);
-            pstmt.setBoolean(i, purchase.hasFeedbackNotes());
+            pstmt.setBoolean(i, purchase.hasFeedbacks());
             pstmt.setBoolean(++i, purchase.hasPublicFeedbacks());
             pstmt.setLong(++i, purchase.getDiscountATM());
             pstmt.setLong(++i, purchase.getRefundATM());
             pstmt.setInt(++i, purchase.getHeight());
             pstmt.executeUpdate();
         }
+    }
+
+    public DGSPurchase get(long id) {
+        return get(KEY_FACTORY.newKey(id));
     }
 
     @Override

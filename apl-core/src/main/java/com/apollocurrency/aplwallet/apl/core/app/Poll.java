@@ -49,6 +49,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Vetoed;
@@ -67,31 +68,6 @@ public final class Poll extends AbstractPoll {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static DatabaseManager databaseManager;
 
-    public static final class OptionResult {
-
-        private long result;
-        private long weight;
-
-        private OptionResult(long result, long weight) {
-            this.result = result;
-            this.weight = weight;
-        }
-
-        public long getResult() {
-            return result;
-        }
-
-        public long getWeight() {
-            return weight;
-        }
-
-        private void add(long vote, long weight) {
-            this.result += vote;
-            this.weight += weight;
-        }
-
-    }
-
     private static final LongKeyFactory<Poll> pollDbKeyFactory = new LongKeyFactory<Poll>("id") {
         @Override
         public DbKey newKey(Poll poll) {
@@ -103,7 +79,7 @@ public final class Poll extends AbstractPoll {
 
         @Override
         public Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new Poll(rs, dbKey);
+            return new Poll(rs, dbKey, null);
         }
 
         @Override
@@ -119,23 +95,28 @@ public final class Poll extends AbstractPoll {
         }
     };
 
-    private static final ValuesDbTable<Poll, OptionResult> pollResultsTable = new ValuesDbTable<Poll, OptionResult>("poll_result", pollResultsDbKeyFactory) {
+//    private static final ValuesDbTable<Poll, PollOptionResult> pollResultsTable = new ValuesDbTable<Poll, PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
+    private static final ValuesDbTable<Poll> pollResultsTable = new ValuesDbTable<Poll>("poll_result", pollResultsDbKeyFactory) {
 
         @Override
-        protected OptionResult load(Connection con, ResultSet rs) throws SQLException {
+        public Poll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+//        protected OptionResult load(Connection con, ResultSet rs) throws SQLException {
             long weight = rs.getLong("weight");
-            return weight == 0 ? null : new OptionResult(rs.getLong("result"), weight);
+//            return weight == 0 ? null : new OptionResult(rs.getLong("result"), weight);
+            return weight == 0 ? null : new Poll(rs, dbKey, new PollOptionResult(rs.getLong("result"), weight));
         }
 
         @Override
-        protected void save(Connection con, Poll poll, OptionResult optionResult) throws SQLException {
+        public void save(Connection con, Poll poll/*, PollOptionResult optionResult*/) throws SQLException {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll_result (poll_id, "
                     + "result, weight, height) VALUES (?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, poll.getId());
-                if (optionResult != null) {
-                    pstmt.setLong(++i, optionResult.result);
-                    pstmt.setLong(++i, optionResult.weight);
+                if (poll.getOptionResult() != null) {
+//                    pstmt.setLong(++i, optionResult.result);
+//                    pstmt.setLong(++i, optionResult.weight);
+                    pstmt.setLong(++i, poll.getOptionResult().getResult());
+                    pstmt.setLong(++i, poll.getOptionResult().getWeight());
                 } else {
                     pstmt.setNull(++i, Types.BIGINT);
                     pstmt.setLong(++i, 0);
@@ -234,7 +215,7 @@ public final class Poll extends AbstractPoll {
     }
 
     public static void addPoll(Transaction transaction, MessagingPollCreation attachment) {
-        Poll poll = new Poll(transaction, attachment);
+        Poll poll = new Poll(transaction, attachment, null);
         pollTable.insert(poll);
     }
 
@@ -247,17 +228,21 @@ public final class Poll extends AbstractPoll {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             if (Poll.isPollsProcessing) {
                 int height = block.getHeight();
-                Poll.checkPolls(height);
+                try {
+                    Poll.checkPolls(height);
+                } catch (SQLException e) {
+                    LOG.error("Poll Observer error", e);
+                }
             }
         }
     }
 
-    private static void checkPolls(int currentHeight) {
+    private static void checkPolls(int currentHeight) throws SQLException {
         try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
             for (Poll poll : polls) {
                 try {
-                    List<OptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
-                    pollResultsTable.insert(poll, results);
+                    List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
+                    pollResultsTable.insert(poll/*, results, currentHeight*/);
                     LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
                 } catch (RuntimeException e) {
                     LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()));
@@ -275,8 +260,9 @@ public final class Poll extends AbstractPoll {
     private final byte minRangeValue;
     private final byte maxRangeValue;
     private final int timestamp;
+    private PollOptionResult optionResult;
 
-    public Poll(Transaction transaction, MessagingPollCreation attachment) {
+    public Poll(Transaction transaction, MessagingPollCreation attachment, PollOptionResult optionResult) {
         super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
         this.dbKey = pollDbKeyFactory.newKey(this.id);
         this.name = attachment.getPollName();
@@ -287,9 +273,10 @@ public final class Poll extends AbstractPoll {
         this.minRangeValue = attachment.getMinRangeValue();
         this.maxRangeValue = attachment.getMaxRangeValue();
         this.timestamp = blockchain.getLastBlockTimestamp();
+        this.optionResult = optionResult; // TODO: YL replace to fields
     }
 
-    public Poll(ResultSet rs, DbKey dbKey) throws SQLException {
+    public Poll(ResultSet rs, DbKey dbKey, PollOptionResult optionResult) throws SQLException {
         super(rs);
         this.dbKey = dbKey;
         this.name = rs.getString("name");
@@ -300,6 +287,15 @@ public final class Poll extends AbstractPoll {
         this.minRangeValue = rs.getByte("min_range_value");
         this.maxRangeValue = rs.getByte("max_range_value");
         this.timestamp = rs.getInt("timestamp");
+        this.optionResult = optionResult; // TODO: YL replace to fields
+    }
+
+    public PollOptionResult getOptionResult() {
+        return optionResult;
+    }
+
+    public void setOptionResult(PollOptionResult optionResult) {
+        this.optionResult = optionResult;
     }
 
     private void save(Connection con) throws SQLException {
@@ -328,7 +324,7 @@ public final class Poll extends AbstractPoll {
         }
     }
 
-    public List<OptionResult> getResults(VoteWeighting voteWeighting) {
+    public List<PollOptionResult> getResults(VoteWeighting voteWeighting) {
         if (this.voteWeighting.equals(voteWeighting)) {
             return getResults();
         } else {
@@ -337,9 +333,16 @@ public final class Poll extends AbstractPoll {
 
     }
 
-    public List<OptionResult> getResults() {
+    public List<PollOptionResult> getResults() {
+        List<PollOptionResult> result = new ArrayList<>();
         if (Poll.isPollsProcessing && isFinished()) {
-            return pollResultsTable.get(pollDbKeyFactory.newKey(this));
+//            return pollResultsTable.get(pollDbKeyFactory.newKey(this));
+            Iterator<Poll> it = pollResultsTable.get(pollDbKeyFactory.newKey(this)).iterator();
+            while (it.hasNext()) {
+                Poll poll =  it.next();
+                result.add(poll.getOptionResult());
+            }
+            return result;
         } else {
             return countResults(voteWeighting);
         }
@@ -386,7 +389,7 @@ public final class Poll extends AbstractPoll {
         return finishHeight <= blockchain.getHeight();
     }
 
-    private List<OptionResult> countResults(VoteWeighting voteWeighting) {
+    private List<PollOptionResult> countResults(VoteWeighting voteWeighting) {
         int countHeight = Math.min(finishHeight, blockchain.getHeight());
         if (countHeight < blockchainProcessor.getMinRollbackHeight()) {
             return null;
@@ -394,8 +397,8 @@ public final class Poll extends AbstractPoll {
         return countResults(voteWeighting, countHeight);
     }
 
-    private List<OptionResult> countResults(VoteWeighting voteWeighting, int height) {
-        final OptionResult[] result = new OptionResult[options.length];
+    private List<PollOptionResult> countResults(VoteWeighting voteWeighting, int height) {
+        final PollOptionResult[] result = new PollOptionResult[options.length];
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
         try (DbIterator<Vote> votes = Vote.getVotes(this.getId(), 0, -1)) {
             for (Vote vote : votes) {
@@ -407,9 +410,10 @@ public final class Poll extends AbstractPoll {
                 for (int i = 0; i < partialResult.length; i++) {
                     if (partialResult[i] != Long.MIN_VALUE) {
                         if (result[i] == null) {
-                            result[i] = new OptionResult(partialResult[i], weight);
+                            result[i] = new PollOptionResult(partialResult[i], weight);
                         } else {
-                            result[i].add(partialResult[i], weight);
+//                            result[i].add(partialResult[i], weight);
+                            result[i].add( vote.getId(), weight);
                         }
                     }
                 }

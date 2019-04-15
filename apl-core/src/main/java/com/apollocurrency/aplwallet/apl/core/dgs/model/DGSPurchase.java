@@ -9,7 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
-import java.util.ArrayList;
+import java.sql.ResultSet;
+import java.util.Collections;
 import java.util.List;
 
 public class DGSPurchase {
@@ -36,16 +37,26 @@ public class DGSPurchase {
     private EncryptedData encryptedGoods;
     private boolean goodsIsText;
     private EncryptedData refundNote;
-    private boolean hasFeedbackNotes;
-    private List<EncryptedData> feedbackNotes;
     private boolean hasPublicFeedbacks;
-    List<DGSFeedback> dgsFeedbacks;
-    private List<String> publicFeedbacks;
+    private boolean hasFeedbacks;
+    private List<DGSFeedback> dgsFeedbacks = Collections.emptyList();
+    private List<DGSPublicFeedback> publicFeedbacks;
     private long discountATM;
     private long refundATM;
     private int height;
 
-    private DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment, long sellerId, int lastBlockchainTimestamp) {
+    public DGSPurchase(ResultSet rs, DbKey dbKey) {
+        // TODO: YL implement here
+        throw new RuntimeException("implement constructor from RSet");
+    }
+
+    public DGSPurchase(ResultSet rs, DbKey dbKey, DGSFeedback dgsFeedback) {
+        // TODO: YL implement here
+        throw new RuntimeException("implement constructor from RSet");
+    }
+
+    public DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment,
+                        long sellerId, int lastBlockchainTimestamp,  List<DGSFeedback> dgsFeedbackList) {
         this.id = transaction.getId();
         this.buyerId = transaction.getSenderId();
         this.goodsId = attachment.getGoodsId();
@@ -56,9 +67,14 @@ public class DGSPurchase {
         this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
         this.timestamp = lastBlockchainTimestamp;
         this.isPending = true;
+        this.dgsFeedbacks = dgsFeedbackList;
     }
 
-    public DGSPurchase(long id, long buyerId, long goodsId, long sellerId, int quantity, long priceATM, int deadline, EncryptedData note, int timestamp, boolean isPending, EncryptedData encryptedGoods, boolean goodsIsText, EncryptedData refundNote, boolean hasFeedbackNotes, List<EncryptedData> feedbackNotes, boolean hasPublicFeedbacks, List<String> publicFeedbacks, long discountATM, long refundATM) {
+    public DGSPurchase(long id, long buyerId, long goodsId, long sellerId, int quantity, long priceATM, int deadline,
+                       EncryptedData note, int timestamp, boolean isPending, EncryptedData encryptedGoods,
+                       boolean goodsIsText, EncryptedData refundNote, boolean hasFeedbacks,
+                       List<DGSFeedback> feedbacks, boolean hasPublicFeedbacks,
+                       List<DGSPublicFeedback> publicFeedbacks, long discountATM, long refundATM) {
         this.id = id;
         this.buyerId = buyerId;
         this.goodsId = goodsId;
@@ -72,12 +88,20 @@ public class DGSPurchase {
         this.encryptedGoods = encryptedGoods;
         this.goodsIsText = goodsIsText;
         this.refundNote = refundNote;
-        this.hasFeedbackNotes = hasFeedbackNotes;
-        this.feedbackNotes = feedbackNotes;
+        this.hasFeedbacks = hasFeedbacks;
+        this.dgsFeedbacks = feedbacks;
         this.hasPublicFeedbacks = hasPublicFeedbacks;
         this.publicFeedbacks = publicFeedbacks;
         this.discountATM = discountATM;
         this.refundATM = refundATM;
+    }
+
+    public List<DGSFeedback> getDgsFeedbacks() {
+        return dgsFeedbacks;
+    }
+
+    public void setFeedbacks(List<DGSFeedback> dgsFeedbacks) {
+        this.dgsFeedbacks = dgsFeedbacks;
     }
 
     public int getDeadline() {
@@ -86,14 +110,6 @@ public class DGSPurchase {
 
     public boolean isGoodsIsText() {
         return goodsIsText;
-    }
-
-    public boolean isHasFeedbackNotes() {
-        return hasFeedbackNotes;
-    }
-
-    public boolean isHasPublicFeedbacks() {
-        return hasPublicFeedbacks;
     }
 
     public long getId() {
@@ -159,35 +175,27 @@ public class DGSPurchase {
         this.refundNote = refundNote;
     }
 
-    public boolean hasFeedbackNotes() {
-        return hasFeedbackNotes;
+    public boolean hasFeedbacks() {
+        return hasFeedbacks;
     }
 
-    public List<EncryptedData> getFeedbackNotes() {
-        if (!hasFeedbackNotes) {
+    public List<DGSFeedback> getFeedbacks() {
+        if (!hasFeedbacks) {
             return null;
         }
 //        feedbackNotes = feedbackTable.get(feedbackDbKeyFactory.newKey(this));
-        return feedbackNotes;
+        return dgsFeedbacks;
     }
 
-    public void addFeedbackNote(EncryptedData feedbackNote) {
-        if (getFeedbackNotes() == null) {
-            feedbackNotes = new ArrayList<>();
-        }
-        feedbackNotes.add(feedbackNote);
-        if (!this.hasFeedbackNotes) {
-            this.hasFeedbackNotes = true;
-//            purchaseTable.insert(this);
-        }
-//        feedbackTable.insert(this, feedbackNotes);
+    public void addFeedback(DGSFeedback feedback) {
+        dgsFeedbacks.add(feedback);
     }
 
     public boolean hasPublicFeedbacks() {
         return hasPublicFeedbacks;
     }
 
-    public List<String> getPublicFeedbacks() {
+    public List<DGSPublicFeedback> getPublicFeedbacks() {
         if (!hasPublicFeedbacks) {
             return null;
         }
@@ -195,16 +203,8 @@ public class DGSPurchase {
         return publicFeedbacks;
     }
 
-    public void addPublicFeedback(String publicFeedback) {
-        if (getPublicFeedbacks() == null) {
-            publicFeedbacks = new ArrayList<>();
-        }
+    public void addPublicFeedback(DGSPublicFeedback publicFeedback) {
         publicFeedbacks.add(publicFeedback);
-        if (!this.hasPublicFeedbacks) {
-            this.hasPublicFeedbacks = true;
-//            purchaseTable.insert(this);
-        }
-//        publicFeedbackTable.insert(this, publicFeedbacks);
     }
 
     public long getDiscountATM() {
@@ -231,16 +231,12 @@ public class DGSPurchase {
         this.goodsIsText = goodsIsText;
     }
 
-    public void setHasFeedbackNotes(boolean hasFeedbackNotes) {
-        this.hasFeedbackNotes = hasFeedbackNotes;
+    public void setHasFeedbacks(boolean hasFeedbackNotes) {
+        this.hasFeedbacks = hasFeedbackNotes;
     }
 
     public void setHasPublicFeedbacks(boolean hasPublicFeedbacks) {
         this.hasPublicFeedbacks = hasPublicFeedbacks;
-    }
-
-    public List<DGSFeedback> getDgsFeedbacks() {
-        return dgsFeedbacks;
     }
 
     public void setHeight(int height) {
@@ -251,15 +247,7 @@ public class DGSPurchase {
         this.encryptedGoods = encryptedGoods;
     }
 
-    public void setFeedbackNotes(List<EncryptedData> feedbackNotes) {
-        this.feedbackNotes = feedbackNotes;
-    }
-
-    public void setDgsFeedbacks(List<DGSFeedback> dgsFeedbacks) {
-        this.dgsFeedbacks = dgsFeedbacks;
-    }
-
-    public void setPublicFeedbacks(List<String> publicFeedbacks) {
+    public void setPublicFeedbacks(List<DGSPublicFeedback> publicFeedbacks) {
         this.publicFeedbacks = publicFeedbacks;
     }
 }
