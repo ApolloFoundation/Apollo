@@ -33,7 +33,7 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     AbstractAppendix() {
-        this.version = 1;
+        this.version = getVersion();
     }
 
     public abstract String getAppendixName();
@@ -67,7 +67,7 @@ public abstract class AbstractAppendix implements Appendix {
     @Override
     public final JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
-        json.put("version." + getAppendixName(), version);
+        json.put("version." + getAppendixName(), getVersion());
         putMyJSON(json);
         return json;
     }
@@ -75,7 +75,7 @@ public abstract class AbstractAppendix implements Appendix {
     abstract void putMyJSON(JSONObject json);
 
     @Override
-    public final byte getVersion() {
+    public byte getVersion() {
         return version;
     }
 

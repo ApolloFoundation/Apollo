@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("/dex")
+@Api(value = "/dex", description = "Operations with exchange.")
 @Singleton
 public class DexController {
 
@@ -75,12 +77,6 @@ public class DexController {
             @ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
     public Response getBalances(@QueryParam("eth") String ethAddress, @QueryParam("pax") String paxAddress)
             throws NotFoundException {
-        //Apl info don't use right now.
-//        long accountId = ParameterParser.getAccountId(account, "account", true);
-//        Account userAccount = Account.getAccount(accountId);
-//        if (userAccount == null) {
-//            return Response.ok(JSONResponses.unknownAccount(accountId)).build();
-//        }
         return Response.ok(service.getBalances(ethAddress, paxAddress).balanceToJson()).build();
     }
 

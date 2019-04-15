@@ -43,9 +43,6 @@ public class PhasingAppendix extends AbstractAppendix {
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
-    public static final String appendixName = "Phasing";
-    public static final byte VERSION = 1;
-
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
         PhasingAppendix phasing = (PhasingAppendix)appendage;
@@ -67,12 +64,8 @@ public class PhasingAppendix extends AbstractAppendix {
     private final byte[] hashedSecret;
     private final byte algorithm;
 
-    public PhasingAppendix(ByteBuffer buffer) {
-        this(buffer, VERSION);
-    }
 
-    public PhasingAppendix(ByteBuffer buffer, byte version) {
-        super(version);
+    public PhasingAppendix(ByteBuffer buffer) {
         finishHeight = buffer.getInt();
         params = new PhasingParams(buffer);
 
@@ -129,9 +122,16 @@ public class PhasingAppendix extends AbstractAppendix {
         this.algorithm = algorithm;
     }
 
+    //TODO think it over how to change it (magic numbers).
     @Override
     public String getAppendixName() {
-        return appendixName;
+        return "Phasing";
+    }
+
+    //TODO think it over how to change it (magic numbers).
+    @Override
+    public byte getVersion() {
+        return Byte.valueOf("1");
     }
 
     @Override
@@ -231,19 +231,16 @@ public class PhasingAppendix extends AbstractAppendix {
         Block lastBlock = blockchain.getLastBlock();
         int currentHeight = lastBlock.getHeight();
 
-        if (finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
-                || finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
+        if (this.finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
+                || this.finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
             throw new AplException.NotCurrentlyValidException("Invalid finish height " + finishHeight);
         }
 
     }
 
     public void validateFinishHeightAndTime(Integer height, Integer time) throws ParameterException{
-        if(height == null || time == null){
-            throw new AplException.NotCurrentlyValidException("PhasingFinishHeight and PhasingFinishTime shouldn't be null.");
-        }
 
-        if((height != -1 && time != -1) || (height == -1 && time == -1)){
+        if((this.finishHeight != -1 && time != -1) || (this.finishHeight == -1 && time == -1)){
             throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
         }
 
@@ -254,13 +251,13 @@ public class PhasingAppendix extends AbstractAppendix {
         int currentTime = timeService.getEpochTime();
 
         if (time == -1 &&
-                (height <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
-                        height >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
+                (this.finishHeight <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
+                        this.finishHeight >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
             throw new AplException.NotCurrentlyValidException("Invalid finish height " + height);
         }
 
 
-        if (height == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC){
+        if (this.finishHeight == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC){
                 throw new AplException.NotCurrentlyValidException("Invalid finish time " + time);
         }
 
@@ -404,7 +401,4 @@ public class PhasingAppendix extends AbstractAppendix {
         return params;
     }
 
-    public byte getVERSION() {
-        return VERSION;
-    }
 }

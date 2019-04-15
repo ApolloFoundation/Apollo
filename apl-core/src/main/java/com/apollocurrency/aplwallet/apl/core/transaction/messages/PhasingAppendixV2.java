@@ -7,34 +7,15 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 public class PhasingAppendixV2 extends PhasingAppendix {
-    private static final Logger LOG = getLogger(PhasingAppendixV2.class);
-    public static final String appendixName = "Phasing_V2";
-
-    public static final byte VERSION = 2;
-
-
-    public static PhasingAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PhasingAppendix(attachmentData);
-    }
 
     private final int finishTime;
 
     public PhasingAppendixV2(ByteBuffer buffer) {
-        this(buffer, VERSION);
-    }
-
-    public PhasingAppendixV2(ByteBuffer buffer, byte version) {
-        super(buffer, version);
+        super(buffer);
         finishTime = buffer.getInt();
     }
 
@@ -50,9 +31,16 @@ public class PhasingAppendixV2 extends PhasingAppendix {
         this.finishTime = finishTime;
     }
 
+    //TODO think it over how to change it (magic numbers).
+    @Override
+    public byte getVersion() {
+        return Byte.valueOf("2");
+    }
+
+    //TODO think it over how to change it (magic numbers).
     @Override
     public String getAppendixName() {
-        return appendixName;
+        return "Phasing_V2";
     }
 
     @Override
@@ -83,8 +71,4 @@ public class PhasingAppendixV2 extends PhasingAppendix {
         return finishTime;
     }
 
-    @Override
-    public byte getVERSION() {
-        return VERSION;
-    }
 }

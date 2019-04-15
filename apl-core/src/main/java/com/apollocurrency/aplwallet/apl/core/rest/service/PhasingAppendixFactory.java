@@ -18,9 +18,9 @@ public class PhasingAppendixFactory {
         byte version = buffer.get();
 
         switch (version)  {
-            case PhasingAppendix.VERSION :
+            case 1 :
                 return new PhasingAppendix(buffer);
-            case PhasingAppendixV2.VERSION :
+            case 2 :
                 return new PhasingAppendixV2(buffer);
             default:
                 return null;
@@ -28,9 +28,9 @@ public class PhasingAppendixFactory {
     }
 
     public static PhasingAppendix parse(JSONObject attachmentData) {
-        if (Appendix.hasAppendix(PhasingAppendix.appendixName, attachmentData)) {
+        if (Appendix.hasAppendix( "Phasing", attachmentData)) {
             return new PhasingAppendix(attachmentData);
-        } else if (Appendix.hasAppendix(PhasingAppendixV2.appendixName, attachmentData)){
+        } else if (Appendix.hasAppendix("Phasing_V2", attachmentData)){
             return new PhasingAppendixV2(attachmentData);
         }
         return null;
