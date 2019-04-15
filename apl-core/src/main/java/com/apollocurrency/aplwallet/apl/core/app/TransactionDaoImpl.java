@@ -89,6 +89,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Transaction findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
@@ -135,6 +136,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Transaction findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
@@ -171,6 +173,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
@@ -199,6 +202,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
@@ -345,6 +349,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized (blockDao.getBlockCache()) {

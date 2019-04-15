@@ -97,6 +97,9 @@ public class PeerHttpServer {
             ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
                 try {
                     if (enablePeerUPnP) {
+                        if(!upnp.isInited()){
+                            upnp.init();
+                        }
                         Connector[] peerConnectors = peerServer.getConnectors();
                         for (Connector peerConnector : peerConnectors) {
                             if (peerConnector instanceof ServerConnector) {

@@ -153,9 +153,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return blockchainConfigUpdater;
     }
     private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
         return databaseManager.getDataSource();
     }
 

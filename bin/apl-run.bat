@@ -3,4 +3,4 @@
 set DIRP=%~dp0
 call "%DIRP%\apl-common.bat"
 @REM start Apollo
-%JAVA_CMD% -jar "%APL_MAIN%"
+%JAVA_CMD% -jar %APL_MAIN%

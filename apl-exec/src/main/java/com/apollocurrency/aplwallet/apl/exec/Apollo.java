@@ -61,7 +61,9 @@ public class Apollo {
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
             "socksProxyHost",
             "socksProxyPort",
-            "apl.enablePeerUPnP");
+            "apl.enablePeerUPnP",
+            "apl.enableAPIUPnP"
+    );
 
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");

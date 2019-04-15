@@ -50,15 +50,17 @@ public class UPnP {
     private InetAddress externalAddress;
     
     public static int TIMEOUT=1500; //1,5 secons
+    private boolean inited=false;
 
 
     
 //TODO: Inject with properties    
     @Inject  
     public UPnP() {
-        init();
     }
-
+    public boolean isInited(){
+        return inited;
+    }
     /**
      * Add a port to the UPnP mapping
      *
@@ -125,11 +127,12 @@ public class UPnP {
     /**
      * Initialize the UPnP support
      */
-    private void init() {
+    public void init() {
         AppStatus.getInstance().update("UPnP initialization...");
         //
         // Discover the gateway devices on the local network
         //
+        inited=true;
         try {
             
             LOG.info("Looking for UPnP gateway device...");
