@@ -34,7 +34,7 @@
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>
-    <logger name="com.zaxxer" level="warn" additivity="false"/>
+    <logger name="com.zaxxer" level="warn"/>
     <root level="warn">
         <appender-ref ref="console" />
         <appender-ref ref="file" />
