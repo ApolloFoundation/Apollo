@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBindi
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -1070,6 +1071,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
+            int currentHeight = lastBlock.getHeight();
+            // conditional recovery to target HEIGHT
+            int desiredLowHeight = propertiesHolder.getIntProperty("apl.recovery.1.30.6"); // target
+            log.debug("Recovery PopOff at {} to target recovery {}, condition ? = {}",
+                    currentHeight, desiredLowHeight, currentHeight > desiredLowHeight);
+            if (currentHeight > desiredLowHeight)  { // check on current height
+                makeConditionalPopOff(desiredLowHeight); // calling
+            }
             genesisBlockId = blockchain.getBlockIdAtHeight(0);
             log.info("Last block height: " + lastBlock.getHeight());
             return;
@@ -1091,6 +1100,29 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.rollback();
             log.info(e.getMessage());
             throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    // Do conditional popOff to specified height
+    private void makeConditionalPopOff(int popOffHeight) {
+        long start = System.currentTimeMillis();
+        OptionDAO optionDAO = CDI.current().select(OptionDAO.class).get();
+        String previousPopOff = optionDAO.get("POP_OFF_DONE"); // read if previous process was DONE before
+        if (previousPopOff == null || previousPopOff.isEmpty()) {
+            // no previous process were executed
+            log.debug("Recovery PopOff starting...");
+            List<Block> popOffList = popOffTo(popOffHeight); // popOff block list
+            log.debug("Recovery PopOff = [{}] in {} sec", popOffList.size(),  (System.currentTimeMillis() - start)/1000);
+            for (Block block : popOffList) {
+                if (block != null && block.getTransactions() != null) {
+                    // preserve all transactions
+                    lookupTransactionProcessor().processLater(block.getTransactions());
+                }
+            }
+            log.debug("Recovery PopOff transactions were done in {} sec", (System.currentTimeMillis() - start)/1000);
+            optionDAO.set("POP_OFF_DONE", "DONE"); // store conditional popOff value for next run
+        } else {
+            log.debug("SKIPPED recovery PopOff, because 'POP_OFF_DONE' = {}", previousPopOff);
         }
     }
 
