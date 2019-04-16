@@ -6,22 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.phasing;
 
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
+import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.inTransaction;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Consumer;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -67,6 +58,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -278,7 +277,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testFinishPollNotApproved() throws SQLException {
-        inTransaction(con -> {
+        inTransaction(extension, con -> {
             phasingPollService.finish(ptd.POLL_3, 1);
 
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
@@ -290,7 +289,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
-        inTransaction(con -> {
+        inTransaction(extension, con -> {
             phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
             PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true, 1);
@@ -312,7 +311,7 @@ public class PhasingPollServiceTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.BLOCK_11);
-        inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
+        inTransaction(extension, connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = phasingPollService.countVotes(ptd.POLL_3);
 
         assertEquals(3, votes);
@@ -370,7 +369,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testAddPoll() throws SQLException {
-        inTransaction(con -> {
+        inTransaction(extension, con -> {
                     phasingPollService.addPoll(ttd.TRANSACTION_10, ptd.NEW_POLL_APPENDIX);
 
                     PhasingPoll poll = phasingPollService.getPoll(ttd.TRANSACTION_10.getId());
@@ -396,7 +395,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testAddVote() throws SQLException {
-        inTransaction(con -> {
+        inTransaction(extension, con -> {
                     phasingPollService.addVote(ptd.NEW_VOTE_TX, new Account(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId());
                     long voteCount = phasingPollService.getVoteCount(ptd.POLL_1.getId());
 
@@ -416,15 +415,4 @@ public class PhasingPollServiceTest {
         assertEquals(Collections.singletonList(ttd.TRANSACTION_12), phasedTransactions);
     }
 
-
-    void inTransaction(Consumer<Connection> consumer) throws SQLException {
-        try (Connection con = extension.getDatabaseManger().getDataSource().begin()) { // start new transaction
-            consumer.accept(con);
-            extension.getDatabaseManger().getDataSource().commit();
-        }
-        catch (SQLException e) {
-            extension.getDatabaseManger().getDataSource().rollback();
-            throw e;
-        }
-    }
 }

@@ -18,6 +18,7 @@ delete from phasing_poll_linked_transaction;
 delete from PUBLIC.GENESIS_PUBLIC_KEY;
 delete from PUBLIC.PUBLIC_KEY;
 delete from PUBLIC.SHARD_RECOVERY;
+delete from account_guaranteed_balance;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT, TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -156,3 +157,12 @@ INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VA
 INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (10, -4013722529644937202, '6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true);
 
 INSERT INTO PUBLIC.SHARD_RECOVERY (SHARD_RECOVERY_ID, STATE, COLUMN_NAME, UPDATED) VALUES (1, 'INIT', NULL, CURRENT_TIMESTAMP());
+
+insert into public.account_guaranteed_balance
+(db_id, account_id                 , additions       , height) VALUES
+(10   , 457571885748888948         , 30000000000     , 1000  ),
+(20   , 457571885748888948         , 10000000000000  , 1500  ),
+(30   , 6110033502865709882        , 40000000000     , 2000  ),
+(40   , 457571885748888948         , 40000000000     , 2000  ),
+(50   , 457571885748888948         , 20000000000     , 15457 ),
+;

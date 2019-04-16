@@ -94,10 +94,11 @@ public class UpdaterCoreImpl implements UpdaterCore {
 
     @Override
     public void init(String updateAttachmentFile, boolean debug) {
-        UpdaterUtil.init(debug);
         UpdateTransaction updateTransaction = null;
         boolean startUpdater = true;
-        if (!StringUtils.isBlank(updateAttachmentFile)) {
+        boolean notBlankAttachmentFilePath = !StringUtils.isBlank(updateAttachmentFile);
+        UpdaterUtil.init(debug && notBlankAttachmentFilePath);
+        if (notBlankAttachmentFilePath) {
             UpdateAttachment updateAttachment = loadFromFile(updateAttachmentFile);
             startUpdater = false;
             UpdateData updateData = updateTransactionVerifier.process(updateAttachment, -1);
