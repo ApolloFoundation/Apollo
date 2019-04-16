@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -126,6 +127,7 @@ public final class Account {
         blockchain = blockchainParam;
         publicKeyTable = pkTable;
         sync = globalSync;
+        CDI.current().select(AccountGuaranteedBalanceTable.class).get();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
