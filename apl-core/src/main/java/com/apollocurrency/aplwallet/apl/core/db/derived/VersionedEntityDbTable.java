@@ -105,14 +105,16 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             throw new IllegalStateException("Not in transaction");
         }
         long startTime = System.currentTimeMillis();
+        String sql = "UPDATE " + table
+                + " SET latest = TRUE " + dbKeyFactory.getPKClause() + " AND height ="
+                + " (SELECT MAX(height) FROM " + table + dbKeyFactory.getPKClause() + ")";
+        LOG.trace(sql);
         try (Connection con = db.getConnection();
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + dbKeyFactory.getPKColumns()
                      + " FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table
                      + " WHERE height > ?");
-             PreparedStatement pstmtSetLatest = con.prepareStatement("UPDATE " + table
-                     + " SET latest = TRUE " + dbKeyFactory.getPKClause() + " AND height ="
-                     + " (SELECT MAX(height) FROM " + table + dbKeyFactory.getPKClause() + ")")) {
+             PreparedStatement pstmtSetLatest = con.prepareStatement(sql)) {
             pstmtSelectToDelete.setInt(1, height);
             List<DbKey> dbKeys = new ArrayList<>();
             try (ResultSet rs = pstmtSelectToDelete.executeQuery()) {
@@ -141,6 +143,7 @@ public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
             }
         }
         catch (SQLException e) {
+            LOG.error("Error", e);
             throw new RuntimeException(e.toString(), e);
         }
         LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);

@@ -4,14 +4,13 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelisting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsFeedback;
@@ -32,11 +31,21 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+
 public abstract class DigitalGoods extends TransactionType {
     
-    private static final Logger LOG = getLogger(DigitalGoods.class); 
-    
+    private static final Logger LOG = getLogger(DigitalGoods.class);
+    private DGSService service;
+
     private DigitalGoods() {
+    }
+
+    public DGSService lookupDGService() {
+        if (service == null) {
+            service = CDI.current().select(DGSService.class).get();
+        }
+        return service;
     }
 
     @Override
@@ -104,7 +113,7 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-            DigitalGoodsStore.listGoods(transaction, attachment);
+            lookupDGService().listGoods(transaction, attachment);
         }
 
         @Override
@@ -176,13 +185,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsDelisting attachment = (DigitalGoodsDelisting) transaction.getAttachment();
-            DigitalGoodsStore.delistGoods(attachment.getGoodsId());
+            lookupDGService().delistGoods(attachment.getGoodsId());
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsDelisting attachment = (DigitalGoodsDelisting) transaction.getAttachment();
-            DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
+            DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
             if (goods != null && transaction.getSenderId() != goods.getSellerId()) {
                 throw new AplException.NotValidException("Invalid digital goods delisting - seller is different: " + attachment.getJSONObject());
             }
@@ -236,13 +245,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
-            DigitalGoodsStore.changePrice(attachment.getGoodsId(), attachment.getPriceATM());
+            lookupDGService().changePrice(attachment.getGoodsId(), attachment.getPriceATM());
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
-            DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
+            DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
             if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM() || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                 throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
             }
@@ -297,13 +306,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
-            DigitalGoodsStore.changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
+            lookupDGService().changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
-            DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
+            DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
             if (attachment.getDeltaQuantity() < -Constants.MAX_DGS_LISTING_QUANTITY || attachment.getDeltaQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                 throw new AplException.NotValidException("Invalid digital goods quantity change: " + attachment.getJSONObject());
             }
@@ -374,13 +383,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
-            DigitalGoodsStore.purchase(transaction, attachment);
+            lookupDGService().purchase(transaction, attachment);
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
-            DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(attachment.getGoodsId());
+            DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
             if (attachment.getQuantity() <= 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM() || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
                 throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
             }
@@ -460,13 +469,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
-            DigitalGoodsStore.deliver(transaction, attachment);
+            lookupDGService().deliver(transaction, attachment);
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
-            DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPendingPurchase(attachment.getPurchaseId());
+            DGSPurchase purchase = lookupDGService().getPendingPurchase(attachment.getPurchaseId());
             if (attachment.getGoodsDataLength() > Constants.MAX_DGS_GOODS_LENGTH) {
                 throw new AplException.NotValidException("Invalid digital goods delivery data length: " + attachment.getGoodsDataLength());
             }
@@ -528,13 +537,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsFeedback attachment = (DigitalGoodsFeedback) transaction.getAttachment();
-            DigitalGoodsStore.feedback(attachment.getPurchaseId(), transaction.getEncryptedMessage(), transaction.getMessage());
+            lookupDGService().feedback(attachment.getPurchaseId(), transaction.getEncryptedMessage(), transaction.getMessage());
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsFeedback attachment = (DigitalGoodsFeedback) transaction.getAttachment();
-            DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(attachment.getPurchaseId());
+            DGSPurchase purchase = lookupDGService().getPurchase(attachment.getPurchaseId());
             if (purchase != null && (purchase.getSellerId() != transaction.getRecipientId() || transaction.getSenderId() != purchase.getBuyerId())) {
                 throw new AplException.NotValidException("Invalid digital goods feedback: " + attachment.getJSONObject());
             }
@@ -607,13 +616,13 @@ public abstract class DigitalGoods extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
-            DigitalGoodsStore.refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(), attachment.getPurchaseId(), attachment.getRefundATM(), transaction.getEncryptedMessage());
+            lookupDGService().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(), attachment.getPurchaseId(), attachment.getRefundATM(), transaction.getEncryptedMessage());
         }
 
         @Override
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
-            DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(attachment.getPurchaseId());
+            DGSPurchase purchase = lookupDGService().getPurchase(attachment.getPurchaseId());
             if (attachment.getRefundATM() < 0 || attachment.getRefundATM() > blockchainConfig.getCurrentConfig().getMaxBalanceATM() || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId() || transaction.getSenderId() != purchase.getSellerId()))) {
                 throw new AplException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
             }

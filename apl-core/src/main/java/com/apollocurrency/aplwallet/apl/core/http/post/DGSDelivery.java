@@ -29,7 +29,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
@@ -54,7 +54,7 @@ public final class DGSDelivery extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+        DGSPurchase purchase = ParameterParser.getPurchase(req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }

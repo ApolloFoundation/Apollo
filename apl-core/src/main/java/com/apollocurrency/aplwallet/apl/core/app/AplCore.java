@@ -204,7 +204,7 @@ public final class AplCore {
                 AccountLedger.init(databaseManager);
                 Alias.init();
                 Asset.init();
-                DigitalGoodsStore.init();
+//                DigitalGoodsStore.init();
                 Order.init();
                 Poll.init();
                 Trade.init();

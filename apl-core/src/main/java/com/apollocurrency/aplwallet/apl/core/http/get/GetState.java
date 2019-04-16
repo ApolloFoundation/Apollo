@@ -24,12 +24,12 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
@@ -57,7 +57,8 @@ import javax.enterprise.inject.spi.CDI;
 public final class GetState extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private UPnP upnp = CDI.current().select(UPnP.class).get();
-    
+    private DGSService service = CDI.current().select(DGSService.class).get();
+
     public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
     }
@@ -84,9 +85,9 @@ public final class GetState extends AbstractAPIRequestHandler {
         	response.put("numberOfExchanges", Exchange.getCount());
         	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", Alias.getCount());
-            response.put("numberOfGoods", DigitalGoodsStore.Goods.getCount());
-            response.put("numberOfPurchases", DigitalGoodsStore.Purchase.getCount());
-            response.put("numberOfTags", DigitalGoodsStore.Tag.getCount());
+            response.put("numberOfGoods", service.getGoodsCount());
+            response.put("numberOfPurchases", service.getPurchaseCount());
+            response.put("numberOfTags", service.getTagsCount());
             response.put("numberOfPolls", Poll.getCount());
             response.put("numberOfVotes", Vote.getCount());
             response.put("numberOfPrunableMessages", PrunableMessage.getCount());

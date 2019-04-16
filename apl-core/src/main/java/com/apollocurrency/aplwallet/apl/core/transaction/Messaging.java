@@ -38,7 +38,6 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -486,12 +485,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
-            try {
-                Poll.addPoll(transaction, attachment);
-            } catch (SQLException e) {
-                log.error("Add Poll error", e);
-                throw new RuntimeException(e); // TODO: YL review later
-            }
+            Poll.addPoll(transaction, attachment);
         }
 
         @Override

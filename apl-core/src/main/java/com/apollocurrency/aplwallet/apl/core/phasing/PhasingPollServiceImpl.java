@@ -16,7 +16,9 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -38,7 +40,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final Blockchain blockchain;
 
     @Inject
-    public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable, PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable, PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
+    public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
+                                  PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
+                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -63,10 +67,18 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPoll phasingPoll = phasingPollTable.get(id);
         if (phasingPoll != null) {
             getAndSetLinkedFullHashes(phasingPoll);
-            byte[] fullHash = blockchain.getFullHash(phasingPoll.getId());
+            long phasingPollId = phasingPoll.getId();
+            byte[] fullHash = blockchain.getFullHash(phasingPollId);
             phasingPoll.setFullHash(fullHash);
             if (phasingPoll.getWhitelist() == null) {
-                phasingPoll.setWhitelist(Convert.toArray(voterTable.get(phasingPoll.getId())));
+                // TODO: YL check later
+                List<PhasingPollVoter> phasingPollVoters = voterTable.get(phasingPollId);
+                List<Long> voteIds = new ArrayList<>(phasingPollVoters.size());
+                for (int i = 0; i < phasingPollVoters.size(); i++) {
+                    PhasingPollVoter phasingPollVoter = phasingPollVoters.get(i);
+                    voteIds.add(phasingPollVoter.getVoterId());
+                }
+                phasingPoll.setWhitelist(Convert.toArray(voteIds)); // TODO: YL check later
             }
         }
         return phasingPoll;
@@ -149,13 +161,30 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPoll poll = new PhasingPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.getWhitelist();
-        if (voters.length > 0) {
-            voterTable.insert(poll, Convert.toList(voters));
+        List<PhasingPollVoter> phasingPollVoters = new ArrayList<>(voters.length);
+        if (voters.length > 0) { // TODO: YL check later
+//            voterTable.insert(poll, Convert.toList(voters));
+            for (int i = 0; i < voters.length; i++) {
+                long voteId =  voters[i];
+                PhasingPollVoter pollVoter = new PhasingPollVoter(poll.getId(), voteId, blockchain.getHeight());
+                phasingPollVoters.add(pollVoter);
+            }
+//            voterTable.insert(Convert.toList(voters));
+            voterTable.insert(phasingPollVoters);
         }
-        if (appendix.getLinkedFullHashes().length > 0) {
+        if (appendix.getLinkedFullHashes() != null && appendix.getLinkedFullHashes().length > 0) { // TODO: YL check later
             List<byte[]> linkedFullHashes = new ArrayList<>(appendix.getLinkedFullHashes().length);
             Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
-            linkedTransactionTable.insert(poll, linkedFullHashes);
+//            linkedTransactionTable.insert(poll, linkedFullHashes);
+            List<PhasingPollLinkedTransaction> linkedTransactions = new ArrayList<>(linkedFullHashes.size());
+            for (int i = 0; i < linkedFullHashes.size(); i++) {
+                PhasingPollLinkedTransaction linkedTransaction = new PhasingPollLinkedTransaction(
+                        poll.getId(), Convert.fullHashToId( linkedFullHashes.get(i)),
+                        linkedFullHashes.get(i), blockchain.getHeight()
+                );
+                linkedTransactions.add(linkedTransaction);
+            }
+            linkedTransactionTable.insert(linkedTransactions);
         }
     }
 
@@ -167,7 +196,27 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
         if (phasingPoll.getLinkedFullHashes() == null) {
-            List<byte[]> linkedFullHashes = null; /*linkedTransactionTable.get(phasingPoll.getId());*/
+            // TODO: YL check later
+            List<PhasingPollLinkedTransaction> list = linkedTransactionTable.get(phasingPoll.getId());
+            List<byte[]> linkedFullHashes = null;
+            if (list != null && phasingPoll.getLinkedFullHashes() != null) {
+                linkedFullHashes = new ArrayList<>(
+                        list.size() + phasingPoll.getLinkedFullHashes().size());
+                for (int i = 0; i < list.size(); i++) {
+                    PhasingPollLinkedTransaction linkedTransaction = list.get(i);
+                    linkedFullHashes.add(linkedTransaction.getFullHash());
+                }
+                linkedFullHashes.addAll(phasingPoll.getLinkedFullHashes());
+            } else if (list == null) {
+                linkedFullHashes = new ArrayList<>(phasingPoll.getLinkedFullHashes().size());
+                linkedFullHashes.addAll(phasingPoll.getLinkedFullHashes());
+            } else {
+                linkedFullHashes = new ArrayList<>(list.size());
+                for (int i = 0; i < list.size(); i++) {
+                    PhasingPollLinkedTransaction linkedTransaction = list.get(i);
+                    linkedFullHashes.add(linkedTransaction.getFullHash());
+                }
+            }
             phasingPoll.setLinkedFullHashes(linkedFullHashes);
             return linkedFullHashes;
         } else {

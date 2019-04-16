@@ -21,14 +21,16 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsFeedback;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
@@ -38,6 +40,8 @@ import javax.enterprise.inject.Vetoed;
 @Vetoed
 public final class DGSFeedback extends CreateTransaction {
 
+    private DGSService service = CDI.current().select(DGSService.class).get();
+
     public DGSFeedback() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "purchase");
@@ -46,7 +50,7 @@ public final class DGSFeedback extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DigitalGoodsStore.Purchase purchase = ParameterParser.getPurchase(req);
+        DGSPurchase purchase = ParameterParser.getPurchase(req);
 
         Account buyerAccount = ParameterParser.getSenderAccount(req);
         if (buyerAccount.getId() != purchase.getBuyerId()) {

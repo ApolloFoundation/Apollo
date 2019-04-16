@@ -111,6 +111,8 @@ public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static DGSService dgsService = CDI.current().select(DGSService.class).get();
+
     private static final int DEFAULT_LAST_INDEX = 250;
 
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
@@ -488,10 +490,8 @@ public final class ParameterParser {
         return null;
     }
 
-//    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
     public static DGSPurchase getPurchase(HttpServletRequest req) throws ParameterException {
-//        DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
-        DGSPurchase purchase = null;// TODO: YL review and fix
+        DGSPurchase purchase = dgsService.getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }
