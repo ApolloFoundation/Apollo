@@ -1,11 +1,8 @@
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
-    private static final Logger log = getLogger(AbstractConfigLoader.class);
 
     public static final String DEFAULT_CONFIG_DIR = "conf";
     private ConfigDirProvider dirProvider;
@@ -98,12 +94,10 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
                 config = merge(config, userConfig);
             }
             catch (FileNotFoundException ignored) {
-//                log.warn("File not found in searched dir: " + p, ignored); // if you need stacktrace
-                log.error("File not found in searched dir: {}", p); // no stacktrace
-//                System.out.println("File not found: " + p);
+                System.err.println("File not found: " + p); // do not use logger (we should init it before using)
             }
             catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("Config IO error " + e.toString());
             }
         }
     }

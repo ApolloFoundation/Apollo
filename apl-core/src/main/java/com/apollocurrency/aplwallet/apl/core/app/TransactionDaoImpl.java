@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
@@ -89,10 +90,12 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Transaction findTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         // Check the block cache
@@ -134,10 +137,12 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Transaction findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
@@ -169,10 +174,12 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
         return hasTransaction(transactionId, Integer.MAX_VALUE);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
@@ -196,11 +203,12 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
     }
 
-
+    @Transactional(readOnly = true)
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
@@ -225,6 +233,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public byte[] getFullHash(long transactionId) {
         // Check the block cache
@@ -341,6 +350,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
         synchronized (blockDao.getBlockCache()) {

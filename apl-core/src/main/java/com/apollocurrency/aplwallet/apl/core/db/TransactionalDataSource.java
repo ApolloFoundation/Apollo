@@ -139,11 +139,11 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         try {
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
-            con = new DbConnectionWrapper(con, factory, localConnection, transactionCaches, transactionCallback);
-            ((DbConnectionWrapper)con).txStart = System.currentTimeMillis();
-            localConnection.set((DbConnectionWrapper)con);
+            DbConnectionWrapper wcon = new DbConnectionWrapper(con, factory, localConnection, transactionCaches, transactionCallback);
+            wcon.txStart = System.currentTimeMillis();
+            localConnection.set(wcon);
             transactionCaches.set(new HashMap<>());
-            return con;
+            return wcon;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

@@ -535,7 +535,6 @@ public final class Peers {
 
         PeerImpl peer;
         if ((peer = peers.get(host)) != null) {
-            LOG.debug("Return existing peer from map {}", peer);
             return peer;
         }
         if (!create) {

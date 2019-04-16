@@ -82,8 +82,8 @@ public final class GetAssetTransfers extends AbstractAPIRequestHandler {
         return response;
     }
 
-    @Override
-    protected boolean startDbTransaction() {
-        return true;
-    }
+//    @Override
+//    protected boolean startDbTransaction() {
+//        return true;
+//    }
 }

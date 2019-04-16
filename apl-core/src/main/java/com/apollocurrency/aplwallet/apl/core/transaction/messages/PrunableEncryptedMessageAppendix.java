@@ -4,16 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import javax.enterprise.inject.spi.CDI;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -21,12 +15,17 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import javax.enterprise.inject.spi.CDI;
 
 public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunableEncryptedMessage";
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {

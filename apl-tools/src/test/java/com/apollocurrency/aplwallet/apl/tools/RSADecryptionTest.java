@@ -8,13 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-@Disabled
 public class RSADecryptionTest {
 
     @Test

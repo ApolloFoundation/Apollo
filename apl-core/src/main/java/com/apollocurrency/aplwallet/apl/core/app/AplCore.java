@@ -67,6 +67,7 @@ import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 
 public final class AplCore {
@@ -230,7 +231,7 @@ public final class AplCore {
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
-
+                ThreadPool.scheduleThread("Active connections logger", () -> LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections()), 15, TimeUnit.SECONDS);
                 ThreadPool.start();
 
                 try {

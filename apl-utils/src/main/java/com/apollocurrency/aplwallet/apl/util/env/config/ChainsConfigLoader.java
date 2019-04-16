@@ -62,6 +62,7 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
         if (newChains != null) {
             resultChains.putAll(newChains);
         }
+        System.out.println("Old chains: " + oldChains + " \nNew chains: " + newChains + " \nResult chains: " + resultChains);
         return resultChains;
     }
 

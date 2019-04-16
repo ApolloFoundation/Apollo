@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import javax.xml.bind.DatatypeConverter;
 
-@Disabled
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
 
@@ -53,7 +52,7 @@ public class DownloaderTest {
     /**
      * test with successful download scenario
      */
-    @Test
+    @Disabled
     public void testTryDownloadWithSignedValidPayload() {
         DownloadInfo downloadInfo = new DownloadInfo();
         Downloader downloader = new DownloaderImpl(downloadInfo, 1, 10, (path, hash) -> true, new ResourceDownloadExecutor());

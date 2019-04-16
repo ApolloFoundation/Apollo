@@ -65,7 +65,7 @@ public class ReferencedTransactionMigrator {
             dataSource.commit(!isInTransaction);
         }
         catch (SQLException e) {
-            dataSource.rollback();
+            dataSource.rollback(!isInTransaction);
             throw new RuntimeException(e.toString(), e);
         }
     }

@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-@Disabled
+
 public class AuthorityCheckerImplTest {
     @Test
     public void testVerifyCertificates() throws Exception {
