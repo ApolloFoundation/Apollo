@@ -349,6 +349,10 @@ public abstract class TransactionType {
         return canHaveRecipient();
     }
 
+    /**
+     * Is not used.
+     */
+    @Deprecated
     public abstract boolean isPhasingSafe();
 
     public boolean isPhasable() {

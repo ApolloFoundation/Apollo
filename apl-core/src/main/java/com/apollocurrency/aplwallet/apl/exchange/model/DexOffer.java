@@ -13,6 +13,7 @@ public class DexOffer{
     private Long accountId;
 
     private OfferType type;
+    private OfferStatus status;
     private DexCurrencies offerCurrency;
     private Long offerAmount;
 
@@ -31,6 +32,7 @@ public class DexOffer{
         this.offerAmount = dexOfferAttachment.getOfferAmount();
         this.pairCurrency = DexCurrencies.getType(dexOfferAttachment.getPairCurrency());
         this.pairRate = dexOfferAttachment.getPairRate();
+        this.status = OfferStatus.getType(dexOfferAttachment.getStatus());
         this.finishTime = dexOfferAttachment.getFinishTime();
     }
 
@@ -44,6 +46,7 @@ public class DexOffer{
         dexOfferDto.offerAmount = this.getOfferAmount();
         dexOfferDto.pairCurrency = this.getPairCurrency().ordinal();
         dexOfferDto.finishTime = this.getFinishTime();
+        dexOfferDto.status = this.getStatus().ordinal();
         dexOfferDto.pairRate = this.getPairRate();
 
         return dexOfferDto;
@@ -120,5 +123,13 @@ public class DexOffer{
 
     public void setFinishTime(Integer finishTime) {
         this.finishTime = finishTime;
+    }
+
+    public OfferStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OfferStatus status) {
+        this.status = status;
     }
 }

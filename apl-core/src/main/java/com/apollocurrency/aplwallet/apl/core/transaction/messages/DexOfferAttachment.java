@@ -16,6 +16,7 @@ public class DexOfferAttachment extends AbstractAttachment {
     private byte offerCurrency;
     private long offerAmount;
     private byte pairCurrency;
+    private byte status;
     private long pairRate;
     private int finishTime;
 
@@ -26,6 +27,7 @@ public class DexOfferAttachment extends AbstractAttachment {
         this.pairCurrency = Byte.valueOf(String.valueOf(offer.getPairCurrency().ordinal()));
         this.pairRate = offer.getPairRate();
         this.finishTime = offer.getFinishTime();
+        this.status = Byte.valueOf(String.valueOf(offer.getStatus().ordinal()));
     }
 
     public DexOfferAttachment(ByteBuffer buffer) {
@@ -35,6 +37,7 @@ public class DexOfferAttachment extends AbstractAttachment {
         this.offerAmount = buffer.getLong();
         this.pairCurrency = buffer.get();
         this.pairRate = buffer.getLong();
+        this.status = buffer.get();
         this.finishTime = buffer.getInt();
     }
 
@@ -45,6 +48,7 @@ public class DexOfferAttachment extends AbstractAttachment {
         this.offerAmount = Convert.parseUnsignedLong((String) attachmentData.get("offerAmount"));
         this.pairCurrency = Byte.valueOf(String.valueOf(attachmentData.get("pairCurrency")));
         this.pairRate = Convert.parseUnsignedLong((String) attachmentData.get("pairRate"));
+        this.status = Byte.valueOf(String.valueOf( attachmentData.get("status")));
         this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
     }
 
@@ -55,7 +59,7 @@ public class DexOfferAttachment extends AbstractAttachment {
 
     @Override
     public int getMySize() {
-        return 1 + 1 + 8 + 1 + 8 + 4;
+        return 1 + 1 + 8 + 1 + 8 + 1 + 4;
     }
 
     @Override
@@ -65,6 +69,7 @@ public class DexOfferAttachment extends AbstractAttachment {
         buffer.putLong(this.offerAmount);
         buffer.put(this.pairCurrency);
         buffer.putLong(this.pairRate);
+        buffer.put(this.status);
         buffer.putInt(this.finishTime);
     }
 
@@ -75,7 +80,13 @@ public class DexOfferAttachment extends AbstractAttachment {
         json.put("offerAmount", this.offerAmount);
         json.put("pairCurrency", this.pairCurrency);
         json.put("pairRate", this.pairRate);
+        json.put("status", this.status);
         json.put("finishTime", this.finishTime);
+    }
+
+    @Override
+    public byte getVersion() {
+        return 1;
     }
 
     public byte getType() {
@@ -124,5 +135,13 @@ public class DexOfferAttachment extends AbstractAttachment {
 
     public void setFinishTime(int finishTime) {
         this.finishTime = finishTime;
+    }
+
+    public byte getStatus() {
+        return status;
+    }
+
+    public void setStatus(byte status) {
+        this.status = status;
     }
 }

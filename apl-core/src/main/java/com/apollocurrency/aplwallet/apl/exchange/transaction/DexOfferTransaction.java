@@ -77,8 +77,9 @@ public class DexOfferTransaction extends DEX {
 
     @Override
     public boolean canHaveRecipient() {
-        return false;
+        return true;
     }
+
 
     @Override
     public boolean isPhasingSafe() {

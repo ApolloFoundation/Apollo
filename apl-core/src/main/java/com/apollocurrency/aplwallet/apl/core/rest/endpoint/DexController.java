@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -118,6 +119,7 @@ public class DexController {
         offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
         offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
         offer.setPairRate(pairRate);
+        offer.setStatus(OfferStatus.OPEN);
         offer.setFinishTime(currentTime + amountOfTime);
 
         if(offer.getOfferCurrency().equals(offer.getPairCurrency())){
@@ -127,8 +129,10 @@ public class DexController {
         Account account = ParameterParser.getSenderAccount(req);
         DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
 
+
         try {
-            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, dexOfferAttachment);
+            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, account.getId(), offerAmount, dexOfferAttachment);
+//            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, dexOfferAttachment);
             return Response.ok(JSON.toString(response)).build();
         } catch (AplException.InsufficientBalanceException e) {
             return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();

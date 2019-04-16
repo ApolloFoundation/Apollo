@@ -33,7 +33,7 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     AbstractAppendix() {
-        this.version = getVersion();
+        this.version = getVersion() > 0 ? getVersion() : 1;
     }
 
     public abstract String getAppendixName();
