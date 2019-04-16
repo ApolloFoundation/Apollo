@@ -55,19 +55,20 @@ public class DexOfferTransaction extends DEX {
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        //TODO Implement it. Check if user really has money.
+        DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
+
+        if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
+            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+        }
+        dexService.saveOffer(new DexOffer(transaction, attachment));
+
         return true;
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
-
-        if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
-        }
-
-        dexService.saveOffer(new DexOffer(transaction, attachment));
+        //TODO Implement change status on Close.
     }
 
     @Override
@@ -80,6 +81,10 @@ public class DexOfferTransaction extends DEX {
         return true;
     }
 
+    @Override
+    public boolean mustHaveRecipient() {
+        return false;
+    }
 
     @Override
     public boolean isPhasingSafe() {

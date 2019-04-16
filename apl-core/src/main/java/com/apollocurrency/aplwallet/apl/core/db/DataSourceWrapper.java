@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -189,6 +190,7 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new BigIntegerArgumentFactory());
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OfferTypeFactory());
+        jdbi.registerArgument(new OfferStatusFactory());
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {

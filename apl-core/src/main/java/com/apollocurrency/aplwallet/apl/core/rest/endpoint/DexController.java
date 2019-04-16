@@ -9,7 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
@@ -114,25 +116,53 @@ public class DexController {
         //TODO add amountOfTime validation.
 
         DexOffer offer = new DexOffer();
-        offer.setType(OfferType.getType(offerType));
-        offer.setOfferAmount(offerAmount);
-        offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
-        offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
-        offer.setPairRate(pairRate);
-        offer.setStatus(OfferStatus.OPEN);
-        offer.setFinishTime(currentTime + amountOfTime);
+        try {
+            offer.setType(OfferType.getType(offerType));
+            offer.setOfferAmount(offerAmount);
+            offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
+            offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
+            offer.setPairRate(pairRate);
+            offer.setStatus(OfferStatus.OPEN);
+            offer.setFinishTime(currentTime + amountOfTime);
+        } catch (Exception ex){
+            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+        }
+
+        CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
+        Account account = ParameterParser.getSenderAccount(req);
+
+        if(OfferType.SELL.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getOfferCurrency())) {
+            requestWrapper.addParameter("amountATM", offer.getOfferAmount().toString());
+
+            requestWrapper.addParameter("phased", "true");
+            requestWrapper.addParameter("phasingFinishHeight", "-1");
+            requestWrapper.addParameter("phasingFinishTime", amountOfTime.toString());
+            requestWrapper.addParameter("phasingVotingModel", "-1");
+            requestWrapper.addParameter("phasingQuorum", "0");
+            requestWrapper.addParameter("phasingMinBalanceModel", "0");
+        } else if(OfferType.BUY.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getPairCurrency())) {
+            //TODO add validation.
+            Long totalAmount = offer.getOfferAmount() * pairRate;
+            requestWrapper.addParameter("amountATM", totalAmount.toString());
+            requestWrapper.addParameter("phased", "true");
+            requestWrapper.addParameter("phasingFinishHeight", "-1");
+            requestWrapper.addParameter("phasingFinishTime", amountOfTime.toString());
+            requestWrapper.addParameter("phasingVotingModel", "-1");
+            requestWrapper.addParameter("phasingQuorum", "0");
+            requestWrapper.addParameter("phasingMinBalanceModel", "0");
+        }
+
+        requestWrapper.addParameter("recipient", Convert.defaultRsAccount(account.getId()));
+        requestWrapper.addParameter("deadline", "1440");
+
 
         if(offer.getOfferCurrency().equals(offer.getPairCurrency())){
             return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
         DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
-
-
         try {
-            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, account.getId(), offerAmount, dexOfferAttachment);
-//            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, dexOfferAttachment);
+            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, account.getId(), offerAmount, dexOfferAttachment);
             return Response.ok(JSON.toString(response)).build();
         } catch (AplException.InsufficientBalanceException e) {
             return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
@@ -181,7 +211,7 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, minAskPrice, maxBidPrice);
+        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, OfferStatus.OPEN.ordinal(), minAskPrice, maxBidPrice);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
         return Response.ok(offers.stream()

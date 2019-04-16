@@ -19,8 +19,8 @@ public interface DexOfferDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO dex_offer (transaction_id, account_id, type, " +
-            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time)" +
-            "VALUES (:transactionId, :accountId, :type, :offerCurrency, :offerAmount, :pairCurrency, :pairRate, :finishTime)"
+            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status)" +
+            "VALUES (:transactionId, :accountId, :type, :offerCurrency, :offerAmount, :pairCurrency, :pairRate, :finishTime, :status)"
     )
     void save(@BindBean DexOffer dexOffer);
 
@@ -30,6 +30,7 @@ public interface DexOfferDao {
             "(:accountId is NULL or offer.account_id = :accountId)" +
             "AND (:currentTime is NULL OR offer.finish_time > :currentTime) " +
             "AND (:type is NULL OR offer.type = :type) " +
+            "AND (:type is NULL OR offer.type = :status) " +
             "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
             "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
             "ORDER BY offer.pair_rate DESC"

@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -26,6 +27,7 @@ public class DexOfferMapper implements RowMapper<DexOffer> {
         dexOffer.setPairCurrency(DexCurrencies.getType(rs.getInt("pair_currency")));
         dexOffer.setPairRate(rs.getLong("pair_rate"));
         dexOffer.setFinishTime(rs.getInt("finish_time"));
+        dexOffer.setStatus(OfferStatus.getType(rs.getInt("status")));
 
         return dexOffer;
     }

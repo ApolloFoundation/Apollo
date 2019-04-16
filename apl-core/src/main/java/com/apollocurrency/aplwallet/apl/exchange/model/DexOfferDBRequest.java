@@ -12,10 +12,11 @@ public class DexOfferDBRequest {
     private Integer currentTime;
     private Integer offerCur;
     private Integer pairCur;
+    private Integer status;
     private BigDecimal minAskPrice;
     private BigDecimal maxBidPrice;
 
-    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, Long accountId, BigDecimal minAskPrice, BigDecimal maxBidPrice) {
+    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, Long accountId, Integer status, BigDecimal minAskPrice, BigDecimal maxBidPrice) {
         this.type = type != null ? type.ordinal() : null;
         this.currentTime = currentTime;
         this.offerCur = offerCur != null ? offerCur.ordinal() : null;
@@ -23,6 +24,7 @@ public class DexOfferDBRequest {
         this.minAskPrice = minAskPrice;
         this.maxBidPrice = maxBidPrice;
         this.accountId = accountId;
+        this.status = status;
     }
 
     public DexOfferDBRequest() {
@@ -82,5 +84,13 @@ public class DexOfferDBRequest {
 
     public void setAccountId(Long accountId) {
         this.accountId = accountId;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }
