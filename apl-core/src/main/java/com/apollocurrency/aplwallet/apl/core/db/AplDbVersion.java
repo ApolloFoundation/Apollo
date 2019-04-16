@@ -732,11 +732,13 @@ public class AplDbVersion extends DbVersion {
             case 270:
                 apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY AUTO_INCREMENT, transaction_id BIGINT NOT NULL, type TINYINT NOT NULL," +
                         "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL," +
-                        " pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL, status TINYINT NOT NULL)");
+                        " pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL)");
             case 271 :
                 apply("CREATE UNIQUE INDEX dex_offer_tr_ID ON dex_offer(transaction_id)");
             case 272 :
-                return 272;
+                    apply("ALTER TABLE dex_offer ADD status TINYINT NOT NULL;");
+            case 273 :
+                return 273;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
