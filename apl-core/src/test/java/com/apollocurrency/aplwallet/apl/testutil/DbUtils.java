@@ -16,13 +16,11 @@ public class DbUtils {
         TransactionalDataSource dataSource = extension.getDatabaseManger().getDataSource();
         try (Connection con = dataSource.begin()) { // start new transaction
             consumer.accept(con);
-            dataSource.commit(false);
+            dataSource.commit();
         }
         catch (SQLException e) {
-            dataSource.rollback(false);
+            dataSource.rollback();
             throw e;
-        } finally {
-            dataSource.endTransaction();
         }
     }
 }
