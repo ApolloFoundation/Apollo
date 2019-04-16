@@ -736,7 +736,7 @@ public class AplDbVersion extends DbVersion {
             case 271 :
                 apply("CREATE UNIQUE INDEX dex_offer_tr_ID ON dex_offer(transaction_id)");
             case 272 :
-                    apply("ALTER TABLE dex_offer ADD status TINYINT NOT NULL;");
+                    apply("ALTER TABLE dex_offer ADD status TINYINT");
             case 273 :
                 return 273;
             default:
