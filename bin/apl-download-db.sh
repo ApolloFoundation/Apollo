@@ -8,8 +8,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 ${DIR}/apl-stop.sh
 
-#DB_LOCATION=~/.apl-blockchain/apl-blockchain-db
-DB_LOCATION=~/0
+DB_LOCATION=~/.apl-blockchain/apl-blockchain-db
 DB_FILE=b5d7b6.jar
 DB_URL="https://s3.amazonaws.com/updates.apollowallet.org/database/${DB_FILE}"
 echo "Exctractiong into ${DB_LOCATION}"
