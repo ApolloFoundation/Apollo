@@ -571,6 +571,9 @@ public final class ParameterParser {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
+        if (publicKey == null) {
+            throw new ParameterException(UNKNOWN_ACCOUNT);
+        }
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);

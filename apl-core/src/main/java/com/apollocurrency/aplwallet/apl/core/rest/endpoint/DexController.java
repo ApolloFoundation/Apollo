@@ -117,54 +117,55 @@ public class DexController {
                                 @Context HttpServletRequest req) throws NotFoundException {
         Integer currentTime = epochTime.getEpochTime();
         //TODO add amountOfTime validation.
-
-        DexOffer offer = new DexOffer();
         try {
-            offer.setType(OfferType.getType(offerType));
-            offer.setOfferAmount(offerAmount);
-            offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
-            offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
-            offer.setPairRate(pairRate);
-            offer.setStatus(OfferStatus.OPEN);
-            offer.setFinishTime(currentTime + amountOfTime);
-        } catch (Exception ex){
-            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
-        }
-
-        CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
-        Account account = ParameterParser.getSenderAccount(req);
-        Long totalOfferAmount = 0L;
-        Long recipientId = 0L;
-
-        if(OfferType.SELL.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getOfferCurrency())) {
-            totalOfferAmount = offer.getOfferAmount();
-            requestWrapper.addParameter("amountATM", totalOfferAmount.toString());
-            recipientId = account.getId();
-
-            addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
-        } else if(OfferType.BUY.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getPairCurrency())) {
+            DexOffer offer = new DexOffer();
             try {
-                totalOfferAmount = Math.multiplyExact(offer.getOfferAmount(), pairRate);
-            } catch (ArithmeticException ex){
-                return Response.ok(JSON.toString(JSONResponses.ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH)).build();
+                offer.setType(OfferType.getType(offerType));
+                offer.setOfferAmount(offerAmount);
+                offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
+                offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
+                offer.setPairRate(pairRate);
+                offer.setStatus(OfferStatus.OPEN);
+                offer.setFinishTime(currentTime + amountOfTime);
+            } catch (Exception ex) {
+                return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
             }
-            recipientId = account.getId();
 
-            addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
-        }
+            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
+            Account account = ParameterParser.getSenderAccount(req);
+            Long totalOfferAmount = 0L;
+            Long recipientId = 0L;
 
-        requestWrapper.addParameter("deadline", "1440");
+            if (OfferType.SELL.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getOfferCurrency())) {
+                totalOfferAmount = offer.getOfferAmount();
+                requestWrapper.addParameter("amountATM", totalOfferAmount.toString());
+                recipientId = account.getId();
 
-        if(offer.getOfferCurrency().equals(offer.getPairCurrency())){
-            return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
-        }
+                addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
+            } else if (OfferType.BUY.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getPairCurrency())) {
+                try {
+                    totalOfferAmount = Math.multiplyExact(offer.getOfferAmount(), pairRate);
+                } catch (ArithmeticException ex) {
+                    return Response.ok(JSON.toString(JSONResponses.ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH)).build();
+                }
+                recipientId = account.getId();
 
-        DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
-        try {
-            JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, recipientId, totalOfferAmount, dexOfferAttachment);
-            return Response.ok(JSON.toString(response)).build();
-        } catch (AplException.InsufficientBalanceException e) {
-            return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
+            }
+
+            requestWrapper.addParameter("deadline", "1440");
+
+            if (offer.getOfferCurrency().equals(offer.getPairCurrency())) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
+            }
+
+            DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
+            try {
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, recipientId, totalOfferAmount, dexOfferAttachment);
+                return Response.ok(JSON.toString(response)).build();
+            } catch (AplException.InsufficientBalanceException e) {
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
         } catch (ParameterException ex){
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         }
