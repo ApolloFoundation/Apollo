@@ -91,12 +91,12 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + Convert.toBytes(name).length + 1 + Convert.toBytes(code).length + 2 + Convert.toBytes(description).length + 1 + 8 + 8 + 8 + 4 + 8 + 1 + 1 + 1 + 1 + 1;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] name = Convert.toBytes(this.name);
         byte[] code = Convert.toBytes(this.code);
         byte[] description = Convert.toBytes(this.description);
@@ -120,7 +120,7 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("name", name);
         attachment.put("code", code);
         attachment.put("description", description);

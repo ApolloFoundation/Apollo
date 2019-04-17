@@ -1,6 +1,10 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
@@ -43,6 +47,11 @@ public class DaoConfig {
     @Produces
     private ShardRecoveryDao shardRecoveryDao() {
         return createDaoInterfaceProxy(ShardRecoveryDao.class);
+    }
+
+    @Produces
+    public TaggedDataTimestampDao taggedDataTimestampDao() {
+        return createDaoInterfaceProxy(TaggedDataTimestampDao.class);
     }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {

@@ -1,14 +1,14 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.transaction.messages;
+package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Data;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.nio.ByteBuffer;
 import javax.enterprise.inject.spi.CDI;
@@ -51,17 +51,17 @@ public final class TaggedDataExtend extends TaggedDataAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(taggedDataId);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
         attachment.put("taggedData", Long.toUnsignedString(taggedDataId));
     }
@@ -88,7 +88,7 @@ public final class TaggedDataExtend extends TaggedDataAttachment {
     }
 
     @Override
-    long getTaggedDataId(Transaction transaction) {
+    public long getTaggedDataId(Transaction transaction) {
         return taggedDataId;
     }
 

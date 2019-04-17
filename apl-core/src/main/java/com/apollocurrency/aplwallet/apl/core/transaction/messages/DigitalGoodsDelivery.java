@@ -56,12 +56,12 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 4 + goods.getSize() + 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(purchaseId);
         buffer.putInt(goodsIsText ? goods.getData().length | Integer.MIN_VALUE : goods.getData().length);
         buffer.put(goods.getData());
@@ -70,7 +70,7 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("purchase", Long.toUnsignedString(purchaseId));
         attachment.put("goodsData", Convert.toHexString(goods.getData()));
         attachment.put("goodsNonce", Convert.toHexString(goods.getNonce()));

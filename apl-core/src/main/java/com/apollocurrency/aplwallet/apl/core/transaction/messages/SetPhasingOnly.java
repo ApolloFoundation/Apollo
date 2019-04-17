@@ -51,12 +51,12 @@ public final class SetPhasingOnly extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return phasingParams.getMySize() + 8 + 2 + 2;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         phasingParams.putMyBytes(buffer);
         buffer.putLong(maxFees);
         buffer.putShort(minDuration);
@@ -64,7 +64,7 @@ public final class SetPhasingOnly extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         JSONObject phasingControlParams = new JSONObject();
         phasingParams.putMyJSON(phasingControlParams);
         json.put("phasingControlParams", phasingControlParams);

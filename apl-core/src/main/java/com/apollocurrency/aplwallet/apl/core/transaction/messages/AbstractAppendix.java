@@ -2,7 +2,6 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import java.nio.ByteBuffer;
@@ -48,9 +47,9 @@ public abstract class AbstractAppendix implements Appendix {
         return getMyFullSize() + (version > 0 ? 1 : 0);
     }
 
-    abstract int getMySize();
+    public abstract int getMySize();
 
-    int getMyFullSize() {
+    public int getMyFullSize() {
         return getMySize();
     }
 
@@ -62,7 +61,7 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
-    abstract void putMyBytes(ByteBuffer buffer);
+    public abstract void putMyBytes(ByteBuffer buffer);
 
     @Override
     public final JSONObject getJSONObject() {
@@ -72,7 +71,7 @@ public abstract class AbstractAppendix implements Appendix {
         return json;
     }
 
-    abstract void putMyJSON(JSONObject json);
+    public abstract void putMyJSON(JSONObject json);
 
     @Override
     public final byte getVersion() {
