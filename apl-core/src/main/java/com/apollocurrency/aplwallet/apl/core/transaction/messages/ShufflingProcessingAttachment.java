@@ -61,7 +61,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    int getMyFullSize() {
+    public int getMyFullSize() {
         int size = super.getMySize();
         if (data != null) {
             size += 1;
@@ -74,18 +74,18 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return super.getMySize() + 32;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
         buffer.put(getHash());
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
         if (data != null) {
             JSONArray jsonArray = new JSONArray();

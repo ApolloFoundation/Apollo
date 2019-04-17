@@ -24,11 +24,11 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Data;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUpload;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;

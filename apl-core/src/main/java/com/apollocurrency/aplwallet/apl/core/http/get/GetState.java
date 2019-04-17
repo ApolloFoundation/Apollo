@@ -37,7 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.tagged.dao.TagDao;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -57,6 +58,7 @@ import javax.enterprise.inject.spi.CDI;
 public final class GetState extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private UPnP upnp = CDI.current().select(UPnP.class).get();
+    private TagDao tagDao = CDI.current().select(TagDao.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public GetState() {
@@ -92,7 +94,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfVotes", Vote.getCount());
             response.put("numberOfPrunableMessages", PrunableMessage.getCount());
             response.put("numberOfTaggedData", TaggedData.getCount());
-            response.put("numberOfDataTags", TaggedData.Tag.getTagCount());
+            response.put("numberOfDataTags", tagDao.getCount());
             response.put("numberOfAccountLeases", AccountLeaseTable.getAccountLeaseCount());
             response.put("numberOfActiveAccountLeases", Account.getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());

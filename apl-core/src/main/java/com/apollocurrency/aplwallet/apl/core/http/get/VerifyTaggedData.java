@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUpload;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

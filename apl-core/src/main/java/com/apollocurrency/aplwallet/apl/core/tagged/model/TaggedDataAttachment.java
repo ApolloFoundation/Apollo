@@ -1,10 +1,11 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.transaction.messages;
+package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import java.nio.ByteBuffer;
@@ -75,7 +76,7 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
     }
 
     @Override
-    final int getMyFullSize() {
+    public int getMyFullSize() {
         if (getData() == null) {
             return 0;
         }
@@ -83,7 +84,7 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         if (taggedData != null) {
             attachment.put("name", taggedData.getName());
             attachment.put("description", taggedData.getDescription());
@@ -190,6 +191,6 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
         return taggedData != null || data != null;
     }
 
-    abstract long getTaggedDataId(Transaction transaction);
+    public abstract long getTaggedDataId(Transaction transaction);
     
 }

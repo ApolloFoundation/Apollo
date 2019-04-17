@@ -18,7 +18,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -28,18 +28,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -116,7 +116,7 @@ public class TaggedData {
                             }
                         }
                     }
-                    Tag.delete(expiredTags);
+//                    Tag.delete(expiredTags); // TODO: YL review and change
                 } catch (SQLException e) {
                     throw new RuntimeException(e.toString(), e);
                 }
@@ -126,62 +126,32 @@ public class TaggedData {
 
     };
 
-    private static final class Timestamp {
 
-        private final long id;
-        private final DbKey dbKey;
-        private int timestamp;
-
-        private Timestamp(long id, int timestamp) {
-            this.id = id;
-            this.dbKey = timestampKeyFactory.newKey(this.id);
-            this.timestamp = timestamp;
-        }
-
-        private Timestamp(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.id = rs.getLong("id");
-            this.dbKey = dbKey;
-            this.timestamp = rs.getInt("timestamp");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, TRUE)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.id);
-                pstmt.setInt(++i, this.timestamp);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-
-    }
-
-
-    private static final LongKeyFactory<Timestamp> timestampKeyFactory = new LongKeyFactory<Timestamp>("id") {
+    private static final LongKeyFactory<TaggedDataTimestamp> timestampKeyFactory = new LongKeyFactory<TaggedDataTimestamp>("id") {
 
         @Override
-        public DbKey newKey(Timestamp timestamp) {
-            return timestamp.dbKey;
+        public DbKey newKey(TaggedDataTimestamp timestamp) {
+            return null /*timestamp.dbKey*/; // TODO: YL review and change
         }
 
     };
 
-    private static final VersionedEntityDbTable<Timestamp> timestampTable = new VersionedEntityDbTable<Timestamp>(
+    private static final VersionedEntityDbTable<TaggedDataTimestamp> timestampTable = new VersionedEntityDbTable<TaggedDataTimestamp>(
             "tagged_data_timestamp", timestampKeyFactory) {
 
         @Override
-        public Timestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-            return new Timestamp(rs, dbKey);
+        public TaggedDataTimestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            return new TaggedDataTimestamp(rs, dbKey);
         }
 
         @Override
-        public void save(Connection con, Timestamp timestamp) throws SQLException {
-            timestamp.save(con);
+        public void save(Connection con, TaggedDataTimestamp timestamp) throws SQLException {
+//            timestamp.save(con); // TODO: YL review and change
         }
 
     };
 
+/*
     public static final class Tag {
 
         private static final StringKeyFactory<Tag> tagDbKeyFactory = new StringKeyFactory<Tag>("tag") {
@@ -311,6 +281,7 @@ public class TaggedData {
         }
 
     }
+*/
 
     private static final LongKeyFactory<Long> extendDbKeyFactory = new LongKeyFactory<Long>("id") {
 
@@ -385,9 +356,11 @@ public class TaggedData {
         return dbClause;
     }
 
+/*
     static void init() {
         Tag.init();
     }
+*/
 
     private final long id;
     private final DbKey dbKey;
@@ -539,37 +512,38 @@ public class TaggedData {
                 taggedData = new TaggedData(transaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());
                 taggedDataTable.insert(taggedData);
-                Tag.add(taggedData);
+//                Tag.add(taggedData); // TODO: YL review and change
             }
         }
-        Timestamp timestamp = new Timestamp(transaction.getId(), transaction.getTimestamp());
+        TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp());
         timestampTable.insert(timestamp);
     }
 
     public static void extend(Transaction transaction, TaggedDataExtend attachment) {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
-        Timestamp timestamp = timestampTable.get(dbKey);
-        if (transaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp.timestamp) {
-            timestamp.timestamp = transaction.getTimestamp();
+        TaggedDataTimestamp timestamp = timestampTable.get(dbKey);
+        if (transaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp.getTimestamp()) {
+            timestamp.setTimestamp(transaction.getTimestamp() );
         } else {
-            timestamp.timestamp = timestamp.timestamp + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.timestamp);
+            timestamp.setTimestamp(timestamp.getTimestamp()
+                    + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.getTimestamp()));
         }
         timestampTable.insert(timestamp);
         // TODO: YL review
 //        List<Long> extendTransactionIds = extendTable.get(dbKey);
 //        extendTransactionIds.add(transaction.getId());
 //        extendTable.insert(taggedDataId, extendTransactionIds);
-        if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.timestamp) {
+        if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.getTimestamp()) {
             TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData == null && attachment.getData() != null) {
                 Transaction uploadTransaction = blockchain.getTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());
-                Tag.add(taggedData);
+//                Tag.add(taggedData); // TODO: YL review and change
             }
             if (taggedData != null) {
-                taggedData.transactionTimestamp = timestamp.timestamp;
+                taggedData.transactionTimestamp = timestamp.getTimestamp();
                 taggedData.blockTimestamp = blockchain.getLastBlockTimestamp();
                 taggedData.height = blockchain.getHeight();
                 taggedDataTable.insert(taggedData);
@@ -580,7 +554,7 @@ public class TaggedData {
     public static void restore(Transaction transaction, TaggedDataUpload attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
-        Tag.add(taggedData, height);
+//        Tag.add(taggedData, height); // TODO: YL review and change
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : TaggedData.getExtendTransactionIds(transaction.getId())) {
             Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);

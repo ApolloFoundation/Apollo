@@ -51,12 +51,12 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + Convert.toBytes(name).length + 2 + Convert.toBytes(description).length + 8 + 1;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] name = Convert.toBytes(this.name);
         byte[] description = Convert.toBytes(this.description);
         buffer.put((byte) name.length);
@@ -68,7 +68,7 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("name", name);
         attachment.put("description", description);
         attachment.put("quantityATU", quantityATU);

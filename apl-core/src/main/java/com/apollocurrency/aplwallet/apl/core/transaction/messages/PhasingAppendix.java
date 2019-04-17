@@ -130,12 +130,12 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 4 + params.getMySize() + 1 + 32 * linkedFullHashes.length + 1 + hashedSecret.length + 1;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(finishHeight);
         params.putMyBytes(buffer);
         buffer.put((byte) linkedFullHashes.length);
@@ -148,7 +148,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         json.put("phasingFinishHeight", finishHeight);
         params.putMyJSON(json);
         if (linkedFullHashes.length > 0) {
