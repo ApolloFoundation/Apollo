@@ -7,6 +7,8 @@ call "%DIRP%\apl-common.bat"
 
 set UH=%HOMEDRIVE%%HOMEPATH%
 set DB_LOCATION=%UH%\.apl-blockchain\apl-blockchain-db
+rmdir /Q/S %DB_LOCATION%
+mkdir %DB_LOCATION%
 set DB_FILE=b5d7b6.jar
 set DB_URL="https://s3.amazonaws.com/updates.apollowallet.org/database/%DB_FILE%"
 echo "Downloading and Exctracting %DB_FILE% into %DB_LOCATION%"
