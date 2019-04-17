@@ -13,5 +13,5 @@ echo "Downloading and Exctracting %DB_FILE% into %DB_LOCATION%"
 cd %DB_LOCATION%
 %DIRP%\..\curl -k --output %DB_FILE% %DB_URL%
 %JAR_CMD% -v -x -f %DB_FILE%
-DEL META-INF
-DEL %DB_FILE%
+@REM DEL META-INF
+@REM DEL %DB_FILE%
