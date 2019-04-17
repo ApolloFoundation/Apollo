@@ -232,6 +232,14 @@ public final class JSONResponses {
         ERROR_INCORRECT_REQUEST = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH;
+    static {
+        JSONObject response  = new JSONObject();
+        response.put("errorCode", 1);
+        response.put("errorDescription", " Amount or rate is too high.");
+        ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH = JSON.prepare(response);
+    }
+
     public static final JSONStreamAware NOT_FORGING;
     static {
         JSONObject response = new JSONObject();

@@ -19,6 +19,7 @@ public class DexOfferMapper implements RowMapper<DexOffer> {
     public DexOffer map(ResultSet rs, StatementContext ctx) throws SQLException {
         DexOffer dexOffer = new DexOffer();
 
+        dexOffer.setId(rs.getLong("db_id"));
         dexOffer.setTransactionId(rs.getLong("transaction_id"));
         dexOffer.setAccountId(rs.getLong("account_id"));
         dexOffer.setType(OfferType.getType(rs.getInt("type")));
