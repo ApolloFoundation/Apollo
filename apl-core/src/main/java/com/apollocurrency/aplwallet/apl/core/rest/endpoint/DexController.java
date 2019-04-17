@@ -146,15 +146,6 @@ public class DexController {
                 recipientId = account.getId();
 
                 addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
-            } else if (OfferType.BUY.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getPairCurrency())) {
-                try {
-                    totalOfferAmount = Math.multiplyExact(offer.getOfferAmount(), pairRate);
-                } catch (ArithmeticException ex) {
-                    return Response.ok(JSON.toString(JSONResponses.ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH)).build();
-                }
-                recipientId = account.getId();
-
-                addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
             }
 
             requestWrapper.addParameter("deadline", "1440");
