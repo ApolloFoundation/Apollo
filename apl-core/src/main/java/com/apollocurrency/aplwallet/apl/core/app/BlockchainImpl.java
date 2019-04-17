@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -338,11 +339,13 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
         return transactionDao.hasTransaction(transactionId) || transactionIndexDao.getByTransactionId(transactionId) != null;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId, int height) {
         boolean hasTransaction = transactionDao.hasTransaction(transactionId, height);
         if (!hasTransaction) {
@@ -354,11 +357,13 @@ public class BlockchainImpl implements Blockchain {
 
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(String fullHash) {
         return hasTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash) {
         return transactionDao.hasTransactionByFullHash(fullHash) || hasShardTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
@@ -373,11 +378,13 @@ public class BlockchainImpl implements Blockchain {
 
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         return transactionDao.hasTransactionByFullHash(fullHash, height) || hasShardTransactionByFullHash(fullHash, height);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
         Transaction transaction = transactionDao.findTransactionByFullHash(fullHash, heightLimit);
         Integer txHeight = null;
@@ -390,6 +397,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] getFullHash(long transactionId) {
         byte[] fullHash = transactionDao.getFullHash(transactionId);
         if (fullHash == null) {

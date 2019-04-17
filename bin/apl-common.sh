@@ -58,6 +58,8 @@ else
   fi
     JAVA_CMD=java
 fi
+JAVA_BASE=$(dirname $(readlink $(which java)))
+JAR_CMD=$JAVA_BASE/jar
 
 jdk_version() {
   local result

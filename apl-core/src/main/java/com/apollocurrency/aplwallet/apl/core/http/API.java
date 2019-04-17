@@ -427,7 +427,12 @@ public final class API {
                 }
 
           //  }, true);
-
+          if(enableAPIUPnP){
+              if(!upnp.isInited()){
+                upnp.init();
+              }
+              upnp.addPort(port);
+          }
         } else {
             apiServer = null;
             disableAdminPassword = false;

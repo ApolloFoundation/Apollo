@@ -417,6 +417,7 @@ public final class BlockImpl implements Block {
             Account account = Account.getAccount(getGeneratorId());
             long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceAPL();
             if (effectiveBalance <= 0) {
+                LOG.warn("Account: {} Effective ballance: {},  verification failed",account,effectiveBalance);
                 return false;
             }
 
@@ -424,13 +425,18 @@ public final class BlockImpl implements Block {
             digest.update(previousBlock.getGenerationSignature());
             byte[] generationSignatureHash = digest.digest(getGeneratorPublicKey());
             if (!Arrays.equals(generationSignature, generationSignatureHash)) {
+                LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, verification failed",
+                        account,effectiveBalance,generationSignature,generationSignatureHash);
                 return false;
             }
 
             BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
 
-            return Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout: timestamp);
-
+            boolean ret = Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout: timestamp);
+            if(!ret){
+               LOG.warn("Account: {} Effective ballance: {},  Generator.verifyHit() verification failed",account,effectiveBalance);
+            }
+            return ret;
         } catch (RuntimeException e) {
 
             LOG.info("Error verifying block generation signature", e);
