@@ -59,6 +59,7 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_ACCOUNT = incorrect("account");
     public static final JSONStreamAware INCORRECT_TIMESTAMP = incorrect("timestamp");
     public static final JSONStreamAware UNKNOWN_ACCOUNT = unknown("account");
+    public static final JSONStreamAware UNKNOWN_PUBLIC_KEY = unknown("public key");
     public static final JSONStreamAware UNKNOWN_ALIAS = unknown("alias");
     public static final JSONStreamAware UNKNOWN_ASSET = unknown("asset");
     public static final JSONStreamAware INCORRECT_ASSET = incorrect("asset");

@@ -30,7 +30,7 @@ public interface DexOfferDao {
             "(:accountId is NULL or offer.account_id = :accountId)" +
             "AND (:currentTime is NULL OR offer.finish_time > :currentTime) " +
             "AND (:type is NULL OR offer.type = :type) " +
-            "AND (:type is NULL OR offer.type = :status) " +
+            "AND (:status is NULL OR offer.status = :status) " +
             "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
             "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
             "ORDER BY offer.pair_rate DESC"

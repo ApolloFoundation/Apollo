@@ -49,6 +49,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_C
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -572,7 +573,7 @@ public final class ParameterParser {
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
         if (publicKey == null) {
-            throw new ParameterException(UNKNOWN_ACCOUNT);
+            throw new ParameterException(UNKNOWN_PUBLIC_KEY);
         }
         Account account = Account.getAccount(publicKey);
         if (account == null) {
