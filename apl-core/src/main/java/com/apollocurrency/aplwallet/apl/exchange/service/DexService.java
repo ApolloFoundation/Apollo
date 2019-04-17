@@ -29,10 +29,15 @@ public class DexService {
         this.dexOfferDao = dexOfferDao;
     }
 
+    public void updateOffer (DexOffer offer){
+        dexOfferDao.save(offer);
+    }
 
 
     public void saveOffer (DexOffer offer){
-        dexOfferDao.save(offer);
+        if(dexOfferDao.getByTransactionId(offer.getTransactionId()) == null){
+            dexOfferDao.save(offer);
+        }
     }
 
     public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest){

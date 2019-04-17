@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -37,5 +38,10 @@ public interface DexOfferDao {
     )
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffers(@BindBean DexOfferDBRequest dexOfferDBRequest);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer where transaction_id = :transactionId")
+    @RegisterRowMapper(DexOfferMapper.class)
+    DexOffer getByTransactionId(@Bind("transactionId") long blockId);
 
 }

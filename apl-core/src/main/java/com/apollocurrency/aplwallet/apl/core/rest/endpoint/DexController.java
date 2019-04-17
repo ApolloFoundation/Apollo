@@ -131,6 +131,10 @@ public class DexController {
                 return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
             }
 
+            if (offer.getOfferCurrency().equals(offer.getPairCurrency())) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
+            }
+
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             Account account = ParameterParser.getSenderAccount(req);
             Long totalOfferAmount = 0L;
@@ -154,10 +158,6 @@ public class DexController {
             }
 
             requestWrapper.addParameter("deadline", "1440");
-
-            if (offer.getOfferCurrency().equals(offer.getPairCurrency())) {
-                return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
-            }
 
             DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
             try {
