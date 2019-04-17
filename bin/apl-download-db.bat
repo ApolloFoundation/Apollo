@@ -1,7 +1,7 @@
 @REM This file required for starting user-mode Apollo application on Windows.
 @echo off
 set DIRP=%~dp0
-call "%DIRP%\bin\apl-common.bat"
+call "%DIRP%\apl-common.bat"
 
 @REM Start downloading Apollo database. Please make sure that Apollo IS SPOPPED!
 
