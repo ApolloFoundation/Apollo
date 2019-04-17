@@ -45,9 +45,9 @@ public class DexOfferAttachment extends AbstractAttachment {
         super(attachmentData);
         this.type = Byte.valueOf(String.valueOf(attachmentData.get("type")));
         this.offerCurrency = Byte.valueOf(String.valueOf(attachmentData.get("offerCurrency")));
-        this.offerAmount = Convert.parseUnsignedLong((String) attachmentData.get("offerAmount"));
+        this.offerAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("offerAmount")));
         this.pairCurrency = Byte.valueOf(String.valueOf(attachmentData.get("pairCurrency")));
-        this.pairRate = Convert.parseUnsignedLong((String) attachmentData.get("pairRate"));
+        this.pairRate = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("pairRate")));
         this.status = Byte.valueOf(String.valueOf( attachmentData.get("status")));
         this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
     }
