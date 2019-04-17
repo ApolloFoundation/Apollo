@@ -117,21 +117,21 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     public PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
         Blockchain blockchain = lookupBlockchain();
 
+        int phasingTimeLockDuration = -1;
         int phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
-                -1,
-                blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
-                true);
-        int phasingTimeLockDuration = ParameterParser.getInt(req, "phasingFinishTime",
-                -1,
-                Constants.MAX_PHASING_TIME_DURATION_SEC,
-                true);
-        int phasingFinishTime = -1;
+                -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
+
+        if(req.getParameter("phasingFinishTime") != null){
+            phasingTimeLockDuration = ParameterParser.getInt(req, "phasingFinishTime",
+                    -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
+        }
 
         if(phasingFinishHeight != -1 && phasingTimeLockDuration != -1){
             throw new ParameterException(
                     JSONResponses.incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
         }
 
+        int phasingFinishTime = -1;
         if(phasingTimeLockDuration == -1) {
             phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
                     blockchain.getHeight() + 1,
