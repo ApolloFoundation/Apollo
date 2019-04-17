@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollLinkedTransactionMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -33,6 +33,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
             return new LongKey(poll.getPollId());
         }
     };
+    private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper();
     private final Blockchain blockchain;
 
     @Inject
@@ -43,11 +44,9 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
 
     @Override
     public PhasingPollLinkedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        int height = rs.getInt("height");
-        long pollId = rs.getLong("transaction_id");
-        long linkedTransactionId = rs.getLong("linked_transaction_id");
-        byte[] fullHash = rs.getBytes("linked_full_hash");
-        return new PhasingPollLinkedTransaction(pollId, linkedTransactionId, fullHash, height);
+        PhasingPollLinkedTransaction linkedTransaction = MAPPER.map(rs, null);
+        linkedTransaction.setDbKey(dbKey);
+        return linkedTransaction;
     }
 
     public List<PhasingPollLinkedTransaction> get(long id) {
@@ -62,7 +61,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
             pstmt.setLong(++i, linkedTransaction.getPollId());
             pstmt.setBytes(++i, linkedTransaction.getFullHash());
             pstmt.setLong(++i, linkedTransaction.getTransactionId());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, linkedTransaction.getHeight());
             pstmt.executeUpdate();
         }
     }

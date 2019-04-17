@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 
 import java.sql.Connection;
@@ -37,6 +38,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     };
     private static final String TABLE_NAME = "phasing_poll";
     private final Blockchain blockchain;
+    private static final PhasingPollMapper MAPPER = new PhasingPollMapper();
 
     @Inject
     public PhasingPollTable(Blockchain blockchain) {
@@ -47,7 +49,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     @Override
     public PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new PhasingPoll(rs);
+        PhasingPoll poll = MAPPER.map(rs, null);
+        poll.setDbKey(dbKey);
+        return poll;
     }
 
     public PhasingPoll get(long id) {
@@ -72,7 +76,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             pstmt.setByte(++i, voteWeighting.getMinBalanceModel().getCode());
             DbUtils.setBytes(pstmt, ++i, poll.getHashedSecret());
             pstmt.setByte(++i, poll.getAlgorithm());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, poll.getHeight());
             pstmt.executeUpdate();
         }
     }

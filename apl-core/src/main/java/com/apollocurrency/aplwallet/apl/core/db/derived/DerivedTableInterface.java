@@ -36,6 +36,12 @@ public interface DerivedTableInterface<T> {
         throw new UnsupportedOperationException("unsupported save");
     }
 
-    default boolean delete(T t) {return false;}
+    default DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
+        throw new UnsupportedOperationException("GetAll is not supported");
+    }
+
+    default boolean delete(T t) {
+        throw new UnsupportedOperationException("Delete is not supported");
+    }
 
 }

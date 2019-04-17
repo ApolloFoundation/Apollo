@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingVoteMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 
 import java.sql.Connection;
@@ -27,6 +28,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
             return new LinkKey(vote.getPhasedTransactionId(), vote.getVoterId());
         }
     };
+    private static final PhasingVoteMapper MAPPER = new PhasingVoteMapper();
     private static final String TABLE_NAME = "phasing_vote";
 
 
@@ -36,7 +38,9 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
 
     @Override
     public PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new PhasingVote(rs);
+        PhasingVote phasingVote = MAPPER.map(rs, null);
+        phasingVote.setDbKey(dbKey);
+        return phasingVote;
     }
 
     @Override
@@ -48,7 +52,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
             pstmt.setLong(++i, vote.getVoteId());
             pstmt.setLong(++i, vote.getPhasedTransactionId());
             pstmt.setLong(++i, vote.getVoterId());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, vote.getHeight());
             pstmt.executeUpdate();
         }
     }

@@ -29,7 +29,6 @@ public class PhasingPollLinkedTransaction {
         if (!(o instanceof PhasingPollLinkedTransaction)) return false;
         PhasingPollLinkedTransaction that = (PhasingPollLinkedTransaction) o;
         return height == that.height &&
-                Objects.equals(dbKey, that.dbKey) &&
                 Objects.equals(pollId, that.pollId) &&
                 Objects.equals(transactionId, that.transactionId) &&
                 Arrays.equals(fullHash, that.fullHash);
@@ -37,7 +36,7 @@ public class PhasingPollLinkedTransaction {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(dbKey, pollId, transactionId, height);
+        int result = Objects.hash(pollId, transactionId, height);
         result = 31 * result + Arrays.hashCode(fullHash);
         return result;
     }

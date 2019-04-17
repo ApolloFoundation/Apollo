@@ -6,33 +6,44 @@ package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Objects;
 
 public class PhasingVote {
 
+    private DbKey dbKey;
     private final long phasedTransactionId;
     private final long voterId;
     private final long voteId;
+    private final int height;
 
     public PhasingVote(Transaction transaction, Account voter, long phasedTransactionId) {
         this.phasedTransactionId = phasedTransactionId;
         this.voterId = voter.getId();
         this.voteId = transaction.getId();
+        this.height = transaction.getHeight();
     }
 
-    public PhasingVote(ResultSet rs) throws SQLException {
-        this.phasedTransactionId = rs.getLong("transaction_id");
-        this.voterId = rs.getLong("voter_id");
-        this.voteId = rs.getLong("vote_id");
-    }
 
-    public PhasingVote(long phasedTransactionId, long voterId, long voteId) {
+
+    public PhasingVote(long phasedTransactionId, long voterId, long voteId, int height) {
         this.phasedTransactionId = phasedTransactionId;
         this.voterId = voterId;
         this.voteId = voteId;
+        this.height = height;
+    }
+
+    public DbKey getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     @Override
@@ -42,12 +53,13 @@ public class PhasingVote {
         PhasingVote that = (PhasingVote) o;
         return phasedTransactionId == that.phasedTransactionId &&
                 voterId == that.voterId &&
-                voteId == that.voteId;
+                voteId == that.voteId &&
+                height == that.height;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(phasedTransactionId, voterId, voteId);
+        return Objects.hash(phasedTransactionId, voterId, voteId, height);
     }
 
     public long getPhasedTransactionId() {

@@ -156,7 +156,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void addPoll(Transaction transaction, PhasingAppendix appendix) {
-        PhasingPoll poll = new PhasingPoll(transaction, appendix);
+        PhasingPoll poll = new PhasingPoll(transaction, appendix, blockchain.getHeight());
         phasingPollTable.insert(poll);
         long[] voters = poll.getWhitelist();
         if (voters.length > 0) { // TODO: YL check later
@@ -180,7 +180,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void finish(PhasingPoll phasingPoll, long result) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight() + 1);
+        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight());
         resultTable.insert(phasingPollResult);
     }
 

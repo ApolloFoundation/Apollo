@@ -169,7 +169,7 @@ public class DGSService {
         return dgsPurchase.getFeedbacks();
     }
 
-    private void addFeedbackNote(DGSPurchase purchase, EncryptedData feedbackNote) {
+    private void addFeedback(DGSPurchase purchase, EncryptedData feedbackNote) {
         if (purchase.getFeedbacks() == null) {
             purchase.setFeedbacks(new ArrayList<>());
         }
@@ -344,7 +344,7 @@ public class DGSService {
     public void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {
         DGSPurchase purchase = purchaseTable.get(purchaseId);
         if (encryptedMessage != null) {
-            addFeedbackNote(purchase, encryptedMessage.getEncryptedData());
+            addFeedback(purchase, encryptedMessage.getEncryptedData());
         }
         if (message != null) {
             addPublicFeedback(purchase, Convert.toString(message.getMessage()));

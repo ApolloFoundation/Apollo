@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+
 import java.util.Objects;
 
 public class PhasingPollResult {
 
+    private DbKey dbKey;
     private final long id;
     private final long result;
     private final boolean approved;
@@ -28,6 +31,13 @@ public class PhasingPollResult {
         this.height = height;
     }
 
+    public DbKey getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
+    }
 
     public long getId() {
         return id;

@@ -26,14 +26,13 @@ public class PhasingPollVoter {
         if (!(o instanceof PhasingPollVoter)) return false;
         PhasingPollVoter that = (PhasingPollVoter) o;
         return height == that.height &&
-                Objects.equals(dbKey, that.dbKey) &&
                 Objects.equals(pollId, that.pollId) &&
                 Objects.equals(voterId, that.voterId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dbKey, pollId, voterId, height);
+        return Objects.hash(pollId, voterId, height);
     }
 
     public Long getPollId() {
