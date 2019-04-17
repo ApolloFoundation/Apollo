@@ -50,12 +50,13 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
     public GetDGSPurchase() {
         super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey", "account", "passphrase");
     }
+
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DGSPurchase purchase = ParameterParser.getPurchase(req);
+        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
         JSONObject response = JSONData.purchase(service, purchase);
 
         byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);

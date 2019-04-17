@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -71,14 +72,11 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             byte[] fullHash = blockchain.getFullHash(phasingPollId);
             phasingPoll.setFullHash(fullHash);
             if (phasingPoll.getWhitelist() == null) {
-                // TODO: YL check later
-                List<PhasingPollVoter> phasingPollVoters = voterTable.get(phasingPollId);
-                List<Long> voteIds = new ArrayList<>(phasingPollVoters.size());
-                for (int i = 0; i < phasingPollVoters.size(); i++) {
-                    PhasingPollVoter phasingPollVoter = phasingPollVoters.get(i);
-                    voteIds.add(phasingPollVoter.getVoterId());
-                }
-                phasingPoll.setWhitelist(Convert.toArray(voteIds)); // TODO: YL check later
+                List<Long> voteIds = voterTable.get(phasingPollId)
+                        .stream()
+                        .map(PhasingPollVoter::getVoterId)
+                        .collect(Collectors.toList());
+                phasingPoll.setWhitelist(Convert.toArray(voteIds));
             }
         }
         return phasingPoll;
@@ -161,30 +159,22 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPoll poll = new PhasingPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.getWhitelist();
-        List<PhasingPollVoter> phasingPollVoters = new ArrayList<>(voters.length);
         if (voters.length > 0) { // TODO: YL check later
 //            voterTable.insert(poll, Convert.toList(voters));
-            for (int i = 0; i < voters.length; i++) {
-                long voteId =  voters[i];
-                PhasingPollVoter pollVoter = new PhasingPollVoter(poll.getId(), voteId, blockchain.getHeight());
-                phasingPollVoters.add(pollVoter);
-            }
-//            voterTable.insert(Convert.toList(voters));
-            voterTable.insert(phasingPollVoters);
+            List<PhasingPollVoter> voterList = Convert.toList(voters)
+                    .stream()
+                    .map(v -> new PhasingPollVoter(poll.getId(), v, blockchain.getHeight()))
+                    .collect(Collectors.toList());
+            voterTable.insert(voterList);
         }
-        if (appendix.getLinkedFullHashes() != null && appendix.getLinkedFullHashes().length > 0) { // TODO: YL check later
-            List<byte[]> linkedFullHashes = new ArrayList<>(appendix.getLinkedFullHashes().length);
+        if (appendix.getLinkedFullHashes().length > 0) {
+            List<byte[]> linkedFullHashes = new ArrayList<>();
             Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
-//            linkedTransactionTable.insert(poll, linkedFullHashes);
-            List<PhasingPollLinkedTransaction> linkedTransactions = new ArrayList<>(linkedFullHashes.size());
-            for (int i = 0; i < linkedFullHashes.size(); i++) {
-                PhasingPollLinkedTransaction linkedTransaction = new PhasingPollLinkedTransaction(
-                        poll.getId(), Convert.fullHashToId( linkedFullHashes.get(i)),
-                        linkedFullHashes.get(i), blockchain.getHeight()
-                );
-                linkedTransactions.add(linkedTransaction);
-            }
-            linkedTransactionTable.insert(linkedTransactions);
+            List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedFullHashes
+                    .stream()
+                    .map(fullHash -> new PhasingPollLinkedTransaction(poll.getId(), Convert.fullHashToId(fullHash), fullHash, blockchain.getHeight()))
+                    .collect(Collectors.toList());
+            linkedTransactionTable.insert(phasingPollLinkedTransactions);
         }
     }
 
@@ -196,27 +186,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
         if (phasingPoll.getLinkedFullHashes() == null) {
-            // TODO: YL check later
-            List<PhasingPollLinkedTransaction> list = linkedTransactionTable.get(phasingPoll.getId());
-            List<byte[]> linkedFullHashes = null;
-            if (list != null && phasingPoll.getLinkedFullHashes() != null) {
-                linkedFullHashes = new ArrayList<>(
-                        list.size() + phasingPoll.getLinkedFullHashes().size());
-                for (int i = 0; i < list.size(); i++) {
-                    PhasingPollLinkedTransaction linkedTransaction = list.get(i);
-                    linkedFullHashes.add(linkedTransaction.getFullHash());
-                }
-                linkedFullHashes.addAll(phasingPoll.getLinkedFullHashes());
-            } else if (list == null) {
-                linkedFullHashes = new ArrayList<>(phasingPoll.getLinkedFullHashes().size());
-                linkedFullHashes.addAll(phasingPoll.getLinkedFullHashes());
-            } else {
-                linkedFullHashes = new ArrayList<>(list.size());
-                for (int i = 0; i < list.size(); i++) {
-                    PhasingPollLinkedTransaction linkedTransaction = list.get(i);
-                    linkedFullHashes.add(linkedTransaction.getFullHash());
-                }
-            }
+            List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedTransactionTable.get(phasingPoll.getId());
+            List<byte[]> linkedFullHashes = phasingPollLinkedTransactions.stream().map(PhasingPollLinkedTransaction::getFullHash).collect(Collectors.toList());
             phasingPoll.setLinkedFullHashes(linkedFullHashes);
             return linkedFullHashes;
         } else {

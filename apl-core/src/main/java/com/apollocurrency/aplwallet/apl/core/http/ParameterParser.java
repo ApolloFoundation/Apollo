@@ -111,7 +111,6 @@ public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static DGSService dgsService = CDI.current().select(DGSService.class).get();
 
     private static final int DEFAULT_LAST_INDEX = 250;
 
@@ -490,8 +489,8 @@ public final class ParameterParser {
         return null;
     }
 
-    public static DGSPurchase getPurchase(HttpServletRequest req) throws ParameterException {
-        DGSPurchase purchase = dgsService.getPurchase(getUnsignedLong(req, "purchase", true));
+    public static DGSPurchase getPurchase(DGSService service, HttpServletRequest req) throws ParameterException {
+        DGSPurchase purchase = service.getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }
