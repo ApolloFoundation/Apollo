@@ -65,10 +65,10 @@ public class DexOfferTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
         }
 
-        if (attachment.getPairRate() < 0 ) {
+        if (attachment.getPairRate() <= 0 ) {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("pairRate", String.format("Couldn't be less than zero."))));
         }
-        if (attachment.getOfferAmount() < 0) {
+        if (attachment.getOfferAmount() <= 0) {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("offerAmount", String.format("Couldn't be less than zero."))));
         }
 
@@ -80,7 +80,7 @@ public class DexOfferTransaction extends DEX {
 
 
         Integer currentTime = epochTime.getEpochTime();
-        if (attachment.getFinishTime() < 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
+        if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
