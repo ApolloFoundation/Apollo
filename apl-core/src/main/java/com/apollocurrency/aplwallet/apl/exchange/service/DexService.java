@@ -33,6 +33,13 @@ public class DexService {
         dexOfferDao.save(offer);
     }
 
+    public DexOffer getOfferByTransactionId(Long transactionId){
+        return dexOfferDao.getByTransactionId(transactionId);
+    }
+
+    public void deleteOfferByTransactionId(Long transactionId){
+        dexOfferDao.deleteByTransactionId(transactionId);
+    }
 
     public void saveOffer (DexOffer offer){
         if(dexOfferDao.getByTransactionId(offer.getTransactionId()) == null){

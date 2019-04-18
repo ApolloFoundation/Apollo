@@ -44,4 +44,8 @@ public interface DexOfferDao {
     @RegisterRowMapper(DexOfferMapper.class)
     DexOffer getByTransactionId(@Bind("transactionId") long blockId);
 
+    @Transactional
+    @SqlUpdate("DELETE FROM dex_offer  AS offer where offer.transaction_id = :transactionId")
+    void deleteByTransactionId(@Bind("transactionId") long blockId);
+
 }
