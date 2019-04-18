@@ -34,16 +34,16 @@ public class PeerDiffStat {
         this.version2 = version2;
     }
 
-    public Version getVersion1() {
-        return version1;
+    public String getVersion1() {
+        return version1.toString();
     }
 
     public void setVersion1(Version version1) {
         this.version1 = version1;
     }
 
-    public Version getVersion2() {
-        return version2;
+    public String getVersion2() {
+        return version2.toString();
     }
 
     public void setVersion2(Version version2) {
