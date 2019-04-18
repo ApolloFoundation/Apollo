@@ -82,6 +82,12 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         }
     }
 
+
+    @Override
+    public List<PeerInfo> getAllPeers() {
+        return peers;
+    }
+
     @Override
     public void setUp(HeightMonitorConfig config) {
         PeersConfig peersConfig = config.getPeersConfig();

@@ -41,7 +41,12 @@ public class NetStatController {
         return Response.ok(last).build();
     }
 
-
+    @GET
+    @Path("/peers")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllPeers() {
+        return Response.ok(heightMonitorService.getAllPeers()).build();
+    }
     @POST
     @Path("/peers")
     @Produces(MediaType.APPLICATION_JSON)
@@ -62,7 +67,7 @@ public class NetStatController {
     }
 
     @GET
-    @Path("/peers/{ip}")
+    @Path("/{ip}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPeerStats(@NotNull @PathParam("ip") String ip) {
         List<PeerDiffStat> diffStats = heightMonitorService.getLastStats()
