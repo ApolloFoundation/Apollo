@@ -53,6 +53,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Path("/dex")
@@ -115,8 +116,26 @@ public class DexController {
                                 @ApiParam(value = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
                                 @ApiParam(value = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
+        if (pairRate < 0 ) {
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Couldn't be less than zero.")))).build();
+        }
+        if (offerAmount < 0 ) {
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Couldn't be less than zero.")))).build();
+        }
+
+        try {
+            Math.multiplyExact(pairRate, offerAmount);
+        } catch (ArithmeticException ex){
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate or offerAmount", String.format("Are too big.")))).build();
+        }
+
+        if (amountOfTime < 0 || amountOfTime > MAX_ORDER_DURATION_SEC) {
+            return Response.status(Response.Status.OK).entity(
+                    JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", amountOfTime, 0, MAX_ORDER_DURATION_SEC)))
+            ).build();
+        }
+
         Integer currentTime = epochTime.getEpochTime();
-        //TODO add amountOfTime validation.
         try {
             DexOffer offer = new DexOffer();
             try {

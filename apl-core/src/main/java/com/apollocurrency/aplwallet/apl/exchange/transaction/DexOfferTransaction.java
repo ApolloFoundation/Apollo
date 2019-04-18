@@ -5,23 +5,30 @@ package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+
 @Singleton
 public class DexOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
+    private EpochTime epochTime = CDI.current().select(EpochTime.class).get();
 
     @Override
     public byte getSubtype() {
@@ -49,6 +56,32 @@ public class DexOfferTransaction extends DEX {
 
         if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
             throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+        }
+
+        try {
+            DexCurrencies.getType(attachment.getOfferCurrency());
+            DexCurrencies.getType(attachment.getPairCurrency());
+        } catch (Exception ex){
+            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+        }
+
+        if (attachment.getPairRate() < 0 ) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("pairRate", String.format("Couldn't be less than zero."))));
+        }
+        if (attachment.getOfferAmount() < 0) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("offerAmount", String.format("Couldn't be less than zero."))));
+        }
+
+        try {
+            Math.multiplyExact(attachment.getPairRate(), attachment.getOfferAmount());
+        } catch (ArithmeticException ex){
+            throw new AplException.NotCurrentlyValidException("PairRate or OfferAmount is too big.");
+        }
+
+
+        Integer currentTime = epochTime.getEpochTime();
+        if (attachment.getFinishTime() < 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
     }
