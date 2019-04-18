@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
@@ -29,24 +30,29 @@ public class DexService {
         this.dexOfferDao = dexOfferDao;
     }
 
+    @Transactional
     public void updateOffer (DexOffer offer){
         dexOfferDao.save(offer);
     }
 
+    @Transactional
     public DexOffer getOfferByTransactionId(Long transactionId){
         return dexOfferDao.getByTransactionId(transactionId);
     }
 
+    @Transactional
     public void deleteOfferByTransactionId(Long transactionId){
         dexOfferDao.deleteByTransactionId(transactionId);
     }
 
+    @Transactional
     public void saveOffer (DexOffer offer){
         if(dexOfferDao.getByTransactionId(offer.getTransactionId()) == null){
             dexOfferDao.save(offer);
         }
     }
 
+    @Transactional
     public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest){
         return dexOfferDao.getOffers(dexOfferDBRequest);
     }

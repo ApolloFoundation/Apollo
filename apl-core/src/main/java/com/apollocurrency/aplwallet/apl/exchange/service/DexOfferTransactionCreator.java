@@ -20,6 +20,6 @@ public class DexOfferTransactionCreator extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 }

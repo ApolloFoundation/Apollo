@@ -50,16 +50,13 @@ public class DexOfferTransaction extends DEX {
         if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
             throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
         }
-        //TODO add validation cases.
+
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
-        if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new RuntimeException(new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency()));
-        }
         if(dexService.getOfferByTransactionId(transaction.getId()) == null) {
             dexService.saveOffer(new DexOffer(transaction, attachment));
         }
@@ -70,10 +67,6 @@ public class DexOfferTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
-
-        if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new RuntimeException(new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency()));
-        }
 
         if(dexService.getOfferByTransactionId(transaction.getId()) == null) {
             dexService.saveOffer(new DexOffer(transaction, attachment));
@@ -105,8 +98,6 @@ public class DexOfferTransaction extends DEX {
     public String getName() {
         return "DexOffer";
     }
-
-
 
 
 }

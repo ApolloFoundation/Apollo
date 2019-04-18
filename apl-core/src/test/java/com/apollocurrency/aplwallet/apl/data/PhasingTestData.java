@@ -39,6 +39,7 @@ public class PhasingTestData {
 
     public PhasingTestData() {
         td = new TransactionTestData();
+        //TODO Add one POLL testdata with finishTime != -1
         POLL_1 = new PhasingPoll(td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0, POLL_1_VOTER_1}, td.TRANSACTION_8.getFullHash(), 10000, -1, (byte) 0, 1,  0, 0, (byte) 0, null, (byte) 0, null);
         POLL_2 = new PhasingPoll(td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500,-1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
         POLL_3 = new PhasingPoll(td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000,-1, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e"),td.TRANSACTION_11.getFullHash(), td.NOT_SAVED_TRANSACTION.getFullHash()});
