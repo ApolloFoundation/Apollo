@@ -11,7 +11,9 @@ import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitor
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerDiffStat;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerInfo;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerMonitoringResult;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeersConfig;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +53,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private static final int CONNECT_TIMEOUT = 5_000;
     private static final int IDLE_TIMEOUT = 5_000;
     private static final int BLOCKS_TO_RETRIEVE = 1000;
+    private static final Version DEFAULT_VERSION = new Version("0.0.0");
     private static final String URL_FORMAT = "%s://%s:%d/apl";
     private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
 
@@ -85,7 +88,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         this.port = peersConfig.getDefaultPort();
         this.peers = Collections.synchronizedList(peersConfig.getPeersInfo().stream().peek(this::setDefaultPortIfNull).collect(Collectors.toList()));
         this.maxBlocksDiffCounters = createMaxBlocksDiffCounters(config.getMaxBlocksDiffPeriods() == null ? DEFAULT_PERIODS : config.getMaxBlocksDiffPeriods());
-        this.peerApiUrls = this.peers.stream().map(this::createUrl).collect(Collectors.toList());
+        this.peerApiUrls = Collections.synchronizedList(this.peers.stream().map(this::createUrl).collect(Collectors.toList()));
 
     }
 
@@ -106,6 +109,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
             result = true;
             peers.add(peer);
             peerApiUrls.add(url);
+            log.info("Added new peer: {}", peer.getHost());
         }
         return result;
     }
@@ -147,19 +151,21 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     @Override
     public NetworkStats updateStats() {
         log.info("===========================================");
-        Map<String, List<Block>> peerBlocks = getPeersBlocks();
-        log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2"));
+        Map<String, PeerMonitoringResult> peerBlocks = getPeersMonitoringResults();
+        log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2"));
         int currentMaxBlocksDiff = -1;
         NetworkStats networkStats = new NetworkStats();
         for (int i = 0; i < peers.size(); i++) {
             String host1 = peers.get(i).getHost();
-            List<Block> targetBlocks = peerBlocks.get(host1);
+            PeerMonitoringResult targetMonitoringResult = peerBlocks.get(host1);
+            List<Block> targetBlocks = targetMonitoringResult.getBlocks();
             if (targetBlocks.isEmpty()) {
                 continue;
             }
             for (int j = i + 1; j < peers.size(); j++) {
                 String host2 = peers.get(j).getHost();
-                List<Block> blocksToCompare = peerBlocks.get(host2);
+                PeerMonitoringResult comparedMonitoringResult = peerBlocks.get(host2);
+                List<Block> blocksToCompare = comparedMonitoringResult.getBlocks();
                 Block lastMutualBlock = findLastMutualBlock(blocksToCompare, targetBlocks);
                 if (!blocksToCompare.isEmpty()) {
                     int lastHeight = targetBlocks.get(0).getHeight();
@@ -167,8 +173,8 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                     int blocksDiff2 = getBlockDiff(lastMutualBlock, blocksToCompare.get(0).getHeight());
                     int milestoneHeight = getMilestoneHeight(lastMutualBlock);
                     currentMaxBlocksDiff = Math.max(blocksDiff1, currentMaxBlocksDiff);
-                    log.info(String.format("%5d %5d %-16.16s %-16.16s %9d %7d %7d", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight()));
-                    networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, blocksToCompare.get(0).getHeight()));
+                    log.info(String.format("%5d %5d %-16.16s %-16.16s %9d %7d %7d %8.8s %8.8s", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion()));
+                    networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, blocksToCompare.get(0).getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion()));
                 }
             }
         }
@@ -199,11 +205,15 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         return blocksDiff;
     }
 
-    private Map<String, List<Block>> getPeersBlocks() {
-        Map<String, List<Block>> peerBlocks = new HashMap<>();
-        List<CompletableFuture<List<Block>>> getBlocksRequests = new ArrayList<>();
+    private Map<String, PeerMonitoringResult> getPeersMonitoringResults() {
+        Map<String, PeerMonitoringResult> peerBlocks = new HashMap<>();
+        List<CompletableFuture<PeerMonitoringResult>> getBlocksRequests = new ArrayList<>();
         for (String peerUrl : peerApiUrls) {
-            getBlocksRequests.add(CompletableFuture.supplyAsync(() -> getBlocksList(peerUrl), executor));
+            getBlocksRequests.add(CompletableFuture.supplyAsync(() -> {
+                List<Block> blocksList = getBlocksList(peerUrl);
+                Version version = getPeerVersion(peerUrl);
+                return new PeerMonitoringResult(blocksList, version);
+            }, executor));
         }
         for (int i = 0; i < getBlocksRequests.size(); i++) {
             String host = peers.get(i).getHost();
@@ -228,6 +238,25 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
             return "";
         }
         return response.getContentAsString();
+    }
+    private Version getPeerVersion(String peerUrl) {
+        Version res = DEFAULT_VERSION;
+        Request request = client.newRequest(peerUrl)
+                .method(HttpMethod.GET)
+                .param("requestType", "getState");
+        ContentResponse response = null;
+        try {
+            response = request.send();
+            JsonNode jsonNode  = objectMapper.readTree(response.getContentAsString());
+            res = new Version(jsonNode.get("version").asText());
+        }
+        catch (InterruptedException | TimeoutException | ExecutionException e) {
+            log.error("Unable to get response from {} - {}", peerUrl, e.toString());
+        }
+        catch (IOException e) {
+            log.error("Unable to parse peer version from json for {} - {}",peerUrl, e.toString());
+        }
+        return res;
     }
 
     private List<Block> getBlocksList(String peerUrl) {

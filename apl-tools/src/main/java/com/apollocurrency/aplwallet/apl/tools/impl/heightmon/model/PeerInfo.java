@@ -18,11 +18,11 @@ public class PeerInfo {
     private static final String HTTPS = "https";
 
     @JsonCreator
-    public PeerInfo(@JsonProperty("host") String host) throws UnknownHostException {
+    public PeerInfo(@JsonProperty("host") String host) {
         this(host, HTTP, null);
     }
 
-    public PeerInfo(String host, String schema, Integer port) throws UnknownHostException {
+    public PeerInfo(String host, String schema, Integer port) {
         this.host = host;
         this.schema = schema;
         this.port = port;

@@ -52,8 +52,8 @@ public class HeightMonitor {
 
     public void stop() {
         try {
-            container.shutdown();
             executor.shutdown();
+            container.shutdown();
         }
         catch (Exception e) {
             throw new RuntimeException(e);

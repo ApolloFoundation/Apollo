@@ -1,7 +1,7 @@
 <configuration scan="true" scanPeriod="30 seconds">
     <appender name="std" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} - %msg%n</pattern>
         </encoder>
     </appender>
     <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.tools.ToolsLogDirDefiner">
@@ -17,7 +17,7 @@
         </rollingPolicy>
 
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} - %msg%n</pattern>
         </encoder>
     </appender>
     <logger name="com.apollocurrency.aplwallet.apl.tools.impl" level="debug" additivity="true"/>

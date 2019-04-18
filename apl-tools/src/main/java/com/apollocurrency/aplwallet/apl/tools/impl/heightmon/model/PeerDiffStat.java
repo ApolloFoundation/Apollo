@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
+import com.apollocurrency.aplwallet.apl.util.Version;
+
 import java.util.Objects;
 
 public class PeerDiffStat {
@@ -14,11 +16,13 @@ public class PeerDiffStat {
     private int milestoneHeight;
     private int height1;
     private int height2;
+    private Version version1;
+    private Version version2;
 
     public PeerDiffStat() {
     }
 
-    public PeerDiffStat(int diff1, int diff2, String peer1, String peer2, int milestoneHeight, int height1, int height2) {
+    public PeerDiffStat(int diff1, int diff2, String peer1, String peer2, int milestoneHeight, int height1, int height2, Version version1, Version version2) {
         this.diff1 = diff1;
         this.diff2 = diff2;
         this.peer1 = peer1;
@@ -26,6 +30,24 @@ public class PeerDiffStat {
         this.milestoneHeight = milestoneHeight;
         this.height1 = height1;
         this.height2 = height2;
+        this.version1 = version1;
+        this.version2 = version2;
+    }
+
+    public Version getVersion1() {
+        return version1;
+    }
+
+    public void setVersion1(Version version1) {
+        this.version1 = version1;
+    }
+
+    public Version getVersion2() {
+        return version2;
+    }
+
+    public void setVersion2(Version version2) {
+        this.version2 = version2;
     }
 
     public int getDiff1() {
@@ -95,11 +117,13 @@ public class PeerDiffStat {
                 height1 == that.height1 &&
                 height2 == that.height2 &&
                 Objects.equals(peer1, that.peer1) &&
-                Objects.equals(peer2, that.peer2);
+                Objects.equals(peer2, that.peer2) &&
+                Objects.equals(version1, that.version1) &&
+                Objects.equals(version2, that.version2);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(diff1, diff2, peer1, peer2, milestoneHeight, height1, height2);
+        return Objects.hash(diff1, diff2, peer1, peer2, milestoneHeight, height1, height2, version1, version2);
     }
 }

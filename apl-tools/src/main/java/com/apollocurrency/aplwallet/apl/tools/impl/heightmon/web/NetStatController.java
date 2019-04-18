@@ -40,9 +40,16 @@ public class NetStatController {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addPeer(@NotNull @QueryParam("ip") String ip) {
+    public Response addPeer(@NotNull @QueryParam("ip") String ip, @QueryParam("port") Integer port, @QueryParam("schema") String schema) {
         try {
-            return Response.ok(heightMonitorService.addPeer(new PeerInfo(ip))).build();
+            PeerInfo peerInfo = new PeerInfo(ip);
+            if (schema != null) {
+                peerInfo.setSchema(schema);
+            }
+            if (port != null) {
+                peerInfo.setPort(port);
+            }
+            return Response.ok(heightMonitorService.addPeer(peerInfo)).build();
         }
         catch (UnknownHostException e) {
             return Response.status(422).build();
