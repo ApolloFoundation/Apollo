@@ -320,7 +320,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 try {
                     processPeerTransactions(transactionsData);
-                } catch (RuntimeException e) {
+                } catch (AplException.NotValidException | RuntimeException e) {
                     peer.blacklist(e);
                 }
             } catch (Exception e) {

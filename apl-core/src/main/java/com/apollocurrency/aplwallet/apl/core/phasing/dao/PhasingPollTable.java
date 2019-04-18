@@ -99,8 +99,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         } catch (SQLException e) {
             DbUtils.close(con);
             LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return transactions;
     }
 
     public List<Transaction> getFinishingTransactionsByTime(int time) {
@@ -118,9 +118,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         } catch (SQLException e) {
             DbUtils.close(con);
             LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-
-        return transactions;
     }
 
 
