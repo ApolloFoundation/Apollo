@@ -279,7 +279,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testFinishPollNotApproved() throws SQLException {
-        inTransaction(con -> {
+        inTransaction(extension, con -> {
             blockchain.setLastBlock(btd.BLOCK_10);
             phasingPollService.finish(ptd.POLL_3, 1);
 
@@ -292,7 +292,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
-        inTransaction(con -> {
+        inTransaction(extension, con -> {
             blockchain.setLastBlock(btd.BLOCK_11);
             phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
