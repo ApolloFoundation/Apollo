@@ -43,6 +43,11 @@ public final class Constants {
     public static final int MAX_PHASING_DURATION = 14 * 1440;
     public static final int MAX_PHASING_REVEALED_SECRET_LENGTH = 100;
 
+    // 2 days.
+    public static final int MAX_PHASING_TIME_DURATION_SEC = 2 * 24 * 60 * 60;
+    // 24 hours
+    public static final int MAX_ORDER_DURATION_SEC = 24 * 60 * 60;
+
     public static final int MAX_ALIAS_URI_LENGTH = 1000;
     public static final int MAX_ALIAS_LENGTH = 100;
 

@@ -54,7 +54,10 @@ public class NtpTime {
             timeOffset = 0;
         }
     }
-    
+
+    /**
+     * @return current time in Millis.
+     */
     public long getTime() {
         return System.currentTimeMillis() + timeOffset;
     }
