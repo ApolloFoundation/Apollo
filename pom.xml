@@ -28,7 +28,7 @@
         <repository>
             <id>apl</id>
             <name>arti.firstbridge.work-releases</name>
-            <url>https://arti.firstbridge.work/artifactory/apl-exchange</url>
+            <url>https://arti.firstbridge.work/artifactory/apl</url>
         </repository>
     </repositories>
     <modules>
