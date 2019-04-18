@@ -259,10 +259,14 @@ public final class Generator implements Comparable<Generator> {
         BigInteger effectiveBaseTarget = BigInteger.valueOf(previousBlock.getBaseTarget()).multiply(effectiveBalance);
         BigInteger prevTarget = effectiveBaseTarget.multiply(BigInteger.valueOf(elapsedTime - 1));
         BigInteger target = prevTarget.add(effectiveBaseTarget);
-        return hit.compareTo(target) < 0
+        boolean ret = hit.compareTo(target) < 0
                 && (hit.compareTo(prevTarget) >= 0
                 || elapsedTime > 3600
                 || propertiesHolder.isOffline());
+        if(!ret){
+            LOG.warn("target: {}, hit: {}, verification failed!",target,hit);
+        }
+        return ret;
     }
 
     static BigInteger getHit(byte[] publicKey, Block block) {
