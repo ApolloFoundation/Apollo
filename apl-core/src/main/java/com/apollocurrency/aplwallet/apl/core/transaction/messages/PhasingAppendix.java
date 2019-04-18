@@ -176,7 +176,7 @@ public class PhasingAppendix extends AbstractAppendix {
         validateFinishHeight(this.finishHeight);
     }
 
-    public void generalValidation(Transaction transaction){
+    public void generalValidation(Transaction transaction) throws AplException.ValidationException{
         params.validate();
 
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -226,7 +226,7 @@ public class PhasingAppendix extends AbstractAppendix {
         }
     }
 
-    public void validateFinishHeight(Integer finishHeight) throws ParameterException{
+    public void validateFinishHeight(Integer finishHeight) throws AplException.NotCurrentlyValidException{
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         Block lastBlock = blockchain.getLastBlock();
         int currentHeight = lastBlock.getHeight();
@@ -238,7 +238,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
     }
 
-    public void validateFinishHeightAndTime(Integer height, Integer time) throws ParameterException{
+    public void validateFinishHeightAndTime(Integer height, Integer time) throws AplException.NotCurrentlyValidException {
 
         if((this.finishHeight != -1 && time != -1) || (this.finishHeight == -1 && time == -1)){
             throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");

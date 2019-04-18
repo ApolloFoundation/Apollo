@@ -761,7 +761,7 @@ public final class ParameterParser {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
                 return Transaction.newTransactionBuilder(json);
-            } catch (RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionJSON");
@@ -772,7 +772,7 @@ public final class ParameterParser {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
                 return Transaction.newTransactionBuilder(bytes, prunableAttachments);
-            } catch (RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionBytes");

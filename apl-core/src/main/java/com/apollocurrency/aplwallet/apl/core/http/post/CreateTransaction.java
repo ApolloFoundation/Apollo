@@ -182,7 +182,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     }
 
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
-                                            long amountATM, Attachment attachment) throws AplException {
+                                            long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);

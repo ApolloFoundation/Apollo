@@ -1729,7 +1729,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
                                 currentBlockId = currentBlock.getNextBlockId();
-                            } catch (RuntimeException e) {
+                            } catch (AplException | RuntimeException e) {
                                 dataSource.rollback(false);
                                 log.debug(e.toString(), e);
                                 log.debug("Applying block " + Long.toUnsignedString(currentBlockId) + " at height "

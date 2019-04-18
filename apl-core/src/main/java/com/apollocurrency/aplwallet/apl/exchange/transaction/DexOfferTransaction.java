@@ -58,7 +58,7 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
         if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+            throw new RuntimeException(new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency()));
         }
         if(dexService.getOfferByTransactionId(transaction.getId()) == null) {
             dexService.saveOffer(new DexOffer(transaction, attachment));
@@ -72,7 +72,7 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
         if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+            throw new RuntimeException(new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency()));
         }
 
         if(dexService.getOfferByTransactionId(transaction.getId()) == null) {

@@ -664,7 +664,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                 || currentTime - Convert2.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
                             iterator.remove();
                         }
-                    } catch (RuntimeException e) {
+                    } catch (AplException.ValidationException | RuntimeException e) {
                         iterator.remove();
                     }
                 }
@@ -709,7 +709,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 addedUnconfirmedTransactions.add(transaction);
 
             } catch (AplException.NotCurrentlyValidException ignore) {
-            } catch (RuntimeException e) {
+            } catch (AplException.ValidationException | RuntimeException e) {
                 LOG.debug(String.format("Invalid transaction from peer: %s", ((JSONObject) transactionData).toJSONString()), e);
                 exceptions.add(e);
             }

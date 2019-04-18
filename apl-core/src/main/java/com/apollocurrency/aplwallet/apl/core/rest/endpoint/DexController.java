@@ -154,7 +154,7 @@ public class DexController {
             try {
                 JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, recipientId, totalOfferAmount, dexOfferAttachment);
                 return Response.ok(JSON.toString(response)).build();
-            } catch (AplException.InsufficientBalanceException e) {
+            } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
             }
         } catch (ParameterException ex){
