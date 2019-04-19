@@ -89,7 +89,7 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
             List<V> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(load(con, rs, dbKeyFactory.newKey(rs))); // TODO: YL review DbKey = NULL
+                    result.add(load(con, rs, dbKeyFactory.newKey(rs)));
                 }
             }
             return result;
@@ -125,6 +125,8 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
             throw new RuntimeException(e.toString(), e);
         }
     }
+
+    public abstract void save(Connection con, V entity) throws SQLException;
 
     private void checkKeys(DbKey key, List<V> values) {
 

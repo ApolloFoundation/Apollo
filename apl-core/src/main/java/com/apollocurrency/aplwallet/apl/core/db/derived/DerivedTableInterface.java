@@ -30,8 +30,6 @@ public interface DerivedTableInterface<T> {
 
     default T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {return null;}
 
-    void save(Connection con, T entity) throws SQLException;
-
     default void insert(T t) {
         throw new UnsupportedOperationException("unsupported insert");
     }

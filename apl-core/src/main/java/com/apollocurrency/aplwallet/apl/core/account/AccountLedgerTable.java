@@ -31,6 +31,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
          *
          * @param   ledgerEntry             Ledger entry
          */
+        @Override
         public void insert(LedgerEntry ledgerEntry) {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection()) {

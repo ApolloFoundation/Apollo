@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.mapper;
 
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingCreator;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
@@ -13,6 +14,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class PhasingPollMapper extends DerivedEntityMapper<PhasingPoll> {
+
+    public PhasingPollMapper(KeyFactory<PhasingPoll> keyFactory) {
+        super(keyFactory);
+    }
 
     @Override
     public PhasingPoll doMap(ResultSet rs, StatementContext ctx) throws SQLException {

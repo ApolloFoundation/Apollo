@@ -33,7 +33,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
             return new LongKey(poll.getPollId());
         }
     };
-    private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper();
+    private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper(KEY_FACTORY);
     private final Blockchain blockchain;
 
     @Inject
@@ -44,9 +44,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
 
     @Override
     public PhasingPollLinkedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        PhasingPollLinkedTransaction linkedTransaction = MAPPER.map(rs, null);
-        linkedTransaction.setDbKey(dbKey);
-        return linkedTransaction;
+        return MAPPER.map(rs, null);
     }
 
     public List<PhasingPollLinkedTransaction> get(long id) {

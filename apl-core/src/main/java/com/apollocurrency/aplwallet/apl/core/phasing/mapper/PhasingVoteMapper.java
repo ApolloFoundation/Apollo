@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.mapper;
 
 
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -13,6 +14,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class PhasingVoteMapper extends DerivedEntityMapper<PhasingVote> {
+
+    public PhasingVoteMapper(KeyFactory<PhasingVote> keyFactory) {
+        super(keyFactory);
+    }
 
     @Override
     public PhasingVote doMap(ResultSet rs, StatementContext ctx) throws SQLException {

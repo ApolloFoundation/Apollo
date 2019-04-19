@@ -166,7 +166,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 //            voterTable.insert(poll, Convert.toList(voters));
             List<PhasingPollVoter> voterList = Convert.toList(voters)
                     .stream()
-                    .map(v -> PhasingCreator.createVoter(poll,  v))
+                    .map(v -> new PhasingPollVoter(null, poll.getHeight(), poll.getId(),  v))
                     .collect(Collectors.toList());
             voterTable.insert(voterList);
         }
@@ -175,7 +175,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
             List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedFullHashes
                     .stream()
-                    .map(fullHash -> PhasingCreator.createLinkedTx(poll, fullHash))
+                    .map(fullHash -> new PhasingPollLinkedTransaction(null, poll.getHeight(), poll.getId(), Convert.fullHashToId(fullHash), fullHash))
                     .collect(Collectors.toList());
             linkedTransactionTable.insert(phasingPollLinkedTransactions);
         }
@@ -183,7 +183,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void finish(PhasingPoll phasingPoll, long result) {
-        PhasingPollResult phasingPollResult = PhasingCreator.createResult(phasingPoll, result, blockchain.getHeight());
+        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
         resultTable.insert(phasingPollResult);
     }
 
@@ -260,7 +260,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
         PhasingVote phasingVote = phasingVoteTable.get(phasedTransactionId, voter.getId());
         if (phasingVote == null) {
-            phasingVote =  PhasingCreator.createVote(transaction, voter, phasedTransactionId);
+            phasingVote =  new PhasingVote(null, transaction.getHeight(),phasedTransactionId, voter.getId(), transaction.getId());
             phasingVoteTable.insert(phasingVote);
         }
     }

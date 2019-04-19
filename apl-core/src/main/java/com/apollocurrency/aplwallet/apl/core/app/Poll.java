@@ -262,7 +262,7 @@ public final class Poll extends AbstractPoll {
     private PollOptionResult optionResult;
 
     public Poll(Transaction transaction, MessagingPollCreation attachment, PollOptionResult optionResult) {
-        super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting(), transaction.getHeight());
+        super(null, transaction.getHeight(), transaction.getId(), attachment.getVoteWeighting(), transaction.getSenderId(), attachment.getFinishHeight());
         setDbKey(pollDbKeyFactory.newKey(this.id));
         this.name = attachment.getPollName();
         this.description = attachment.getPollDescription();

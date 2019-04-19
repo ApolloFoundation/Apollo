@@ -11,10 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 
@@ -33,12 +32,15 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
-            return new LongKey(poll.getId());
+            if (poll.getDbKey() == null) {
+                poll.setDbKey(KEY_FACTORY.newKey(poll.getId()));
+            }
+            return poll.getDbKey();
         }
     };
+    private static final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_poll";
     private final Blockchain blockchain;
-    private static final PhasingPollMapper MAPPER = new PhasingPollMapper();
 
     @Inject
     public PhasingPollTable(Blockchain blockchain) {
@@ -50,7 +52,6 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     @Override
     public PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         PhasingPoll poll = MAPPER.map(rs, null);
-        poll.setDbKey(dbKey);
         return poll;
     }
 

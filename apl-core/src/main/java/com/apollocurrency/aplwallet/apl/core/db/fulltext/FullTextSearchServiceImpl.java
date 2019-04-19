@@ -241,6 +241,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         return ftl.search(schema, table, queryText, limit, offset);
     }
 
+    @Override
     public void shutdown() {
         ftl.shutdown();
     }

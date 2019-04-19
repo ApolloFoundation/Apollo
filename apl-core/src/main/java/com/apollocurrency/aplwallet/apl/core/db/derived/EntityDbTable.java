@@ -87,6 +87,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
          this.fullTextSearchColumns = "";
     }
 
+    public abstract void save(Connection con, T entity) throws SQLException;
+
     protected String defaultSort() {
         return defaultSort;
     }

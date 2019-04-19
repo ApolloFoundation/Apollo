@@ -30,7 +30,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
             return phasingPollResult.getDbKey();
         }
     };
-    private static final PhasingPollResultMapper MAPPER = new PhasingPollResultMapper();
+    private static final PhasingPollResultMapper MAPPER = new PhasingPollResultMapper(KEY_FACTORY);
 
     public PhasingPollResultTable() {
         super(TABLE_NAME, KEY_FACTORY, false);
@@ -40,9 +40,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
 
     @Override
     public PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        PhasingPollResult phasingPollResult = MAPPER.map(rs, null);
-        phasingPollResult.setDbKey(dbKey);
-        return phasingPollResult;
+        return MAPPER.map(rs, null);
     }
 
     public PhasingPollResult get(long id) {

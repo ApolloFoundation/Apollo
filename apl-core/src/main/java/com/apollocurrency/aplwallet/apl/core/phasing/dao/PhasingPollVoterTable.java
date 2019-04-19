@@ -36,7 +36,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
             return poll.getDbKey();
         }
     };
-    private static final PhasingPollVoterMapper MAPPER = new PhasingPollVoterMapper();
+    private static final PhasingPollVoterMapper MAPPER = new PhasingPollVoterMapper(KEY_FACTORY);
     private final Blockchain blockchain;
 
 
@@ -52,9 +52,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
 
     @Override
     public PhasingPollVoter load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        PhasingPollVoter voter = MAPPER.map(rs, null);
-        voter.setDbKey(dbKey);
-        return voter;
+        return MAPPER.map(rs, null);
     }
 
     @Override

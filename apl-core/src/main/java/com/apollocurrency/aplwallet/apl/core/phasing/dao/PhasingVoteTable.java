@@ -25,10 +25,13 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     static final LinkKeyFactory<PhasingVote> KEY_FACTORY = new LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
         @Override
         public DbKey newKey(PhasingVote vote) {
-            return new LinkKey(vote.getPhasedTransactionId(), vote.getVoterId());
+            if (vote.getDbKey() == null) {
+                vote.setDbKey(new LinkKey(vote.getPhasedTransactionId(), vote.getVoterId()));
+            }
+            return vote.getDbKey();
         }
     };
-    private static final PhasingVoteMapper MAPPER = new PhasingVoteMapper();
+    private static final PhasingVoteMapper MAPPER = new PhasingVoteMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_vote";
 
 
@@ -38,9 +41,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
 
     @Override
     public PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        PhasingVote phasingVote = MAPPER.map(rs, null);
-        phasingVote.setDbKey(dbKey);
-        return phasingVote;
+        return MAPPER.map(rs, null);
     }
 
     @Override
