@@ -1,9 +1,13 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Data;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -17,23 +21,23 @@ import org.json.simple.JSONObject;
  *
  * @author al
  */
-public final class TaggedDataUpload extends TaggedDataAttachment {
+public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     
-    public static TaggedDataUpload parse(JSONObject attachmentData) {
+    public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
             return null;
         }
-        return new TaggedDataUpload(attachmentData);
+        return new TaggedDataUploadAttachment(attachmentData);
     }
     final byte[] hash;
 
-    public TaggedDataUpload(ByteBuffer buffer) {
+    public TaggedDataUploadAttachment(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
         buffer.get(hash);
     }
 
-    public TaggedDataUpload(JSONObject attachmentData) {
+    public TaggedDataUploadAttachment(JSONObject attachmentData) {
         super(attachmentData);
         String dataJSON = (String) attachmentData.get("data");
         if (dataJSON == null) {
@@ -43,7 +47,7 @@ public final class TaggedDataUpload extends TaggedDataAttachment {
         }
     }
 
-    public TaggedDataUpload(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data) throws AplException.NotValidException {
+    public TaggedDataUploadAttachment(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data) throws AplException.NotValidException {
         super(name, description, tags, type, channel, isText, filename, data);
         this.hash = null;
         if (isText && !Arrays.equals(data, Convert.toBytes(Convert.toString(data)))) {
@@ -87,7 +91,8 @@ public final class TaggedDataUpload extends TaggedDataAttachment {
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        TaggedData.restore(transaction, this, blockTimestamp, height);
+        TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
+        taggedDataService.restore(transaction, this, blockTimestamp, height);
     }
     
 }

@@ -23,14 +23,16 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Data;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUpload;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
@@ -38,6 +40,7 @@ import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class ExtendTaggedData extends CreateTransaction {
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public ExtendTaggedData() {
         super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
@@ -49,19 +52,19 @@ public final class ExtendTaggedData extends CreateTransaction {
 
         Account account = ParameterParser.getSenderAccount(req);
         long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        TaggedData taggedData = TaggedData.getData(transactionId);
+        TaggedData taggedData = taggedDataService.getData(transactionId);
         if (taggedData == null) {
             Transaction transaction = lookupBlockchain().getTransaction(transactionId);
             if (transaction == null || transaction.getType() != Data.TAGGED_DATA_UPLOAD) {
                 return UNKNOWN_TRANSACTION;
             }
-            TaggedDataUpload taggedDataUpload = ParameterParser.getTaggedData(req);
-            taggedData = new TaggedData(transaction, taggedDataUpload,
+            TaggedDataUploadAttachment taggedDataUploadAttachment = ParameterParser.getTaggedData(req);
+            taggedData = new TaggedData(transaction, taggedDataUploadAttachment,
                     lookupBlockchain().getLastBlockTimestamp(),
                     lookupBlockchain().getHeight());
         }
-        TaggedDataExtend taggedDataExtend = new TaggedDataExtend(taggedData);
-        return createTransaction(req, account, taggedDataExtend);
+        TaggedDataExtendAttachment taggedDataExtendAttachment = new TaggedDataExtendAttachment(taggedData);
+        return createTransaction(req, account, taggedDataExtendAttachment);
 
     }
 

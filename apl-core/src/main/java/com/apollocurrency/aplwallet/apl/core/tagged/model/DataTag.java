@@ -2,7 +2,6 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
 import java.sql.ResultSet;
@@ -10,27 +9,32 @@ import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
-public class Tag {
+public class DataTag {
 
     private String tag;
-//    private DbKey dbKey;
+    private DbKey dbKey;
     private int height;
     private int count;
 
-    public Tag(String tag, int height) {
+    public DataTag(String tag, int height, int count) {
         this.tag = tag;
-//        this.dbKey = tagDbKeyFactory.newKey(this.tag);
+        this.height = height;
+        this.count = count;
+    }
+
+    public DataTag(String tag, int height) {
+        this.tag = tag;
         this.height = height;
     }
 
-    public Tag(ResultSet rs, DbKey dbKey) throws SQLException {
+    public DataTag(ResultSet rs, DbKey dbKey) throws SQLException {
         this.tag = rs.getString("tag");
-//        this.dbKey = dbKey;
+        this.dbKey = dbKey;
         this.count = rs.getInt("tag_count");
         this.height = rs.getInt("height");
     }
 
-    public Tag(ResultSet rs) throws SQLException {
+    public DataTag(ResultSet rs) throws SQLException {
         this.tag = rs.getString("tag");
         this.count = rs.getInt("tag_count");
         this.height = rs.getInt("height");
@@ -60,4 +64,19 @@ public class Tag {
         this.count = count;
     }
 
+    public DbKey getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
 }

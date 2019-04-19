@@ -24,10 +24,9 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TagDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.Tag;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -40,7 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetDataTags extends AbstractAPIRequestHandler {
 
-    private TagDao tagDao = CDI.current().select(TagDao.class).get();
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public GetDataTags() {
         super(new APITag[] {APITag.DATA}, "firstIndex", "lastIndex");
@@ -55,7 +54,7 @@ public final class GetDataTags extends AbstractAPIRequestHandler {
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
 
-        try (DbIterator<Tag> tags = tagDao.getAll(firstIndex, lastIndex)) {
+        try (DbIterator<DataTag> tags = taggedDataService.getAllTags(firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.dataTag(tags.next()));
             }

@@ -24,11 +24,13 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
@@ -36,6 +38,7 @@ import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetTaggedData extends AbstractAPIRequestHandler {
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public GetTaggedData() {
         super(new APITag[] {APITag.DATA}, "transaction", "includeData", "retrieve");
@@ -47,12 +50,12 @@ public final class GetTaggedData extends AbstractAPIRequestHandler {
         boolean includeData = !"false".equalsIgnoreCase(req.getParameter("includeData"));
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
 
-        TaggedData taggedData = TaggedData.getData(transactionId);
+        TaggedData taggedData = taggedDataService.getData(transactionId);
         if (taggedData == null && retrieve) {
             if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            taggedData = TaggedData.getData(transactionId);
+            taggedData = taggedDataService.getData(transactionId);
         }
         if (taggedData != null) {
             return JSONData.taggedData(taggedData, includeData);

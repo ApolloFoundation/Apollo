@@ -340,7 +340,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    public final DbIterator<T> getAll(int from, int to) {
+    public DbIterator<T> getAll(int from, int to) {
         return getAll(from, to, defaultSort());
     }
 
@@ -393,7 +393,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    public final int getCount() {
+    public int getCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table

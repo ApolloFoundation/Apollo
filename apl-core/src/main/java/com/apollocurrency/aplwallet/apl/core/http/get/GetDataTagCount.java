@@ -22,9 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TagDao;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -35,7 +35,8 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetDataTagCount extends AbstractAPIRequestHandler {
 
-    private TagDao tagDao = CDI.current().select(TagDao.class).get();
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
+
     public GetDataTagCount() {
         super(new APITag[] {APITag.DATA});
     }
@@ -43,7 +44,7 @@ public final class GetDataTagCount extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject response = new JSONObject();
-        response.put("numberOfDataTags", tagDao.getCount());
+        response.put("numberOfDataTags", taggedDataService.getDataTagCount());
         return response;
     }
 

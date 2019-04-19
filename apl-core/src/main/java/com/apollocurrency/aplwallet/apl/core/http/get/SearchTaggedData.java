@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -33,10 +34,12 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class SearchTaggedData extends AbstractAPIRequestHandler {
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public SearchTaggedData() {
         super(new APITag[] {APITag.DATA, APITag.SEARCH}, "query", "tag", "channel", "account", "firstIndex", "lastIndex", "includeData");
@@ -54,7 +57,7 @@ public final class SearchTaggedData extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("data", jsonArray);
-        try (DbIterator<TaggedData> data = TaggedData.searchData(query, channel, accountId, firstIndex, lastIndex)) {
+        try (DbIterator<TaggedData> data = taggedDataService.searchData(query, channel, accountId, firstIndex, lastIndex)) {
             while (data.hasNext()) {
                 jsonArray.add(JSONData.taggedData(data.next(), includeData));
             }
