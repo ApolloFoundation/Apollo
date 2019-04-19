@@ -35,6 +35,7 @@ import javax.enterprise.inject.spi.CDI;
 
 public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
     private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+
     protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }

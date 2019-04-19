@@ -49,11 +49,6 @@ public class DaoConfig {
         return createDaoInterfaceProxy(ShardRecoveryDao.class);
     }
 
-    @Produces
-    public TaggedDataTimestampDao taggedDataTimestampDao() {
-        return createDaoInterfaceProxy(TaggedDataTimestampDao.class);
-    }
-
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {
         return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
                 jdbiHandleFactory,

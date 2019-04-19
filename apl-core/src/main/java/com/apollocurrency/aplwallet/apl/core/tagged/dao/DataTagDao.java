@@ -20,40 +20,42 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPersistentDbTable;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.Tag;
+import com.apollocurrency.aplwallet.apl.core.tagged.mapper.DataTagMapper;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public class TagDao extends VersionedPersistentDbTable<Tag> {
-    private static Logger logger = LoggerFactory.getLogger(TagDao.class);
+public class DataTagDao extends VersionedPersistentDbTable<DataTag> {
+    private static Logger logger = LoggerFactory.getLogger(DataTagDao.class);
 
     protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     private static final String DB_TABLE = "data_tag";
+    private static final DataTagMapper MAPPER = new DataTagMapper();
 
-    private static final StringKeyFactory<Tag> tagDbKeyFactory = new StringKeyFactory<>("tag") {
+    private static final StringKeyFactory<DataTag> tagDbKeyFactory = new StringKeyFactory<>("tag") {
         @Override
-        public DbKey newKey(Tag tag) {
-           return newKey(tag.getTag());
+        public DbKey newKey(DataTag dataTag) {
+           return newKey(dataTag.getTag());
         }
     };
 
-    public TagDao() {
+    public DataTagDao() {
         super(DB_TABLE, tagDbKeyFactory);
     }
 
 
     public void add(TaggedData taggedData) {
         for (String tagValue : taggedData.getParsedTags()) {
-            Tag tag = get(tagDbKeyFactory.newKey(tagValue));
-            if (tag == null) {
-                tag = new Tag(tagValue, blockchain.getHeight());
+            DataTag dataTag = get(tagDbKeyFactory.newKey(tagValue));
+            if (dataTag == null) {
+                dataTag = new DataTag(tagValue, blockchain.getHeight());
             }
-            tag.setCount(tag.getCount() + 1);
-            insert(tag);
+            dataTag.setCount(dataTag.getCount() + 1);
+            insert(dataTag);
         }
     }
 
@@ -66,9 +68,9 @@ public class TagDao extends VersionedPersistentDbTable<Tag> {
                 pstmt.setInt(2, height);
                 int updated = pstmt.executeUpdate();
                 if (updated == 0) {
-                    Tag tag = new Tag(tagValue, height);
-                    tag.setCount(tag.getCount() + 1);
-                    insert(tag);
+                    DataTag dataTag = new DataTag(tagValue, height);
+                    dataTag.setCount(dataTag.getCount() + 1);
+                    insert(dataTag);
                 }
             }
         } catch (SQLException e) {
@@ -96,33 +98,37 @@ public class TagDao extends VersionedPersistentDbTable<Tag> {
         }
     }
 
-    public DbIterator<Tag> getTagsLike(String prefix, int from, int to) {
+    public int getDataTagCount() {
+        return this.getCount();
+    }
+
+    public DbIterator<DataTag> getAllTags(int from, int to) {
+        return this.getAll(from, to);
+    }
+
+    public DbIterator<DataTag> getTagsLike(String prefix, int from, int to) {
         DbClause dbClause = new DbClause.LikeClause("tag", prefix);
         return getManyBy(dbClause, from, to, " ORDER BY tag ");
     }
 
-    private void save(Tag tag) throws SQLException {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (PreparedStatement pstmt = dataSource.getConnection().prepareStatement(
+    @Override
+    public DataTag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        DataTag dataTag = MAPPER.map(rs, null);
+        dataTag.setDbKey(dbKey);
+        return dataTag;
+    }
+
+    @Override
+    public void save(Connection con, DataTag dataTag) throws SQLException {
+        try (PreparedStatement pstmt = con.prepareStatement(
                 "MERGE INTO data_tag (tag, tag_count, height, latest) "
-                + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")) {
+                        + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setString(++i, tag.getTag());
-            pstmt.setInt(++i, tag.getCount());
-            pstmt.setInt(++i, tag.getHeight());
+            pstmt.setString(++i, dataTag.getTag());
+            pstmt.setInt(++i, dataTag.getCount());
+            pstmt.setInt(++i, dataTag.getHeight());
             pstmt.executeUpdate();
         }
-    }
-
-
-    @Override
-    public Tag load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return mapTag(rs);
-    }
-
-    @Override
-    public void save(Connection con, Tag tag) throws SQLException {
-        save(tag);
     }
 
     @Override
@@ -130,11 +136,4 @@ public class TagDao extends VersionedPersistentDbTable<Tag> {
         return " ORDER BY tag_count DESC, tag ASC ";
     }
 
-    private Tag mapTag(ResultSet rs) throws SQLException {
-        Tag tag = new Tag(rs);
-//        tag.setTag(rs.getString("tag"));
-//        tag.setCount(rs.getInt("tag_count"));
-//        tag.setHeight(rs.getInt("height"));
-        return tag;
-    }
 }

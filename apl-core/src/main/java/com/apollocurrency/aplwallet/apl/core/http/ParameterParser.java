@@ -72,13 +72,13 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
@@ -888,7 +888,7 @@ public final class ParameterParser {
         }
     }
 
-    public static TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
+    public static TaggedDataUploadAttachment getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -967,7 +967,7 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+        return new TaggedDataUploadAttachment(name, description, tags, type, channel, isText, filename, data);
     }
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {

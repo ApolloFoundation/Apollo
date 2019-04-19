@@ -45,7 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.Tag;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
@@ -1254,10 +1254,10 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject dataTag(Tag tag) {
+    public static JSONObject dataTag(DataTag dataTag) {
         JSONObject json = new JSONObject();
-        json.put("tag", tag.getTag());
-        json.put("count", tag.getCount());
+        json.put("tag", dataTag.getTag());
+        json.put("count", dataTag.getCount());
         return json;
     }
 

@@ -4,34 +4,55 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TagDataTimestampMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
- * Jdbi DAO for TaggedDataTimestamp
+ * DAO for TaggedDataTimestamp
  */
-public interface TaggedDataTimestampDao extends SqlObject {
+@Singleton
+public class TaggedDataTimestampDao extends VersionedEntityDbTable<TaggedDataTimestamp> {
 
-    @SqlQuery("SELECT " +
-            "   id, " +
-            "   timestamp " +
-            "FROM tagged_data_timestamp " +
-            "WHERE id = :id")
-    @RegisterBeanMapper(TaggedDataTimestamp.class)
-    TaggedDataTimestamp get(@Bind("id") long id);
+    private static final LongKeyFactory<TaggedDataTimestamp> timestampKeyFactory = new LongKeyFactory<>("id") {
+        @Override
+        public DbKey newKey(TaggedDataTimestamp timestamp) {
+            return new LongKey(timestamp.getId());
+        }
+    };
 
-    @SqlUpdate("MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) KEY (id, height) " +
-            "VALUES (:id, :timestamp, :height, TRUE)")
-    void save(@BindBean TaggedDataTimestamp taggedDataTimestamp, @Bind("height") int height);
+    private static final String TABLE_NAME = "phasing_poll";
+    private final TagDataTimestampMapper MAPPER = new TagDataTimestampMapper();
 
-    @SqlUpdate("UPDATE tagged_data_timestamp " +
-            "SET latest = FALSE " +
-            "WHERE id = :id AND latest = TRUE LIMIT 1")
-    void updateLatestFalse(@Bind("id") long id);
+    public TaggedDataTimestampDao() {
+        super(TABLE_NAME, timestampKeyFactory);
+    }
 
+    @Override
+    public TaggedDataTimestamp load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        TaggedDataTimestamp dataTimestamp = MAPPER.map(rs, null);
+        dataTimestamp.setDbKey(dbKey);
+        return dataTimestamp;
+    }
+
+    public void save(Connection con, TaggedDataTimestamp dataTimestamp) throws SQLException {
+        try (PreparedStatement pstmt = con.prepareStatement(
+                "MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
+                        + "KEY (id, height) VALUES (?, ?, ?, TRUE)")) {
+            int i = 0;
+            pstmt.setLong(++i, dataTimestamp.getId());
+            pstmt.setInt(++i, dataTimestamp.getTimestamp());
+            pstmt.setInt(++i, dataTimestamp.getHeight());
+            pstmt.executeUpdate();
+        }
+    }
 }

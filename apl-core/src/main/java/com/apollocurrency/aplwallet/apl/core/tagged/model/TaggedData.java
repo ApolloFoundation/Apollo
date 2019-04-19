@@ -1,20 +1,4 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
@@ -47,7 +31,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPersistentDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
@@ -55,10 +38,10 @@ import com.apollocurrency.aplwallet.apl.util.Search;
 import org.slf4j.Logger;
 
 public class TaggedData {
+/*
     private static final Logger LOG = getLogger(TaggedData.class);
 
     private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<TaggedData>("id") {
-
         @Override
         public DbKey newKey(TaggedData taggedData) {
             return taggedData.dbKey;
@@ -78,7 +61,9 @@ public class TaggedData {
         }
         return databaseManager.getDataSource();
     }
+*/
 
+/*
     private static final VersionedPrunableDbTable<TaggedData> taggedDataTable = new VersionedPrunableDbTable<TaggedData>(
             "tagged_data", taggedDataKeyFactory, "name,description,tags") {
 
@@ -125,17 +110,16 @@ public class TaggedData {
         }
 
     };
+*/
 
-
+/*
     private static final LongKeyFactory<TaggedDataTimestamp> timestampKeyFactory = new LongKeyFactory<TaggedDataTimestamp>("id") {
-
         @Override
         public DbKey newKey(TaggedDataTimestamp timestamp) {
-            return null /*timestamp.dbKey*/; // TODO: YL review and change
+            return timestamp.dbKey;
         }
 
     };
-
     private static final VersionedEntityDbTable<TaggedDataTimestamp> timestampTable = new VersionedEntityDbTable<TaggedDataTimestamp>(
             "tagged_data_timestamp", timestampKeyFactory) {
 
@@ -150,6 +134,7 @@ public class TaggedData {
         }
 
     };
+*/
 
 /*
     public static final class Tag {
@@ -180,7 +165,7 @@ public class TaggedData {
 
         };
 
-        public static int getTagCount() {
+        public static int getDataTagCount() {
             return tagTable.getCount();
         }
 
@@ -283,17 +268,15 @@ public class TaggedData {
     }
 */
 
+/*
     private static final LongKeyFactory<Long> extendDbKeyFactory = new LongKeyFactory<Long>("id") {
-
         @Override
         public DbKey newKey(Long taggedDataId) {
             return newKey(taggedDataId.longValue());
         }
-
     };
 
     private static final VersionedValuesDbTable<Long> extendTable = new VersionedValuesDbTable<Long>("tagged_data_extend", extendDbKeyFactory) {
-
         @Override
         public Long load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return rs.getLong("extend_id");
@@ -301,21 +284,26 @@ public class TaggedData {
 
         // TODO: YL WARNING code will be refactored and changed
         @Override
-        public void save(Connection con, /*Long taggedDataId, */Long extendId) throws SQLException {
+        public void save(Connection con, Long taggedDataId, Long extendId) throws SQLException {
             LOG.warn("TODO: YL WARNING code will be refactored and changed !!");
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data_extend (id, extend_id, "
                     + "height, latest) VALUES (?, ?, ?, TRUE)")) {
                 int i = 0;
-//                pstmt.setLong(++i, taggedDataId);
+                pstmt.setLong(++i, taggedDataId);
                 pstmt.setLong(++i, extendId);
 //                // TODO: YL can it be replace by 'sql join' here ???
                 pstmt.setInt(++i, blockchain.getHeight());
                 pstmt.executeUpdate();
             }
         }
-
     };
 
+    public static List<Long> getExtendTransactionIds(long taggedDataId) {
+        return extendTable.get(extendDbKeyFactory.newKey(taggedDataId));
+    }
+*/
+
+/*
     public static int getCount() {
         return taggedDataTable.getCount();
     }
@@ -326,11 +314,6 @@ public class TaggedData {
 
     public static TaggedData getData(long transactionId) {
         return taggedDataTable.get(taggedDataKeyFactory.newKey(transactionId));
-    }
-
-    public static List<Long> getExtendTransactionIds(long taggedDataId) {
-        return extendTable.get(extendDbKeyFactory.newKey(taggedDataId));
-    }
 
     public static DbIterator<TaggedData> getData(String channel, long accountId, int from, int to) {
         if (channel == null && accountId == 0) {
@@ -355,15 +338,16 @@ public class TaggedData {
         }
         return dbClause;
     }
+*/
 
 /*
     static void init() {
-        Tag.init();
+        DataTag.init();
     }
 */
 
     private final long id;
-    private final DbKey dbKey;
+    private DbKey dbKey;
     private final long accountId;
     private final String name;
     private final String description;
@@ -380,7 +364,7 @@ public class TaggedData {
 
     public TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
         this.id = transaction.getId();
-        this.dbKey = taggedDataKeyFactory.newKey(this.id);
+//        this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.description = attachment.getDescription();
@@ -396,7 +380,7 @@ public class TaggedData {
         this.height = height;
     }
 
-    private TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
+    public TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
@@ -414,7 +398,7 @@ public class TaggedData {
         this.height = rs.getInt("height");
     }
 
-    private TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
+    public TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
         this.id = id;
         this.dbKey = dbKey;
         this.accountId = accountId;
@@ -429,6 +413,7 @@ public class TaggedData {
         this.filename = filename;
     }
 
+/*
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
                 + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
@@ -451,6 +436,7 @@ public class TaggedData {
             pstmt.executeUpdate();
         }
     }
+*/
 
     public long getId() {
         return id;
@@ -504,7 +490,32 @@ public class TaggedData {
         return blockTimestamp;
     }
 
-    public static void add(TransactionImpl transaction, TaggedDataUpload attachment) {
+    public DbKey getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
+    }
+
+    public void setTransactionTimestamp(int transactionTimestamp) {
+        this.transactionTimestamp = transactionTimestamp;
+    }
+
+    public void setBlockTimestamp(int blockTimestamp) {
+        this.blockTimestamp = blockTimestamp;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+/*
+    public static void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             DbKey dbKey = keyFactory.newKey(transaction.getId());
             TaggedData taggedData = taggedDataTable.get(dbKey);
@@ -512,14 +523,15 @@ public class TaggedData {
                 taggedData = new TaggedData(transaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());
                 taggedDataTable.insert(taggedData);
-//                Tag.add(taggedData); // TODO: YL review and change
+//                DataTag.add(taggedData); // TODO: YL review and change
             }
         }
         TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp());
         timestampTable.insert(timestamp);
     }
+*/
 
-    public static void extend(Transaction transaction, TaggedDataExtend attachment) {
+/*    public static void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
         TaggedDataTimestamp timestamp = timestampTable.get(dbKey);
@@ -540,7 +552,7 @@ public class TaggedData {
                 Transaction uploadTransaction = blockchain.getTransaction(taggedDataId);
                 taggedData = new TaggedData(uploadTransaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchain.getHeight());
-//                Tag.add(taggedData); // TODO: YL review and change
+//                DataTag.add(taggedData); // TODO: YL review and change
             }
             if (taggedData != null) {
                 taggedData.transactionTimestamp = timestamp.getTimestamp();
@@ -549,12 +561,13 @@ public class TaggedData {
                 taggedDataTable.insert(taggedData);
             }
         }
-    }
+    }*/
 
-    public static void restore(Transaction transaction, TaggedDataUpload attachment, int blockTimestamp, int height) {
+/*
+    public static void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedDataTable.insert(taggedData);
-//        Tag.add(taggedData, height); // TODO: YL review and change
+//        DataTag.add(taggedData, height); // TODO: YL review and change
         int timestamp = transaction.getTimestamp();
         for (long extendTransactionId : TaggedData.getExtendTransactionIds(transaction.getId())) {
             Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);
@@ -570,7 +583,6 @@ public class TaggedData {
         }
     }
 
-
     public static boolean isPruned(long transactionId) {
         try (Connection con = lookupDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
@@ -582,5 +594,6 @@ public class TaggedData {
             throw new RuntimeException(e.toString(), e);
         }
     }
+*/
 
 }

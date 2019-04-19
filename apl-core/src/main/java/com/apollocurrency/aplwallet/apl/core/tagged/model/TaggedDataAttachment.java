@@ -3,7 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -182,7 +186,8 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            taggedData = TaggedData.getData(getTaggedDataId(transaction));
+            TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
+            taggedData = taggedDataService.getData(getTaggedDataId(transaction));
         }
     }
 
