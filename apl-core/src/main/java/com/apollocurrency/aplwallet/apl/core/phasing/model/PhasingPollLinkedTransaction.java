@@ -4,49 +4,41 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-public class PhasingPollLinkedTransaction {
-    private DbKey dbKey;
-    private Long pollId;
-    private Long transactionId;
+public class PhasingPollLinkedTransaction extends DerivedEntity {
+    private long pollId;
+    private long transactionId;
     private byte[] fullHash;
-    private int height;
 
-    public PhasingPollLinkedTransaction(Long pollId, Long transactionId, byte[] fullHash, int height) {
+
+    public PhasingPollLinkedTransaction(Long dbId, Integer height, long pollId, long transactionId, byte[] fullHash) {
+        super(dbId, height);
         this.pollId = pollId;
         this.transactionId = transactionId;
         this.fullHash = fullHash;
-        this.height = height;
     }
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PhasingPollLinkedTransaction)) return false;
+        if (!super.equals(o)) return false;
         PhasingPollLinkedTransaction that = (PhasingPollLinkedTransaction) o;
-        return height == that.height &&
-                Objects.equals(pollId, that.pollId) &&
+        return Objects.equals(pollId, that.pollId) &&
                 Objects.equals(transactionId, that.transactionId) &&
                 Arrays.equals(fullHash, that.fullHash);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(pollId, transactionId, height);
+        int result = Objects.hash(super.hashCode(), pollId, transactionId);
         result = 31 * result + Arrays.hashCode(fullHash);
         return result;
-    }
-
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
     }
 
     public Long getPollId() {
@@ -73,11 +65,4 @@ public class PhasingPollLinkedTransaction {
         this.fullHash = fullHash;
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
 }

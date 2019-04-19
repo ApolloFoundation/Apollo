@@ -30,10 +30,10 @@ public interface DerivedTableInterface<T> {
 
     default T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {return null;}
 
-    default void save(Connection con, T entity) throws SQLException {throw new UnsupportedOperationException("unsupported save");}
+    void save(Connection con, T entity) throws SQLException;
 
-    default void insert(T t) throws SQLException {
-        throw new UnsupportedOperationException("unsupported save");
+    default void insert(T t) {
+        throw new UnsupportedOperationException("unsupported insert");
     }
 
     default DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {

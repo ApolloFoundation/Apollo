@@ -4,35 +4,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 
 import java.util.Objects;
 
-public class PhasingPollVoter {
-    private DbKey dbKey;
-    private Long pollId;
-    private Long voterId;
-    private int height;
+public class PhasingPollVoter extends DerivedEntity {
+    private long pollId;
+    private long voterId;
 
-    public PhasingPollVoter(Long pollId, Long voterId, int height) {
+    public PhasingPollVoter(Long dbId, Integer height, long pollId, long voterId) {
+        super(dbId, height);
         this.pollId = pollId;
         this.voterId = voterId;
-        this.height = height;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PhasingPollVoter)) return false;
+        if (!super.equals(o)) return false;
         PhasingPollVoter that = (PhasingPollVoter) o;
-        return height == that.height &&
-                Objects.equals(pollId, that.pollId) &&
+        return Objects.equals(pollId, that.pollId) &&
                 Objects.equals(voterId, that.voterId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pollId, voterId, height);
+        return Objects.hash(super.hashCode(), pollId, voterId);
     }
 
     public Long getPollId() {
@@ -51,19 +49,4 @@ public class PhasingPollVoter {
         this.voterId = voterId;
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
 }

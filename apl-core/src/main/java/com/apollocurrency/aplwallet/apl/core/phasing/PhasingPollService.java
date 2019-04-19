@@ -75,5 +75,7 @@ public interface PhasingPollService {
 
     int getAllPhasedTransactionsCount();
 
+    boolean verifySecret(PhasingPoll poll, byte[] revealedSecret);
+
     boolean isTransactionPhased(long id);
 }

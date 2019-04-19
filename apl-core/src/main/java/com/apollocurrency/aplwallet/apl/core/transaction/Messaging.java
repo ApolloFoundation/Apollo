@@ -695,7 +695,7 @@ public abstract class Messaging extends TransactionType {
                     if (algorithm != 0 && algorithm != poll.getAlgorithm()) {
                         throw new AplException.NotValidException("Phased transaction " + Long.toUnsignedString(phasedTransactionId) + " is using a different hashedSecretAlgorithm");
                     }
-                    if (hashedSecret == null && !poll.verifySecret(revealedSecret)) {
+                    if (hashedSecret == null && !phasingPollService.verifySecret(poll, revealedSecret)) {
                         throw new AplException.NotValidException("Revealed secret does not match phased transaction hashed secret");
                     }
                     hashedSecret = poll.getHashedSecret();

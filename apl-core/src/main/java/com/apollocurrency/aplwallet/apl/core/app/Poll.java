@@ -71,7 +71,7 @@ public final class Poll extends AbstractPoll {
     private static final LongKeyFactory<Poll> pollDbKeyFactory = new LongKeyFactory<Poll>("id") {
         @Override
         public DbKey newKey(Poll poll) {
-            return poll.dbKey == null ? newKey(poll.id) : poll.dbKey;
+            return poll.getDbKey() == null ? newKey(poll.id) : poll.getDbKey();
         }
     };
 
@@ -91,7 +91,7 @@ public final class Poll extends AbstractPoll {
     private static final LongKeyFactory<Poll> pollResultsDbKeyFactory = new LongKeyFactory<Poll>("poll_id") {
         @Override
         public DbKey newKey(Poll poll) {
-            return poll.dbKey;
+            return poll.getDbKey();
         }
     };
 
@@ -251,7 +251,6 @@ public final class Poll extends AbstractPoll {
         }
     }
 
-    private final DbKey dbKey;
     private final String name;
     private final String description;
     private final String[] options;
@@ -263,8 +262,8 @@ public final class Poll extends AbstractPoll {
     private PollOptionResult optionResult;
 
     public Poll(Transaction transaction, MessagingPollCreation attachment, PollOptionResult optionResult) {
-        super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting());
-        this.dbKey = pollDbKeyFactory.newKey(this.id);
+        super(transaction.getId(), transaction.getSenderId(), attachment.getFinishHeight(), attachment.getVoteWeighting(), transaction.getHeight());
+        setDbKey(pollDbKeyFactory.newKey(this.id));
         this.name = attachment.getPollName();
         this.description = attachment.getPollDescription();
         this.options = attachment.getPollOptions();
@@ -278,7 +277,7 @@ public final class Poll extends AbstractPoll {
 
     public Poll(ResultSet rs, DbKey dbKey, PollOptionResult optionResult) throws SQLException {
         super(rs);
-        this.dbKey = dbKey;
+        setDbKey(dbKey);
         this.name = rs.getString("name");
         this.description = rs.getString("description");
         this.options = DbUtils.getArray(rs, "options", String[].class);
