@@ -22,7 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.BigIntegerArgumentFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -118,6 +121,10 @@ public class DataSourceWrapper implements DataSource {
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
+    public HikariPoolMXBean getJmxBean() {
+        return jmxBean;
+    }
+
     public DataSourceWrapper(DbProperties dbProperties) {
         long maxCacheSize = dbProperties.getMaxCacheSize();
         if (maxCacheSize == 0) {
@@ -156,6 +163,8 @@ public class DataSourceWrapper implements DataSource {
         config.setPassword(dbPassword);
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
+        config.setLeakDetectionThreshold(120_000); // 2 minutes
+        log.debug("Creating DataSource pool, path = {}", dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
 /*
@@ -171,6 +180,7 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        log.debug("Before starting Db schema init {}...", dbVersion);
         dbVersion.init(this);
 
         log.debug("Attempting to create Jdbi instance...");
@@ -178,6 +188,9 @@ public class DataSourceWrapper implements DataSource {
         jdbi.installPlugin(new SqlObjectPlugin());
         jdbi.installPlugin(new H2DatabasePlugin());
         jdbi.registerArgument(new BigIntegerArgumentFactory());
+        jdbi.registerArgument(new DexCurrenciesFactory());
+        jdbi.registerArgument(new OfferTypeFactory());
+        jdbi.registerArgument(new OfferStatusFactory());
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
@@ -238,9 +251,11 @@ public class DataSourceWrapper implements DataSource {
 //        int activeConnections = dataSource.getActiveConnections();
         if (activeConnections > maxActiveConnections) {
             maxActiveConnections = activeConnections;
-            log.debug("Used/Maximum connections from Pool '{}'/'{}'",
+            log.debug("Used/Maximum connections from Pool '{}'/'{}' Tread: {}",
 //                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
-                    jmxBean.getActiveConnections(), jmxBean.getTotalConnections());
+                    jmxBean.getActiveConnections(), 
+                    jmxBean.getTotalConnections(), 
+                    Thread.currentThread().getName());
         }
         return con;
     }

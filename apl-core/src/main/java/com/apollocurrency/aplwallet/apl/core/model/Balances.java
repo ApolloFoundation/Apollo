@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.exchange.model;
+package com.apollocurrency.aplwallet.apl.core.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;

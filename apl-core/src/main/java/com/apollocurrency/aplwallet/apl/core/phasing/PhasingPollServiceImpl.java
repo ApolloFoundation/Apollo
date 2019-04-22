@@ -73,13 +73,13 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getFinishingTransactions(int height) {
-        try {
-            return phasingPollTable.getFinishingTransactions(height);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+    public List<Transaction> getFinishingTransactions(int height) {
+        return phasingPollTable.getFinishingTransactions(height);
+    }
+
+    @Override
+    public List<Transaction> getFinishingTransactionsByTime(int time) {
+        return phasingPollTable.getFinishingTransactionsByTime(time);
     }
 
     @Override
@@ -161,7 +161,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void finish(PhasingPoll phasingPoll, long result) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight() + 1);
+        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight());
         resultTable.insert(phasingPollResult);
     }
 

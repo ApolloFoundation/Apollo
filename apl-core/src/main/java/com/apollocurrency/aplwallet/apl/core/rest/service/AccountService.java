@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

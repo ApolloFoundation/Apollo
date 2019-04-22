@@ -210,6 +210,23 @@ public class Chain {
                 genesisLocation, blockchainPropertiesCopy);
     }
 
+    @Override
+    public String toString() {
+        return "Chain{" +
+                "chainId=" + chainId +
+                ", active=" + active +
+                ", defaultPeers=" + defaultPeers +
+                ", wellKnownPeers=" + wellKnownPeers +
+                ", blacklistedPeers=" + blacklistedPeers +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", symbol='" + symbol + '\'' +
+                ", prefix='" + prefix + '\'' +
+                ", project='" + project + '\'' +
+                ", genesisLocation='" + genesisLocation + '\'' +
+                ", blockchainProperties=" + blockchainProperties +
+                '}';
+    }
 
     @JsonGetter("blockchainProperties")
     public List<BlockchainProperties> getBlockchainPropertiesList() {

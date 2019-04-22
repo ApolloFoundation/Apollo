@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 
 import javax.inject.Singleton;
 
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import org.slf4j.Logger;
@@ -106,6 +107,7 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block findBlock(long blockId) {
         // Check the block cache
@@ -160,11 +162,13 @@ public class BlockDaoImpl implements BlockDao {
         return dataSource;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId) {
         return hasBlock(blockId, Integer.MAX_VALUE);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId, int height) {
         // Check the block cache
@@ -188,6 +192,7 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public long findBlockIdAtHeight(int height) {
         // Check the cache
@@ -223,6 +228,7 @@ public class BlockDaoImpl implements BlockDao {
         return heightMap;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block findBlockAtHeight(int height) {
         // Check the cache
@@ -682,19 +688,18 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public Block deleteBlocksFrom(long blockId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        if (!dataSource.isInTransaction()) {
-            Block lastBlock = null;
+        boolean inTransaction = dataSource.isInTransaction();
+        if (!inTransaction) {
+            Block lastBlock;
             try {
-                Connection con = dataSource.getConnection();
+                dataSource.begin();
                 // TODO: Recursion, check if safe...
                 lastBlock = deleteBlocksFrom(blockId);
                 dataSource.commit();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 dataSource.rollback();
-//                throw e;
-            } /*finally {
-                dataSource.endTransaction(null);
-            }*/
+                throw e;
+            }
             return lastBlock;
         }
         try (Connection con = dataSource.getConnection();
@@ -721,7 +726,7 @@ public class BlockDaoImpl implements BlockDao {
                 dataSource.commit(false);
                 return lastBlock;
             } catch (SQLException e) {
-                dataSource.rollback();
+                dataSource.rollback(false);
                 throw e;
             }
         } catch (SQLException e) {
@@ -736,15 +741,13 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             try {
-                Connection con = dataSource.getConnection();
+                dataSource.begin();
                 deleteAll();
                 dataSource.commit();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 dataSource.rollback();
-//                throw e;
-            } /*finally {
-                dataSource.endTransaction(null);
-            }*/
+                throw e;
+            }
             return;
         }
         LOG.info("Deleting blockchain...");
@@ -760,9 +763,9 @@ public class BlockDaoImpl implements BlockDao {
                     } catch (SQLException ignore) {}
                 });
                 stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");
-                dataSource.commit();
+                dataSource.commit(false);
             } catch (SQLException e) {
-                dataSource.rollback();
+                dataSource.rollback(false);
                 throw e;
             }
         } catch (SQLException e) {

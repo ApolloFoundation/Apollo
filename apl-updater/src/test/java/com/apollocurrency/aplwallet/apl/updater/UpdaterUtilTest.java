@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -26,7 +29,7 @@ import java.util.stream.Stream;
 //import org.powermock.api.mockito.PowerMockito;
 
 //TODO: Rewrite using mockito
-@Ignore
+@Disabled
 public class UpdaterUtilTest {
 
     private final static String CERTIFICATE_MOCK_PREFIX = "CERTIFICATE_MOCK_";
@@ -58,19 +61,19 @@ public class UpdaterUtilTest {
         // Call tested method
         Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
 
-        Assert.assertNotNull(result);
+        assertNotNull(result);
         for(CertificatePair pair : result) {
             System.out.println("pair: [" + pair.getFirstCertificate().toString() + ", " + pair.getSecondCertificate().toString() + "]");
         }
 
-        Assert.assertEquals(result.size(), 6);
+        assertEquals(result.size(), 6);
 
-        Assert.assertTrue(containsPair(result, "2_1.crt", "1_1.crt"));
-        Assert.assertTrue(containsPair(result, "2_1.crt", "1_2.crt"));
-        Assert.assertTrue(containsPair(result, "2_1.crt", "1_3.crt"));
-        Assert.assertTrue(containsPair(result, "2_2.crt", "1_1.crt"));
-        Assert.assertTrue(containsPair(result, "2_2.crt", "1_2.crt"));
-        Assert.assertTrue(containsPair(result, "2_2.crt", "1_3.crt"));
+        assertTrue(containsPair(result, "2_1.crt", "1_1.crt"));
+        assertTrue(containsPair(result, "2_1.crt", "1_2.crt"));
+        assertTrue(containsPair(result, "2_1.crt", "1_3.crt"));
+        assertTrue(containsPair(result, "2_2.crt", "1_1.crt"));
+        assertTrue(containsPair(result, "2_2.crt", "1_2.crt"));
+        assertTrue(containsPair(result, "2_2.crt", "1_3.crt"));
 
     }
 
@@ -95,13 +98,13 @@ public class UpdaterUtilTest {
         // Call tested method
         Set<Certificate> result = UpdaterUtil.readCertificates(createPathStream(files).collect(Collectors.toSet()));
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(result.size(), files.length);
+        assertNotNull(result);
+        assertEquals(result.size(), files.length);
 
         HashSet<String> filenames = new HashSet<>(Arrays.asList(files));
         // Assert that for each filename a correspondent certificate was created
         for(Certificate certificate : result) {
-            Assert.assertTrue(filenames.contains(certificate.toString().replace(CERTIFICATE_MOCK_PREFIX, "")));
+            assertTrue(filenames.contains(certificate.toString().replace(CERTIFICATE_MOCK_PREFIX, "")));
         }
 
     }

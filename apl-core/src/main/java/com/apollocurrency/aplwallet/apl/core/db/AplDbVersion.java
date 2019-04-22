@@ -722,11 +722,23 @@ public class AplDbVersion extends DbVersion {
             case 265:
                 apply("ALTER TABLE genesis_public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_C11");
             case 266:
-                apply("ALTER TABLE IF EXISTS referenced_transaction ADD COLUMN IF NOT EXISTS height INT NOT NULL");
+                apply("ALTER TABLE IF EXISTS referenced_transaction ADD COLUMN IF NOT EXISTS height INT NOT NULL DEFAULT -1");
             case 267:
                 apply("ALTER TABLE referenced_transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_4B1");
-            case 268:
-                return 268;
+            case 268 :
+                apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
+            case 269:
+                apply("ALTER TABLE phasing_poll ADD finish_time INT NOT NULL DEFAULT -1;");
+            case 270:
+                apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY AUTO_INCREMENT, transaction_id BIGINT NOT NULL, type TINYINT NOT NULL," +
+                        "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL," +
+                        " pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL)");
+            case 271 :
+                apply("CREATE UNIQUE INDEX dex_offer_tr_ID ON dex_offer(transaction_id)");
+            case 272 :
+                    apply("ALTER TABLE dex_offer ADD status TINYINT NOT NULL DEFAULT 2;");
+            case 273 :
+                return 273;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

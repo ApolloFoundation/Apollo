@@ -20,55 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.Search;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
@@ -104,6 +57,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
+
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -140,7 +94,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
@@ -154,6 +107,7 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
+
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -161,6 +115,8 @@ public final class ParameterParser {
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();;
     
+    private static final int DEFAULT_LAST_INDEX = 250;
+
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
@@ -621,6 +577,9 @@ public final class ParameterParser {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
+        if (publicKey == null) {
+            throw new ParameterException(UNKNOWN_PUBLIC_KEY);
+        }
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
@@ -722,11 +681,11 @@ public final class ParameterParser {
     }
 
     public static int getLastIndex(HttpServletRequest req) {
-        int lastIndex = Integer.MAX_VALUE;
+        int lastIndex = DEFAULT_LAST_INDEX;
         try {
             lastIndex = Integer.parseInt(req.getParameter("lastIndex"));
             if (lastIndex < 0) {
-                lastIndex = Integer.MAX_VALUE;
+                lastIndex = DEFAULT_LAST_INDEX;
             }
         } catch (NumberFormatException ignored) {}
         if (!apw.checkPassword(req)) {
@@ -807,7 +766,7 @@ public final class ParameterParser {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
                 return Transaction.newTransactionBuilder(json);
-            } catch (AplException.ValidationException | RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionJSON");
@@ -818,7 +777,7 @@ public final class ParameterParser {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
                 return Transaction.newTransactionBuilder(bytes, prunableAttachments);
-            } catch (AplException.ValidationException|RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionBytes");

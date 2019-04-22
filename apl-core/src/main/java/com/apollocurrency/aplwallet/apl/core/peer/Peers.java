@@ -73,6 +73,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.enterprise.inject.spi.CDI;
 import org.slf4j.LoggerFactory;
 
+
 public final class Peers {
     private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
 
@@ -585,19 +586,11 @@ public final class Peers {
             // put new or replace previous
             if (!peers.containsKey(peer.getHost())) {
                 peers.put(peer.getHost(), (PeerImpl) peer);
-                if (peer.getVersion() == null) {
-                    LOG.warn("Added incorrect Peer = {}", peer);
-                }
             } else {
                 peers.replace(peer.getHost(), (PeerImpl) peer);
-                if (peer.getVersion() == null) {
-                    LOG.warn("Replaced by incorrect Peer = {}", peer);
-                }
             }
             listeners.notify(peer, Event.NEW_PEER);
             return true;
-        } else {
-            LOG.trace("NOT added, attempt to PUT incorrect = {}", peer);
         }
         return false;
     }

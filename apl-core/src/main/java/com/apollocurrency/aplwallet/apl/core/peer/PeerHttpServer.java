@@ -21,6 +21,7 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.DoSFilter;
+import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -98,6 +99,8 @@ public class PeerHttpServer {
             
             ServletContextHandler ctxHandler = new ServletContextHandler();
             ctxHandler.setContextPath("/");
+            //add Weld listener
+            ctxHandler.addEventListener(new Listener());
             ServletHolder peerServletHolder = new ServletHolder(new PeerServlet());
             ctxHandler.addServlet(peerServletHolder, "/*");
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
@@ -129,6 +132,9 @@ public class PeerHttpServer {
                ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
                 try {
                     if (enablePeerUPnP) {
+                        if(!upnp.isInited()){
+                            upnp.init();
+                        }
                         Connector[] peerConnectors = peerServer.getConnectors();
                         for (Connector peerConnector : peerConnectors) {
                             if (peerConnector instanceof ServerConnector) {

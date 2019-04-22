@@ -113,9 +113,9 @@ public abstract class AbstractAPIRequestHandler {
         return false;
     }
 
-    protected boolean startDbTransaction() {
-        return false;
-    }
+//    protected boolean startDbTransaction() {
+//        return false;
+//    }
 
     protected boolean requirePassword() {
         return false;

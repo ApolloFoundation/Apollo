@@ -10,6 +10,8 @@ import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.double
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.encrypt;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPrivateKey;
 import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -17,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
@@ -50,7 +51,7 @@ public class RSAUtilTest {
         System.out.println("Decrypted message:");
         System.out.println(actual);
 
-        Assert.assertEquals(expectedMessage, actual);
+        assertEquals(expectedMessage, actual);
     }
 
     @Test
@@ -72,7 +73,7 @@ public class RSAUtilTest {
         System.out.println("Decrypted message:");
         System.out.println(actual);
 
-        Assert.assertEquals(expectedMessage, actual);
+        assertEquals(expectedMessage, actual);
     }
 
     @Test
@@ -91,8 +92,8 @@ public class RSAUtilTest {
 
         String url = new String(new RSADoubleDecryptor().decrypt(encryptedBytes,
                 pubKey2, pubKey1));
-        Assert.assertNotNull(url);
-        Assert.assertEquals(expectedMessage, url);
+        assertNotNull(url);
+        assertEquals(expectedMessage, url);
     }
 
     @Test

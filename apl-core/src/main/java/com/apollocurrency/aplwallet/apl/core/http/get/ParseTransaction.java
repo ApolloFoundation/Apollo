@@ -58,7 +58,7 @@ public final class ParseTransaction extends AbstractAPIRequestHandler {
         JSONObject response = JSONData.unconfirmedTransaction(transaction);
         try {
             validator.validate(transaction);
-        } catch (AplException.ValidationException|RuntimeException e) {
+        } catch (AplException.ValidationException | RuntimeException e) {
             LOG.debug(e.getMessage(), e);
             response.put("validate", false);
             JSONData.putException(response, e, "Invalid transaction");

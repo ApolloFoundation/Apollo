@@ -64,7 +64,7 @@ public final class APIServlet extends HttpServlet {
     public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+//    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
             
@@ -181,11 +181,11 @@ public final class APIServlet extends HttpServlet {
                 globalSync.readLock();
             }
             try {
-                TransactionalDataSource dataSource = databaseManager.getDataSource();
+//                TransactionalDataSource dataSource = databaseManager.getDataSource();
                 try {
-                    if (apiRequestHandler.startDbTransaction()) {
-                        dataSource.begin();
-                    }
+//                    if (apiRequestHandler.startDbTransaction()) {
+//                        dataSource.begin();
+//                    }
                     if (requireBlockId != 0 && !blockchain.hasBlock(requireBlockId)) {
                         response = REQUIRED_BLOCK_NOT_FOUND;
                         return;
@@ -200,9 +200,9 @@ public final class APIServlet extends HttpServlet {
                         ((JSONObject) response).put("lastBlock", blockchain.getLastBlock().getStringId());
                     }
                 } finally {
-                    if (apiRequestHandler.startDbTransaction()) {
-                        dataSource.commit(true);
-                    }
+//                    if (apiRequestHandler.startDbTransaction()) {
+//                        dataSource.commit(true);
+//                    }
                 }
             } finally {
                 if (requireBlockId != 0 || requireLastBlockId != 0) {

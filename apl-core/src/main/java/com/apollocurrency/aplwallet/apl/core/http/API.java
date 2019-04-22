@@ -69,6 +69,8 @@ import java.util.StringJoiner;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
+import org.jboss.weld.environment.servlet.Listener;
+
 
 @Singleton
 public final class API {
@@ -210,7 +212,8 @@ public final class API {
                 String[] wellcome = {propertiesHolder.getStringProperty("apl.apiWelcomeFile")};
                 apiHandler.setWelcomeFiles(wellcome);
             }
-
+            //add Weld listener
+            apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
                     null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
@@ -267,7 +270,7 @@ public final class API {
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
-                            .add(RestParameterExceptionMapper.class.getName())
+                                .add(RestParameterExceptionMapper.class.getName())
                             .toString()
             );
 
@@ -322,7 +325,13 @@ public final class API {
                     LOG.error("Failed to start API server", e);
                     throw new RuntimeException(e.toString(), e);
                 }
-
+          //  }, true);
+          if(enableAPIUPnP){
+              if(!upnp.isInited()){
+                upnp.init();
+              }
+              upnp.addPort(port);
+          }
 
         } else {
             apiServer = null;

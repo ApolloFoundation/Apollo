@@ -156,6 +156,20 @@
         }
       },
       {
+        "height": 2000000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
+        }
+      },
+      {
         "height": 2249999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
@@ -233,9 +247,9 @@
   {
     "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6",
     "wellKnownPeers": [
-      "51.15.233.202",
       "51.15.247.49",
-      "51.15.226.113",
+      "51.15.209.252",
+      "51.15.228.90",
       "51.15.228.126",
       "51.15.228.171"
     ],
@@ -253,6 +267,20 @@
         "maxBlockTimeLimit": 12,
         "minBlockTimeLimit": 8,
         "maxBalance": 30000000000
+      },
+      {
+        "height": 10,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
       }
     ]
   },

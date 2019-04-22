@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
@@ -90,7 +90,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 builder.appendix(new EncryptToSelfMessageAppendix(buffer));
             }
             if (rs.getBoolean("phased")) {
-                builder.appendix(new PhasingAppendix(buffer));
+                builder.appendix(PhasingAppendixFactory.build(buffer));
             }
             if (rs.getBoolean("has_prunable_message")) {
                 builder.appendix(new PrunablePlainMessageAppendix(buffer));

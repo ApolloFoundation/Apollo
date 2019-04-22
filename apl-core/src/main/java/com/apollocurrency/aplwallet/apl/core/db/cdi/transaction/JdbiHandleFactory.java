@@ -1,13 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.db.cdi.transaction;
 
-import static org.apache.uima.UIMAFramework.getLogger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Holds opened connection {@link Handle} for current thread.
@@ -38,7 +38,7 @@ public class JdbiHandleFactory {
         return handle;
     }
 
-    protected Handle open() {
+    public Handle open() {
         Handle handle = currentHandleThreadLocal.get();
         if (handle != null) {
             return handle;
