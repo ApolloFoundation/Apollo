@@ -30,11 +30,15 @@ public class TaggedDataTimestampDao extends VersionedEntityDbTable<TaggedDataTim
         }
     };
 
-    private static final String TABLE_NAME = "phasing_poll";
+    private static final String TABLE_NAME = "tagged_data_timestamp";
     private final TagDataTimestampMapper MAPPER = new TagDataTimestampMapper();
 
     public TaggedDataTimestampDao() {
         super(TABLE_NAME, timestampKeyFactory);
+    }
+
+    public DbKey newDbKey(TaggedDataTimestamp dataTimestamp) {
+        return timestampKeyFactory.newKey(dataTimestamp.getId());
     }
 
     @Override

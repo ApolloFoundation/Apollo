@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -84,8 +83,6 @@ class TaggedDataServiceTest {
     @Inject
     TaggedDataService taggedDataService;
     @Inject
-    TransactionDao transactionDao;
-    @Inject
     Blockchain blockchain;
     TaggedTestData tagTd;
     TransactionTestData ttd;
@@ -152,14 +149,14 @@ class TaggedDataServiceTest {
     @Disabled
     void addDataUploadAttach() {
         DbUtils.inTransaction(extension, (con) -> {
-            taggedDataService.add(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp);
+            taggedDataService.add(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT);
         });
     }
 
     @Disabled
     void restore() {
         DbUtils.inTransaction(extension, (con) -> {
-            taggedDataService.restore(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp, btd.BLOCK_7.getTimestamp(), btd.BLOCK_7.getHeight());
+            taggedDataService.restore(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT, btd.BLOCK_7.getTimestamp(), btd.BLOCK_7.getHeight());
         });
     }
 
