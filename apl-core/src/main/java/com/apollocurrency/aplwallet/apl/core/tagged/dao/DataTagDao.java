@@ -47,6 +47,9 @@ public class DataTagDao extends VersionedPersistentDbTable<DataTag> {
         super(DB_TABLE, tagDbKeyFactory);
     }
 
+    public DbKey newDbKey(DataTag dataTag) {
+        return tagDbKeyFactory.newKey(dataTag.getTag());
+    }
 
     public void add(TaggedData taggedData) {
         for (String tagValue : taggedData.getParsedTags()) {

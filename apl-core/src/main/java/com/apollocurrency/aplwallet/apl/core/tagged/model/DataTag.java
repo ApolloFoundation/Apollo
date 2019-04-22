@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
@@ -78,5 +79,21 @@ public class DataTag {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataTag dataTag = (DataTag) o;
+        return height == dataTag.height &&
+                count == dataTag.count &&
+                Objects.equals(tag, dataTag.tag) &&
+                Objects.equals(dbKey, dataTag.dbKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tag, dbKey, height, count);
     }
 }

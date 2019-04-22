@@ -171,7 +171,7 @@ INSERT into PUBLIC.TAGGED_DATA_TIMESTAMP
 
 INSERT into PUBLIC.DATA_TAG
 (DB_ID  	,TAG      , TAG_COUNT  	,HEIGHT , LATEST) VALUES
-(10         ,'abc',      1         , 1500, FALSE),
+(10         ,'abc',      1         , 1500, TRUE),
 (20         ,'efd',      1         , 2000, FALSE),
 (30         ,'xyz' ,     2         , 3500, FALSE),
 (40         ,'trw' ,     1         , 3500, TRUE),
