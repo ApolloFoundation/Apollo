@@ -28,7 +28,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
      */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
-    private static DatabaseManager databaseManager;
+    private DatabaseManager databaseManager;
     /**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method

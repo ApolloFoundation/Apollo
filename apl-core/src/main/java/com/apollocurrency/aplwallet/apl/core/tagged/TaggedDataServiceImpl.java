@@ -4,18 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.TypeLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -31,6 +22,13 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.TypeLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TaggedDataServiceImpl implements TaggedDataService {
@@ -124,6 +122,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
 //            Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);
             Transaction extendTransaction = blockchain.getTransaction(taggedDataForTransaction.getExtendId());
+            //TODO extend transaction is null
             if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {

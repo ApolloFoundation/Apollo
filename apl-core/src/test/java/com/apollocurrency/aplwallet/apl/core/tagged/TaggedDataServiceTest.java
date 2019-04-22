@@ -5,12 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -24,8 +19,13 @@ import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
@@ -53,6 +53,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Set;
+import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 class TaggedDataServiceTest {
@@ -61,7 +66,9 @@ class TaggedDataServiceTest {
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
+    private NtpTime time = mock(NtpTime.class);
+    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
+    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data"), "PUBLIC");
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -70,6 +77,7 @@ class TaggedDataServiceTest {
             GlobalSyncImpl.class,
             TaggedDataDao.class,
             DataTagDao.class,
+            KeyFactoryProducer.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
@@ -78,8 +86,11 @@ class TaggedDataServiceTest {
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(time, NtpTime.class))
+            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class))
+            .addBeans(MockBean.of(ftlService, FullTextSearchService.class))
             .build();
+
     @Inject
     TaggedDataService taggedDataService;
     @Inject
@@ -90,6 +101,11 @@ class TaggedDataServiceTest {
 
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
+
+    @Inject
+    FullTextSearchService ftl;
+
+    TaggedDataServiceTest() throws IOException {}
 
     private Path createPath(String fileName) {
         try {
@@ -103,6 +119,7 @@ class TaggedDataServiceTest {
     @AfterEach
     void cleanup() {
         jdbiHandleFactory.close();
+        ftl.shutdown();
     }
 
     @BeforeEach
@@ -110,7 +127,9 @@ class TaggedDataServiceTest {
         ttd = new TransactionTestData();
         btd = new BlockTestData();
         tagTd = new TaggedTestData();
+        ftl.init();
     }
+
 
     @Test
     void getTaggedDataCount() {
@@ -146,12 +165,13 @@ class TaggedDataServiceTest {
         assertEquals(1, count);
     }
 
-    @Disabled
+    @Test
     void addDataUploadAttach() {
         DbUtils.inTransaction(extension, (con) -> {
             taggedDataService.add(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT);
         });
     }
+
 
     @Disabled
     void restore() {
