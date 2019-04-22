@@ -140,7 +140,7 @@ class TaggedDataServiceTest {
     @Test
     void getDataTagCount() {
         int result = taggedDataService.getDataTagCount();
-        assertEquals(1, result);
+        assertEquals(2, result);
     }
 
     @Test
@@ -151,7 +151,7 @@ class TaggedDataServiceTest {
             DataTag dataTag = result.next();
             count++;
         }
-        assertEquals(1, count);
+        assertEquals(2, count);
     }
 
     @Test
