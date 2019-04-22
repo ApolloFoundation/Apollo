@@ -11,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-public abstract class DerivedEntity {
+public abstract class DerivedEntity implements Comparable {
     private DbKey dbKey;
     private static final long DEFAULT_DB_ID = 0L;
     private static final int DEFAULT_HEIGHT = -1;
@@ -65,5 +65,15 @@ public abstract class DerivedEntity {
 
     public void setDbKey(DbKey dbKey) {
         this.dbKey = dbKey;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        DerivedEntity entity = (DerivedEntity) o;
+        int res = Integer.compare(entity.getHeight(), height);
+        if (res == 0) {
+            res = Long.compare(entity.getDbId(), dbId);
+        }
+        return res;
     }
 }

@@ -36,6 +36,10 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
     private final boolean multiversion;
     protected final KeyFactory<V> dbKeyFactory;
 
+    public boolean isMultiversion() {
+        return multiversion;
+    }
+
     protected ValuesDbTable(String table, KeyFactory<V> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
@@ -51,10 +55,6 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         this.multiversion = false;
         this.dbKeyFactory = dbKeyFactory;
     }
-
-//    protected abstract T load(Connection con, ResultSet rs) throws SQLException;
-
-//    protected abstract void save(Connection con, T t, V v) throws SQLException;
 
     protected void clearCache() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -82,6 +82,10 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    public KeyFactory<V> getDbKeyFactory() {
+        return dbKeyFactory;
     }
 
     private List<V> get(Connection con, PreparedStatement pstmt) {
@@ -126,7 +130,7 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    public abstract void save(Connection con, V entity) throws SQLException;
+    protected abstract void save(Connection con, V entity) throws SQLException;
 
     private void checkKeys(DbKey key, List<V> values) {
 
@@ -157,12 +161,6 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
             }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         }
-        // nothing to do here
-/*
-        else {
-            super.trim(height, dataSource);
-        }
-*/
     }
 
 }
