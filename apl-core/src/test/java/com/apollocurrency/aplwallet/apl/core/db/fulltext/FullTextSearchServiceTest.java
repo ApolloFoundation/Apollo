@@ -45,7 +45,7 @@ import org.mockito.Mockito;
 class FullTextSearchServiceTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("fullTextSearchDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
