@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.tagged;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
@@ -47,7 +47,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -93,15 +92,12 @@ class TaggedDataServiceTest {
 
     @Inject
     TaggedDataService taggedDataService;
-    @Inject
-    Blockchain blockchain;
     TaggedTestData tagTd;
     TransactionTestData ttd;
     BlockTestData btd;
 
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
-
     @Inject
     FullTextSearchService ftl;
 
@@ -170,14 +166,27 @@ class TaggedDataServiceTest {
         DbUtils.inTransaction(extension, (con) -> {
             taggedDataService.add(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT);
         });
+        DbIterator<TaggedData> result = taggedDataService.getAll(0, 5);
+        int count = 0;
+        while (result.hasNext()) {
+            TaggedData dataTag = result.next();
+            count++;
+        }
+        assertEquals(1, count);
     }
 
-
-    @Disabled
+    @Test
     void restore() {
         DbUtils.inTransaction(extension, (con) -> {
             taggedDataService.restore(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT, btd.BLOCK_7.getTimestamp(), btd.BLOCK_7.getHeight());
         });
+        DbIterator<TaggedData> result = taggedDataService.getAll(0, 100);
+        int count = 0;
+        while (result.hasNext()) {
+            TaggedData dataTag = result.next();
+            count++;
+        }
+        assertEquals(1, count);
     }
 
 }

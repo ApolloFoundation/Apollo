@@ -14,7 +14,7 @@ public class TaggedDataExtend {
     private long id;
     private DbKey dbKey;
     private int height;
-    private int extendId;
+    private long extendId;
 
     public TaggedDataExtend(long id, int height, int extendId) {
         this.id = id;
@@ -26,13 +26,13 @@ public class TaggedDataExtend {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
         this.height = rs.getInt("height");
-        this.extendId = rs.getInt("extend_id");
+        this.extendId = rs.getLong("extend_id");
     }
 
     public TaggedDataExtend(ResultSet rs) throws SQLException {
         this.id = rs.getLong("id");
         this.height = rs.getInt("height");
-        this.extendId = rs.getInt("extend_id");
+        this.extendId = rs.getLong("extend_id");
     }
 
     public long getId() {
@@ -59,7 +59,7 @@ public class TaggedDataExtend {
         this.height = height;
     }
 
-    public int getExtendId() {
+    public long getExtendId() {
         return extendId;
     }
 
