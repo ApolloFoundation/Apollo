@@ -122,7 +122,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
 //            Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);
             Transaction extendTransaction = blockchain.getTransaction(taggedDataForTransaction.getExtendId());
-            //TODO extend transaction is null
             if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {
