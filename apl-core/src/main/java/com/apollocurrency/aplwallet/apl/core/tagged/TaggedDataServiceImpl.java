@@ -43,9 +43,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private TaggedDataExtendDao taggedDataExtendDao;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
-    private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(
-            new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
-
+    private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
     @Inject
     public TaggedDataServiceImpl(TaggedDataDao taggedDataDao, DataTagDao dataTagDao,
@@ -60,8 +58,11 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     }
 
     @Override
-    public void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
+    public void add(Transaction transaction, TaggedDataUploadAttachment attachment) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
+            if (keyFactory == null) {
+                keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
+            }
             DbKey dbKey = keyFactory.newKey(transaction.getId());
             TaggedData taggedData = taggedDataDao.get(dbKey);
             if (taggedData == null) {
@@ -86,6 +87,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             timestamp.setTimestamp(timestamp.getTimestamp()
                     + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.getTimestamp()));
         }
+        timestamp.setHeight(blockchain.getHeight());
         taggedDataTimestampDao.insert(timestamp);
 
 //        List<Long> extendTransactionIds = taggedDataExtendDao.get(dbKey);
@@ -114,6 +116,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     @Override
     public void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
+        taggedData.setDbKey(taggedDataDao.newKey(transaction.getId()));
         taggedDataDao.insert(taggedData);
         dataTagDao.add(taggedData, height);
         int timestamp = transaction.getTimestamp();// TODO: YL review
@@ -128,7 +131,8 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             }
             taggedData.setTransactionTimestamp(timestamp);
             taggedData.setBlockTimestamp(extendTransaction.getBlockTimestamp());
-            taggedData.setHeight(extendTransaction.getHeight());
+//            taggedData.setHeight(extendTransaction.getHeight());
+            taggedData.setHeight(blockchain.getHeight()); // TODO: YL review
             taggedDataDao.insert(taggedData);
         }
     }

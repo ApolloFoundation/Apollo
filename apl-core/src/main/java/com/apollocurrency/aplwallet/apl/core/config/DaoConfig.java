@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;

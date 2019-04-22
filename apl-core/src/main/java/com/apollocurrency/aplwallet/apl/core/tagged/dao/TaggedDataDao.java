@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -13,16 +12,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -34,28 +26,18 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 
 @Singleton
 public class TaggedDataDao extends VersionedPrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
     protected DatabaseManager databaseManager;
-    private BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
-    private Blockchain blockchain;// = CDI.current().select(BlockchainImpl.class).get();
+    private BlockchainConfig blockchainConfig;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private TaggedDataTimestampDao taggedDataTimestampDao;
-    private TaggedDataExtendDao taggedDataExtendDao;
 
     private static final String DB_TABLE = "tagged_data";
-//    private static final String FULL_TEXT_SEARCH = "name,description,tags";
     private TaggedDataMapper MAPPER = new TaggedDataMapper();
 
-    private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(
-            new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
     private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(TaggedData taggedData) {
@@ -65,18 +47,11 @@ public class TaggedDataDao extends VersionedPrunableDbTable<TaggedData> {
 
     @Inject
     public TaggedDataDao(DataTagDao dataTagDao, DatabaseManager databaseManager,
-                         BlockchainConfig blockchainConfig, Blockchain blockchain,
-                         TaggedDataTimestampDao taggedDataTimestampDao,
-                         TaggedDataExtendDao taggedDataExtendDao) {
+                         BlockchainConfig blockchainConfig) {
         super(DB_TABLE, taggedDataKeyFactory);
-//        setFullTextSearchColumns(FULL_TEXT_SEARCH);
         this.dataTagDao = dataTagDao;
         this.databaseManager = databaseManager;
         this.blockchainConfig = blockchainConfig;
-        this.blockchain = blockchain;
-//        this.timeService = timeService;
-        this.taggedDataTimestampDao = taggedDataTimestampDao;
-        this.taggedDataExtendDao = taggedDataExtendDao;
     }
 
     private TransactionalDataSource lookupDataSource() {
@@ -93,9 +68,11 @@ public class TaggedDataDao extends VersionedPrunableDbTable<TaggedData> {
         return taggedData;
     }
 
+/*
     public void save(TaggedData taggedData) throws SQLException {
         save(lookupDataSource().getConnection(), taggedData);
     }
+*/
 
     public DbKey newKey(long taggedDataId) {
         return taggedDataKeyFactory.newKey(taggedDataId);

@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttach
 
 public interface TaggedDataService {
 
-    void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment);
+    void add(Transaction transaction, TaggedDataUploadAttachment attachment);
 
     void extend(Transaction transaction, TaggedDataExtendAttachment attachment);
 

@@ -21,6 +21,12 @@ public class TaggedDataTimestamp {
         this.timestamp = timestamp;
     }
 
+    public TaggedDataTimestamp(long id, int timestamp, int height) {
+        this.id = id;
+        this.timestamp = timestamp;
+        this.height = height;
+    }
+
     public TaggedDataTimestamp(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;

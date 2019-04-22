@@ -18,6 +18,10 @@ delete from phasing_poll_linked_transaction;
 delete from PUBLIC.GENESIS_PUBLIC_KEY;
 delete from PUBLIC.PUBLIC_KEY;
 delete from PUBLIC.SHARD_RECOVERY;
+delete from PUBLIC.TAGGED_DATA_TIMESTAMP;
+delete from PUBLIC.DATA_TAG;
+delete from PUBLIC.TAGGED_DATA_EXTEND;
+--delete from PUBLIC.TAGGED_DATA;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT, TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -128,8 +132,8 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (30         ,-4081443370478530685, X'5ea0de6146ac28b8b64d4f7f1ccbd1c7b2e43397221ef7ed3fa10c4ec0581d43', -5176698353372716962  , 15456),
 ;
 INSERT into version values (267);
-INSERT INTO FTL.INDEXES (schema, table, columns)
-                         VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
+INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
+INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
 
 INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (1, -8446737619314270165, '5E8D43FF197F8B554A59007F9E6F73E10BFF4DDA9906F8389D015F31D0ABC433', 1000, true);
@@ -156,3 +160,37 @@ INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VA
 INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (10, -4013722529644937202, '6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true);
 
 INSERT INTO PUBLIC.SHARD_RECOVERY (SHARD_RECOVERY_ID, STATE, COLUMN_NAME, UPDATED) VALUES (1, 'INIT', NULL, CURRENT_TIMESTAMP());
+
+
+INSERT into PUBLIC.TAGGED_DATA_TIMESTAMP
+(DB_ID  	,ID  	             ,  TIMESTAMP  	 , HEIGHT ) VALUES
+(10         ,-780794814210884355 , 35078473      , 2000),
+(20         ,-9128485677221760321, 35078473      , 3500),
+(30         ,3746857886535243786,  35078473      , 3500),
+;
+
+INSERT into PUBLIC.DATA_TAG
+(DB_ID  	,TAG      , TAG_COUNT  	,HEIGHT , LATEST) VALUES
+(10         ,'abc',      1         , 1500, FALSE),
+(20         ,'efd',      1         , 2000, FALSE),
+(30         ,'xyz' ,     2         , 3500, FALSE),
+(40         ,'trw' ,     1         , 3500, TRUE),
+;
+
+--INSERT into PUBLIC.TAGGED_DATA
+--(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,       data      ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
+--(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,   X'c11dd7986e'  ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
+--(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,   X'c11d86986e'  ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
+--(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,   X'c11d8344588e' ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
+--(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,   X'c11d1234589e' ,   TRUE   ,          73600    ,      35078473        ,   3500),
+--(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,   X'c11d1234586e' ,   FALSE  ,          73600    ,      35078473        ,   8000),
+--;
+
+INSERT into PUBLIC.TAGGED_DATA_EXTEND
+(DB_ID  	,ID  	             , EXTEND_ID  	,HEIGHT ) VALUES
+(10         ,-780794814210884355 ,   1          , 2000),
+(20         ,-9128485677221760321,   2          , 3500),
+(30         ,3746857886535243786 ,   3          , 3500),
+(40         ,2083198303623116770 ,   4          , 3500),
+(50         ,808614188720864902 ,    5          , 8000),
+;

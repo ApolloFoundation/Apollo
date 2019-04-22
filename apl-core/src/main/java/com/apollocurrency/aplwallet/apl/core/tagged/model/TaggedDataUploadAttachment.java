@@ -47,7 +47,8 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
         }
     }
 
-    public TaggedDataUploadAttachment(String name, String description, String tags, String type, String channel, boolean isText, String filename, byte[] data) throws AplException.NotValidException {
+    public TaggedDataUploadAttachment(String name, String description, String tags, String type, String channel,
+                                      boolean isText, String filename, byte[] data) throws AplException.NotValidException {
         super(name, description, tags, type, channel, isText, filename, data);
         this.hash = null;
         if (isText && !Arrays.equals(data, Convert.toBytes(Convert.toString(data)))) {
