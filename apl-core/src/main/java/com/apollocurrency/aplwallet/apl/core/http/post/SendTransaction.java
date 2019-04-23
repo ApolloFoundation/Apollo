@@ -28,11 +28,12 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
+
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -59,7 +60,7 @@ import org.json.simple.JSONStreamAware;
  * In case the client submits transactionBytes for a transaction containing prunable appendages, the client also needs
  * to submit the prunableAttachmentJSON parameter which includes the attachment JSON for the prunable appendages.<br>
  * <p>
- * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl.Appendix.Prunable} interface.
+ * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl} interface.
  */
 @Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
@@ -82,7 +83,7 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
             Peers.sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.ValidationException|RuntimeException e) {
+        } catch (AplException.NotValidException | RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

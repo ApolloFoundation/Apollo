@@ -42,7 +42,7 @@ final class ProcessTransactions extends PeerRequestHandler {
         try {
             lookupTransactionProcessor().processPeerTransactions(request);
             return JSON.emptyJSON;
-        } catch (RuntimeException | AplException.ValidationException e) {
+        } catch (AplException.ValidationException | RuntimeException e) {
             //LOG.debug("Failed to parse peer transactions: " + request.toJSONString());
             peer.blacklist(e);
             return PeerServlet.error(e);

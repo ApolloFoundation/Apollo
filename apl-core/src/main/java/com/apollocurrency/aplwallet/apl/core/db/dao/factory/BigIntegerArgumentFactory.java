@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
+package com.apollocurrency.aplwallet.apl.core.db.dao.factory;
 
 import java.math.BigInteger;
 import java.sql.Types;

@@ -20,6 +20,39 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
@@ -28,37 +61,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
@@ -112,13 +114,33 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
     }
 
-    private PhasingAppendix parsePhasing(HttpServletRequest req) throws ParameterException {
+    public PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
         Blockchain blockchain = lookupBlockchain();
-        int finishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
-                blockchain.getHeight() + 1,
-                blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
-                true);
-        
+
+        int phasingTimeLockDuration = -1;
+        int phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
+                -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
+
+        if(req.getParameter("phasingFinishTime") != null){
+            phasingTimeLockDuration = ParameterParser.getInt(req, "phasingFinishTime",
+                    -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
+        }
+
+        if(phasingFinishHeight != -1 && phasingTimeLockDuration != -1){
+            throw new ParameterException(
+                    JSONResponses.incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
+        }
+
+        int phasingFinishTime = -1;
+        if(phasingTimeLockDuration == -1) {
+            phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
+                    blockchain.getHeight() + 1,
+                    blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
+                    true);
+        } else {
+            phasingFinishTime = timeService.getEpochTime() + phasingTimeLockDuration;
+        }
+
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
         
         byte[][] linkedFullHashes = null;
@@ -136,7 +158,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
         byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
-        return new PhasingAppendix(finishHeight, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+        return new PhasingAppendixV2(phasingFinishHeight, phasingFinishTime, phasingParams, linkedFullHashes, hashedSecret, algorithm);
     }
 
     public PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
@@ -160,7 +182,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     }
 
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
-                                            long amountATM, Attachment attachment) throws AplException {
+                                            long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);

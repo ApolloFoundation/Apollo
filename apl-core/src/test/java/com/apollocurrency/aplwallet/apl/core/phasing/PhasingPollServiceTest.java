@@ -228,7 +228,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetFinishingTransactions() {
-        List<Transaction> finishingTransactions = CollectionUtil.toList(phasingPollService.getFinishingTransactions(ptd.POLL_2.getFinishHeight()));
+        List<Transaction> finishingTransactions = phasingPollService.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
         assertEquals(Arrays.asList(ttd.TRANSACTION_7), finishingTransactions);
     }
@@ -236,7 +236,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetFinishingTransactionsWhenNoTransactionsAtHeight() {
-        List<Transaction> finishingTransactions = CollectionUtil.toList(phasingPollService.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1));
+        List<Transaction> finishingTransactions = phasingPollService.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1);
 
         assertTrue(finishingTransactions.isEmpty(), "No transactions should be found at height");
     }
@@ -287,6 +287,20 @@ public class PhasingPollServiceTest {
 
         assertEquals(expected, result);
     }
+/*
+    @Test // FROM ANDRII K. branch
+    void testFinishPollNotApproved2() throws SQLException {
+        inTransaction(con -> {
+            blockchain.setLastBlock(btd.BLOCK_9);
+            phasingPollService.finish(ptd.POLL_3, 1);
+
+            PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3, 1, btd.BLOCK_9.getHeight());
+
+            assertEquals(expected, result);
+        });
+    }
+*/
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
@@ -297,6 +311,19 @@ public class PhasingPollServiceTest {
 
         assertEquals(expected, result);
     }
+/*
+    @Test  // FROM ANDRII K. branch
+    void testFinishPollApprovedByLinkedTransactions2() throws SQLException {
+        inTransaction(con -> {
+            blockchain.setLastBlock(btd.BLOCK_11);
+            phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
+            PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3, ptd.POLL_3.getQuorum(), btd.BLOCK_11.getHeight());
+
+            assertEquals(expected, result);
+        });
+    }
+*/
 
     @Test
     void testCountVotesForPollWithLinkedTransactions() {

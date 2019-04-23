@@ -10,6 +10,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
@@ -22,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndex
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
+import org.jdbi.v3.sqlobject.transaction.Transaction;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -73,6 +75,7 @@ public class ShardMigrationExecutor {
         this.backupDb = backupDb;
     }
 
+    @Transactional
     public void createAllCommands(int height) {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardInitTableSchemaVersion());
@@ -121,6 +124,7 @@ public class ShardMigrationExecutor {
         return lastShardHeight != null ? lastShardHeight + 1 : 0;
     }
 
+    @Transactional
     public void cleanCommands() {
         dataMigrateOperations.clear();
     }
@@ -131,6 +135,7 @@ public class ShardMigrationExecutor {
         dataMigrateOperations.add(shardOperation);
     }
 
+    @Transactional
     public MigrateState executeAllOperations() {
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;

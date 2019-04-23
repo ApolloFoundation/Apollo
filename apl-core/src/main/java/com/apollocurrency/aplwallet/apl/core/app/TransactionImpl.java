@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -750,7 +751,7 @@ public class TransactionImpl implements Transaction {
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new PhasingAppendix(buffer));
+                builder.appendix(PhasingAppendixFactory.build(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
@@ -764,7 +765,7 @@ public class TransactionImpl implements Transaction {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
             return builder;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
             throw e;
         }
@@ -902,12 +903,12 @@ public class TransactionImpl implements Transaction {
                 builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
                 builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
                 builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
-                builder.appendix(PhasingAppendix.parse(attachmentData));
+                builder.appendix(PhasingAppendixFactory.parse(attachmentData));
                 builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
                 builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
             }
             return builder;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse transaction: " + transactionData.toJSONString());
             throw e;
         }
