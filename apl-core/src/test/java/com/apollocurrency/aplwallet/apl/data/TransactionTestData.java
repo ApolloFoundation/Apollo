@@ -26,11 +26,11 @@ import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_IN
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
@@ -132,7 +132,7 @@ public class TransactionTestData {
                 builder.appendix(new EncryptToSelfMessageAppendix(buffer));
             }
             if (phased) {
-                builder.appendix(new PhasingAppendix(buffer));
+                builder.appendix(PhasingAppendixFactory.build(buffer));
             }
             if (hasPrunableMessage) {
                 builder.appendix(new PrunablePlainMessageAppendix(buffer));

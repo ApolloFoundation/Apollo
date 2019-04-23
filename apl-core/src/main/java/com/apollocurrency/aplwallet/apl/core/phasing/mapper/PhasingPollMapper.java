@@ -32,6 +32,7 @@ public class PhasingPollMapper extends DerivedEntityMapper<PhasingPoll> {
         byte[] hashedSecret = rs.getBytes("hashed_secret");
         byte algorithm = rs.getByte("algorithm");
         byte whiteListSize = rs.getByte("whitelist_size");
-        return PhasingCreator.createPoll(id, accountId, whiteListSize, finishHeight, votingModel, quorum, minBalance, holdingId, minBalanceModel, hashedSecret, algorithm);
+        return PhasingCreator.createPoll(id, accountId, whiteListSize, finishHeight, votingModel, quorum,
+                minBalance, holdingId, minBalanceModel, hashedSecret, algorithm);
     }
 }

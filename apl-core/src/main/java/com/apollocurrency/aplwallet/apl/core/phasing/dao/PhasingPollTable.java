@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,6 +31,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
+    private static final Logger LOG = LoggerFactory.getLogger(PhasingPollTable.class);
+
     static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
@@ -62,12 +66,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     @Override
     public void save(Connection con, PhasingPoll poll) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll (id, account_id, "
-                + "finish_height, whitelist_size, voting_model, quorum, min_balance, holding_id, "
-                + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "finish_height,  finish_time, whitelist_size, voting_model, quorum, min_balance, holding_id, "
+                + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, poll.getId());
             pstmt.setLong(++i, poll.getAccountId());
             pstmt.setInt(++i, poll.getFinishHeight());
+            pstmt.setInt(++i, poll.getFinishTime());
             pstmt.setByte(++i, (byte) poll.getWhitelist().length);
             VoteWeighting voteWeighting = poll.getVoteWeighting();
             pstmt.setByte(++i, voteWeighting.getVotingModel().getCode());
@@ -82,20 +87,46 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public DbIterator<Transaction> getFinishingTransactions(int height) throws SQLException {
+    public List<Transaction> getFinishingTransactions(int height) {
         Connection con = null;
+        List<Transaction> transactions = new ArrayList<>();
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
-            return blockchain.getTransactions(con, pstmt);
+            blockchain.getTransactions(con, pstmt).forEach(transactions::add);
+
+            return transactions;
         } catch (SQLException e) {
             DbUtils.close(con);
-            throw e;
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
+
+    public List<Transaction> getFinishingTransactionsByTime(int time) {
+        Connection con = null;
+        List<Transaction> transactions = new ArrayList<>();
+        try {
+            con = getDatabaseManager().getDataSource().getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
+                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time <= ? " +
+                    "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
+            pstmt.setInt(1, time);
+            blockchain.getTransactions(con, pstmt).forEach(transactions::add);
+
+            return transactions;
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
     public long getSenderPhasedTransactionFees(long accountId) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
 

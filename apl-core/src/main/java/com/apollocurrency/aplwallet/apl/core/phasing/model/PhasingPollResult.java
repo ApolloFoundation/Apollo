@@ -14,6 +14,13 @@ public class PhasingPollResult extends DerivedEntity {
     private final long result;
     private final boolean approved;
 
+    public PhasingPollResult(PhasingPoll poll, long result, int height) {
+        super(poll.getDbId(), height);
+        this.id = poll.getId();
+        this.result = result;
+        this.approved = result >= poll.getQuorum();
+    }
+
     public PhasingPollResult(Long dbId, Integer height, long id, long result, boolean approved) {
         super(dbId, height);
         this.id = id;

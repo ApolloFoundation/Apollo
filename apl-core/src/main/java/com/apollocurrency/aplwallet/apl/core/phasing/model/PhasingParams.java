@@ -71,12 +71,6 @@ public final class PhasingParams {
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
 
-    private PhasingParams(long quorum, long[] whitelist, VoteWeighting voteWeighting) {
-        this.quorum = quorum;
-        this.whitelist = whitelist;
-        this.voteWeighting = voteWeighting;
-    }
-
     public int getMySize() {
         return 1 + 8 + 8 + 1 + 8 * whitelist.length + 8 + 1;
     }
@@ -192,6 +186,7 @@ public final class PhasingParams {
     }
 
     public void checkApprovable() throws AplException.NotCurrentlyValidException {
+
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
                 && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
