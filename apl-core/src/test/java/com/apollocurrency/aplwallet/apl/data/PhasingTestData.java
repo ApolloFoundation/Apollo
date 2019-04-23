@@ -22,6 +22,9 @@ public class PhasingTestData {
     public final PhasingPollVoter POLL_1_VOTER_0;
     public final PhasingPollVoter POLL_1_VOTER_1;
     public final PhasingPollVoter POLL_4_VOTER_0;
+    public final PhasingPollVoter FAKE_VOTER_0;
+    public final PhasingPollVoter FAKE_VOTER_1;
+    public final PhasingPollVoter FAKE_VOTER_2;
     public final PhasingPollVoter NEW_VOTER_0;
     public final PhasingPollVoter NEW_VOTER_1;
     public final PhasingPollVoter NEW_VOTER_2;
@@ -29,10 +32,16 @@ public class PhasingTestData {
     public final byte[] LINKED_TRANSACTION_0_HASH = Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e");
     public final byte[] LINKED_TRANSACTION_1_HASH;
     public final byte[] LINKED_TRANSACTION_2_HASH;
+    public final byte[] LINKED_TRANSACTION_3_HASH = Convert.parseHexString("b273e15c07bf99b5139e5753946e004d663e83b3eadb4c8dea699ee982573ef0");
+    public final byte[] LINKED_TRANSACTION_4_HASH = Convert.parseHexString("faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed");
+    public final byte[] LINKED_TRANSACTION_5_HASH = Convert.parseHexString("3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1");
 
     public final PhasingPollLinkedTransaction LINKED_TRANSACTION_0;
     public final PhasingPollLinkedTransaction LINKED_TRANSACTION_1;
     public final PhasingPollLinkedTransaction LINKED_TRANSACTION_2;
+    public final PhasingPollLinkedTransaction FAKE_LINKED_TRANSACTION_0;
+    public final PhasingPollLinkedTransaction FAKE_LINKED_TRANSACTION_1;
+    public final PhasingPollLinkedTransaction FAKE_LINKED_TRANSACTION_2;
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_1;
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_2;
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_3;
@@ -66,15 +75,25 @@ public class PhasingTestData {
         POLL_1_VOTER_0 = new PhasingPollVoter(20L, POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_0_ID);
         POLL_1_VOTER_1 = new PhasingPollVoter(30L,POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_1_ID);
         POLL_4_VOTER_0 = new PhasingPollVoter(40L, POLL_4.getHeight(), POLL_4.getId(), POLL_4_VOTER_0_ID);
+        FAKE_VOTER_0 = new PhasingPollVoter(50L, POLL_4.getHeight() + 1, 128, 102);
+        FAKE_VOTER_1 = new PhasingPollVoter(60L, POLL_4.getHeight() + 1, 128, 103);
+        FAKE_VOTER_2 = new PhasingPollVoter(70L, POLL_4.getHeight() + 1, 128, 104);
+
         SHARD_RESULT_0 = new PhasingPollResult(10L, 300, 100, 1, true);
         RESULT_0 = new PhasingPollResult(20L, 1500, td.TRANSACTION_0.getId(), 1, true);
         RESULT_1 = new PhasingPollResult(30L, 9000, POLL_1.getId(), 0, true);
         RESULT_2 = new PhasingPollResult(40L, 9500, POLL_2.getId(), 0, false );
         POLL_1_VOTE_0 = new PhasingVote(30L, 8500, POLL_1.getId(), POLL_1_VOTER_0_ID, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(40L, 8999, POLL_1.getId(), POLL_1_VOTER_1_ID, td.TRANSACTION_10.getId());
-        LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(10L, td.TRANSACTION_12.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_0_HASH), LINKED_TRANSACTION_0_HASH);
-        LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(20L, td.TRANSACTION_12.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_1_HASH), LINKED_TRANSACTION_1_HASH);
-        LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(30L, td.TRANSACTION_12.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_2_HASH), LINKED_TRANSACTION_2_HASH);
+        //real linked transactions
+        LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(10L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_0_HASH), LINKED_TRANSACTION_0_HASH);
+        LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(20L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_1_HASH), LINKED_TRANSACTION_1_HASH);
+        LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(30L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_2_HASH), LINKED_TRANSACTION_2_HASH);
+        //fake linked transactions
+        FAKE_LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(40L, POLL_3.getHeight() + 1, 100, Convert.fullHashToId(LINKED_TRANSACTION_3_HASH), LINKED_TRANSACTION_3_HASH);
+        FAKE_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(50L, POLL_3.getHeight() + 1, 100, Convert.fullHashToId(LINKED_TRANSACTION_4_HASH), LINKED_TRANSACTION_4_HASH);
+        FAKE_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(60L, POLL_3.getHeight() + 2, 200, Convert.fullHashToId(LINKED_TRANSACTION_5_HASH), LINKED_TRANSACTION_5_HASH);
+
         NEW_POLL_PARAMS     = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
         NEW_POLL_APPENDIX = new PhasingAppendix(20000, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
         NEW_POLL = PhasingCreator.createPoll(td.TRANSACTION_10, NEW_POLL_APPENDIX);

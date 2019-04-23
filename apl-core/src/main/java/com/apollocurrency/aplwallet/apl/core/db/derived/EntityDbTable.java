@@ -55,6 +55,14 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     private static BlockchainProcessor blockchainProcessor;
     private static FullTextSearchService fullText;
 
+    public boolean isMultiversion() {
+        return multiversion;
+    }
+
+    public KeyFactory<T> getDbKeyFactory() {
+        return dbKeyFactory;
+    }
+
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
     }

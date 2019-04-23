@@ -101,7 +101,6 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
 
-
     @Override
     public void truncate() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();

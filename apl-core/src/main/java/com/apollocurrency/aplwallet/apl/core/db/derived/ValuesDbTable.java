@@ -160,6 +160,8 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
                 dataSource = databaseManager.getDataSource();
             }
             VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
+        } else {
+            super.trim(height, dataSource);
         }
     }
 
