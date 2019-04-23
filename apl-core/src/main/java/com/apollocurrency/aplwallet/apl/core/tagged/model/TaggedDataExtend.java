@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
@@ -65,5 +66,21 @@ public class TaggedDataExtend {
 
     public void setExtendId(int extendId) {
         this.extendId = extendId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TaggedDataExtend that = (TaggedDataExtend) o;
+        return id == that.id &&
+                height == that.height &&
+                extendId == that.extendId &&
+                Objects.equals(dbKey, that.dbKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, dbKey, height, extendId);
     }
 }

@@ -120,8 +120,8 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         int timestamp = transaction.getTimestamp();// TODO: YL review
 //        for (long extendTransactionId : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
         for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
-//            Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);
             Transaction extendTransaction = blockchain.getTransaction(taggedDataForTransaction.getExtendId());
+            // TODO: NPE is possible here if 'extendTransaction' not found
             if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {
