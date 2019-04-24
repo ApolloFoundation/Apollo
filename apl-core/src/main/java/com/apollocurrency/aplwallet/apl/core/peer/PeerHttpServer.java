@@ -9,7 +9,9 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
@@ -38,7 +40,7 @@ public class PeerHttpServer {
      public static final int DEFAULT_PEER_PORT=47874;
      public static final int DEFAULT_PEER_PORT_TLS=48743;
      boolean shareMyAddress;
-     private final int myPeerServerPort;
+     private int myPeerServerPort;
      private final int myPeerServerPortTLS;
      private final boolean useTLS;
      boolean enablePeerUPnP;    
@@ -48,6 +50,7 @@ public class PeerHttpServer {
      private final UPnP upnp;
      private final String host;
      private final int idleTimeout; 
+     private static List<Integer> externalPorts=new ArrayList<>();
      
     public boolean isShareMyAddress() {
         return shareMyAddress;
@@ -69,7 +72,7 @@ public class PeerHttpServer {
         return myAddress;
     }
 
-    
+
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator) {
         this.upnp = upnp;
@@ -138,8 +141,11 @@ public class PeerHttpServer {
                         Connector[] peerConnectors = peerServer.getConnectors();
                         for (Connector peerConnector : peerConnectors) {
                             if (peerConnector instanceof ServerConnector) {
-                                upnp.addPort(((ServerConnector) peerConnector).getPort());
+                                externalPorts.add(upnp.addPort(((ServerConnector) peerConnector).getPort(),"Peer2Peer"));
                             }
+                        }
+                        if(!externalPorts.isEmpty()){
+                            myPeerServerPort=externalPorts.get(0);
                         }
                     }
                     peerServer.start();
@@ -157,9 +163,8 @@ public class PeerHttpServer {
                 peerServer.stop();
                 if (enablePeerUPnP) {
                     Connector[] peerConnectors = peerServer.getConnectors();
-                    for (Connector peerConnector : peerConnectors) {
-                        if (peerConnector instanceof ServerConnector)
-                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
+                    for (int extPort: externalPorts) {
+                            upnp.deletePort(extPort);
                     }
                 }
             } catch (Exception e) {

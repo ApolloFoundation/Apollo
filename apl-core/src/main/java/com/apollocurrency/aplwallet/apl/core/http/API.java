@@ -98,7 +98,7 @@ public final class API {
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
- 
+    private static List<Integer> externalPorts=new ArrayList<>(); 
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
     final int port;
@@ -311,10 +311,16 @@ public final class API {
                 try {
 
                     if (enableAPIUPnP) {
+                        if(!upnp.isInited()){
+                            upnp.init();
+                        }
                         Connector[] apiConnectors = apiServer.getConnectors();
                         for (Connector apiConnector : apiConnectors) {
                             if (apiConnector instanceof ServerConnector)
-                                upnp.addPort(((ServerConnector)apiConnector).getPort());
+                                externalPorts.add(upnp.addPort(((ServerConnector)apiConnector).getPort(),"API"));
+                        }
+                        if(!externalPorts.isEmpty()){
+                            openAPIPort=externalPorts.get(0);
                         }
                     }
 
@@ -326,12 +332,6 @@ public final class API {
                     throw new RuntimeException(e.toString(), e);
                 }
           //  }, true);
-          if(enableAPIUPnP){
-              if(!upnp.isInited()){
-                upnp.init();
-              }
-              upnp.addPort(port);
-          }
 
         } else {
             apiServer = null;
@@ -349,9 +349,8 @@ public final class API {
                 apiServer.stop();
                 if (enableAPIUPnP) {
                     Connector[] apiConnectors = apiServer.getConnectors();
-                    for (Connector apiConnector : apiConnectors) {
-                        if (apiConnector instanceof ServerConnector)
-                            upnp.deletePort(((ServerConnector)apiConnector).getPort());
+                    for (int extPort:externalPorts) {
+                            upnp.deletePort(extPort);
                     }
                 }
             } catch (Exception e) {
