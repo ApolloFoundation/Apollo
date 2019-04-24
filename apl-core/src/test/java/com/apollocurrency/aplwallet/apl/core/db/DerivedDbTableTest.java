@@ -124,12 +124,22 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
                 .collect(Collectors.toList());
     }
 
-    public List<T> sublistByHeightDesc() {
-        return sublistByHeightDesc(getAllExpectedData(), Integer.MAX_VALUE);
+    public List<T> sortByHeightDesc(List<T> list) {
+        return sublistByHeightDesc(list, Integer.MAX_VALUE);
+    }
+
+    public List<T> sortByHeightAsc(List<T> list) {
+        return list
+                .stream()
+                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
+                .collect(Collectors.toList());
     }
 
     public List<Integer> getHeights() {
-        return getAllExpectedData()
+        return getHeights(getAllExpectedData());
+    }
+    public List<Integer> getHeights(List<T> l) {
+        return l
                 .stream()
                 .map(DerivedEntity::getHeight)
                 .sorted(Comparator.reverseOrder())
@@ -165,6 +175,20 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         DbKey dbKey = keyFactory.newKey(values.get(0));
         Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
         cache.remove(dbKey);
+    }
+    public Map<DbKey, List<T>> groupByDbKey(KeyFactory<T> keyFactory) {
+        List<T> allExpectedData = getAllExpectedData();
+        return allExpectedData
+                .stream()
+                .collect(Collectors.groupingBy(keyFactory::newKey));
+    }
+    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(KeyFactory<T> keyFactory, int size) {
+        return groupByDbKey(keyFactory)
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().size() == size)
+                .findFirst()
+                .get();
     }
 
     protected abstract List<T> getAllExpectedData();
