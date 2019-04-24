@@ -79,6 +79,12 @@ public class UPnP {
         while(busy){
          busy = gateway.getSpecificPortMappingEntry(port, "TCP", portMappingEntry);
          if(busy){
+             String mapAddr = portMappingEntry.getInternalClient();
+             String myAddr = localAddress.getHostAddress();
+             if(mapAddr.equalsIgnoreCase(myAddr)){
+                 //it is my mapping lost somehow
+                 break;
+             }             
              port++;
              count++;
              if(count>MAX_PORTS_TO_TRY){
