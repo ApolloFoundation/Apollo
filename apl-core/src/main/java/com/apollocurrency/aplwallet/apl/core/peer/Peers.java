@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
+import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URI;
@@ -70,6 +71,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Level;
 import javax.enterprise.inject.spi.CDI;
 import org.slf4j.LoggerFactory;
 
@@ -162,13 +164,9 @@ public final class Peers {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private  static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();  
-    
+    public static int myPort;
+            
     private Peers() {} // never
-
-
-    public static int getDefaultPeerPort() {
-        return propertiesHolder.getIntProperty("apl.networkPeerServerPort", Constants.DEFAULT_PEER_PORT);
-    }
 
     public static void init() {
         MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
@@ -178,12 +176,12 @@ public final class Peers {
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails",true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS",true);
         String myHost = null;
-        int myPort = -1;
         if (peerHttpServer.getMyAddress() != null) {
             try {
-                URI uri = new URI("http://" + peerHttpServer.getMyAddress());
-                myHost = uri.getHost();
-                myPort = (uri.getPort() == -1 ? getDefaultPeerPort() : uri.getPort());
+                PeerAddress pa = new PeerAddress(propertiesHolder);
+                pa.fromString(peerHttpServer.getMyAddress());
+                myHost = pa.getHost();
+                myPort = pa.getPort();
                 InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
                 boolean addrValid = false;
                 Enumeration<NetworkInterface> intfs = NetworkInterface.getNetworkInterfaces();
@@ -216,7 +214,7 @@ public final class Peers {
                 }
             } catch (SocketException e) {
                 LOG.error("Unable to enumerate the network interfaces :" + e.toString());
-            } catch (URISyntaxException | UnknownHostException e) {
+            } catch (UnknownHostException e) {
                 LOG.warn("Your announced address is not valid: " + e.toString());
             }
         }
@@ -454,7 +452,9 @@ public final class Peers {
     }
 
     public static Peer getPeer(String host) {
-        return peers.get(host);
+        PeerAddress pa = new PeerAddress(propertiesHolder);
+        pa.setHost(host);
+        return peers.get(pa.getAddrWithPort());
     }
 
     public static List<Peer> getInboundPeers() {
@@ -475,19 +475,20 @@ public final class Peers {
             return null;
         }
         announcedAddress = announcedAddress.trim().toLowerCase();
+        PeerAddress pAnnouncedAddress = new PeerAddress(propertiesHolder);
         PeerImpl peer;
-        if ((peer = peers.get(announcedAddress)) != null) {
+        if ((peer = peers.get(pAnnouncedAddress.getAddrWithPort())) != null) {
             LOG.trace("Return 0 = {}", peer);
             return peer;
         }
-        String host = selfAnnouncedAddresses.get(announcedAddress);
+        String host = selfAnnouncedAddresses.get(pAnnouncedAddress.getAddrWithPort());
         if (host != null && (peer = peers.get(host)) != null) {
             LOG.trace("Return 1 = {}", peer);
             return peer;
         }
         try {
-            URI uri = new URI("http://" + announcedAddress);
-            host = uri.getHost();
+            
+            host = pAnnouncedAddress.getAddrWithPort();
             if (host == null) {
                 return null;
             }
@@ -500,9 +501,9 @@ public final class Peers {
                 LOG.trace("Return 3 = {}", peer);
                 return peer;
             }
-            InetAddress inetAddress = InetAddress.getByName(host);
-            return findOrCreatePeer(inetAddress, addressWithPort(announcedAddress), create);
-        } catch (URISyntaxException | UnknownHostException e) {
+            InetAddress inetAddress = InetAddress.getByName(pAnnouncedAddress.getHost());
+            return findOrCreatePeer(inetAddress, announcedAddress, create);
+        } catch (UnknownHostException e) {
             //LOG.debug("Invalid peer address: " + announcedAddress + ", " + e.toString());
             return null;
         }
@@ -516,12 +517,26 @@ public final class Peers {
             return null;
         }
     }
+    
+    static boolean isMyAddress(InetAddress inetAddress, int port){
+        boolean res = false;
+        int myPort = peerHttpServer.getMyPeerServerPort();
+        if (  myPort==port 
+                ||inetAddress.isAnyLocalAddress() 
+                || inetAddress.isLoopbackAddress() 
+                || inetAddress.isLinkLocalAddress()) {
+            res = true;
+        }  
 
+        return res;
+    }
+    
     static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
-
-        if (inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress()) {
+        PeerAddress pa = new PeerAddress(propertiesHolder);
+        
+        if(isMyAddress(inetAddress,pa.getDefaultPeerPort())){
             return null;
-        }
+        } 
 
         String host = inetAddress.getHostAddress();
         if (cjdnsOnly && !host.substring(0,2).equals("fc")) {
@@ -531,9 +546,10 @@ public final class Peers {
         if (host.split(":").length > 2) {
             host = "[" + host + "]";
         }
-
+        pa.fromString(host);
+        
         PeerImpl peer;
-        if ((peer = peers.get(host)) != null) {
+        if ((peer = peers.get(pa.getAddrWithPort())) != null) {
             LOG.debug("Returning existing peer from map {}", peer);
             return peer;
         }
@@ -541,9 +557,6 @@ public final class Peers {
             return null;
         }
 
-        if (peerHttpServer.getMyAddress() != null && peerHttpServer.getMyAddress().equalsIgnoreCase(announcedAddress)) {
-            return null;
-        }
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
             return null;
         }
@@ -551,29 +564,35 @@ public final class Peers {
         return peer;
     }
 
-    static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
-        Peer oldPeer = peers.get(peer.getHost());
+    static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {        
+        Peer oldPeer = peers.get(peer.getHostWithPort());
         if (oldPeer != null) {
             String oldAnnouncedAddress = oldPeer.getAnnouncedAddress();
             if (oldAnnouncedAddress != null && !oldAnnouncedAddress.isEmpty()
                     && newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()
                     && !oldAnnouncedAddress.equals(newAnnouncedAddress)) {
-                LOG.debug("Removing old announced address " + oldAnnouncedAddress + " for peer " + oldPeer.getHost());
-                selfAnnouncedAddresses.remove(oldAnnouncedAddress);
+                LOG.debug("Removing old announced address " + oldAnnouncedAddress + " for peer " + oldPeer.getHost()+":"+oldPeer.getPort());
+                PeerAddress pa = new PeerAddress(propertiesHolder);
+                pa.fromString(oldAnnouncedAddress);
+                selfAnnouncedAddresses.remove(pa.getAddrWithPort());
             }
         }
         if (newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()) {
-            String oldHost = selfAnnouncedAddresses.put(newAnnouncedAddress, peer.getHost());
+            String oldHost = selfAnnouncedAddresses.put(newAnnouncedAddress, peer.getHostWithPort());
             if (oldHost != null && !peer.getHost().equals(oldHost)) {
-                LOG.debug("Announced address " + newAnnouncedAddress + " now maps to peer " + peer.getHost()
-                        + ", removing old peer " + oldHost);
+                LOG.debug("Announced address " + newAnnouncedAddress + " now maps to peer " + peer.getHost()+":"+peer.getPort()
+                        + ", removing old peer " + oldHost+":"+oldPeer.getPort());
                 oldPeer = peers.remove(oldHost);
                 if (oldPeer != null) {
                     notifyListeners(oldPeer, Event.REMOVE);
                 }
             }
         }
-        peer.setAnnouncedAddress(newAnnouncedAddress);
+        try {
+            peer.setAnnouncedAddress(newAnnouncedAddress);
+        } catch (MalformedURLException | UnknownHostException ex) {
+           LOG.warn("Wrong announces address: "+newAnnouncedAddress,ex);
+        }
     }
 
     public static boolean addPeer(Peer peer, String newAnnouncedAddress) {
@@ -584,10 +603,10 @@ public final class Peers {
     public static boolean addPeer(Peer peer) {
         if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()) {
             // put new or replace previous
-            if (!peers.containsKey(peer.getHost())) {
-                peers.put(peer.getHost(), (PeerImpl) peer);
+            if (!peers.containsKey(peer.getHostWithPort())) {
+                peers.put(peer.getHostWithPort(), (PeerImpl) peer);
             } else {
-                peers.replace(peer.getHost(), (PeerImpl) peer);
+                peers.replace(peer.getHostWithPort(), (PeerImpl) peer);
             }
             listeners.notify(peer, Event.NEW_PEER);
             return true;
@@ -599,7 +618,7 @@ public final class Peers {
         if (peer.getAnnouncedAddress() != null) {
             selfAnnouncedAddresses.remove(peer.getAnnouncedAddress());
         }
-        return peers.remove(peer.getHost());
+        return peers.remove(peer.getHostWithPort());
     }
 
     public static void connectPeer(Peer peer) {
@@ -712,21 +731,6 @@ public final class Peers {
         }
         return null;
     }
-
-    static String addressWithPort(String address) {
-        if (address == null) {
-            return null;
-        }
-        try {
-            URI uri = new URI("http://" + address);
-            String host = uri.getHost();
-            int port = uri.getPort();
-            return port > 0 && port != getDefaultPeerPort() ? host + ":" + port : host;
-        } catch (URISyntaxException e) {
-            return null;
-        }
-    }
-
 
     public static boolean hasTooFewKnownPeers() {
         return peers.size() < minNumberOfKnownPeers;

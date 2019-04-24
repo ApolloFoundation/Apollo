@@ -21,3 +21,4 @@ nbactions.xml
 /apl-exec/apl.log
 **/apl.log
 **/pom.xml.versionsBackup
+/apl-core/nbproject/

@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
@@ -40,6 +41,7 @@ public abstract class AbstractAPIRequestHandler {
     private DatabaseManager databaseManager;
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();

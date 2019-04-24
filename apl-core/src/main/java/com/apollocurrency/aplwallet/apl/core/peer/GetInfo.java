@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -59,12 +58,13 @@ final class GetInfo extends PeerRequestHandler {
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
         String servicesString = (String)request.get("services");
+        String announcedAddress = null;
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
         peerImpl.analyzeHallmark((String)request.get("hallmark"));
         if (!Peers.ignorePeerAnnouncedAddress) {
-            String announcedAddress = Convert.emptyToNull((String) request.get("announcedAddress"));
+           announcedAddress = Convert.emptyToNull((String) request.get("announcedAddress"));
             if (announcedAddress != null) {
-                announcedAddress = Peers.addressWithPort(announcedAddress.toLowerCase());
+                announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
                     if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
                         LOG.debug("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
@@ -104,7 +104,7 @@ final class GetInfo extends PeerRequestHandler {
             version = new Version(1, 0, 0);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("PEER-GetINFO: version {}", version);
+            LOG.debug("PEER-GetINFO: Addr: {}, version {}",announcedAddress, version);
         }
         peerImpl.setVersion(version);
 

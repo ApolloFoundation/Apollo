@@ -44,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
@@ -55,7 +56,6 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private UPnP upnp = CDI.current().select(UPnP.class).get();
     
     public GetState() {
@@ -105,7 +105,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
-        response.put("peerPort", Peers.getDefaultPeerPort());
+        response.put("peerPort", Peers.myPort);
         response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !apw.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());

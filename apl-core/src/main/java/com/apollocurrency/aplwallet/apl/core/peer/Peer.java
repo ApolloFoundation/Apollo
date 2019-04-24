@@ -76,7 +76,9 @@ public interface Peer extends Comparable<Peer> {
     String getHost();
 
     int getPort();
-
+    
+    String getHostWithPort();
+    
     String getAnnouncedAddress();
 
     State getState();

@@ -56,6 +56,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -111,8 +112,8 @@ public final class PeerImpl implements Peer {
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private volatile EpochTime timeService;
-
-
+    private PropertiesHolder propertiesHolder;
+   
     PeerImpl(String host, 
             String announcedAddress,
             BlockchainConfig blockchainConfig,
@@ -121,6 +122,7 @@ public final class PeerImpl implements Peer {
             PropertiesHolder propertiesHolder
     ) {
         this.host = host;
+        this.propertiesHolder=propertiesHolder;
         this.announcedAddress = announcedAddress;
         try {
             this.port = getURI(false).getPort();
@@ -142,7 +144,15 @@ public final class PeerImpl implements Peer {
     public String getHost() {
         return host;
     }
-
+    
+    @Override
+    public String getHostWithPort(){
+      PeerAddress pa = new PeerAddress(propertiesHolder);
+      pa.setHost(host);
+      pa.setPort(port);
+      return pa.getAddrWithPort();
+    }
+    
     @Override
     public State getState() {
         return state;
@@ -332,11 +342,14 @@ public final class PeerImpl implements Peer {
         return announcedAddress;
     }
 
-    void setAnnouncedAddress(String announcedAddress) {
+    void setAnnouncedAddress(String announcedAddress) throws MalformedURLException, UnknownHostException {
         if (announcedAddress != null && announcedAddress.length() > Peers.MAX_ANNOUNCED_ADDRESS_LENGTH) {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
-        this.announcedAddress = announcedAddress;
+        PeerAddress pa = new PeerAddress(propertiesHolder);
+        pa.fromString(announcedAddress);
+        this.announcedAddress = pa.getAddrWithPort();
+        this.port=pa.getPort();
         if (announcedAddress != null) {
             try {
                 this.port = getURI(false).getPort();
@@ -350,7 +363,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public int getPort() {
-           return port <= 0 ? Peers.getDefaultPeerPort() : port;
+           return port;
     }
 
     @Override
@@ -573,7 +586,7 @@ public final class PeerImpl implements Peer {
                 //
                 // Send the request using HTTP
                 //
-                String urlString = "http://" + host + ":" + getPort() + "/apl";
+                String urlString = "http://" + getHostWithPort() + "/apl";
                 URL url = new URL(urlString);
                 LOG.debug("Connecting to URL = {}...", urlString);
                 if (communicationLoggingMask != 0)
@@ -752,8 +765,6 @@ public final class PeerImpl implements Peer {
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     String newAnnouncedAddress = Convert.emptyToNull((String) response.get("announcedAddress"));
                     if (newAnnouncedAddress != null) {
-                        newAnnouncedAddress = Peers.addressWithPort(newAnnouncedAddress.toLowerCase());
-                        if (newAnnouncedAddress != null) {
                             if (!verifyAnnouncedAddress(newAnnouncedAddress)) {
                                 LOG.debug("Connect: new announced address for " + host + " not accepted");
                                 if (!verifyAnnouncedAddress(announcedAddress)) {
@@ -773,14 +784,13 @@ public final class PeerImpl implements Peer {
                                     return;
                                 }
                             }
-                        }
                     } else {
                         Peers.setAnnouncedAddress(this, host);
                     }
                 }
 
                 if (announcedAddress == null) {
-                    if (hallmark == null || hallmark.getPort() == Peers.getDefaultPeerPort()) {
+                    if (hallmark == null){// || hallmark.getPort() == Peers.getDefaultPeerPort()) {
                         Peers.setAnnouncedAddress(this, host);
                         LOG.debug("Connected to peer without announced address, setting to " + host);
                     } else {
@@ -812,7 +822,8 @@ public final class PeerImpl implements Peer {
         }
         try {
             URI uri = getURI(false);
-            int announcedPort = uri.getPort() == -1 ? Peers.getDefaultPeerPort() : uri.getPort();
+            PeerAddress pa = new PeerAddress(propertiesHolder);
+            int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
                 unsetHallmark();
