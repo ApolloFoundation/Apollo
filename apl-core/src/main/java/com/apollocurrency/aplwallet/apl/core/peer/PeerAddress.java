@@ -15,27 +15,33 @@ import java.net.UnknownHostException;
  *
  * @author alukin@gmail.com
  */
-public class PeerAddress {
+public final class PeerAddress {
     private InetAddress host;
     private String hostName;    
     private Integer port;
     private final PropertiesHolder propertiesHolder;
-
+    
+    public PeerAddress(PropertiesHolder propertiesHolder, int port, String host){
+        this.propertiesHolder = propertiesHolder;
+        setHost(host);
+        this.port = port;      
+    }
     
     public PeerAddress(PropertiesHolder propertiesHolder) {
-        this.propertiesHolder = propertiesHolder;
-        try {
-            host = InetAddress.getByName("127.0.0.1");
-        } catch (UnknownHostException ex) {
-        }
-        port = getDefaultPeerPort();
+       this(propertiesHolder, 0, "127.0.0.1");
+       setPort(getDefaultPeerPort());
+    }
+    
+    public PeerAddress(PropertiesHolder propertiesHolder, String hostWithPort){
+        this(propertiesHolder);
+        fromString(hostWithPort);
     }
     
     public final Integer getDefaultPeerPort() {
         return propertiesHolder.getIntProperty("apl.networkPeerServerPort", Constants.DEFAULT_PEER_PORT);
     } 
     
-    public void fromString(String addr){
+    public final void fromString(String addr){
         try {
             String a=addr.toLowerCase();
             if(!a.startsWith("http")){
@@ -55,7 +61,7 @@ public class PeerAddress {
         return host.getHostAddress();
     }
 
-    public void setHost(String host){
+    public final void setHost(String host){
         hostName=host;
         try {
             this.host = InetAddress.getByName(host);
@@ -67,7 +73,7 @@ public class PeerAddress {
         return port;
     }
 
-    public void setPort(Integer port) {
+    public final void setPort(Integer port) {
         this.port = port;
     }
     
@@ -80,5 +86,8 @@ public class PeerAddress {
     }
     public InetAddress getInetAddress(){
         return host;
+    }
+    public String getHostName(){
+        return hostName;
     }
 }

@@ -147,9 +147,7 @@ public final class PeerImpl implements Peer {
     
     @Override
     public String getHostWithPort(){
-      PeerAddress pa = new PeerAddress(propertiesHolder);
-      pa.setHost(host);
-      pa.setPort(port);
+      PeerAddress pa = new PeerAddress(propertiesHolder,port,host);
       return pa.getAddrWithPort();
     }
     
@@ -346,8 +344,7 @@ public final class PeerImpl implements Peer {
         if (announcedAddress != null && announcedAddress.length() > Peers.MAX_ANNOUNCED_ADDRESS_LENGTH) {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
-        PeerAddress pa = new PeerAddress(propertiesHolder);
-        pa.fromString(announcedAddress);
+        PeerAddress pa = new PeerAddress(propertiesHolder,announcedAddress);
         this.announcedAddress = pa.getAddrWithPort();
         this.port=pa.getPort();
         if (announcedAddress != null) {
@@ -822,7 +819,7 @@ public final class PeerImpl implements Peer {
         }
         try {
             URI uri = getURI(false);
-            PeerAddress pa = new PeerAddress(propertiesHolder);
+            PeerAddress pa = new PeerAddress(propertiesHolder,announcedAddress);
             int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);

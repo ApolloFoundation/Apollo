@@ -133,8 +133,7 @@ public final class Hallmark {
     private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date, boolean isValid)
             throws URISyntaxException {
         this.hallmarkString = hallmarkString;
-        PeerAddress pa = new PeerAddress(propertiesHolder);
-        pa.fromString(host);
+        PeerAddress pa = new PeerAddress(propertiesHolder,host);
         this.host = pa.getHost();
         this.port = pa.getPort();
         this.publicKey = publicKey;

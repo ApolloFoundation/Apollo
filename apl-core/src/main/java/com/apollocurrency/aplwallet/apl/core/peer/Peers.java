@@ -178,8 +178,7 @@ public final class Peers {
         String myHost = null;
         if (peerHttpServer.getMyAddress() != null) {
             try {
-                PeerAddress pa = new PeerAddress(propertiesHolder);
-                pa.fromString(peerHttpServer.getMyAddress());
+                PeerAddress pa = new PeerAddress(propertiesHolder,peerHttpServer.getMyAddress());
                 myHost = pa.getHost();
                 myPort = pa.getPort();
                 InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
@@ -452,9 +451,8 @@ public final class Peers {
     }
 
     public static Peer getPeer(String host) {
-        PeerAddress pa = new PeerAddress(propertiesHolder);
-        pa.setHost(host);
-        return peers.get(pa.getAddrWithPort());
+       PeerAddress pa = new PeerAddress(propertiesHolder,host);
+       return peers.get(pa.getAddrWithPort());
     }
 
     public static List<Peer> getInboundPeers() {
@@ -475,7 +473,7 @@ public final class Peers {
             return null;
         }
         announcedAddress = announcedAddress.trim().toLowerCase();
-        PeerAddress pAnnouncedAddress = new PeerAddress(propertiesHolder);
+        PeerAddress pAnnouncedAddress = new PeerAddress(propertiesHolder,announcedAddress);
         PeerImpl peer;
         if ((peer = peers.get(pAnnouncedAddress.getAddrWithPort())) != null) {
             LOG.trace("Return 0 = {}", peer);
@@ -560,7 +558,7 @@ public final class Peers {
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
             return null;
         }
-        peer = new PeerImpl(host, announcedAddress,blockchainConfig, blockchain, timeService,propertiesHolder);
+        peer = new PeerImpl(host, announcedAddress, blockchainConfig, blockchain, timeService, propertiesHolder);
         return peer;
     }
 
@@ -572,8 +570,7 @@ public final class Peers {
                     && newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()
                     && !oldAnnouncedAddress.equals(newAnnouncedAddress)) {
                 LOG.debug("Removing old announced address " + oldAnnouncedAddress + " for peer " + oldPeer.getHost()+":"+oldPeer.getPort());
-                PeerAddress pa = new PeerAddress(propertiesHolder);
-                pa.fromString(oldAnnouncedAddress);
+                PeerAddress pa = new PeerAddress(propertiesHolder,oldAnnouncedAddress);
                 selfAnnouncedAddresses.remove(pa.getAddrWithPort());
             }
         }
