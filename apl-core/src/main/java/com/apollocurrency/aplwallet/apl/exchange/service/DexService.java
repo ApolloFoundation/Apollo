@@ -49,7 +49,7 @@ public class DexService {
 
     @Transactional
     public void saveOffer (DexOffer offer){
-        if(dexOfferDao.getByTransactionId(offer.getTransactionId()) == null){
+        if(getOfferByTransactionId(offer.getTransactionId()) == null){
             dexOfferTable.insert(offer);
         }
     }

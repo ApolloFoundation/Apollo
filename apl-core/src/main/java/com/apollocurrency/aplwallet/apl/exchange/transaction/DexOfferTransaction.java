@@ -109,11 +109,9 @@ public class DexOfferTransaction extends DEX {
         // On the Apl side.
         if(shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
             lockOnAplSide(transaction, senderAccount);
-
-            if (dexService.getOfferByTransactionId(transaction.getId()) == null) {
-                dexService.saveOffer(new DexOffer(transaction, attachment));
-            }
         }
+
+        dexService.saveOffer(new DexOffer(transaction, attachment));
     }
 
     private void lockOnAplSide(Transaction transaction, Account senderAccount){
