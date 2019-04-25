@@ -52,8 +52,6 @@ public interface DexOfferDao {
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             " where latest = true " +
             " AND offer.finish_time < :currentTime" +
-            " AND offer.type = 1" +
-            " AND offer.offer_currency = 0" +
             " AND offer.status = 0")
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOverdueOrders(@Bind("currentTime") int currentTime);
