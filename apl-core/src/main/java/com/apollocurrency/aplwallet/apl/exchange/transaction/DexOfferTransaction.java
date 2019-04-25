@@ -85,7 +85,7 @@ public class DexOfferTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
-        if (shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
+        if (dexService.shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
             Long fee = transaction.getFeeATM();
             Long amountATM = attachment.getOfferAmount();
             long totalAmountATM = Math.addExact(amountATM, fee);
@@ -107,7 +107,7 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
         // On the Apl side.
-        if(shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
+        if(dexService.shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
             lockOnAplSide(transaction, senderAccount);
         }
 
@@ -119,13 +119,6 @@ public class DexOfferTransaction extends DEX {
         long amountATM = dexOfferAttachment.getOfferAmount();
 
         senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -amountATM);
-    }
-
-    private boolean shouldFreezeAPL(int offerType, int dexCurrencies){
-        if (OfferType.SELL.ordinal() == offerType && DexCurrencies.APL.ordinal() == dexCurrencies) {
-            return true;
-        }
-        return false;
     }
 
     @Override
