@@ -137,7 +137,8 @@ public final class API {
     private static URI serverRootUri;
     //TODO: remove static context
     private static final UPnP upnp = CDI.current().select(UPnP.class).get();
-
+    private static List<Integer> externalPorts=new ArrayList<>();
+    
 //TODO: remove this as soon as Al Gamal is ready!    
     private static Thread serverKeysGenerator = new Thread(() -> {
         while (!Thread.currentThread().isInterrupted()) {
@@ -408,10 +409,16 @@ public final class API {
                 try {
                     serverKeysGenerator.start();
                     if (enableAPIUPnP) {
+                        if(!upnp.isInited()){
+                            upnp.init();
+                        }
                         Connector[] apiConnectors = apiServer.getConnectors();
                         for (Connector apiConnector : apiConnectors) {
                             if (apiConnector instanceof ServerConnector)
-                                upnp.addPort(((ServerConnector)apiConnector).getPort());
+                                externalPorts.add(upnp.addPort(((ServerConnector)apiConnector).getPort(),"API"));
+                        }
+                        if(!externalPorts.isEmpty()){
+                            openAPIPort=externalPorts.get(0);
                         }
                     }
 
@@ -427,12 +434,6 @@ public final class API {
                 }
 
           //  }, true);
-          if(enableAPIUPnP){
-              if(!upnp.isInited()){
-                upnp.init();
-              }
-              upnp.addPort(port);
-          }
         } else {
             apiServer = null;
             disableAdminPassword = false;
@@ -452,9 +453,8 @@ public final class API {
                 apiServer.stop();
                 if (enableAPIUPnP) {
                     Connector[] apiConnectors = apiServer.getConnectors();
-                    for (Connector apiConnector : apiConnectors) {
-                        if (apiConnector instanceof ServerConnector)
-                            upnp.deletePort(((ServerConnector)apiConnector).getPort());
+                    for (int extPort:externalPorts) {
+                            upnp.deletePort(extPort);
                     }
                 }
             } catch (Exception e) {

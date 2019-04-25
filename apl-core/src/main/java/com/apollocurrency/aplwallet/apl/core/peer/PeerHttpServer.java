@@ -7,9 +7,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.util.ArrayList;
 import java.util.EnumSet;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
@@ -44,7 +44,8 @@ public class PeerHttpServer {
      String myAddress;
      Server peerServer;
      UPnP upnp;
-    
+     private static List<Integer> externalPorts=new ArrayList<>();
+     
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp) {
         this.propertiesHolder = propertiesHolder;
@@ -103,8 +104,11 @@ public class PeerHttpServer {
                         Connector[] peerConnectors = peerServer.getConnectors();
                         for (Connector peerConnector : peerConnectors) {
                             if (peerConnector instanceof ServerConnector) {
-                                upnp.addPort(((ServerConnector) peerConnector).getPort());
+                                externalPorts.add(upnp.addPort(((ServerConnector) peerConnector).getPort(),"Peer2Peer"));
                             }
+                        }
+                        if(!externalPorts.isEmpty()){
+                            myPeerServerPort=externalPorts.get(0);
                         }
                     }
                     peerServer.start();
@@ -126,9 +130,8 @@ public class PeerHttpServer {
                 peerServer.stop();
                 if (enablePeerUPnP) {
                     Connector[] peerConnectors = peerServer.getConnectors();
-                    for (Connector peerConnector : peerConnectors) {
-                        if (peerConnector instanceof ServerConnector)
-                            upnp.deletePort(((ServerConnector)peerConnector).getPort());
+                    for (int extPort: externalPorts) {
+                            upnp.deletePort(extPort);
                     }
                 }
             } catch (Exception e) {

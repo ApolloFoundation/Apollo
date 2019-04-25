@@ -1,12 +1,17 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,32 +28,29 @@ public class DexService {
 
     private EthereumWalletService ethereumWalletService;
     private DexOfferDao dexOfferDao;
+    private DexOfferTable dexOfferTable;
+    private EpochTime epochTime;
+
 
     @Inject
-    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao) {
+    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, EpochTime epochTime, DexOfferTable dexOfferTable) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
+        this.epochTime = epochTime;
+        this.dexOfferTable = dexOfferTable;
     }
 
-    @Transactional
-    public void updateOffer (DexOffer offer){
-        dexOfferDao.save(offer);
-    }
 
     @Transactional
     public DexOffer getOfferByTransactionId(Long transactionId){
         return dexOfferDao.getByTransactionId(transactionId);
     }
 
-    @Transactional
-    public void deleteOfferByTransactionId(Long transactionId){
-        dexOfferDao.deleteByTransactionId(transactionId);
-    }
 
     @Transactional
     public void saveOffer (DexOffer offer){
-        if(dexOfferDao.getByTransactionId(offer.getTransactionId()) == null){
-            dexOfferDao.save(offer);
+        if(getOfferByTransactionId(offer.getTransactionId()) == null){
+            dexOfferTable.insert(offer);
         }
     }
 
@@ -89,6 +91,25 @@ public class DexService {
 
     public boolean widthraw(String account,String secretPhrase,BigDecimal amount,String address,String cryptocurrency){
         return false;
+    }
+
+
+    public void closeOverdueOrders(){
+        List<DexOffer> offers = dexOfferDao.getOverdueOrders(epochTime.getEpochTime());
+
+        for (DexOffer offer : offers) {
+            try {
+                Account account = Account.getAccount(offer.getAccountId());
+                offer.setStatus(OfferStatus.CLOSED);
+
+                dexOfferTable.insert(offer);
+                account.addToUnconfirmedBalanceATM(LedgerEvent.TRANSACTION_FEE, offer.getTransactionId(), offer.getOfferAmount());
+            } catch (Exception ex){
+                LOG.error(ex.getMessage(), ex);
+                throw new RuntimeException(ex);
+            }
+        }
+
     }
 
 

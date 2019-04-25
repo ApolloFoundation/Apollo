@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -66,10 +67,10 @@ public class DexOfferTransaction extends DEX {
         }
 
         if (attachment.getPairRate() <= 0 ) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("pairRate", String.format("Couldn't be less than zero."))));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("pairRate", String.format("Should be more than zero."))));
         }
         if (attachment.getOfferAmount() <= 0) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("offerAmount", String.format("Couldn't be less than zero."))));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero."))));
         }
 
         try {
@@ -84,16 +85,20 @@ public class DexOfferTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
+        if (shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
+            Long fee = transaction.getFeeATM();
+            Long amountATM = attachment.getOfferAmount();
+            long totalAmountATM = Math.addExact(amountATM, fee);
+            Account sender = Account.getAccount(transaction.getSenderId());
+
+            if (sender.getUnconfirmedBalanceATM() < totalAmountATM) {
+                throw new AplException.NotCurrentlyValidException("Not enough money.");
+            }
+        }
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
-
-        if(dexService.getOfferByTransactionId(transaction.getId()) == null) {
-            dexService.saveOffer(new DexOffer(transaction, attachment));
-        }
-
         return true;
     }
 
@@ -101,24 +106,34 @@ public class DexOfferTransaction extends DEX {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
-        if(dexService.getOfferByTransactionId(transaction.getId()) == null) {
-            dexService.saveOffer(new DexOffer(transaction, attachment));
+        // On the Apl side.
+        if(shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
+            lockOnAplSide(transaction, senderAccount);
         }
-        //TODO Implement change status on Close.
+
+        dexService.saveOffer(new DexOffer(transaction, attachment));
+    }
+
+    private void lockOnAplSide(Transaction transaction, Account senderAccount){
+        DexOfferAttachment dexOfferAttachment = (DexOfferAttachment) transaction.getAttachment();
+        long amountATM = dexOfferAttachment.getOfferAmount();
+
+        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -amountATM);
+    }
+
+    private boolean shouldFreezeAPL(int offerType, int dexCurrencies){
+        if (OfferType.SELL.ordinal() == offerType && DexCurrencies.APL.ordinal() == dexCurrencies) {
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        dexService.deleteOfferByTransactionId(transaction.getId());
     }
 
     @Override
     public boolean canHaveRecipient() {
-        return true;
-    }
-
-    @Override
-    public boolean mustHaveRecipient() {
         return false;
     }
 
@@ -129,7 +144,7 @@ public class DexOfferTransaction extends DEX {
 
     @Override
     public String getName() {
-        return "DexOffer";
+        return "DexOrder";
     }
 
 

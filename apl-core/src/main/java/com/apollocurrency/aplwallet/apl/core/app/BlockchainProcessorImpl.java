@@ -50,6 +50,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -101,7 +102,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-   private BlockchainConfigUpdater blockchainConfigUpdater;
+   private DexService dexService;
+   private  BlockchainConfigUpdater blockchainConfigUpdater;
 
 
     private FullTextSearchService fullTextSearchProvider;
@@ -755,7 +757,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                     TransactionValidator transactionValidator,
                                     TransactionApplier transactionApplier,
-                                    TrimService trimService, DatabaseManager databaseManager) {
+                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -766,6 +768,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.transactionApplier = transactionApplier;
         this.referencedTransactionService = referencedTransactionService;
         this.databaseManager = databaseManager;
+        this.dexService = dexService;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -1127,6 +1130,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 List<Transaction> invalidPhasedTransactions = new ArrayList<>();
                 validatePhasedTransactions(previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
+
+                dexService.closeOverdueOrders();
 
                 block.setPrevious(previousLastBlock);
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);

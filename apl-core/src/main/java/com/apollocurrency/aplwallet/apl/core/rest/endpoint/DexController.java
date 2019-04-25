@@ -117,10 +117,10 @@ public class DexController {
                                 @ApiParam(value = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
         if (pairRate <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Couldn't be less than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Should be more than zero.")))).build();
         }
         if (offerAmount <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Couldn't be less than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero.")))).build();
         }
 
         try {
@@ -154,24 +154,20 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
 
-            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             Account account = ParameterParser.getSenderAccount(req);
-            Long totalOfferAmount = 0L;
-            Long recipientId = 0L;
-
+            //If we should freeze APL
             if (OfferType.SELL.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getOfferCurrency())) {
-                totalOfferAmount = offer.getOfferAmount();
-                requestWrapper.addParameter("amountATM", totalOfferAmount.toString());
-                recipientId = account.getId();
-
-                addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
+                Long amountATM = offer.getOfferAmount();
+                if (account.getUnconfirmedBalanceATM() < amountATM) {
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                }
             }
 
+            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", "1440");
-
             DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
             try {
-                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, recipientId, totalOfferAmount, dexOfferAttachment);
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
@@ -191,12 +187,14 @@ public class DexController {
     public Response getOffers(  @ApiParam(value = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
                                 @ApiParam(value = "Criteria by Offered currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Byte offerCurrency,
                                 @ApiParam(value = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
+                                @ApiParam(value = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
                                 @ApiParam(value = "User account id.") @QueryParam("accountId") String accountIdStr,
                                 @ApiParam(value = "Return offers available for now.", defaultValue = "false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
                                 @ApiParam(value = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @ApiParam(value = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                                 @Context SecurityContext securityContext) throws NotFoundException {
         OfferType type = null;
+        OfferStatus offerStatus = null;
         DexCurrencies offerCur = null;
         DexCurrencies pairCur = null;
         Integer currentTime = null;
@@ -219,11 +217,14 @@ public class DexController {
             if(!StringUtils.isBlank(accountIdStr)){
                 accountId = Long.parseUnsignedLong(accountIdStr);
             }
+            if(status != null){
+                offerStatus = OfferStatus.getType(status);
+            }
         } catch (Exception ex){
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, OfferStatus.OPEN.ordinal(), minAskPrice, maxBidPrice);
+        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
         return Response.ok(offers.stream()
@@ -265,14 +266,6 @@ public class DexController {
         }
     }
 
-    private void addParametersForPhasing(CustomRequestWrapper requestWrapper, Integer amountOfTime, Long id){
-        requestWrapper.addParameter("phased", "true");
-        requestWrapper.addParameter("phasingFinishHeight", "-1");
-        requestWrapper.addParameter("phasingFinishTime", amountOfTime.toString());
-        requestWrapper.addParameter("phasingVotingModel", "-1");
-        requestWrapper.addParameter("phasingQuorum", "0");
-        requestWrapper.addParameter("phasingMinBalanceModel", "0");
-        requestWrapper.addParameter("recipient", Convert.defaultRsAccount(id));
-    }
+
 
 }

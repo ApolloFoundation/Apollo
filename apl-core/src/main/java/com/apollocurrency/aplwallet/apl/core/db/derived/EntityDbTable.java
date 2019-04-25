@@ -64,7 +64,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     }
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
-        this(table, dbKeyFactory, false, "", init);
+        this(table, dbKeyFactory, false, null, init);
     }
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
