@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 public final class Constants {
-    public static final Version VERSION = new Version("1.30.6");
+    public static final Version VERSION = new Version("1.30.14");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -42,6 +42,11 @@ public final class Constants {
     public static final byte MAX_PHASING_LINKED_TRANSACTIONS = 10;
     public static final int MAX_PHASING_DURATION = 14 * 1440;
     public static final int MAX_PHASING_REVEALED_SECRET_LENGTH = 100;
+
+    // 2 days.
+    public static final int MAX_PHASING_TIME_DURATION_SEC = 2 * 24 * 60 * 60;
+    // 24 hours
+    public static final int MAX_ORDER_DURATION_SEC = 24 * 60 * 60;
 
     public static final int MAX_ALIAS_URI_LENGTH = 1000;
     public static final int MAX_ALIAS_LENGTH = 100;

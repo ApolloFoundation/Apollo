@@ -5,17 +5,21 @@
 package com.apollocurrency.aplwallet.apl.tools;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 public class RSAEncryptionTest {
+    private static final Logger log = getLogger(RSAEncryptionTest.class);
+
     @Test
     public void testSingleEncryption() throws Exception {
         PrintStream systemOut = System.out;
@@ -39,7 +43,7 @@ public class RSAEncryptionTest {
         }
         finally {
             System.setOut(systemOut);
-            System.out.println(new String(out.toByteArray()));
+            log.debug(new String(out.toByteArray()));
             out.close();
         }
     }
@@ -75,7 +79,7 @@ public class RSAEncryptionTest {
         }
         finally {
             System.setOut(systemOut);
-            System.out.println(new String(out.toByteArray()));
+            log.debug(new String(out.toByteArray()));
             out.close();
         }
     }
