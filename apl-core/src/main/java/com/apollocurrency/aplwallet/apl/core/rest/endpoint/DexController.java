@@ -117,10 +117,10 @@ public class DexController {
                                 @ApiParam(value = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
         if (pairRate <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Couldn't be less than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Should be more than zero.")))).build();
         }
         if (offerAmount <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Couldn't be less than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero.")))).build();
         }
 
         try {
@@ -154,24 +154,20 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
 
-            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             Account account = ParameterParser.getSenderAccount(req);
-            Long totalOfferAmount = 0L;
-            Long recipientId = 0L;
-
+            //If we should freeze APL
             if (OfferType.SELL.equals(offer.getType()) && DexCurrencies.APL.equals(offer.getOfferCurrency())) {
-                totalOfferAmount = offer.getOfferAmount();
-                requestWrapper.addParameter("amountATM", totalOfferAmount.toString());
-                recipientId = account.getId();
-
-                addParametersForPhasing(requestWrapper, amountOfTime, account.getId());
+                Long amountATM = offer.getOfferAmount();
+                if (account.getUnconfirmedBalanceATM() < amountATM) {
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                }
             }
 
+            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", "1440");
-
             DexOfferAttachment dexOfferAttachment = new DexOfferAttachment(offer);
             try {
-                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, recipientId, totalOfferAmount, dexOfferAttachment);
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
@@ -270,14 +266,6 @@ public class DexController {
         }
     }
 
-    private void addParametersForPhasing(CustomRequestWrapper requestWrapper, Integer amountOfTime, Long id){
-        requestWrapper.addParameter("phased", "true");
-        requestWrapper.addParameter("phasingFinishHeight", "-1");
-        requestWrapper.addParameter("phasingFinishTime", amountOfTime.toString());
-        requestWrapper.addParameter("phasingVotingModel", "-1");
-        requestWrapper.addParameter("phasingQuorum", "0");
-        requestWrapper.addParameter("phasingMinBalanceModel", "0");
-        requestWrapper.addParameter("recipient", Convert.defaultRsAccount(id));
-    }
+
 
 }
