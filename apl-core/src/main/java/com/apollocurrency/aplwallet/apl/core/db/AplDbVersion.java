@@ -728,7 +728,7 @@ public class AplDbVersion extends DbVersion {
             case 268 :
                 apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
             case 269:
-                apply("ALTER TABLE phasing_poll ADD finish_time INT NOT NULL DEFAULT -1;");
+                apply("ALTER TABLE phasing_poll ADD IF NOT EXISTS finish_time INT NOT NULL DEFAULT -1");
             case 270:
                 apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY NOT NULL, transaction_id BIGINT NOT NULL, type TINYINT NOT NULL, " +
                         "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL, " +
