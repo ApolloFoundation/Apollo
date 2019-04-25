@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;

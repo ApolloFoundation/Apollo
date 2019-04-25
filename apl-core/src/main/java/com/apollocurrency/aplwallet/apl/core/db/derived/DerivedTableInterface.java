@@ -38,6 +38,14 @@ public interface DerivedTableInterface<T> {
         throw new UnsupportedOperationException("GetAll is not supported");
     }
 
+    default long getMinDbId() throws SQLException {
+        return -1L;
+    }
+
+    default long getMaxDbIdByHeight(int height) throws SQLException {
+        return -1L;
+    }
+
     default boolean delete(T t) {
         throw new UnsupportedOperationException("Delete is not supported");
     }

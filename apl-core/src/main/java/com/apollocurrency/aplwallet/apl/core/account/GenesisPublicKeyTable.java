@@ -20,7 +20,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-    public class GenesisPublicKeyTable  extends VersionedPersistentDbTable<PublicKey> {
+public class GenesisPublicKeyTable  extends VersionedPersistentDbTable<PublicKey> {
     
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 

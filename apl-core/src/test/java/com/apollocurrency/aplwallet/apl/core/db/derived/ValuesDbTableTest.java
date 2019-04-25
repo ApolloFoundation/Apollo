@@ -2,14 +2,14 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import org.junit.jupiter.api.Test;
 

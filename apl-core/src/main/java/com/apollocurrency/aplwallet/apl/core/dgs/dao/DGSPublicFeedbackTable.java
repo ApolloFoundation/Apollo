@@ -4,21 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSPublicFeedbackMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 
 @Singleton

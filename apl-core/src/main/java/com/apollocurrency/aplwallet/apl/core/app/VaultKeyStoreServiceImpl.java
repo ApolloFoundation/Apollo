@@ -48,11 +48,12 @@
      private Integer version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
-     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
+     private NtpTime ntpTime;
 
     @Inject
-    public VaultKeyStoreServiceImpl(@Named("keystoreDirPath")Path keystoreDir) {
+    public VaultKeyStoreServiceImpl(@Named("keystoreDirPath")Path keystoreDir, NtpTime ntpTime) {
         this(keystoreDir, CURRENT_KEYSTORE_VERSION);
+        this.ntpTime = ntpTime;
     }
 
      public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version) {
