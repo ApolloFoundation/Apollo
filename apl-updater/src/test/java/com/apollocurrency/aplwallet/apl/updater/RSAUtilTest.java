@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 
 public class RSAUtilTest {
-    private static final Logger LOG = getLogger(RSAUtilTest.class);
+    private static final Logger log = getLogger(RSAUtilTest.class);
 
     @Test
     public void testEncryptAndDecrypt() throws Exception {
@@ -41,16 +41,13 @@ public class RSAUtilTest {
         // encrypt the message
         String expectedMessage = "This is a secret message";
         byte[] encrypted = encrypt(privateKey, expectedMessage.getBytes());
-        System.out.println("Encrypted message in hex:");
-        System.out.println(Convert.toHexString(encrypted));
+        log.debug("Encrypted message in hex: {}", Convert.toHexString(encrypted));
         // decrypt the message
 
         byte[] secret = decrypt(pubKey, encrypted);
         String actual = new String(secret);
 
-        System.out.println("Decrypted message:");
-        System.out.println(actual);
-
+        log.debug("Decrypted message: {}", actual);
         assertEquals(expectedMessage, actual);
     }
 
@@ -70,9 +67,7 @@ public class RSAUtilTest {
 
         String actual = new String(doubleDecryptedMessageBytes);
 
-        System.out.println("Decrypted message:");
-        System.out.println(actual);
-
+        log.debug("Decrypted message: {}", actual);
         assertEquals(expectedMessage, actual);
     }
 
