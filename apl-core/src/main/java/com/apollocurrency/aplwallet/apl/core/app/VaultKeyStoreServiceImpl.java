@@ -52,16 +52,16 @@
 
     @Inject
     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath")Path keystoreDir, NtpTime ntpTime) {
-        this(keystoreDir, CURRENT_KEYSTORE_VERSION);
-        this.ntpTime = ntpTime;
+        this(keystoreDir, CURRENT_KEYSTORE_VERSION, ntpTime);
     }
 
-     public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version) {
+     public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version, NtpTime ntpTime) {
          if (version < 0) {
              throw new IllegalArgumentException("version should not be negative");
          }
          this.version = version;
          this.keystoreDirPath = keystoreDir;
+         this.ntpTime = ntpTime;
          if (!Files.exists(keystoreDirPath)) {
              try {
                  Files.createDirectories(keystoreDirPath);
