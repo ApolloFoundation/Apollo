@@ -4,16 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -23,12 +13,22 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 @Singleton
-public class TaggedDataDao extends VersionedPrunableDbTable<TaggedData> {
+public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
     protected DatabaseManager databaseManager;
@@ -36,6 +36,7 @@ public class TaggedDataDao extends VersionedPrunableDbTable<TaggedData> {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static final String DB_TABLE = "tagged_data";
+    private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
     private TaggedDataMapper MAPPER = new TaggedDataMapper();
 
     private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<>("id") {
@@ -48,7 +49,7 @@ public class TaggedDataDao extends VersionedPrunableDbTable<TaggedData> {
     @Inject
     public TaggedDataDao(DataTagDao dataTagDao, DatabaseManager databaseManager,
                          BlockchainConfig blockchainConfig) {
-        super(DB_TABLE, taggedDataKeyFactory);
+        super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, false);
         this.dataTagDao = dataTagDao;
         this.databaseManager = databaseManager;
         this.blockchainConfig = blockchainConfig;

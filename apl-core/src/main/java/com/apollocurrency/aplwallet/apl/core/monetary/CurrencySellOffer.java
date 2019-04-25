@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -44,7 +44,7 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencySellOffer> sellOfferTable = new VersionedEntityDbTable<CurrencySellOffer>("sell_offer", sellOfferDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<CurrencySellOffer> sellOfferTable = new VersionedDeletableEntityDbTable<CurrencySellOffer>("sell_offer", sellOfferDbKeyFactory) {
 
         @Override
         public CurrencySellOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

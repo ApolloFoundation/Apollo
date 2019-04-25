@@ -35,7 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
+public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
@@ -46,20 +46,12 @@ public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
         super(table, dbKeyFactory);
     }
 
-    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, fullTextSearchColumns);
-    }
-
     public PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
     }
 
     PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
-    }
-
-    protected PrunableDbTable(KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super("", dbKeyFactory, multiversion, fullTextSearchColumns);
     }
 
     @Override

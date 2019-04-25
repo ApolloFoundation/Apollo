@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,7 +53,7 @@ public class CurrencyFounder {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencyFounder> currencyFounderTable = new VersionedEntityDbTable<CurrencyFounder>("currency_founder", currencyFounderDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<CurrencyFounder> currencyFounderTable = new VersionedDeletableEntityDbTable<CurrencyFounder>("currency_founder", currencyFounderDbKeyFactory) {
 
         @Override
         public CurrencyFounder load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -29,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -105,7 +105,7 @@ public final class Alias {
 
     };
 
-    private static final VersionedEntityDbTable<Alias> aliasTable = new VersionedEntityDbTable<Alias>("alias", aliasDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<Alias> aliasTable = new VersionedDeletableEntityDbTable<Alias>("alias", aliasDbKeyFactory) {
 
         @Override
         public Alias load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -133,7 +133,7 @@ public final class Alias {
 
     };
 
-    private static final VersionedEntityDbTable<Offer> offerTable = new VersionedEntityDbTable<Offer>("alias_offer", offerDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<Offer> offerTable = new VersionedDeletableEntityDbTable<Offer>("alias_offer", offerDbKeyFactory) {
 
         @Override
         public Offer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

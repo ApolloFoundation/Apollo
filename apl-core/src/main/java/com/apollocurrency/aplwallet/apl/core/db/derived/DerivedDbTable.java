@@ -115,32 +115,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
-/*
-    @Override
-    @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-
-        //nothing to trim
-    }
-*/
 
     public  DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
 
-/*
-    @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-        //implemented in EntityDbTable only
-    }
-*/
-
-/*
-    @Override
-    public boolean isPersistent() {
-        return false;
-    }
-*/
 
     @Override
     public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {

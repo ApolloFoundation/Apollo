@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +23,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
+public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
     
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 

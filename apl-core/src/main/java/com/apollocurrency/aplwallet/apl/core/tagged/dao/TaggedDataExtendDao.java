@@ -17,12 +17,12 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataExtendDataMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
 
 @Singleton
-public class TaggedDataExtendDao extends VersionedValuesDbTable<TaggedDataExtend> {
+public class TaggedDataExtendDao extends VersionedDeletableValuesDbTable<TaggedDataExtend> {
 
     protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();

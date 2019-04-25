@@ -33,10 +33,8 @@ import java.sql.SQLException;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
-    private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-
-    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
+public abstract class VersionedDeletableValuesDbTable<T> extends ValuesDbTable<T> {
+    protected VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 

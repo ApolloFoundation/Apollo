@@ -8,12 +8,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -22,7 +24,7 @@ import javax.inject.Singleton;
  * @author al
  */
 @Singleton
-public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
+public class PublicKeyTable extends EntityDbTable<PublicKey> {
     private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
 
     private final Blockchain blockchain;
@@ -35,14 +37,17 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
 
         @Override
         public DbKey newKey(PublicKey publicKey) {
-            return publicKey.dbKey;
+            if (publicKey.getDbKey() == null) {
+                publicKey.setDbKey(new LongKey(publicKey.getAccountId()));
+            }
+            return publicKey.getDbKey();
         }
 
         @Override
         public PublicKey newEntity(DbKey dbKey) {
-            return new PublicKey(((LongKey) dbKey).getId(), null);
+            Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+            return new PublicKey(((LongKey) dbKey).getId(), null, blockchain.getHeight());
         }
-
     }
 
     public static DbKey newKey(long id){
@@ -62,12 +67,12 @@ public class PublicKeyTable extends VersionedPersistentDbTable<PublicKey> {
 
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
-        publicKey.height = blockchain.getHeight();
+        publicKey.setHeight(blockchain.getHeight());
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, publicKey.accountId);
             DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
-            pstmt.setInt(++i, publicKey.height);
+            pstmt.setInt(++i, publicKey.getHeight());
             pstmt.executeUpdate();
         }
     }

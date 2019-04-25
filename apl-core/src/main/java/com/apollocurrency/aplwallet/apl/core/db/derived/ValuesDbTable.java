@@ -31,26 +31,26 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
+public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
 
     private final boolean multiversion;
-    protected final KeyFactory<V> dbKeyFactory;
+    protected final KeyFactory<T> dbKeyFactory;
 
     public boolean isMultiversion() {
         return multiversion;
     }
 
-    protected ValuesDbTable(String table, KeyFactory<V> dbKeyFactory) {
+    protected ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, KeyFactory<V> dbKeyFactory, boolean multiversion) {
+    ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
         super(table);
         this.dbKeyFactory = dbKeyFactory;
         this.multiversion = multiversion;
     }
 
-    public ValuesDbTable(String table, boolean init,  KeyFactory<V> dbKeyFactory) {
+    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
         super(table, init);
         this.multiversion = false;
         this.dbKeyFactory = dbKeyFactory;
@@ -61,11 +61,11 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         dataSource.clearCache(table);
     }
 
-    public final List<V> get(DbKey dbKey) {
-        List<V> values;
+    public final List<T> get(DbKey dbKey) {
+        List<T> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (dataSource.isInTransaction()) {
-            values = (List<V>) dataSource.getCache(table).get(dbKey);
+            values = (List<T>) dataSource.getCache(table).get(dbKey);
             if (values != null) {
                 return values;
             }
@@ -84,13 +84,13 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    public KeyFactory<V> getDbKeyFactory() {
+    public KeyFactory<T> getDbKeyFactory() {
         return dbKeyFactory;
     }
 
-    private List<V> get(Connection con, PreparedStatement pstmt) {
+    private List<T> get(Connection con, PreparedStatement pstmt) {
         try {
-            List<V> result = new ArrayList<>();
+            List<T> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     result.add(load(con, rs, dbKeyFactory.newKey(rs)));
@@ -102,7 +102,7 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    public final void insert(List<V> values) {
+    public final void insert(List<T> values) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -121,7 +121,7 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
                     pstmt.executeUpdate();
                 }
             }
-            for (V v : values) {
+            for (T v : values) {
 //                save(con, t, v);
                 save(con, v); // TODO: YL review and fix
             }
@@ -130,9 +130,9 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    protected abstract void save(Connection con, V entity) throws SQLException;
+    protected abstract void save(Connection con, T entity) throws SQLException;
 
-    private void checkKeys(DbKey key, List<V> values) {
+    private void checkKeys(DbKey key, List<T> values) {
 
         boolean match = values
                 .stream()
@@ -147,7 +147,7 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
     public final void rollback(int height) {
         if (multiversion) {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
-            VersionedEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
+            VersionedDeletableEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
         } else {
             super.rollback(height);
         }
@@ -159,7 +159,7 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
             if (dataSource == null) {
                 dataSource = databaseManager.getDataSource();
             }
-            VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
+            VersionedDeletableEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         } else {
             super.trim(height, dataSource);
         }

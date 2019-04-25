@@ -4,41 +4,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-
-public class DataTag {
+public class DataTag extends VersionedDerivedEntity {
 
     private String tag;
-    private DbKey dbKey;
-    private int height;
     private int count;
 
     public DataTag(String tag, int height, int count) {
+        super(null, height);
         this.tag = tag;
-        this.height = height;
         this.count = count;
     }
 
     public DataTag(String tag, int height) {
+        super(null, height);
         this.tag = tag;
-        this.height = height;
     }
 
     public DataTag(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
         this.tag = rs.getString("tag");
-        this.dbKey = dbKey;
         this.count = rs.getInt("tag_count");
-        this.height = rs.getInt("height");
+        setDbKey(dbKey);
     }
 
     public DataTag(ResultSet rs) throws SQLException {
+        super(rs);
         this.tag = rs.getString("tag");
         this.count = rs.getInt("tag_count");
-        this.height = rs.getInt("height");
     }
 
     public String getTag() {
@@ -49,13 +48,6 @@ public class DataTag {
         this.tag = tag;
     }
 
-    public Integer getHeight() {
-        return height;
-    }
-
-    public void setHeight(Integer height) {
-        this.height = height;
-    }
 
     public Integer getCount() {
         return count;
@@ -65,18 +57,6 @@ public class DataTag {
         this.count = count;
     }
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
     public void setCount(int count) {
         this.count = count;
     }
@@ -84,16 +64,15 @@ public class DataTag {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof DataTag)) return false;
+        if (!super.equals(o)) return false;
         DataTag dataTag = (DataTag) o;
-        return height == dataTag.height &&
-                count == dataTag.count &&
-                Objects.equals(tag, dataTag.tag) &&
-                Objects.equals(dbKey, dataTag.dbKey);
+        return count == dataTag.count &&
+                Objects.equals(tag, dataTag.tag);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tag, dbKey, height, count);
+        return Objects.hash(super.hashCode(), tag, count);
     }
 }

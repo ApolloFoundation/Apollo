@@ -1,29 +1,11 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -40,15 +22,16 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.spi.CDI;
 
-public abstract class VersionedEntityDbTable<T> extends EntityDbTable<T> {
-    private static final Logger LOG = getLogger(VersionedEntityDbTable.class);
+public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T> {
+    private static final Logger LOG = getLogger(VersionedDeletableEntityDbTable.class);
 
-    protected VersionedEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
+    protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
     }
 
-    protected VersionedEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
+    protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 

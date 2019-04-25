@@ -109,9 +109,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     public void checkAvailable(int height) {
         if (multiversion) {
             if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            int minRollBackHeight = isPersistent() && blockchainProcessor.isScanning() ?
-                    Math.max(blockchainProcessor.getInitialScanHeight() - propertiesHolder.MAX_ROLLBACK(), 0)
-                    : blockchainProcessor.getMinRollbackHeight();
+            int minRollBackHeight = blockchainProcessor.getMinRollbackHeight();
             if (height < minRollBackHeight) {
                 throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
             }
@@ -122,6 +120,13 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
+
+    /**
+     * Create new entity or return existing from cache in transaction
+     * Current use case: caching complex entity, incremental entity update from multiple methods in one transaction
+     * Should be removed asap
+     */
+    @Deprecated
     public final T newEntity(DbKey dbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean cache = dataSource.isInTransaction();
@@ -217,7 +222,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    private T get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException {
+    protected T get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         final boolean doCache = cache && dataSource.isInTransaction();
         try (ResultSet rs = pstmt.executeQuery()) {
@@ -465,7 +470,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    private int getCount(PreparedStatement pstmt) throws SQLException {
+    protected int getCount(PreparedStatement pstmt) throws SQLException {
         try (ResultSet rs = pstmt.executeQuery()) {
             rs.next();
             return rs.getInt(1);
@@ -509,7 +514,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     public void rollback(int height) {
         if (multiversion) {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
-            VersionedEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
+            VersionedDeletableEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
         } else {
             super.rollback(height);
         }
@@ -521,7 +526,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             if (dataSource == null) {
                 dataSource = databaseManager.getDataSource();
             }
-            VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
+            VersionedDeletableEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
         }
         else {
             super.trim(height, dataSource);
@@ -547,7 +552,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     private boolean doesNotExceed(int height) {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        return blockchain.getHeight() <= height && ! (isPersistent() && blockchainProcessor.isScanning());
+        return blockchain.getHeight() <= height;
     }
 
 }

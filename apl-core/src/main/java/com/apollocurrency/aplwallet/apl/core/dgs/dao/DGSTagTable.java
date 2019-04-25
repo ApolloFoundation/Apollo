@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSTagMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 
@@ -14,11 +14,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
-public class DGSTagTable extends VersionedEntityDbTable<DGSTag> {
+public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
     private static final StringKeyFactory<DGSTag> KEY_FACTORY = new StringKeyFactory<DGSTag>("tag") {
         @Override
         public DbKey newKey(DGSTag tag) {
