@@ -66,7 +66,7 @@ public class PropertiesHolder {
         if (value != null && ! "".equals(value)) {
            // LOG.debug(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
         } else {
-            LOG.info(name + " not defined");
+            LOG.debug(name + " not defined");
             value = defaultValue;
         }
         if (encoding == null || value == null) {
@@ -113,7 +113,7 @@ public class PropertiesHolder {
           //  LOG.debug(name + " = \"false\"");
             return false;
         }
-        LOG.info(name + " not defined, using default " + defaultValue);
+        LOG.debug(name + " not defined, using default " + defaultValue);
         return defaultValue;
     }
     
