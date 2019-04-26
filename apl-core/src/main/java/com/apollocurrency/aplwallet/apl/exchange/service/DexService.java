@@ -48,12 +48,12 @@ public class DexService {
         return dexOfferDao.getByTransactionId(transactionId);
     }
 
-
+    /**
+     * Use dexOfferTable for insert, to be sure that everything in one transaction.
+     */
     @Transactional
     public void saveOffer (DexOffer offer){
-        if(getOfferByTransactionId(offer.getTransactionId()) == null){
-            dexOfferTable.insert(offer);
-        }
+        dexOfferTable.insert(offer);
     }
 
     @Transactional
@@ -101,20 +101,34 @@ public class DexService {
 
         for (DexOffer offer : offers) {
             try {
-                offer.setStatus(OfferStatus.CLOSED);
+                offer.setStatus(OfferStatus.EXPIRED);
                 dexOfferTable.insert(offer);
 
-                //Return frozen money.
-                if(shouldFreezeAPL(offer.getType().ordinal(), offer.getOfferCurrency().ordinal())) {
-                    Account account = Account.getAccount(offer.getAccountId());
-                    account.addToUnconfirmedBalanceATM(LedgerEvent.TRANSACTION_FEE, offer.getTransactionId(), offer.getOfferAmount());
-                }
+                refundFrozenMoney(offer);
             } catch (Exception ex){
                 LOG.error(ex.getMessage(), ex);
                 throw new RuntimeException(ex);
             }
         }
 
+    }
+
+    public void cancelOffer(DexOffer offer){
+        offer.setStatus(OfferStatus.CANCEL);
+        saveOffer(offer);
+
+        refundFrozenMoney(offer);
+    }
+
+    public void refundFrozenMoney(DexOffer offer){
+        //Return APL.
+        if(shouldFreezeAPL(offer.getType().ordinal(), offer.getOfferCurrency().ordinal())) {
+            Account account = Account.getAccount(offer.getAccountId());
+            account.addToUnconfirmedBalanceATM(LedgerEvent.TRANSACTION_FEE, offer.getTransactionId(), offer.getOfferAmount());
+        }
+
+        //Return Eth
+        //TODO
     }
 
 

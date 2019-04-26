@@ -40,8 +40,8 @@ public class DexOffer{
     public DexOfferDto toDto(){
         DexOfferDto dexOfferDto = new DexOfferDto();
 
-        dexOfferDto.id = this.getId();
-        dexOfferDto.accountId = this.getAccountId();
+        dexOfferDto.id = Long.toUnsignedString(this.getTransactionId());
+        dexOfferDto.accountId = Long.toUnsignedString(this.getAccountId());
         dexOfferDto.type = this.getType().ordinal();
         dexOfferDto.offerCurrency = this.getOfferCurrency().ordinal();
         dexOfferDto.offerAmount = this.getOfferAmount();

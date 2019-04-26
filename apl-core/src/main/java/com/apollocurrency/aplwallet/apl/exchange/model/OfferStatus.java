@@ -4,7 +4,8 @@ public enum  OfferStatus {
 
     OPEN,
     PENDING,
-    CLOSED;
+    EXPIRED,
+    CANCEL;
 
     public static OfferStatus getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferStatus.values().length){

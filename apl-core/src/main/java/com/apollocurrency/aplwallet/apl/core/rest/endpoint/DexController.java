@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
@@ -233,18 +233,49 @@ public class DexController {
         ).build();
     }
 
-    @GET
-    @Path("/order")
+    @POST
+    @Path("/offer/cancel")
     @Produces(MediaType.APPLICATION_JSON)
-    @io.swagger.annotations.ApiOperation(value = "get Order By Id", notes = "extract one order by OrderID", response = ExchangeOrder.class, tags={  })
+    @io.swagger.annotations.ApiOperation(value = "Cancel Order By Id", response = ExchangeOrder.class, tags={"dex"})
     @io.swagger.annotations.ApiResponses(value = {
             @io.swagger.annotations.ApiResponse(code = 200, message = "Order", response = ExchangeOrder.class),
-
             @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response dexGetOrderByOrderID(@QueryParam("orderID") Long orderID, @Context SecurityContext securityContext)
-            throws NotFoundException {
+    public Response cancelOrderByOrderID(@ApiParam(value = "Order id") @FormParam("orderId") String transactionIdStr,
+                                         @Context HttpServletRequest req) throws NotFoundException {
 
-        return Response.ok(service.getOrderByID(orderID)).build();
+        try{
+            Long transactionId;
+            Account account = ParameterParser.getSenderAccount(req);
+
+            if (StringUtils.isBlank(transactionIdStr)) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", String.format("Can't be null.")))).build();
+            }
+            try{
+                transactionId = Long.parseUnsignedLong(transactionIdStr);
+            } catch (Exception ex){
+                return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+            }
+            DexOffer offer = service.getOfferByTransactionId(transactionId);
+            if(offer == null) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", String.format("Order was not found.")))).build();
+            }
+            if(!Long.valueOf(offer.getAccountId()).equals(account.getId())){
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("accountId", String.format("Can cancel only your orders.")))).build();
+            }
+
+            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
+            requestWrapper.addParameter("deadline", "1440");
+            DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
+
+            try {
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferCancelAttachment);
+                return Response.ok(JSON.toString(response)).build();
+            } catch (AplException.ValidationException e) {
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
+        } catch (ParameterException ex){
+            return Response.ok(JSON.toString(ex.getErrorResponse())).build();
+        }
     }
 
     @POST
