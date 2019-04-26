@@ -46,10 +46,10 @@ public abstract class VersionedDeletableValuesDbTable<T> extends ValuesDbTable<T
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(t);
+        DbKey dbKey = getKeyFactory().newKey(t);
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
+             PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + getKeyFactory().getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
             int height = blockchain.getHeight();
@@ -57,7 +57,7 @@ public abstract class VersionedDeletableValuesDbTable<T> extends ValuesDbTable<T
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND height = ? AND latest = TRUE")) {
+                            + " SET latest = FALSE " + getKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
                         pstmt.setInt(j, blockchain.getHeight()); // TODO: YL review
                         if (pstmt.executeUpdate() > 0) {
@@ -72,7 +72,7 @@ public abstract class VersionedDeletableValuesDbTable<T> extends ValuesDbTable<T
                         save(con, v);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
+                            + " SET latest = FALSE " + getKeyFactory().getPKClause() + " AND latest = TRUE")) {
                         dbKey.setPK(pstmt);
                         if (pstmt.executeUpdate() == 0) {
                             throw new RuntimeException(); // should not happen
@@ -80,7 +80,7 @@ public abstract class VersionedDeletableValuesDbTable<T> extends ValuesDbTable<T
                     }
                     return true;
                 } else {
-                    try (PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + dbKeyFactory.getPKClause())) {
+                    try (PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + getKeyFactory().getPKClause())) {
                         dbKey.setPK(pstmtDelete);
                         return pstmtDelete.executeUpdate() > 0;
                     }

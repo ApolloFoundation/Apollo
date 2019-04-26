@@ -40,7 +40,7 @@ public class TrimObserver {
             log.info("processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
-            trimService.doTrimDerivedTables(block.getHeight(), null);
+            trimService.doTrimDerivedTablesOnHeight(block.getHeight());
         }
     }
 

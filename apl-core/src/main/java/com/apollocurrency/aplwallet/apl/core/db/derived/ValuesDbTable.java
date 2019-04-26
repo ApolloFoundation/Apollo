@@ -31,34 +31,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
+public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
 
-    private final boolean multiversion;
-    protected final KeyFactory<T> dbKeyFactory;
-
-    public boolean isMultiversion() {
-        return multiversion;
-    }
-
-    protected ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
+    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
-        super(table);
-        this.dbKeyFactory = dbKeyFactory;
-        this.multiversion = multiversion;
+    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
+        super(table, dbKeyFactory, multiversion, true);
     }
 
     public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
-        super(table, init);
-        this.multiversion = false;
-        this.dbKeyFactory = dbKeyFactory;
-    }
-
-    protected void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
+        super(table, dbKeyFactory, false, init);
     }
 
     public final List<T> get(DbKey dbKey) {
@@ -71,7 +55,7 @@ public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
             }
         }
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
                      + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
             dbKey.setPK(pstmt);
             values = get(con, pstmt);
@@ -84,16 +68,12 @@ public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    public KeyFactory<T> getDbKeyFactory() {
-        return dbKeyFactory;
-    }
-
     private List<T> get(Connection con, PreparedStatement pstmt) {
         try {
             List<T> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(load(con, rs, dbKeyFactory.newKey(rs)));
+                    result.add(load(con, rs, keyFactory.newKey(rs)));
                 }
             }
             return result;
@@ -107,7 +87,7 @@ public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(values.get(0)); // TODO: YL review and fix
+        DbKey dbKey = keyFactory.newKey(values.get(0)); // TODO: YL review and fix
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
@@ -116,7 +96,7 @@ public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
+                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE")) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }
@@ -136,33 +116,10 @@ public abstract class ValuesDbTable<T> extends DerivedDbTable<T> {
 
         boolean match = values
                 .stream()
-                .map(dbKeyFactory::newKey)
+                .map(keyFactory::newKey)
                 .allMatch(key::equals);
         if (!match) {
             throw new IllegalArgumentException("DbKeys not match");
         }
     }
-
-    @Override
-    public final void rollback(int height) {
-        if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            VersionedDeletableEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
-        } else {
-            super.rollback(height);
-        }
-    }
-
-    @Override
-    public final void trim(int height, TransactionalDataSource dataSource) {
-        if (multiversion) {
-            if (dataSource == null) {
-                dataSource = databaseManager.getDataSource();
-            }
-            VersionedDeletableEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
-        } else {
-            super.trim(height, dataSource);
-        }
-    }
-
 }

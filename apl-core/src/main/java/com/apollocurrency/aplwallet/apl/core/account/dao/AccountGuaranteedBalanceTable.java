@@ -5,12 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,7 +24,8 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     private int batchCommitSize;
 
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
+    public void trim(int height) {
+        TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                      + "WHERE height < ? AND height >= 0 LIMIT " + batchCommitSize)) {
@@ -36,6 +39,11 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    @Override
+    protected Object load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        throw new RuntimeException("Method is not implemented yet");
     }
 
     @Inject

@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -42,26 +41,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
+public abstract class EntityDbTable<T> extends BasicDbTable<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
 
-    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-
-    private final boolean multiversion;
-    protected final KeyFactory<T> dbKeyFactory;
     private final String defaultSort;
     private final String fullTextSearchColumns;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private static FullTextSearchService fullText;
-
-    public boolean isMultiversion() {
-        return multiversion;
-    }
-
-    public KeyFactory<T> getDbKeyFactory() {
-        return dbKeyFactory;
-    }
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -72,27 +59,17 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
     }
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
-        this(table, dbKeyFactory, false, "", init);
+        this(table, dbKeyFactory, false, null, init);
     }
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
-        super(table, init);
-        this.dbKeyFactory = dbKeyFactory;
-        this.multiversion = multiversion;
+        super(table, dbKeyFactory, multiversion, init);
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
     EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
         this(table, dbKeyFactory, multiversion, fullTextSearchColumns, true);
-    }
-
-     protected EntityDbTable(String table, boolean multiversion, KeyFactory<T> dbKeyFactory) {
-         super(table);
-         this.multiversion = multiversion;
-         this.dbKeyFactory = dbKeyFactory;
-         this.defaultSort = "";
-         this.fullTextSearchColumns = "";
     }
 
     public abstract void save(Connection con, T entity) throws SQLException;
@@ -136,7 +113,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
                 return t;
             }
         }
-        T t = dbKeyFactory.newEntity(dbKey);
+        T t = keyFactory.newEntity(dbKey);
         if (cache) {
             dataSource.getCache(table).put(dbKey, t);
         }
@@ -156,7 +133,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             }
         }
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
              + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbKey.setPK(pstmt);
             return get(con, pstmt, cache);
@@ -172,9 +149,9 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         checkAvailable(height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
                      + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + dbKeyFactory.getPKClause() + " AND height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
+                     + "SELECT 1 FROM " + table + keyFactory.getPKClause() + " AND height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
             int i = dbKey.setPK(pstmt);
             pstmt.setInt(i, height);
             if (multiversion) {
@@ -208,7 +185,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
                      + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
+                     + "SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
                      + " AND b.height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
             int i = 0;
             i = dbClause.set(pstmt, ++i);
@@ -233,7 +210,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
 
             DbKey dbKey = null;
             if (doCache) {
-                dbKey = dbKeyFactory.newKey(rs);                              
+                dbKey = keyFactory.newKey(rs);
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
@@ -287,8 +264,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
                     + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
+                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
                     + " AND b.height <= ? AND b.height > a.height))) "
                     : " ") + sort
                     + DbUtils.limitsClause(from, to));
@@ -314,7 +291,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             T t = null;
             DbKey dbKey = null;
             if (doCache) {
-                dbKey = dbKeyFactory.newKey(rs);
+                dbKey = keyFactory.newKey(rs);
                 t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
@@ -388,8 +365,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE height <= ?"
                     + (multiversion ? " AND (latest = TRUE OR (latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height > ? AND " + dbKeyFactory.getSelfJoinClause()
-                    + ") AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height <= ? AND " + dbKeyFactory.getSelfJoinClause()
+                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height > ? AND " + keyFactory.getSelfJoinClause()
+                    + ") AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height <= ? AND " + keyFactory.getSelfJoinClause()
                     + " AND b.height > a.height))) " : " ") + sort
                     + DbUtils.limitsClause(from, to));
             int i = 0;
@@ -440,8 +417,8 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table + " AS a WHERE " + dbClause.getClause()
                     + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + dbKeyFactory.getSelfJoinClause()
+                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
                     + " AND b.height <= ? AND b.height > a.height))) "
                     : " "));
             int i = 0;
@@ -484,7 +461,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(t);
+        DbKey dbKey = keyFactory.newKey(t);
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
@@ -499,7 +476,7 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
+                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }
@@ -508,33 +485,6 @@ public abstract class EntityDbTable<T> extends DerivedDbTable<T> {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    @Override
-    public void rollback(int height) {
-        if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            VersionedDeletableEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
-        } else {
-            super.rollback(height);
-        }
-    }
-
-    @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-        if (multiversion) {
-            if (dataSource == null) {
-                dataSource = databaseManager.getDataSource();
-            }
-            VersionedDeletableEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
-        }
-        else {
-            super.trim(height, dataSource);
-        }
-    }
-
-    public void trim(int height) {
-        trim(height, databaseManager.getDataSource());
     }
 
 

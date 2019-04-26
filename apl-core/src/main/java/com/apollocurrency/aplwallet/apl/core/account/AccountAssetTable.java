@@ -79,8 +79,8 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     }
     
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK), dataSource);
+    public void trim(int height) {
+        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
     }
 
     @Override

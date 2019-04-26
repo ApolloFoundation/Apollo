@@ -270,7 +270,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             long startTrim = System.currentTimeMillis();
             currentTable = PUBLIC_KEY_TABLE_NAME; // assign name for trim
             log.debug("Start trimming '{}' to HEIGHT '{}'", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight());
-            trimService.doTrimDerivedTables(paramInfo.getSnapshotBlockHeight().intValue(), sourceDataSource); // TRIM 'PUBLIC_KEY' table before processing
+            trimService.doTrimDerivedTablesOnHeight(paramInfo.getSnapshotBlockHeight().intValue()); // TRIM 'PUBLIC_KEY' table before processing
             log.debug("Trimmed '{}' to HEIGHT '{}' within {} sec", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight(), (System.currentTimeMillis() - startTrim)/1000);
 
             for (String tableName : paramInfo.getTableNameList()) {

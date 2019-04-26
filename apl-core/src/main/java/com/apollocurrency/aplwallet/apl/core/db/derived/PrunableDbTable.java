@@ -55,9 +55,9 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     }
 
     @Override
-    public final void trim(int height, TransactionalDataSource dataSource) {
+    public final void trim(int height) {
         prune();
-        super.trim(height, dataSource);
+        super.trim(height);
     }
 
     protected void prune() {
