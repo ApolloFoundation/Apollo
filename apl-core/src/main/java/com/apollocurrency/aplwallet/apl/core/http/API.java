@@ -348,7 +348,6 @@ public final class API {
             try {
                 apiServer.stop();
                 if (enableAPIUPnP) {
-                    Connector[] apiConnectors = apiServer.getConnectors();
                     for (int extPort:externalPorts) {
                             upnp.deletePort(extPort);
                     }

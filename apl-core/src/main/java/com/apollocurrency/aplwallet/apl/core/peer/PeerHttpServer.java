@@ -162,7 +162,6 @@ public class PeerHttpServer {
             try {
                 peerServer.stop();
                 if (enablePeerUPnP) {
-                    Connector[] peerConnectors = peerServer.getConnectors();
                     for (int extPort: externalPorts) {
                             upnp.deletePort(extPort);
                     }
