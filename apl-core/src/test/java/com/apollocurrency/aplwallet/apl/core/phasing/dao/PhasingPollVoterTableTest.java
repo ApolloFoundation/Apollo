@@ -90,7 +90,7 @@ public class PhasingPollVoterTableTest extends ValuesDbTableTest<PhasingPollVote
     }
 
     @Override
-    protected List<PhasingPollVoter> getAllExpectedData() {
+    protected List<PhasingPollVoter> getAll() {
         return List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1, ptd.POLL_4_VOTER_0, ptd.FAKE_VOTER_0, ptd.FAKE_VOTER_1, ptd.FAKE_VOTER_2);
     }
 

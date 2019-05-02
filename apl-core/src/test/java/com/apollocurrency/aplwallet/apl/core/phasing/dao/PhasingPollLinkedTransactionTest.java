@@ -140,7 +140,7 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
 
 
     @Override
-    protected List<PhasingPollLinkedTransaction> getAllExpectedData() {
+    protected List<PhasingPollLinkedTransaction> getAll() {
         return List.of(ptd.LINKED_TRANSACTION_0, ptd.LINKED_TRANSACTION_1, ptd.LINKED_TRANSACTION_2, ptd.FAKE_LINKED_TRANSACTION_0, ptd.FAKE_LINKED_TRANSACTION_1, ptd.FAKE_LINKED_TRANSACTION_2);
     }
 

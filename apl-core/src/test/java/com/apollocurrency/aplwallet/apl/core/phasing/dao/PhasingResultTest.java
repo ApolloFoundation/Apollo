@@ -92,7 +92,7 @@ public class PhasingResultTest extends EntityDbTableTest<PhasingPollResult> {
     }
 
     @Override
-    protected List<PhasingPollResult> getAllExpectedData() {
+    protected List<PhasingPollResult> getAll() {
         return new ArrayList<>(List.of(ptd.SHARD_RESULT_0, ptd.RESULT_0, ptd.RESULT_1, ptd.RESULT_2));
     }
 

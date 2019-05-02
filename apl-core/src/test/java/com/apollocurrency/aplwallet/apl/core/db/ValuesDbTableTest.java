@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static java.util.stream.Collectors.toMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -135,7 +136,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     public void testTrimNothing() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> table.trim(0));
         List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(getAllExpectedData(), allValues);
+        assertEquals(getAll(), allValues);
     }
 
     @Override
@@ -188,12 +189,41 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
                             Integer maxHeight = l.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get();
                             l.stream().filter(e-> e.getHeight() < maxHeight).forEach(removed::add);
                         });
-        List<T> allExpectedData = new ArrayList<>(getAllExpectedData());
+        List<T> allExpectedData = new ArrayList<>(getAll());
         removed.forEach(allExpectedData::remove);
         return allExpectedData;
     }
 
+    public void assertInCache(KeyFactory<T> keyFactory, List<T> values) {
+        List<T> cachedValues = getCache(keyFactory.newKey(values.get(0)));
+        assertEquals(values, cachedValues);
+    }
 
+    public void assertNotInCache(KeyFactory<T> keyFactory, List<T> values) {
+        List<T> cachedValues = getCache(keyFactory.newKey(values.get(0)));
+        assertNotEquals(values, cachedValues);
+    }
+
+    public  List<T> getCache(DbKey dbKey) {
+        if (!extension.getDatabaseManger().getDataSource().isInTransaction()) {
+            return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
+        } else {
+            return getCacheInTransaction(dbKey);
+        }
+    }
+
+    public List<T> getCacheInTransaction(DbKey dbKey) {
+        Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
+        return (List<T>) cache.get(dbKey);
+    }
+
+
+    public void removeFromCache(KeyFactory<T> keyFactory, List<T> values) {
+        DbKey dbKey = keyFactory.newKey(values.get(0));
+        Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
+        cache.remove(dbKey);
+    }
 
     protected abstract List<T> dataToInsert();
+
 }
