@@ -40,7 +40,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testGetAll() throws SQLException {
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
 
         assertEquals(getAllExpectedData(), all);
     }
@@ -49,7 +49,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     public void testTrim() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(0));
 
-        List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
         assertEquals(getAllExpectedData(), all);
     }
 
@@ -62,7 +62,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     public void testTruncate() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.truncate());
 
-        List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
 
         assertTrue(all.isEmpty(), "Table should not contain any records after 'truncate' operation");
     }
@@ -75,7 +75,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     @Test
     public void testRollbackToNegativeHeight() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(-1));
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
         assertTrue(all.isEmpty(), "Derived table " + derivedDbTable.toString() + " should not have any entries after rollback to -1 height");
     }
 
@@ -85,7 +85,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         List<Integer> heights = getHeights(all);
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(heights.get(0)));
 
-        assertEquals(all, derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE));
+        assertEquals(all, derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE));
     }
 
 
@@ -95,7 +95,8 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         List<Integer> heights = getHeights(all);
         Integer rollbackHeight = heights.get(heights.size() - 1);
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(rollbackHeight));
-        assertEquals(sortByHeight(getAllExpectedData(), rollbackHeight), derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE));
+        assertEquals(sortByHeight(getAllExpectedData(), rollbackHeight), derivedDbTable.getAllByDbId(
+                new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE));
     }
 
     public List<T> sortByHeight(List<T> list, int maxHeight) {

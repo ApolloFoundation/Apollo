@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -9,6 +10,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -151,6 +153,7 @@ class DerivedDbTableListingTest {
     @AfterEach
     void cleanup() {
         jdbiHandleFactory.close();
+        registry.getDerivedTables().clear();
     }
 
     @BeforeEach
@@ -160,18 +163,26 @@ class DerivedDbTableListingTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         tables.add(AccountCurrencyTable.getInstance());
         tables.add(AccountAssetTable.getInstance());
+        tables.forEach(DerivedDbTable::init); // init all derived tables in current limited list
     }
 
     @Test
-    void testDerivedInit() {
-        tables.forEach(DerivedDbTable::init); // init all derived tables in current limited list
+    void testMinMaxValues() {
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
         assertNotNull(result);
         assertEquals(9, result.size()); // the real number is higher then initial, it OK !
+        int targetHeight = 8000;
         result.forEach(item -> {
             assertNotNull(item);
-            assertNotNull(item.toString());
-            log.debug(item.toString()); // dump table name
+            log.debug("Table = '{}'", item.toString());
+            try {
+                MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
+                assertTrue(minMaxDbId.getMinDbId() >= 0);
+                assertTrue(minMaxDbId.getMaxDbId() >= 0);
+                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
+            } catch (SQLException e) {
+                log.error("Exception", e);
+            }
         });
     }
 }

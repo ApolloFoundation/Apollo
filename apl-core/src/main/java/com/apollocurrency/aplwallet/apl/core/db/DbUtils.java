@@ -20,8 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import org.h2.store.fs.FilePath;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.sql.*;
 import java.util.Arrays;
 
@@ -38,6 +44,78 @@ public final class DbUtils {
                 } catch (Exception ignore) {}
             }
         }
+    }
+
+    /**
+     * Close a result set without throwing an exception.
+     *
+     * @param rs the result set or null
+     */
+    public static void closeSilently(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException ignore) {}
+        }
+    }
+
+    /**
+     * Close a reader without throwing an exception.
+     *
+     * @param reader the reader or null
+     */
+    public static void closeSilently(Reader reader) {
+        if (reader != null) {
+            try {
+                reader.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+    }
+
+    /**
+     * Close a writer without throwing an exception.
+     *
+     * @param writer the writer or null
+     */
+    public static void closeSilently(Writer writer) {
+        if (writer != null) {
+            try {
+                writer.flush();
+                writer.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+    }
+
+    /**
+     * Create an output stream to write into the file.
+     * This method is similar to Java 7
+     * <code>java.nio.file.Path.newOutputStream</code>.
+     *
+     * @param fileName the file name
+     * @param append if true, the file will grow, if false, the file will be
+     *            truncated first
+     * @return the output stream
+     */
+    public static OutputStream newOutputStream(String fileName, boolean append)
+            throws IOException {
+        return FilePath.get(fileName).newOutputStream(append);
+    }
+
+    /**
+     * Create an input stream to read from the file.
+     * This method is similar to Java 7
+     * <code>java.nio.file.Path.newInputStream</code>.
+     *
+     * @param fileName the file name
+     * @return the input stream
+     */
+    public static InputStream newInputStream(String fileName)
+            throws IOException {
+        return FilePath.get(fileName).newInputStream();
     }
 
     public static void rollback(Connection con) {

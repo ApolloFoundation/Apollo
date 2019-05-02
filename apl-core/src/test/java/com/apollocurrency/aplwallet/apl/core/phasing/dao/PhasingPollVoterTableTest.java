@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
@@ -101,7 +102,7 @@ public class PhasingPollVoterTableTest {
 
     @Test
     void testGetAll() throws SQLException {
-        List<PhasingPollVoter> all = table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
+        List<PhasingPollVoter> all = table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
 
         assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1, ptd.POLL_4_VOTER_0), all);
     }
@@ -109,7 +110,7 @@ public class PhasingPollVoterTableTest {
     @Test
     void testInsert() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> table.insert(List.of(ptd.NEW_VOTER_0, ptd.NEW_VOTER_1)));
-        List<PhasingPollVoter> all = table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
+        List<PhasingPollVoter> all = table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
         assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1, ptd.POLL_4_VOTER_0, ptd.NEW_VOTER_0, ptd.NEW_VOTER_1), all);
         List<PhasingPollVoter> poll4Voters = table.get(ptd.POLL_4.getId());
         assertEquals(List.of(ptd.POLL_4_VOTER_0, ptd.NEW_VOTER_0, ptd.NEW_VOTER_1), poll4Voters);
@@ -126,21 +127,21 @@ public class PhasingPollVoterTableTest {
     void testTruncate() throws SQLException {
         DbUtils.inTransaction(extension, (con)-> table.truncate());
 
-        assertTrue(table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues().isEmpty(), "Table should not have any entries after truncating");
+        assertTrue(table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues().isEmpty(), "Table should not have any entries after truncating");
     }
 
     @Test
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> table.rollback(ptd.POLL_1.getHeight()));
 
-        assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1), table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+        assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1), table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues());
     }
 
     @Test
     void testRollbackNothing() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> table.rollback(ptd.POLL_4.getHeight()));
 
-        assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1,  ptd.POLL_4_VOTER_0), table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+        assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1,  ptd.POLL_4_VOTER_0), table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues());
     }
 
     @Test
@@ -157,7 +158,7 @@ public class PhasingPollVoterTableTest {
     void testTrimNothing() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> table.trim(ptd.POLL_4.getHeight()));
 
-        assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1, ptd.POLL_4_VOTER_0), table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+        assertEquals(List.of(ptd.POLL_1_VOTER_0, ptd.POLL_1_VOTER_1, ptd.POLL_4_VOTER_0), table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues());
     }
 
 

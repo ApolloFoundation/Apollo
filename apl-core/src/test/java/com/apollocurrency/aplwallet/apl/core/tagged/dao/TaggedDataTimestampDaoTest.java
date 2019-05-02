@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
@@ -92,7 +93,7 @@ class TaggedDataTimestampDaoTest {
 
     @Test
     void getDataStampAllById() throws Exception {
-        List<TaggedDataTimestamp> result = dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
+        List<TaggedDataTimestamp> result = dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
         assertNotNull(result);
         assertEquals(3, result.size());
     }
@@ -100,21 +101,21 @@ class TaggedDataTimestampDaoTest {
     @Test
     void insertData() throws Exception {
         DbUtils.inTransaction(extension, (con) -> dataTimestampDao.insert(tagtd.NOT_SAVED_TagDTsmp));
-        List<TaggedDataTimestamp> all = dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
+        List<TaggedDataTimestamp> all = dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
         assertEquals(List.of(tagtd.TagDTsmp_1, tagtd.TagDTsmp_2, tagtd.TagDTsmp_3, tagtd.NOT_SAVED_TagDTsmp), all);
     }
 
     @Test
     void testTruncate() throws SQLException {
         DbUtils.inTransaction(extension, (con)-> dataTimestampDao.truncate());
-        assertTrue(dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues().isEmpty(), "Table should not have any entries after truncating");
+        assertTrue(dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues().isEmpty(), "Table should not have any entries after truncating");
     }
 
     @Test
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> dataTimestampDao.rollback(tagtd.TagDTsmp_1.getHeight()));
         assertEquals(List.of(tagtd.TagDTsmp_1),
-                dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+                dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues());
     }
 
 }

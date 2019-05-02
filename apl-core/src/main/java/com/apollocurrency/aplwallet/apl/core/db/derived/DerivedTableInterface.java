@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -34,16 +38,12 @@ public interface DerivedTableInterface<T> {
         throw new UnsupportedOperationException("unsupported insert");
     }
 
-    default DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
+    default DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
         throw new UnsupportedOperationException("GetAll is not supported");
     }
 
-    default long getMinDbId() throws SQLException {
-        return -1L;
-    }
-
-    default long getMaxDbIdByHeight(int height) throws SQLException {
-        return -1L;
+    default MinMaxDbId getMinMaxDbId(int height) throws SQLException {
+        return new MinMaxDbId();
     }
 
     default boolean delete(T t) {

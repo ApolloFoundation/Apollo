@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 
@@ -144,12 +145,13 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 */
 
     @Override
-    public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
+    public DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
+        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("select * from " + table + " where db_id >= ? and db_id < ? limit ?")) {
-            pstmt.setLong(1, from);
-            pstmt.setLong(2, dbIdLimit);
+            pstmt.setLong(1, minMaxDbId.getMinDbId());
+            pstmt.setLong(2, minMaxDbId.getMaxDbId());
             pstmt.setLong(3, limit);
             List<T> values = new ArrayList<>();
             long dbId = -1;
@@ -159,9 +161,31 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
                     dbId = rs.getLong("db_id");
                 }
             }
-
             return new DerivedTableData<>(values, dbId);
         }
+    }
+
+    @Override
+    public MinMaxDbId getMinMaxDbId(int height) throws SQLException {
+        // select MIN and MAX dbId values in one query
+        String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_DB_ID, " +
+                "IFNULL(max(DB_ID), 0) as max_DB_ID from %s where HEIGHT <= ?",  table);
+        long dbIdMin = -1;
+        long dbIdMax = -1;
+        MinMaxDbId minMaxDbId = new MinMaxDbId();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
+            pstmt.setInt(1, height);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    dbIdMin = rs.getLong("min_db_id");
+                    dbIdMax = rs.getLong("max_db_id");
+                    minMaxDbId = new MinMaxDbId(dbIdMin, dbIdMax);
+                }
+            }
+        }
+        return minMaxDbId;
     }
 
     @Override

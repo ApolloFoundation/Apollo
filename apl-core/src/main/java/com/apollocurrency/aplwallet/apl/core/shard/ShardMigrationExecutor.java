@@ -77,15 +77,16 @@ public class ShardMigrationExecutor {
 
     @Transactional
     public void createAllCommands(int height) {
-        CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
-                new ShardInitTableSchemaVersion());
-        this.addOperation(createShardSchemaCommand);
-        Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
         if (backupDb) {
             log.info("Will backup db before sharding");
             BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(managementReceiver);
             this.addOperation(beforeShardCommand);
         }
+
+        CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
+                new ShardInitTableSchemaVersion());
+        this.addOperation(createShardSchemaCommand);
+        Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
         CopyDataCommand copyDataCommand = new CopyDataCommand(managementReceiver, height, dbIds);
         this.addOperation(copyDataCommand);
 

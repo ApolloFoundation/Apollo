@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableData;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
@@ -147,7 +148,8 @@ public class PhasingPollLinkedTransactionTest {
             assertEquals(insertList, linkedTransactions);
             assertInCache(insertList);
         });
-        List<PhasingPollLinkedTransaction> values = table.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
+        List<PhasingPollLinkedTransaction> values = table.getAllByDbId(
+                new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
         assertEquals(values, List.of(ptd.LINKED_TRANSACTION_0, ptd.LINKED_TRANSACTION_1, ptd.LINKED_TRANSACTION_2, ptd.NEW_LINKED_TRANSACTION_1, ptd.NEW_LINKED_TRANSACTION_2));
     }
 
@@ -184,7 +186,7 @@ public class PhasingPollLinkedTransactionTest {
                     table.rollback(ptd.LINKED_TRANSACTION_0.getHeight() - 1);
                 }
         );
-        DerivedTableData<PhasingPollLinkedTransaction> derivedTableData = table.getAllByDbId(0, 100, Long.MAX_VALUE);
+        DerivedTableData<PhasingPollLinkedTransaction> derivedTableData = table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100);
         List<PhasingPollLinkedTransaction> values = derivedTableData.getValues();
         assertEquals(List.of(ptd.NEW_LINKED_TRANSACTION_1, ptd.NEW_LINKED_TRANSACTION_2), values);
     }
@@ -195,7 +197,7 @@ public class PhasingPollLinkedTransactionTest {
                     table.trim(0);
                 }
         );
-        DerivedTableData<PhasingPollLinkedTransaction> derivedTableData = table.getAllByDbId(0, 100, Long.MAX_VALUE);
+        DerivedTableData<PhasingPollLinkedTransaction> derivedTableData = table.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100);
         List<PhasingPollLinkedTransaction> values = derivedTableData.getValues();
         assertEquals(List.of(ptd.LINKED_TRANSACTION_0, ptd.LINKED_TRANSACTION_1, ptd.LINKED_TRANSACTION_2), values);
     }
