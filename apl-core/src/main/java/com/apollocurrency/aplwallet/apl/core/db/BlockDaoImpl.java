@@ -703,16 +703,26 @@ public class BlockDaoImpl implements BlockDao {
             return lastBlock;
         }
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtSelect = con.prepareStatement("SELECT db_id FROM block WHERE timestamp >= "
+             PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
                      + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?")) {
+             PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
+             PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE FROM transaction WHERE db_id = ?");
+             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?")
+        ) {
             try {
-                pstmtSelect.setLong(1, blockId);
-                try (ResultSet rs = pstmtSelect.executeQuery()) {
+                pstmtBlockSelect.setLong(1, blockId);
+                try (ResultSet rs = pstmtBlockSelect.executeQuery()) {
                     dataSource.commit(false);
                     while (rs.next()) {
-        	            pstmtDelete.setLong(1, rs.getLong("db_id"));
-            	        pstmtDelete.executeUpdate();
+        	            pstmtBlockDelete.setLong(1, rs.getLong("db_id"));
+            	        pstmtBlockDelete.executeUpdate();
+                        pstmtTransactionSelect.setLong(1, rs.getLong("id"));
+                        try (ResultSet txRs = pstmtTransactionSelect.executeQuery()) {
+                            while (txRs.next()) {
+                                pstmtTransactionDelete.setLong(1, txRs.getLong("db_id"));
+                                pstmtTransactionDelete.executeUpdate();
+                            }
+                        }
                         dataSource.commit(false);
                     }
 	            }

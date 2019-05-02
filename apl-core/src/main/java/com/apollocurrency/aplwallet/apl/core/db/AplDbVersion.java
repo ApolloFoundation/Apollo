@@ -39,7 +39,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS transaction (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "deadline SMALLINT NOT NULL, recipient_id BIGINT, transaction_index SMALLINT NOT NULL, "
                         + "amount BIGINT NOT NULL, fee BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
-                        + "height INT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
+                        + "height INT NOT NULL, block_id BIGINT NOT NULL, "
                         + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
                         + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
                         + "phased BOOLEAN NOT NULL DEFAULT FALSE, "
@@ -744,7 +744,11 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE shuffling_data DROP CONSTRAINT IF EXISTS CONSTRAINT_A08");
             case 277:
                 apply("ALTER TABLE data_tag DROP CONSTRAINT IF EXISTS CONSTRAINT_995");
-                return 277;
+            case 278:
+                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_FF");
+            case 279:
+                apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
+                return 279;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

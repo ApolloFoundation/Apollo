@@ -18,12 +18,10 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCom
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
-import org.jdbi.v3.sqlobject.transaction.Transaction;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -93,15 +91,15 @@ public class ShardMigrationExecutor {
                 new ShardAddConstraintsSchemaVersion());
         this.addOperation(createShardConstraintsCommand);
 
-        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
-        this.addOperation(reLinkDataCommand);
+//        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
+//        this.addOperation(reLinkDataCommand);
 
         UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
                 (managementReceiver, height, dbIds);
         this.addOperation(updateSecondaryIndexCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
-                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE, height);
+                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE, height, dbIds);
         this.addOperation(deleteCopiedDataCommand);
 
         byte[] hash = calculateHash(height);

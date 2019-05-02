@@ -35,7 +35,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         this.multiversion = multiversion;
     }
 
-    public KeyFactory<T> getKeyFactory() {
+    public KeyFactory<T> getDbKeyFactory() {
         return keyFactory;
     }
 
@@ -44,7 +44,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     @Override
-    public final void rollback(int height) {
+    public void rollback(int height) {
         if (multiversion) {
             doMultiversionRollback(height);
         } else {

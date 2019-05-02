@@ -40,7 +40,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
             throw new IllegalStateException("Not in transaction");
         }
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        KeyFactory<T> keyFactory = getKeyFactory();
+        KeyFactory<T> keyFactory = getDbKeyFactory();
         DbKey dbKey = keyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table

@@ -20,6 +20,7 @@ import java.util.Set;
 /**
  * Update records in specified tables so they point to snapshot block in main db
  */
+@Deprecated
 public class ReLinkDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(ReLinkDataCommand.class);
 

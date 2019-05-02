@@ -23,6 +23,7 @@ import java.util.Set;
  *
  * @author yuriy.larin
  */
+@Deprecated
 public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
     private static final Logger log = getLogger(RelinkingToSnapshotBlockHelper.class);
 

@@ -124,7 +124,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
         return
-                new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", keyFactory) {
+                new EntityDbTable<>("unconfirmed_transaction", keyFactory) {
 
                     @Override
                     public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
