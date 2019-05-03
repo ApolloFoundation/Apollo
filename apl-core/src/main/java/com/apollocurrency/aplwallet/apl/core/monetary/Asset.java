@@ -85,11 +85,6 @@ public final class Asset {
                 throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
             }
         }
-
-        @Override
-        protected String defaultSort() {
-            return super.defaultSort();
-        }
     };
 
     public static DbIterator<Asset> getAllAssets(int from, int to) {

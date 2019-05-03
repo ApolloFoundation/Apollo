@@ -16,11 +16,13 @@ import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,6 +41,9 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends Derived
         }
     };
     private DbKey THROWING_DB_KEY = createThrowingKey();
+    private Comparator<T> DEFAULT_COMPARATOR = Comparator.comparing(T::getHeight).thenComparing(T::getDbId).reversed();
+    private String DEFAULT_SORT = " ORDER BY height DESC, db_id DESC";
+    private Comparator<T> comparator;
 
     private DbKey createThrowingKey() {
         DbKey throwingKey = mock(DbKey.class);
@@ -62,6 +67,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends Derived
     public void setUp() {
         super.setUp();
         table = (EntityDbTable<T>) getDerivedDbTable();
+        comparator = getDefaultComparator();
     }
 
     @Test
@@ -461,10 +467,71 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends Derived
 
     }
 
-    public void testGetAllWithPaginationForHeight() {
-        Map.Entry<DbKey, List<T>> data = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3);
-        data.getValue()
+    @Test
+    public void testGetAllWithPaginationForMaxHeight() {
+        testGetAllWithPaginationForHeight(0, Integer.MAX_VALUE, Integer.MAX_VALUE, DEFAULT_COMPARATOR, DEFAULT_SORT);
     }
+
+    @Test
+    public void testGetAllWithPaginationForLastHeight() {
+        int height = getHeights().get(0);
+        testGetAllWithPaginationForHeight(0, 2, height, DEFAULT_COMPARATOR, DEFAULT_SORT);
+    }
+
+    @Test
+    public void testGetAllWithPaginationForMiddleHeight() {
+        List<Integer> heights = getHeights();
+        int height = heights.get(heights.size() / 2);
+        testGetAllWithPaginationForHeight(1, 3, height, DEFAULT_COMPARATOR, DEFAULT_SORT);
+    }
+    @Test
+    public void testGetAllWithPaginationForMinHeight() {
+        List<Integer> heights = getHeights();
+        int height = heights.get(heights.size() - 1);
+        testGetAllWithPaginationForHeight(0, 3, height, DEFAULT_COMPARATOR, DEFAULT_SORT);
+    }
+
+    public void testGetAllWithPaginationForHeight(int from, int to, int height, Comparator<T> comp, String sort) {
+        List<T> latest = getAllLatest();
+        Map<DbKey, List<T>> dbKeyListMap = groupByDbKey(latest, table.getDbKeyFactory());
+        List<T> all = getAll();
+        List<T> expected = all.stream().filter(e -> {
+            if (e.getHeight() <= height && latest.contains(e)) {
+                return true;
+            }
+            List<T> elements = dbKeyListMap.get(table.getDbKeyFactory().newKey(e));
+            boolean notDeleted = elements
+                    .stream()
+                    .anyMatch(el -> el.getHeight() > height);
+            boolean lastAtHeight = elements
+                    .stream()
+                    .noneMatch(el -> el.getHeight() <= height && el.getHeight() > e.getHeight());
+            return notDeleted && lastAtHeight;
+
+        })
+                .sorted(comp)
+                .skip(from)
+                .limit(to - from)
+                .collect(Collectors.toList());
+
+        DbUtils.inTransaction(extension, (con)-> {
+
+            List<T> actual;
+            if (StringUtils.isBlank(sort)) {
+                actual = CollectionUtil.toList(table.getAll(height, from, to - 1)); // default sort
+            } else {
+                actual = CollectionUtil.toList(table.getAll(height, from, to - 1, sort)); // custom sort
+            }
+            //check cache, which should not contains data
+            assertEquals(expected, actual);
+            assertListNotInCache(expected);
+        });
+        assertListNotInCache(expected);
+    }
+
+
+
+
 
 
 
@@ -526,5 +593,9 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends Derived
 
     public List<T> getAllLatest() {
         return sortByHeightDesc(getAll());
+    }
+
+    public Comparator<T> getDefaultComparator() {
+        return DEFAULT_COMPARATOR;
     }
 }
