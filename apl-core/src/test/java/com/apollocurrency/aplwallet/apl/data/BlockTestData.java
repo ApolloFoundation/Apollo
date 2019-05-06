@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -71,6 +70,7 @@ public class BlockTestData {
     public final Block BLOCK_9;
     public final Block BLOCK_10;
     public final Block BLOCK_11;
+    public final Block LAST_BLOCK;
 
     public final List<Block> BLOCKS;
 
@@ -90,5 +90,6 @@ public class BlockTestData {
         BLOCK_11 = new BlockImpl(6, BLOCK_11_TIMESTAMP, -6206981717632723220L, 0, 0,         0   , Convert.parseHexString("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),3883484057046974168L, Convert.parseHexString("82e59d851fdf0d01ca1ee20df906009cd66885cc63e8314ebde80dc5e38987fa"), Convert.parseHexString("202acda4d57f2a24212d265053241a07608de29a6dd8252994cf8be197765d02a585c676aca15e7f43a57d7747173d51435d9f2820da637ca8bc9cd1e536d761"), Convert.parseHexString("ec562889035fdca9d59d9bdca460992c01c5286278104287a989834eeffcb83e"), new BigInteger(Convert.parseHexString("02dfb51a2bb035b4")), 23058430050L, 433871417191886464L    ,BLOCK_11_HEIGHT  ,BLOCK_11_ID,9, Collections.emptyList());
 
         BLOCKS = Arrays.asList(GENESIS_BLOCK, BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3, BLOCK_4, BLOCK_5, BLOCK_6, BLOCK_7, BLOCK_8, BLOCK_9, BLOCK_10, BLOCK_11);
+        LAST_BLOCK = BLOCK_11;
     }
 }

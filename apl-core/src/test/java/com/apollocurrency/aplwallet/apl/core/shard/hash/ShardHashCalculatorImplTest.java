@@ -84,7 +84,7 @@ public class ShardHashCalculatorImplTest {
         Mockito.doReturn(SHA_256).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         td = new BlockTestData();
-        blockchain.setLastBlock(td.BLOCK_11);
+        blockchain.setLastBlock(td.LAST_BLOCK);
     }
 
     @AfterEach
@@ -94,9 +94,9 @@ public class ShardHashCalculatorImplTest {
     @Test
     void testCalculateHashForAllBlocks() throws IOException {
 
-        byte[] merkleRoot1 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot2 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot3 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 20000);
+        byte[] merkleRoot1 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.LAST_BLOCK.getHeight() + 1);
+        byte[] merkleRoot2 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.LAST_BLOCK.getHeight() + 1);
+        byte[] merkleRoot3 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.LAST_BLOCK.getHeight() + 20000);
         assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot1);
         assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot2);
         assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot3);
@@ -117,7 +117,7 @@ public class ShardHashCalculatorImplTest {
     @Test
     void testCalculateHashWhenNoBlocks() throws IOException {
 
-        byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_11.getHeight() + 1, td.BLOCK_11.getHeight() + 100_000);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(td.LAST_BLOCK.getHeight() + 1, td.LAST_BLOCK.getHeight() + 100_000);
 
         Assertions.assertNull(merkleRoot);
     }
@@ -136,7 +136,7 @@ public class ShardHashCalculatorImplTest {
     @Test
     void testCalculateHashForLastBlocks() throws IOException {
 
-        byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_6.getHeight(), td.BLOCK_11.getHeight() + 1000);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_6.getHeight(), td.LAST_BLOCK.getHeight() + 1000);
         assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }
     @Test

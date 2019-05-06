@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -63,6 +64,8 @@ public class PhasingResultTest extends EntityDbTableTest<PhasingPollResult> {
             .build();
     @Inject
     PhasingPollResultTable table;
+    @Inject
+    Blockchain blockchain;
     PhasingTestData ptd;
     TransactionTestData ttd;
 
@@ -84,6 +87,16 @@ public class PhasingResultTest extends EntityDbTableTest<PhasingPollResult> {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
         super.setUp();
+    }
+
+    @Override
+    public Blockchain getBlockchain() {
+        return blockchain;
+    }
+
+    @Override
+    public PhasingPollResult valueToInsert() {
+        return ptd.NEW_RESULT;
     }
 
     @Override

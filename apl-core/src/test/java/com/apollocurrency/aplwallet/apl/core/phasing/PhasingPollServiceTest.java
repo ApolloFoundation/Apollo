@@ -251,7 +251,7 @@ public class PhasingPollServiceTest {
     @Test
     void testGetVoterPhasedTransactionsWnenBlockchainHeightIsHigherThanPollFinishHeight() {
         BlockTestData blockTestData = new BlockTestData();
-        blockchain.setLastBlock(blockTestData.BLOCK_11);
+        blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         List<Transaction> voterTransactions = CollectionUtil.toList(phasingPollService.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID, 0, 100));
 
         assertEquals(0, voterTransactions.size());
@@ -304,10 +304,10 @@ public class PhasingPollServiceTest {
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
-        blockchain.setLastBlock(btd.BLOCK_11);
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         inTransaction(con -> phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
         PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_2.getDbId() + 1, btd.BLOCK_11.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
+        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_2.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
 
         assertEquals(expected, result);
     }
@@ -315,10 +315,10 @@ public class PhasingPollServiceTest {
     @Test  // FROM ANDRII K. branch
     void testFinishPollApprovedByLinkedTransactions2() throws SQLException {
         inTransaction(con -> {
-            blockchain.setLastBlock(btd.BLOCK_11);
+            blockchain.setLastBlock(btd.LAST_BLOCK);
             phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3, ptd.POLL_3.getQuorum(), btd.BLOCK_11.getHeight());
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3, ptd.POLL_3.getQuorum(), btd.LAST_BLOCK.getHeight());
 
             assertEquals(expected, result);
         });
@@ -328,7 +328,7 @@ public class PhasingPollServiceTest {
     @Test
     void testCountVotesForPollWithLinkedTransactions() {
         BlockTestData blockTestData = new BlockTestData();
-        blockchain.setLastBlock(blockTestData.BLOCK_11);
+        blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         long votes = phasingPollService.countVotes(ptd.POLL_3);
 
         assertEquals(2, votes);
@@ -337,7 +337,7 @@ public class PhasingPollServiceTest {
     @Test
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
-        blockchain.setLastBlock(blockTestData.BLOCK_11);
+        blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = phasingPollService.countVotes(ptd.POLL_3);
 

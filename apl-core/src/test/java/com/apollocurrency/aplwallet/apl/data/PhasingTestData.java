@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTran
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -64,6 +63,7 @@ public class PhasingTestData {
     public final Transaction NEW_VOTE_TX;
     public final PhasingVote NEW_VOTE;
     public final PhasingVote NEW_LINKED_TX_VOTE;
+    public final PhasingPollResult NEW_RESULT;
 
     public PhasingTestData() {
         td = new TransactionTestData();
@@ -108,7 +108,7 @@ public class PhasingTestData {
         NEW_VOTER_0 = new PhasingPollVoter(POLL_4_VOTER_0.getDbId() + 1, POLL_4.getHeight(), POLL_4.getId(), POLL_1_VOTER_0_ID);
         NEW_VOTER_1 = new PhasingPollVoter(POLL_4_VOTER_0.getDbId() + 2, POLL_4.getHeight(), POLL_4.getId(), 10000L);
         NEW_VOTER_2 = new PhasingPollVoter(POLL_4_VOTER_0.getDbId() + 3, POLL_2.getHeight(), POLL_2.getId(), 20000L);
-
+        NEW_RESULT = new PhasingPollResult(RESULT_2.getDbId() + 1, POLL_4.getHeight() + 1, POLL_4.getId(), 0, true);
 /*
         //TODO Add one POLL testdata with finishTime != -1
         POLL_1 = new PhasingPoll(td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0, POLL_1_VOTER_1}, td.TRANSACTION_8.getFullHash(), 10000, -1, (byte) 0, 1,  0, 0, (byte) 0, null, (byte) 0, null);

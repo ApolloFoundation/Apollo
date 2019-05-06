@@ -275,7 +275,7 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] senderPublicKey;
     private final long recipientId;
     private final long amountATM;
-    private volatile long feeATM; // remove final modifier to set fee outside the class TODO should return
+    private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
     private final byte[] referencedTransactionFullHash;
     private final TransactionType type;
     private final int ecBlockHeight;
