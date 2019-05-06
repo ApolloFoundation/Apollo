@@ -124,9 +124,14 @@ public final class PeerImpl implements Peer {
         this.host = host;
         this.propertiesHolder=propertiesHolder;
         this.announcedAddress = announcedAddress;
-        try {
-            this.port = getURI(false).getPort();
-        } catch (URISyntaxException ignore) {}
+        PeerAddress pa;
+        if(announcedAddress==null || announcedAddress.isEmpty()){
+            LOG.debug("got empty announcedAddress from host {}",host);
+            pa= new PeerAddress(propertiesHolder,host);
+        }else{
+            pa = new PeerAddress(propertiesHolder,announcedAddress);
+        }
+        this.port = pa.getPort();
         this.state = State.NON_CONNECTED;
         this.shareAddress = true;
         this.webSocket = new PeerWebSocket();
@@ -347,15 +352,6 @@ public final class PeerImpl implements Peer {
         PeerAddress pa = new PeerAddress(propertiesHolder,announcedAddress);
         this.announcedAddress = pa.getAddrWithPort();
         this.port=pa.getPort();
-        if (announcedAddress != null) {
-            try {
-                this.port = getURI(false).getPort();
-            } catch (URISyntaxException e) {
-                this.port = -1;
-            }
-        } else {
-            this.port = -1;
-        }
     }
 
     @Override
@@ -814,7 +810,7 @@ public final class PeerImpl implements Peer {
     }
 
     boolean verifyAnnouncedAddress(String newAnnouncedAddress) {
-        if (newAnnouncedAddress == null) {
+        if (newAnnouncedAddress == null || newAnnouncedAddress.isEmpty()) {
             return true;
         }
         try {

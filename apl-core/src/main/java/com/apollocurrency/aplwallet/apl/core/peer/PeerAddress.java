@@ -15,7 +15,7 @@ import java.net.UnknownHostException;
  *
  * @author alukin@gmail.com
  */
-public final class PeerAddress {
+public final class PeerAddress implements Comparable{
     private InetAddress host;
     private String hostName;    
     private Integer port;
@@ -42,6 +42,9 @@ public final class PeerAddress {
     } 
     
     public final void fromString(String addr){
+        if(addr==null || addr.isEmpty()){
+            addr="localhost";
+        }
         try {
             String a=addr.toLowerCase();
             if(!a.startsWith("http")){
@@ -89,5 +92,27 @@ public final class PeerAddress {
     }
     public String getHostName(){
         return hostName;
+    }
+    
+    public boolean isLocal(){
+       boolean res = ( host.isAnyLocalAddress() 
+                     || host.isLoopbackAddress() 
+                     || host.isLinkLocalAddress() );
+      return res;
+    }
+    
+    @Override
+    public int compareTo(Object t) {
+       int res = -1; 
+       if(t instanceof PeerAddress){
+         PeerAddress pa = (PeerAddress)t;
+         if( pa.host.getHostAddress().equalsIgnoreCase(host.getHostAddress()) &&
+             pa.port == this.port
+            ){
+             res=0;
+         }
+             
+       }  
+       return res;
     }
 }

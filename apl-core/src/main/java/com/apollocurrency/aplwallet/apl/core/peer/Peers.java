@@ -476,12 +476,12 @@ public final class Peers {
         PeerAddress pAnnouncedAddress = new PeerAddress(propertiesHolder,announcedAddress);
         PeerImpl peer;
         if ((peer = peers.get(pAnnouncedAddress.getAddrWithPort())) != null) {
-            LOG.trace("Return 0 = {}", peer);
+            LOG.trace("Return peer from peers list = {}", peer);
             return peer;
         }
         String host = selfAnnouncedAddresses.get(pAnnouncedAddress.getAddrWithPort());
         if (host != null && (peer = peers.get(host)) != null) {
-            LOG.trace("Return 1 = {}", peer);
+            LOG.trace("Return peer form selfAnnouncedAddresses = {}", peer);
             return peer;
         }
         try {
@@ -516,23 +516,32 @@ public final class Peers {
         }
     }
     
-    static boolean isMyAddress(InetAddress inetAddress, int port){
-        boolean res = false;
-        int myPort = peerHttpServer.getMyPeerServerPort();
-        if (  myPort==port 
-                ||inetAddress.isAnyLocalAddress() 
-                || inetAddress.isLoopbackAddress() 
-                || inetAddress.isLinkLocalAddress()) {
-            res = true;
+    static boolean isMyAddress(PeerAddress pa){
+        
+        //TODO: many ports: http, https, ssl
+        if((pa.isLocal() && myPort==pa.getPort())){
+            return true;
         }  
-
-        return res;
+        String ca = propertiesHolder.getStringProperty("apl.myAddress","");
+        if(!ca.isEmpty()){
+            PeerAddress myConfiguredAddr = new PeerAddress(propertiesHolder, ca);
+            if (myConfiguredAddr.compareTo(pa)==0){
+                return true;
+            } 
+        }
+        if(peerHttpServer.enablePeerUPnP && peerHttpServer.shareMyAddress){
+            PeerAddress myUPnPAddr = new PeerAddress(propertiesHolder,peerHttpServer.getMyPeerServerPort(),peerHttpServer.getMyAddress());
+            if(myUPnPAddr.compareTo(ca)==0){
+                return true;
+            }
+        }
+        return false;
     }
     
     static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
         PeerAddress pa = new PeerAddress(propertiesHolder);
         
-        if(isMyAddress(inetAddress,pa.getDefaultPeerPort())){
+        if(isMyAddress(pa)){
             return null;
         } 
 
