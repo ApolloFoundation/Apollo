@@ -124,7 +124,7 @@ public class DexService {
         //Return APL.
         if(shouldFreezeAPL(offer.getType().ordinal(), offer.getOfferCurrency().ordinal())) {
             Account account = Account.getAccount(offer.getAccountId());
-            account.addToUnconfirmedBalanceATM(LedgerEvent.TRANSACTION_FEE, offer.getTransactionId(), offer.getOfferAmount());
+            account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
         }
 
         //Return Eth

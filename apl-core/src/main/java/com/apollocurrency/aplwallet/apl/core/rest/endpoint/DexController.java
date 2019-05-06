@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -116,16 +117,16 @@ public class DexController {
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
         if (pairRate <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Should be more than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
         if (offerAmount <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", "Should be more than zero."))).build();
         }
 
         try {
             Math.multiplyExact(pairRate, offerAmount);
         } catch (ArithmeticException ex){
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate or offerAmount", String.format("Are too big.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate or offerAmount", "Are too big."))).build();
         }
 
         if (amountOfTime <= 0 || amountOfTime > MAX_ORDER_DURATION_SEC) {
@@ -247,23 +248,27 @@ public class DexController {
             Account account = ParameterParser.getSenderAccount(req);
 
             if (StringUtils.isBlank(transactionIdStr)) {
-                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", String.format("Can't be null.")))).build();
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("transactionId", "Can't be null."))).build();
             }
             try{
                 transactionId = Long.parseUnsignedLong(transactionIdStr);
             } catch (Exception ex){
-                return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+                return Response.ok(JSON.toString(incorrect("transactionId", "Transaction ID is not correct."))).build();
             }
             DexOffer offer = service.getOfferByTransactionId(transactionId);
             if(offer == null) {
-                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", String.format("Order was not found.")))).build();
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Order was not found."))).build();
             }
             if(!Long.valueOf(offer.getAccountId()).equals(account.getId())){
-                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("accountId", String.format("Can cancel only your orders.")))).build();
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("accountId", "Can cancel only your orders."))).build();
+            }
+            if(!OfferStatus.OPEN.equals(offer.getStatus())) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
             }
 
+
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
-            requestWrapper.addParameter("deadline", "1440");
+            requestWrapper.addParameter("deadline", Constants.GUARANTEED_BALANCE_CONFIRMATIONS.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
 
             try {
