@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -40,6 +41,11 @@ public interface DerivedTableInterface<T> {
 
     default DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
         throw new UnsupportedOperationException("GetAll is not supported");
+    }
+
+    default ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
+                                     MinMaxDbId minMaxDbId, int limit) throws SQLException {
+        throw new UnsupportedOperationException("GetRange is not supported");
     }
 
     default MinMaxDbId getMinMaxDbId(int height) throws SQLException {
