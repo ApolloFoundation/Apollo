@@ -48,7 +48,7 @@ class DirProviderFactoryTest {
         assertNotNull(df.getDbDir());
         assertNotNull(df.getVaultKeystoreDir());
 
-        dirLocations = new PredefinedDirLocations("dbDir", "logDir", "vaultDir", "pidDir", "twoFADir");
+        dirLocations = new PredefinedDirLocations("dbDir", "logDir", "vaultDir", "pidDir", "twoFADir", "dataExportDir");
         df =  DirProviderFactory.getProvider(true, UUID.randomUUID(), "Default", dirLocations);
         assertNotNull(df.getAppBaseDir());
         assertNotNull(df.getLogsDir());
@@ -59,5 +59,7 @@ class DirProviderFactoryTest {
         assertEquals("dbDir", df.getDbDir().toFile().getName());
         assertNotNull(df.getVaultKeystoreDir());
         assertEquals("vaultDir", df.getVaultKeystoreDir().toFile().getName());
+        assertNotNull(df.getDataExportDir());
+        assertEquals("dataExportDir", df.getDataExportDir().toFile().getName());
     }
 }

@@ -17,17 +17,20 @@ public class PredefinedDirLocations {
     private Path vaultKeystoreDir;
     private Path pidFilePath;
     private Path twoFactorAuthDir;
+    private Path dataExportDir; // path to keep exported CSV files
 
     public PredefinedDirLocations() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
     }
 
-    public PredefinedDirLocations(String dbDir, String logsDir, String vaultKeystoreDir, String pidFilePath, String twoFactorAuthDir) {
+    public PredefinedDirLocations(String dbDir, String logsDir, String vaultKeystoreDir, String pidFilePath,
+                                  String twoFactorAuthDir, String dataExportDir) {
         this.dbDir = getPath(dbDir);
         this.logsDir = getPath(logsDir);
         this.vaultKeystoreDir = getPath(vaultKeystoreDir);
         this.pidFilePath = getPath(pidFilePath);
         this.twoFactorAuthDir = getPath(twoFactorAuthDir);
+        this.dataExportDir = getPath(dataExportDir);
     }
 
     private Path getPath(String path) {
@@ -58,5 +61,9 @@ public class PredefinedDirLocations {
 
     public Path getTwoFactorAuthDir() {
         return twoFactorAuthDir;
+    }
+
+    public Path getDataExportDir() {
+        return dataExportDir;
     }
 }
