@@ -28,13 +28,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DbUtils {
-    private static final Logger LOG = getLogger(DbUtils.class);
+    private static final Logger log = getLogger(DbUtils.class);
 
     public static void close(AutoCloseable... closeables) {
         for (AutoCloseable closeable : closeables) {
@@ -102,7 +104,29 @@ public final class DbUtils {
      */
     public static OutputStream newOutputStream(String fileName, boolean append)
             throws IOException {
-        return FilePath.get(fileName).newOutputStream(append);
+        Objects.requireNonNull(fileName, "fileName is NULL");
+        FilePath filePath = FilePath.get(fileName);
+        log.debug("new output file by path = '{}'", filePath.toRealPath());
+        return filePath.newOutputStream(append);
+    }
+
+    /**
+     * Create an output stream to write into the file.
+     * This method is similar to Java 7
+     * <code>java.nio.file.Path.newOutputStream</code>.
+     *
+     * @param fileName the file name
+     * @param append if true, the file will grow, if false, the file will be
+     *            truncated first
+     * @return the output stream
+     */
+    public static OutputStream newOutputStream(Path dataExportPath, String fileName, boolean append)
+            throws IOException {
+        Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
+        Objects.requireNonNull(fileName, "fileName is NULL");
+        FilePath filePath = FilePath.get(dataExportPath.resolve(fileName).toString());
+        log.debug("new output file by path = '{}'", filePath.toRealPath());
+        return filePath.newOutputStream(append);
     }
 
     /**
@@ -115,7 +139,10 @@ public final class DbUtils {
      */
     public static InputStream newInputStream(String fileName)
             throws IOException {
-        return FilePath.get(fileName).newInputStream();
+        Objects.requireNonNull(fileName, "fileName is NULL");
+        FilePath filePath = FilePath.get(fileName);
+        log.debug("new input file by path = '{}'", filePath.toRealPath());
+        return filePath.newInputStream();
     }
 
     public static void rollback(Connection con) {
@@ -124,7 +151,7 @@ public final class DbUtils {
                 con.rollback();
             }
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            log.error(e.toString(), e);
         }
 
     }
