@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
@@ -50,6 +51,10 @@ public class DexCancelOfferTransaction extends DEX {
 
         if(!Long.valueOf(offer.getAccountId()).equals(transaction.getSenderId())){
             throw new AplException.NotCurrentlyValidException("Can cancel only your orders.");
+        }
+
+        if(!OfferStatus.OPEN.equals(offer.getStatus())) {
+            throw new AplException.NotCurrentlyValidException("Can cancel only Open orders.");
         }
 
     }
