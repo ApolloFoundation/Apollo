@@ -39,7 +39,7 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
      */
     @Override
     public BatchedPaginationOperation createDeleteHelper(String helperTableName) {
-        if (BLOCK_TABLE_NAME.equals(helperTableName.toUpperCase())) {
+        if (BLOCK_TABLE_NAME.equals(helperTableName.toUpperCase()) || TRANSACTION_TABLE_NAME.equals(helperTableName.toUpperCase())) {
             return new BlockDeleteHelper();
         } else {
             throw new IllegalArgumentException("Incorrect Table name was supplied: " + helperTableName);

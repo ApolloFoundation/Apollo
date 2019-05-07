@@ -748,7 +748,8 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_FF");
             case 279:
                 apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
-                return 279;
+            case 280:
+                return 280;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

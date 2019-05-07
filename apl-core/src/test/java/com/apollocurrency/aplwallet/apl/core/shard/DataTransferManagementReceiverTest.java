@@ -246,9 +246,9 @@ class DataTransferManagementReceiverTest {
             tableNameList.add(DATA_TAG_TABLE_NAME);
             tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
 
-            paramInfo.setTableNameList(tableNameList);
-            state = managementReceiver.relinkDataToSnapshotBlock(paramInfo);
-            assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
+//            paramInfo.setTableNameList(tableNameList);
+//            state = managementReceiver.relinkDataToSnapshotBlock(paramInfo);
+//            assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
             tableNameList.clear();

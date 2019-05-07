@@ -62,7 +62,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     @Test
     public void testGetByDbKey() {
         Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 3);
-        List<T> values = entry.getValue();
+        List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         List<T> result = table.get(dbKey);
         assertEquals(values, result);
@@ -81,10 +81,10 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
         DbUtils.inTransaction(extension, (con) -> {
             table.insert(toInsert);
             //check cache in transaction
-            assertInCache(table.getDbKeyFactory(), toInsert);
+            assertInCache(toInsert);
         });
         //check db
-        assertNotInCache(table.getDbKeyFactory(), toInsert);
+        assertNotInCache(toInsert);
         List<T> retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
         assertEquals(toInsert, retrievedData);
     }
@@ -92,30 +92,29 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     @Test
     public void testGetInCached() {
         Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 2);
-        List<T> values = entry.getValue();
+        List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         DbUtils.inTransaction(extension, con -> {
             List<T> actual = table.get(dbKey);
-            assertInCache(table.getDbKeyFactory(), values);
+            assertInCache(values);
             assertEquals(values, actual);
         });
-        assertNotInCache(table.getDbKeyFactory(), values);
+        assertNotInCache(values);
     }
 
     @Test
     public void testGetFromDeletedCache() {
         Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 2);
-        List<T> values = entry.getValue();
+        List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
-        KeyFactory<T> dbKeyFactory = table.getDbKeyFactory();
         DbUtils.inTransaction(extension, con -> {
             List<T> actual = table.get(dbKey);
-            assertInCache(dbKeyFactory, values);
+            assertInCache(values);
             assertEquals(values, actual);
-            removeFromCache(dbKeyFactory, values);
-            assertNotInCache(dbKeyFactory, values);
+            removeFromCache(values);
+            assertNotInCache(values);
         });
-        assertNotInCache(dbKeyFactory, values);
+        assertNotInCache(values);
     }
 
 
@@ -194,13 +193,13 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
         return allExpectedData;
     }
 
-    public void assertInCache(KeyFactory<T> keyFactory, List<T> values) {
-        List<T> cachedValues = getCache(keyFactory.newKey(values.get(0)));
+    public void assertInCache(List<T> values) {
+        List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
         assertEquals(values, cachedValues);
     }
 
-    public void assertNotInCache(KeyFactory<T> keyFactory, List<T> values) {
-        List<T> cachedValues = getCache(keyFactory.newKey(values.get(0)));
+    public void assertNotInCache(List<T> values) {
+        List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
         assertNotEquals(values, cachedValues);
     }
 
@@ -218,8 +217,8 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     }
 
 
-    public void removeFromCache(KeyFactory<T> keyFactory, List<T> values) {
-        DbKey dbKey = keyFactory.newKey(values.get(0));
+    public void removeFromCache(List<T> values) {
+        DbKey dbKey = table.getDbKeyFactory().newKey(values.get(0));
         Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
         cache.remove(dbKey);
     }

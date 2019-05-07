@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPIED_TO_SHARD;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINKED_IN_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_BACKUPED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
@@ -58,7 +57,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -208,9 +206,9 @@ class ShardMigrationExecutorTest {
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
 
-            ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver, snapshotBlockHeight, dbIds);
-            state = shardMigrationExecutor.executeOperation(reLinkDataCommand);
-            assertEquals(DATA_RELINKED_IN_MAIN, state);
+//            ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver, snapshotBlockHeight, dbIds);
+//            state = shardMigrationExecutor.executeOperation(reLinkDataCommand);
+//            assertEquals(DATA_RELINKED_IN_MAIN, state);
 
             UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(managementReceiver, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
