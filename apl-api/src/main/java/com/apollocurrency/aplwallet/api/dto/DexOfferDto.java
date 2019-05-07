@@ -5,8 +5,11 @@ package com.apollocurrency.aplwallet.api.dto;
 
 public class DexOfferDto {
 
-    public long id;
-    public long accountId;
+    /**
+     * id for entity offer is a transaction id.
+     */
+    public String id;
+    public String accountId;
 
     public Integer type;
     public Integer offerCurrency;

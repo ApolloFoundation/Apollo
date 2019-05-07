@@ -9,28 +9,28 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 
@@ -57,7 +57,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Path("/dex")
-@Api(value = "/dex", description = "Operations with exchange.")
+@OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
 @Singleton
 public class DexController {
 
@@ -79,10 +79,11 @@ public class DexController {
     @GET
     @Path("/balance")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(tags = {"dex"}, value = "Balances of cryptocurrency wallets", notes = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/BTC/PAX) balances", response = Balances.class)
+    @Operation(tags = {"dex"}, summary = "Balances of cryptocurrency wallets",
+            description = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/BTC/PAX) balances")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Wallets balances", response = ExchangeBalances.class),
-            @ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
+            @ApiResponse(responseCode = "200", description = "Wallets balances"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getBalances(@QueryParam("eth") String ethAddress, @QueryParam("pax") String paxAddress)
             throws NotFoundException {
         return Response.ok(service.getBalances(ethAddress, paxAddress).balanceToJson()).build();
@@ -92,11 +93,10 @@ public class DexController {
     @GET
     @Path("/history")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(tags = {"dex"}, value = "get trading history for certain account", notes = "get trading history for certain account", response = ExchangeOrder.class, responseContainer = "List")
+    @Operation(tags = {"dex"}, summary = "Get trading history for certain account", description = "get trading history for certain account")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Wallets balances", response = ExchangeOrder.class, responseContainer = "List"),
-
-            @ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
+            @ApiResponse(responseCode = "200", description = "Wallets balances"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getHistory( @NotNull  @QueryParam("account") String account,  @QueryParam("pair") String pair,  @QueryParam("type") String type,@Context SecurityContext securityContext)
             throws NotFoundException {
         return Response.ok(service.getHistory(account,pair,type)).build();
@@ -105,28 +105,28 @@ public class DexController {
     @POST
     @Path("/offer")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(tags = {"dex"}, value = "create offer", response = ExchangeOrder.class)
+    @Operation(tags = {"dex"}, summary = "Create order", description = "get trading history for certain account")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK", response = Response.class),
-            @ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response createOffer(@ApiParam(value = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("offerType") Byte offerType,
-                                @ApiParam(value = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
-                                @ApiParam(value = "Offered currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("offerCurrency") Byte offerCurrency,
-                                @ApiParam(value = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
-                                @ApiParam(value = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
-                                @ApiParam(value = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response createOffer(@Parameter(description = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("offerType") Byte offerType,
+                                @Parameter(description = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
+                                @Parameter(description = "Offered currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("offerCurrency") Byte offerCurrency,
+                                @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
+                                @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
+                                @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
         if (pairRate <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", String.format("Should be more than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
         if (offerAmount <= 0 ) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("offerAmount", "Should be more than zero."))).build();
         }
 
         try {
             Math.multiplyExact(pairRate, offerAmount);
         } catch (ArithmeticException ex){
-            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate or offerAmount", String.format("Are too big.")))).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("pairRate or offerAmount", "Are too big."))).build();
         }
 
         if (amountOfTime <= 0 || amountOfTime > MAX_ORDER_DURATION_SEC) {
@@ -180,18 +180,18 @@ public class DexController {
     @GET
     @Path("/offers")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(tags = {"dex"}, value = "Get exchange offers", notes = "dexGetOffers endpoint list of opened pending exchange orders", response = ExchangeOrder.class, responseContainer = "List")
+    @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Exchange offers", response = ExchangeOrder.class, responseContainer = "List"),
-            @ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response getOffers(  @ApiParam(value = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
-                                @ApiParam(value = "Criteria by Offered currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Byte offerCurrency,
-                                @ApiParam(value = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
-                                @ApiParam(value = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
-                                @ApiParam(value = "User account id.") @QueryParam("accountId") String accountIdStr,
-                                @ApiParam(value = "Return offers available for now.", defaultValue = "false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
-                                @ApiParam(value = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
-                                @ApiParam(value = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getOffers(  @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
+                                @Parameter(description = "Criteria by Offered currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Byte offerCurrency,
+                                @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
+                                @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
+                                @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
+                                @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
+                                @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
+                                @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                                 @Context SecurityContext securityContext) throws NotFoundException {
         OfferType type = null;
         OfferStatus offerStatus = null;
@@ -233,28 +233,62 @@ public class DexController {
         ).build();
     }
 
-    @GET
-    @Path("/order")
+    @POST
+    @Path("/offer/cancel")
     @Produces(MediaType.APPLICATION_JSON)
-    @io.swagger.annotations.ApiOperation(value = "get Order By Id", notes = "extract one order by OrderID", response = ExchangeOrder.class, tags={  })
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = "Order", response = ExchangeOrder.class),
+    @Operation(tags = {"dex"}, summary = "Cancel Order By Id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
+                                         @Context HttpServletRequest req) throws NotFoundException {
 
-            @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = Error.class) })
-    public Response dexGetOrderByOrderID(@QueryParam("orderID") Long orderID, @Context SecurityContext securityContext)
-            throws NotFoundException {
+        try{
+            Long transactionId;
+            Account account = ParameterParser.getSenderAccount(req);
 
-        return Response.ok(service.getOrderByID(orderID)).build();
+            if (StringUtils.isBlank(transactionIdStr)) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("transactionId", "Can't be null."))).build();
+            }
+            try{
+                transactionId = Long.parseUnsignedLong(transactionIdStr);
+            } catch (Exception ex){
+                return Response.ok(JSON.toString(incorrect("transactionId", "Transaction ID is not correct."))).build();
+            }
+            DexOffer offer = service.getOfferByTransactionId(transactionId);
+            if(offer == null) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Order was not found."))).build();
+            }
+            if(!Long.valueOf(offer.getAccountId()).equals(account.getId())){
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("accountId", "Can cancel only your orders."))).build();
+            }
+            if(!OfferStatus.OPEN.equals(offer.getStatus())) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
+            }
+
+
+            CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
+            requestWrapper.addParameter("deadline", Constants.GUARANTEED_BALANCE_CONFIRMATIONS.toString());
+            DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
+
+            try {
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferCancelAttachment);
+                return Response.ok(JSON.toString(response)).build();
+            } catch (AplException.ValidationException e) {
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
+        } catch (ParameterException ex){
+            return Response.ok(JSON.toString(ex.getErrorResponse())).build();
+        }
     }
 
     @POST
     @Path("/widthraw")
     @Produces(MediaType.APPLICATION_JSON)
-    @io.swagger.annotations.ApiOperation(value = "Widthraw cryptocurrency", notes = "dexWidthraw endpoint provides transfer of Ethereum", response = Response.class, tags={  })
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = "Wallets balances", response = Response.class),
-
-            @io.swagger.annotations.ApiResponse(code = 200, message = "Unexpected error", response = ApiError.class) })
+    @Operation(tags = {"dex"}, summary = "Widthraw cryptocurrency", description = "dexWidthraw endpoint provides transfer of Ethereum")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Wallets balances"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response dexWidthrawPost( @NotNull  @QueryParam("account") String account, @NotNull  @QueryParam("secretPhrase") String secretPhrase, @NotNull  @QueryParam("amount") BigDecimal amount, @NotNull  @QueryParam("address") String address, @NotNull  @QueryParam("cryptocurrency") String cryptocurrency,@Context SecurityContext securityContext)
             throws NotFoundException {
         boolean status = service.widthraw(account,secretPhrase,amount,address,cryptocurrency);

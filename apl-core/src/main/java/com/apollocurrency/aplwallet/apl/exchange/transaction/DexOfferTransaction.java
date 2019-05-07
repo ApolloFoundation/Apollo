@@ -118,7 +118,7 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment dexOfferAttachment = (DexOfferAttachment) transaction.getAttachment();
         long amountATM = dexOfferAttachment.getOfferAmount();
 
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -amountATM);
+        senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -amountATM);
     }
 
     @Override
