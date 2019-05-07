@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// at least 8 data records required to launch this test
+// 2 deleted record, 1 latest not updated, 2 - 1 latest 1 not latest, 3 (1 latest, 1 not latest, 1 not latest)
 public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEntity> extends EntityDbTableTest<T> {
     public MultiversionEntityDbTableTest(Class<T> clazz) {
         super(clazz);
@@ -30,7 +32,7 @@ public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEn
     public void setUp() {
         super.setUp();
         Map<DbKey, List<T>> dbKeyListMap = groupByDbKey();
-        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 1 && !e.getValue().get(0).isLatest()), "At least one blockchain deleted record should exist");
+        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 2 && !e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest()), "At least two blockchain deleted record should exist");
         Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 1 && e.getValue().get(0).isLatest()), "At least one not updated record should exist");
         Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 2 && e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest()), "At least one updated record should exist");
         Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 3 && e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest() && !e.getValue().get(2).isLatest()), "At least one updated twice record should exist");
@@ -43,7 +45,7 @@ public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEn
 
     @Override
     public T getDeletedMultiversionRecord() {
-        return groupByDbKey().entrySet().stream().filter(e -> e.getValue().size() == 1 && !e.getValue().get(0).isLatest()).map(e-> e.getValue().get(0)).findAny().get();
+        return groupByDbKey().entrySet().stream().filter(e -> e.getValue().size() == 2 && !e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest()).map(e-> e.getValue().get(0)).findAny().get();
     }
 
     @Test
@@ -83,8 +85,111 @@ public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEn
     }
 
     @Override
+    @Test
     public void testTrim() throws SQLException {
+        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight();
+        testTrim(maxHeight);
+    }
 
+    @Test
+    public void testTrimForMaxHeightInclusive() throws SQLException {
+        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() + 1;
+        testTrim(maxHeight);
+    }
+
+    @Test
+    public void testTrimForMaxHeightExclusive() throws SQLException {
+        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() - 1;
+        testTrim(maxHeight);
+    }
+
+    @Test
+    public void testTrimForDeleteDeltedHeight() throws SQLException {
+        int height = getDeletedMultiversionRecord().getHeight() + 1;
+        testTrim(height);
+    }
+
+    @Test
+    public void testTrimMiddleHeight() throws SQLException {
+        List<Integer> heights = getHeights();
+        int middleHeight = (heights.get(0) + heights.get(heights.size() - 1)) / 2;
+        testTrim(middleHeight);
+
+    }
+
+    @Test
+    public void testTrimNothing() throws SQLException {
+        testTrim(0);
+    }
+
+    @Test
+    public void testTrimForThreeUpdatedRecords() throws SQLException {
+        List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
+        testTrim(list.get(0).getHeight());
+    }
+
+    @Test
+    public void testTrimNothingForThreeUpdatedRecords() throws SQLException {
+        List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
+        testTrim(list.get(1).getHeight());
+    }
+
+    @Test
+    public void testTrimOutsideTransaction() {
+        Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0));
+    }
+
+    @Test
+    public void testRollbackOutsideTransaction() {
+        Assertions.assertThrows(IllegalStateException.class, () -> table.rollback(0));
+    }
+
+    @Test
+    public void testRollbackDeletedEntries() throws SQLException {
+        int height = getDeletedMultiversionRecord().getHeight() - 1;
+        testRollback(height);
+    }
+
+    @Test
+    public void testRollbackForThreeUpdatedRecords() throws SQLException {
+        int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight() - 1;
+        testRollback(height);
+    }
+
+    @Test
+    public void testRollbackNothingForThreeUpdatedRecords() throws SQLException {
+        int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight();
+        testRollback(height);
+    }
+
+    @Test
+    public void testRollbackEntirelyForTwoRecords() throws SQLException {
+        int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2).getValue()).get(1).getHeight() - 1;
+        testRollback(height);
+    }
+
+
+    public void testRollback(int height) throws SQLException {
+        List<T> all = getAll();
+        List<T> rollbacked = all.stream().filter(t -> t.getHeight() > height).collect(Collectors.toList());
+        Map<DbKey, List<T>> dbKeyListMapRollbacked = groupByDbKey(rollbacked, table.getDbKeyFactory());
+
+        List<T> expected = new ArrayList<>(all);
+        for (T t : rollbacked) {
+            expected.remove(t);
+        }
+        Map<DbKey, List<T>> expectedDbKeyListMap = groupByDbKey(expected, table.getDbKeyFactory());
+        dbKeyListMapRollbacked.entrySet()
+                .stream()
+                .filter(e-> expectedDbKeyListMap.containsKey(e.getKey()) && expectedDbKeyListMap.get(e.getKey()).size() != 0)
+                .map(Map.Entry::getKey)
+                .map(expectedDbKeyListMap::get)
+                .forEach((e)-> e.get(0).setLatest(true));
+        expected = sortByHeightAsc(expected);
+
+        DbUtils.inTransaction(extension, (con)-> table.rollback(height));
+        List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(expected, values);
     }
 
     public void testTrim(int height) throws SQLException {
