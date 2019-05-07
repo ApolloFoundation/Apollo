@@ -47,6 +47,7 @@ public class PhasingTestData {
     public final PhasingPollLinkedTransaction NEW_LINKED_TRANSACTION_3;
 
     private final TransactionTestData td;
+    public final PhasingPoll POLL_0;
     public final PhasingPoll POLL_1;
     public final PhasingPoll POLL_2;
     public final PhasingPoll POLL_3;
@@ -69,10 +70,11 @@ public class PhasingTestData {
         td = new TransactionTestData();
         LINKED_TRANSACTION_1_HASH = td.TRANSACTION_11.getFullHash();
         LINKED_TRANSACTION_2_HASH = td.NOT_SAVED_TRANSACTION.getFullHash();
+        POLL_0 = PhasingCreator.createPoll(10, td.TRANSACTION_6.getId(), td.TRANSACTION_6.getSenderId(), null, td.TRANSACTION_6.getFullHash(), 4000, (byte) 5, 1, 0, 0, (byte) 0, Convert.parseHexString("be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414"), (byte) 2, null, td.TRANSACTION_6.getHeight());
         POLL_1 = PhasingCreator.createPoll(20, td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0_ID, POLL_1_VOTER_1_ID}, td.TRANSACTION_8.getFullHash(), 10000, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_8.getHeight());
         POLL_2 = PhasingCreator.createPoll(30, td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_7.getHeight());
         POLL_3 = PhasingCreator.createPoll(40, td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{LINKED_TRANSACTION_0_HASH, LINKED_TRANSACTION_1_HASH, LINKED_TRANSACTION_2_HASH}, td.TRANSACTION_12.getHeight());
-        POLL_4 = PhasingCreator.createPoll(50, td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0_ID}, td.TRANSACTION_11.getFullHash(), 18000, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_11.getHeight());
+        POLL_4 = PhasingCreator.createPoll(50, td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0_ID}, td.TRANSACTION_11.getFullHash(), 18000, (byte) 0, 3, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_11.getHeight());
         POLL_1_VOTER_0 = new PhasingPollVoter(20L, POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_0_ID);
         POLL_1_VOTER_1 = new PhasingPollVoter(30L,POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_1_ID);
         POLL_4_VOTER_0 = new PhasingPollVoter(40L, POLL_4.getHeight(), POLL_4.getId(), POLL_4_VOTER_0_ID);

@@ -59,8 +59,9 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     public void testTrim() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(0));
 
+        List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(getAll(), all);
+        assertEquals(expected, all);
     }
 
     @Test

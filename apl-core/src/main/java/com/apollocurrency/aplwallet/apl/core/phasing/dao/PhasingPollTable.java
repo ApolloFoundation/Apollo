@@ -144,6 +144,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+
     public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) throws SQLException {
 
@@ -215,6 +216,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+
     public int getAllPhasedTransactionsCount() throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {

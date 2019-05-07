@@ -101,10 +101,11 @@ INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_tra
 ;
 INSERT INTO PUBLIC.PHASING_POLL (
 DB_ID  	    ,ID  	            ,ACCOUNT_ID  	    ,WHITELIST_SIZE  	,FINISH_HEIGHT  	,VOTING_MODEL  	,QUORUM  	,MIN_BALANCE  	,HOLDING_ID  	,MIN_BALANCE_MODEL  ,HASHED_SECRET  ,ALGORITHM  	,HEIGHT) VALUES
-(20	    , 808614188720864902	,9211698109297098287	        ,2	        ,10000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
-(30	    , 2083198303623116770	,9211698109297098287	        ,0	        ,9500	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
-(40	    ,-4081443370478530685	,9211698109297098287	        ,0	        ,17000	            ,4	        ,3	        ,null	        ,null	        ,0		            ,null           ,0	            ,15456),
-(50	    ,-1536976186224925700	,9211698109297098287	        ,1	        ,18000	            ,0	        ,3	        ,null	        ,null	        ,0		            ,null           ,0	            ,15456),
+(10	    , 5471926494854938613	,9211698109297098287	        ,0	        ,4000	            , 5	        ,1	        ,null	        ,null	        ,0		            ,X'be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414'           ,2	            ,3500),
+(20	    , 808614188720864902	,9211698109297098287	        ,2	        ,10000	            , 0	        ,1	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,8000),
+(30	    , 2083198303623116770	,9211698109297098287	        ,0	        ,9500	            , 0	        ,1	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,8000),
+(40	    ,-4081443370478530685	,9211698109297098287	        ,0	        ,17000	            , 4	        ,3	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,15456),
+(50	    ,-1536976186224925700	,9211698109297098287	        ,1	        ,18000	            , 0	        ,3	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,15456),
 ;
 INSERT INTO PUBLIC.PHASING_POLL_RESULT
 (DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT  ) VALUES
