@@ -828,8 +828,8 @@ public final class PeerImpl implements Peer {
                 }
             }
             LOG.debug("Announced address " + newAnnouncedAddress + " does not match: " + host);
-        } catch (UnknownHostException|URISyntaxException e) {
-            LOG.debug("Unresolved announced address: {}",newAnnouncedAddress);
+        } catch (RuntimeException|UnknownHostException|URISyntaxException e) {
+            LOG.trace("Unresolved announced address: {}",newAnnouncedAddress);
             blacklist(e);
         }
         return false;

@@ -62,24 +62,63 @@ public final class PeerServlet extends WebSocketServlet {
         return blockchainProcessor;
     }  
 
-    private static final Map<String,PeerRequestHandler> peerRequestHandlers;
-
-    static {
-        Map<String,PeerRequestHandler> map = new HashMap<>();
-        map.put("addPeers", new AddPeers());
-        map.put("getCumulativeDifficulty", new GetCumulativeDifficulty());
-        map.put("getInfo", new GetInfo());
-        map.put("getMilestoneBlockIds", new GetMilestoneBlockIds());
-        map.put("getNextBlockIds", new GetNextBlockIds());
-        map.put("getNextBlocks", new GetNextBlocks());
-        map.put("getPeers", new GetPeers());
-        map.put("getTransactions", new GetTransactions());
-        map.put("getUnconfirmedTransactions", new GetUnconfirmedTransactions());
-        map.put("processBlock", new ProcessBlock());
-        map.put("processTransactions", new ProcessTransactions());
-        peerRequestHandlers = Collections.unmodifiableMap(map);
-    }
+//    private static final Map<String,PeerRequestHandler> peerRequestHandlers;
+//
+//    static {
+//        Map<String,PeerRequestHandler> map = new HashMap<>();
+//        map.put("addPeers", new AddPeers());
+//        map.put("getCumulativeDifficulty", new GetCumulativeDifficulty());
+//        map.put("getInfo", new GetInfo());
+//        map.put("getMilestoneBlockIds", new GetMilestoneBlockIds());
+//        map.put("getNextBlockIds", new GetNextBlockIds());
+//        map.put("getNextBlocks", new GetNextBlocks());
+//        map.put("getPeers", new GetPeers());
+//        map.put("getTransactions", new GetTransactions());
+//        map.put("getUnconfirmedTransactions", new GetUnconfirmedTransactions());
+//        map.put("processBlock", new ProcessBlock());
+//        map.put("processTransactions", new ProcessTransactions());
+//        peerRequestHandlers = Collections.unmodifiableMap(map);
+//    }
     
+    static PeerRequestHandler getHandler(String rtype){
+        PeerRequestHandler res = null;
+        switch (rtype) {
+            case "addPeers":
+                res = new AddPeers();
+                break;
+            case "getCumulativeDifficulty":
+                res = new GetCumulativeDifficulty();
+                break;
+            case "getInfo":
+                res = new GetInfo();
+                break;
+            case "getMilestoneBlockIds":
+                res = new GetMilestoneBlockIds();
+                break;
+            case "getNextBlockIds":
+                res = new GetNextBlockIds();
+                break;
+            case "getNextBlocks":
+                res = new GetNextBlocks();
+                break;
+            case "getPeers":
+                res = new GetPeers();
+                break;
+            case "getTransactions":
+                res = new GetTransactions();
+                break;
+            case "getUnconfirmedTransactions":
+                res = new GetUnconfirmedTransactions();
+                break;
+            case "processBlock":
+                res = new ProcessBlock();
+                break;
+            case "processTransactions":
+                res = new ProcessTransactions();
+                break;
+        }
+        return res;
+    }
     /**
      * Configure the WebSocket factory
      *
@@ -217,7 +256,7 @@ public final class PeerServlet extends WebSocketServlet {
                 LOG.debug("Unsupported protocol " + request.get("protocol"));
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
-            PeerRequestHandler peerRequestHandler = peerRequestHandlers.get((String)request.get("requestType"));
+            PeerRequestHandler peerRequestHandler = getHandler((String)request.get("requestType"));
             if (peerRequestHandler == null) {
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
