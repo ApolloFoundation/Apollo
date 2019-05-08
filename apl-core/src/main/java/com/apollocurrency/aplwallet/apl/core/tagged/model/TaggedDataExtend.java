@@ -4,44 +4,44 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-
 public class TaggedDataExtend {
 
-    private long id;
+    private long taggedDataId;
     private DbKey dbKey;
     private int height;
     private long extendId;
 
-    public TaggedDataExtend(long id, int height, int extendId) {
-        this.id = id;
+    public TaggedDataExtend(long taggedDataId, int height, long extendId) {
+        this.taggedDataId = taggedDataId;
         this.height = height;
         this.extendId = extendId;
     }
 
     public TaggedDataExtend(ResultSet rs, DbKey dbKey) throws SQLException {
-        this.id = rs.getLong("id");
+        this.taggedDataId = rs.getLong("id");
         this.dbKey = dbKey;
         this.height = rs.getInt("height");
         this.extendId = rs.getLong("extend_id");
     }
 
     public TaggedDataExtend(ResultSet rs) throws SQLException {
-        this.id = rs.getLong("id");
+        this.taggedDataId = rs.getLong("id");
         this.height = rs.getInt("height");
         this.extendId = rs.getLong("extend_id");
     }
 
-    public long getId() {
-        return id;
+    public long getTaggedDataId() {
+        return taggedDataId;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setTaggedDataId(long taggedDataId) {
+        this.taggedDataId = taggedDataId;
     }
 
     public DbKey getDbKey() {
@@ -73,7 +73,7 @@ public class TaggedDataExtend {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TaggedDataExtend that = (TaggedDataExtend) o;
-        return id == that.id &&
+        return taggedDataId == that.taggedDataId &&
                 height == that.height &&
                 extendId == that.extendId &&
                 Objects.equals(dbKey, that.dbKey);
@@ -81,6 +81,6 @@ public class TaggedDataExtend {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, dbKey, height, extendId);
+        return Objects.hash(taggedDataId, dbKey, height, extendId);
     }
 }
