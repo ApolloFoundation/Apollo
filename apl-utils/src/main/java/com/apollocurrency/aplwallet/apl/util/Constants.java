@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 public final class Constants {
-    public static final Version VERSION = new Version("1.30.15");
+    public static final Version VERSION = new Version("1.30.16");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
