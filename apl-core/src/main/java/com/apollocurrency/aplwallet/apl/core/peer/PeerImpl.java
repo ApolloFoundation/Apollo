@@ -815,7 +815,7 @@ public final class PeerImpl implements Peer {
         }
         try {
             URI uri = getURI(false);
-            PeerAddress pa = new PeerAddress(propertiesHolder,announcedAddress);
+            PeerAddress pa = new PeerAddress(propertiesHolder,newAnnouncedAddress);
             int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);

@@ -51,7 +51,8 @@ public final class PeerAddress implements Comparable{
                 a="http://"+a;
             }
             URL u = new URL(a);
-            host=InetAddress.getByName(u.getHost());
+            hostName=u.getHost();
+            host=InetAddress.getByName(hostName);
             port=u.getPort();
             if(port==-1){
                 port=getDefaultPeerPort();
@@ -104,11 +105,11 @@ public final class PeerAddress implements Comparable{
     @Override
     public int compareTo(Object t) {
        int res = -1; 
-       if(t instanceof PeerAddress){
+       if(t!=null && t instanceof PeerAddress){
          PeerAddress pa = (PeerAddress)t;
-         if( pa.host.getHostAddress().equalsIgnoreCase(host.getHostAddress()) &&
-             pa.port == this.port
-            ){
+         if( pa.host.getHostAddress().equalsIgnoreCase(host.getHostAddress()) 
+             && this.port.intValue() == pa.port.intValue()
+         ){
              res=0;
          }
              

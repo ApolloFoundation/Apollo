@@ -529,21 +529,15 @@ public final class Peers {
                 return true;
             } 
         }
-        if(peerHttpServer.enablePeerUPnP && peerHttpServer.shareMyAddress){
-            PeerAddress myUPnPAddr = new PeerAddress(propertiesHolder,peerHttpServer.getMyPeerServerPort(),peerHttpServer.getMyAddress());
-            if(myUPnPAddr.compareTo(ca)==0){
-                return true;
-            }
+
+        PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
+        if(myExtAddr.compareTo(pa)==0){
+            return true;
         }
         return false;
     }
     
     static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
-        PeerAddress pa = new PeerAddress(propertiesHolder);
-        
-        if(isMyAddress(pa)){
-            return null;
-        } 
 
         String host = inetAddress.getHostAddress();
         if (cjdnsOnly && !host.substring(0,2).equals("fc")) {
@@ -553,7 +547,12 @@ public final class Peers {
         if (host.split(":").length > 2) {
             host = "[" + host + "]";
         }
-        pa.fromString(host);
+
+        PeerAddress pa = new PeerAddress(propertiesHolder,host);
+        
+        if(isMyAddress(pa)){
+            return null;
+        } 
         
         PeerImpl peer;
         if ((peer = peers.get(pa.getAddrWithPort())) != null) {
