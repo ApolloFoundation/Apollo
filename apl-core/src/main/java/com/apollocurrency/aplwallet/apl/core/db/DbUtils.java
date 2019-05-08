@@ -145,6 +145,24 @@ public final class DbUtils {
         return filePath.newInputStream();
     }
 
+    /**
+     * Create an input stream to read from the file.
+     * This method is similar to Java 7
+     * <code>java.nio.file.Path.newInputStream</code>.
+     *
+     * @param dataExportPath folder with CSV files to import
+     * @param fileName the file name
+     * @return the input stream
+     */
+    public static InputStream newInputStream(Path dataExportPath, String fileName)
+            throws IOException {
+        Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
+        Objects.requireNonNull(fileName, "fileName is NULL");
+        FilePath filePath = FilePath.get(dataExportPath.resolve(fileName).toString());
+        log.debug("new input file by path = '{}'", filePath.toRealPath());
+        return filePath.newInputStream();
+    }
+
     public static void rollback(Connection con) {
         try {
             if (con != null) {
