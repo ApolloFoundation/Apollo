@@ -745,7 +745,9 @@ public class AplDbVersion extends DbVersion {
             case 277:
                 apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
             case 278:
-                return 278;
+                apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
+            case 279:
+                return 279;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

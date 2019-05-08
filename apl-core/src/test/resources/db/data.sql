@@ -139,7 +139,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (278);
+INSERT into version values (279);
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
@@ -185,14 +185,14 @@ INSERT into PUBLIC.DATA_TAG
 (40         ,'trw' ,     1         , 3500, TRUE),
 ;
 
---INSERT into PUBLIC.TAGGED_DATA
---(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,       data      ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
---(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,   X'c11dd7986e'  ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
---(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,   X'c11d86986e'  ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
---(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,   X'c11d8344588e' ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
---(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,   X'c11d1234589e' ,   TRUE   ,          73600    ,      35078473        ,   3500),
---(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,   X'c11d1234586e' ,   FALSE  ,          73600    ,      35078473        ,   8000),
---;
+INSERT into PUBLIC.TAGGED_DATA
+(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,       data      ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
+(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,   X'c11dd7986e'  ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
+(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,   X'c11d86986e'  ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
+(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,   X'c11d8344588e' ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
+(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,   X'c11d1234589e' ,   TRUE   ,          73600    ,      35078473        ,   3500),
+(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,   X'c11d1234586e' ,   FALSE  ,          73600    ,      35078473        ,   8000),
+;
 
 INSERT into PUBLIC.TAGGED_DATA_EXTEND
 (DB_ID  	,ID  	             , EXTEND_ID  	,HEIGHT  , LATEST) VALUES

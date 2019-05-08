@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -62,12 +61,12 @@ import javax.inject.Inject;
 class TaggedDataServiceTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
-    @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
     private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data"), "PUBLIC");
+    @RegisterExtension
+    DbExtension extension = new DbExtension(ftlService);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -98,8 +97,6 @@ class TaggedDataServiceTest {
 
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
-    @Inject
-    FullTextSearchService ftl;
 
     TaggedDataServiceTest() throws IOException {}
 
@@ -115,7 +112,6 @@ class TaggedDataServiceTest {
     @AfterEach
     void cleanup() {
         jdbiHandleFactory.close();
-        ftl.shutdown();
     }
 
     @BeforeEach
@@ -123,14 +119,13 @@ class TaggedDataServiceTest {
         ttd = new TransactionTestData();
         btd = new BlockTestData();
         tagTd = new TaggedTestData();
-        ftl.init();
     }
 
 
     @Test
     void getTaggedDataCount() {
         int result = taggedDataService.getTaggedDataCount();
-        assertEquals(0, result);
+        assertEquals(5, result);
     }
 
     @Test
@@ -172,7 +167,7 @@ class TaggedDataServiceTest {
             TaggedData dataTag = result.next();
             count++;
         }
-        assertEquals(1, count);
+        assertEquals(5, count);
     }
 
     @Test
@@ -186,7 +181,7 @@ class TaggedDataServiceTest {
             TaggedData dataTag = result.next();
             count++;
         }
-        assertEquals(1, count);
+        assertEquals(5, count);
     }
 
 }
