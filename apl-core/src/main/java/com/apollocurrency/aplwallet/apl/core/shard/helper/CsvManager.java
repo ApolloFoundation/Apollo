@@ -85,4 +85,18 @@ public interface CsvManager {
      * @return the result set
      */
     ResultSet read(Reader reader, String[] colNames) throws IOException;
+
+    /**
+     * Set String for Option values as 'key='value'. Possible parameters with default values are following:
+     * escape='\"'
+     * fieldDelimiter='\"'
+     * fieldSeparator=',' on READ and WRITE
+     * lineComment="\n"
+     * charset='UTF-8'
+     * nullString="null"
+     *
+     * @param options the options line separated by space. Example : escape='\"' fieldDelimiter='\"'
+     * @return the character set
+     */
+    String setOptions(String options);
 }

@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,7 +26,9 @@ import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -60,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
+import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -150,10 +155,8 @@ class CsvManagerTest {
     JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private Blockchain blockchain;
-//    List<DerivedDbTable> tables = new ArrayList<>(9);
     @Inject
     DerivedTablesRegistry registry;
-//    @Inject
     CsvManager csvManager;
 
     public CsvManagerTest() throws Exception {}
@@ -178,14 +181,14 @@ class CsvManagerTest {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
-//        tables.add(AccountCurrencyTable.getInstance());
-//        tables.add(AccountAssetTable.getInstance());
-//        tables.forEach(DerivedDbTable::init); // init all derived tables in current limited list
-        AccountCurrencyTable.getInstance().init();
+//        AccountCurrencyTable.getInstance().init();
+//        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811")); // TODO: finish Arrays !
         AccountAssetTable.getInstance().init();
         GenesisPublicKeyTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
+        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
+        purchaseTable.init();
     }
 
     @Test
@@ -196,12 +199,15 @@ class CsvManagerTest {
         excludeColumnNames.add("DB_ID");
 //        excludeColumnNames.add("REFERENCED_TRANSACTION_ID");
 //        excludeColumnNames.add("PUBLIC_KEY");
+//        excludeColumnNames.add("LATEST");
         csvManager = new CsvManagerImpl(dirProvider.getDataExportDir(), excludeColumnNames);
+        csvManager.setOptions("fieldDelimiter=");
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
 
         assertNotNull(result);
-        assertEquals(11, result.size()); // the real number is higher then initial, it's OK !
+        log.debug("Processing [{}] tables", result.size());
+//        assertEquals(12, result.size()); // the real number is higher then initial, it's OK !
         int targetHeight = 8000;
         result.forEach(item -> {
             assertNotNull(item);
@@ -219,12 +225,42 @@ class CsvManagerTest {
                                 item.getRangeByDbId(con, pstmt, minMaxDbId, 2), minMaxDbId );
                     } while (processedCount > 0);
                     ((SimpleRowSource)csvManager).close(); // close CSV file
+
+                    dropDataByName(targetHeight, item); // drop exported data only
                 }
             } catch (SQLException e) {
                 log.error("Exception", e);
             }
+
+/*
+            try (ResultSet rs = csvManager.read(item.toString() + ".csv", null, null);
+                 Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
+                con.setAutoCommit(false);
+
+                ResultSetMetaData meta = rs.getMetaData();
+                while (rs.next()) {
+                    for (int i = 0; i < meta.getColumnCount(); i++) {
+                        log.debug("{}: {}\n", meta.getColumnLabel(i + 1), rs.getString(i + 1));
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+*/
         });
         log.debug("Processed Tables = {}", result);
+    }
+
+    private void dropDataByName(int targetHeight, DerivedTableInterface item) {
+        // drop data
+        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("delete from " + item.toString() + " where db_id < ?")) {
+            pstmt.setInt(1, targetHeight);
+            int deleted = pstmt.executeUpdate();
+            log.debug("Table = {}, deleted = {} at height = {}", item.toString(), deleted, targetHeight);
+        } catch (SQLException e) {
+            log.error("Exception", e);
+        }
     }
 
 
