@@ -814,7 +814,7 @@ public final class PeerImpl implements Peer {
             return true;
         }
         try {
-            URI uri = getURI(false);
+
             PeerAddress pa = new PeerAddress(propertiesHolder,newAnnouncedAddress);
             int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
@@ -822,13 +822,13 @@ public final class PeerImpl implements Peer {
                 unsetHallmark();
             }            
             InetAddress address = InetAddress.getByName(host);
-            for (InetAddress inetAddress : InetAddress.getAllByName(uri.getHost())) {
+            for (InetAddress inetAddress : InetAddress.getAllByName(pa.getHostName())) {
                 if (inetAddress.equals(address)) {
                     return true;
                 }
             }
             LOG.debug("Announced address " + newAnnouncedAddress + " does not match: " + host);
-        } catch (RuntimeException|UnknownHostException|URISyntaxException e) {
+        } catch (RuntimeException|UnknownHostException e) {
             LOG.trace("Unresolved announced address: {}",newAnnouncedAddress);
             blacklist(e);
         }
