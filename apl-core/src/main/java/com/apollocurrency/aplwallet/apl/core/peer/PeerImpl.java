@@ -820,16 +820,16 @@ public final class PeerImpl implements Peer {
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
                 unsetHallmark();
-            }
+            }            
             InetAddress address = InetAddress.getByName(host);
             for (InetAddress inetAddress : InetAddress.getAllByName(uri.getHost())) {
                 if (inetAddress.equals(address)) {
                     return true;
                 }
             }
-            LOG.debug("Announced address " + newAnnouncedAddress + " does not resolve to " + host);
+            LOG.debug("Announced address " + newAnnouncedAddress + " does not match: " + host);
         } catch (UnknownHostException|URISyntaxException e) {
-            LOG.debug(e.toString());
+            LOG.debug("Unresolved announced address: {}",newAnnouncedAddress);
             blacklist(e);
         }
         return false;

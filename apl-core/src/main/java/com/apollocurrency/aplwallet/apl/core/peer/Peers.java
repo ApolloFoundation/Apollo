@@ -556,7 +556,7 @@ public final class Peers {
         
         PeerImpl peer;
         if ((peer = peers.get(pa.getAddrWithPort())) != null) {
-            LOG.debug("Returning existing peer from map {}", peer);
+            LOG.trace("Returning existing peer from map {}", peer);
             return peer;
         }
         if (!create) {

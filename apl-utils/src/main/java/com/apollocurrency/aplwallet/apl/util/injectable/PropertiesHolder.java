@@ -41,7 +41,7 @@ public class PropertiesHolder {
   //          LOG.debug(name + " = \"" + result + "\"");
             return result;
         } catch (NumberFormatException e) {
-            LOG.debug(name + " not defined or not numeric, using default value " + defaultValue);
+            LOG.trace(name + " not defined or not numeric, using default value " + defaultValue);
             return defaultValue;
         }
     }
