@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -48,6 +50,8 @@ import javax.inject.Inject;
 
 @EnableWeld
 public class ShardHashCalculatorImplTest {
+    private static final Logger log = getLogger(ShardHashCalculatorImplTest.class);
+
     static final String SHA_256 = "SHA-256";
     static final byte[] FULL_MEKLE_ROOT = Convert.parseHexString("b87941d4db242065ac84b4b14dd2b35e22d89d7f41272c0a6448a2c1734c444d");
     static final byte[] PARTIAL_MERKLE_ROOT_2_6 =  Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
@@ -108,7 +112,7 @@ public class ShardHashCalculatorImplTest {
             blocks.stream().map(Block::getBlockSignature).forEach(merkleTree::appendLeaf);
             merkleTree.appendLeaf(td.GENESIS_BLOCK.getGenerationSignature());
             byte[] value = merkleTree.getRoot().getValue();
-            System.out.println(Convert.toHexString(value));
+            log.debug(Convert.toHexString(value));
         }
         catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
