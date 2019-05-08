@@ -69,7 +69,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     public void beforeEach(ExtensionContext context) throws Exception {
         if (!staticInit) {
             manipulator.init();
-            ftl.init();
+            if (ftl != null) {
+                ftl.init();
+            }
         }
         manipulator.populate();
     }
@@ -83,7 +85,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         staticInit = true;
-        ftl.init();
         manipulator.init();
+        if (ftl != null) {
+            ftl.init();
+        }
     }
 }
