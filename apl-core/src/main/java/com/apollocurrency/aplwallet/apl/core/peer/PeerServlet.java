@@ -44,9 +44,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,24 +58,6 @@ public final class PeerServlet extends WebSocketServlet {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         return blockchainProcessor;
     }  
-
-//    private static final Map<String,PeerRequestHandler> peerRequestHandlers;
-//
-//    static {
-//        Map<String,PeerRequestHandler> map = new HashMap<>();
-//        map.put("addPeers", new AddPeers());
-//        map.put("getCumulativeDifficulty", new GetCumulativeDifficulty());
-//        map.put("getInfo", new GetInfo());
-//        map.put("getMilestoneBlockIds", new GetMilestoneBlockIds());
-//        map.put("getNextBlockIds", new GetNextBlockIds());
-//        map.put("getNextBlocks", new GetNextBlocks());
-//        map.put("getPeers", new GetPeers());
-//        map.put("getTransactions", new GetTransactions());
-//        map.put("getUnconfirmedTransactions", new GetUnconfirmedTransactions());
-//        map.put("processBlock", new ProcessBlock());
-//        map.put("processTransactions", new ProcessTransactions());
-//        peerRequestHandlers = Collections.unmodifiableMap(map);
-//    }
     
     static PeerRequestHandler getHandler(String rtype){
         PeerRequestHandler res = null;
@@ -116,6 +95,15 @@ public final class PeerServlet extends WebSocketServlet {
             case "processTransactions":
                 res = new ProcessTransactions();
                 break;
+            case "getFileInfo":
+                res = new GetFileInfo();
+                break;
+            case "getFileDownloadInfo":
+                res = new GetFileDownloadInfo();
+                break;
+            case "getFileChunk":
+                res = new GetFileChunk();
+                break;                
         }
         return res;
     }
