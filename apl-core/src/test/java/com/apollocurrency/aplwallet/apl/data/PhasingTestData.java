@@ -28,7 +28,7 @@ public class PhasingTestData {
     public final PhasingPollVoter NEW_VOTER_0;
     public final PhasingPollVoter NEW_VOTER_1;
     public final PhasingPollVoter NEW_VOTER_2;
-    public final int NUMBER_OF_PHASED_TRANSACTIONS = 6;
+    public final int NUMBER_OF_PHASED_TRANSACTIONS = 7;
     public final byte[] LINKED_TRANSACTION_0_HASH = Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e");
     public final byte[] LINKED_TRANSACTION_1_HASH;
     public final byte[] LINKED_TRANSACTION_2_HASH;
@@ -56,6 +56,7 @@ public class PhasingTestData {
     public final PhasingPollResult RESULT_0;
     public final PhasingPollResult RESULT_1;
     public final PhasingPollResult RESULT_2;
+    public final PhasingPollResult RESULT_3;
     public final PhasingVote POLL_1_VOTE_0;
     public final PhasingVote POLL_1_VOTE_1;
     public final PhasingPoll NEW_POLL;
@@ -84,8 +85,9 @@ public class PhasingTestData {
 
         SHARD_RESULT_0 = new PhasingPollResult(10L, 300, 100, 1, true);
         RESULT_0 = new PhasingPollResult(20L, 1500, td.TRANSACTION_0.getId(), 1, true);
-        RESULT_1 = new PhasingPollResult(30L, 9000, POLL_1.getId(), 0, true);
-        RESULT_2 = new PhasingPollResult(40L, 9500, POLL_2.getId(), 0, false );
+        RESULT_1 = new PhasingPollResult(25L, POLL_0.getFinishHeight(), POLL_0.getId(), 1, true);
+        RESULT_2 = new PhasingPollResult(30L, 9000, POLL_1.getId(), 0, true);
+        RESULT_3 = new PhasingPollResult(40L, 9500, POLL_2.getId(), 0, false );
         POLL_1_VOTE_0 = new PhasingVote(30L, 8500, POLL_1.getId(), POLL_1_VOTER_0_ID, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(40L, 8999, POLL_1.getId(), POLL_1_VOTER_1_ID, td.TRANSACTION_10.getId());
         //real linked transactions

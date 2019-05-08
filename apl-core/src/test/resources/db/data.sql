@@ -111,6 +111,7 @@ INSERT INTO PUBLIC.PHASING_POLL_RESULT
 (DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT  ) VALUES
 (10	    ,100                	,1	    ,TRUE	    ,300     ),
 (20	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
+(25	    ,5471926494854938613	,1	    ,TRUE	    ,4000   ),
 (30	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ),
 (40	    ,2083198303623116770	,0	    ,FALSE	    ,9500   ),
 ;

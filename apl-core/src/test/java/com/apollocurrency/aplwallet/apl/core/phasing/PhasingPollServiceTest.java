@@ -144,7 +144,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetActivePhasingDbIdAllPollsFinished() {
-        List<Long> dbIds = phasingPollService.getActivePhasedTransactionDbIdsAtHeight(ptd.POLL_2.getFinishHeight() + 1);
+        List<Long> dbIds = phasingPollService.getActivePhasedTransactionDbIdsAtHeight(ptd.POLL_0.getHeight() - 1);
         assertEquals(Collections.emptyList(), dbIds);
     }
 
@@ -160,6 +160,7 @@ public class PhasingPollServiceTest {
 
         assertNotNull(poll);
         assertEquals(ptd.POLL_1, poll);
+        assertTrue(poll.fullEquals(ptd.POLL_1));
     }
 
     @Test
@@ -175,6 +176,7 @@ public class PhasingPollServiceTest {
 
         assertNotNull(poll);
         assertEquals(ptd.POLL_3, poll);
+        assertTrue(poll.fullEquals(ptd.POLL_3));
     }
 
     @Test
@@ -188,7 +190,7 @@ public class PhasingPollServiceTest {
     void testGetResult() {
         PhasingPollResult result = phasingPollService.getResult(ptd.POLL_1.getId());
 
-        assertEquals(ptd.RESULT_1, result);
+        assertEquals(ptd.RESULT_2, result);
     }
 
     @Test
@@ -283,7 +285,7 @@ public class PhasingPollServiceTest {
         blockchain.setLastBlock(btd.BLOCK_9);
         inTransaction(con -> phasingPollService.finish(ptd.POLL_3, 1));
         PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_2.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false);
+        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false);
 
         assertEquals(expected, result);
     }
@@ -307,7 +309,7 @@ public class PhasingPollServiceTest {
         blockchain.setLastBlock(btd.LAST_BLOCK);
         inTransaction(con -> phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
         PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_2.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
+        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
 
         assertEquals(expected, result);
     }
@@ -412,7 +414,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetApprovedForNotApprovedPollResult() {
-        List<PhasingPollResult> phasingPollResults = CollectionUtil.toList(phasingPollService.getApproved(ptd.RESULT_2.getHeight()));
+        List<PhasingPollResult> phasingPollResults = CollectionUtil.toList(phasingPollService.getApproved(ptd.RESULT_3.getHeight()));
 
         assertEquals(Collections.emptyList(), phasingPollResults);
     }

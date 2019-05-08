@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -100,17 +99,9 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Override
     protected List<PhasingPoll> getAll() {
-        return List.of(simplify(ptd.POLL_0), simplify(ptd.POLL_1), simplify(ptd.POLL_2), simplify(ptd.POLL_3), simplify(ptd.POLL_4));
+        return List.of(ptd.POLL_0, ptd.POLL_1, ptd.POLL_2, ptd.POLL_3, ptd.POLL_4);
     }
 
-    private PhasingPoll simplify(PhasingPoll p) {
-        p.setFullHash(null);
-        p.setLinkedFullHashes(null);
-        if (p.getWhitelist() != Convert.EMPTY_LONG) {
-            p.setWhitelist(null);
-        }
-        return p;
-    }
 
     @Override
     public Blockchain getBlockchain() {

@@ -27,11 +27,8 @@ public class PhasingPoll extends AbstractPoll {
     }
 
     public void setLinkedFullHashes(List<byte[]> linkedFullHashes) {
-        if (linkedFullHashes != null) {
-            this.linkedFullHashes =  linkedFullHashes.toArray(Convert.EMPTY_BYTES);
-        } else {
-            this.linkedFullHashes = null;
-        }
+        Objects.requireNonNull(linkedFullHashes);
+        this.linkedFullHashes = linkedFullHashes.toArray(Convert.EMPTY_BYTES);
     }
 
     public void setFullHash(byte[] fullHash) {
@@ -52,7 +49,7 @@ public class PhasingPoll extends AbstractPoll {
         super(transaction.getDbId(), transaction.getHeight(), transaction.getId(),
                 new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel),
                 transaction.getSenderId(), appendix.getFinishHeight()*/
-/*, appendix.getVoteWeighting()*//*
+    /*, appendix.getVoteWeighting()*//*
 );
         this.quorum = appendix.getQuorum();
         if(appendix instanceof PhasingAppendixV2) {
@@ -123,6 +120,7 @@ public class PhasingPoll extends AbstractPoll {
 */
 
     public void setWhitelist(long[] whitelist) {
+        Objects.requireNonNull(whitelist, "Whitelist should not be null");
         this.whitelist = whitelist;
     }
 
@@ -134,10 +132,17 @@ public class PhasingPoll extends AbstractPoll {
         PhasingPoll that = (PhasingPoll) o;
         return quorum == that.quorum &&
                 algorithm == that.algorithm &&
-                Arrays.equals(whitelist, that.whitelist) &&
-                Arrays.equals(hashedSecret, that.hashedSecret) &&
-                Arrays.deepEquals(linkedFullHashes, that.linkedFullHashes) &&
-                Arrays.equals(fullHash, that.fullHash);
+                Arrays.equals(hashedSecret, that.hashedSecret);
+    }
+
+    public boolean fullEquals(PhasingPoll poll) {
+        if (!equals(poll)) {
+            return false;
+        }
+        return
+                Arrays.equals(whitelist, poll.whitelist) &&
+                        Arrays.deepEquals(linkedFullHashes, poll.linkedFullHashes) &&
+                        Arrays.equals(fullHash, poll.fullHash);
     }
 
     @Override
