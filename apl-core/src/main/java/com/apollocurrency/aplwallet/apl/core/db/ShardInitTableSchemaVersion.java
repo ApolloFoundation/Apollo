@@ -49,6 +49,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "type TINYINT NOT NULL, " +
                         "subtype TINYINT NOT NULL, " +
                         "sender_id BIGINT NOT NULL, " +
+                        "sender_public_key BINARY(32), "+
                         "block_timestamp INT NOT NULL, " +
                         "referenced_transaction_full_hash BINARY(32), " +
                         "phased BOOLEAN NOT NULL DEFAULT FALSE, " +
