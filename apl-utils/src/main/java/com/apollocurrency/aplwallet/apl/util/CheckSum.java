@@ -18,4 +18,8 @@ public class CheckSum {
     public Long finish(){
         return cs.getValue();
     }
+
+    void update(byte[] dataBuf, int size) {
+        cs.update(dataBuf, 0, size);
+    }
 }
