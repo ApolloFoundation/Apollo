@@ -157,6 +157,11 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public boolean shouldSavePublicKey() {
+        return transaction.shouldSavePublicKey();
+    }
+
+    @Override
     public long getRecipientId() {
         return transaction.getRecipientId();
     }

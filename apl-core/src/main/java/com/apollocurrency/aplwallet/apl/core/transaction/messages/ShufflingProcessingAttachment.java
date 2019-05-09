@@ -9,11 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 /**
  *
@@ -29,6 +30,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         }
         return new ShufflingProcessingAttachment(attachmentData);
     }
+
     volatile byte[][] data;
     final byte[] hash;
 
