@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -140,6 +141,7 @@ class TaggedDataServiceTest {
         int count = 0;
         while (result.hasNext()) {
             DataTag dataTag = result.next();
+            assertNotNull(dataTag);
             count++;
         }
         assertEquals(2, count);
@@ -151,6 +153,7 @@ class TaggedDataServiceTest {
         int count = 0;
         while (result.hasNext()) {
             DataTag dataTag = result.next();
+            assertNotNull(dataTag);
             count++;
         }
         assertEquals(1, count);
@@ -165,6 +168,7 @@ class TaggedDataServiceTest {
         int count = 0;
         while (result.hasNext()) {
             TaggedData dataTag = result.next();
+            assertNotNull(dataTag);
             count++;
         }
         assertEquals(5, count);
@@ -175,10 +179,26 @@ class TaggedDataServiceTest {
         DbUtils.inTransaction(extension, (con) -> {
             taggedDataService.restore(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT, btd.BLOCK_7.getTimestamp(), btd.BLOCK_7.getHeight());
         });
-        DbIterator<TaggedData> result = taggedDataService.getAll(0, 100);
+        DbIterator<TaggedData> result = taggedDataService.getAll(0, 10);
         int count = 0;
         while (result.hasNext()) {
             TaggedData dataTag = result.next();
+            assertNotNull(dataTag);
+            count++;
+        }
+        assertEquals(5, count);
+    }
+
+    @Test
+    void extend() {
+        DbUtils.inTransaction(extension, (con) -> {
+            taggedDataService.extend(ttd.NOT_SAVED_TRANSACTION, tagTd.NOT_SAVED_TagExtend_ATTACHMENT);
+        });
+        DbIterator<TaggedData> result = taggedDataService.getAll(0, 10);
+        int count = 0;
+        while (result.hasNext()) {
+            TaggedData dataTag = result.next();
+            assertNotNull(dataTag);
             count++;
         }
         assertEquals(5, count);
