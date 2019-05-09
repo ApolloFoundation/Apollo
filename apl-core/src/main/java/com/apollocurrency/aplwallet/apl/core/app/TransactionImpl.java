@@ -99,9 +99,6 @@ public class TransactionImpl implements Transaction {
         private short index = -1;
         private long dbId = 0;
 
-        public BuilderImpl() { // for weld
-        }
-
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp) {
             this.version = version;
@@ -400,6 +397,11 @@ public class TransactionImpl implements Transaction {
             senderPublicKey = Account.getPublicKey(senderId);
         }
         return senderPublicKey;
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return Account.getPublicKey(senderId) == null;
     }
 
     @Override

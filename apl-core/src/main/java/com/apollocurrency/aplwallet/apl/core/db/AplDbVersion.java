@@ -41,7 +41,7 @@ public class AplDbVersion extends DbVersion {
                         + "amount BIGINT NOT NULL, fee BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
                         + "height INT NOT NULL, block_id BIGINT NOT NULL, "
                         + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
-                        + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
+                        + "sender_id BIGINT NOT NULL, sender_public_key BINARY(32), block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
                         + "phased BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "attachment_bytes VARBINARY, version TINYINT NOT NULL, has_message BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "has_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, has_public_key_announcement BOOLEAN NOT NULL DEFAULT FALSE, "
@@ -747,7 +747,9 @@ public class AplDbVersion extends DbVersion {
             case 278:
                 apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
             case 279:
-                return 279;
+                apply("ALTER TABLE transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32)");
+            case 280:
+                return 280;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

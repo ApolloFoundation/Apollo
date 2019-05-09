@@ -360,16 +360,6 @@ public final class Shuffling {
         this.registrantCount = rs.getByte("registrant_count");
     }
 
-    private Shuffling(long id, DbKey dbKey, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.holdingId = holdingId;
-        this.holdingType = holdingType;
-        this.issuerId = issuerId;
-        this.amount = amount;
-        this.participantCount = participantCount;
-    }
-
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
                 + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
