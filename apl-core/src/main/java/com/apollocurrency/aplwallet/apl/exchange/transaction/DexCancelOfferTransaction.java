@@ -57,6 +57,10 @@ public class DexCancelOfferTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException("Can cancel only Open orders.");
         }
 
+        if(dexService.isThereAnotherCancelUnconfirmedTx(orderTransactionId, transaction.getId())){
+            throw new AplException.NotCurrentlyValidException("There is another cancel transaction for this order in the unconfirmed tx pool already.");
+        }
+
     }
 
     @Override

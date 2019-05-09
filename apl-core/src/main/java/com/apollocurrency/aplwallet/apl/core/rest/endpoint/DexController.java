@@ -64,6 +64,8 @@ public class DexController {
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
+    private Integer DEFAULT_DEADLINE_MIN = 60*2;
+
 
     @Inject
     public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime) {
@@ -266,9 +268,13 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
             }
 
+            if(service.isThereAnotherCancelUnconfirmedTx(transactionId, null)){
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "There is another cancel transaction for this order in the unconfirmed tx pool already."))).build();
+            }
+
 
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
-            requestWrapper.addParameter("deadline", Constants.GUARANTEED_BALANCE_CONFIRMATIONS.toString());
+            requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
 
             try {
