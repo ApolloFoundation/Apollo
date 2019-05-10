@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -13,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -46,6 +49,8 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -163,4 +168,63 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
             }
         });
     }
+
+    @Test
+    void testGetFinishingTransactions() {
+        List<Transaction> finishingTransactions = table.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
+
+        assertEquals(Arrays.asList(ttd.TRANSACTION_7), finishingTransactions);
+    }
+
+
+    @Test
+    void testGetFinishingTransactionsWhenNoTransactionsAtHeight() {
+        List<Transaction> finishingTransactions = table.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1);
+
+        assertTrue(finishingTransactions.isEmpty(), "No transactions should be found at height");
+    }
+    @Test
+    void testGetActivePhasingDbIds() throws SQLException {
+        List<Long> dbIds = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
+        assertEquals(Arrays.asList(ttd.DB_ID_8, ttd.DB_ID_7), dbIds);
+    }
+
+    @Test
+    void testGetActivePhasingDbIdWhenHeightIsMax() throws SQLException {
+        List<Long> dbIds = table.getActivePhasedTransactionDbIds(Integer.MAX_VALUE);
+        assertEquals(Arrays.asList(ttd.DB_ID_12, ttd.DB_ID_11), dbIds);
+    }
+
+    @Test
+    void testGetActivePhasingDbIdAllPollsFinished() throws SQLException {
+        List<Long> dbIds = table.getActivePhasedTransactionDbIds(ptd.POLL_0.getHeight() - 1);
+        assertEquals(Collections.emptyList(), dbIds);
+    }
+
+    @Test
+    void testGetActivePhasingDbIdsWhenNoPollsAtHeight() throws SQLException {
+        List<Long> dbIds = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_0.getHeight());
+        assertEquals(Collections.emptyList(), dbIds);
+    }
+
+    @Test
+    void testGetAllPhasedTransactionsCount() throws SQLException {
+        int count = table.getAllPhasedTransactionsCount();
+
+        assertEquals(ptd.NUMBER_OF_PHASED_TRANSACTIONS, count);
+    }
+    @Test
+    void testGetAccountPhasedTransactionsCount() throws SQLException {
+        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId());
+
+        assertEquals(2, count);
+    }
+
+    @Test
+    void testGetNonExistentAccountPhasedTransactionCount() throws SQLException {
+        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId() + 1);
+
+        assertEquals(0, count);
+    }
+
 }
