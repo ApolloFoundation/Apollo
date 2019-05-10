@@ -181,8 +181,9 @@ class CsvManagerTest {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
-//        AccountCurrencyTable.getInstance().init();
-//        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811")); // TODO: finish Arrays !
+        // init several derived tables
+        AccountCurrencyTable.getInstance().init();
+        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811"));
         AccountAssetTable.getInstance().init();
         GenesisPublicKeyTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
@@ -195,13 +196,14 @@ class CsvManagerTest {
     void testMinMaxValues() throws SQLException {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+        // init columns excludes from export
         HashSet<String> excludeColumnNames = new HashSet<>();
         excludeColumnNames.add("DB_ID");
-//        excludeColumnNames.add("REFERENCED_TRANSACTION_ID");
 //        excludeColumnNames.add("PUBLIC_KEY");
 //        excludeColumnNames.add("LATEST");
+        // init CvsManager
         csvManager = new CsvManagerImpl(dirProvider.getDataExportDir(), excludeColumnNames);
-        csvManager.setOptions("fieldDelimiter=");
+        csvManager.setOptions("fieldDelimiter="); // do not put ""
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
 
@@ -212,55 +214,85 @@ class CsvManagerTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
+            long minDbValue = 0;
+            long maxDbValue = 0;
             int processedCount = 0;
+            int totalCount = 0;
+            // prepare connection + statement
             try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?")) {
+                // select Min, Max DbId + rows count
                 MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
+                minDbValue = minMaxDbId.getMinDbId();
+                maxDbValue = minMaxDbId.getMaxDbId();
                 assertTrue(minMaxDbId.getMaxDbId() >= 0);
                 log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
 
+                // process non empty tables
                 if (minMaxDbId.getCount() > 0) {
                     do { // do exporting into csv with pagination
                         processedCount = csvManager.append(item.toString(),
                                 item.getRangeByDbId(con, pstmt, minMaxDbId, 2), minMaxDbId );
-                    } while (processedCount > 0);
+                        totalCount += processedCount;
+                    } while (processedCount > 0); //keep processing while not found more rows
                     ((SimpleRowSource)csvManager).close(); // close CSV file
 
-                    dropDataByName(targetHeight, item); // drop exported data only
+                    log.debug("Table = {}, exported rows = {}", item.toString(), totalCount);
+                    assertEquals(minMaxDbId.getCount(), totalCount);
+
+                    int deletedCount = dropDataByName(minDbValue, maxDbValue, item); // drop exported data only
+                    assertEquals(minMaxDbId.getCount(), deletedCount);
+
+//                    int imported = importCsv(item); // TODO: YL NOT READY YET!
+
                 }
             } catch (SQLException e) {
                 log.error("Exception", e);
             }
 
-/*
-            try (ResultSet rs = csvManager.read(item.toString() + ".csv", null, null);
-                 Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
-                con.setAutoCommit(false);
-
-                ResultSetMetaData meta = rs.getMetaData();
-                while (rs.next()) {
-                    for (int i = 0; i < meta.getColumnCount(); i++) {
-                        log.debug("{}: {}\n", meta.getColumnLabel(i + 1), rs.getString(i + 1));
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-*/
         });
         log.debug("Processed Tables = {}", result);
     }
 
-    private void dropDataByName(int targetHeight, DerivedTableInterface item) {
+    private int importCsv(DerivedTableInterface item) {
+        int importedCount = 0;
+        try (ResultSet rs = csvManager.read(item.toString() + ".csv", null, null);
+             Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
+            con.setAutoCommit(false);
+
+            ResultSetMetaData meta = rs.getMetaData();
+            while (rs.next()) {
+                for (int i = 0; i < meta.getColumnCount(); i++) {
+                    log.debug("{}: {}\n", meta.getColumnLabel(i + 1), rs.getString(i + 1));
+                    importedCount++;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return importedCount;
+    }
+
+    /**
+     * Delete rows in table
+     * @param minDbValue min db id
+     * @param maxDbValue max db id
+     * @param item derived table name
+     * @return deleted rows quantity
+     */
+    private int dropDataByName(long minDbValue, long maxDbValue, DerivedTableInterface item) {
         // drop data
         try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("delete from " + item.toString() + " where db_id < ?")) {
-            pstmt.setInt(1, targetHeight);
+             PreparedStatement pstmt = con.prepareStatement("delete from " + item.toString() + " where db_id > ? AND db_id < ?")) {
+            pstmt.setLong(1, minDbValue);
+            pstmt.setLong(2, maxDbValue);
             int deleted = pstmt.executeUpdate();
-            log.debug("Table = {}, deleted = {} at height = {}", item.toString(), deleted, targetHeight);
+            log.debug("Table = {}, deleted = {} by MIN = {} / MAX = {}", item.toString(), deleted, minDbValue, maxDbValue);
+            return deleted;
         } catch (SQLException e) {
             log.error("Exception", e);
         }
+        return -1;
     }
 
 

@@ -36,12 +36,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.h2.api.ErrorCode;
-import org.h2.jdbc.JdbcArray;
 import org.h2.message.DbException;
 import org.h2.tools.SimpleResultSet;
 import org.h2.tools.SimpleRowSource;
@@ -116,7 +113,6 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             int rows = 0;
             ResultSetMetaData meta = rs.getMetaData();
             int columnCount = meta.getColumnCount();
-//            String[] rowColumnNames = new String[columnCount];
             Object[] rowColumnNames = new String[columnCount];
             int[] sqlTypes = new int[columnCount];
             for (int i = 0; i < columnCount; i++) {
@@ -146,9 +142,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                         case Types.SMALLINT:
                         case Types.TINYINT:
                             o = rs.getString(i + 1);
-//                            columnValues.append(v);
                             break;
-
                         case Types.DATE:
                             date = rs.getDate(i + 1);
                         case Types.TIME:
@@ -156,46 +150,47 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                         case Types.TIMESTAMP:
                             if (date == null) date = rs.getTimestamp(i + 1);
                             if (date == null) {
-//                                columnValues.append("null");
                                 o = nullString;
                             } else {
-//                                columnValues.append("TO_DATE('").append(super.dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
                                 o = "TO_DATE('" + dateFormat.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
                             }
                             break;
                         case Types.ARRAY:
                             Array array = rs.getArray(i + 1);
-                            o = array != null ? array.getArray() : nullString;
-/*
-                            if (array != null && array.getArray() instanceof Object[]) {
-                                o = (Object[])array.getArray();
+//                            o = array != null ? array.getArray() : nullString;
+                            if (array != null && array.getArray() instanceof Object[] && ((Object[])array.getArray()).length > 0) {
+                                Object[] objectArray = (Object[]) array.getArray();
+                                StringBuilder outputValue = new StringBuilder(objectArray.length + 2);
+                                for (int j = 0; j < objectArray.length; j++) {
+                                    Object o1 = objectArray[j];
+                                    if (j == 0) {
+                                        outputValue.append("(");
+                                    }
+                                    outputValue.append(o1.toString()).append(",");
+                                    if (j == objectArray.length - 1) {
+                                        // remove latest "comma" then  append ")"
+                                        outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")");
+                                    }
+                                }
+                                o = outputValue.toString();
+                                break;
                             } else {
-                                o = array != null ? array.getArray() : "";
+                                o = array != null ? array.getArray() : nullString;
                             }
-*/
                             break;
                         case Types.NVARCHAR:
-                            o = rs.getNString(i + 1);
-                            break;
                         case Types.VARBINARY:
-//                            o = Convert.toHexString( rs.getString(i + 1) != null ? rs.getString(i + 1).getBytes() : "".getBytes());
-                            o = rs.getString(i + 1);
-                            break;
-
                         case Types.VARCHAR:
                         default:
                             o = rs.getString(i + 1);
                             if (o != null) {
-//                                columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
                                  o = "'" + ((String)o).replaceAll("'", "''") + "'";
                             } else {
-//                                columnValues.append("null");
                                  o = nullString;
                             }
                             break;
                     }
-//                    rowColumnNames[i] = o == null ? null : o.toString();
-                    rowColumnNames[i] = o;
+                    rowColumnNames[i] = o == null ? null : o.toString();
                 }
                 log.debug("Row = {}", Arrays.toString(rowColumnNames));
                 writeRow(rowColumnNames);
@@ -283,7 +278,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
     @Override
     public ResultSet read(String inputFileName, String[] colNames, String charset) throws SQLException {
         Objects.requireNonNull(inputFileName, "inputFileName is NULL");
-        Objects.requireNonNull(colNames, "columnNames is NULL");
+//        Objects.requireNonNull(colNames, "columnNames is NULL");
         Objects.requireNonNull(charset, "charset is NULL");
         assignNewFileName(inputFileName, true);
         try {
@@ -363,24 +358,15 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
         }
     }
 
-//    private void writeHeaderRow(String[] rowColumnNames) throws IOException {
     private void writeHeaderRow(Object[] rowColumnNames) throws IOException {
         Objects.requireNonNull(rowColumnNames, "rowColumnNames is NULL");
         boolean isSkippedColumn = false;
         for (int i = 0; i < rowColumnNames.length; i++) {
-/*
-            if (i > 0 && i < rowColumnNames.length - 1) {
-                if (fieldSeparatorWrite != null && !isSkippedColumn) { // do not write comma in case skipped column
-                    output.write(fieldSeparatorWrite);
-                }
-            }
-*/
             if (rowColumnNames[i] != null && rowColumnNames[i].toString() != null) {
                 String s = rowColumnNames[i].toString(); // column name
-                if (i > 0 /*&& i < rowColumnNames.length - 1*/ && !isSkippedColumn) {
-                    if (fieldSeparatorWrite != null) { // do not write comma in case skipped column
-                        // or when last known column
-//                        output.write(fieldSeparatorWrite);
+                if (i > 0 && !isSkippedColumn) {
+                    if (fieldSeparatorWrite != null) {
+                        // do not write comma-separator in case skipped column
                         outputBuffer.append(fieldSeparatorWrite);
                     }
                 }
@@ -390,23 +376,13 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                     excludeColumnIndex.add(i); // if HEADER is not written, we CAN'T store skipped column index !!
                     continue;
                 }
-//                if (escapeCharacter != 0) {
-                    if (fieldDelimiter != 0) {
-//                        output.write(fieldDelimiter);
-                        outputBuffer.append(fieldDelimiter);
-                    }
-//                    output.write(escape(s));
-//                    output.write(s);
-                        outputBuffer.append(s);
-                    if (fieldDelimiter != 0) {
-//                        output.write(fieldDelimiter);
-                        outputBuffer.append(fieldDelimiter);
-                    }
-//                } else {
-//                    output.write(s);
-//                }
-//            } else if (nullString != null && nullString.length() > 0) {
-//                output.write(nullString);
+                if (fieldDelimiter != 0) {
+                    outputBuffer.append(fieldDelimiter);
+                }
+                outputBuffer.append(s);
+                if (fieldDelimiter != 0) {
+                    outputBuffer.append(fieldDelimiter);
+                }
             } else {
                 // we can't proceed if column name is empty
                 log.error("ERROR, column name is EMPTY. Array = {}", Arrays.toString(rowColumnNames));
@@ -415,7 +391,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             isSkippedColumn = false; // reset flag
         }
         if (isSkippedColumn) {
-            // remove last comma
+            // remove latest comma
             outputBuffer.deleteCharAt(outputBuffer.lastIndexOf(","));
         }
         outputBuffer.append(lineSeparator);
@@ -423,21 +399,13 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
         outputBuffer.setLength(0); // reset
     }
 
-//    private void writeRow(String[] rowColumnValues) throws IOException {
     private void writeRow(Object[] rowColumnValues) throws IOException {
         boolean isSkippedColumn = false;
         for (int i = 0; i < rowColumnValues.length; i++) {
-/*
-            if (i > 0 && i < rowColumnValues.length - 1) {
-                if (fieldSeparatorWrite != null && !isSkippedColumn) {
-                    output.write(fieldSeparatorWrite);
-                }
-            }
-*/
             if (rowColumnValues[i] != null && rowColumnValues[i].toString() != null) {
                 if (i > 0 && !isSkippedColumn) {
-                    if (fieldSeparatorWrite != null/* && !isSkippedColumn*/) {
-//                        output.write(fieldSeparatorWrite);
+                    if (fieldSeparatorWrite != null) {
+                        // do not write comma-separator in case skipped column
                         outputBuffer.append(fieldSeparatorWrite);
                     }
                 }
@@ -462,16 +430,14 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                     outputEscapedValueWithDelimiter(s);
                 }
             } else if (nullString != null && nullString.length() > 0 && !nullString.equalsIgnoreCase("null")) {
-//                output.write(nullString);
                 outputBuffer.append(nullString);
             }
             isSkippedColumn = false; // reset flag
         }
-        // remove last comma, when latest columnn was skipped
+        // remove last comma, when latest column was skipped
         if (isSkippedColumn) {
             outputBuffer.deleteCharAt(outputBuffer.lastIndexOf(","));
         }
-//        output.write(lineSeparator);
         outputBuffer.append(lineSeparator);
         output.write(outputBuffer.toString());
         outputBuffer.setLength(0); // reset
@@ -480,17 +446,13 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
     private void outputEscapedValueWithDelimiter(String s) throws IOException {
         if (escapeCharacter != 0) {
             if (fieldDelimiter != 0) {
-//                output.write(fieldDelimiter);
                 outputBuffer.append(fieldDelimiter);
             }
-//            output.write(escape(s));
             outputBuffer.append(escape(s));
             if (fieldDelimiter != 0) {
-//                output.write(fieldDelimiter);
                 outputBuffer.append(fieldDelimiter);
             }
         } else {
-//            output.write(s);
             outputBuffer.append(s);
         }
     }
