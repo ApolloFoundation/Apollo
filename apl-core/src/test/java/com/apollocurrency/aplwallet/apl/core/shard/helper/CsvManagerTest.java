@@ -193,7 +193,7 @@ class CsvManagerTest {
     }
 
     @Test
-    void testMinMaxValues() throws SQLException {
+    void testExportAndImportData() throws SQLException {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
         // init columns excludes from export
