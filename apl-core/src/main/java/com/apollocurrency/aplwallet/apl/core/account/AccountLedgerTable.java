@@ -5,11 +5,13 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import static com.apollocurrency.aplwallet.apl.core.account.AccountLedger.propertiesHolder;
 import static com.apollocurrency.aplwallet.apl.core.account.AccountLedger.trimKeep;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,7 +47,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
     @Override
     protected LedgerEntry load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        throw new RuntimeException("Method is not implemented yet");
+        throw new UnsupportedOperationException("Method is not implemented yet");
     }
 
 

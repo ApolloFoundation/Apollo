@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
@@ -27,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -35,12 +37,18 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
@@ -111,5 +119,48 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Override
     public PhasingPoll valueToInsert() {
         return ptd.NEW_POLL;
+    }
+
+    @Test
+    @Override
+    public void testTrim() {
+        table.trim(ptd.POLL_1.getFinishHeight() + 1);
+        List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
+        Assertions.assertEquals(List.of(ptd.POLL_4, ptd.POLL_3), actual);
+        String condition = "transaction_id IN " + String.format("(%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId());
+        assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
+        assertNotExistEntriesInTableForCondition("phasing_vote", condition);
+        assertNotExistEntriesInTableForCondition("phasing_poll_linked_transaction", condition);
+    }
+
+    @Test
+    public void testTrimAll() {
+        table.trim(Integer.MAX_VALUE);
+        List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
+        Assertions.assertEquals(List.of(), actual);
+        String condition = "transaction_id IN " + String.format("(%d,%d,%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId(), ptd.POLL_4.getId(), ptd.POLL_3.getId());
+        assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
+        assertNotExistEntriesInTableForCondition("phasing_vote", condition);
+        assertNotExistEntriesInTableForCondition("phasing_poll_linked_transaction", condition);
+    }
+
+    @Test
+    public void testTrimNothing() {
+        table.trim(0);
+        List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
+        Assertions.assertEquals(sortByHeightDesc(getAll()), actual);
+    }
+
+    private void assertNotExistEntriesInTableForCondition(String tableName, String condition) {
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+            try (Statement stmt = con.createStatement()) {
+                try (ResultSet rs = stmt.executeQuery("SELECT 1 FROM " + tableName + " where  " + condition)) {
+                    Assertions.assertFalse(rs.next());
+                }
+            }
+            catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        });
     }
 }
