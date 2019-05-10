@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -226,5 +227,18 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
         assertEquals(0, count);
     }
+
+    @Test
+    void testGetByHoldingId() throws SQLException {
+        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100));
+        assertEquals(List.of(ttd.TRANSACTION_13), transactions);
+    }
+
+    @Test
+    void testGetByHoldingIdNotExist() throws SQLException {
+        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100));
+        assertTrue(transactions.isEmpty());
+    }
+
 
 }
