@@ -65,11 +65,9 @@ public interface CsvManager {
      * and are converted to uppercase. Other column names are considered
      * case sensitive (that means they need to be quoted when accessed).
      *
-     * @param inputFileName the file name
-     * @param colNames or null if the column names should be read from the CSV
-     *          file
-     * @param charset the charset or null to use the system default charset
-     *          (see system property file.encoding)
+     * @param inputFileName the file name, not NULL
+     * @param colNames or null if the column names should be read from the CSV file
+     * @param charset the charset or null to use the system default charset (see system property file.encoding)
      * @return the result set
      */
     ResultSet read(String inputFileName, String[] colNames, String charset) throws SQLException;

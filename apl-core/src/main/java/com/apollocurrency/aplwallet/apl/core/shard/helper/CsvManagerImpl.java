@@ -278,8 +278,6 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
     @Override
     public ResultSet read(String inputFileName, String[] colNames, String charset) throws SQLException {
         Objects.requireNonNull(inputFileName, "inputFileName is NULL");
-//        Objects.requireNonNull(colNames, "columnNames is NULL");
-        Objects.requireNonNull(charset, "charset is NULL");
         assignNewFileName(inputFileName, true);
         try {
             return readResultSet(colNames);

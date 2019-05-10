@@ -255,10 +255,9 @@ class CsvManagerTest {
     }
 
     private int importCsv(DerivedTableInterface item) {
-        int importedCount = 0;
+        int importedCount = -1;
         try (ResultSet rs = csvManager.read(item.toString() + ".csv", null, null);
              Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
-            con.setAutoCommit(false);
 
             ResultSetMetaData meta = rs.getMetaData();
             while (rs.next()) {
@@ -267,6 +266,7 @@ class CsvManagerTest {
                     importedCount++;
                 }
             }
+//            con.commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }
