@@ -11,13 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.http.BlockEventSourceProcessor;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +36,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
-            return new LongKey(poll.getId());
+            if (poll.getDbKey() == null) {
+                poll.setDbKey(KEY_FACTORY.newKey(poll.getId()));
+            }
+            return poll.getDbKey();
         }
     };
+    private static final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_poll";
     private final Blockchain blockchain;
 
@@ -52,8 +54,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
 
     @Override
-    protected PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new PhasingPoll(rs);
+    public PhasingPoll load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        PhasingPoll poll = MAPPER.map(rs, null);
+        return poll;
     }
 
     public PhasingPoll get(long id) {
@@ -61,7 +64,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    protected void save(Connection con, PhasingPoll poll) throws SQLException {
+    public void save(Connection con, PhasingPoll poll) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll (id, account_id, "
                 + "finish_height,  finish_time, whitelist_size, voting_model, quorum, min_balance, holding_id, "
                 + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -79,7 +82,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             pstmt.setByte(++i, voteWeighting.getMinBalanceModel().getCode());
             DbUtils.setBytes(pstmt, ++i, poll.getHashedSecret());
             pstmt.setByte(++i, poll.getAlgorithm());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, poll.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -141,6 +144,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+
     public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) throws SQLException {
 
@@ -212,6 +216,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+
     public int getAllPhasedTransactionsCount() throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {
@@ -253,8 +258,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-        super.trim(height, dataSource);
+    public void trim(int height) {
+        super.trim(height);
+        TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              DbIterator<PhasingPoll> pollsToTrim = getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
              PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");

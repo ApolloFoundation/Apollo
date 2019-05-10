@@ -21,6 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -29,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -47,6 +51,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -1090,7 +1096,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
             Genesis.apply();
-            for (DerivedDbTable table : dbTables.getDerivedTables()) {
+            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.createSearchIndex(con);
             }
             blockchain.commit(genesisBlock);
@@ -1405,7 +1411,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 block = popLastBlock();
             }
             long rollbackStartTime = System.currentTimeMillis();
-            for (DerivedDbTable table : dbTables.getDerivedTables()) {
+            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.rollback(commonBlock.getHeight());
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
@@ -1655,7 +1661,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.debug("Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                 }
-                for (DerivedDbTable table : dbTables.getDerivedTables()) {
+                for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                     if (height == 0) {
                         table.truncate();
                     } else {
@@ -1674,6 +1680,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
+                lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
                 if (shutdown) {
                     log.info("Scan will be performed at next start");
                     new Thread(() -> System.exit(0)).start();
@@ -1755,14 +1762,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
                 if (height == 0) {
-                    for (DerivedDbTable table : dbTables.getDerivedTables()) {
+                    for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                         table.createSearchIndex(con);
                     }
                 }
                 pstmtDone.executeUpdate();
                 dataSource.commit(false);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
-                log.info("...done at height " + blockchain.getHeight());
+                log.info("Scan done at height " + blockchain.getHeight());
                 if (height == 0 && validate) {
                     log.info("SUCCESSFULLY PERFORMED FULL RESCAN WITH VALIDATION");
                 }

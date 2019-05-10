@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Singleton;
 
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+
 /**
  * This is registry for tables that is used in TrimService for deleting old data from derived tables
  *
@@ -15,11 +17,13 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class DerivedDbTablesRegistryImpl implements DerivedTablesRegistry {
-    private final Map<String, DerivedDbTable> derivedTables = new ConcurrentHashMap<>();
-    public void registerDerivedTable(DerivedDbTable table) {
+    private final Map<String, DerivedTableInterface> derivedTables = new ConcurrentHashMap<>();
+
+    public void registerDerivedTable(DerivedTableInterface table) {
         derivedTables.putIfAbsent(table.toString(), table);
-    } 
-    public Collection<DerivedDbTable> getDerivedTables() {
+    }
+
+    public Collection<DerivedTableInterface> getDerivedTables() {
         return derivedTables.values();
     }
 

@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.Arrays;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+
+import java.util.Arrays;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class DefaultBlockValidator extends AbstractBlockValidator {
@@ -39,7 +39,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     void validateAdaptiveBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         int actualBlockTime = block.getTimestamp() - previousBlock.getTimestamp();
         if (actualBlockTime < blockchainConfig.getCurrentConfig().getAdaptiveBlockTime() && block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid adaptive block. " + actualBlockTime, null);
+            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid adaptive block: time - " + actualBlockTime + " height " + previousBlock.getHeight() + 1 + ". Perhaps blockchain config is outdated", null);
         }
     }
 

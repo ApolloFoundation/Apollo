@@ -55,12 +55,12 @@ public final class DigitalGoodsListing extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 2 + Convert.toBytes(name).length + 2 + Convert.toBytes(description).length + 2 + Convert.toBytes(tags).length + 4 + 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] nameBytes = Convert.toBytes(name);
         buffer.putShort((short) nameBytes.length);
         buffer.put(nameBytes);
@@ -75,7 +75,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("name", name);
         attachment.put("description", description);
         attachment.put("tags", tags);

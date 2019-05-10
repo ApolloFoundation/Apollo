@@ -10,7 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,7 +24,7 @@ import java.util.EnumSet;
  *
  * @author al
  */
-public class AccountTable extends VersionedEntityDbTable<Account> {
+public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
         @Override
@@ -56,7 +57,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    protected Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         long id = rs.getLong("id");
         Account res = new Account(id);
         res.dbKey = dbKey;
@@ -73,7 +74,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    protected void save(Connection con, Account account) throws SQLException {
+    public void save(Connection con, Account account) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, account.id);
@@ -88,11 +89,11 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
+    public void trim(int height) {
         if (height <= Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height, dataSource);
+        super.trim(height);
     }
 
     @Override

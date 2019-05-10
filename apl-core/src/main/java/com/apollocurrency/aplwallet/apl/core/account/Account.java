@@ -435,7 +435,7 @@ public final class Account {
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
-            publicKey.height = blockchain.getHeight();
+            publicKey.setHeight(blockchain.getHeight());
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
@@ -529,7 +529,7 @@ public final class Account {
         if (this.publicKey == null) {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
-        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
+        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         sync.readLock();
@@ -801,7 +801,7 @@ public final class Account {
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
-        } else if (publicKey.height >= blockchain.getHeight() - 1) {
+        } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);

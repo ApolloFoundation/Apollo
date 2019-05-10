@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(DeleteCopiedDataCommand.class);
@@ -20,12 +21,14 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private DataTransferManagementReceiver dataTransferManagement;
     private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
+    private Set<Long> excludedTxs;
     private int snapshotBlockHeight;
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                                   int commitBatchSize, int snapshotBlockHeight) {
+                                   int commitBatchSize, int snapshotBlockHeight, Set<Long> exludedTxs) {
         this(dataTransferManagement, snapshotBlockHeight);
         this.commitBatchSize = commitBatchSize;
+        this.excludedTxs = exludedTxs;
     }
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
@@ -33,6 +36,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         tableNameList.add(BLOCK_TABLE_NAME);
+        tableNameList.add(TRANSACTION_TABLE_NAME);
     }
 
     public DeleteCopiedDataCommand(
@@ -53,7 +57,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Delete Block/Transaction Data from main DB Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, null);
+                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, excludedTxs);
         return dataTransferManagement.deleteCopiedData(paramInfo);
     }
 

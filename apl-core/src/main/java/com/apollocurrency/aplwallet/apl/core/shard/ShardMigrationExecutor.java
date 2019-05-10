@@ -10,6 +10,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
@@ -17,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCom
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
-import com.apollocurrency.aplwallet.apl.core.shard.commands.ReLinkDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
@@ -73,6 +73,7 @@ public class ShardMigrationExecutor {
         this.backupDb = backupDb;
     }
 
+    @Transactional
     public void createAllCommands(int height) {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                 new ShardInitTableSchemaVersion());
@@ -90,15 +91,15 @@ public class ShardMigrationExecutor {
                 new ShardAddConstraintsSchemaVersion());
         this.addOperation(createShardConstraintsCommand);
 
-        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
-        this.addOperation(reLinkDataCommand);
+//        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
+//        this.addOperation(reLinkDataCommand);
 
         UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
                 (managementReceiver, height, dbIds);
         this.addOperation(updateSecondaryIndexCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
-                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE, height);
+                new DeleteCopiedDataCommand(managementReceiver, DEFAULT_COMMIT_BATCH_SIZE, height, dbIds);
         this.addOperation(deleteCopiedDataCommand);
 
         byte[] hash = calculateHash(height);
@@ -121,6 +122,7 @@ public class ShardMigrationExecutor {
         return lastShardHeight != null ? lastShardHeight + 1 : 0;
     }
 
+    @Transactional
     public void cleanCommands() {
         dataMigrateOperations.clear();
     }
@@ -131,6 +133,7 @@ public class ShardMigrationExecutor {
         dataMigrateOperations.add(shardOperation);
     }
 
+    @Transactional
     public MigrateState executeAllOperations() {
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;

@@ -20,25 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-public abstract class AbstractPoll {
+public abstract class AbstractPoll extends DerivedEntity {
 
     final long id;
     protected final VoteWeighting voteWeighting;
     final long accountId;
     protected final int finishHeight;
 
-    public AbstractPoll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting) {
+    public AbstractPoll(Long dbId, Integer height, long id, VoteWeighting voteWeighting, long accountId, int finishHeight) {
+        super(dbId, height);
         this.id = id;
+        this.voteWeighting = voteWeighting;
         this.accountId = accountId;
         this.finishHeight = finishHeight;
-        this.voteWeighting = voteWeighting;
     }
 
     public AbstractPoll(ResultSet rs) throws SQLException {
+        super(rs);
         this.id = rs.getLong("id");
         this.accountId = rs.getLong("account_id");
         this.finishHeight = rs.getInt("finish_height");
@@ -50,6 +54,7 @@ public abstract class AbstractPoll {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AbstractPoll)) return false;
+        if (!super.equals(o)) return false;
         AbstractPoll that = (AbstractPoll) o;
         return id == that.id &&
                 accountId == that.accountId &&
@@ -59,7 +64,7 @@ public abstract class AbstractPoll {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, voteWeighting, accountId, finishHeight);
+        return Objects.hash(super.hashCode(), id, voteWeighting, accountId, finishHeight);
     }
 
     public final long getId() {
@@ -77,6 +82,5 @@ public abstract class AbstractPoll {
     public final VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-
 }
 

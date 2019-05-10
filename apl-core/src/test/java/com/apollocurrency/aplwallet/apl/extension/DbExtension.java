@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.extension;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -23,6 +24,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
     private DbManipulator manipulator;
     private boolean staticInit = false;
+    private FullTextSearchService ftl;
 
     public DbExtension(Path path) {
         manipulator = new DbManipulator(path);
@@ -30,6 +32,11 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     public DbExtension(DbProperties dbProperties) {
         this(dbProperties, null);
+    }
+
+    public DbExtension(FullTextSearchService ftl) {
+        this();
+        this.ftl = ftl;
     }
 
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
@@ -53,11 +60,19 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     private void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
+        if (ftl != null) {
+            ftl.shutdown();
+        }
     }
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        if (!staticInit) {manipulator.init();}
+        if (!staticInit) {
+            manipulator.init();
+            if (ftl != null) {
+                ftl.init();
+            }
+        }
         manipulator.populate();
     }
 
@@ -71,5 +86,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     public void beforeAll(ExtensionContext context) throws Exception {
         staticInit = true;
         manipulator.init();
+        if (ftl != null) {
+            ftl.init();
+        }
     }
 }

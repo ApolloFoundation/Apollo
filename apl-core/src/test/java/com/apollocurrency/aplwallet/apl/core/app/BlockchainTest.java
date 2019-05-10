@@ -129,7 +129,7 @@ class BlockchainTest {
     void getLastBlock() {
         Block block = blockchain.getLastBlock();
         assertNotNull(block);
-        assertEquals(blockTestData.BLOCK_11.getId(), block.getId());
+        assertEquals(blockTestData.LAST_BLOCK.getId(), block.getId());
     }
 */
 

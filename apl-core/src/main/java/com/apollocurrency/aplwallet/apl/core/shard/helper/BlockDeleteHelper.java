@@ -4,15 +4,16 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
-import org.slf4j.Logger;
 
 /**
  * Helper class is used for deleting block/transaction data from main database previously copied to shard db.
@@ -83,6 +84,8 @@ public class BlockDeleteHelper extends AbstractHelper {
                     if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
 //                        sqlInsertString.append("delete from BLOCK WHERE DB_ID >= ? AND DB_ID < ? LIMIT ?");
                         sqlInsertString.append("delete from BLOCK WHERE DB_ID = ?");
+                    } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+                        sqlInsertString.append("delete from transaction WHERE db_id = ?");
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
@@ -153,7 +156,15 @@ public class BlockDeleteHelper extends AbstractHelper {
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);
-        } else {
+        } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+            sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+            log.trace(sqlToExecuteWithPaging);
+            sqlSelectUpperBound =
+                    "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
+            log.trace(sqlSelectUpperBound);
+            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+            log.trace(sqlSelectBottomBound);
+        }else {
             throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
         }
     }

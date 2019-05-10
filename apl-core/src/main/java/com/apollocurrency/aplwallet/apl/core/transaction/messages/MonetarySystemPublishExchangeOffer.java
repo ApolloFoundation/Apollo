@@ -60,12 +60,12 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 8 + 8 + 8 + 8 + 8 + 8 + 4;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(currencyId);
         buffer.putLong(buyRateATM);
         buffer.putLong(sellRateATM);
@@ -77,7 +77,7 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("currency", Long.toUnsignedString(currencyId));
         attachment.put("buyRateATM", buyRateATM);
         attachment.put("sellRateATM", sellRateATM);

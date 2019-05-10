@@ -31,8 +31,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     @Inject
     public FullTextSearchServiceImpl(FullTextSearchEngine ftl,
-                                     @Named("fullTextTables") Set<String> indexTables,
-                                     @Named("tablesSchema") String schemaName) {
+                                     @Named(value = "fullTextTables") Set<String> indexTables,
+                                     @Named(value = "tablesSchema") String schemaName) {
         this.ftl = ftl;
         this.indexTables = indexTables;
         this.schemaName = schemaName;
@@ -241,6 +241,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         return ftl.search(schema, table, queryText, limit, offset);
     }
 
+    @Override
     public void shutdown() {
         ftl.shutdown();
     }

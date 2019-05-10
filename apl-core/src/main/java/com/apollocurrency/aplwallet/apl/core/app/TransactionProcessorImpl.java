@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -124,15 +124,15 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
         return
-                new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", keyFactory) {
+                new EntityDbTable<>("unconfirmed_transaction", keyFactory) {
 
                     @Override
-                    protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                    public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                         return new UnconfirmedTransaction(rs);
                     }
 
                     @Override
-                    protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+                    public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
                         unconfirmedTransaction.save(con);
                         if (transactionCache.size() < maxUnconfirmedTransactions) {
                             DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());

@@ -44,12 +44,12 @@ public final class MonetarySystemCurrencyMinting extends AbstractAttachment impl
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 8 + 8 + 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(nonce);
         buffer.putLong(currencyId);
         buffer.putLong(units);
@@ -57,7 +57,7 @@ public final class MonetarySystemCurrencyMinting extends AbstractAttachment impl
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("nonce", nonce);
         attachment.put("currency", Long.toUnsignedString(currencyId));
         attachment.put("units", units);

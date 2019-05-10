@@ -18,6 +18,10 @@ delete from phasing_poll_linked_transaction;
 delete from PUBLIC.GENESIS_PUBLIC_KEY;
 delete from PUBLIC.PUBLIC_KEY;
 delete from PUBLIC.SHARD_RECOVERY;
+delete from PUBLIC.TAGGED_DATA_TIMESTAMP;
+delete from PUBLIC.DATA_TAG;
+delete from PUBLIC.TAGGED_DATA_EXTEND;
+delete from PUBLIC.TAGGED_DATA;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT, TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -97,15 +101,17 @@ INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_tra
 ;
 INSERT INTO PUBLIC.PHASING_POLL (
 DB_ID  	    ,ID  	            ,ACCOUNT_ID  	    ,WHITELIST_SIZE  	,FINISH_HEIGHT  	,VOTING_MODEL  	,QUORUM  	,MIN_BALANCE  	,HOLDING_ID  	,MIN_BALANCE_MODEL  ,HASHED_SECRET  ,ALGORITHM  	,HEIGHT) VALUES
-(20	    , 808614188720864902	,9211698109297098287	        ,2	        ,10000	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
-(30	    , 2083198303623116770	,9211698109297098287	        ,0	        ,9500	            ,0	        ,1	        ,null	        ,null	        ,0		            ,null           ,0	            ,8000),
-(40	    ,-4081443370478530685	,9211698109297098287	        ,0	        ,17000	            ,4	        ,3	        ,null	        ,null	        ,0		            ,null           ,0	            ,15456),
-(50	    ,-1536976186224925700	,9211698109297098287	        ,1	        ,18000	            ,0	        ,3	        ,null	        ,null	        ,0		            ,null           ,0	            ,15456),
+(10	    , 5471926494854938613	,9211698109297098287	        ,0	        ,4000	            , 5	        ,1	        ,null	        ,null	        ,0		            ,X'be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414'           ,2	            ,3500),
+(20	    , 808614188720864902	,9211698109297098287	        ,2	        ,10000	            , 0	        ,1	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,8000),
+(30	    , 2083198303623116770	,9211698109297098287	        ,0	        ,9500	            , 0	        ,1	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,8000),
+(40	    ,-4081443370478530685	,9211698109297098287	        ,0	        ,17000	            , 4	        ,3	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,15456),
+(50	    ,-1536976186224925700	,9211698109297098287	        ,1	        ,18000	            , 0	        ,3	        ,null	        ,null	        ,0		            ,null                                                                          ,0	            ,15456),
 ;
 INSERT INTO PUBLIC.PHASING_POLL_RESULT
 (DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT  ) VALUES
 (10	    ,100                	,1	    ,TRUE	    ,300     ),
 (20	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
+(25	    ,5471926494854938613	,1	    ,TRUE	    ,4000   ),
 (30	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ),
 (40	    ,2083198303623116770	,0	    ,FALSE	    ,9500   ),
 ;
@@ -114,6 +120,9 @@ INSERT into PUBLIC.PHASING_POLL_VOTER
 (20   ,808614188720864902	, 5564664969772495473 ,8000  ),
 (30   ,808614188720864902   , -8315839810807014152	 ,8000 ),
 (40   ,-1536976186224925700   , -8315839810807014152	 ,15456 ),
+(50   ,128   , 102	 ,15457 ),
+(60   ,128   , 103	 ,15457 ),
+(70   ,128   , 104	 ,15457 ),
 ;
 INSERT into PUBLIC.PHASING_VOTE
 (DB_ID  	,VOTE_ID  	                ,TRANSACTION_ID  	   ,VOTER_ID  	,HEIGHT) VALUES
@@ -126,10 +135,13 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (10         ,-4081443370478530685, X'6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e', 100                   , 15456),
 (20         ,-4081443370478530685, X'fc23d4474d90abeae5dd6d599381a75a2a06e61f91ff2249067a10e6515d202f', -1536976186224925700  , 15456),
 (30         ,-4081443370478530685, X'5ea0de6146ac28b8b64d4f7f1ccbd1c7b2e43397221ef7ed3fa10c4ec0581d43', -5176698353372716962  , 15456),
+(40         ,100                 , X'b273e15c07bf99b5139e5753946e004d663e83b3eadb4c8dea699ee982573ef0',  -5361043843063909454 , 15457),
+(50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
+(60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (271);
-INSERT INTO FTL.INDEXES (schema, table, columns)
-                         VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
+INSERT into version values (280);
+INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
+INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
 
 INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (1, -8446737619314270165, '5E8D43FF197F8B554A59007F9E6F73E10BFF4DDA9906F8389D015F31D0ABC433', 1000, true);
@@ -156,3 +168,37 @@ INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VA
 INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (10, -4013722529644937202, '6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true);
 
 INSERT INTO PUBLIC.SHARD_RECOVERY (SHARD_RECOVERY_ID, STATE, COLUMN_NAME, UPDATED) VALUES (1, 'INIT', NULL, CURRENT_TIMESTAMP());
+
+
+INSERT into PUBLIC.TAGGED_DATA_TIMESTAMP
+(DB_ID  	,ID  	             ,  TIMESTAMP  	 , HEIGHT , LATEST ) VALUES
+(10         ,-780794814210884355 , 35078473      , 2000 , TRUE),
+(20         ,-9128485677221760321, 35078473      , 3500, TRUE),
+(30         ,3746857886535243786,  35078473      , 3500, TRUE),
+;
+
+INSERT into PUBLIC.DATA_TAG
+(DB_ID  	,TAG      , TAG_COUNT  	,HEIGHT , LATEST) VALUES
+(10         ,'abc',      1         , 1500, TRUE),
+(20         ,'efd',      1         , 2000, FALSE),
+(30         ,'xyz' ,     2         , 3500, FALSE),
+(40         ,'trw' ,     1         , 3500, TRUE),
+;
+
+INSERT into PUBLIC.TAGGED_DATA
+(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,       data      ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
+(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,   X'c11dd7986e'  ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
+(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,   X'c11d86986e'  ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
+(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,   X'c11d8344588e' ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
+(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,   X'c11d1234589e' ,   TRUE   ,          73600    ,      35078473        ,   3500),
+(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,   X'c11d1234586e' ,   FALSE  ,          73600    ,      35078473        ,   8000),
+;
+
+INSERT into PUBLIC.TAGGED_DATA_EXTEND
+(DB_ID  	,ID  	             , EXTEND_ID  	,HEIGHT  , LATEST) VALUES
+(10         ,-780794814210884355 ,   1          , 2000, FALSE),
+(20         ,-9128485677221760321,   2          , 3500, FALSE),
+(30         ,3746857886535243786 ,   3          , 3500, FALSE),
+(40         ,2083198303623116770 ,   4          , 3500, FALSE),
+(50         ,808614188720864902 ,  2083198303623116770 , 8000, TRUE),
+;

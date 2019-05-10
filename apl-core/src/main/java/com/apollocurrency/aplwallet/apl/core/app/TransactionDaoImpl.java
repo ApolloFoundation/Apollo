@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
@@ -33,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
@@ -62,7 +62,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
-
+    private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
     private final DatabaseManager databaseManager;
     private final BlockDao blockDao;
     private TransactionIndexDao transactionIndexDao;
@@ -258,82 +258,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        try {
-
-            byte type = rs.getByte("type");
-            byte subtype = rs.getByte("subtype");
-            int timestamp = rs.getInt("timestamp");
-            short deadline = rs.getShort("deadline");
-            long amountATM = rs.getLong("amount");
-            long feeATM = rs.getLong("fee");
-            byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
-            int ecBlockHeight = rs.getInt("ec_block_height");
-            long ecBlockId = rs.getLong("ec_block_id");
-            byte[] signature = rs.getBytes("signature");
-            long blockId = rs.getLong("block_id");
-            int height = rs.getInt("height");
-            long id = rs.getLong("id");
-            long senderId = rs.getLong("sender_id");
-            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
-            int blockTimestamp = rs.getInt("block_timestamp");
-            byte[] fullHash = rs.getBytes("full_hash");
-            byte version = rs.getByte("version");
-            short transactionIndex = rs.getShort("transaction_index");
-            long dbId = rs.getLong("db_id");
-
-            ByteBuffer buffer = null;
-            if (attachmentBytes != null) {
-                buffer = ByteBuffer.wrap(attachmentBytes);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-            }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer), timestamp)
-                    .referencedTransactionFullHash(referencedTransactionFullHash)
-                    .signature(signature)
-                    .blockId(blockId)
-                    .height(height)
-                    .id(id)
-                    .senderId(senderId)
-                    .blockTimestamp(blockTimestamp)
-                    .fullHash(fullHash)
-                    .ecBlockHeight(ecBlockHeight)
-                    .ecBlockId(ecBlockId)
-                    .dbId(dbId)
-                    .index(transactionIndex);
-            if (transactionType.canHaveRecipient()) {
-                long recipientId = rs.getLong("recipient_id");
-                if (!rs.wasNull()) {
-                    builder.recipientId(recipientId);
-                }
-            }
-            if (rs.getBoolean("has_message")) {
-                builder.appendix(new MessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_encrypted_message")) {
-                builder.appendix(new EncryptedMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_public_key_announcement")) {
-                builder.appendix(new PublicKeyAnnouncementAppendix(buffer));
-            }
-            if (rs.getBoolean("has_encrypttoself_message")) {
-                builder.appendix(new EncryptToSelfMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("phased")) {
-                builder.appendix(PhasingAppendixFactory.build(buffer));
-            }
-            if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-
-            return builder.build();
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return MAPPER.mapWithException(rs, null);
     }
 
     private TransactionalDataSource getDataSourceWithShardingByBlockId(long blockId) {
@@ -424,11 +349,11 @@ public class TransactionDaoImpl implements TransactionDao {
             for (Transaction transaction : transactions) {
                 try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
                         + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
-                        + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
+                        + "block_id, signature, timestamp, type, subtype, sender_id, sender_public_key, attachment_bytes, "
                         + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                         + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
                         + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
@@ -443,6 +368,11 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setByte(++i, transaction.getType().getType());
                     pstmt.setByte(++i, transaction.getType().getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());
+                    if (!transaction.shouldSavePublicKey()) {
+                        pstmt.setNull(++i, Types.BINARY);
+                    } else {
+                        pstmt.setBytes(++i, transaction.getSenderPublicKey());
+                    }
                     int bytesLength = 0;
                     for (Appendix appendage : transaction.getAppendages()) {
                         bytesLength += appendage.getSize();

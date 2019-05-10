@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDi
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -58,12 +58,12 @@ public final class AssetDividend {
     private static final EntityDbTable<AssetDividend> assetDividendTable = new EntityDbTable<AssetDividend>("asset_dividend", dividendDbKeyFactory) {
 
         @Override
-        protected AssetDividend load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public AssetDividend load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new AssetDividend(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, AssetDividend assetDividend) throws SQLException {
+        public void save(Connection con, AssetDividend assetDividend) throws SQLException {
             assetDividend.save(con);
         }
 

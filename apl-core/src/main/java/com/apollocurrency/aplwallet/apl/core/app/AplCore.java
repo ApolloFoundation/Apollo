@@ -199,7 +199,7 @@ public final class AplCore {
                 AccountLedger.init(databaseManager);
                 Alias.init();
                 Asset.init();
-                DigitalGoodsStore.init();
+//                DigitalGoodsStore.init();
                 Order.init();
                 Poll.init();
                 Trade.init();
@@ -219,7 +219,7 @@ public final class AplCore {
                 Shuffling.init();
                 ShufflingParticipant.init();
                 PrunableMessage.init();
-                TaggedData.init();
+//                TaggedData.init();
                 AppStatus.getInstance().update("Peer server initialization...");
                 Peers.init();
                 AppStatus.getInstance().update("API Proxy initialization...");

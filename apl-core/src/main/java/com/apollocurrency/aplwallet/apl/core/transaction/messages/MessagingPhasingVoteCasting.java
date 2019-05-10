@@ -59,12 +59,12 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + 32 * transactionFullHashes.size() + 4 + revealedSecret.length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.put((byte) transactionFullHashes.size());
         transactionFullHashes.forEach(buffer::put);
         buffer.putInt(revealedSecret.length);
@@ -72,7 +72,7 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         JSONArray jsonArray = new JSONArray();
         transactionFullHashes.forEach((hash) -> jsonArray.add(Convert.toHexString(hash)));
         attachment.put("transactionFullHashes", jsonArray);

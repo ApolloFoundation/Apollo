@@ -49,12 +49,12 @@ public final class ShufflingCreation extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 1 + 8 + 1 + 2;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(holdingId);
         buffer.put(holdingType.getCode());
         buffer.putLong(amount);
@@ -63,7 +63,7 @@ public final class ShufflingCreation extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("holding", Long.toUnsignedString(holdingId));
         attachment.put("holdingType", holdingType.getCode());
         attachment.put("amount", amount);
