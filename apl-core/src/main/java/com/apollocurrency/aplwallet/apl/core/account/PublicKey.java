@@ -8,6 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  *
@@ -38,5 +40,20 @@ public final class PublicKey extends VersionedDerivedEntity {
         return publicKey;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PublicKey)) return false;
+        if (!super.equals(o)) return false;
+        PublicKey publicKey1 = (PublicKey) o;
+        return accountId == publicKey1.accountId &&
+                Arrays.equals(publicKey, publicKey1.publicKey);
+    }
 
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), accountId);
+        result = 31 * result + Arrays.hashCode(publicKey);
+        return result;
+    }
 }

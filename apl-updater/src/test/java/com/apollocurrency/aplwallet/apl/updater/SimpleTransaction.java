@@ -84,8 +84,13 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getOrFetchSenderPublicKey() {
+    public byte[] getSenderPublicKey() {
         return new byte[0];
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return false;
     }
 
     @Override

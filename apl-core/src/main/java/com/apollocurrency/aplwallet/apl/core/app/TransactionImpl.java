@@ -401,7 +401,8 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public boolean shouldSavePublicKey() {
-        return Account.getPublicKey(senderId) == null;
+        return true;
+        //        return Account.getPublicKey(senderId) == null;
     }
 
     @Override

@@ -162,17 +162,19 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             long deleteStm = 0L;
             long startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery();
-                 PreparedStatement pstmtDeleteByIds =
-                         con.prepareStatement("DELETE FROM " + table + " WHERE db_id IN (SELECT * FROM table(x bigint = ? ))");
+                 PreparedStatement pstmtDeleteById =
+                         con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
                          con.prepareStatement("SELECT db_id, height FROM " + table + " " + keyFactory.getPKClause())) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
                 while (rs.next()) {
                     List<Long> keys = selectDbIds(selectDbIdStatement, rs);
-                    if (!keys.isEmpty()) {
-                        pstmtDeleteByIds.setObject(1, keys.toArray());
-                        deleted += pstmtDeleteByIds.executeUpdate();
+                    // TODO migrate to PreparedStatement.addBatch for another db
+                    for (Long dbId :keys) {
+                        pstmtDeleteById.setLong(1, dbId);
+                        pstmtDeleteById.executeUpdate();
+                        deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
                             dataSource.commit(false);

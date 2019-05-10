@@ -1680,6 +1680,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
+                lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
                 if (shutdown) {
                     log.info("Scan will be performed at next start");
                     new Thread(() -> System.exit(0)).start();
@@ -1768,7 +1769,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 pstmtDone.executeUpdate();
                 dataSource.commit(false);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
-                log.info("...done at height " + blockchain.getHeight());
+                log.info("Scan done at height " + blockchain.getHeight());
                 if (height == 0 && validate) {
                     log.info("SUCCESSFULLY PERFORMED FULL RESCAN WITH VALIDATION");
                 }

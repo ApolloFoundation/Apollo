@@ -42,13 +42,15 @@ public class TransactionPublicKeyMigrator {
             }
             con = dataSource.getConnection();
 
-            try (PreparedStatement checkTxStmt = con.prepareStatement("select count(*) from transaction where sender_public_key IS NOT NULL");
+            try (PreparedStatement checkTxStmt = con.prepareStatement("select 1 from transaction where sender_public_key IS NOT NULL");
                  PreparedStatement selectPublicKeyStmt = con.prepareStatement("select * from public_key where latest = true AND public_key is not null");
-                 PreparedStatement updateTxStmt = con.prepareStatement("update transaction set sender_public_key = ? where sender_id = ? and height = ? order by db_id limit 1")
+                 PreparedStatement updateTxStmt = con.prepareStatement("update transaction set sender_public_key = ? where sender_id = ? and height = ? order by db_id")
             ) {
-                long updateCount;
+                long updateCount = 0;
                 try(ResultSet rs = checkTxStmt.executeQuery()) {
-                    updateCount = rs.getLong(1);
+                    if (rs.next()) {
+                        updateCount = rs.getLong(1);
+                    }
                 }
                 if (updateCount == 0) {
                     LOG.info("Will assign public keys for transactions");

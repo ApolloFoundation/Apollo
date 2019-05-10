@@ -308,7 +308,7 @@ public class PhasingAppendix extends AbstractAppendix {
         TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
         transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
-        LOG.debug("Transaction " + transaction.getStringId() + " has been released");
+        LOG.trace("Phased transaction " + transaction.getStringId() + " has been released");
     }
 
     public void reject(Transaction transaction) {
@@ -320,7 +320,7 @@ public class PhasingAppendix extends AbstractAppendix {
         TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
         transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
-        LOG.debug("Phased transaction " + transaction.getStringId() + " has been rejected");
+        LOG.trace("Phased transaction " + transaction.getStringId() + " has been rejected");
     }
 
     /**
