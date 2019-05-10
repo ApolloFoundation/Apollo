@@ -23,10 +23,11 @@ import javax.inject.Singleton;
  * @author alukin@gmail.com
  */
 
+//TODO: cache purging
 @Singleton
 public class DownloadableFilesManager {
     
-    public final static long FDI_TTL=24*3600*1000; //one day in ms
+    public final static long FDI_TTL=7*24*3600*1000; //7 days in ms
     public final static int FILE_CHUNK_SIZE=32768;
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
     private String fileBaseDir="/home/at/testfiles";
@@ -86,7 +87,7 @@ public class DownloadableFilesManager {
         }
         return res;
     }
-    
+   //TODO:  real mapping 
     public Path mapFileIdToLocalPath(String fileId){
        String abspath = fileBaseDir+File.separator+fileId;
        Path res = Paths.get(abspath);
