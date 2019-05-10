@@ -8,19 +8,35 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Read/Write file by chunks
  * @author alukin@gmail.com
  */
 public class ChunkedFileOps {
-    private String absPath;
+    private final Path absPath;
     private Long lastRDChunkCrc;
     private Long lastWRChunkCrc;
-    
+    public static final String DIGESTER="SHA-256";
+     
     public ChunkedFileOps(String absPath) {
-        this.absPath = absPath;
+        this.absPath = Paths.get(absPath);        
     }
+    public ChunkedFileOps(Path path) {
+        this.absPath = path;        
+    }
+    public class ChunkInfo{
+        public long offset;
+        public int size;
+        public long crc;
+    }
+    private final List<ChunkInfo> fileCRCs = new ArrayList<>();
     
     public int writeChunk(int offset, byte[] data, long crc) throws IOException{
         int res=0;
@@ -28,13 +44,12 @@ public class ChunkedFileOps {
         cs.update(data);
         lastWRChunkCrc=cs.finish();
         if(lastWRChunkCrc!=crc){
-            throw new BadCheckSumException(absPath);
+            throw new BadCheckSumException(absPath.toString());
         }
-        Path path = Paths.get(absPath);
-        if(!path.toFile().exists()){
-            Files.createFile(path);
+        if(!absPath.toFile().exists()){
+            Files.createFile(absPath);
         }
-        RandomAccessFile rf = new RandomAccessFile(absPath,"rw");
+        RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"rw");
         rf.skipBytes(offset);
         rf.write(data);
         rf.close();
@@ -42,13 +57,12 @@ public class ChunkedFileOps {
     }
     
     public int readChunk(int offset, int size, byte[] dataBuf) throws IOException{
-        int res=0;
-        Path path = Paths.get(absPath);
-        if(!path.toFile().exists()){
+        int res;
+        if(!absPath.toFile().exists()){
            res=-2;
            return res;
         }        
-        RandomAccessFile rf = new RandomAccessFile(absPath,"rw");
+        RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r");
         rf.skipBytes(offset);
         res = rf.read(dataBuf,0,size);
         CheckSum cs = new CheckSum();
@@ -60,7 +74,64 @@ public class ChunkedFileOps {
     public long getLastWRChunkCrc() {
         return lastWRChunkCrc;
     }
+    
     public long getLastRDChunkCrc() {
         return lastRDChunkCrc;
-    }    
+    }
+    
+    public long getFileSize(){
+        long res = -1L;
+        try {  
+            BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
+            res = attrs.size();
+        } catch (IOException ex) {            
+        }
+      return res;   
+    }   
+    
+    /**
+     * Should depends on crypto settings, but at the time it is SHA-256
+     * @param chunkSize size of file chunks to calculate partial CRCs
+     * @return Crypto hash sum of entire file
+     */
+    public byte[] getFileHashSums(int chunkSize){
+        byte[] hash = null;
+        byte[] buf = new byte[chunkSize];
+        fileCRCs.clear();
+        try { 
+            RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r");
+            //TODO: use FBCryptoDigest after FBCrypto update for stream operations
+            MessageDigest dgst = MessageDigest.getInstance(DIGESTER);
+            int rd;
+            long offset=0;
+            while((rd=rf.read(buf))>0){
+                dgst.update(buf,0,rd);
+                CheckSum cs = new CheckSum();
+                cs.update(buf,rd);
+                ChunkInfo ci = new ChunkInfo();
+                ci.offset=offset;
+                ci.size=rd;
+                ci.crc=cs.finish();
+                fileCRCs.add(ci);
+                offset=offset+rd;
+            }
+            hash=dgst.digest();
+        } catch (IOException | NoSuchAlgorithmException ex) {
+        }
+       return hash;    
+    }
+    
+    public List<ChunkInfo> getChunksCRC(){
+        return fileCRCs;
+    }
+
+    public Date getFileDate() {
+        Long res=1L;
+        try {  
+            BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
+            res = attrs.lastModifiedTime().toMillis();
+        } catch (IOException ex) {            
+        }
+       return new Date(res);       
+    }
 }

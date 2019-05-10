@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkResonse;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.io.IOException;
+import java.util.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -34,6 +35,10 @@ public class GetFileChunk extends PeerRequestHandler {
                 res.errorCode = -1;
             }
             FileChunk fc = new FileChunk();
+            fc.info.crc=ops.getLastRDChunkCrc();
+            fc.info.fileId=fcr.fileId;
+            fc.info.size=rres;
+            fc.mime64data=Base64.getMimeEncoder().encodeToString(dataBuf);
             res.chunk = fc;
         } catch (IOException ex) {
             LOG.error("Error reading file with id: " + fcr.fileId, ex);

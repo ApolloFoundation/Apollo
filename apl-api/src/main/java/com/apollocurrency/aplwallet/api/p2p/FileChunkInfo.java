@@ -8,9 +8,10 @@ package com.apollocurrency.aplwallet.api.p2p;
  * @author alukin@gmail.com
  */
 public class FileChunkInfo {
-    public int id;
-    public int offset;
+    public String fileId;
+    public int chunkId;
+    public long offset;
     public int size;
     public boolean present;
-    public int crc32;
+    public long crc;
 }
