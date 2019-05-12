@@ -133,6 +133,26 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         return databaseManager;
     }
 
+    @Override
+    public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("select * from " + table + " where db_id >= ? and db_id < ? limit ?")) {
+            pstmt.setLong(1, from);
+            pstmt.setLong(2, dbIdLimit);
+            pstmt.setLong(3, limit);
+            List<T> values = new ArrayList<>();
+            long dbId = -1;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()){
+                    values.add(load(con, rs, null));
+                    dbId = rs.getLong("db_id");
+                }
+            }
+
+            return new DerivedTableData<>(values, dbId);
+        }
+    }
 
     @Override
     public DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {

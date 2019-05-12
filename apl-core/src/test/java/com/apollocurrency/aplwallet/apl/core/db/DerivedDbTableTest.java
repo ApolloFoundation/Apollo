@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db.derived;
+package com.apollocurrency.aplwallet.apl.core.db;
 
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -63,7 +66,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 //        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
-        assertEquals(getAllExpectedData(), all);
+        assertEquals(expected, all);
     }
 
     @Test
