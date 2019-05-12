@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,21 +20,15 @@ public interface DerivedTableInterface<T> {
 
     void truncate();
 
-    void trim(int height, TransactionalDataSource dataSource);
+    void trim(int height);
 
-    default void trim(int height) {}
+    void createSearchIndex(Connection con) throws SQLException;
 
-    default void createSearchIndex(Connection con) throws SQLException {}
+    void insert(T t);
 
-    default boolean isPersistent() {
-        return false;
-    }
+    DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException;
 
-    default T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {return null;}
-
-    default void insert(T t) {
-        throw new UnsupportedOperationException("unsupported insert");
-    }
+    boolean delete(T t);
 
     default DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
         throw new UnsupportedOperationException("GetAll is not supported");
@@ -50,10 +41,6 @@ public interface DerivedTableInterface<T> {
 
     default MinMaxDbId getMinMaxDbId(int height) throws SQLException {
         return new MinMaxDbId();
-    }
-
-    default boolean delete(T t) {
-        throw new UnsupportedOperationException("Delete is not supported");
     }
 
 }

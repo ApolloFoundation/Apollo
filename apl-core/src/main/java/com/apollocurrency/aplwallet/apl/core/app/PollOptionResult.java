@@ -1,13 +1,23 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+
 public final class PollOptionResult {
+    private long pollId;
+    private Long result;
+    private Long weight;
+    private DbKey dbKey;
 
-    private long result;
-    private long weight;
+    public DbKey getDbKey() {
+        return dbKey;
+    }
 
-    PollOptionResult(long result, long weight) {
-        this.result = result;
-        this.weight = weight;
+    public boolean isUndefined() {
+        return result == null && weight == null;
+    }
+
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
     }
 
     public long getResult() {
@@ -16,6 +26,24 @@ public final class PollOptionResult {
 
     public long getWeight() {
         return weight;
+    }
+
+    public long getPollId() {
+        return pollId;
+    }
+
+    public PollOptionResult(long pollId) {
+        this.pollId = pollId;
+    }
+
+    public void setPollId(long pollId) {
+        this.pollId = pollId;
+    }
+
+    public PollOptionResult(long pollId, long result, long weight) {
+        this.pollId = pollId;
+        this.result = result;
+        this.weight = weight;
     }
 
     public void add(long vote, long weight) {

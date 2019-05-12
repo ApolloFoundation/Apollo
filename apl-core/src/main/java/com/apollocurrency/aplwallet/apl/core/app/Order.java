@@ -25,6 +25,7 @@ import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
@@ -33,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -130,7 +130,7 @@ public abstract class Order {
 
     }
     */
-    static <T extends Order> void insertOrDeleteOrder(VersionedEntityDbTable<T> table, long quantityATU, T order) {
+    static <T extends Order> void insertOrDeleteOrder(VersionedDeletableEntityDbTable<T> table, long quantityATU, T order) {
         if (quantityATU > 0) {
             table.insert(order);
         } else if (quantityATU == 0) {
@@ -219,7 +219,7 @@ public abstract class Order {
 
         };
 
-        private static final VersionedEntityDbTable<Ask> askOrderTable = new VersionedEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
+        private static final VersionedDeletableEntityDbTable<Ask> askOrderTable = new VersionedDeletableEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
 
             @Override
             public Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -340,7 +340,7 @@ public abstract class Order {
 
         };
 
-        private static final VersionedEntityDbTable<Bid> bidOrderTable = new VersionedEntityDbTable<Bid>("bid_order", bidOrderDbKeyFactory) {
+        private static final VersionedDeletableEntityDbTable<Bid> bidOrderTable = new VersionedDeletableEntityDbTable<Bid>("bid_order", bidOrderDbKeyFactory) {
 
             @Override
             public Bid load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

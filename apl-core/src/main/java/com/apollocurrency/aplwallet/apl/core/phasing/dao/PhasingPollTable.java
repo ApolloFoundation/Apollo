@@ -144,6 +144,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+
     public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) throws SQLException {
 
@@ -215,6 +216,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
         }
     }
+
     public int getAllPhasedTransactionsCount() throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {
@@ -256,8 +258,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-        super.trim(height, dataSource);
+    public void trim(int height) {
+        super.trim(height);
+        TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              DbIterator<PhasingPoll> pollsToTrim = getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
              PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");

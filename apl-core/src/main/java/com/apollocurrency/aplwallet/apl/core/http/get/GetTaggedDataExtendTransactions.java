@@ -20,26 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHandler {
@@ -54,7 +54,7 @@ public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHan
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long taggedDataId = ParameterParser.getUnsignedLong(req, "transaction", true);
         List<TaggedDataExtend> extendTransactionList = taggedDataService.getExtendTransactionIds(taggedDataId);
-        List<Long> extendTransactions = extendTransactionList.stream().map(TaggedDataExtend::getId).collect(Collectors.toList());
+        List<Long> extendTransactions = extendTransactionList.stream().map(TaggedDataExtend::getTaggedDataId).collect(Collectors.toList());
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = lookupBlockchain();

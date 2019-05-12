@@ -99,9 +99,6 @@ public class TransactionImpl implements Transaction {
         private short index = -1;
         private long dbId = 0;
 
-        public BuilderImpl() { // for weld
-        }
-
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp) {
             this.version = version;
@@ -275,7 +272,7 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] senderPublicKey;
     private final long recipientId;
     private final long amountATM;
-    private volatile long feeATM; // remove final modifier to set fee outside the class TODO should return
+    private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
     private final byte[] referencedTransactionFullHash;
     private final TransactionType type;
     private final int ecBlockHeight;
@@ -400,6 +397,12 @@ public class TransactionImpl implements Transaction {
             senderPublicKey = Account.getPublicKey(senderId);
         }
         return senderPublicKey;
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return true;
+        //        return Account.getPublicKey(senderId) == null;
     }
 
     @Override

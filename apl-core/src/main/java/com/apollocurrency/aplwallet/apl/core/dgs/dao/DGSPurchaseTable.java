@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSPurchaseMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
@@ -19,7 +19,7 @@ import java.sql.SQLException;
 import javax.inject.Singleton;
 
 @Singleton
-public class DGSPurchaseTable extends VersionedEntityDbTable<DGSPurchase> {
+public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchase> {
     private static final LongKeyFactory<DGSPurchase> KEY_FACTORY = new LongKeyFactory<DGSPurchase>("id") {
         @Override
         public DbKey newKey(DGSPurchase purchase) {

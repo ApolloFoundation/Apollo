@@ -89,6 +89,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public boolean shouldSavePublicKey() {
+        return false;
+    }
+
+    @Override
     public long getRecipientId() {
         return 0;
     }

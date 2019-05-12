@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -141,7 +141,7 @@ public final class ShufflingParticipant {
 
     };
 
-    private static final VersionedEntityDbTable<ShufflingParticipant> shufflingParticipantTable = new VersionedEntityDbTable<ShufflingParticipant>("shuffling_participant", shufflingParticipantDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<ShufflingParticipant> shufflingParticipantTable = new VersionedDeletableEntityDbTable<ShufflingParticipant>("shuffling_participant", shufflingParticipantDbKeyFactory) {
 
         @Override
         public ShufflingParticipant load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -164,7 +164,7 @@ public final class ShufflingParticipant {
 
     };
 
-    private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<ShufflingData>("shuffling_data", shufflingDataDbKeyFactory) {
+    private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<>("shuffling_data", shufflingDataDbKeyFactory) {
 
         @Override
         public ShufflingData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,6 +50,7 @@ public class ActiveGenerators {
     }
 
 
+    @PostConstruct
     public void init() {
         if (!generatorsInitialized) {
             activeGeneratorIds.addAll(blockchain.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));

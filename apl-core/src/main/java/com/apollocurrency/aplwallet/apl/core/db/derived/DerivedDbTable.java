@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
@@ -74,9 +75,6 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {}
-
-    @Override
     public void trim(int height) {}
 
     @PostConstruct
@@ -101,7 +99,20 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
+    @Override
+    public boolean delete(T t) {
+        throw new UnsupportedOperationException("Delete is not supported");
+    }
 
+    @Override
+    public void insert(T t) {
+        throw new UnsupportedOperationException("Insert is not supported");
+    }
+
+    @Override
+    public void createSearchIndex(Connection con) throws SQLException {
+
+    }
 
     @Override
     public void truncate() {
@@ -117,32 +128,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
-/*
-    @Override
-    @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-
-        //nothing to trim
-    }
-*/
 
     public  DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
 
-/*
-    @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-        //implemented in EntityDbTable only
-    }
-*/
-
-/*
-    @Override
-    public boolean isPersistent() {
-        return false;
-    }
-*/
 
     @Override
     public DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
@@ -164,6 +154,8 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
             return new DerivedTableData<>(values, dbId);
         }
     }
+
+    protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
 
     @Override
     public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,

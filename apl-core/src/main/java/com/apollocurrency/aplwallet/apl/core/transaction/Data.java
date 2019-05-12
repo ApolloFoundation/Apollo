@@ -3,24 +3,24 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import org.json.simple.JSONObject;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  *
@@ -141,7 +141,7 @@ public abstract class Data extends TransactionType {
 
         @Override
         public String getName() {
-            return "TaggedDataUploadAttachment";
+            return "TaggedDataUpload";
         }
 
         @Override

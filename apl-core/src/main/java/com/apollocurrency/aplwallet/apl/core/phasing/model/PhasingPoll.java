@@ -5,18 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.AbstractPoll;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +27,8 @@ public class PhasingPoll extends AbstractPoll {
     }
 
     public void setLinkedFullHashes(List<byte[]> linkedFullHashes) {
-        this.linkedFullHashes =  linkedFullHashes.toArray(Convert.EMPTY_BYTES);
+        Objects.requireNonNull(linkedFullHashes);
+        this.linkedFullHashes = linkedFullHashes.toArray(Convert.EMPTY_BYTES);
     }
 
     public void setFullHash(byte[] fullHash) {
@@ -57,7 +49,7 @@ public class PhasingPoll extends AbstractPoll {
         super(transaction.getDbId(), transaction.getHeight(), transaction.getId(),
                 new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel),
                 transaction.getSenderId(), appendix.getFinishHeight()*/
-/*, appendix.getVoteWeighting()*//*
+    /*, appendix.getVoteWeighting()*//*
 );
         this.quorum = appendix.getQuorum();
         if(appendix instanceof PhasingAppendixV2) {
@@ -140,10 +132,17 @@ public class PhasingPoll extends AbstractPoll {
         PhasingPoll that = (PhasingPoll) o;
         return quorum == that.quorum &&
                 algorithm == that.algorithm &&
-                Arrays.equals(whitelist, that.whitelist) &&
-                Arrays.equals(hashedSecret, that.hashedSecret) &&
-                Arrays.deepEquals(linkedFullHashes, that.linkedFullHashes) &&
-                Arrays.equals(fullHash, that.fullHash);
+                Arrays.equals(hashedSecret, that.hashedSecret);
+    }
+
+    public boolean fullEquals(PhasingPoll poll) {
+        if (!equals(poll)) {
+            return false;
+        }
+        return
+                Arrays.equals(whitelist, poll.whitelist) &&
+                        Arrays.deepEquals(linkedFullHashes, poll.linkedFullHashes) &&
+                        Arrays.equals(fullHash, poll.fullHash);
     }
 
     @Override

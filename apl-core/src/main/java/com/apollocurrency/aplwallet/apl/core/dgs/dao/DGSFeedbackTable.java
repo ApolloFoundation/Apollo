@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSFeedbackMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
@@ -20,7 +20,7 @@ import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
-public class DGSFeedbackTable extends VersionedValuesDbTable<DGSFeedback> {
+public class DGSFeedbackTable extends VersionedDeletableValuesDbTable<DGSFeedback> {
     private static final LongKeyFactory<DGSFeedback> KEY_FACTORY = new LongKeyFactory<DGSFeedback>("id") {
         @Override
         public DbKey newKey(DGSFeedback feedback) {

@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import javax.enterprise.inject.spi.CDI;
 
@@ -37,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,7 +58,7 @@ public final class Asset {
 
     };
 
-    private static final VersionedEntityDbTable<Asset> assetTable = new VersionedEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
+    private static final VersionedDeletableEntityDbTable<Asset> assetTable = new VersionedDeletableEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
 
         @Override
         public Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -71,8 +71,8 @@ public final class Asset {
         }
 
         @Override
-        public void trim(int height, TransactionalDataSource dataSource) {
-            super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK), dataSource);
+        public void trim(int height) {
+            super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
         }
 
         @Override
@@ -84,11 +84,6 @@ public final class Asset {
             if (height > blockchain.getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
             }
-        }
-
-        @Override
-        protected String defaultSort() {
-            return super.defaultSort();
         }
     };
 

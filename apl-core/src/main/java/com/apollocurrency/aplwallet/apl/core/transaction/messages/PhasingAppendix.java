@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -16,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
@@ -28,14 +29,12 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
@@ -309,7 +308,7 @@ public class PhasingAppendix extends AbstractAppendix {
         TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
         transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
-        LOG.debug("Transaction " + transaction.getStringId() + " has been released");
+        LOG.trace("Phased transaction " + transaction.getStringId() + " has been released");
     }
 
     public void reject(Transaction transaction) {
@@ -321,7 +320,7 @@ public class PhasingAppendix extends AbstractAppendix {
         TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
 
         transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
-        LOG.debug("Transaction " + transaction.getStringId() + " has been rejected");
+        LOG.trace("Phased transaction " + transaction.getStringId() + " has been rejected");
     }
 
     /**

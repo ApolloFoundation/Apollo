@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TagDataTimestampMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
 
@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
  * DAO for TaggedDataTimestamp
  */
 @Singleton
-public class TaggedDataTimestampDao extends VersionedEntityDbTable<TaggedDataTimestamp> {
+public class TaggedDataTimestampDao extends VersionedDeletableEntityDbTable<TaggedDataTimestamp> {
 
     private static final LongKeyFactory<TaggedDataTimestamp> timestampKeyFactory = new LongKeyFactory<>("id") {
         @Override

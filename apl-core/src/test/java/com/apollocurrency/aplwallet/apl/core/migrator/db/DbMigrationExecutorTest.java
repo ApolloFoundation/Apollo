@@ -160,7 +160,7 @@ public class DbMigrationExecutorTest {
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
         BlockTestData btd = new BlockTestData();
-        Assertions.assertEquals(btd.BLOCK_11.getHeight(), migratedHeight);
+        Assertions.assertEquals(btd.LAST_BLOCK.getHeight(), migratedHeight);
 
     }
 }

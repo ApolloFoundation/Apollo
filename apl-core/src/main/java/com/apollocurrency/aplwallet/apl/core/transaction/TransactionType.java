@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -38,12 +40,10 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
 
 
 public abstract class TransactionType {
@@ -353,7 +353,7 @@ public abstract class TransactionType {
     }
 
     /**
-     * Is not used.
+     * Is not used in blockchain logic. Required for info purposes only
      */
     @Deprecated
     public abstract boolean isPhasingSafe();

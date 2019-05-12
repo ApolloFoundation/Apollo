@@ -4,14 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -19,19 +11,28 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedPersistentDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.DataTagMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Objects;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 @Singleton
-public class DataTagDao extends VersionedPersistentDbTable<DataTag> {
+public class DataTagDao extends EntityDbTable<DataTag> {
     private static Logger logger = LoggerFactory.getLogger(DataTagDao.class);
 
-    protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-    private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private Blockchain blockchain;
 
     private static final String DB_TABLE = "data_tag";
     private static final DataTagMapper MAPPER = new DataTagMapper();
@@ -43,8 +44,10 @@ public class DataTagDao extends VersionedPersistentDbTable<DataTag> {
         }
     };
 
-    public DataTagDao() {
-        super(DB_TABLE, tagDbKeyFactory);
+    @Inject
+    public DataTagDao(Blockchain blockchain) {
+        super(DB_TABLE, tagDbKeyFactory, true, null, false);
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is null");
     }
 
     public DbKey newDbKey(DataTag dataTag) {

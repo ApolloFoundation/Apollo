@@ -33,10 +33,8 @@ import java.sql.SQLException;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
-    private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-
-    protected VersionedValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
+public abstract class VersionedDeletableValuesDbTable<T> extends ValuesDbTable<T> {
+    protected VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 
@@ -48,10 +46,10 @@ public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(t);
+        DbKey dbKey = getDbKeyFactory().newKey(t);
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + dbKeyFactory.getPKClause()
+             PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + getDbKeyFactory().getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
             int height = blockchain.getHeight();
@@ -59,7 +57,7 @@ public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND height = ? AND latest = TRUE")) {
+                            + " SET latest = FALSE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
                         pstmt.setInt(j, blockchain.getHeight()); // TODO: YL review
                         if (pstmt.executeUpdate() > 0) {
@@ -74,7 +72,7 @@ public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
                         save(con, v);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
+                            + " SET latest = FALSE " + getDbKeyFactory().getPKClause() + " AND latest = TRUE")) {
                         dbKey.setPK(pstmt);
                         if (pstmt.executeUpdate() == 0) {
                             throw new RuntimeException(); // should not happen
@@ -82,7 +80,7 @@ public abstract class VersionedValuesDbTable<T> extends ValuesDbTable<T> {
                     }
                     return true;
                 } else {
-                    try (PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + dbKeyFactory.getPKClause())) {
+                    try (PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + getDbKeyFactory().getPKClause())) {
                         dbKey.setPK(pstmtDelete);
                         return pstmtDelete.executeUpdate() > 0;
                     }

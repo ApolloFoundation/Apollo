@@ -44,12 +44,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -71,7 +71,7 @@ public final class Currency {
 
     };
 
-    private static final VersionedEntityDbTable<Currency> currencyTable = new VersionedEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
+    private static final VersionedDeletableEntityDbTable<Currency> currencyTable = new VersionedDeletableEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
  
         @Override
         public Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -133,7 +133,7 @@ public final class Currency {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedDeletableEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
 
         @Override
         public CurrencySupply load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

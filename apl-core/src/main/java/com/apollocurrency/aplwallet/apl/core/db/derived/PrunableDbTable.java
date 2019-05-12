@@ -24,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -35,37 +34,24 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
 
-public abstract class PrunableDbTable<T> extends PersistentDbTable<T> {
+public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    protected static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-    
+
     protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
-    }
-
-    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, fullTextSearchColumns);
     }
 
     public PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
         super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
     }
 
-    PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, multiversion, fullTextSearchColumns);
-    }
-
-    protected PrunableDbTable(KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns) {
-        super("", dbKeyFactory, multiversion, fullTextSearchColumns);
-    }
-
     @Override
-    public final void trim(int height, TransactionalDataSource dataSource) {
+    public final void trim(int height) {
         prune();
-        super.trim(height, dataSource);
+        super.trim(height);
     }
 
     protected void prune() {

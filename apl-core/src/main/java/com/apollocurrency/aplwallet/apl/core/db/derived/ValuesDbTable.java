@@ -23,6 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,47 +33,33 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
+public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
+        private static final Logger log = LoggerFactory.getLogger(ValuesDbTable.class);
 
-    private final boolean multiversion;
-    protected final KeyFactory<V> dbKeyFactory;
 
-    public boolean isMultiversion() {
-        return multiversion;
-    }
-
-    protected ValuesDbTable(String table, KeyFactory<V> dbKeyFactory) {
+    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false);
     }
 
-    ValuesDbTable(String table, KeyFactory<V> dbKeyFactory, boolean multiversion) {
-        super(table);
-        this.dbKeyFactory = dbKeyFactory;
-        this.multiversion = multiversion;
+    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
+        super(table, dbKeyFactory, multiversion, true);
     }
 
-    public ValuesDbTable(String table, boolean init,  KeyFactory<V> dbKeyFactory) {
-        super(table, init);
-        this.multiversion = false;
-        this.dbKeyFactory = dbKeyFactory;
+    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
+        super(table, dbKeyFactory, false, init);
     }
 
-    protected void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
-    }
-
-    public final List<V> get(DbKey dbKey) {
-        List<V> values;
+    public final List<T> get(DbKey dbKey) {
+        List<T> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (dataSource.isInTransaction()) {
-            values = (List<V>) dataSource.getCache(table).get(dbKey);
+            values = (List<T>) dataSource.getCache(table).get(dbKey);
             if (values != null) {
                 return values;
             }
         }
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + dbKeyFactory.getPKClause()
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
                      + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
             dbKey.setPK(pstmt);
             values = get(con, pstmt);
@@ -84,16 +72,17 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    public KeyFactory<V> getDbKeyFactory() {
-        return dbKeyFactory;
-    }
-
-    private List<V> get(Connection con, PreparedStatement pstmt) {
+    private List<T> get(Connection con, PreparedStatement pstmt) {
         try {
-            List<V> result = new ArrayList<>();
+            List<T> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    result.add(load(con, rs, dbKeyFactory.newKey(rs)));
+                    T loadedValue = load(con, rs, keyFactory.newKey(rs));
+                    if (loadedValue != null) {
+                        result.add(loadedValue);
+                    } else {
+                        log.debug("Loaded null value from {}. Skipping it", getTableName());
+                    }
                 }
             }
             return result;
@@ -102,12 +91,12 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    public final void insert(List<V> values) {
+    public final void insert(List<T> values) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = dbKeyFactory.newKey(values.get(0)); // TODO: YL review and fix
+        DbKey dbKey = keyFactory.newKey(values.get(0)); // TODO: YL review and fix
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
@@ -116,12 +105,12 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + dbKeyFactory.getPKClause() + " AND latest = TRUE")) {
+                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE")) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }
             }
-            for (V v : values) {
+            for (T v : values) {
 //                save(con, t, v);
                 save(con, v); // TODO: YL review and fix
             }
@@ -130,37 +119,16 @@ public abstract class ValuesDbTable<V> extends DerivedDbTable<V> {
         }
     }
 
-    protected abstract void save(Connection con, V entity) throws SQLException;
+    protected abstract void save(Connection con, T entity) throws SQLException;
 
-    private void checkKeys(DbKey key, List<V> values) {
+    private void checkKeys(DbKey key, List<T> values) {
 
         boolean match = values
                 .stream()
-                .map(dbKeyFactory::newKey)
+                .map(keyFactory::newKey)
                 .allMatch(key::equals);
         if (!match) {
             throw new IllegalArgumentException("DbKeys not match");
         }
     }
-
-    @Override
-    public final void rollback(int height) {
-        if (multiversion) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            VersionedEntityDbTable.rollback(dataSource, table, height, dbKeyFactory);
-        } else {
-            super.rollback(height);
-        }
-    }
-
-    @Override
-    public final void trim(int height, TransactionalDataSource dataSource) {
-        if (multiversion) {
-            if (dataSource == null) {
-                dataSource = databaseManager.getDataSource();
-            }
-            VersionedEntityDbTable.trim(dataSource, table, height, dbKeyFactory);
-        }
-    }
-
 }
