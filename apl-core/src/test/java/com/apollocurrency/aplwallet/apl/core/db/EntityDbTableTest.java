@@ -557,7 +557,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends Derived
             }
             //check cache, which should not contain data
             assertEquals(expected, actual);
-            if (getBlockchain().getHeight() < height || height < 0) {
+            if (getBlockchain().getHeight() <= height || height < 0) {
                 assertListInCache(expected);
             } else {
                 assertListNotInCache(expected);

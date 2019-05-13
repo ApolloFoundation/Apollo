@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -30,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -88,6 +91,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
+    private BlockTestData btd;
 
     public PhasingPollTableTest() {
         super(PhasingPoll.class);
@@ -113,7 +117,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Override
     protected List<PhasingPoll> getAll() {
-        return List.of(ptd.POLL_0, ptd.POLL_1, ptd.POLL_2, ptd.POLL_3, ptd.POLL_4);
+        return List.of(ptd.POLL_0, ptd.POLL_1, ptd.POLL_2, ptd.POLL_3, ptd.POLL_4, ptd.POLL_5);
     }
 
 
@@ -132,7 +136,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     public void testTrim() {
         table.trim(ptd.POLL_1.getFinishHeight() + 1);
         List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
-        Assertions.assertEquals(List.of(ptd.POLL_4, ptd.POLL_3), actual);
+        Assertions.assertEquals(List.of(ptd.POLL_5, ptd.POLL_4, ptd.POLL_3), actual);
         String condition = "transaction_id IN " + String.format("(%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId());
         assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
         assertNotExistEntriesInTableForCondition("phasing_vote", condition);
@@ -193,7 +197,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() throws SQLException {
         List<Long> dbIds = table.getActivePhasedTransactionDbIds(Integer.MAX_VALUE);
-        assertEquals(Arrays.asList(ttd.DB_ID_12, ttd.DB_ID_11), dbIds);
+        assertEquals(Arrays.asList(ttd.DB_ID_12, ttd.DB_ID_11, ttd.DB_ID_13), dbIds);
     }
 
     @Test
@@ -215,30 +219,105 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         assertEquals(ptd.NUMBER_OF_PHASED_TRANSACTIONS, count);
     }
     @Test
-    void testGetAccountPhasedTransactionsCount() throws SQLException {
-        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId());
+    void testGetAccountPhasedTransactionsCountAtLastBlockHeight() throws SQLException {
+        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId(), ptd.POLL_5.getHeight());
 
-        assertEquals(2, count);
+        assertEquals(1, count);
+    }
+
+    @Test
+    void testGetAccountPhasedTransactionsCountAtGenesisBlockHeight() throws SQLException {
+        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId(), 0);
+
+        assertEquals(3, count);
     }
 
     @Test
     void testGetNonExistentAccountPhasedTransactionCount() throws SQLException {
-        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId() + 1);
+        int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId() + 1, ptd.POLL_5.getHeight());
 
         assertEquals(0, count);
     }
 
     @Test
     void testGetByHoldingId() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100));
+        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight()));
         assertEquals(List.of(ttd.TRANSACTION_13), transactions);
     }
 
     @Test
     void testGetByHoldingIdNotExist() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100));
+        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight()));
         assertTrue(transactions.isEmpty());
     }
 
+    @Test
+    void testIsTransactionPhasedForPollId() throws SQLException {
+        boolean phased = table.isTransactionPhased(ptd.POLL_0.getId());
 
+        assertTrue(phased);
+    }
+
+    @Test
+    void testIsTransactionPhasedForPollResult() throws SQLException {
+        boolean phased = table.isTransactionPhased(ptd.RESULT_0.getId());
+
+        assertTrue(phased);
+    }
+
+    @Test
+    void testIsTransactionPhasedForOrdinaryTransaction() throws SQLException {
+        boolean phased = table.isTransactionPhased(ttd.TRANSACTION_1.getId());
+
+        assertFalse(phased);
+    }
+
+    @Test
+    void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtLastBlockHeight() throws SQLException {
+        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1));
+        assertTrue(transactions.isEmpty());
+    }
+
+    @Test
+    void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() throws SQLException {
+        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0));
+        assertEquals(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
+    }
+
+    @Test
+    void testGetAllAccountPhasedTransactionsWithPagination() throws SQLException {
+        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0));
+        assertEquals(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
+    }
+
+    @Test
+    void testGetSenderPhasedTransactionFees() throws SQLException {
+        long actualFee = table.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId(), 0);
+        long expectedFee = ttd.TRANSACTION_13.getFeeATM() + ttd.TRANSACTION_12.getFeeATM() + ttd.TRANSACTION_11.getFeeATM();
+        assertEquals(expectedFee, actualFee);
+    }
+
+    @Test
+    void testGetSenderPhasedTransactionFeesAtLastPollHeight() throws SQLException {
+        long actualFee = table.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId(), ptd.POLL_5.getHeight());
+        long expectedFee = ttd.TRANSACTION_13.getFeeATM();
+        assertEquals(expectedFee, actualFee);
+    }
+    @Test
+    void testGetSenderPhasedTransactionFeesForNonExistentAccount() throws SQLException {
+        long actualFee = table.getSenderPhasedTransactionFees(1, 0);
+        assertEquals(0, actualFee);
+    }
+
+    @Test
+    void testGetById() {
+        PhasingPoll phasingPoll = table.get(ptd.POLL_2.getId());
+        assertEquals(ptd.POLL_2, phasingPoll);
+    }
+
+    @Test
+    void testGetByIdNotExist() {
+        PhasingPoll phasingPoll = table.get(1);
+        assertNull(phasingPoll);
+    }
 }

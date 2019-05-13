@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -280,7 +281,7 @@ public class PhasingPollServiceTest {
     void testGetAccountPhasedTransactionsCount() {
         int count = service.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId());
 
-        assertEquals(2, count);
+        assertEquals(3, count);
     }
 
     @Test
@@ -452,7 +453,7 @@ public class PhasingPollServiceTest {
     @Test
     void testGetAccountPhasedTransactions() {
         List<Transaction> accountTransactions = CollectionUtil.toList(service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100));
-        assertEquals(accountTransactions, List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11));
+        assertEquals(accountTransactions, List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11));
     }
 
     @Test
@@ -474,4 +475,61 @@ public class PhasingPollServiceTest {
             throw e;
         }
     }
+
+
+    @Test
+    void testGetByHoldingId() throws SQLException {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
+        List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100));
+        assertEquals(List.of(ttd.TRANSACTION_13), transactions);
+    }
+
+    @Test
+    void testGetByHoldingIdNotExist() throws SQLException {
+        List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100));
+        assertTrue(transactions.isEmpty());
+    }
+
+    @Test
+    void testGetSenderPhasedTransactionFees() throws SQLException {
+        blockchain.setLastBlock(btd.GENESIS_BLOCK);
+        long actualFee = service.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId());
+        long expectedFee = ttd.TRANSACTION_13.getFeeATM() + ttd.TRANSACTION_12.getFeeATM() + ttd.TRANSACTION_11.getFeeATM();
+        assertEquals(expectedFee, actualFee);
+    }
+
+    @Test
+    void testGetSenderPhasedTransactionFeesAtLastPollHeight() throws SQLException {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
+        long actualFee = service.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId());
+        long expectedFee = ttd.TRANSACTION_13.getFeeATM();
+        assertEquals(expectedFee, actualFee);
+    }
+    @Test
+    void testGetSenderPhasedTransactionFeesForNonExistentAccount() throws SQLException {
+        blockchain.setLastBlock(btd.GENESIS_BLOCK);
+        long actualFee = service.getSenderPhasedTransactionFees(1);
+        assertEquals(0, actualFee);
+    }
+
+    @Test
+    void testVerifyRevealedSecret() {
+        boolean verified = service.verifySecret(ptd.POLL_0, "fasfas".getBytes());
+
+        assertTrue(verified);
+    }
+    @Test
+    void testVerifyRevealedSecretForWrongPhasingPoll() {
+        boolean verified = service.verifySecret(ptd.POLL_1, "fasfas".getBytes());
+
+        assertFalse(verified);
+    }
+
+    @Test
+    void testVerifyWrongRevealedSecret() {
+        boolean verified = service.verifySecret(ptd.POLL_0, "fasfa".getBytes());
+
+        assertFalse(verified);
+    }
+
 }

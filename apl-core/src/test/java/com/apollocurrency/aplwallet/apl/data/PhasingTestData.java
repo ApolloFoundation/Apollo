@@ -32,7 +32,7 @@ public class PhasingTestData {
     public final PhasingPollVoter NEW_VOTER_0;
     public final PhasingPollVoter NEW_VOTER_1;
     public final PhasingPollVoter NEW_VOTER_2;
-    public final int NUMBER_OF_PHASED_TRANSACTIONS = 7;
+    public final int NUMBER_OF_PHASED_TRANSACTIONS = 8;
     public final byte[] LINKED_TRANSACTION_0_HASH = Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e");
     public final byte[] LINKED_TRANSACTION_1_HASH;
     public final byte[] LINKED_TRANSACTION_2_HASH;
@@ -111,7 +111,7 @@ public class PhasingTestData {
         NEW_POLL_PARAMS     = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
         NEW_POLL_APPENDIX = new PhasingAppendixV2(td.TRANSACTION_10.getHeight(), 20000, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
         NEW_POLL = PhasingCreator.createPoll(td.TRANSACTION_10, NEW_POLL_APPENDIX);
-        NEW_POLL.setDbId(POLL_4.getDbId() + 1);
+        NEW_POLL.setDbId(POLL_5.getDbId() + 1);
         NEW_VOTE_TX = td.TRANSACTION_3;
         NEW_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1,  NEW_VOTE_TX.getHeight(), POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());
         NEW_LINKED_TX_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1, td.NOT_SAVED_TRANSACTION.getHeight(), POLL_3.getId(), td.NOT_SAVED_TRANSACTION.getSenderId(), td.NOT_SAVED_TRANSACTION.getId());

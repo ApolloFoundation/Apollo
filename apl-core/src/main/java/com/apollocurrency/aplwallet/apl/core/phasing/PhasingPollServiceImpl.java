@@ -109,7 +109,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) {
         try {
-            return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to);
+            return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -119,7 +119,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
-            return phasingPollTable.getAccountPhasedTransactions(accountId, from, to);
+            return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -129,7 +129,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public int getAccountPhasedTransactionCount(long accountId) {
         try {
-            return phasingPollTable.getAccountPhasedTransactionCount(accountId);
+            return phasingPollTable.getAccountPhasedTransactionCount(accountId, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -150,7 +150,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public long getSenderPhasedTransactionFees(long accountId) {
         try {
-            return phasingPollTable.getSenderPhasedTransactionFees(accountId);
+            return phasingPollTable.getSenderPhasedTransactionFees(accountId, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -227,6 +227,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         }
         return cumulativeWeight;
     }
+
     public boolean verifySecret(PhasingPoll poll, byte[] revealedSecret) {
         HashFunction hashFunction = PhasingPollService.getHashFunction(poll.getAlgorithm());
         return hashFunction != null && Arrays.equals(poll.getHashedSecret(), hashFunction.hash(revealedSecret));

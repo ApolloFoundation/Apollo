@@ -127,7 +127,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
 
 
-    public long getSenderPhasedTransactionFees(long accountId) throws SQLException {
+    public long getSenderPhasedTransactionFees(long accountId, int height) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
 
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
@@ -137,7 +137,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
                      " AND phasing_poll.finish_height > ?")) {
             int i = 0;
             pstmt.setLong(++i, accountId);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getLong("fees");
@@ -146,7 +146,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
-                                                                long accountId, boolean withoutWhitelist, int from, int to) throws SQLException {
+                                                                long accountId, boolean withoutWhitelist, int from, int to, int height) throws SQLException {
 
         Connection con = null;
         try {
@@ -164,7 +164,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             int i = 0;
             pstmt.setLong(++i, holdingId);
             pstmt.setByte(++i, votingModel.getCode());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, height);
             if (accountId != 0) {
                 pstmt.setLong(++i, accountId);
             }
@@ -176,7 +176,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             throw e;
         }
     }
-    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) throws SQLException {
+    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
         Connection con = null;
         try {
             con = getDatabaseManager().getDataSource().getConnection();
@@ -189,7 +189,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, height);
             DbUtils.setLimits(++i, pstmt, from, to);
 
             return blockchain.getTransactions(con, pstmt);
@@ -199,7 +199,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public int getAccountPhasedTransactionCount(long accountId) throws SQLException {
+    public int getAccountPhasedTransactionCount(long accountId, int height) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction, phasing_poll " +
                      " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
@@ -209,7 +209,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
