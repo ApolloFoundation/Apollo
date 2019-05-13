@@ -53,15 +53,15 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     public void setUp() {
         super.setUp();
         table = getTable();
-        assertNotNull(getEntryWithListOfSize(table.getDbKeyFactory(),2));
-        assertNotNull(getEntryWithListOfSize(table.getDbKeyFactory(),3));
+        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),2));
+        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),3));
     }
 
     ValuesDbTable<T> table ;
 
     @Test
     public void testGetByDbKey() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 3);
+        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3);
         List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         List<T> result = table.get(dbKey);
@@ -91,7 +91,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
 
     @Test
     public void testGetInCached() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 2);
+        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
         List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         DbUtils.inTransaction(extension, con -> {
@@ -104,7 +104,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
 
     @Test
     public void testGetFromDeletedCache() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 2);
+        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
         List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         DbUtils.inTransaction(extension, con -> {
@@ -225,4 +225,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
 
     protected abstract List<T> dataToInsert();
 
+    protected List<T> getAllLatest() {
+        return getAll();
+    }
 }

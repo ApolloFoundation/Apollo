@@ -66,7 +66,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     }
 
     @Test
-    public void testDelete() {
+    public void testDelete() throws SQLException {
         assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.delete(mock(clazz)));
     }
 

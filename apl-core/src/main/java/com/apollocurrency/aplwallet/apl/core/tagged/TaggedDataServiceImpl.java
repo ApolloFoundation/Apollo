@@ -94,7 +94,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                 .peek(e-> e.setHeight(blockchain.getHeight()))
                 .collect(Collectors.toList());
 
-        taggedDataExtendList.add(new TaggedDataExtend(taggedDataId, blockchain.getHeight(),transaction.getId()));
+        taggedDataExtendList.add(new TaggedDataExtend(null, blockchain.getHeight(), taggedDataId, transaction.getId()));
         taggedDataExtendDao.insert(taggedDataExtendList);
         if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.getTimestamp()) {
             TaggedData taggedData = taggedDataDao.get(dbKey);

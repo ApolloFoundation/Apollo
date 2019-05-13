@@ -23,6 +23,7 @@ public class DGSPublicFeedback extends VersionedDerivedEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof DGSPublicFeedback)) return false;
+        if (!super.equals(o)) return false;
         DGSPublicFeedback that = (DGSPublicFeedback) o;
         return Objects.equals(feedback, that.feedback) &&
                 Objects.equals(id, that.id);
@@ -30,7 +31,7 @@ public class DGSPublicFeedback extends VersionedDerivedEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedback, id);
+        return Objects.hash(super.hashCode(), feedback, id);
     }
 
     public String getFeedback() {
