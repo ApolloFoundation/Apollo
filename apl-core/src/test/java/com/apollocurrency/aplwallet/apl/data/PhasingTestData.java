@@ -82,15 +82,17 @@ public class PhasingTestData {
         POLL_3 = PhasingCreator.createPoll(40, td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{LINKED_TRANSACTION_0_HASH, LINKED_TRANSACTION_1_HASH, LINKED_TRANSACTION_2_HASH}, td.TRANSACTION_12.getHeight());
         POLL_4 = PhasingCreator.createPoll(50, td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0_ID}, td.TRANSACTION_11.getFullHash(), 18000, (byte) 0, 3, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_11.getHeight());
         POLL_5 = PhasingCreator.createPoll(60, td.TRANSACTION_13.getId(), td.TRANSACTION_13.getSenderId(), new long[]{POLL_5_VOTER_0_ID, POLL_5_VOTER_1_ID }, td.TRANSACTION_13.getFullHash(), 537000, (byte) 2, 50, 10, 4826028362757542803L, (byte) 2, null, (byte) 0, null, td.TRANSACTION_13.getHeight());
+
         POLL_1_VOTER_0 = new PhasingPollVoter(20L, POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_0_ID);
         POLL_1_VOTER_1 = new PhasingPollVoter(30L,POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_1_ID);
         POLL_4_VOTER_0 = new PhasingPollVoter(40L, POLL_4.getHeight(), POLL_4.getId(), POLL_4_VOTER_0_ID);
-        POLL_5_VOTER_0 = new PhasingPollVoter(50L, POLL_5.getHeight(), POLL_5.getId(), POLL_5_VOTER_0_ID);
-        POLL_5_VOTER_1 = new PhasingPollVoter(60L, POLL_5.getHeight(), POLL_5.getId(), POLL_5_VOTER_1_ID);
 
-        FAKE_VOTER_0 = new PhasingPollVoter(70L, POLL_4.getHeight() + 1, 128, 102);
-        FAKE_VOTER_1 = new PhasingPollVoter(80L, POLL_4.getHeight() + 1, 128, 103);
-        FAKE_VOTER_2 = new PhasingPollVoter(90L, POLL_4.getHeight() + 1, 128, 104);
+        FAKE_VOTER_0 = new PhasingPollVoter(50L, POLL_4.getHeight() + 1, 128, 102);
+        FAKE_VOTER_1 = new PhasingPollVoter(60L, POLL_4.getHeight() + 1, 128, 103);
+        FAKE_VOTER_2 = new PhasingPollVoter(70L, POLL_4.getHeight() + 1, 128, 104);
+
+        POLL_5_VOTER_0 = new PhasingPollVoter(80L, POLL_5.getHeight(), POLL_5.getId(), POLL_5_VOTER_0_ID);
+        POLL_5_VOTER_1 = new PhasingPollVoter(90L, POLL_5.getHeight(), POLL_5.getId(), POLL_5_VOTER_1_ID);
 
         SHARD_RESULT_0 = new PhasingPollResult(10L, 300, 100, 1, true);
         RESULT_0 = new PhasingPollResult(20L, 1500, td.TRANSACTION_0.getId(), 1, true);

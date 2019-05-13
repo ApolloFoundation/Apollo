@@ -167,18 +167,39 @@ public class DGSServiceImpl implements DGSService {
     }
 
     private void addFeedback(DGSPurchase purchase, EncryptedData feedbackNote) {
-        if (purchase.getFeedbacks() == null) {
+        if (getFeedbacks(purchase) == null) {
             purchase.setFeedbacks(new ArrayList<>());
         }
-        DGSFeedback feedback = new DGSFeedback(null, blockchain.getHeight(), purchase.getId(), feedbackNote);
-        purchase.addFeedback(feedback);
+        int blockchainHeight = blockchain.getHeight();
         if (!purchase.hasFeedbacks()) {
             purchase.setHasFeedbacks(true);
+            purchase.setHeight(blockchainHeight);
             purchaseTable.insert(purchase);
         }
+        DGSFeedback feedback = new DGSFeedback(null, blockchainHeight, purchase.getId(), feedbackNote);
+        purchase.addFeedback(feedback);
+        purchase.getFeedbacks().forEach((f -> f.setHeight(blockchainHeight)));
+
         feedbackTable.insert(purchase.getFeedbacks());
     }
 
+
+    public void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback) {
+
+        if (getPublicFeedbacks(dgsPurchase) == null) {
+            dgsPurchase.setPublicFeedbacks(new ArrayList<>());
+        }
+        int blockchainHeight = blockchain.getHeight();
+        if (!dgsPurchase.hasPublicFeedbacks()) {
+            dgsPurchase.setHasPublicFeedbacks(true);
+            dgsPurchase.setHeight(blockchainHeight);
+            purchaseTable.insert(dgsPurchase);
+        }
+        DGSPublicFeedback dgsPublicFeedback = new DGSPublicFeedback(null, blockchainHeight, publicFeedback, dgsPurchase.getId());
+        dgsPurchase.getPublicFeedbacks().add(dgsPublicFeedback);
+        dgsPurchase.getPublicFeedbacks().forEach((f -> f.setHeight(blockchainHeight)));
+        publicFeedbackTable.insert(dgsPurchase.getPublicFeedbacks());
+    }
 
     public List<DGSPublicFeedback> getPublicFeedbacks(DGSPurchase dgsPurchase) {
         if (!dgsPurchase.hasPublicFeedbacks()) {
@@ -186,19 +207,6 @@ public class DGSServiceImpl implements DGSService {
         }
         dgsPurchase.setPublicFeedbacks(publicFeedbackTable.get(dgsPurchase.getId()));
         return dgsPurchase.getPublicFeedbacks();
-    }
-
-    public void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback) {
-        if (dgsPurchase.getPublicFeedbacks() == null) {
-            dgsPurchase.setPublicFeedbacks(new ArrayList<>());
-        }
-        DGSPublicFeedback dgsPublicFeedback = new DGSPublicFeedback(null, blockchain.getHeight(), publicFeedback, dgsPurchase.getId());
-        dgsPurchase.getPublicFeedbacks().add(dgsPublicFeedback);
-        if (!dgsPurchase.hasPublicFeedbacks()) {
-            dgsPurchase.setHasPublicFeedbacks(true);
-            purchaseTable.insert(dgsPurchase);
-        }
-        publicFeedbackTable.insert(dgsPurchase.getPublicFeedbacks());
     }
 
     public void setDiscountATM(DGSPurchase dgsPurchase, long discountATM) {
@@ -251,6 +259,7 @@ public class DGSServiceImpl implements DGSService {
             }
             tag.setInStockCount(tag.getInStockCount() + 1);
             tag.setTotalCount(tag.getTotalCount() + 1);
+            tag.setHeight(blockchain.getHeight());
             tagTable.insert(tag);
         }
     }
@@ -262,6 +271,7 @@ public class DGSServiceImpl implements DGSService {
                 throw new IllegalStateException("Unknown tag " + tagValue);
             }
             tag.setInStockCount(tag.getInStockCount() - 1);
+            tag.setHeight(blockchain.getHeight());
             tagTable.insert(tag);
         }
     }
@@ -269,7 +279,8 @@ public class DGSServiceImpl implements DGSService {
     public void delistGoods(long goodsId) {
         DGSGoods goods = goodsTable.get(goodsId);
         if (!goods.isDelisted()) {
-            goods.setDelisted(true);
+            goods.setHeight(blockchain.getHeight());
+            setDelistedGoods(goods, true);
         } else {
             throw new IllegalStateException("Goods already delisted");
         }
@@ -278,6 +289,7 @@ public class DGSServiceImpl implements DGSService {
     public void changePrice(long goodsId, long priceATM) {
         DGSGoods goods = goodsTable.get(goodsId);
         if (!goods.isDelisted()) {
+            goods.setHeight(blockchain.getHeight());
             changePrice(goods, priceATM);
         } else {
             throw new IllegalStateException("Can't change price of delisted goods");
@@ -287,6 +299,7 @@ public class DGSServiceImpl implements DGSService {
     public void changeQuantity(long goodsId, int deltaQuantity) {
         DGSGoods goods = goodsTable.get(goodsId);
         if (!goods.isDelisted()) {
+            goods.setHeight(blockchain.getHeight());
             changeQuantity(goods, deltaQuantity);
         } else {
             throw new IllegalStateException("Can't change quantity of delisted goods");
@@ -298,6 +311,7 @@ public class DGSServiceImpl implements DGSService {
         if (!goods.isDelisted()
                 && attachment.getQuantity() <= goods.getQuantity()
                 && attachment.getPriceATM() == goods.getPriceATM()) {
+            goods.setHeight(blockchain.getHeight());
             changeQuantity(goods, -attachment.getQuantity());
             DGSPurchase purchase = new DGSPurchase(transaction, attachment, goods.getSellerId(), blockchain.getLastBlockTimestamp(), new ArrayList<>());
             purchaseTable.insert(purchase);
@@ -311,7 +325,8 @@ public class DGSServiceImpl implements DGSService {
 
     public void deliver(Transaction transaction, DigitalGoodsDelivery attachment) {
         DGSPurchase purchase = getPendingPurchase(attachment.getPurchaseId());
-        purchase.setPending(false);
+        purchase.setHeight(blockchain.getHeight());
+        setPending(purchase, false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
         Account buyer = Account.getAccount(purchase.getBuyerId());
         long transactionId = transaction.getId();
@@ -321,21 +336,23 @@ public class DGSServiceImpl implements DGSService {
         Account seller = Account.getAccount(transaction.getSenderId());
         seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
                 Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
-        purchase.setEncryptedGoods(attachment.getGoods(), attachment.goodsIsText());
-        purchase.setDiscountATM(attachment.getDiscountATM());
+        setEncryptedGoods(purchase, attachment.getGoods(), attachment.goodsIsText());
+        setDiscountATM(purchase, attachment.getDiscountATM());
+
     }
 
     public void refund(LedgerEvent event, long eventId, long sellerId, long purchaseId, long refundATM,
                        EncryptedMessageAppendix encryptedMessage) {
         DGSPurchase purchase = purchaseTable.get(purchaseId);
+        purchase.setHeight(blockchain.getHeight());
         Account seller = Account.getAccount(sellerId);
         seller.addToBalanceATM(event, eventId, -refundATM);
         Account buyer = Account.getAccount(purchase.getBuyerId());
         buyer.addToBalanceAndUnconfirmedBalanceATM(event, eventId, refundATM);
         if (encryptedMessage != null) {
-            purchase.setRefundNote(encryptedMessage.getEncryptedData());
+            setRefundNote(purchase, encryptedMessage.getEncryptedData());
         }
-        purchase.setRefundATM(refundATM);
+        setRefundATM(purchase, refundATM);
     }
 
     public void feedback(long purchaseId, EncryptedMessageAppendix encryptedMessage, MessageAppendix message) {

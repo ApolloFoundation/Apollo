@@ -31,7 +31,7 @@ public class DGSFeedbackTable extends VersionedDeletableValuesDbTable<DGSFeedbac
         }
     };
     private static final String TABLE_NAME = "purchase_feedback";
-    private static final DGSFeedbackMapper MAPPER = new DGSFeedbackMapper();
+    private static final DGSFeedbackMapper MAPPER = new DGSFeedbackMapper(KEY_FACTORY);
 
     public DGSFeedbackTable() {
         super(TABLE_NAME, KEY_FACTORY);

@@ -30,7 +30,7 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
             return purchase.getDbKey();
         }
     };
-    private static final DGSPurchaseMapper MAPPER = new DGSPurchaseMapper();
+    private static final DGSPurchaseMapper MAPPER = new DGSPurchaseMapper(KEY_FACTORY);
     private static final String TABLE = "purchase";
 
     public DGSPurchaseTable() {

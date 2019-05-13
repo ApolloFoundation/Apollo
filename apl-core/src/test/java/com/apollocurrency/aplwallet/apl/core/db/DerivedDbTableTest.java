@@ -52,7 +52,8 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     public void testGetAll() throws SQLException {
         List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
-        assertEquals(getAll(), all);
+        List<T> expected = sortByHeightAsc(getAll());
+        assertEquals(expected, all);
     }
 
     @Test

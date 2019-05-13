@@ -66,12 +66,9 @@ public interface DGSService {
 
     List<DGSFeedback> getFeedbacks(DGSPurchase dgsPurchase);
 
-
     List<DGSPublicFeedback> getPublicFeedbacks(DGSPurchase dgsPurchase);
 
     void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback);
-
-    void setDiscountATM(DGSPurchase dgsPurchase, long discountATM);
 
     void setRefundATM(DGSPurchase dgsPurchase, long refundATM);
 
