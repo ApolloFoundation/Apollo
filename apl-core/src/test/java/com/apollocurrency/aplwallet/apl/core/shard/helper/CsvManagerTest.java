@@ -203,7 +203,7 @@ class CsvManagerTest {
 //        excludeColumnNames.add("LATEST");
         // init CvsManager
         csvManager = new CsvManagerImpl(dirProvider.getDataExportDir(), excludeColumnNames);
-        csvManager.setOptions("fieldDelimiter="); // do not put ""
+//        csvManager.setOptions("fieldDelimiter="); // do not put ""
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
 
@@ -243,7 +243,9 @@ class CsvManagerTest {
                     int deletedCount = dropDataByName(minDbValue, maxDbValue, item); // drop exported data only
                     assertEquals(minMaxDbId.getCount(), deletedCount);
 
-//                    int imported = importCsv(item); // TODO: YL NOT READY YET!
+                    int imported = importCsv(item);
+                    log.debug("Table = {}, imported rows = {}", item.toString(), imported);
+                    assertEquals(minMaxDbId.getCount(), imported);
 
                 }
             } catch (SQLException e) {
@@ -255,14 +257,16 @@ class CsvManagerTest {
     }
 
     private int importCsv(DerivedTableInterface item) {
-        int importedCount = -1;
+        int importedCount = 0;
+        int columnsCount = 0;
         try (ResultSet rs = csvManager.read(item.toString() + ".csv", null, null);
              Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
 
             ResultSetMetaData meta = rs.getMetaData();
+            columnsCount = meta.getColumnCount();
             while (rs.next()) {
-                for (int i = 0; i < meta.getColumnCount(); i++) {
-                    log.debug("{}: {}\n", meta.getColumnLabel(i + 1), rs.getString(i + 1));
+                for (int i = 0; i < meta.getColumnCount(); i++) { // TODO: YL NOT READY YET!
+                    log.debug("{}: {}\n", rs.getObject(i + 1), rs.getString(i + 1));
                     importedCount++;
                 }
             }
@@ -270,7 +274,11 @@ class CsvManagerTest {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return importedCount;
+        if (columnsCount > 0) {
+            return importedCount / columnsCount;
+        } else {
+            return importedCount;
+        }
     }
 
     /**

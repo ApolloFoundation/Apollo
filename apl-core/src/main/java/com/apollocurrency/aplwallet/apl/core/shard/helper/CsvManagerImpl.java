@@ -71,10 +71,13 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
     protected static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     private String[] columnNames;
+    private ColumnMetaData[] columnsMetaData;
 
     private String characterSet = FILE_ENCODING;
     private char escapeCharacter = '\"';
     private char fieldDelimiter = '\"';
+    private char fieldTypeSeparatorStart = '(';
+    private char fieldTypeSeparatorEnd = ')';
     private char fieldSeparatorRead = ',';
     private String fieldSeparatorWrite = ",";
     private boolean caseSensitiveColumnNames;
@@ -93,7 +96,8 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
     private int inputBufferEnd;
     private StringBuffer outputBuffer = new StringBuffer(400);
     private Writer output;
-    private boolean endOfLine, endOfFile;
+    private boolean endOfLine;
+    private boolean endOfFile;
 
     private Set<String> excludeColumn = new HashSet<>();
     private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
@@ -113,22 +117,26 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             int rows = 0;
             ResultSetMetaData meta = rs.getMetaData();
             int columnCount = meta.getColumnCount();
+            if (columnsMetaData == null) {
+                columnsMetaData = new ColumnMetaData[columnCount];
+            }
             Object[] rowColumnNames = new String[columnCount];
-            int[] sqlTypes = new int[columnCount];
             for (int i = 0; i < columnCount; i++) {
                 rowColumnNames[i] = meta.getColumnLabel(i + 1);
-                sqlTypes[i] = meta.getColumnType(i + 1);
+                columnsMetaData[i] = new ColumnMetaData(meta.getColumnLabel(i + 1),
+                        meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
+                        meta.getPrecision(i + 1), meta.getScale(i + 1));
             }
             if (writeColumnHeader) {
                 log.debug("Header = {}", Arrays.toString(rowColumnNames));
-                writeHeaderRow(rowColumnNames);
+                writeHeaderRow(columnsMetaData);
                 this.writeColumnHeader = false;// write header columns only once after fileName/tableName has been changed
             }
             while (rs.next()) {
                 for (int i = 0; i < columnCount; i++) {
                     java.util.Date date = null;
                     Object o;
-                    switch (sqlTypes[i]) {
+                    switch (columnsMetaData[i].getSqlTypeInt()) {
                         case Types.BLOB:
                             o = rs.getBlob(i + 1);
                             break;
@@ -303,8 +311,11 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
         initRead();
         SimpleResultSet result = new SimpleResultSet(this);
         makeColumnNamesUnique();
+        int index = 0; // ZERO when we reading HEADER
         for (String columnName : columnNames) {
-            result.addColumn(columnName, Types.VARCHAR, Integer.MAX_VALUE, 0);
+            result.addColumn(columnName, columnsMetaData[index].getSqlTypeInt(),
+                    columnsMetaData[index].getPrecision(), columnsMetaData[index].getScale());
+            index++;
         }
         return result;
     }
@@ -356,12 +367,12 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
         }
     }
 
-    private void writeHeaderRow(Object[] rowColumnNames) throws IOException {
-        Objects.requireNonNull(rowColumnNames, "rowColumnNames is NULL");
+    private void writeHeaderRow(ColumnMetaData[] columnsMetaData) throws IOException {
+        Objects.requireNonNull(columnsMetaData, "columnsMetaData is NULL");
         boolean isSkippedColumn = false;
-        for (int i = 0; i < rowColumnNames.length; i++) {
-            if (rowColumnNames[i] != null && rowColumnNames[i].toString() != null) {
-                String s = rowColumnNames[i].toString(); // column name
+        for (int i = 0; i < columnsMetaData.length; i++) {
+            if (columnsMetaData[i] != null && columnsMetaData[i].getName() != null) {
+                String s = columnsMetaData[i].getName(); // column name
                 if (i > 0 && !isSkippedColumn) {
                     if (fieldSeparatorWrite != null) {
                         // do not write comma-separator in case skipped column
@@ -377,13 +388,14 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
-                outputBuffer.append(s);
+//                outputBuffer.append(s);
+                outputBuffer.append(columnsMetaData[i].toString()); // write 'composed SQL meta data' as csv Header
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
             } else {
                 // we can't proceed if column name is empty
-                log.error("ERROR, column name is EMPTY. Array = {}", Arrays.toString(rowColumnNames));
+                log.error("ERROR, column name is EMPTY. Array = {}", Arrays.toString(columnsMetaData));
                 throw new IllegalArgumentException("ERROR, column name is EMPTY");
             }
             isSkippedColumn = false; // reset flag
@@ -505,6 +517,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
 
     private void readHeader() throws IOException {
         ArrayList<String> list = new ArrayList<>(4);
+        ArrayList<ColumnMetaData> listMeta = new ArrayList<>(4);
         while (true) {
             String v = readValue();
             if (v == null) {
@@ -522,14 +535,71 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                 } else if (!caseSensitiveColumnNames && isSimpleColumnName(v)) {
                     v = StringUtils.toUpperEnglish(v);
                 }
-                list.add(v);
+                // process HEADER with meta data = COLUMNNAME(TYPE|PRECISION|SCALE)
+                if (v.contains(fieldTypeSeparatorStart + "")) {
+                    ColumnMetaData metaData = exctractMetaDataFromHaderString(v);
+                    listMeta.add(metaData);
+                    list.add(metaData.getName()); // only name
+                } else {
+                    list.add(v); // no meta data is present
+                }
                 if (endOfLine) {
                     break;
                 }
             }
         }
         columnNames = new String[list.size()];
+        columnsMetaData = new ColumnMetaData[list.size()];
+        if (listMeta.size() > 0 && listMeta.get(0) != null) {
+            for (int i = 0; i < listMeta.size(); i++) {
+                columnsMetaData[i] = listMeta.get(i);
+            }
+        }
         list.toArray(columnNames);
+    }
+
+    /**
+     * Extract meta data from CVS Header for one column
+     * @param columnWithMetaData string with meta data
+     * @return meta data instance
+     */
+    private ColumnMetaData exctractMetaDataFromHaderString(String columnWithMetaData) {
+        log.debug("Column string to parse '{}'", columnWithMetaData);
+        int starTypeDelimiter = columnWithMetaData.indexOf(fieldTypeSeparatorStart + "");
+        String columnName = columnWithMetaData.substring(0, starTypeDelimiter);
+        int endTypeDelimiter = columnWithMetaData.lastIndexOf(fieldTypeSeparatorEnd + "");
+        String columnTypeInfo = columnWithMetaData.substring(starTypeDelimiter + 1, endTypeDelimiter);
+        log.debug("Column '{}' TypeInfo to parse '{}'", columnName, columnTypeInfo);
+        String[] typePrecisionScale = columnTypeInfo.split("\\|");
+
+        if (typePrecisionScale.length != 3) {
+            String error = "Incorrect type info was supplied from CSV file," +
+                    " not enough data, 3 is expected, but found " + typePrecisionScale.length;
+            log.error(error);
+            throw new IllegalStateException(error);
+        }
+        int sqlType = -1, sqlPrecision = -1, sqlScale = -1;
+        for (int j = 0; j < typePrecisionScale.length; j++) {
+            String typeValueAsString = typePrecisionScale[j];
+            String error = "Incorrect type VALUE was supplied from CSV file," +
+                    " found " + typeValueAsString;
+            if (typeValueAsString == null || typeValueAsString.isEmpty()) {
+                log.error(error);
+                throw new IllegalStateException(error);
+            }
+            try {
+                int parsedValue = Integer.parseInt(typeValueAsString);
+                switch (j) {
+                    case 0: sqlType = parsedValue; break;
+                    case 1: sqlPrecision = parsedValue; break;
+                    case 2: sqlScale = parsedValue; break;
+                    default: throw new IllegalStateException(error);
+                }
+            } catch (Exception e) {
+                log.error("Incorrect number was supplied = " + typeValueAsString, e);
+            }
+        }
+        return new ColumnMetaData(columnName, null, sqlType, sqlPrecision, sqlScale);
     }
 
     private static boolean isSimpleColumnName(String columnName) {
@@ -771,6 +841,9 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
         input = null;
         DbUtils.closeSilently(output);
         output = null;
+        columnsMetaData = null;
+        this.endOfLine = false; // prepare for next CSV file
+        this.endOfFile = false; // prepare for next CSV file
     }
 
     /**
