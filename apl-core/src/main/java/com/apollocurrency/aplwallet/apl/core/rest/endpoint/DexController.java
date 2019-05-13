@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -21,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -194,7 +194,7 @@ public class DexController {
                                 @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
                                 @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
-                                @Context SecurityContext securityContext) throws NotFoundException {
+                                @Context HttpServletRequest req) throws NotFoundException {
         OfferType type = null;
         OfferStatus offerStatus = null;
         DexCurrencies offerCur = null;
@@ -226,7 +226,12 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice);
+        int firstIndex = ParameterParser.getFirstIndex(req);
+        int lastIndex = ParameterParser.getLastIndex(req);
+        int offset = firstIndex > 0 ? firstIndex : 0;
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+
+        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
         return Response.ok(offers.stream()
