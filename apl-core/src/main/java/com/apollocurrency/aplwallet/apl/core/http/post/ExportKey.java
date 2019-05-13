@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -13,10 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -38,11 +36,10 @@ public class ExportKey extends AbstractAPIRequestHandler {
         long accountId = ParameterParser.getAccountId(request, true);
 
         byte [] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
-        String secrethex = secretBytes != null ? Convert.toHexString(secretBytes) : null;
 
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
-        response.put("secretBytes", secrethex);
+        response.put("secretBytes", Convert.toHexString(secretBytes) );
 
         return response;
     }
