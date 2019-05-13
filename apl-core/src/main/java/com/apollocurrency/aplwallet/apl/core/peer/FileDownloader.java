@@ -4,8 +4,13 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerFileInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -21,6 +26,7 @@ public class FileDownloader {
     public FileDownloader(String fileID) {
         this.fileID = fileID;
     }
+    
     public class Status{
         double completed;
         int chunksTotal;
@@ -28,6 +34,7 @@ public class FileDownloader {
         List<String> peers; 
     }
     
+
     public Status getDownloadStatus(){
         Status res = new Status();
         res.completed=1.0D*res.chunksTotal/res.chunksReady;
@@ -42,5 +49,16 @@ public class FileDownloader {
     public Status download(){
        Status res = new Status();
        return res;
+    }
+    
+    public Set<PeerFileInfo> getAllAvailablePeers(){
+        Set<PeerFileInfo> res = new HashSet<>();
+        Collection<? extends Peer> knownPeers = Peers.getAllPeers();
+        for(Peer p: knownPeers){
+            PeerFileInfo pi=new PeerFileInfo();
+            pi.setPeer(p);
+            res.add(pi);
+        }
+        return res;
     }
 }
