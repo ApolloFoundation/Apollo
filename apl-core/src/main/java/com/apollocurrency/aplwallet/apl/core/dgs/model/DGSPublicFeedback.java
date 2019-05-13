@@ -4,36 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 
 import java.util.Objects;
 
-public class DGSPublicFeedback {
+public class DGSPublicFeedback extends VersionedDerivedEntity {
     private String feedback;
     private Long id;
-    private int height;
-    private DbKey dbKey;
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
 
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
-
-    public DGSPublicFeedback(String feedback, Long id, int height) {
+    public DGSPublicFeedback(Long dbId, Integer height, String feedback, Long id) {
+        super(dbId, height);
         this.feedback = feedback;
         this.id = id;
-        this.height = height;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
     }
 
     @Override

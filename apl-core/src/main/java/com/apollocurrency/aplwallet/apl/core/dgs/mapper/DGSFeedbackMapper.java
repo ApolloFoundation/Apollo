@@ -19,8 +19,6 @@ public class DGSFeedbackMapper implements RowMapper<DGSFeedback> {
         byte[] data = rs.getBytes("feedback_data");
         byte[] nonce = rs.getBytes("feedback_nonce");
         long id = rs.getLong("id");
-        int height = rs.getInt("height");
-        DGSFeedback dgsFeedback = new DGSFeedback(id, height, new EncryptedData(data, nonce));
-        return dgsFeedback;
+        return new DGSFeedback(null, null, id, new EncryptedData(data, nonce));
     }
 }

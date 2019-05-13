@@ -4,12 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 
-public class DGSTag {
-    public DbKey getDbKey() {
-        return dbKey;
-    }
+public class DGSTag extends VersionedDerivedEntity {
 
     public void setInStockCount(int inStockCount) {
         this.inStockCount = inStockCount;
@@ -19,33 +16,22 @@ public class DGSTag {
         this.totalCount = totalCount;
     }
 
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
 
     private final String tag;
-    private DbKey dbKey;
     private int inStockCount;
     private int totalCount;
-    private int height;
 
-    public int getHeight() {
-        return height;
-    }
 
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public DGSTag(String tag) {
+    public DGSTag(String tag, int height) {
+        super(null, height);
         this.tag = tag;
     }
 
-    public DGSTag(String tag, int inStockCount, int totalCount, int height) {
+    public DGSTag(Long dbId, Integer height, String tag, int inStockCount, int totalCount) {
+        super(dbId, height);
         this.tag = tag;
         this.inStockCount = inStockCount;
         this.totalCount = totalCount;
-        this.height = height;
     }
 
     public String getTag() {

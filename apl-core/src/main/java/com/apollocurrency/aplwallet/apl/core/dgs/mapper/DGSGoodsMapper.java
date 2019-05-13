@@ -5,16 +5,22 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.mapper;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
-import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DGSGoodsMapper implements RowMapper<DGSGoods> {
+public class DGSGoodsMapper extends DerivedEntityMapper<DGSGoods> {
+
+    public DGSGoodsMapper(KeyFactory<DGSGoods> keyFactory) {
+        super(keyFactory);
+    }
+
     @Override
-    public DGSGoods map(ResultSet rs, StatementContext ctx) throws SQLException {
+    public DGSGoods doMap(ResultSet rs, StatementContext ctx) throws SQLException {
         long id = rs.getLong("id");
         long sellerId = rs.getLong("seller_id");
         String name = rs.getString("name");
@@ -26,7 +32,6 @@ public class DGSGoodsMapper implements RowMapper<DGSGoods> {
         boolean delisted = rs.getBoolean("delisted");
         int timestamp = rs.getInt("timestamp");
         boolean hasImage = rs.getBoolean("has_image");
-        int height = rs.getInt("height");
-        return new DGSGoods(id, null, sellerId, name, description, tags, parsedTags, timestamp, hasImage, quantity, priceATM, delisted, height);
+        return new DGSGoods(null, null, id, sellerId, name, description, tags, parsedTags, timestamp, hasImage, quantity, priceATM, delisted);
     }
 }

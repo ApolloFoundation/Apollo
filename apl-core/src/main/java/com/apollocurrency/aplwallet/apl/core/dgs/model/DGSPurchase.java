@@ -5,26 +5,16 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
-import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 
-public class DGSPurchase {
-
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
+public class DGSPurchase extends VersionedDerivedEntity {
 
     private final long id;
-    private  DbKey dbKey; //cached value
     private final long buyerId;
     private final long goodsId;
     private final long sellerId;
@@ -43,38 +33,9 @@ public class DGSPurchase {
     private List<DGSPublicFeedback> publicFeedbacks;
     private long discountATM;
     private long refundATM;
-    private int height;
 
-    public DGSPurchase(ResultSet rs, DbKey dbKey) {
-        // TODO: YL implement here
-        throw new RuntimeException("implement constructor from RSet");
-    }
-
-    public DGSPurchase(ResultSet rs, DbKey dbKey, DGSFeedback dgsFeedback) {
-        // TODO: YL implement here
-        throw new RuntimeException("implement constructor from RSet");
-    }
-
-    public DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment,
-                        long sellerId, int lastBlockchainTimestamp,  List<DGSFeedback> dgsFeedbackList) {
-        this.id = transaction.getId();
-        this.buyerId = transaction.getSenderId();
-        this.goodsId = attachment.getGoodsId();
-        this.sellerId = sellerId;
-        this.quantity = attachment.getQuantity();
-        this.priceATM = attachment.getPriceATM();
-        this.deadline = attachment.getDeliveryDeadlineTimestamp();
-        this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
-        this.timestamp = lastBlockchainTimestamp;
-        this.isPending = true;
-        this.dgsFeedbacks = dgsFeedbackList;
-    }
-
-    public DGSPurchase(long id, long buyerId, long goodsId, long sellerId, int quantity, long priceATM, int deadline,
-                       EncryptedData note, int timestamp, boolean isPending, EncryptedData encryptedGoods,
-                       boolean goodsIsText, EncryptedData refundNote, boolean hasFeedbacks,
-                       List<DGSFeedback> feedbacks, boolean hasPublicFeedbacks,
-                       List<DGSPublicFeedback> publicFeedbacks, long discountATM, long refundATM) {
+    public DGSPurchase(Long dbId, Integer height, long id, long buyerId, long goodsId, long sellerId, int quantity, long priceATM, int deadline, EncryptedData note, int timestamp, boolean isPending, EncryptedData encryptedGoods, boolean goodsIsText, EncryptedData refundNote, boolean hasPublicFeedbacks, boolean hasFeedbacks, List<DGSFeedback> dgsFeedbacks, List<DGSPublicFeedback> publicFeedbacks, long discountATM, long refundATM) {
+        super(dbId, height);
         this.id = id;
         this.buyerId = buyerId;
         this.goodsId = goodsId;
@@ -88,13 +49,31 @@ public class DGSPurchase {
         this.encryptedGoods = encryptedGoods;
         this.goodsIsText = goodsIsText;
         this.refundNote = refundNote;
-        this.hasFeedbacks = hasFeedbacks;
-        this.dgsFeedbacks = feedbacks;
         this.hasPublicFeedbacks = hasPublicFeedbacks;
+        this.hasFeedbacks = hasFeedbacks;
+        this.dgsFeedbacks = dgsFeedbacks;
         this.publicFeedbacks = publicFeedbacks;
         this.discountATM = discountATM;
         this.refundATM = refundATM;
     }
+
+    public DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment,
+                       long sellerId, int lastBlockchainTimestamp, List<DGSFeedback> dgsFeedbackList) {
+        super(null, transaction.getHeight());
+        this.id = transaction.getId();
+        this.buyerId = transaction.getSenderId();
+        this.goodsId = attachment.getGoodsId();
+        this.sellerId = sellerId;
+        this.quantity = attachment.getQuantity();
+        this.priceATM = attachment.getPriceATM();
+        this.deadline = attachment.getDeliveryDeadlineTimestamp();
+        this.note = transaction.getEncryptedMessage() == null ? null : transaction.getEncryptedMessage().getEncryptedData();
+        this.timestamp = lastBlockchainTimestamp;
+        this.isPending = true;
+        this.dgsFeedbacks = dgsFeedbackList;
+    }
+
+
 
     public List<DGSFeedback> getDgsFeedbacks() {
         return dgsFeedbacks;
@@ -223,10 +202,6 @@ public class DGSPurchase {
         this.refundATM = refundATM;
     }
 
-    public int getHeight() {
-        return height;
-    }
-
     public void setGoodsIsText(boolean goodsIsText) {
         this.goodsIsText = goodsIsText;
     }
@@ -237,10 +212,6 @@ public class DGSPurchase {
 
     public void setHasPublicFeedbacks(boolean hasPublicFeedbacks) {
         this.hasPublicFeedbacks = hasPublicFeedbacks;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
     }
 
     public void setEncryptedGoods(EncryptedData encryptedGoods) {
