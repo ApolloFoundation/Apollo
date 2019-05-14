@@ -8,6 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,9 +19,7 @@ import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
+@Singleton
 public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource {
     private static final Logger log = getLogger(CsvReaderImpl.class);
 

@@ -26,7 +26,6 @@ import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
@@ -75,7 +74,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -111,8 +109,8 @@ import org.slf4j.Logger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-class CsvManagerTest {
-    private static final Logger log = getLogger(CsvManagerTest.class);
+class CsvWriterReaderDerivedTablesTest {
+    private static final Logger log = getLogger(CsvWriterReaderDerivedTablesTest.class);
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvManagerDb").toAbsolutePath().toString()));
@@ -164,7 +162,7 @@ class CsvManagerTest {
     CsvWriter csvWriter;
     CsvReader csvReader;
 
-    public CsvManagerTest() throws Exception {}
+    public CsvWriterReaderDerivedTablesTest() throws Exception {}
 
     private Path createPath(String fileName) {
         try {
