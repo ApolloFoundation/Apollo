@@ -50,6 +50,7 @@ import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.config.WalletClientProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
@@ -204,7 +205,7 @@ class CsvWriterReaderDerivedTablesTest {
         excludeColumnNames.add("DB_ID");
 //        excludeColumnNames.add("PUBLIC_KEY");
 //        excludeColumnNames.add("LATEST");
-        // init CvsManager
+        // init Cvs reader, writer components
         csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
         csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
@@ -223,6 +224,8 @@ class CsvWriterReaderDerivedTablesTest {
             long maxDbValue = 0;
             int processedCount = 0;
             int totalCount = 0;
+            int batchLimit = 2; // used for pagination and partial commit
+
             // prepare connection + statement
             try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?")) {
@@ -237,7 +240,7 @@ class CsvWriterReaderDerivedTablesTest {
                 if (minMaxDbId.getCount() > 0) {
                     do { // do exporting into csv with pagination
                         processedCount = csvWriter.append(item.toString(),
-                                item.getRangeByDbId(con, pstmt, minMaxDbId, 2), minMaxDbId );
+                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit), minMaxDbId );
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
                     csvWriter.close(); // close CSV file
@@ -248,7 +251,7 @@ class CsvWriterReaderDerivedTablesTest {
                     int deletedCount = dropDataByName(minDbValue, maxDbValue, item); // drop exported data only
                     assertEquals(minMaxDbId.getCount(), deletedCount);
 
-                    int imported = importCsv(item);
+                    int imported = importCsv(item, batchLimit);
                     log.debug("Table = {}, imported rows = {}", item.toString(), imported);
                     assertEquals(minMaxDbId.getCount(), imported);
 
@@ -261,14 +264,18 @@ class CsvWriterReaderDerivedTablesTest {
         log.debug("Processed Tables = {}", result);
     }
 
-    private int importCsv(DerivedTableInterface item) {
+    private int importCsv(DerivedTableInterface item, int batchLimit) {
         int importedCount = 0;
         int columnsCount = 0;
+        PreparedStatement preparedInsertStatement = null;
+        // open CSV Reader and db connection
         try (ResultSet rs = csvReader.read(item.toString() + ".csv", null, null);
              Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
 
+            // get CSV meta data info
             ResultSetMetaData meta = rs.getMetaData();
-            columnsCount = meta.getColumnCount();
+            columnsCount = meta.getColumnCount(); // columns count is main
+            // create SQL insert statement
             StringBuffer sqlInsert = new StringBuffer(600);
             StringBuffer columnNames = new StringBuffer(200);
             StringBuffer columnsValues = new StringBuffer(200);
@@ -277,12 +284,14 @@ class CsvWriterReaderDerivedTablesTest {
                 columnNames.append( meta.getColumnLabel(i + 1)).append(",");
                 columnsValues.append("?").append(",");
             }
-            columnNames.deleteCharAt(columnNames.lastIndexOf(","));
-            columnsValues.deleteCharAt(columnsValues.lastIndexOf(","));
+            columnNames.deleteCharAt(columnNames.lastIndexOf(",")); // remove latest tail comma
+            columnsValues.deleteCharAt(columnsValues.lastIndexOf(",")); // remove latest tail comma
             sqlInsert.append(columnNames).append(") VALUES").append("(").append(columnsValues).append(")");
-            log.debug("SQL = {}", sqlInsert.toString());
-            PreparedStatement preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
+            log.debug("SQL = {}", sqlInsert.toString()); // composed insert
+            // precompile insert SQL
+            preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
 
+            // loop over CSV data reading line by line, column by column
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
@@ -290,10 +299,17 @@ class CsvWriterReaderDerivedTablesTest {
                     log.trace("{}: {}\n", object, rs.getString(i + 1));
                     importedCount++;
                 }
+                if (batchLimit % (importedCount / columnsCount) == 0) {
+                    con.commit();
+                }
             }
-            con.commit();
+            con.commit(); // final commit
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Error on importing data on table = '{}'", item.toString());
+        } finally {
+            if (preparedInsertStatement != null) {
+                DbUtils.close(preparedInsertStatement);
+            }
         }
         if (columnsCount > 0) {
             return importedCount / columnsCount;
