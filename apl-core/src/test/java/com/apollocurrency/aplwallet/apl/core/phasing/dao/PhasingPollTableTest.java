@@ -56,6 +56,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @EnableWeld
@@ -133,32 +134,20 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     @Override
-    public void testTrim() {
-        table.trim(ptd.POLL_1.getFinishHeight() + 1);
+    public void testTrimForZeroHeight() {
+        testTrim(ptd.POLL_1.getFinishHeight() + 1);
+    }
+
+    @Override
+    public void testTrim(int height) {
+        table.trim(height);
         List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
-        Assertions.assertEquals(List.of(ptd.POLL_5, ptd.POLL_4, ptd.POLL_3), actual);
+        List<PhasingPoll> expected = sortByHeightDesc(getAll().stream().filter(p -> p.getFinishHeight() >= height).collect(Collectors.toList()));
+        Assertions.assertEquals(expected, actual);
         String condition = "transaction_id IN " + String.format("(%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId());
         assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
         assertNotExistEntriesInTableForCondition("phasing_vote", condition);
         assertNotExistEntriesInTableForCondition("phasing_poll_linked_transaction", condition);
-    }
-
-    @Test
-    public void testTrimAll() {
-        table.trim(Integer.MAX_VALUE);
-        List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
-        Assertions.assertEquals(List.of(), actual);
-        String condition = "transaction_id IN " + String.format("(%d,%d,%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId(), ptd.POLL_4.getId(), ptd.POLL_3.getId());
-        assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
-        assertNotExistEntriesInTableForCondition("phasing_vote", condition);
-        assertNotExistEntriesInTableForCondition("phasing_poll_linked_transaction", condition);
-    }
-
-    @Test
-    public void testTrimNothing() {
-        table.trim(0);
-        List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
-        Assertions.assertEquals(sortByHeightDesc(getAll()), actual);
     }
 
     private void assertNotExistEntriesInTableForCondition(String tableName, String condition) {

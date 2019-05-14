@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 
 // at least 8 data records required to launch this test
 // 2 deleted record, 1 latest not updated, 2 - 1 latest 1 not latest, 3 (1 latest, 1 not latest, 1 not latest)
-public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEntity> extends EntityDbTableTest<T> {
-    public MultiversionEntityDbTableTest(Class<T> clazz) {
+public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntity> extends EntityDbTableTest<T> {
+    public VersionedEntityDbTableTest(Class<T> clazz) {
         super(clazz);
     }
 
@@ -86,52 +86,52 @@ public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEn
 
     @Override
     @Test
-    public void testTrim() throws SQLException {
+    public void testTrimForZeroHeight() throws SQLException {
         int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight();
-        testTrim(maxHeight);
+        testMultiversionTrim(maxHeight);
     }
 
     @Test
     public void testTrimForMaxHeightInclusive() throws SQLException {
         int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() + 1;
-        testTrim(maxHeight);
+        testMultiversionTrim(maxHeight);
     }
 
     @Test
     public void testTrimForMaxHeightExclusive() throws SQLException {
         int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() - 1;
-        testTrim(maxHeight);
+        testMultiversionTrim(maxHeight);
     }
 
     @Test
     public void testTrimForDeleteDeltedHeight() throws SQLException {
         int height = getDeletedMultiversionRecord().getHeight() + 1;
-        testTrim(height);
+        testMultiversionTrim(height);
     }
 
     @Test
     public void testTrimMiddleHeight() throws SQLException {
         List<Integer> heights = getHeights();
         int middleHeight = (heights.get(0) + heights.get(heights.size() - 1)) / 2;
-        testTrim(middleHeight);
+        testMultiversionTrim(middleHeight);
 
     }
 
     @Test
     public void testTrimNothing() throws SQLException {
-        testTrim(0);
+        testMultiversionTrim(0);
     }
 
     @Test
     public void testTrimForThreeUpdatedRecords() throws SQLException {
         List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
-        testTrim(list.get(0).getHeight());
+        testMultiversionTrim(list.get(0).getHeight());
     }
 
     @Test
     public void testTrimNothingForThreeUpdatedRecords() throws SQLException {
         List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
-        testTrim(list.get(1).getHeight());
+        testMultiversionTrim(list.get(1).getHeight());
     }
 
     @Test
@@ -147,29 +147,36 @@ public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEn
     @Test
     public void testRollbackDeletedEntries() throws SQLException {
         int height = getDeletedMultiversionRecord().getHeight() - 1;
-        testRollback(height);
+        testMultiversionRollback(height);
     }
 
     @Test
     public void testRollbackForThreeUpdatedRecords() throws SQLException {
         int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight() - 1;
-        testRollback(height);
+        testMultiversionRollback(height);
     }
 
     @Test
     public void testRollbackNothingForThreeUpdatedRecords() throws SQLException {
         int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight();
-        testRollback(height);
+        testMultiversionRollback(height);
     }
 
     @Test
     public void testRollbackEntirelyForTwoRecords() throws SQLException {
         int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2).getValue()).get(1).getHeight() - 1;
-        testRollback(height);
+        testMultiversionRollback(height);
     }
 
+    @Override
+    @Test
+    public void testRollbackToFirstEntry() throws SQLException {
+        List<T> all = getAll();
+        T first = all.get(0);
+        testMultiversionRollback(first.getHeight());
+    }
 
-    public void testRollback(int height) throws SQLException {
+    public void testMultiversionRollback(int height) throws SQLException {
         List<T> all = getAll();
         List<T> rollbacked = all.stream().filter(t -> t.getHeight() > height).collect(Collectors.toList());
         Map<DbKey, List<T>> dbKeyListMapRollbacked = groupByDbKey(rollbacked, table.getDbKeyFactory());
@@ -192,7 +199,7 @@ public abstract class MultiversionEntityDbTableTest<T extends VersionedDerivedEn
         assertEquals(expected, values);
     }
 
-    public void testTrim(int height) throws SQLException {
+    public void testMultiversionTrim(int height) throws SQLException {
         List<T> all = getAll();
         Map<DbKey, List<T>> dbKeyListMap = groupByDbKey();
         List<T> trimmed = new ArrayList<>();

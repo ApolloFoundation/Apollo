@@ -57,8 +57,17 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     }
 
     @Test
-    public void testTrim() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(0));
+    public void testTrimForZeroHeight() throws SQLException {
+        testTrim(0);
+    }
+
+    @Test
+    public void testTrimForMaxHeight() throws SQLException {
+        testTrim(sortByHeightDesc(getAll()).get(0).getHeight());
+    }
+
+    public void testTrim(int height) throws SQLException {
+        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height));
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -86,27 +95,27 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testRollbackToNegativeHeight() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(-1));
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertTrue(all.isEmpty(), "Derived table " + derivedDbTable.toString() + " should not have any entries after rollback to -1 height");
+        testRollback(0);
     }
 
     @Test
     public void testRollbackToLastEntry() throws SQLException {
         List<Integer> heights = getHeights();
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(heights.get(0)));
-
-        List<T> all = getAll();
-        List<T> actualValues = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(all, actualValues);
+        testRollback(heights.get(0));
     }
 
     @Test
     public void testRollbackToFirstEntry() throws SQLException {
         List<Integer> heights = getHeights();
         Integer rollbackHeight = heights.get(heights.size() - 1);
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(rollbackHeight));
-        assertEquals(sublistByHeight(getAll(), rollbackHeight), derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues());
+        testRollback(rollbackHeight);
+    }
+
+    public void testRollback(int height) throws SQLException {
+        List<T> expected = sublistByHeight(getAll(), height);
+        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(height));
+        List<T> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(expected, actual);
     }
 
 

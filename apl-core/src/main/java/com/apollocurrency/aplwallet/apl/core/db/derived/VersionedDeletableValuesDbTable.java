@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -32,34 +30,33 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 
 public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerivedEntity> extends ValuesDbTable<T> {
     protected VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true);
     }
 
-    public boolean delete(DbKey dbKey) {
-        if (dbKey == null) {
+    public boolean delete(T t, int height) {
+
+        if (t == null) {
             return false;
         }
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        DbKey dbKey = getDbKeyFactory().newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + getDbKeyFactory().getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
-            int height = blockchain.getHeight();
-            pstmtCount.setInt(i, blockchain.getHeight()); // TODO: YL review
+            pstmtCount.setInt(i, height); // TODO: YL review
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
-                        pstmt.setInt(j, blockchain.getHeight()); // TODO: YL review
+                        pstmt.setInt(j, height); // TODO: YL review
                         if (pstmt.executeUpdate() > 0) {
                             return true;
                         }

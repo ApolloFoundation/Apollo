@@ -19,13 +19,11 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ValuesDbTableTest<T extends DerivedEntity> extends DerivedDbTableTest<T> {
+public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
     private DbKey INCORRECT_DB_KEY = new DbKey() {
         @Override
         public int setPK(PreparedStatement pstmt) throws SQLException {
@@ -131,26 +129,6 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
         assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
     }
 
-    @Test
-    public void testTrimNothing() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> table.trim(0));
-        List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(getAll(), allValues);
-    }
-
-    @Override
-    @Test
-    public void testTrim() throws SQLException {
-        if (table.isMultiversion()) {
-            int trimHeight = getTrimHeight();
-            DbUtils.inTransaction(extension, con-> table.trim(trimHeight));
-            List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            assertEquals(getAllAfterTrim(), allValues);
-        } else {
-            super.testTrim();
-        }
-    }
-
 
     protected Map<DbKey, List<T>> getDuplicates() {
         return groupByDbKey(table.getDbKeyFactory())
@@ -162,35 +140,6 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
                         .distinct()
                         .count() > 1)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    protected int getTrimHeight() {
-        Map<DbKey, List<T>> duplicates = getDuplicates();
-        Integer maxDuplicatesHeight = duplicates.values()
-                .stream()
-                .map(l -> l
-                        .stream()
-                        .map(DerivedEntity::getHeight)
-                        .max(Comparator.naturalOrder())
-                        .get())
-                .max(Comparator.naturalOrder())
-                .get();
-
-        return maxDuplicatesHeight + 1;
-    }
-
-    protected List<T> getAllAfterTrim() {
-        Map<DbKey, List<T>> duplicates = getDuplicates();
-        List<T> removed = new ArrayList<>();
-                duplicates.values()
-                        .forEach(l ->
-                        {
-                            Integer maxHeight = l.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get();
-                            l.stream().filter(e-> e.getHeight() < maxHeight).forEach(removed::add);
-                        });
-        List<T> allExpectedData = new ArrayList<>(getAll());
-        removed.forEach(allExpectedData::remove);
-        return allExpectedData;
     }
 
     public void assertInCache(List<T> values) {

@@ -32,7 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-public abstract class EntityDbTableTest<T extends DerivedEntity> extends DerivedDbTableTest<T> {
+public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
+    static {
+        System.setProperty("multiversion", "false");
+    }
     private DbKey UNKNOWN_DB_KEY = new DbKey() {
         @Override
         public int setPK(PreparedStatement pstmt) throws SQLException {

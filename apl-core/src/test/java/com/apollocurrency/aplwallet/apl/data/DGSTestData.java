@@ -20,22 +20,24 @@ public class DGSTestData {
         return dgsPublicFeedback;
     }
 
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_0  = createFeedback(1	            ,7052449049531083429L   ,"Feedback message"	        ,541965 ,false);
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_1  = createFeedback(2	            ,-3910276708092716563L  ,"Goods dgs"	                ,542677 ,false);
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_2  = createFeedback(3	            ,-3910276708092716563L  ,"Goods dgs"	                ,542679 ,true );
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_3  = createFeedback(4	            ,-3910276708092716563L  ,"Test goods feedback 2"	    ,542679 ,true );
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_4  = createFeedback(5	            ,-1155069143692520623L  ,"Public feedback"	            ,542693 ,false);
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_5  = createFeedback(6	            ,-1155069143692520623L  ,"Public feedback"	            ,542695 ,true );
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_6  = createFeedback(7	            ,-1155069143692520623L  ,"Another Public feedback"     ,542695 ,true );
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_7  = createFeedback(8	            ,7052449049531083429L   ,"Feedback message"	        ,542799 ,false);
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_8  = createFeedback(9	            ,7052449049531083429L   ,"Public feedback 2"	        ,542799 ,false);
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_9  = createFeedback(10	            ,7052449049531083429L   ,"Feedback message"	        ,542801 ,true );
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_10 = createFeedback(11	            ,7052449049531083429L   ,"Public feedback 2"	        ,542801 ,true );
-    public final DGSPublicFeedback PUBLIC_FEEDBACK_11 = createFeedback(12	            ,7052449049531083429L   ,"Public feedback 3"	    ,542801 ,true );
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_0 = createFeedback(1, 100,                   "Deleted feedback",       541960, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_1 = createFeedback(2, 7052449049531083429L, "Feedback message",        541965, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_2 = createFeedback(3, -3910276708092716563L, "Goods dgs",              542677, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_3 = createFeedback(4, -3910276708092716563L, "Goods dgs",              542679, true);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_4 = createFeedback(5, -3910276708092716563L, "Test goods feedback 2",  542679, true);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_5 = createFeedback(6, -1155069143692520623L, "Public feedback",        542693, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_6 = createFeedback(7, -1155069143692520623L, "Public feedback",        542695, true);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_7 = createFeedback(8, -1155069143692520623L, "Another Public feedback",542695, true);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_8 = createFeedback(9, 100,                   "Deleted feedback",       542695, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_10 = createFeedback(11, 7052449049531083429L, "Public feedback 2",     542799, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_9 = createFeedback(10, 7052449049531083429L, "Feedback message",       542799, false);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_11 = createFeedback(12, 7052449049531083429L, "Feedback message",      542801, true);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_12 = createFeedback(13, 7052449049531083429L, "Public feedback 2",     542801, true);
+    public final DGSPublicFeedback PUBLIC_FEEDBACK_13 = createFeedback(14, 7052449049531083429L, "Public feedback 3",     542801, true);
 
-    public final DGSPublicFeedback NEW_PUBLIC_FEEDBACK_0 = new DGSPublicFeedback(PUBLIC_FEEDBACK_11.getDbId() + 1, PUBLIC_FEEDBACK_11.getHeight() + 1, "NewFeedback-1", PUBLIC_FEEDBACK_11.getId());
-    public final DGSPublicFeedback NEW_PUBLIC_FEEDBACK_1 = new DGSPublicFeedback(PUBLIC_FEEDBACK_11.getDbId() + 2, PUBLIC_FEEDBACK_11.getHeight() + 1, "NewFeedback-2", PUBLIC_FEEDBACK_11.getId());
-    public final DGSPublicFeedback NEW_PUBLIC_FEEDBACK_2 = new DGSPublicFeedback(PUBLIC_FEEDBACK_11.getDbId() + 3, PUBLIC_FEEDBACK_11.getHeight() + 1, "NewFeedback-3", PUBLIC_FEEDBACK_11.getId());
+    public final DGSPublicFeedback NEW_PUBLIC_FEEDBACK_0 = new DGSPublicFeedback(PUBLIC_FEEDBACK_13.getDbId() + 1, PUBLIC_FEEDBACK_13.getHeight() + 1, "NewFeedback-1", PUBLIC_FEEDBACK_13.getId());
+    public final DGSPublicFeedback NEW_PUBLIC_FEEDBACK_1 = new DGSPublicFeedback(PUBLIC_FEEDBACK_13.getDbId() + 2, PUBLIC_FEEDBACK_13.getHeight() + 1, "NewFeedback-2", PUBLIC_FEEDBACK_13.getId());
+    public final DGSPublicFeedback NEW_PUBLIC_FEEDBACK_2 = new DGSPublicFeedback(PUBLIC_FEEDBACK_13.getDbId() + 3, PUBLIC_FEEDBACK_13.getHeight() + 1, "NewFeedback-3", PUBLIC_FEEDBACK_13.getId());
 
 //    public final DGSPurchase PURCHASE_ = new DGSPurchase()
 //    public final DGSPurchase PURCHASE_ = new DGSPurchase()

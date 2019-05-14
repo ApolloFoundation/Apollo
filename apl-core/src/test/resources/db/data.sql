@@ -270,18 +270,20 @@ insert into purchase_feedback
 
 insert into purchase_public_feedback
 (DB_ID  	,ID  	                ,PUBLIC_FEEDBACK  	        ,HEIGHT ,LATEST) values
-(1	        ,7052449049531083429	,'Feedback message'	        ,541965 ,FALSE),
-(2	        ,-3910276708092716563	,'Goods dgs'	            ,542677 ,FALSE),
-(3	        ,-3910276708092716563	,'Goods dgs'	            ,542679 ,TRUE ),
-(4	        ,-3910276708092716563	,'Test goods feedback 2'	,542679 ,TRUE ),
-(5	        ,-1155069143692520623	,'Public feedback'	        ,542693 ,FALSE),
-(6	        ,-1155069143692520623	,'Public feedback'	        ,542695 ,TRUE ),
-(7	        ,-1155069143692520623	,'Another Public feedback'  ,542695 ,TRUE ),
-(8	        ,7052449049531083429	,'Feedback message'	        ,542799 ,FALSE),
-(9	        ,7052449049531083429	,'Public feedback 2'	    ,542799 ,FALSE),
-(10	        ,7052449049531083429	,'Feedback message'	        ,542801 ,TRUE ),
-(11	        ,7052449049531083429	,'Public feedback 2'	    ,542801 ,TRUE ),
-(12	        ,7052449049531083429	,'Public feedback 3'	    ,542801 ,TRUE ),
+(1          ,100                   ,'Deleted feedback'          ,541960 ,FALSE),
+(2	        ,7052449049531083429	,'Feedback message'	        ,541965 ,FALSE),
+(3	        ,-3910276708092716563	,'Goods dgs'	            ,542677 ,FALSE),
+(4	        ,-3910276708092716563	,'Goods dgs'	            ,542679 ,TRUE ),
+(5	        ,-3910276708092716563	,'Test goods feedback 2'	,542679 ,TRUE ),
+(6	        ,-1155069143692520623	,'Public feedback'	        ,542693 ,FALSE),
+(7	        ,-1155069143692520623	,'Public feedback'	        ,542695 ,TRUE ),
+(8	        ,-1155069143692520623	,'Another Public feedback'  ,542695 ,TRUE ),
+(9          ,100                    ,'Deleted feedback'         ,542695 ,FALSE),
+(10	        ,7052449049531083429	,'Feedback message'	        ,542799 ,FALSE),
+(11	        ,7052449049531083429	,'Public feedback 2'	    ,542799 ,FALSE),
+(12	        ,7052449049531083429	,'Feedback message'	        ,542801 ,TRUE ),
+(13	        ,7052449049531083429	,'Public feedback 2'	    ,542801 ,TRUE ),
+(14	        ,7052449049531083429	,'Public feedback 3'	    ,542801 ,TRUE ),
 ;
 
 insert into tag
