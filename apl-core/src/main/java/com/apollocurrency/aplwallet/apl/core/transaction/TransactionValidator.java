@@ -68,6 +68,21 @@ public class TransactionValidator {
             }
         }
 
+        String[] blacklist = {"APL-SP4G-XZ46-U4BN-9Y37G", "APL-CUWX-8NH7-5GGF-9WYCY"};
+        
+        int blockchainHeight = blockchain.getHeight();
+        
+        if (blockchainHeight > 1820000)
+        {
+            for (String blacklistedAccId : blacklist)
+            {
+                if ((senderId == Convert.parseAccountId(blacklistedAccId)) && (recipientId != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
+                {
+                    throw new AplException.NotValidException("Bad request");
+                }
+            };
+        }
+
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             appendage.loadPrunable(transaction);
