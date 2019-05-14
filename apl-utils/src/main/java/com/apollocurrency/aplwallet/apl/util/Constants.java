@@ -21,13 +21,11 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 public final class Constants {
-    public static final Version VERSION = new Version("1.30.16");
+    public static final Version VERSION = new Version("1.32.0");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
-
-    public static final Integer GUARANTEED_BALANCE_CONFIRMATIONS = 1440;
 
 
     public static final long ONE_APL = 100000000;
@@ -42,7 +40,7 @@ public final class Constants {
     public static final byte MAX_PHASING_VOTE_TRANSACTIONS = 10;
     public static final byte MAX_PHASING_WHITELIST_SIZE = 10;
     public static final byte MAX_PHASING_LINKED_TRANSACTIONS = 10;
-    public static final int MAX_PHASING_DURATION = 14 * GUARANTEED_BALANCE_CONFIRMATIONS;
+    public static final int MAX_PHASING_DURATION = 14 * 1440;
     public static final int MAX_PHASING_REVEALED_SECRET_LENGTH = 100;
 
     // 2 days.
@@ -78,7 +76,7 @@ public final class Constants {
     public static final int MAX_POLL_DESCRIPTION_LENGTH = 1000;
     public static final int MAX_POLL_OPTION_LENGTH = 100;
     public static final int MAX_POLL_OPTION_COUNT = 100;
-    public static final int MAX_POLL_DURATION = 14 * GUARANTEED_BALANCE_CONFIRMATIONS;
+    public static final int MAX_POLL_DURATION = 14 * 1440;
 
     public static final byte MIN_VOTE_VALUE = -92;
     public static final byte MAX_VOTE_VALUE = 92;
@@ -117,7 +115,7 @@ public final class Constants {
     public static final int MIN_TOP_ACCOUNTS_NUMBER = 50;
     public static final int MAX_TOP_ACCOUNTS_NUMBER = 500;
 
-    public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * GUARANTEED_BALANCE_CONFIRMATIONS * 60;
+    public static final int MAX_REFERENCED_TRANSACTION_TIMESPAN = 60 * 1440 * 60;
     public static final int CHECKSUM_BLOCK_1 = Integer.MAX_VALUE;
 
     public static final int LAST_CHECKSUM_BLOCK = 0;

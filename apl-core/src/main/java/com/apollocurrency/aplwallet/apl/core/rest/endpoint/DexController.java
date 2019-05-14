@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -16,12 +17,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -64,12 +66,16 @@ public class DexController {
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
+    private DexEthService dexEthService;
+    private Integer DEFAULT_DEADLINE_MIN = 60*2;
+
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime) {
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService) {
         this.service = service;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
         this.epochTime = epochTime;
+        this.dexEthService = dexEthService;
     }
 
     //For DI
@@ -192,7 +198,7 @@ public class DexController {
                                 @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
                                 @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
-                                @Context SecurityContext securityContext) throws NotFoundException {
+                                @Context HttpServletRequest req) throws NotFoundException {
         OfferType type = null;
         OfferStatus offerStatus = null;
         DexCurrencies offerCur = null;
@@ -224,7 +230,12 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice);
+        int firstIndex = ParameterParser.getFirstIndex(req);
+        int lastIndex = ParameterParser.getLastIndex(req);
+        int offset = firstIndex > 0 ? firstIndex : 0;
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+
+        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
         return Response.ok(offers.stream()
@@ -266,9 +277,13 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
             }
 
+            if(service.isThereAnotherCancelUnconfirmedTx(transactionId, null)){
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "There is another cancel transaction for this order in the unconfirmed tx pool already."))).build();
+            }
+
 
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
-            requestWrapper.addParameter("deadline", Constants.GUARANTEED_BALANCE_CONFIRMATIONS.toString());
+            requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
 
             try {
@@ -295,6 +310,22 @@ public class DexController {
 
         if(!status){
             return Response.ok(new ApiError("Not Found", 404)).build();
+        } else {
+            return Response.ok().build();
+        }
+    }
+
+
+    @GET
+    @Path("/ethInfo")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
+        EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
+
+        if(ethGasInfo != null){
+            return Response.ok(ethGasInfo.toDto()).build();
         } else {
             return Response.ok().build();
         }
