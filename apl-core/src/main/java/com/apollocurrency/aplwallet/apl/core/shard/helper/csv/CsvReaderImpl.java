@@ -74,7 +74,6 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     @Override
     public ResultSet read(Reader reader, String[] colNames) throws IOException {
         Objects.requireNonNull(reader, "reader is NULL");
-        Objects.requireNonNull(colNames, "columnName is NULL");
         this.input = reader;
         return readResultSet(colNames);
     }
@@ -84,8 +83,9 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         initRead();
         SimpleResultSet result = new SimpleResultSet(this);
         makeColumnNamesUnique();
-        int index = 0; // ZERO when we reading HEADER
-        for (String columnName : columnNames) {
+        int index = 0;
+        //reading from header like COLUMN_NAME(TYPE|PRECISION|SCALE)
+        for (String columnName : columnNames) { // reading header meta data
             result.addColumn(columnName, columnsMetaData[index].getSqlTypeInt(),
                     columnsMetaData[index].getPrecision(), columnsMetaData[index].getScale());
             index++;
@@ -123,6 +123,9 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         }
     }
 
+    /**
+     * When CSV doesn't have columns in header
+     */
     private void makeColumnNamesUnique() {
         for (int i = 0; i < columnNames.length; i++) {
             StringBuilder buff = new StringBuilder();
@@ -163,9 +166,9 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                 } else if (!caseSensitiveColumnNames && isSimpleColumnName(v)) {
                     v = ConversionUtils.toUpperEnglish(v);
                 }
-                // process HEADER with meta data = COLUMNNAME(TYPE|PRECISION|SCALE)
+                // process HEADER with meta data = COLUMN_NAME(TYPE|PRECISION|SCALE)
                 if (v.contains(fieldTypeSeparatorStart + "")) {
-                    ColumnMetaData metaData = exctractMetaDataFromHaderString(v);
+                    ColumnMetaData metaData = parseMetaDataFromHeaderString(v);
                     listMeta.add(metaData);
                     list.add(metaData.getName()); // only name
                 } else {
@@ -357,6 +360,16 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         return buff.toString();
     }
 
+    /**
+     * Method is triggered when code:
+     * <pre>{@code
+     *      while(ResultSet rs.next() ) {
+     *          // internal loop over columns values here
+     *      }
+     * }</pre>
+     * @return
+     * @throws SQLException
+     */
     @Override
     public Object[] readRow() throws SQLException {
         if (input == null) {
@@ -412,11 +425,11 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     }
 
     /**
-     * Extract meta data from CVS Header for one column
-     * @param columnWithMetaData string with meta data
+     * Extract meta data from CVS Header for one column in row
+     * @param columnWithMetaData string with meta data like - ID(-5|7|2)
      * @return meta data instance
      */
-    private ColumnMetaData exctractMetaDataFromHaderString(String columnWithMetaData) {
+    private ColumnMetaData parseMetaDataFromHeaderString(String columnWithMetaData) {
         log.debug("Column string to parse '{}'", columnWithMetaData);
         int starTypeDelimiter = columnWithMetaData.indexOf(fieldTypeSeparatorStart + "");
         String columnName = columnWithMetaData.substring(0, starTypeDelimiter);

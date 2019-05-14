@@ -38,7 +38,7 @@ import org.slf4j.Logger;
  * {@inheritDoc}
  */
 @Singleton
-public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter/*, SimpleRowSource*/ {
+public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
 
     private Writer output;
@@ -137,7 +137,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter/*, Simpl
             this.writeColumnHeader = true; // will write header column names
         }
         if (closeWhenAppend) {
-            excludeColumnIndex.clear(); // clean previously stored id's
+            // clean previously stored id's for the case when different tables should have different excluded column names
+            excludeColumnIndex.clear();
         }
         this.fileName = newFileName;
     }
@@ -148,17 +149,20 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter/*, Simpl
             ResultSetMetaData meta = rs.getMetaData();
             int columnCount = meta.getColumnCount();
             if (columnsMetaData == null) {
+                // meta data array for current table
                 columnsMetaData = new ColumnMetaData[columnCount];
             }
             Object[] rowColumnNames = new String[columnCount];
             for (int i = 0; i < columnCount; i++) {
                 rowColumnNames[i] = meta.getColumnLabel(i + 1);
+                // fill in meta data
                 columnsMetaData[i] = new ColumnMetaData(meta.getColumnLabel(i + 1),
                         meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
                         meta.getPrecision(i + 1), meta.getScale(i + 1));
             }
+            log.debug("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
             if (writeColumnHeader) {
-                log.debug("Header = {}", Arrays.toString(rowColumnNames));
+                log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
                 writeHeaderRow(columnsMetaData);
                 this.writeColumnHeader = false;// write header columns only once after fileName/tableName has been changed
             }
@@ -256,6 +260,12 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter/*, Simpl
         }
     }
 
+    /**
+     * Write CSV header row in format = COLUMN_NAME(TYPE|PRECISION|SCALE)
+     *
+     * @param columnsMetaData meta data - COLUMN_NAME(TYPE|PRECISION|SCALE)
+     * @throws IOException
+     */
     private void writeHeaderRow(ColumnMetaData[] columnsMetaData) throws IOException {
         Objects.requireNonNull(columnsMetaData, "columnsMetaData is NULL");
         boolean isSkippedColumn = false;
@@ -277,8 +287,10 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter/*, Simpl
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
+                // write simple header column : COLUMN_NAME_1,COLUMN_NAME_2
 //                outputBuffer.append(s);
-                outputBuffer.append(columnsMetaData[i].toString()); // write 'composed SQL meta data' as csv Header
+                // write csv Header as COLUMN_NAME_1(TYPE_1|PRECISION_1|SCALE_1),COLUMN_NAME_2(TYPE_2|PRECISION_2|SCALE_2)
+                outputBuffer.append(columnsMetaData[i].toString());
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }

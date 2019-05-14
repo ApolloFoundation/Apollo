@@ -57,7 +57,7 @@ public abstract class CsvAbstractBase {
     protected boolean preserveWhitespace; // config param
     protected char lineComment;
 
-    // CVS WRITE only config parameters
+    // CVS WRITER only config parameters
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
 
     /**

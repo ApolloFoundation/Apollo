@@ -8,6 +8,7 @@ import java.util.Objects;
 
 /**
  * Class keeps sql column meta data for CSV export/import
+ * Header can be written in format = COLUMN_NAME(TYPE|PRECISION|SCALE)
  *
  * @author yuriy.larin
  */
