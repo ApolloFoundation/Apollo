@@ -17,8 +17,10 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -64,14 +66,16 @@ public class DexController {
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
+    private DexEthService dexEthService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
 
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime) {
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService) {
         this.service = service;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
         this.epochTime = epochTime;
+        this.dexEthService = dexEthService;
     }
 
     //For DI
@@ -306,6 +310,22 @@ public class DexController {
 
         if(!status){
             return Response.ok(new ApiError("Not Found", 404)).build();
+        } else {
+            return Response.ok().build();
+        }
+    }
+
+
+    @GET
+    @Path("/ethInfo")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
+        EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
+
+        if(ethGasInfo != null){
+            return Response.ok(ethGasInfo.toDto()).build();
         } else {
             return Response.ok().build();
         }
