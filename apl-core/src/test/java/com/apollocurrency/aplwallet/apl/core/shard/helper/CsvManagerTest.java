@@ -71,6 +71,10 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
@@ -157,7 +161,8 @@ class CsvManagerTest {
     private Blockchain blockchain;
     @Inject
     DerivedTablesRegistry registry;
-    CsvManager csvManager;
+    CsvWriter csvWriter;
+    CsvReader csvReader;
 
     public CsvManagerTest() throws Exception {}
 
@@ -202,8 +207,10 @@ class CsvManagerTest {
 //        excludeColumnNames.add("PUBLIC_KEY");
 //        excludeColumnNames.add("LATEST");
         // init CvsManager
-        csvManager = new CsvManagerImpl(dirProvider.getDataExportDir(), excludeColumnNames);
-        csvManager.setOptions("fieldDelimiter="); // do not put ""
+        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
+        csvWriter.setOptions("fieldDelimiter="); // do not put ""
+        csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
+        csvReader.setOptions("fieldDelimiter="); // do not put ""
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
 
@@ -231,11 +238,11 @@ class CsvManagerTest {
                 // process non empty tables
                 if (minMaxDbId.getCount() > 0) {
                     do { // do exporting into csv with pagination
-                        processedCount = csvManager.append(item.toString(),
+                        processedCount = csvWriter.append(item.toString(),
                                 item.getRangeByDbId(con, pstmt, minMaxDbId, 2), minMaxDbId );
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
-                    ((SimpleRowSource)csvManager).close(); // close CSV file
+                    csvWriter.close(); // close CSV file
 
                     log.debug("Table = {}, exported rows = {}", item.toString(), totalCount);
                     assertEquals(minMaxDbId.getCount(), totalCount);
@@ -259,7 +266,7 @@ class CsvManagerTest {
     private int importCsv(DerivedTableInterface item) {
         int importedCount = 0;
         int columnsCount = 0;
-        try (ResultSet rs = csvManager.read(item.toString() + ".csv", null, null);
+        try (ResultSet rs = csvReader.read(item.toString() + ".csv", null, null);
              Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
 
             ResultSetMetaData meta = rs.getMetaData();

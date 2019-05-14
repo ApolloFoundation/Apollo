@@ -1,0 +1,476 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.file.Path;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
+import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
+import org.slf4j.Logger;
+
+/**
+ * {@inheritDoc}
+ */
+public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource {
+    private static final Logger log = getLogger(CsvReaderImpl.class);
+
+    private Reader input;
+    private char[] inputBuffer;
+    private int inputBufferPos;
+    private int inputBufferStart = -1;
+    private int inputBufferEnd;
+
+    private boolean endOfLine;
+    private boolean endOfFile;
+
+    @Inject
+    public CsvReaderImpl(@Named("dataExportDir") Path dataExportPath) {
+        super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResultSet read(String inputFileName, String[] colNames, String charset) throws SQLException {
+        Objects.requireNonNull(inputFileName, "inputFileName is NULL");
+        assignNewFileName(inputFileName, true);
+        try {
+            return readResultSet(colNames);
+        } catch (IOException e) {
+            throw new SQLException("IOException writing " + inputFileName, e);
+        }
+    }
+
+    private void assignNewFileName(String newFileName, boolean closeWhenAppend) {
+        Objects.requireNonNull(newFileName, "fileName is NULL");
+        this.fileName = newFileName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResultSet read(Reader reader, String[] colNames) throws IOException {
+        Objects.requireNonNull(reader, "reader is NULL");
+        Objects.requireNonNull(colNames, "columnName is NULL");
+        this.input = reader;
+        return readResultSet(colNames);
+    }
+
+    private ResultSet readResultSet(String[] colNames) throws IOException {
+        this.columnNames = colNames;
+        initRead();
+        SimpleResultSet result = new SimpleResultSet(this);
+        makeColumnNamesUnique();
+        int index = 0; // ZERO when we reading HEADER
+        for (String columnName : columnNames) {
+            result.addColumn(columnName, columnsMetaData[index].getSqlTypeInt(),
+                    columnsMetaData[index].getPrecision(), columnsMetaData[index].getScale());
+            index++;
+        }
+        return result;
+    }
+
+    private void initRead() throws IOException {
+        if (input == null) {
+            try {
+                InputStream in = DbUtils.newInputStream(
+                        this.dataExportPath,
+                        !this.fileName.contains(FILE_EXTENSION) ? this.fileName + FILE_EXTENSION : this.fileName
+                );
+                in = new BufferedInputStream(in, IO_BUFFER_SIZE);
+                input = new InputStreamReader(in, characterSet);
+            } catch (IOException e) {
+                close();
+                throw e;
+            }
+        }
+        if (!input.markSupported()) {
+            input = new BufferedReader(input);
+        }
+        input.mark(1);
+        int bom = input.read();
+        if (bom != 0xfeff) {
+            // Microsoft Excel compatibility
+            // ignore pseudo-BOM
+            input.reset();
+        }
+        inputBuffer = new char[IO_BUFFER_SIZE * 2];
+        if (columnNames == null) {
+            readHeader();
+        }
+    }
+
+    private void makeColumnNamesUnique() {
+        for (int i = 0; i < columnNames.length; i++) {
+            StringBuilder buff = new StringBuilder();
+            String n = columnNames[i];
+            if (n == null || n.length() == 0) {
+                buff.append('C').append(i + 1);
+            } else {
+                buff.append(n);
+            }
+            for (int j = 0; j < i; j++) {
+                String y = columnNames[j];
+                if (buff.toString().equals(y)) {
+                    buff.append('1');
+                    j = -1;
+                }
+            }
+            columnNames[i] = buff.toString();
+        }
+    }
+
+    private void readHeader() throws IOException {
+        ArrayList<String> list = new ArrayList<>(4);
+        ArrayList<ColumnMetaData> listMeta = new ArrayList<>(4);
+        while (true) {
+            String v = readValue();
+            if (v == null) {
+                if (endOfLine) {
+                    if (endOfFile || list.size() > 0) {
+                        break;
+                    }
+                } else {
+                    v = "COLUMN" + list.size();
+                    list.add(v);
+                }
+            } else {
+                if (v.length() == 0) {
+                    v = "COLUMN" + list.size();
+                } else if (!caseSensitiveColumnNames && isSimpleColumnName(v)) {
+                    v = ConversionUtils.toUpperEnglish(v);
+                }
+                // process HEADER with meta data = COLUMNNAME(TYPE|PRECISION|SCALE)
+                if (v.contains(fieldTypeSeparatorStart + "")) {
+                    ColumnMetaData metaData = exctractMetaDataFromHaderString(v);
+                    listMeta.add(metaData);
+                    list.add(metaData.getName()); // only name
+                } else {
+                    list.add(v); // no meta data is present
+                }
+                if (endOfLine) {
+                    break;
+                }
+            }
+        }
+        columnNames = new String[list.size()];
+        columnsMetaData = new ColumnMetaData[list.size()];
+        if (listMeta.size() > 0 && listMeta.get(0) != null) {
+            for (int i = 0; i < listMeta.size(); i++) {
+                columnsMetaData[i] = listMeta.get(i);
+            }
+        }
+        list.toArray(columnNames);
+    }
+
+    private String readValue() throws IOException {
+        endOfLine = false;
+        inputBufferStart = inputBufferPos;
+        while (true) {
+            int ch = readChar();
+            if (ch == fieldDelimiter) {
+                // delimited value
+                boolean containsEscape = false;
+                inputBufferStart = inputBufferPos;
+                int sep;
+                while (true) {
+                    ch = readChar();
+                    if (ch == fieldDelimiter) {
+                        ch = readChar();
+                        if (ch != fieldDelimiter) {
+                            sep = 2;
+                            break;
+                        }
+                        containsEscape = true;
+                    } else if (ch == escapeCharacter) {
+                        ch = readChar();
+                        if (ch < 0) {
+                            sep = 1;
+                            break;
+                        }
+                        containsEscape = true;
+                    } else if (ch < 0) {
+                        sep = 1;
+                        break;
+                    }
+                }
+                String s = new String(inputBuffer,
+                        inputBufferStart, inputBufferPos - inputBufferStart - sep);
+                if (containsEscape) {
+                    s = unEscape(s);
+                }
+                inputBufferStart = -1;
+                while (true) {
+                    if (ch == fieldSeparatorRead) {
+                        break;
+                    } else if (ch == '\n' || ch < 0 || ch == '\r') {
+                        endOfLine = true;
+                        break;
+                    } else if (ch == ' ' || ch == '\t') {
+                        // ignore
+                    } else {
+                        pushBack();
+                        break;
+                    }
+                    ch = readChar();
+                }
+                return s;
+            } else if (ch == '\n' || ch < 0 || ch == '\r') {
+                endOfLine = true;
+                return null;
+            } else if (ch == fieldSeparatorRead) {
+                // null
+                return null;
+            } else if (ch <= ' ') {
+                // ignore spaces
+                continue;
+            } else if (lineComment != 0 && ch == lineComment) {
+                // comment until end of line
+                inputBufferStart = -1;
+                while (true) {
+                    ch = readChar();
+                    if (ch == '\n' || ch < 0 || ch == '\r') {
+                        break;
+                    }
+                }
+                endOfLine = true;
+                return null;
+            } else {
+                // un-delimited value
+                while (true) {
+                    ch = readChar();
+                    if (ch == fieldSeparatorRead) {
+                        break;
+                    } else if (ch == '\n' || ch < 0 || ch == '\r') {
+                        endOfLine = true;
+                        break;
+                    }
+                }
+                String s = new String(inputBuffer,
+                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
+                if (!preserveWhitespace) {
+                    s = s.trim();
+                }
+                inputBufferStart = -1;
+                // check un-delimited value for nullString
+                return readNull(s);
+            }
+        }
+    }
+
+    private void pushBack() {
+        inputBufferPos--;
+    }
+
+    private int readChar() throws IOException {
+        if (inputBufferPos >= inputBufferEnd) {
+            return readBuffer();
+        }
+        return inputBuffer[inputBufferPos++];
+    }
+
+    private int readBuffer() throws IOException {
+        if (endOfFile) {
+            return -1;
+        }
+        int keep;
+        if (inputBufferStart >= 0) {
+            keep = inputBufferPos - inputBufferStart;
+            if (keep > 0) {
+                char[] src = inputBuffer;
+                if (keep + IO_BUFFER_SIZE > src.length) {
+                    inputBuffer = new char[src.length * 2];
+                }
+                System.arraycopy(src, inputBufferStart, inputBuffer, 0, keep);
+            }
+            inputBufferStart = 0;
+        } else {
+            keep = 0;
+        }
+        inputBufferPos = keep;
+        int len = input.read(inputBuffer, keep, IO_BUFFER_SIZE);
+        if (len == -1) {
+            // ensure bufferPos > bufferEnd
+            // even after pushBack
+            inputBufferEnd = -1024;
+            endOfFile = true;
+            // ensure the right number of characters are read
+            // in case the input buffer is still used
+            inputBufferPos++;
+            return -1;
+        }
+        inputBufferEnd = keep + len;
+        return inputBuffer[inputBufferPos++];
+    }
+
+    private String readNull(String s) {
+        return s.equals(nullString) ? null : s;
+    }
+
+    private String unEscape(String s) {
+        StringBuilder buff = new StringBuilder(s.length());
+        int start = 0;
+        char[] chars = null;
+        while (true) {
+            int idx = s.indexOf(escapeCharacter, start);
+            if (idx < 0) {
+                idx = s.indexOf(fieldDelimiter, start);
+                if (idx < 0) {
+                    break;
+                }
+            }
+            if (chars == null) {
+                chars = s.toCharArray();
+            }
+            buff.append(chars, start, idx - start);
+            if (idx == s.length() - 1) {
+                start = s.length();
+                break;
+            }
+            buff.append(chars[idx + 1]);
+            start = idx + 2;
+        }
+        buff.append(s.substring(start));
+        return buff.toString();
+    }
+
+    @Override
+    public Object[] readRow() throws SQLException {
+        if (input == null) {
+            return null;
+        }
+        String[] row = new String[columnNames.length];
+        try {
+            int i = 0;
+            while (true) {
+                String v = readValue();
+                if (v == null) {
+                    if (endOfLine) {
+                        if (i == 0) {
+                            if (endOfFile) {
+                                return null;
+                            }
+                            // empty line
+                            continue;
+                        }
+                        break;
+                    }
+                }
+                if (i < row.length) {
+                    row[i++] = v;
+                }
+                if (endOfLine) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new SQLException("IOException reading from " + fileName, e);
+        }
+        return row;
+    }
+
+    private boolean isSimpleColumnName(String columnName) {
+        for (int i = 0, length = columnName.length(); i < length; i++) {
+            char ch = columnName.charAt(i);
+            if (i == 0) {
+                if (ch != '_' && !Character.isLetter(ch)) {
+                    return false;
+                }
+            } else {
+                if (ch != '_' && !Character.isLetterOrDigit(ch)) {
+                    return false;
+                }
+            }
+        }
+        if (columnName.length() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Extract meta data from CVS Header for one column
+     * @param columnWithMetaData string with meta data
+     * @return meta data instance
+     */
+    private ColumnMetaData exctractMetaDataFromHaderString(String columnWithMetaData) {
+        log.debug("Column string to parse '{}'", columnWithMetaData);
+        int starTypeDelimiter = columnWithMetaData.indexOf(fieldTypeSeparatorStart + "");
+        String columnName = columnWithMetaData.substring(0, starTypeDelimiter);
+        int endTypeDelimiter = columnWithMetaData.lastIndexOf(fieldTypeSeparatorEnd + "");
+        String columnTypeInfo = columnWithMetaData.substring(starTypeDelimiter + 1, endTypeDelimiter);
+        log.debug("Column '{}' TypeInfo to parse '{}'", columnName, columnTypeInfo);
+        String[] typePrecisionScale = columnTypeInfo.split("\\|");
+
+        if (typePrecisionScale.length != 3) {
+            String error = "Incorrect type info was supplied from CSV file," +
+                    " not enough data, 3 is expected, but found " + typePrecisionScale.length;
+            log.error(error);
+            throw new IllegalStateException(error);
+        }
+        int sqlType = -1, sqlPrecision = -1, sqlScale = -1;
+        for (int j = 0; j < typePrecisionScale.length; j++) {
+            String typeValueAsString = typePrecisionScale[j];
+            String error = "Incorrect type VALUE was supplied from CSV file," +
+                    " found " + typeValueAsString;
+            if (typeValueAsString == null || typeValueAsString.isEmpty()) {
+                log.error(error);
+                throw new IllegalStateException(error);
+            }
+            try {
+                int parsedValue = Integer.parseInt(typeValueAsString);
+                switch (j) {
+                    case 0: sqlType = parsedValue; break;
+                    case 1: sqlPrecision = parsedValue; break;
+                    case 2: sqlScale = parsedValue; break;
+                    default: throw new IllegalStateException(error);
+                }
+            } catch (Exception e) {
+                log.error("Incorrect number was supplied = " + typeValueAsString, e);
+            }
+        }
+        return new ColumnMetaData(columnName, null, sqlType, sqlPrecision, sqlScale);
+    }
+
+    @Override
+    public void close() {
+        DbUtils.closeSilently(input);
+        input = null;
+        columnsMetaData = null;
+        this.endOfLine = false; // prepare for next CSV file
+        this.endOfFile = false; // prepare for next CSV file
+    }
+
+    /**
+     * INTERNAL
+     */
+    @Override
+    public void reset() throws SQLException {
+        throw new SQLException("Method is not supported by CsvReader", "CSV");
+    }
+
+
+}
