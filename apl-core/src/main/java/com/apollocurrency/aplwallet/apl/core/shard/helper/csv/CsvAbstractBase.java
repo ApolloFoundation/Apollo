@@ -4,11 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
+import org.slf4j.Logger;
 
 /**
  * Abstract Base class for CSV writer, reader classes. It is manly used for storing and
@@ -17,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
  * @author yuriy.larin
  */
 public abstract class CsvAbstractBase {
+    private static final Logger log = getLogger(CsvAbstractBase.class);
 
     /**
      * The block size for I/O operations.
@@ -70,6 +74,10 @@ public abstract class CsvAbstractBase {
     public String setOptions(String options) {
         String charset = null;
         String[] keyValuePairs = ConversionUtils.arraySplit(options, ' ', false);
+        if (keyValuePairs == null) {
+            log.debug("No OPTIONS were found");
+            return "";
+        }
         for (String pair : keyValuePairs) {
             if (pair.length() == 0) {
                 continue;
