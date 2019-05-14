@@ -76,7 +76,7 @@ public class TransactionValidator {
         {
             for (String blacklistedAccId : blacklist)
             {
-                if ((senderId == Convert.parseAccountId(blacklistedAccId)) && (recipientId != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
+                if ((transaction.getSenderId() == Convert.parseAccountId(blacklistedAccId)) && (transaction.getRecipientId() != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
                 {
                     throw new AplException.NotValidException("Bad request");
                 }
@@ -100,7 +100,7 @@ public class TransactionValidator {
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
-        int blockchainHeight = blockchain.getHeight();
+
         if (!validatingAtFinish) {
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
             if (feeATM < minimumFeeATM) {
