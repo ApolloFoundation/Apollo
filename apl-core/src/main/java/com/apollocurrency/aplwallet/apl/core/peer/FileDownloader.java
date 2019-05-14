@@ -4,8 +4,10 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerFileInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,15 +20,6 @@ import java.util.concurrent.CompletableFuture;
  * @author alukin@gmail.com
  */
 public class FileDownloader {
-    private final String fileID;
-    private FileDownloadInfo downloadInfo;
-    private List<Peer> goodPeers;
-    private List<Peer> badPeers;
-    
-    public FileDownloader(String fileID) {
-        this.fileID = fileID;
-    }
-    
     public class Status{
         double completed;
         int chunksTotal;
@@ -34,15 +27,34 @@ public class FileDownloader {
         List<String> peers; 
     }
     
-
-    public Status getDownloadStatus(){
-        Status res = new Status();
-        res.completed=1.0D*res.chunksTotal/res.chunksReady;
-        return res;
+    private final String fileID;
+    private FileDownloadInfo downloadInfo;
+    private List<HasHashSum> goodPeers;
+    private List<HasHashSum> badPeers;
+    private Status status;
+    
+    public FileDownloader(String fileID) {
+        this.fileID = fileID;
     }
     
+
+    public Status getDownloadStatus(){
+        status.completed=1.0D*status.chunksTotal/status.chunksReady;
+        return status;
+    }
+
+    
     public PeerValidityDecisionMaker.Decision prepareForDownloading(){
-        PeerValidityDecisionMaker.Decision res = PeerValidityDecisionMaker.Decision.Bad;
+        PeerValidityDecisionMaker.Decision res;
+        Set<PeerFileInfo> allPeers = getAllAvailablePeers();
+        PeersList pl = new PeersList();
+        allPeers.forEach((pi) -> {
+            pl.add(pi);
+        });
+        PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
+        res=pvdm.calcualteNetworkState();
+        goodPeers = pvdm.getValidPeers();
+        badPeers = pvdm.getInvalidPeers();
         return res;
     }
     
@@ -55,10 +67,10 @@ public class FileDownloader {
         Set<PeerFileInfo> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
         for(Peer p: knownPeers){
-            PeerFileInfo pi=new PeerFileInfo();
-            pi.setPeer(p);
+            PeerFileInfo pi=new PeerFileInfo(p, fileID);
             res.add(pi);
         }
+        //TODO: should we connect to more peers and get more peers here?
         return res;
     }
 }

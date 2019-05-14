@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -42,6 +43,8 @@ import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -314,6 +317,7 @@ public final class Peers {
     
     private static void fillMyPeerInfo(){
         myPeerInfo = new JSONObject();
+        PeerInfo pi = new PeerInfo();
         List<Peer.Service> servicesList = new ArrayList<>();
         if (peerHttpServer.getMyAddress() != null) {
             try {
@@ -329,30 +333,30 @@ public final class Peers {
                 if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                     throw new RuntimeException("Invalid announced address length: " + announcedAddress);
                 }
-                myPeerInfo.put("announcedAddress", announcedAddress);
+                pi.announcedAddress = announcedAddress;
             } catch (URISyntaxException e) {
                 LOG.info("Your announce address is invalid: " + peerHttpServer.getMyAddress());
                 throw new RuntimeException(e.toString(), e);
             }
         }
         if (myHallmark != null && myHallmark.length() > 0) {
-            myPeerInfo.put("hallmark", myHallmark);
+            pi.hallmark = myHallmark;
             servicesList.add(Peer.Service.HALLMARK);
         }
-        myPeerInfo.put("application", Constants.APPLICATION);
-        myPeerInfo.put("version",Constants.VERSION.toString());
-        myPeerInfo.put("platform", peerHttpServer.getMyPlatform());
-        myPeerInfo.put("chainId", blockchainConfig.getChain().getChainId());
-        myPeerInfo.put("shareAddress", peerHttpServer.shareMyAddress);
+        pi.application=Constants.APPLICATION;
+        pi.version=Constants.VERSION.toString();
+        pi.platform=peerHttpServer.getMyPlatform();
+        pi.chainId=blockchainConfig.getChain().getChainId().toString();
+        pi.shareAddress=peerHttpServer.shareMyAddress;
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
         if (API.openAPIPort > 0) {
-            myPeerInfo.put("apiPort", API.openAPIPort);
+            pi.apiPort=API.openAPIPort;
             servicesList.add(Peer.Service.API);
         }
         if (API.openAPISSLPort > 0) {
-            myPeerInfo.put("apiSSLPort", API.openAPISSLPort);
+            pi.apiSSLPort=API.openAPISSLPort;
             servicesList.add(Peer.Service.API_SSL);
         }
 
@@ -372,9 +376,9 @@ public final class Peers {
                     }
                 }
             });
-            myPeerInfo.put("disabledAPIs", APIEnum.enumSetToBase64String(disabledAPISet));
+            pi.disabledAPIs=APIEnum.enumSetToBase64String(disabledAPISet);
 
-            myPeerInfo.put("apiServerIdleTimeout", API.apiServerIdleTimeout);
+            pi.apiServerIdleTimeout=API.apiServerIdleTimeout;
 
             if (API.apiServerCORS) {
                 servicesList.add(Peer.Service.CORS);
@@ -385,8 +389,12 @@ public final class Peers {
         for (Peer.Service service : servicesList) {
             services |= service.getCode();
         }
-        myPeerInfo.put("services", Long.toUnsignedString(services));
+        pi.services=Long.toUnsignedString(services);
         myServices = Collections.unmodifiableList(servicesList);
+        
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JsonOrgModule()); 
+        myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
       
     }

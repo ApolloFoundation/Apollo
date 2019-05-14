@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import javax.enterprise.inject.spi.CDI;
 
@@ -27,6 +28,8 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -37,7 +40,8 @@ import org.slf4j.LoggerFactory;
 final class GetInfo extends PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
+    private  ObjectMapper mapper = new ObjectMapper();
+ 
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     static {
         JSONObject response = new JSONObject();
@@ -45,7 +49,9 @@ final class GetInfo extends PeerRequestHandler {
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
     }
 
-    public GetInfo() {}
+    public GetInfo() {
+       mapper.registerModule(new JsonOrgModule()); 
+    }
 
     @Override
     protected boolean isChainIdProtected() {
@@ -53,16 +59,17 @@ final class GetInfo extends PeerRequestHandler {
     }
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
+        PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
-        String servicesString = (String)request.get("services");
+        String servicesString = pi.services;
         String announcedAddress = null;
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-        peerImpl.analyzeHallmark((String)request.get("hallmark"));
+        peerImpl.analyzeHallmark(pi.hallmark);
         if (!Peers.ignorePeerAnnouncedAddress) {
-           announcedAddress = Convert.emptyToNull((String) request.get("announcedAddress"));
+           announcedAddress = Convert.emptyToNull(pi.announcedAddress);
             if (announcedAddress != null) {
                 announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
@@ -89,15 +96,14 @@ final class GetInfo extends PeerRequestHandler {
                 }
             }
         }
-        String application = (String)request.get("application");
-        if (application == null) {
-            application = "?";
+        if (pi.application == null) {
+            pi.application = "?";
         }
-        peerImpl.setApplication(application.trim());
+        peerImpl.setApplication(pi.application.trim());
 
         Version version = null;
         try {
-            version = new Version((String)request.get("version"));
+            version = new Version(pi.version);
         }
         catch (Exception e) {
             LOG.error("Cannot parse version.", e);
@@ -108,19 +114,18 @@ final class GetInfo extends PeerRequestHandler {
         }
         peerImpl.setVersion(version);
 
-        String platform = (String)request.get("platform");
-        if (platform == null) {
-            platform = "?";
+        if (pi.platform == null) {
+            pi.platform = "?";
         }
-        peerImpl.setPlatform(platform.trim());
+        peerImpl.setPlatform(pi.platform.trim());
 
-        peerImpl.setShareAddress(Boolean.TRUE.equals(request.get("shareAddress")));
+        peerImpl.setShareAddress(pi.shareAddress);
 
-        peerImpl.setApiPort(request.get("apiPort"));
-        peerImpl.setApiSSLPort(request.get("apiSSLPort"));
-        peerImpl.setDisabledAPIs(request.get("disabledAPIs"));
-        peerImpl.setApiServerIdleTimeout(request.get("apiServerIdleTimeout"));
-        peerImpl.setBlockchainState(request.get("blockchainState"));
+        peerImpl.setApiPort(pi.apiPort);
+        peerImpl.setApiSSLPort(pi.apiSSLPort);
+        peerImpl.setDisabledAPIs(pi.disabledAPIs);
+        peerImpl.setApiServerIdleTimeout(pi.apiServerIdleTimeout);
+        peerImpl.setBlockchainState(pi.blockchainState);
 
         if (peerImpl.getServices() != origServices) {
             Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);

@@ -15,4 +15,5 @@ public interface HasHashSum {
     default public boolean hasSameHash(HasHashSum other){
         return getHash().compareTo(other.getHash())==0;
     }
+    public boolean retreiveHash();
 }

@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import java.math.BigInteger;
 
 /**
@@ -13,10 +12,16 @@ import java.math.BigInteger;
  */
 public class PeerFileInfo implements HasHashSum {
 
-    BigInteger hash;
-    String peerAddress;
-    Peer peer = null;
+    private BigInteger hash;
+    private String peerAddress;
+    private final Peer peer;
+    private final String fileId;
 
+    public PeerFileInfo(Peer peer, String fileId) {
+        this.peer = peer;
+        this.fileId = fileId;
+    }
+    
     @Override
     public BigInteger getHash() {
         return hash;
@@ -27,8 +32,11 @@ public class PeerFileInfo implements HasHashSum {
         return peerAddress;
     }
 
-    public void setPeer(Peer p) {
-        peerAddress = p.getHost();
+
+    @Override
+    public boolean retreiveHash() {
+       hash = peer.retreiveHash(fileId);
+       return hash!=null;
     }
 
 }

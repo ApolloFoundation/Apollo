@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
 import java.math.BigInteger;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,10 @@ import java.util.Map;
  * @author alukin@gmail.com
  */
 public class PeerValidityDecisionMaker {
+
+    public final static int MAX_TRIES_TO_GET_NEW=30;
+    public final static int MIN_PEERS=20;
+    public final static double MIN_PEERS_PRCENT=10.0;
     
     public enum Decision{
         AbsOK, //network is 100% consistent
@@ -44,7 +49,8 @@ public class PeerValidityDecisionMaker {
      * @return map of hypotetic probabilities for each discovered hash value
      */
     public Map<BigInteger, ProbabInfo> calculateInitialProb(int n) {
-        List<HasHashSum> first = peers.getPeers(n);
+        List<HasHashSum> first = new ArrayList<>();
+        first.addAll(peers.getEnoughRandomPeers(MIN_PEERS, MIN_PEERS_PRCENT));
         //sort by hash
         for (HasHashSum pi : first) {
             stats.add(pi);
@@ -73,14 +79,14 @@ public class PeerValidityDecisionMaker {
         boolean isNew = false;
         int nTries = 0;
         HasHashSum pi = null;
-        while (!isNew) {
+        while(isNew){
             pi = peers.getRandomPeer();
-            if (!stats.isAlreadyCounted(pi)) {
-                isNew = true;
-                break;
+            isNew = !stats.isAlreadyCounted(pi);
+            if(!isNew){
+                continue;
             }
             nTries++;
-            if (nTries > 200) {
+            if (nTries > MAX_TRIES_TO_GET_NEW) {
                 pi = null;
                 break;
             }
@@ -136,7 +142,7 @@ public class PeerValidityDecisionMaker {
     }
     
     /**
-     * Calulates usability of network by sampling
+     * Calculates usability of network by sampling
      * @return Decision from AbsOK to Bad
      */
     public Decision calcualteNetworkState(){

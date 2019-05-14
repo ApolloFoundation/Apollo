@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.peer.FileDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -254,7 +255,10 @@ public final class AplCore {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
-
+                //File download debug
+//                FileDownloader fdl = new FileDownloader("testFile");
+//                fdl.prepareForDownloading();
+//                fdl.download();
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {

@@ -8,5 +8,6 @@ package com.apollocurrency.aplwallet.api.p2p;
  * @author alukin@gmail.com
  */
 public class BaseP2PResonse {
-    public int errorCode=0;
+    public Integer errorCode;
+    public Integer protocol = 1;
 }
