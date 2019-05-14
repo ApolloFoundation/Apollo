@@ -38,11 +38,10 @@ import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
-import org.h2.api.ErrorCode;
-import org.h2.message.DbException;
-import org.h2.tools.SimpleResultSet;
-import org.h2.tools.SimpleRowSource;
-import org.h2.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
+import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
 import org.slf4j.Logger;
 
 /**
@@ -216,7 +215,8 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             log.debug("CSV file '{}' written rows=[{}]", fileName, rows);
             return rows;
         } catch (IOException e) {
-            throw DbException.convertIOException(e, null);
+            log.error("IO exception", e);
+            throw new SQLException(e);
         } finally {
             if (closeWhenNotAppend) {
                 close();
@@ -247,7 +247,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             initWrite(false);
             return writeResultSet(rs, minMaxDbId, true);
         } catch (IOException e) {
-            throw convertException("IOException writing " + outputFileName, e);
+            throw new SQLException("IOException writing " + outputFileName, e);
         }
     }
 
@@ -264,7 +264,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             initWrite(true);
             return writeResultSet(rs, minMaxDbId, false);
         } catch (IOException e) {
-            throw convertException("IOException writing " + outputFileName, e);
+            throw new SQLException("IOException writing " + outputFileName, e);
         }
     }
 
@@ -290,7 +290,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
         try {
             return readResultSet(colNames);
         } catch (IOException e) {
-            throw convertException("IOException reading " + inputFileName, e);
+            throw new SQLException("IOException writing " + inputFileName, e);
         }
     }
 
@@ -362,7 +362,8 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                 output = new BufferedWriter(new OutputStreamWriter(out, characterSet));
             } catch (Exception e) {
                 close();
-                throw DbException.convertToIOException(e);
+                log.error("initWrite() exception, appendMode=" + appendMode, e);
+                throw e;
             }
         }
     }
@@ -533,7 +534,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                 if (v.length() == 0) {
                     v = "COLUMN" + list.size();
                 } else if (!caseSensitiveColumnNames && isSimpleColumnName(v)) {
-                    v = StringUtils.toUpperEnglish(v);
+                    v = ConversionUtils.toUpperEnglish(v);
                 }
                 // process HEADER with meta data = COLUMNNAME(TYPE|PRECISION|SCALE)
                 if (v.contains(fieldTypeSeparatorStart + "")) {
@@ -822,13 +823,9 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
                 }
             }
         } catch (IOException e) {
-            throw convertException("IOException reading from " + fileName, e);
+            throw new SQLException("IOException reading from " + fileName, e);
         }
         return row;
-    }
-
-    private static SQLException convertException(String message, Exception e) {
-        return DbException.get(ErrorCode.IO_EXCEPTION_1, e, message).getSQLException();
     }
 
     /**
@@ -1071,13 +1068,13 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
      */
     public String setOptions(String options) {
         String charset = null;
-        String[] keyValuePairs = StringUtils.arraySplit(options, ' ', false);
+        String[] keyValuePairs = ConversionUtils.arraySplit(options, ' ', false);
         for (String pair : keyValuePairs) {
             if (pair.length() == 0) {
                 continue;
             }
             int index = pair.indexOf('=');
-            String key = StringUtils.trim(pair.substring(0, index), true, true, " ");
+            String key = ConversionUtils.trim(pair.substring(0, index), true, true, " ");
             String value = pair.substring(index + 1);
             char ch = value.length() == 0 ? 0 : value.charAt(0);
             if (isParam(key, "escape", "esc", "escapeCharacter")) {
@@ -1102,7 +1099,7 @@ public class CsvManagerImpl implements SimpleRowSource, CsvManager {
             } else if (isParam(key, "caseSensitiveColumnNames")) {
                 setCaseSensitiveColumnNames(Boolean.parseBoolean(value));
             } else {
-                throw DbException.getUnsupportedException(key);
+                throw new RuntimeException("Key '" + key + "' not found in config");
             }
         }
         return charset;

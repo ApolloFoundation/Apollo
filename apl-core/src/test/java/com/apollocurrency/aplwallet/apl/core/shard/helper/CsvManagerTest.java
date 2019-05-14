@@ -71,6 +71,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -90,7 +91,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.h2.tools.SimpleRowSource;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -203,7 +203,7 @@ class CsvManagerTest {
 //        excludeColumnNames.add("LATEST");
         // init CvsManager
         csvManager = new CsvManagerImpl(dirProvider.getDataExportDir(), excludeColumnNames);
-//        csvManager.setOptions("fieldDelimiter="); // do not put ""
+        csvManager.setOptions("fieldDelimiter="); // do not put ""
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
 
@@ -264,13 +264,29 @@ class CsvManagerTest {
 
             ResultSetMetaData meta = rs.getMetaData();
             columnsCount = meta.getColumnCount();
+            StringBuffer sqlInsert = new StringBuffer(600);
+            StringBuffer columnNames = new StringBuffer(200);
+            StringBuffer columnsValues = new StringBuffer(200);
+            sqlInsert.append("INSERT INTO ").append(item.toString()).append(" (");
+            for (int i = 0; i < columnsCount; i++) {
+                columnNames.append( meta.getColumnLabel(i + 1)).append(",");
+                columnsValues.append("?").append(",");
+            }
+            columnNames.deleteCharAt(columnNames.lastIndexOf(","));
+            columnsValues.deleteCharAt(columnsValues.lastIndexOf(","));
+            sqlInsert.append(columnNames).append(") VALUES").append("(").append(columnsValues).append(")");
+            log.debug("SQL = {}", sqlInsert.toString());
+            PreparedStatement preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
+
             while (rs.next()) {
-                for (int i = 0; i < meta.getColumnCount(); i++) { // TODO: YL NOT READY YET!
-                    log.debug("{}: {}\n", rs.getObject(i + 1), rs.getString(i + 1));
+                for (int i = 0; i < columnsCount; i++) {
+                    Object object = rs.getObject(i + 1);
+                    preparedInsertStatement.setObject(i + 1, object);
+                    log.trace("{}: {}\n", object, rs.getString(i + 1));
                     importedCount++;
                 }
             }
-//            con.commit();
+            con.commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }
