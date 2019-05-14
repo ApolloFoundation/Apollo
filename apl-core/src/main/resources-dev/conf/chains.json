@@ -170,6 +170,14 @@
         }
       },
       {
+        "height": 2160000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 70,
+        "minBlockTimeLimit": 50,
+        "maxBalance": 30000000000
+      },
+      {
         "height": 2249999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
