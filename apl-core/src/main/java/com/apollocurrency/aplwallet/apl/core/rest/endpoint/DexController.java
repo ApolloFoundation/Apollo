@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -13,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
@@ -298,20 +299,42 @@ public class DexController {
     }
 
     @POST
-    @Path("/widthraw")
+    @Path("/withdraw")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Widthraw cryptocurrency", description = "dexWidthraw endpoint provides transfer of Ethereum")
+    @Operation(tags = {"dex"}, summary = "Widthraw cryptocurrency", description = "dexWidthraw endpoint provides transferEth of Ethereum/Pax")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Wallets balances"),
+            @ApiResponse(responseCode = "200", description = "Transaction hash"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response dexWidthrawPost( @NotNull  @QueryParam("account") String account, @NotNull  @QueryParam("secretPhrase") String secretPhrase, @NotNull  @QueryParam("amount") BigDecimal amount, @NotNull  @QueryParam("address") String address, @NotNull  @QueryParam("cryptocurrency") String cryptocurrency,@Context SecurityContext securityContext)
-            throws NotFoundException {
-        boolean status = service.widthraw(account,secretPhrase,amount,address,cryptocurrency);
+    public Response dexWithdrawPost(
+                                    @NotNull  @FormParam("amount") BigDecimal amount,
+                                    @NotNull  @FormParam("address") String address,
+                                    @NotNull  @FormParam("transferFee") Long transferFee,
+                                    @NotNull  @FormParam("cryptocurrency") Byte cryptocurrency,
+                                    @Context HttpServletRequest req) {
+        DexCurrencies currencies = null;
+        String passphrase;
+        Account sender;
+        try{
+            passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            sender = ParameterParser.getSenderAccount(req);
 
-        if(!status){
-            return Response.ok(new ApiError("Not Found", 404)).build();
+            if (cryptocurrency != null) {
+                currencies = DexCurrencies.getType(cryptocurrency);
+            }
+        } catch (Exception ex){
+            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+        }
+
+        if (currencies == null || DexCurrencies.APL.equals(currencies)) {
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("cryptocurrency", "Withdraw can work only with Eth or Pax."))).build();
+        }
+
+        String transaction = service.withdraw(sender.getId(), passphrase, amount, address, currencies, transferFee);
+
+        if(StringUtils.isBlank(transaction)){
+            return Response.ok(JSON.toString(JSONResponses.error("Transfer didn't send."))).build();
         } else {
-            return Response.ok().build();
+            return Response.ok(new WithdrawResponse(transaction)).build();
         }
     }
 

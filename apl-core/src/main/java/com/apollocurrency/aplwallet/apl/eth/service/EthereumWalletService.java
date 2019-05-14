@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.ethereum.util.blockchain.EtherUtil;
 import org.slf4j.Logger;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
@@ -47,19 +48,35 @@ public class EthereumWalletService {
 
     private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
 
-    public BigInteger getPaxBalanceWei(String accountAddress){
-        return getTokenBalance(paxContractAddress, accountAddress);
+    /**
+     * Get Eth PAX token balance.
+     * @param address Eth address
+     * @return account balance in Wei
+     */
+    public BigInteger getPaxBalanceWei(String address){
+        return getTokenBalance(paxContractAddress, address);
     }
 
+    /**
+     * Get Eth PAX token balance.
+     * @param address Eth address
+     * @return account balance in Eth
+     */
     public BigDecimal getPaxBalanceEther(String address) {
         return Web3jUtils.weiToEther(getPaxBalanceWei(address));
     }
 
-    private BigInteger getTokenBalance(String contractAddress, String userAddress) {
+    /**
+     * Get Eth ERC-20 balance.
+     * @param contractAddress ERC-20 address
+     * @param address Eth address
+     * @return account balance in Wei
+     */
+    private BigInteger getTokenBalance(String contractAddress, String address) {
         BigInteger balance = null;
         try {
-            Function function = balanceOf(userAddress);
-            String responseValue = callSmartContractFunction(function, contractAddress, userAddress);
+            Function function = balanceOf(address);
+            String responseValue = callSmartContractFunction(function, contractAddress, address);
 
             List<Type> response = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
 
@@ -106,12 +123,17 @@ public class EthereumWalletService {
         return response.getValue();
     }
 
-    public BigInteger getBalanceWei(String accountAddress){
+    /**
+     * Get Eth balance.
+     * @param address Eth address
+     * @return account balance in Wei
+     */
+    public BigInteger getBalanceWei(String address){
     // send asynchronous requests to get balance
         BigInteger wei = null;
         try {
             EthGetBalance ethGetBalance = web3j
-                    .ethGetBalance(accountAddress, DefaultBlockParameterName.LATEST)
+                    .ethGetBalance(address, DefaultBlockParameterName.LATEST)
                     .sendAsync()
                     .get();
 
@@ -123,6 +145,11 @@ public class EthereumWalletService {
         return wei;
     }
 
+    /**
+     * Get Eth balance.
+     * @param address Eth address
+     * @return account balance in Eth
+     */
     public BigDecimal getBalanceEther(String address) {
         return Web3jUtils.weiToEther(getBalanceWei(address));
     }
@@ -130,31 +157,34 @@ public class EthereumWalletService {
     /**
      * Transfer money from account to another one.
      * @param amountEth
+     * @param gasPrice Gwei
      * @return String - transaction Hash.
      */
-    public String transfer(String passphrase, long accountId, String toAddress, BigDecimal amountEth){
+    public String transferEth(String passphrase, long accountId, String toAddress, BigDecimal amountEth, Long gasPrice){
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         Credentials ethCredentials = keyStore.getEthWalletKey().getCredentials();
 
-        return transfer(ethCredentials.getAddress(), ethCredentials, toAddress, Web3jUtils.etherToWei(amountEth));
+        return transferEth(ethCredentials.getAddress(), ethCredentials, toAddress, Web3jUtils.etherToWei(amountEth), gasPrice);
     }
 
     /**
      * Transfer money from account to another one.
      * @param amountEth
+     * @param gasPrice Gwei
      * @return String - transaction Hash.
      */
-    public String transfer(String fromAddress, Credentials credentials, String toAddress, BigDecimal amountEth){
-        return transfer(fromAddress, credentials, toAddress, Web3jUtils.etherToWei(amountEth));
+    public String transferEth(String fromAddress, Credentials credentials, String toAddress, BigDecimal amountEth, Long gasPrice){
+        return transferEth(fromAddress, credentials, toAddress, Web3jUtils.etherToWei(amountEth), gasPrice);
     }
 
 
     /**
      * Transfer money from account to another one.
      * @param amountWei
+     * @param gasPrice Gwei
      * @return String - transaction Hash.
      */
-    public String transfer(String fromAddress, Credentials credentials, String toAddress, BigInteger amountWei){
+    public String transferEth(String fromAddress, Credentials credentials, String toAddress, BigInteger amountWei, Long gasPrice){
         log.info("Account (to address) " + toAddress + "\n" + "Balance before Tx: " + getBalanceWei(toAddress) + "\n");
         log.info("Transfer " + Web3jUtils.weiToEther(amountWei) + " Ether to account");
 
@@ -175,7 +205,7 @@ public class EthereumWalletService {
         RawTransaction rawTransaction  = RawTransaction
                 .createEtherTransaction(
                         nonce,
-                        Web3jUtils.GAS_PRICE,
+                        EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI),
                         Web3jUtils.GAS_LIMIT_ETHER_TX,
                         toAddress,
                         amountWei

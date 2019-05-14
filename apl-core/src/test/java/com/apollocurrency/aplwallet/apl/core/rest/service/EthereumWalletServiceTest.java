@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.config.WalletClientProducer;
-import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.eth.utils.Web3jUtils;
 import com.apollocurrency.aplwallet.apl.testutil.FileLoader;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -72,7 +72,7 @@ class EthereumWalletServiceTest {
         log.info("Private key: " + privateKeyGenerated);
         credentials = Credentials.create(privateKeyGenerated);
 
-        String transactionHash = ethereumWalletService.transfer(fromAddress, credentials, toAddress, transferAmount);
+        String transactionHash = ethereumWalletService.transferEth(fromAddress, credentials, toAddress, transferAmount, 30L);
 
         // step 4: wait for the confirmation of the network
         TransactionReceipt receipt = ethereumWalletService.waitForReceipt(transactionHash);

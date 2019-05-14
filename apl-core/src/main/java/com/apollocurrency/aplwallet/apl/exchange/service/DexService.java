@@ -99,8 +99,13 @@ public class DexService {
         return null;
     }
 
-    public boolean widthraw(String account,String secretPhrase,BigDecimal amount,String address,String cryptocurrency){
-        return false;
+    public String withdraw(long accountId, String secretPhrase, BigDecimal amount, String address, DexCurrencies currencies, Long transferFee){
+
+        if(DexCurrencies.ETH.equals(currencies)){
+            return ethereumWalletService.transferEth(secretPhrase, accountId, address, amount, transferFee);
+        }
+
+        return null;
     }
 
 
