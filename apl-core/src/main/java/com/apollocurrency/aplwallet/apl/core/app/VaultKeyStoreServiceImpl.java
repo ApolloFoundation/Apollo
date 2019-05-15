@@ -4,6 +4,7 @@
 
  package com.apollocurrency.aplwallet.apl.core.app;
 
+ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
  import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
  import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
@@ -287,6 +288,7 @@
 
         // Check passphrase / migrate keys from old key store to the new.
         FbWallet fbWallet = getSecretStore(passphrase, accountId);
+
         if(fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllKeys())){
             return null;
         }

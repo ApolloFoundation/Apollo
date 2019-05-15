@@ -259,6 +259,11 @@ public final class DbUtils {
         }
     }
 
+    public static Integer calculateLimit(Integer from, Integer to) {
+        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        return limit;
+    }
+
     public static String limitsClause(int from, int to) {
         int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
         if (limit > 0 && from > 0) {
