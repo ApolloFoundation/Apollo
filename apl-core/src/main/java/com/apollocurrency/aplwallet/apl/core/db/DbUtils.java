@@ -13,27 +13,23 @@
  * Removal or modification of this copyright notice is prohibited.
  *
  */
-
 /*
  * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import org.h2.store.fs.FilePath;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Path;
-import java.sql.*;
-import java.util.Arrays;
-import java.util.Objects;
-
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Arrays;
+
+import org.slf4j.Logger;
 
 public final class DbUtils {
     private static final Logger log = getLogger(DbUtils.class);
