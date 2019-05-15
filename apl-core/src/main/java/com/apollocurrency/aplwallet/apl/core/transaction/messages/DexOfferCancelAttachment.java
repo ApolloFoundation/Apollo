@@ -37,7 +37,7 @@ public class DexOfferCancelAttachment extends AbstractAttachment {
 
     @Override
     void putMyJSON(JSONObject json) {
-        json.put("transactionId", this.transactionId);
+        json.put("transactionId", Long.toUnsignedString(this.transactionId));
     }
 
     @Override
