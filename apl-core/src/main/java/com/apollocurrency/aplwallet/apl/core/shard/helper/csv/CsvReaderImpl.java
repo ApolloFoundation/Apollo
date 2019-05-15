@@ -59,7 +59,8 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         try {
             return readResultSet(colNames);
         } catch (IOException e) {
-            throw new SQLException("IOException writing " + inputFileName, e);
+            throw new SQLException("Exception reading (or not found) file '"
+                    + inputFileName + "' in path = " + super.dataExportPath, e);
         }
     }
 
@@ -98,7 +99,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
             try {
                 InputStream in = DbUtils.newInputStream(
                         this.dataExportPath,
-                        !this.fileName.contains(FILE_EXTENSION) ? this.fileName + FILE_EXTENSION : this.fileName
+                        !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
                 );
                 in = new BufferedInputStream(in, IO_BUFFER_SIZE);
                 input = new InputStreamReader(in, characterSet);

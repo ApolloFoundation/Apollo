@@ -38,13 +38,14 @@ public abstract class CsvAbstractBase {
     public static final String FILE_ENCODING = Charset.forName("UTF-8").name(); // UTF-8 default
     protected String characterSet = FILE_ENCODING;
 
-    public static final String FILE_EXTENSION = ".csv"; // UTF-8
+    public static final String CSV_FILE_EXTENSION = ".csv"; // UTF-8
 
-    protected Path dataExportPath; // common path for al CSV files
-    protected String fileName; // file name changes by table name
+    protected Path dataExportPath; // common path for all CSV files are stored in
+    protected String fileName; // file name (by table name)
+    protected String fileNameExtension = CSV_FILE_EXTENSION; // file name extension
 
     protected String[] columnNames;
-    protected ColumnMetaData[] columnsMetaData;
+    protected ColumnMetaData[] columnsMetaData; // full meta data about sql table columns
 
     protected String lineSeparator = LINE_SEPARATOR;
     protected String nullString = "null";// "";
@@ -90,6 +91,8 @@ public abstract class CsvAbstractBase {
                 setEscapeCharacter(ch);
             } else if (isParam(key, "fieldDelimiter", "fieldDelim")) {
                 setFieldDelimiter(ch);
+            } else if (isParam(key, "fileNameExtension", "fieldDelim")) {
+                setFileNameExtension(value);
             } else if (isParam(key, "fieldSeparator", "fieldSep")) {
                 setFieldSeparatorRead(ch);
                 setFieldSeparatorWrite(value);
@@ -214,6 +217,14 @@ public abstract class CsvAbstractBase {
      */
     public char getFieldDelimiter() {
         return fieldDelimiter;
+    }
+
+    public String getFileNameExtension() {
+        return fileNameExtension;
+    }
+
+    public void setFileNameExtension(String fileNameExtension) {
+        this.fileNameExtension = fileNameExtension;
     }
 
     /**
