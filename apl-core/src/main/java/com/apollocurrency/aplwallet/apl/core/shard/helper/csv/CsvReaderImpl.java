@@ -104,7 +104,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     private void initRead() throws IOException {
         if (input == null) {
             try {
-                InputStream in = DbUtils.newInputStream(
+                InputStream in = CsvFileUtils.newInputStream(
                         this.dataExportPath,
                         !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
                 );

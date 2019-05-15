@@ -10,9 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -54,7 +51,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     @Test
     public void testGetAll() throws SQLException {
         List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-//        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
 
         assertEquals(getAll(), all);
     }
@@ -65,7 +61,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-//        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
         assertEquals(expected, all);
     }
 
@@ -79,7 +74,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.truncate());
 
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-//        List<T> all = derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE).getValues();
 
         assertTrue(all.isEmpty(), "Table should not contain any records after 'truncate' operation");
     }
@@ -103,7 +97,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
         List<T> all = getAll();
         List<T> actualValues = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-//        List<T> actualValues = derivedDbTable.getAllByDbId(new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE);
         assertEquals(all, actualValues);
     }
 
@@ -113,8 +106,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         Integer rollbackHeight = heights.get(heights.size() - 1);
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(rollbackHeight));
         assertEquals(sublistByHeight(getAll(), rollbackHeight), derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues());
-//        derivedDbTable.getAllByDbId(
-//                new MinMaxDbId(Long.MIN_VALUE, Long.MAX_VALUE), Integer.MAX_VALUE)
     }
 
 

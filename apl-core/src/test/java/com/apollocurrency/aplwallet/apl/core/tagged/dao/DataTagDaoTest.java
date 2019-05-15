@@ -95,7 +95,7 @@ class DataTagDaoTest {
 
     @Test
     void getDataTagAllById() throws Exception {
-        List<DataTag> result = dataTagDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
+        List<DataTag> result = dataTagDao.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertNotNull(result);
         assertEquals(4, result.size());
     }
@@ -103,7 +103,7 @@ class DataTagDaoTest {
     @Test
     void insertDataTag() throws Exception {
         DbUtils.inTransaction(extension, (con) -> dataTagDao.insert(tagtd.dataTag_NOT_SAVED));
-        List<DataTag> all = dataTagDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
+        List<DataTag> all = dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
         assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4, tagtd.dataTag_NOT_SAVED), all);
     }
 
@@ -111,7 +111,7 @@ class DataTagDaoTest {
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> dataTagDao.rollback(tagtd.dataTag_4.getHeight()));
         assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4),
-                dataTagDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues());
+                dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }
 
 }

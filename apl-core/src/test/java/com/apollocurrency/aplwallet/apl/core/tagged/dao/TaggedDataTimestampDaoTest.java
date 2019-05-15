@@ -93,7 +93,7 @@ class TaggedDataTimestampDaoTest {
 
     @Test
     void getDataStampAllById() throws Exception {
-        List<TaggedDataTimestamp> result = dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
+        List<TaggedDataTimestamp> result = dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
         assertNotNull(result);
         assertEquals(3, result.size());
     }
@@ -101,21 +101,21 @@ class TaggedDataTimestampDaoTest {
     @Test
     void insertData() throws Exception {
         DbUtils.inTransaction(extension, (con) -> dataTimestampDao.insert(tagtd.NOT_SAVED_TagDTsmp));
-        List<TaggedDataTimestamp> all = dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues();
+        List<TaggedDataTimestamp> all = dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
         assertEquals(List.of(tagtd.TagDTsmp_1, tagtd.TagDTsmp_2, tagtd.TagDTsmp_3, tagtd.NOT_SAVED_TagDTsmp), all);
     }
 
     @Test
     void testTruncate() throws SQLException {
         DbUtils.inTransaction(extension, (con)-> dataTimestampDao.truncate());
-        assertTrue(dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues().isEmpty(), "Table should not have any entries after truncating");
+        assertTrue(dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues().isEmpty(), "Table should not have any entries after truncating");
     }
 
     @Test
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> dataTimestampDao.rollback(tagtd.TagDTsmp_1.getHeight()));
         assertEquals(List.of(tagtd.TagDTsmp_1),
-                dataTimestampDao.getAllByDbId(new MinMaxDbId(0, Long.MAX_VALUE), 100).getValues());
+                dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }
 
 }

@@ -133,6 +133,9 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         return databaseManager;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -154,29 +157,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
-    @Override
-    public DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
-        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("select * from " + table + " where db_id >= ? and db_id < ? limit ?")) {
-            pstmt.setLong(1, minMaxDbId.getMinDbId());
-            pstmt.setLong(2, minMaxDbId.getMaxDbId());
-            pstmt.setLong(3, limit);
-            List<T> values = new ArrayList<>();
-            long dbId = -1;
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()){
-                    values.add(load(con, rs, null));
-                    dbId = rs.getLong("db_id");
-                }
-            }
-            return new DerivedTableData<>(values, dbId);
-        }
-    }
-
     protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
                                     MinMaxDbId minMaxDbId, int limit) throws SQLException {
@@ -193,6 +178,9 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MinMaxDbId getMinMaxDbId(int height) throws SQLException {
         // select MIN and MAX dbId values in one query

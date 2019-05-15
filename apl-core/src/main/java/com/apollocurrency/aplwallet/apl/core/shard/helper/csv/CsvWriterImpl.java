@@ -48,14 +48,21 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
 
     private Set<String> excludeColumn = new HashSet<>();
     private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
+    private String defaultPaginationColumnName = "DB_ID";
 
     @Inject
-    public CsvWriterImpl(@Named("dataExportDir") Path dataExportPath, Set<String> excludeColumnNames) {
+    public CsvWriterImpl(@Named("dataExportDir") Path dataExportPath, Set<String> excludeColumnNames,
+                         String paginationColumnName) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
         if (excludeColumnNames != null && excludeColumnNames.size() > 0) {
             // assign non empty Set
             this.excludeColumn = excludeColumnNames;
-            log.debug("Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
+            log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
+        }
+        if (paginationColumnName != null && !paginationColumnName.isEmpty()) {
+            // assign non empty Set
+            this.defaultPaginationColumnName = paginationColumnName;
+            log.debug("Config paginationColumnName column = {}", paginationColumnName);
         }
     }
 
@@ -117,7 +124,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private void initWrite(boolean appendMode) throws IOException {
         if (output == null) {
             try {
-                OutputStream out = DbUtils.newOutputStream(this.dataExportPath,
+                OutputStream out = CsvFileUtils.newOutputStream(this.dataExportPath,
                         !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName,
                         appendMode);
                 out = new BufferedOutputStream(out, IO_BUFFER_SIZE);
@@ -237,7 +244,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 log.debug("Row = {}", Arrays.toString(rowColumnNames));
                 writeRow(rowColumnNames);
                 rows++;
-                minMaxDbId.setMinDbId(rs.getLong("db_id"));
+                minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
             }
             if (rows == 1) {
                 minMaxDbId.incrementMin(); // increase by one in order to advance further on result set

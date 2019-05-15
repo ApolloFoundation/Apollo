@@ -26,21 +26,38 @@ public interface DerivedTableInterface<T> {
 
     void insert(T t);
 
+    /**
+     * Method is used by unit tests mainly
+     * @param from bottom column value (id or similar)
+     * @param limit top column value (id or similar)
+     * @param dbIdLimit batch value
+     * @return table rows with lastDbId inside
+     * @throws SQLException
+     */
     DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException;
 
     boolean delete(T t);
 
-    default DerivedTableData<T> getAllByDbId(MinMaxDbId minMaxDbId, int limit) throws SQLException {
-        throw new UnsupportedOperationException("GetAll is not supported");
-    }
+    /**
+     * Retrieve sql result set partial table's data for later processing with pagination on current table
+     *
+     * @param con sql connection to use for sql statement
+     * @param pstmt select sql to execute for selecting with pagination
+     * @param minMaxDbId object to keep track on latest ID during pagination
+     * @param limit batch pagination limit
+     * @return sql result set
+     * @throws SQLException
+     */
+    ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
+                             MinMaxDbId minMaxDbId, int limit) throws SQLException;
 
-    default ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
-                                     MinMaxDbId minMaxDbId, int limit) throws SQLException {
-        throw new UnsupportedOperationException("GetRange is not supported");
-    }
-
-    default MinMaxDbId getMinMaxDbId(int height) throws SQLException {
-        return new MinMaxDbId();
-    }
+    /**
+     * Request min, max DB_ID, rows count on current table for later use by retrieving logic
+     *
+     * @param height target blockchain height
+     * @return object with internal values for min, max DB_ID and count of rows
+     * @throws SQLException
+     */
+    MinMaxDbId getMinMaxDbId(int height) throws SQLException;
 
 }

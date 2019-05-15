@@ -210,7 +210,7 @@ class CsvWriterReaderDerivedTablesTest {
 //        excludeColumnNames.add("PUBLIC_KEY");
 //        excludeColumnNames.add("LATEST");
         // init Cvs reader, writer components
-        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
+        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, "DB_ID");
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
         csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
         csvReader.setOptions("fieldDelimiter="); // do not put ""
@@ -372,10 +372,10 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            csvWriter = new CsvWriterImpl(null, Collections.emptySet());
+            csvWriter = new CsvWriterImpl(null, Collections.emptySet(), null);
         });
 
-        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet());
+        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet(), null);
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
