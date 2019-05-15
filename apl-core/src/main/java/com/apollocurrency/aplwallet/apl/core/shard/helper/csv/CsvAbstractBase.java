@@ -53,7 +53,7 @@ public abstract class CsvAbstractBase {
     protected char escapeCharacter = '\"';
     protected char fieldDelimiter = '\"';
     protected char fieldTypeSeparatorStart = '('; // use here only non-alphanumeric characters, no space here
-    protected char fieldTypeSeparatorEnd = ' '; // use here only non-alphanumeric characters, no space here
+    protected char fieldTypeSeparatorEnd = ')'; // use here only non-alphanumeric characters, no space here
     protected char fieldSeparatorRead = ',';
     protected String fieldSeparatorWrite = ",";
 
