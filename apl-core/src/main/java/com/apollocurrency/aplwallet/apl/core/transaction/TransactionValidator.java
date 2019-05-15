@@ -68,10 +68,9 @@ public class TransactionValidator {
                 throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
             }
         }
-        AntifraudValidator antiFraud = new AntifraudValidator(blockchain.getHeight(), transaction.getSenderId(),
-                transaction.getRecipientId());
         
-        if (!antiFraud.validate()) throw new AplException.NotValidException("Incorrect Passphrase");
+        if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
+                transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
         
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
