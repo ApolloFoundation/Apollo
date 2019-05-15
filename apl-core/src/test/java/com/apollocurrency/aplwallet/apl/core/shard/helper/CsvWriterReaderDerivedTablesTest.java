@@ -386,6 +386,5 @@ class CsvWriterReaderDerivedTablesTest {
         assertThrows(NullPointerException.class, () -> {
             csvWriter.write(tableName, new SimpleResultSet(), null);
         });
-
     }
 }

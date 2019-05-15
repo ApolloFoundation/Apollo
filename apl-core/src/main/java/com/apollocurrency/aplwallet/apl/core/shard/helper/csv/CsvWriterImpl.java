@@ -287,10 +287,15 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
-                // write simple header column : COLUMN_NAME_1,COLUMN_NAME_2
-//                outputBuffer.append(s);
-                // write csv Header as COLUMN_NAME_1(TYPE_1|PRECISION_1|SCALE_1),COLUMN_NAME_2(TYPE_2|PRECISION_2|SCALE_2)
-                outputBuffer.append(columnsMetaData[i].toString());
+                // writing 'header columns' row into output file
+                if ((!Character.isLetterOrDigit(fieldTypeSeparatorStart) && !Character.isSpaceChar(fieldTypeSeparatorStart))
+                        && (!Character.isLetterOrDigit(fieldTypeSeparatorEnd) && !Character.isSpaceChar(fieldTypeSeparatorEnd))) {
+                    // write 'complex' csv Header columns as COLUMN_NAME_1(TYPE_1|PRECISION_1|SCALE_1),COLUMN_NAME_2(TYPE_2|PRECISION_2|SCALE_2)
+                    outputBuffer.append(columnsMetaData[i].toString());
+                } else {
+                    // write simple header columns as : COLUMN_NAME_1,COLUMN_NAME_2
+                    outputBuffer.append(s);
+                }
                 if (fieldDelimiter != 0) {
                     outputBuffer.append(fieldDelimiter);
                 }
@@ -302,7 +307,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             isSkippedColumn = false; // reset flag
         }
         if (isSkippedColumn) {
-            // remove latest comma
+            // remove latest, not needed extra comma at end
             outputBuffer.deleteCharAt(outputBuffer.lastIndexOf(","));
         }
         outputBuffer.append(lineSeparator);

@@ -68,6 +68,8 @@ public interface CsvWriter {
     int write(Connection conn, String outputFileName, String sql, String charset, MinMaxDbId minMaxDbId) throws SQLException;
 
     /**
+     * TODO: refactor that method to using another configuration approach (properties or similar)
+     *
      * Set String for Option values as 'key='value'. Possible parameters with default values are following:
      * escape='\"'
      * fieldDelimiter='\"'
@@ -75,6 +77,7 @@ public interface CsvWriter {
      * lineComment="\n"
      * charset='UTF-8'
      * nullString="null"
+     * fileNameExtension=".csv"
      *
      * @param options the options line separated by space. Example : escape='\"' fieldDelimiter='\"'
      * @return the character set

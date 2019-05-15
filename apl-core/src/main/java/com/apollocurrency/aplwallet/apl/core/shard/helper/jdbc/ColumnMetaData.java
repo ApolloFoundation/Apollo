@@ -37,6 +37,9 @@ public class ColumnMetaData {
      * The scale.
      */
     private int scale;
+    // in case we'll want to use diffrent separators
+    private char fieldTypeSeparatorStart = '(';
+    private char fieldTypeSeparatorEnd = ')';
 
     public ColumnMetaData() {
     }
@@ -47,6 +50,17 @@ public class ColumnMetaData {
         this.sqlTypeInt = sqlType;
         this.precision = precision;
         this.scale = scale;
+    }
+
+    public ColumnMetaData(String name, String sqlTypeName, int sqlType, int precision, int scale,
+                          char fieldTypeSeparatorStart, char fieldTypeSeparatorEnd) {
+        this.name = name;
+        this.sqlTypeName = sqlTypeName;
+        this.sqlTypeInt = sqlType;
+        this.precision = precision;
+        this.scale = scale;
+        this.fieldTypeSeparatorStart = fieldTypeSeparatorStart;
+        this.fieldTypeSeparatorEnd = fieldTypeSeparatorEnd;
     }
 
     public String getName() {
@@ -109,11 +123,11 @@ public class ColumnMetaData {
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
-        sb.append(name).append('(');
+        sb.append(name).append(this.fieldTypeSeparatorStart);
         sb.append(sqlTypeInt);
         sb.append("|").append(precision);
         sb.append("|").append(scale);
-        sb.append(')');
+        sb.append(this.fieldTypeSeparatorEnd);
         return sb.toString();
     }
 }

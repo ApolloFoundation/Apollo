@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -87,8 +88,14 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         int index = 0;
         //reading from header like COLUMN_NAME(TYPE|PRECISION|SCALE)
         for (String columnName : columnNames) { // reading header meta data
-            result.addColumn(columnName, columnsMetaData[index].getSqlTypeInt(),
-                    columnsMetaData[index].getPrecision(), columnsMetaData[index].getScale());
+            ColumnMetaData metaData = columnsMetaData[index];
+            if (metaData != null) {
+                // actual meta data
+                result.addColumn(columnName, metaData.getSqlTypeInt(), metaData.getPrecision(), metaData.getScale());
+            } else {
+                // default meta data values
+                result.addColumn(columnName, Types.VARCHAR, Integer.MAX_VALUE, 0);
+            }
             index++;
         }
         return result;

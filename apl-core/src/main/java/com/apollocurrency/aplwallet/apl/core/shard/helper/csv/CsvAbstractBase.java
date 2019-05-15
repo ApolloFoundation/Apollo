@@ -52,8 +52,8 @@ public abstract class CsvAbstractBase {
 
     protected char escapeCharacter = '\"';
     protected char fieldDelimiter = '\"';
-    protected char fieldTypeSeparatorStart = '(';
-    protected char fieldTypeSeparatorEnd = ')';
+    protected char fieldTypeSeparatorStart = '('; // use here only non-alphanumeric characters, no space here
+    protected char fieldTypeSeparatorEnd = ' '; // use here only non-alphanumeric characters, no space here
     protected char fieldSeparatorRead = ',';
     protected String fieldSeparatorWrite = ",";
 
@@ -66,7 +66,7 @@ public abstract class CsvAbstractBase {
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
 
     /**
-     * INTERNAL.
+     * TODO: refactor that functionality to using another configuration approach (properties or similar)
      * Parse and set the CSV options.
      *
      * @param options the the options
