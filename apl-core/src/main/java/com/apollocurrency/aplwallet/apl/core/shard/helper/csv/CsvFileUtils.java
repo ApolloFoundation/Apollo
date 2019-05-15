@@ -9,6 +9,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -59,5 +61,37 @@ public class CsvFileUtils {
         log.debug("new input file by path = '{}'", filePath.toRealPath());
         return filePath.newInputStream();
     }
+
+    /**
+     * Close a reader without throwing an exception.
+     *
+     * @param reader the reader or null
+     */
+    public static void closeSilently(Reader reader) {
+        if (reader != null) {
+            try {
+                reader.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+    }
+
+    /**
+     * Close a writer without throwing an exception.
+     *
+     * @param writer the writer or null
+     */
+    public static void closeSilently(Writer writer) {
+        if (writer != null) {
+            try {
+                writer.flush();
+                writer.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+    }
+
 
 }

@@ -401,17 +401,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     @Override
     public void close() {
         outputBuffer.setLength(0);
-        DbUtils.closeSilently(output);
+        CsvFileUtils.closeSilently(output);
         output = null;
         columnsMetaData = null;
     }
-
-/*
-    @Override
-    public void reset() throws SQLException {
-        throw new SQLException("Method is not supported by CsvWriter", "CSV");
-    }
-*/
-
 
 }

@@ -478,7 +478,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
 
     @Override
     public void close() {
-        DbUtils.closeSilently(input);
+        CsvFileUtils.closeSilently(input);
         input = null;
         columnsMetaData = null;
         this.endOfLine = false; // prepare for next CSV file
