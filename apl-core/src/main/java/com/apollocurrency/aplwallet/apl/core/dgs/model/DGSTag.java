@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 
+import java.util.Objects;
+
 public class DGSTag extends VersionedDerivedEntity {
 
     public void setInStockCount(int inStockCount) {
@@ -46,4 +48,19 @@ public class DGSTag extends VersionedDerivedEntity {
         return totalCount;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DGSTag)) return false;
+        if (!super.equals(o)) return false;
+        DGSTag dgsTag = (DGSTag) o;
+        return inStockCount == dgsTag.inStockCount &&
+                totalCount == dgsTag.totalCount &&
+                Objects.equals(tag, dgsTag.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), tag, inStockCount, totalCount);
+    }
 }

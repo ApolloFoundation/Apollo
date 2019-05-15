@@ -9,6 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class DGSGoods extends VersionedDerivedEntity {
     private final long id;
     private final long sellerId;
@@ -108,5 +111,31 @@ public class DGSGoods extends VersionedDerivedEntity {
 
     public boolean hasImage() {
         return hasImage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DGSGoods)) return false;
+        if (!super.equals(o)) return false;
+        DGSGoods dgsGoods = (DGSGoods) o;
+        return id == dgsGoods.id &&
+                sellerId == dgsGoods.sellerId &&
+                timestamp == dgsGoods.timestamp &&
+                hasImage == dgsGoods.hasImage &&
+                quantity == dgsGoods.quantity &&
+                priceATM == dgsGoods.priceATM &&
+                delisted == dgsGoods.delisted &&
+                Objects.equals(name, dgsGoods.name) &&
+                Objects.equals(description, dgsGoods.description) &&
+                Objects.equals(tags, dgsGoods.tags) &&
+                Arrays.equals(parsedTags, dgsGoods.parsedTags);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), id, sellerId, name, description, tags, timestamp, hasImage, quantity, priceATM, delisted);
+        result = 31 * result + Arrays.hashCode(parsedTags);
+        return result;
     }
 }

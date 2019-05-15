@@ -39,9 +39,7 @@ public class DGSPublicFeedbackTable extends VersionedDeletableValuesDbTable<DGSP
     private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper(KEY_FACTORY);
     @Override
     public DGSPublicFeedback load(Connection connection, ResultSet rs, DbKey dbKey) throws SQLException {
-        DGSPublicFeedback publicFeedback = MAPPER.map(rs, null);
-        publicFeedback.setDbKey(dbKey);
-        return publicFeedback;
+        return MAPPER.map(rs, null);
     }
 
     @Override

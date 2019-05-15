@@ -101,6 +101,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
             catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
+            assertEquals(getAll().size(), all.size());
             assertFalse(all.containsAll(valuesToDelete.getValue()));
             List<T> expectedDeleted = valuesToDelete.getValue().stream().peek(v -> v.setLatest(false)).collect(Collectors.toList());
             assertTrue(all.containsAll(expectedDeleted));
@@ -141,8 +142,8 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
     }
 
     @Override
-    public T getDeletedMultiversionRecord() {
-        return groupByDbKey()
+    public List<T> getDeletedMultiversionRecord() {
+        return sortByHeightAsc(groupByDbKey()
                 .entrySet()
                 .stream()
                 .filter(e -> e.getValue().size() >= 2
@@ -150,7 +151,44 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
                         .stream()
                         .allMatch(VersionedDerivedEntity::isLatest))
                 .map(e -> e.getValue().get(0))
-                .findAny()
-                .get();
+                .collect(Collectors.toList()));
+    }
+
+    @Test
+    public void testInsertWithSameKey() throws SQLException {
+        List<T> toInsert = sortByHeightAsc(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3).getValue());
+        List<Long> dbIds = toInsert.stream().map(T::getDbId).collect(Collectors.toList());
+
+        DbUtils.inTransaction(extension, (con) -> {
+            List<T> values = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
+
+            assertEquals(toInsert, values);
+            assertInCache(toInsert);
+            toInsert.forEach(t-> t.setHeight(t.getHeight() + 1));
+            table.insert(toInsert);
+            //check cache in transaction
+            assertInCache(toInsert);
+
+        });
+        toInsert.forEach(t -> t.setHeight(t.getHeight() - 1));
+        //check db
+        assertNotInCache(toInsert);
+        List<T> retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
+        long lastDbId = sortByHeightDesc(getAll()).get(0).getDbId();
+        for (T t : toInsert) {
+            t.setHeight(t.getHeight() + 1);
+            t.setDbId(++lastDbId);
+        }
+        assertEquals(toInsert, retrievedData);
+        List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+
+        assertTrue(allValues.containsAll(toInsert));
+        for (int i = 0; i < toInsert.size(); i++) {
+            T t = toInsert.get(i);
+            t.setHeight(t.getHeight() - 1);
+            t.setLatest(false);
+            t.setDbId(dbIds.get(i));
+        }
+        assertTrue(allValues.containsAll(toInsert));
     }
 }

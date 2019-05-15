@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class DGSPurchase extends VersionedDerivedEntity {
 
@@ -220,5 +221,37 @@ public class DGSPurchase extends VersionedDerivedEntity {
 
     public void setPublicFeedbacks(List<DGSPublicFeedback> publicFeedbacks) {
         this.publicFeedbacks = publicFeedbacks;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DGSPurchase)) return false;
+        if (!super.equals(o)) return false;
+        DGSPurchase that = (DGSPurchase) o;
+        return id == that.id &&
+                buyerId == that.buyerId &&
+                goodsId == that.goodsId &&
+                sellerId == that.sellerId &&
+                quantity == that.quantity &&
+                priceATM == that.priceATM &&
+                deadline == that.deadline &&
+                timestamp == that.timestamp &&
+                isPending == that.isPending &&
+                goodsIsText == that.goodsIsText &&
+                hasPublicFeedbacks == that.hasPublicFeedbacks &&
+                hasFeedbacks == that.hasFeedbacks &&
+                discountATM == that.discountATM &&
+                refundATM == that.refundATM &&
+                Objects.equals(note, that.note) &&
+                Objects.equals(encryptedGoods, that.encryptedGoods) &&
+                Objects.equals(refundNote, that.refundNote) &&
+                Objects.equals(dgsFeedbacks, that.dgsFeedbacks) &&
+                Objects.equals(publicFeedbacks, that.publicFeedbacks);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), id, buyerId, goodsId, sellerId, quantity, priceATM, deadline, note, timestamp, isPending, encryptedGoods, goodsIsText, refundNote, hasPublicFeedbacks, hasFeedbacks, dgsFeedbacks, publicFeedbacks, discountATM, refundATM);
     }
 }

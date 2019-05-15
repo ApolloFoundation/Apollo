@@ -143,7 +143,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetByHeight() {
 
         if (table.isMultiversion()) {
-            Map.Entry<DbKey, List<T>> entries = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3);
+            Map.Entry<DbKey, List<T>> entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3);
             List<T> sorted = sortByHeightDesc(entries.getValue());
             T latest = sorted.get(0);
             T notLatest = sorted.get(1);
@@ -170,13 +170,13 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             actual = table.get(entries.getKey(), first.getHeight());
             assertEquals(first, actual);
 
-            T deleted = getDeletedMultiversionRecord();
+            T deleted = getDeletedMultiversionRecord().get(0);
 
             actual = table.get(table.getDbKeyFactory().newKey(deleted), deleted.getHeight());
 
             assertNull(actual);
 
-            entries = getEntryWithListOfSize(table.getDbKeyFactory(), 1);
+            entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 1, true);
 
             T expected = entries.getValue().get(0);
 
@@ -249,7 +249,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public long getIncorrectDbId() {
         long incorrectDbId;
         if (table.isMultiversion()) {
-            incorrectDbId = getDeletedMultiversionRecord().getDbId();
+            incorrectDbId = getDeletedMultiversionRecord().get(0).getDbId();
         } else {
             incorrectDbId = Long.MAX_VALUE;
         }
@@ -752,7 +752,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
 
-    public T getDeletedMultiversionRecord() {
+    public List<T> getDeletedMultiversionRecord() {
         throw new UnsupportedOperationException("deleted multiversion record is not provided");
     }
 

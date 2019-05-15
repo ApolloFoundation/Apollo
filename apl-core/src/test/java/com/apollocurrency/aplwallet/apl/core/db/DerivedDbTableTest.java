@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -175,9 +176,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         return groupByDbKey(getAll(), keyFactory);
     }
 
-    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(KeyFactory<T> keyFactory, int size) {
-        return getEntryWithListOfSize(getAll(), keyFactory, size);
-    }
     protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size) {
         return groupByDbKey(data, keyFactory)
                 .entrySet()
@@ -186,6 +184,17 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
                 .findFirst()
                 .get();
     }
+
+    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size, boolean skipDeleted) {
+        return groupByDbKey(data, keyFactory)
+                .entrySet()
+                .stream()
+                .filter(entry-> !skipDeleted || entry.getValue().stream().anyMatch(e -> ((VersionedDerivedEntity) e).isLatest()))
+                .filter(entry -> getHeights(entry.getValue()).size() == size)
+                .findFirst()
+                .get();
+    }
+
 
     protected abstract List<T> getAll();
 }

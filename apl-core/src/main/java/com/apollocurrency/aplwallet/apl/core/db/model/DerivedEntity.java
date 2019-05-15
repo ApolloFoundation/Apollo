@@ -48,7 +48,7 @@ public abstract class DerivedEntity implements Comparable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(dbKey, dbId, height);
+        return Objects.hash(dbId, height);
     }
 
     public DbKey getDbKey() {

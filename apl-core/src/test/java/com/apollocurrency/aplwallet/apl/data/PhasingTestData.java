@@ -117,12 +117,12 @@ public class PhasingTestData {
         NEW_VOTE_TX = td.TRANSACTION_3;
         NEW_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1,  NEW_VOTE_TX.getHeight(), POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());
         NEW_LINKED_TX_VOTE = new PhasingVote(POLL_1_VOTE_1.getDbId() + 1, td.NOT_SAVED_TRANSACTION.getHeight(), POLL_3.getId(), td.NOT_SAVED_TRANSACTION.getSenderId(), td.NOT_SAVED_TRANSACTION.getId());
-        NEW_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(LINKED_TRANSACTION_2.getDbId() + 1, td.TRANSACTION_8.getHeight(), POLL_1.getId(), td.TRANSACTION_0.getId(), td.TRANSACTION_0.getFullHash());
-        NEW_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(LINKED_TRANSACTION_2.getDbId() + 2, td.TRANSACTION_8.getHeight(), POLL_1.getId(), td.TRANSACTION_2.getId(), td.TRANSACTION_2.getFullHash());
-        NEW_LINKED_TRANSACTION_3 = new PhasingPollLinkedTransaction(LINKED_TRANSACTION_2.getDbId() + 3, td.TRANSACTION_11.getHeight(), POLL_4.getId(), td.TRANSACTION_3.getId(), td.TRANSACTION_3.getFullHash());
-        NEW_VOTER_0 = new PhasingPollVoter(POLL_4_VOTER_0.getDbId() + 1, POLL_4.getHeight(), POLL_4.getId(), POLL_1_VOTER_0_ID);
-        NEW_VOTER_1 = new PhasingPollVoter(POLL_4_VOTER_0.getDbId() + 2, POLL_4.getHeight(), POLL_4.getId(), 10000L);
-        NEW_VOTER_2 = new PhasingPollVoter(POLL_4_VOTER_0.getDbId() + 3, POLL_2.getHeight(), POLL_2.getId(), 20000L);
+        NEW_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(FAKE_LINKED_TRANSACTION_2.getDbId() + 1, td.TRANSACTION_8.getHeight(), POLL_1.getId(), td.TRANSACTION_0.getId(), td.TRANSACTION_0.getFullHash());
+        NEW_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(FAKE_LINKED_TRANSACTION_2.getDbId() + 2, td.TRANSACTION_8.getHeight(), POLL_1.getId(), td.TRANSACTION_2.getId(), td.TRANSACTION_2.getFullHash());
+        NEW_LINKED_TRANSACTION_3 = new PhasingPollLinkedTransaction(FAKE_LINKED_TRANSACTION_2.getDbId() + 3, td.TRANSACTION_11.getHeight(), POLL_4.getId(), td.TRANSACTION_3.getId(), td.TRANSACTION_3.getFullHash());
+        NEW_VOTER_0 = new PhasingPollVoter(POLL_5_VOTER_1.getDbId() + 1, POLL_4.getHeight() + 1, POLL_4.getId() + 1, POLL_1_VOTER_0_ID);
+        NEW_VOTER_1 = new PhasingPollVoter(POLL_5_VOTER_1.getDbId() + 2, POLL_4.getHeight() + 1, POLL_4.getId() + 1, 10000L);
+        NEW_VOTER_2 = new PhasingPollVoter(POLL_5_VOTER_1.getDbId() + 3, POLL_2.getHeight() + 1, POLL_2.getId() + 1, 20000L);
         NEW_RESULT = new PhasingPollResult(RESULT_2.getDbId() + 1, POLL_4.getHeight() + 1, POLL_4.getId(), 0, true);
 /*
         //TODO Add one POLL testdata with finishTime != -1

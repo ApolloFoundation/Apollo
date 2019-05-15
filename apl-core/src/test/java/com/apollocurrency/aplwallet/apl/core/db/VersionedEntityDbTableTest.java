@@ -13,9 +13,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,8 +41,8 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
     }
 
     @Override
-    public T getDeletedMultiversionRecord() {
-        return groupByDbKey().entrySet().stream().filter(e -> e.getValue().size() == 2 && !e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest()).map(e-> e.getValue().get(0)).findAny().get();
+    public List<T> getDeletedMultiversionRecord() {
+        return sortByHeightAsc(groupByDbKey().entrySet().stream().filter(e -> e.getValue().size() >= 2 && e.getValue().stream().noneMatch(VersionedDerivedEntity::isLatest)).map(e -> e.getValue().get(0)).collect(Collectors.toList()));
     }
 
     @Test
@@ -82,146 +79,5 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
         });
         assertListNotInCache(allLatest);
         assertNotInCache(t);
-    }
-
-    @Override
-    @Test
-    public void testTrimForZeroHeight() throws SQLException {
-        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight();
-        testMultiversionTrim(maxHeight);
-    }
-
-    @Test
-    public void testTrimForMaxHeightInclusive() throws SQLException {
-        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() + 1;
-        testMultiversionTrim(maxHeight);
-    }
-
-    @Test
-    public void testTrimForMaxHeightExclusive() throws SQLException {
-        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() - 1;
-        testMultiversionTrim(maxHeight);
-    }
-
-    @Test
-    public void testTrimForDeleteDeltedHeight() throws SQLException {
-        int height = getDeletedMultiversionRecord().getHeight() + 1;
-        testMultiversionTrim(height);
-    }
-
-    @Test
-    public void testTrimMiddleHeight() throws SQLException {
-        List<Integer> heights = getHeights();
-        int middleHeight = (heights.get(0) + heights.get(heights.size() - 1)) / 2;
-        testMultiversionTrim(middleHeight);
-
-    }
-
-    @Test
-    public void testTrimNothing() throws SQLException {
-        testMultiversionTrim(0);
-    }
-
-    @Test
-    public void testTrimForThreeUpdatedRecords() throws SQLException {
-        List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
-        testMultiversionTrim(list.get(0).getHeight());
-    }
-
-    @Test
-    public void testTrimNothingForThreeUpdatedRecords() throws SQLException {
-        List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
-        testMultiversionTrim(list.get(1).getHeight());
-    }
-
-    @Test
-    public void testTrimOutsideTransaction() {
-        Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0));
-    }
-
-    @Test
-    public void testRollbackOutsideTransaction() {
-        Assertions.assertThrows(IllegalStateException.class, () -> table.rollback(0));
-    }
-
-    @Test
-    public void testRollbackDeletedEntries() throws SQLException {
-        int height = getDeletedMultiversionRecord().getHeight() - 1;
-        testMultiversionRollback(height);
-    }
-
-    @Test
-    public void testRollbackForThreeUpdatedRecords() throws SQLException {
-        int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight() - 1;
-        testMultiversionRollback(height);
-    }
-
-    @Test
-    public void testRollbackNothingForThreeUpdatedRecords() throws SQLException {
-        int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight();
-        testMultiversionRollback(height);
-    }
-
-    @Test
-    public void testRollbackEntirelyForTwoRecords() throws SQLException {
-        int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2).getValue()).get(1).getHeight() - 1;
-        testMultiversionRollback(height);
-    }
-
-    @Override
-    @Test
-    public void testRollbackToFirstEntry() throws SQLException {
-        List<T> all = getAll();
-        T first = all.get(0);
-        testMultiversionRollback(first.getHeight());
-    }
-
-    public void testMultiversionRollback(int height) throws SQLException {
-        List<T> all = getAll();
-        List<T> rollbacked = all.stream().filter(t -> t.getHeight() > height).collect(Collectors.toList());
-        Map<DbKey, List<T>> dbKeyListMapRollbacked = groupByDbKey(rollbacked, table.getDbKeyFactory());
-
-        List<T> expected = new ArrayList<>(all);
-        for (T t : rollbacked) {
-            expected.remove(t);
-        }
-        Map<DbKey, List<T>> expectedDbKeyListMap = groupByDbKey(expected, table.getDbKeyFactory());
-        dbKeyListMapRollbacked.entrySet()
-                .stream()
-                .filter(e-> expectedDbKeyListMap.containsKey(e.getKey()) && expectedDbKeyListMap.get(e.getKey()).size() != 0)
-                .map(Map.Entry::getKey)
-                .map(expectedDbKeyListMap::get)
-                .forEach((e)-> e.get(0).setLatest(true));
-        expected = sortByHeightAsc(expected);
-
-        DbUtils.inTransaction(extension, (con)-> table.rollback(height));
-        List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, values);
-    }
-
-    public void testMultiversionTrim(int height) throws SQLException {
-        List<T> all = getAll();
-        Map<DbKey, List<T>> dbKeyListMap = groupByDbKey();
-        List<T> trimmed = new ArrayList<>();
-        dbKeyListMap.forEach(((key, value) -> {
-            List<T> list = value.stream().filter(t -> t.getHeight() < height && !t.isLatest()).collect(Collectors.toList());
-            if (list.size() != 0) {
-                if (list.stream().noneMatch(VersionedDerivedEntity::isLatest) && value.size() > list.size()) {
-                    trimmed.addAll(list);
-                } else {
-                    Integer maxHeight = list.stream().map(VersionedDerivedEntity::getHeight).max(Comparator.naturalOrder()).get();
-                    List<T> toTrim = list.stream().filter(el -> el.getHeight() < maxHeight).collect(Collectors.toList());
-                    trimmed.addAll(toTrim);
-                }
-            }
-        }));
-        List<T> expected = new ArrayList<>(all);
-        for (T t : trimmed) {
-            expected.remove(t);
-        }
-        expected = sortByHeightAsc(expected);
-        DbUtils.inTransaction(extension, (con)-> table.trim(height));
-        List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, values);
     }
 }

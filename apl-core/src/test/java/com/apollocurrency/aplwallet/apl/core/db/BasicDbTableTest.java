@@ -35,7 +35,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         super(clazz);
     }
 
-    public T getDeletedMultiversionRecord() {
+    public List<T> getDeletedMultiversionRecord() {
         throw new UnsupportedOperationException("deleted multiversion record is not provided");
     }
 
@@ -80,9 +80,27 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     }
 
     @Test
-    public void testTrimForDeleteDeletedHeight() throws SQLException {
+    public void testTrimAllDeleted() throws SQLException {
         if (table.isMultiversion()) {
-            int height = getDeletedMultiversionRecord().getHeight() + 1;
+            List<T> deleted = getDeletedMultiversionRecord();
+            int height = deleted.get(deleted.size() - 1).getHeight() + 1;
+            testMultiversionTrim(height);
+        }
+    }
+
+    @Test
+    public void testTrimDeletedEqualAtLastDeletedHeight() throws SQLException {
+        if (table.isMultiversion()) {
+            List<T> deleted = getDeletedMultiversionRecord();
+            int height = deleted.get(deleted.size() - 1).getHeight();
+            testMultiversionTrim(height);
+        }
+    }
+    @Test
+    public void testTrimDeletedAtHeightLessThanLastDeletedRecord() throws SQLException {
+        if (table.isMultiversion()) {
+            List<T> deleted = getDeletedMultiversionRecord();
+            int height = deleted.get(deleted.size() - 1).getHeight() - 1;
             testMultiversionTrim(height);
         }
     }
@@ -106,7 +124,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testTrimForThreeUpdatedRecords() throws SQLException {
         if (table.isMultiversion()) {
-            List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
+            List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue());
             testOrdinaryOrMultiversionTrim(list.get(0).getHeight());
         }
     }
@@ -114,7 +132,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testTrimNothingForThreeUpdatedRecords() throws SQLException {
         if (table.isMultiversion()) {
-            List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue());
+            List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue());
             testOrdinaryOrMultiversionTrim(list.get(1).getHeight());
         }
     }
@@ -134,7 +152,8 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testRollbackDeletedEntries() throws SQLException {
         if (table.isMultiversion()) {
-            int height = getDeletedMultiversionRecord().getHeight() - 1;
+            List<T> deleted = getDeletedMultiversionRecord();
+            int height = deleted.get(deleted.size() - 1).getHeight() - 1;
             testOrdinaryOrMultiversionRollback(height);
         }
     }
@@ -142,7 +161,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testRollbackForThreeUpdatedRecords() throws SQLException {
         if (table.isMultiversion()) {
-            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight() - 1;
+            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue()).get(0).getHeight() - 1;
             testOrdinaryOrMultiversionRollback(height);
         }
     }
@@ -150,7 +169,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testRollbackNothingForThreeUpdatedRecords() throws SQLException {
         if (table.isMultiversion()) {
-            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3).getValue()).get(0).getHeight();
+            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue()).get(0).getHeight();
             testOrdinaryOrMultiversionRollback(height);
         }
     }
@@ -158,7 +177,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testRollbackEntirelyForTwoRecords() throws SQLException {
         if (table.isMultiversion()) {
-            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2).getValue()).get(1).getHeight() - 1;
+            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2, true).getValue()).get(1).getHeight() - 1;
             testOrdinaryOrMultiversionRollback(height);
         }
     }
@@ -176,17 +195,17 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         List<T> rollbacked = all.stream().filter(t -> t.getHeight() > height).collect(Collectors.toList());
         Map<DbKey, List<T>> dbKeyListMapRollbacked = groupByDbKey(rollbacked, table.getDbKeyFactory());
 
-        List<T> expected = new ArrayList<>(all);
-        for (T t : rollbacked) {
-            expected.remove(t);
-        }
+        List<T> expected = all.stream().filter(t -> t.getHeight() <= height).collect(Collectors.toList());
         Map<DbKey, List<T>> expectedDbKeyListMap = groupByDbKey(expected, table.getDbKeyFactory());
         dbKeyListMapRollbacked.entrySet()
                 .stream()
                 .filter(e-> expectedDbKeyListMap.containsKey(e.getKey()) && expectedDbKeyListMap.get(e.getKey()).size() != 0)
                 .map(Map.Entry::getKey)
                 .map(expectedDbKeyListMap::get)
-                .forEach((e)-> ((VersionedDerivedEntity)e.get(0)).setLatest(true));
+                .forEach((e) -> {
+                    int maxHeight = e.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get();
+                    e.stream().filter(el->el.getHeight() == maxHeight).forEach(el-> ((VersionedDerivedEntity) el).setLatest(true));
+                });
         expected = sortByHeightAsc(expected);
 
         DbUtils.inTransaction(extension, (con)-> table.rollback(height));

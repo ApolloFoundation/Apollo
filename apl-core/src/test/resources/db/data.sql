@@ -222,15 +222,15 @@ INSERT into goods
 (56,	350597963087434976	    ,9211698109297098287	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
 (57,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,1	        ,100000000	    ,FALSE	    ,541986	    ,FALSE),
 (58,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,0	        ,100000000	    ,FALSE	    ,542026	    ,TRUE ),
-(59,	-2208439159357779035	,9211698109297098287	,'1'		        , null	                        ,()                     ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
+(59,	-2208439159357779035	,9211698109297098287	,'1'		        , null	                        ,()                         ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
 (60,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,222	    ,400000000	    ,FALSE	    ,542710	    ,FALSE),
-(61,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')                 ,TRUE	,'asdf'	                    ,37965044	,2	        ,400000000	    ,FALSE	    ,542712	    ,FALSE),
-(62,	-8243930277887618399	,9211698109297098287	,'test'	            ,'TEST'	                        ,('sport')	            ,TRUE	,'sport'	                ,38188829	,21	        ,44400000000	,TRUE	    ,542717	    ,TRUE ),
-(63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,()	                    ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
+(61,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')                   ,TRUE	,'asdf'	                    ,37965044	,2	        ,400000000	    ,FALSE	    ,542712	    ,FALSE),
+(62,	-8243930277887618399	,9211698109297098287	,'test'	            ,'TEST'	                        ,('sport')	                ,TRUE	,'sport'	                ,38188829	,21	        ,44400000000	,TRUE	    ,542717	    ,TRUE ),
+(63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,()	                        ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
 (64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                        ,('test')	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
 (65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                        ,('qwe')	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
 (66,	2267824434322963112	    ,9211698109297098287	,'Another product'	,'Just another produc'	        ,('tag','batman')	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
-(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,TRUE ),
+(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,FALSE ),
 ;
 
 INSERT INTO purchase
@@ -256,16 +256,18 @@ INSERT INTO purchase
 
 insert into purchase_feedback
 (DB_ID  	,ID  	        ,FEEDBACK_DATA  	                                                                                                                                                    ,FEEDBACK_NONCE  	                                                    ,HEIGHT ,LATEST) values
-(1	,7052449049531083429	,X'5bfe10ef4af446d18145113d2df6e35ef9a154d2db25f035ab94b243c12e498790de649e528af993eb786d10d56ea6190d081c9d379a75009a20c905912d1f89'	                                ,X'469c3ccdcc8e5dd8bdc5e1c4ff83ee5dcf4020f2eafbaf6e74bb24c4a7f65bd2'	,542010	,FALSE),
-(2	,7052449049531083429	,X'5bfe10ef4af446d18145113d2df6e35ef9a154d2db25f035ab94b243c12e498790de649e528af993eb786d10d56ea6190d081c9d379a75009a20c905912d1f89'	                                ,X'469c3ccdcc8e5dd8bdc5e1c4ff83ee5dcf4020f2eafbaf6e74bb24c4a7f65bd2'	,542012	,FALSE),
-(3	,7052449049531083429	,X'9838f3543b3f91a9ad21bde160ae1fd195b8534fe85ed1a587b27d0b8c7385dc6ad22914a2bf3693158f99026e102e8a2137ba1ecb1b81ac56f4bcfd19726f4a'	                                ,X'b45128a765486610a728f92e9cb9204d27c712a8862c3679880c0f0cdfad4605'	,542012	,FALSE),
-(4	,7052449049531083429	,X'5bfe10ef4af446d18145113d2df6e35ef9a154d2db25f035ab94b243c12e498790de649e528af993eb786d10d56ea6190d081c9d379a75009a20c905912d1f89'	                                ,X'469c3ccdcc8e5dd8bdc5e1c4ff83ee5dcf4020f2eafbaf6e74bb24c4a7f65bd2'	,542014	,TRUE ),
-(5	,7052449049531083429	,X'9838f3543b3f91a9ad21bde160ae1fd195b8534fe85ed1a587b27d0b8c7385dc6ad22914a2bf3693158f99026e102e8a2137ba1ecb1b81ac56f4bcfd19726f4a'	                                ,X'b45128a765486610a728f92e9cb9204d27c712a8862c3679880c0f0cdfad4605'	,542014	,TRUE ),
-(6	,7052449049531083429	,X'f7f482fa35b1749ff8a095be76b5aa9260d3445990444a50bc3538b6c6c03bf46f0974fe4d02feb1d88569c15db8f380dbec193c71d8663e845110280dd23154'	                                ,X'4828b6f8e8d6854798386455c2094e90d65e9a682ef5add71965f6488b586aad'	,542014	,TRUE ),
-(7	,-3910276708092716563	,X'33c6b12600b8dba6caa21887fc4f17702d2d841395d60b7d8435b8cc8cd1e2755ed177db220f7768b4f7d26ec1abd014ad953e8f00294e7615d16186037572eabe61c17c3c71a21846d8c7b08f9be85f'	,X'955484fec03af1f97fa14e092c8d77e10c84a47bef9e5918b887f18760572429'	,542682	,TRUE ),
-(8	,-1155069143692520623	,X'2ebec2f061d3b54cdfc7b8fac33762c90e37fa2bb61450726dae0425b28bbfb3dbcaf6259390abe44537f14a3ff35c08487ad65a7050082ec3ce76413aefb715f5044ff866705d1cfd4af01391f752a2'	,X'bce4d461fe18c95e6147266f8852e989a413248963828a136380f98f5fde8e44'	,542688	,FALSE),
-(9	,-1155069143692520623	,X'2ebec2f061d3b54cdfc7b8fac33762c90e37fa2bb61450726dae0425b28bbfb3dbcaf6259390abe44537f14a3ff35c08487ad65a7050082ec3ce76413aefb715f5044ff866705d1cfd4af01391f752a2'	,X'bce4d461fe18c95e6147266f8852e989a413248963828a136380f98f5fde8e44'	,542690	,TRUE ),
-(10	,-1155069143692520623	,X'eb07b583e5c2f52dae03872b17d31346e97b2fa1f21ad2b92f9c2a3bf349bced1780eb2858ab85035b8d437eda92a4665b3acb992bec126102a21157b785f64c'                                	,X'7f4fb46c93dc9e9c18d242fdf9be3913f38934913cac5ae682c4a59bb40a2be5'	,542690	,TRUE )
+(10	,7052449049531083429	,X'5bfe10ef4af446d18145113d2df6e35ef9a154d2db25f035ab94b243c12e498790de649e528af993eb786d10d56ea6190d081c9d379a75009a20c905912d1f89'	                                ,X'469c3ccdcc8e5dd8bdc5e1c4ff83ee5dcf4020f2eafbaf6e74bb24c4a7f65bd2'	,542010	,FALSE),
+(20	,200                	,X'c7673f0a7f3ced8db457620b3d3d34f873cbeb1db7ffe3faea83e03b8973ef52eefcfa3651b1c6d926579e0c3eddb4e88695ad436b319b2d81ad5ce7ba0751ca'	                                ,X'1ade60abe93f5cfce908a10bb2d1b474f024779843faba4bb1f2ef06f277d3c7'	,542010	,FALSE),
+(30	,7052449049531083429	,X'5bfe10ef4af446d18145113d2df6e35ef9a154d2db25f035ab94b243c12e498790de649e528af993eb786d10d56ea6190d081c9d379a75009a20c905912d1f89'	                                ,X'469c3ccdcc8e5dd8bdc5e1c4ff83ee5dcf4020f2eafbaf6e74bb24c4a7f65bd2'	,542012	,FALSE),
+(40	,7052449049531083429	,X'9838f3543b3f91a9ad21bde160ae1fd195b8534fe85ed1a587b27d0b8c7385dc6ad22914a2bf3693158f99026e102e8a2137ba1ecb1b81ac56f4bcfd19726f4a'	                                ,X'b45128a765486610a728f92e9cb9204d27c712a8862c3679880c0f0cdfad4605'	,542012	,FALSE),
+(50	,7052449049531083429	,X'5bfe10ef4af446d18145113d2df6e35ef9a154d2db25f035ab94b243c12e498790de649e528af993eb786d10d56ea6190d081c9d379a75009a20c905912d1f89'	                                ,X'469c3ccdcc8e5dd8bdc5e1c4ff83ee5dcf4020f2eafbaf6e74bb24c4a7f65bd2'	,542014	,TRUE ),
+(60	,7052449049531083429	,X'9838f3543b3f91a9ad21bde160ae1fd195b8534fe85ed1a587b27d0b8c7385dc6ad22914a2bf3693158f99026e102e8a2137ba1ecb1b81ac56f4bcfd19726f4a'	                                ,X'b45128a765486610a728f92e9cb9204d27c712a8862c3679880c0f0cdfad4605'	,542014	,TRUE ),
+(70	,7052449049531083429	,X'f7f482fa35b1749ff8a095be76b5aa9260d3445990444a50bc3538b6c6c03bf46f0974fe4d02feb1d88569c15db8f380dbec193c71d8663e845110280dd23154'	                                ,X'4828b6f8e8d6854798386455c2094e90d65e9a682ef5add71965f6488b586aad'	,542014	,TRUE ),
+(80	,200                	,X'c7673f0a7f3ced8db457620b3d3d34f873cbeb1db7ffe3faea83e03b8973ef52eefcfa3651b1c6d926579e0c3eddb4e88695ad436b319b2d81ad5ce7ba0751ca'	                                ,X'1ade60abe93f5cfce908a10bb2d1b474f024779843faba4bb1f2ef06f277d3c7'	,542150	,FALSE),
+(90	,-3910276708092716563	,X'33c6b12600b8dba6caa21887fc4f17702d2d841395d60b7d8435b8cc8cd1e2755ed177db220f7768b4f7d26ec1abd014ad953e8f00294e7615d16186037572eabe61c17c3c71a21846d8c7b08f9be85f'	,X'955484fec03af1f97fa14e092c8d77e10c84a47bef9e5918b887f18760572429'	,542682	,TRUE ),
+(100	,-1155069143692520623	,X'2ebec2f061d3b54cdfc7b8fac33762c90e37fa2bb61450726dae0425b28bbfb3dbcaf6259390abe44537f14a3ff35c08487ad65a7050082ec3ce76413aefb715f5044ff866705d1cfd4af01391f752a2'	,X'bce4d461fe18c95e6147266f8852e989a413248963828a136380f98f5fde8e44'	,542688	,FALSE),
+(110	,-1155069143692520623	,X'2ebec2f061d3b54cdfc7b8fac33762c90e37fa2bb61450726dae0425b28bbfb3dbcaf6259390abe44537f14a3ff35c08487ad65a7050082ec3ce76413aefb715f5044ff866705d1cfd4af01391f752a2'	,X'bce4d461fe18c95e6147266f8852e989a413248963828a136380f98f5fde8e44'	,542690	,TRUE ),
+(120	,-1155069143692520623	,X'eb07b583e5c2f52dae03872b17d31346e97b2fa1f21ad2b92f9c2a3bf349bced1780eb2858ab85035b8d437eda92a4665b3acb992bec126102a21157b785f64c'                                	,X'7f4fb46c93dc9e9c18d242fdf9be3913f38934913cac5ae682c4a59bb40a2be5'	,542690	,TRUE )
 ;
 
 insert into purchase_public_feedback
@@ -291,12 +293,14 @@ insert into tag
 (36	        ,'product'	,2	                ,4	            ,541839	,FALSE  ),
 (37	        ,'some'	    ,1	                ,1	            ,541839	,FALSE  ),
 (38	        ,'ptd'	    ,1	                ,1	            ,541839	,FALSE  ),
-(39	        ,'product'	,1	                ,4	            ,541874	,TRUE   ),
-(40	        ,'some'	    ,0	                ,1	            ,541874	,TRUE   ),
-(41	        ,'ptd'	    ,0	                ,1	            ,541874	,TRUE   ),
-(42	        ,'tag'	    ,1	                ,1	            ,541986	,FALSE  ),
-(43	        ,'tag'	    ,0	                ,1	            ,542026	,FALSE  ),
-(44	        ,'sport'    ,4	                ,5	            ,542717	,TRUE   ),
-(45	        ,'tag'	    ,1	                ,2	            ,542828	,TRUE   ),
-(46	        ,'batman'   ,1	                ,1	            ,542828	,TRUE   ),
+(39	        ,'deleted'	,2	                ,2	            ,541842	,FALSE  ),
+(40	        ,'product'	,1	                ,4	            ,541874	,TRUE   ),
+(41	        ,'some'	    ,0	                ,1	            ,541874	,TRUE   ),
+(42	        ,'ptd'	    ,0	                ,1	            ,541874	,TRUE   ),
+(43	        ,'tag'	    ,1	                ,1	            ,541986	,FALSE  ),
+(44	        ,'deleted'	,2	                ,2	            ,541988	,FALSE  ),
+(45	        ,'tag'	    ,0	                ,1	            ,542026	,FALSE  ),
+(46	        ,'sport'    ,4	                ,5	            ,542717	,TRUE   ),
+(47	        ,'tag'	    ,1	                ,2	            ,542828	,TRUE   ),
+(48	        ,'batman'   ,1	                ,1	            ,542828	,TRUE   ),
 ;

@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static java.util.stream.Collectors.toMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -74,6 +73,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     @Override
+    @Test
     public void testInsert() {
         List<T> toInsert = dataToInsert();
         DbUtils.inTransaction(extension, (con) -> {
@@ -129,18 +129,6 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
     }
 
-
-    protected Map<DbKey, List<T>> getDuplicates() {
-        return groupByDbKey(table.getDbKeyFactory())
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue()
-                        .stream()
-                        .map(DerivedEntity::getHeight)
-                        .distinct()
-                        .count() > 1)
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
 
     public void assertInCache(List<T> values) {
         List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));

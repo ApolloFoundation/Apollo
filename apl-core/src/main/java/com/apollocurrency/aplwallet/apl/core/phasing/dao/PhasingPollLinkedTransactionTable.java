@@ -30,7 +30,10 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     private static final LongKeyFactory<PhasingPollLinkedTransaction> KEY_FACTORY = new LongKeyFactory<PhasingPollLinkedTransaction>("transaction_id") {
         @Override
         public DbKey newKey(PhasingPollLinkedTransaction poll) {
-            return new LongKey(poll.getPollId());
+            if (poll.getDbKey() == null) {
+                poll.setDbKey(new LongKey(poll.getPollId()));
+            }
+            return poll.getDbKey();
         }
     };
     private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper(KEY_FACTORY);
