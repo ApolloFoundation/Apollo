@@ -6,8 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -29,8 +32,14 @@ public class DownloadableFilesManager {
     
     public final static long FDI_TTL=7*24*3600*1000; //7 days in ms
     public final static int FILE_CHUNK_SIZE=32768;
+    public final static String FILES_SUBDIR="downloadables";
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
     private String fileBaseDir="/home/at/testfiles";
+    
+    public DownloadableFilesManager() {
+        DirProvider dirProvider = AplCoreRuntime.getInstance().getDirProvider();
+        fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
+    }
     
     public FileInfo getFileInfo(String fileId){
         FileInfo fi;
@@ -74,7 +83,7 @@ public class DownloadableFilesManager {
                     fci.crc=ci.crc;
                     fci.fileId=fileId;
                     fci.offset=ci.offset;
-                    fci.present=true;
+                    fci.present=3;
                     fci.size=ci.size;
                     fci.chunkId=i;
                     res.chunks.add(fci);

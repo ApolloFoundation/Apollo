@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.FileInfoResponse;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -506,15 +507,16 @@ public final class PeerImpl implements Peer {
         return send(request, chainId, Peers.MAX_RESPONSE_SIZE, false);
     }
     
-    public HttpURLConnection connectMeHTTP(boolean useHTTPS){
-        HttpURLConnection connection = null;
-        return connection;
-    }
-    
-    public boolean connectMeWS(boolean useHTTPS){
-       boolean res = false; 
-       return res; 
-    }
+//    //TODO: implement
+//    public HttpURLConnection connectMeHTTP(boolean useHTTPS){
+//        HttpURLConnection connection = null;
+//        return connection;
+//    }
+//    //TODO: implement
+//    public boolean connectMeWS(boolean useHTTPS){
+//       boolean res = false; 
+//       return res; 
+//    }
     
     @Override
     public JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize, boolean firstConnect) {
@@ -1052,7 +1054,14 @@ public final class PeerImpl implements Peer {
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
         rq.fileId=entityId;
         rq.full=true;
-        return null;
+        JSONObject req = mapper.convertValue(rq,JSONObject.class);
+        JSONObject resp = send(req, chainId.get());
+        FileInfoResponse res = mapper.convertValue(resp, FileInfoResponse.class);
+        if(res.errorCode!=null && res.errorCode!=0){
+            return null;
+        }
+        byte[] hash = Convert.parseHexString(res.fileInfo.hash);
+        return new BigInteger(hash);
     }
 
     void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {

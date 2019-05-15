@@ -12,6 +12,12 @@ public class FileChunkInfo {
     public int chunkId;
     public long offset;
     public int size;
-    public boolean present;
+    /**
+     * 0 - not present
+     * 1 - download in progress;
+     * 2 - present;
+     * 3 - saved;
+     */
+    public int present;
     public long crc;
 }

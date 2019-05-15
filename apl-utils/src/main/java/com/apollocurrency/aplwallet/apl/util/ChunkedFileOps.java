@@ -38,7 +38,7 @@ public class ChunkedFileOps {
     }
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
     
-    public int writeChunk(int offset, byte[] data, long crc) throws IOException{
+    public int writeChunk(Long offset, byte[] data, long crc) throws IOException{
         int res=0;
         CheckSum cs = new CheckSum();
         cs.update(data);
@@ -50,7 +50,7 @@ public class ChunkedFileOps {
             Files.createFile(absPath);
         }
         RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"rw");
-        rf.skipBytes(offset);
+        rf.skipBytes(offset.intValue());
         rf.write(data);
         rf.close();
         return res;
@@ -90,6 +90,7 @@ public class ChunkedFileOps {
     }   
     
     /**
+     * Calculates file hash and partial CRCss
      * Should depends on crypto settings, but at the time it is SHA-256
      * @param chunkSize size of file chunks to calculate partial CRCs
      * @return Crypto hash sum of entire file
