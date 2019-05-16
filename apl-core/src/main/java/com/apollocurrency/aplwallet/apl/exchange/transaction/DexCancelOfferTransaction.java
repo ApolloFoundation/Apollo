@@ -46,19 +46,19 @@ public class DexCancelOfferTransaction extends DEX {
 
         DexOffer offer = dexService.getOfferByTransactionId(orderTransactionId);
         if(offer == null) {
-            throw new AplException.NotCurrentlyValidException("Order was not found. Transaction: " + orderTransactionId);
+            throw new AplException.NotValidException("Order was not found. Transaction: " + orderTransactionId);
         }
 
         if(!Long.valueOf(offer.getAccountId()).equals(transaction.getSenderId())){
-            throw new AplException.NotCurrentlyValidException("Can cancel only your orders.");
+            throw new AplException.NotValidException("Can cancel only your orders.");
         }
 
         if(!OfferStatus.OPEN.equals(offer.getStatus())) {
-            throw new AplException.NotCurrentlyValidException("Can cancel only Open orders.");
+            throw new AplException.NotValidException("Can cancel only Open orders.");
         }
 
         if(dexService.isThereAnotherCancelUnconfirmedTx(orderTransactionId, transaction.getId())){
-            throw new AplException.NotCurrentlyValidException("There is another cancel transaction for this order in the unconfirmed tx pool already.");
+            throw new AplException.NotValidException("There is another cancel transaction for this order in the unconfirmed tx pool already.");
         }
 
     }
