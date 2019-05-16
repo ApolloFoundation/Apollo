@@ -557,7 +557,7 @@ public final class PeerImpl implements Peer {
                 //
                 String urlString = "http://" + host + ":" + getPort() + "/apl";
                 URL url = new URL(urlString);
-                LOG.debug("Connecting to URL = {}...", urlString);
+                LOG.trace("Connecting to URL = {}...", urlString);
                 if (communicationLoggingMask != 0)
                     log = "\"" + url.toString() + "\": " + JSON.toString(request);
                 connection = (HttpURLConnection) url.openConnection();
