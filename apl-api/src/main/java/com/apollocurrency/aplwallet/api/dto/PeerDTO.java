@@ -13,7 +13,7 @@ import lombok.ToString;
 import java.util.List;
 
 @Getter @Setter @ToString
-@JsonInclude(value = JsonInclude.Include.NON_EMPTY, content = JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PeerDTO extends DTO{
     private String address;
@@ -40,4 +40,5 @@ public class PeerDTO extends DTO{
     private List<String> services;
     private String blockchainState;
     private String chainId;
+    private Boolean isNewlyAdded;
 }

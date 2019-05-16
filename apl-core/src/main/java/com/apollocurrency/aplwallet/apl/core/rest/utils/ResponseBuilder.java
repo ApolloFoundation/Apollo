@@ -8,11 +8,17 @@ package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
 import com.apollocurrency.aplwallet.api.dto.DTO;
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
+import com.apollocurrency.aplwallet.api.response.ResponseDone;
+import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.ws.rs.core.Response;
 
 public class ResponseBuilder {
+
+    private static ObjectMapper mapper = new ObjectMapper();
 
     private long startRequestTime;
     protected DTO dto;
@@ -24,47 +30,35 @@ public class ResponseBuilder {
         this.startRequestTime = System.currentTimeMillis();
     }
 
-    public static Response apiError(int errorNo, String reasonPhrase){
-        return apiError(200, errorNo, errorNo, reasonPhrase);
-    }
-
-    public static Response apiError(ErrorInfo error){
-        String reasonPhrase = Messages.format(error.getErrorDescription());
-        return apiError(200, error.getOldErrorCode(), error.getErrorCode(), reasonPhrase);
-    }
-
-    public static Response apiError(ErrorInfo error, Object ... args){
-        String reasonPhrase = Messages.format(error.getErrorDescription(), args);
-        return apiError(200, error.getOldErrorCode(), error.getErrorCode(), reasonPhrase);
-    }
-
-    public static Response apiError(int status, int oldErrorNo, int errorNo, String reasonPhrase){
-        ResponseBuilder instance = new ResponseBuilder(status);
-
-        ResponseBase body = new ResponseBase();
-        body.newErrorCode = errorNo;
-        body.errorCode = (long) oldErrorNo;
-        body.errorDescription = reasonPhrase;
-
-        instance.response = body;
-
-        return instance.build();
-    }
-
-    public static ResponseBuilder ok(){
+    public static ResponseBuilder startTiming(){
         return new ResponseBuilder(200);
     }
 
-    public static ResponseBuilder startTiming(){
-        return ok();
+    public static ResponseBuilder apiError(ErrorInfo error, Object ... args){
+        ResponseBuilder instance = new ResponseBuilder(200);
+        instance.error(error, args);
+        return instance;
     }
 
-    public ResponseBuilder error(int status, int errorNo, String reasonPhrase){
-        ResponseBase body = new ResponseBase();
-        body.errorCode = (long) errorNo;
-        body.errorDescription = reasonPhrase;
-        this.response = body;
+    public static ResponseBuilder ok(){
+        ResponseBuilder instance = new ResponseBuilder(200);
+        instance.response = new ResponseBase(0, null, 0L);
+        return instance;
+    }
+
+    public static ResponseBuilder done(){
+        ResponseBuilder instance = new ResponseBuilder(200);
+        instance.response = new ResponseDone();
+        return instance;
+    }
+
+    public ResponseBuilder error(ErrorInfo error, Object ... args){
+        this.status = 200;
+
+        String reasonPhrase = Messages.format(error.getErrorDescription(), args);
+        this.response = new ResponseBase(error.getErrorCode(), reasonPhrase, (long)error.getOldErrorCode());
         this.dto = null;
+
         return this;
     }
 
@@ -98,6 +92,15 @@ public class ResponseBuilder {
             dto.setRequestProcessingTime(elapsed);
             entity=dto;
         }
-        return Response.status(status).entity(entity).build();
+        String stringJsonEntity;
+        try {
+            stringJsonEntity = mapper.writeValueAsString(entity);
+        } catch (JsonProcessingException e) {
+            ErrorInfo internalError = ApiErrors.JSON_SERIALIZATION_EXCEPTION;
+            String reasonPhrase = Messages.format(internalError.getErrorDescription(), e.getMessage());
+            ResponseBase body = new ResponseBase(internalError.getErrorCode(), reasonPhrase, (long)internalError.getOldErrorCode());
+            return Response.status(500).entity(body).build();
+        }
+        return Response.status(status).entity(stringJsonEntity).build();
     }
 }

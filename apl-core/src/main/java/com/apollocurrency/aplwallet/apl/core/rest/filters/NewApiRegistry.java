@@ -28,8 +28,14 @@ public class NewApiRegistry {
         apis.put("getDexOrders", "/rest/dex/order");
         apis.put("getDexWidthraw", "/rest/dex/widthraw");
 
-        apis.put("getPeers", "/rest/networking/peer/all");
-        apis.put("getPeer", "/rest/networking/peer");
+        apis.put("getMyInfo", "/rest/networking/myinfo"); //GET
+        apis.put("getPeer", "/rest/networking/peer"); //GET
+        apis.put("addPeer", "/rest/networking/peer"); //POST
+        apis.put("getPeers", "/rest/networking/peer/all"); //GET
+        apis.put("getInboundPeers",  "/rest/networking/peer/inbound"); //GET
+        apis.put("blacklistPeer", "/rest/networking/peer/blacklist"); //POST
+        apis.put("blacklistAPIProxyPeer", "/rest/networking/peer/proxyblacklist"); //POST
+        apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
 
         //TODO: add new implemented endpoints

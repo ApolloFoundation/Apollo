@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class PeerConverter implements Converter<Peer, PeerDTO> {
         dto.setDownloadedVolume(peer.getDownloadedVolume());
         dto.setUploadedVolume(peer.getUploadedVolume());
         dto.setApplication(peer.getApplication());
-        dto.setVersion(String.valueOf(peer.getVersion()));
+        dto.setVersion(peer.getVersion() == null?null:peer.getVersion().toString());
         dto.setPlatform(peer.getPlatform());
         if (peer.getApiPort() != 0) {
             dto.setApiPort(peer.getApiPort());
@@ -52,7 +53,7 @@ public class PeerConverter implements Converter<Peer, PeerDTO> {
         }
 
         dto.setBlockchainState(peer.getBlockchainState().name());
-        dto.setChainId(String.valueOf(peer.getChainId()));
+        dto.setChainId(peer.getChainId()==null?null:peer.getChainId().toString());
         return dto;
 
     }

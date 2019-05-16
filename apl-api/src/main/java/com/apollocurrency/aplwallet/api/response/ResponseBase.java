@@ -47,4 +47,13 @@ public class ResponseBase {
      * Old error code. Should be gone in new API
      */
     public Long errorCode;
+
+    public ResponseBase(Integer newErrorCode, String errorDescription, Long errorCode) {
+        this.newErrorCode = newErrorCode;
+        this.errorDescription = errorDescription;
+        this.errorCode = errorCode;
+    }
+
+    public ResponseBase() {
+    }
 }

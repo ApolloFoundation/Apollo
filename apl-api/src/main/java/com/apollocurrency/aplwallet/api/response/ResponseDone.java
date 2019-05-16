@@ -10,12 +10,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
-@Getter @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetPeersSimpleResponse extends ResponseBase {
+@Getter @Setter
+public class ResponseDone extends ResponseBase {
 
-    private List<String> peers;
+    private Boolean done;
+
+    public ResponseDone() {
+        this(true);
+    }
+
+    public ResponseDone(Boolean done) {
+        super(0, null, 0L);
+        this.done = done;
+    }
 
 }
