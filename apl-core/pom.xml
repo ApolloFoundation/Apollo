@@ -100,6 +100,18 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-cdi</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+        </dependency>
 
         <!-- Swagger runtime dependencies -->
         <!-- Swagger annotation for API auto-documenting --> 
@@ -318,7 +330,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/src/main/resources/io/firstbridge/fbc/core/model/i18n</outputDirectory>
+                            <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${basedir}/src/test/resources/i18n</directory>

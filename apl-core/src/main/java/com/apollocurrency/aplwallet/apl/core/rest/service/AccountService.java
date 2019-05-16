@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -23,8 +24,14 @@ public class AccountService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AccountService.class);
 
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private Blockchain blockchain;
+    private BlockchainConfig blockchainConfig;
+
+    @Inject
+    public AccountService(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+        this.blockchain = blockchain;
+        this.blockchainConfig = blockchainConfig;
+    }
 
     public Balances getAccountBalances(Account account, boolean includeEffectiveBalance){
         return getAccountBalances(account, includeEffectiveBalance, blockchain.getHeight());

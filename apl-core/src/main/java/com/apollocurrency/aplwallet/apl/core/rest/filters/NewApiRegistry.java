@@ -28,6 +28,8 @@ public class NewApiRegistry {
         apis.put("getDexOrders", "/rest/dex/order");
         apis.put("getDexWidthraw", "/rest/dex/widthraw");
 
+        apis.put("getPeers", "/rest/networking/peer/all");
+        apis.put("getPeer", "/rest/networking/peer");
 
 
         //TODO: add new implemented endpoints

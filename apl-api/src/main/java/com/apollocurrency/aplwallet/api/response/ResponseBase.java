@@ -35,8 +35,7 @@ public class ResponseBase {
      */
     public Integer newErrorCode;
     /**
-     * Time in miliseconds that took from incoming request to
-     * responce
+     * Time in miliseconds that took from incoming request to response
      */
     public Long requestProcessingTime;
     /**
