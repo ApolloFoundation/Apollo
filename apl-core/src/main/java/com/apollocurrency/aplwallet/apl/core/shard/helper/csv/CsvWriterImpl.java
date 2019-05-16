@@ -6,9 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -37,7 +34,7 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-@Singleton
+//@Singleton
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
 
@@ -50,8 +47,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
     private String defaultPaginationColumnName = "DB_ID";
 
-    @Inject
-    public CsvWriterImpl(@Named("dataExportDir") Path dataExportPath, Set<String> excludeColumnNames,
+//    @Inject
+    public CsvWriterImpl(/*@Named("dataExportDir") */Path dataExportPath, Set<String> excludeColumnNames,
                          String paginationColumnName) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
         if (excludeColumnNames != null && excludeColumnNames.size() > 0) {

@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-@Singleton
+//@Singleton
 public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource {
     private static final Logger log = getLogger(CsvReaderImpl.class);
 
@@ -45,8 +45,8 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     private boolean endOfLine;
     private boolean endOfFile;
 
-    @Inject
-    public CsvReaderImpl(@Named("dataExportDir") Path dataExportPath) {
+//    @Inject
+    public CsvReaderImpl(/*@Named("dataExportDir") */Path dataExportPath) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
     }
 
