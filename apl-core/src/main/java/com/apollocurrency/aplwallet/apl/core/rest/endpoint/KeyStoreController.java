@@ -35,6 +35,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
@@ -177,17 +178,17 @@ public class KeyStoreController {
     )
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
-        String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
-        long accountId = ParameterParser.getAccountId(account, "account", true);
-
-        if(!keyStoreService.isKeyStoreForAccountExist(accountId)){
-            return Response.status(Response.Status.OK)
-                            .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
-                                    "get account information", "Key for this account is not exist."))
-                            ).build();
-        }
-
         try {
+            String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
+            long accountId = ParameterParser.getAccountId(account, "account", true);
+
+            if(!keyStoreService.isKeyStoreForAccountExist(accountId)){
+                return Response.status(Response.Status.OK)
+                                .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
+                                        "get account information", "Key for this account is not exist."))
+                                ).build();
+            }
+
             if(helper2FA.isEnabled2FA(accountId)){
                 int code2FA = ParameterParser.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
                 Status2FA status2FA = helper2FA.auth2FA(passphraseStr, accountId, code2FA);
@@ -195,14 +196,18 @@ public class KeyStoreController {
                     return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.error2FA(status2FA, accountId))).build();
                 }
             }
+
+            File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
+
+            if(keyStore == null){
+                throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
+            }
+
+            Response.ResponseBuilder response = Response.ok(new ExportKeyStore(Files.readAllBytes(keyStore.toPath()), keyStore.getName()).toJSON());
+            return response.build();
         } catch (ParameterException ex){
-           return Response.status(Response.Status.OK).entity(JSON.toString(ex.getErrorResponse())).build();
+            return Response.status(Response.Status.OK).entity(JSON.toString(ex.getErrorResponse())).build();
         }
-
-        File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
-
-        Response.ResponseBuilder response = Response.ok(new ExportKeyStore(FileUtils.readFileToByteArray(keyStore), keyStore.getName()).toJSON());
-        return response.build();
     }
 
 }
