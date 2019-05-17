@@ -46,7 +46,8 @@ public class DigitalGoodsStoreObserver {
             DGSGoods goods = service.getGoods(purchase.getGoodsId());
             goods.setHeight(block.getHeight());
             service.changeQuantity(goods, purchase.getQuantity());
-            purchase.setPending(false);
+            purchase.setHeight(block.getHeight());
+            service.setPending(purchase, false);
         }
     }
 }
