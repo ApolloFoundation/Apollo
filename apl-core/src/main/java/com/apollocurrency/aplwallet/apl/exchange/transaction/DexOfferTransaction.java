@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -21,6 +20,7 @@ import org.json.simple.JSONObject;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
@@ -93,6 +93,11 @@ public class DexOfferTransaction extends DEX {
                 throw new AplException.NotValidException("Not enough money.");
             }
         }
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        return isDuplicate(DEX.DEX_OFFER_TRANSACTION, Long.toUnsignedString(transaction.getId()), duplicates, true);
     }
 
     @Override

@@ -104,7 +104,7 @@ final class GetInfo extends PeerRequestHandler {
             version = new Version(1, 0, 0);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("PEER-GetINFO: version {}", version);
+            LOG.debug("PEER-GetINFO: IP: {}, version {}", peerImpl.getHost(), version);
         }
         peerImpl.setVersion(version);
 
