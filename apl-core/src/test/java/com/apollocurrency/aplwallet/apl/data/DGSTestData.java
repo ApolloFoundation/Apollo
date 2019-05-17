@@ -116,9 +116,7 @@ public class DGSTestData {
     public final DGSTag TAG_11 = createTag(47	        ,"tag"	    ,1	                ,2	            ,542828	,true      );
     public final DGSTag TAG_12 = createTag(48	        ,"batman"   ,1	                ,1	            ,542828	,true      );
 
-    
-
-
+    public final DGSTag NEW_TAG = createTag(TAG_12.getDbId() + 1, "superman", 2, 3, TAG_12.getHeight() + 1, true);
 
     private DGSPurchase createPurchase(long dbId, long id, long buyerId, long goodsId, long sellerId, int quantity, long price, short deadline, String note, String nonce, int timestamp, boolean pending, String goods, String goodsNonce, boolean goodsIsText, String refundNote, String refundNonce, boolean hasFeedbackNotes, boolean hasPublicFeedbacks, long discount, long refund, int height, boolean latest, List<DGSPublicFeedback> publicFeedbacks, List<DGSFeedback> feedbacks) {
         DGSPurchase dgsPurchase = new DGSPurchase(dbId, height, id, buyerId, goodsId, sellerId, quantity, price, deadline, new EncryptedData(Convert.parseHexString(note), Convert.parseHexString(nonce)), timestamp, pending, new EncryptedData(Convert.parseHexString(goods), Convert.parseHexString(goodsNonce)), goodsIsText, new EncryptedData(Convert.parseHexString(refundNote), Convert.parseHexString(refundNonce)), hasPublicFeedbacks, hasFeedbackNotes, feedbacks, publicFeedbacks, discount, refund);

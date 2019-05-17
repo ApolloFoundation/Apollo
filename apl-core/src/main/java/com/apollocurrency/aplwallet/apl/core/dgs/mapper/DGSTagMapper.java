@@ -5,14 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.mapper;
 
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DerivedEntityMapper;
+import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DGSTagMapper extends DerivedEntityMapper<DGSTag> {
+public class DGSTagMapper extends VersionedDerivedEntityMapper<DGSTag> {
 
 
     public DGSTagMapper(KeyFactory<DGSTag> keyFactory) {

@@ -300,9 +300,8 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetManyByHeightAllClause() {
-        List<T> allExpectedData = getAllLatest();
-        List<T> all = CollectionUtil.toList(table.getManyBy(new DbClause.IntClause("height", DbClause.Op.GTE, 0), 0, allExpectedData.size()));
-        List<T> expected = allExpectedData;
+        List<T> expected = getAllLatest().stream().sorted(getDefaultComparator()).collect(Collectors.toList());
+        List<T> all = CollectionUtil.toList(table.getManyBy(new DbClause.IntClause("height", DbClause.Op.GTE, 0), 0, expected.size()));
         assertEquals(expected, all);
     }
 
@@ -411,7 +410,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetManyOnConnectionWithoutCache() {
-        List<T> allExpectedData = sortByHeightDesc(getAllLatest());
+        List<T> allExpectedData = sortByHeightDesc(getAll());
         DbUtils.inTransaction(extension, (con) -> {
                     try {
                         PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
