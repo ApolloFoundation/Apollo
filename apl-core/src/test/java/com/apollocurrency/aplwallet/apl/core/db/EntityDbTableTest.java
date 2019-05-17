@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
@@ -36,18 +37,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     static {
         System.setProperty("multiversion", "false");
     }
-    private DbKey UNKNOWN_DB_KEY = new DbKey() {
-        @Override
-        public int setPK(PreparedStatement pstmt) throws SQLException {
-            return setPK(pstmt, 1);
-        }
 
-        @Override
-        public int setPK(PreparedStatement pstmt, int index) throws SQLException {
-            pstmt.setLong(index, Long.MIN_VALUE);
-            return index + 1;
-        }
-    };
     private DbKey THROWING_DB_KEY = createThrowingKey();
     private Comparator<T> DB_ID_HEIGHT_COMPARATOR = Comparator.comparing(T::getHeight).thenComparing(T::getDbId).reversed();
     private String DB_ID_HEIGHT_SORT = " ORDER BY height DESC, db_id DESC";
@@ -88,7 +78,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testByUnknownDbKey() {
-        T unknownValue = table.get(UNKNOWN_DB_KEY);
+        T unknownValue = table.get(table.getDbKeyFactory().newKey(valueToInsert()));
 
         assertNull(unknownValue, "value with unknown db key should be null");
     }
@@ -143,6 +133,9 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetByHeight() {
 
         if (table.isMultiversion()) {
+            Block mock = mock(Block.class);
+            doReturn(Integer.MAX_VALUE).when(mock).getHeight();
+            getBlockchain().setLastBlock(mock);
             Map.Entry<DbKey, List<T>> entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3);
             List<T> sorted = sortByHeightDesc(entries.getValue());
             T latest = sorted.get(0);
@@ -162,7 +155,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             assertEquals(notLatest, actual);
 
             actual = table.get(entries.getKey(), notLatest.getHeight());
-            assertEquals(latest, actual);
+            assertEquals(notLatest, actual);
 
             actual = table.get(entries.getKey(), notLatest.getHeight() - 1);
             assertEquals(first, actual);
@@ -197,7 +190,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetByHeightForUnknownDbKey() {
-        T unknownEntity = table.get(UNKNOWN_DB_KEY, Integer.MAX_VALUE);
+        T unknownEntity = table.get(table.getDbKeyFactory().newKey(valueToInsert()), Integer.MAX_VALUE);
         assertNull(unknownEntity, "Entity with unknown db key should not exist");
     }
 
