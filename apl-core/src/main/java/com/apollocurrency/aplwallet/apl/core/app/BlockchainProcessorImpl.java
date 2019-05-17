@@ -563,7 +563,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
-                log.debug(slowestPeer.getHost() + " took " + maxResponseTime + " ms, disconnecting");
+                log.debug("Solwest peer "+slowestPeer.getHost() + " took " + maxResponseTime + " ms, disconnecting");
                 slowestPeer.deactivate();
             }
             //
@@ -595,7 +595,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 int myForkSize = lookupBlockhain().getHeight() - startHeight;
                 if (!forkBlocks.isEmpty() && myForkSize < 720) {
-                    log.debug("Will process a fork of " + forkBlocks.size() + " blocks, mine is " + myForkSize);
+                    log.debug("Will process a fork of " + forkBlocks.size() + " blocks, mine is " + myForkSize+"; feed peer addr: "+feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
             } finally {
@@ -647,7 +647,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             } else {
-                log.debug("Switched to peer's fork");
+                log.debug("Switched to peer's fork, peer addr: {}",peer.getHost());
                 for (Block block : myPoppedOffBlocks) {
                     lookupTransactionProcessor().processLater(block.getTransactions());
                 }
