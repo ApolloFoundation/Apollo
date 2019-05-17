@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -256,7 +257,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     @Test
     public void testGetManyByEmptyClause() {
         List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE));
-        List<T> expected = getAllLatest();
+        List<T> expected = getAllLatest().stream().sorted(getDefaultComparator()).collect(Collectors.toList());
         assertEquals(expected, all);
     }
 
@@ -265,7 +266,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetManyByEmptyClauseWithOffset() {
         List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 2, Integer.MAX_VALUE));
         List<T> allExpectedData = getAllLatest();
-        List<T> expected = allExpectedData.subList(2, allExpectedData.size());
+        List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).skip(2).collect(Collectors.toList());
         assertEquals(expected, all);
     }
 
@@ -273,7 +274,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetManyByEmptyClauseWithLimit() {
         List<T> allExpectedData = getAllLatest();
         List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 0, allExpectedData.size() - 2));
-        List<T> expected = allExpectedData.subList(0, allExpectedData.size() - 1);
+        List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).limit(allExpectedData.size() - 1).collect(Collectors.toList());
         assertEquals(expected, all);
     }
 
@@ -281,7 +282,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetManyByEmptyClauseWithLimitAndOffset() {
         List<T> allExpectedData = getAllLatest();
         List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 1, allExpectedData.size() - 2));
-        List<T> expected = allExpectedData.subList(1, allExpectedData.size() - 1);
+        List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).skip(1).limit(allExpectedData.size() - 2).collect(Collectors.toList());
         assertEquals(expected, all);
     }
 
@@ -303,7 +304,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         List<T> allExpectedData = getAllLatest();
         List<Integer> heights = getHeights(allExpectedData);
         int height = heights.get(1);
-        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() < height).collect(Collectors.toList());
+        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() < height).sorted(getDefaultComparator()).collect(Collectors.toList());
         List<T> all = CollectionUtil.toList(table.getManyBy(new DbClause.IntClause("height", DbClause.Op.GTE, 0).and(new DbClause.IntClause("height", DbClause.Op.LT, height)), 0, expected.size() - 1));
         assertEquals(expected, all);
     }
@@ -315,7 +316,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         List<Integer> heights = getHeights(allExpectedData);
         int upperHeight = heights.get(1);
         int lowerHeight = heights.get(2);
-        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() < upperHeight && t.getHeight() >= lowerHeight).collect(Collectors.toList());
+        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() < upperHeight && t.getHeight() >= lowerHeight).sorted(getDefaultComparator()).collect(Collectors.toList());
         List<T> all = CollectionUtil.toList(table.getManyBy(new DbClause.IntClause("height", DbClause.Op.GTE, lowerHeight).and(new DbClause.IntClause("height", DbClause.Op.LT, upperHeight)), 0, expected.size() - 1));
         assertEquals(expected, all);
     }
@@ -337,7 +338,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         List<Integer> heights = getHeights(allExpectedData);
 
         int notExpectedHeight = heights.get(0);
-        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() != notExpectedHeight).collect(Collectors.toList());
+        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() != notExpectedHeight).sorted(getDefaultComparator()).collect(Collectors.toList());
         List<T> all = CollectionUtil.toList(table.getManyBy(new DbClause.IntClause("height", DbClause.Op.NE, notExpectedHeight), 0, expected.size() - 1));
         assertEquals(expected, all);
     }
@@ -385,11 +386,22 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetManyOnConnectionWithCache() {
-        List<T> allExpectedData = sortByHeightDesc(getAllLatest());
+        List<T> allExpectedData = sortByHeightDesc(getAll());
+        Map<DbKey, T> keys = new HashMap<>();
+        for (int i = 0; i < allExpectedData.size(); i++) {
+            T t = allExpectedData.get(i);
+            DbKey key = table.getDbKeyFactory().newKey(t);
+            if (keys.containsKey(key)) {
+                allExpectedData.set(i, keys.get(key));
+            } else {
+                keys.put(key, t);
+            }
+        }
         DbUtils.inTransaction(extension, (con) -> {
                     try {
-                        PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
+                        PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " ORDER BY height desc, DB_ID desc ");
                         List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, true));
+
                         assertEquals(allExpectedData, all);
                         assertListInCache(allExpectedData);
                     }
@@ -400,6 +412,8 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         );
         assertListNotInCache(allExpectedData);
     }
+
+
 
     @Test
     public void testGetManyOnConnectionWithoutCache() {
@@ -496,12 +510,18 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetAllWithPaginationForLastHeight() {
+        Block mock = mock(Block.class);
+        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
+        getBlockchain().setLastBlock(mock);
         int height = getHeights().get(0);
         testGetAllWithPaginationForHeight(height);
     }
 
     @Test
     public void testGetAllWithPaginationForMiddleHeight() {
+        Block mock = mock(Block.class);
+        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
+        getBlockchain().setLastBlock(mock);
         List<Integer> heights = getHeights();
         int height = heights.get(heights.size() / 2);
         testGetAllWithPaginationForHeight(height);
@@ -509,6 +529,9 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetAllWithPaginationForMinHeight() {
+        Block mock = mock(Block.class);
+        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
+        getBlockchain().setLastBlock(mock);
         List<Integer> heights = getHeights();
         int height = heights.get(heights.size() - 1);
         testGetAllWithPaginationForHeight(height);
@@ -563,8 +586,8 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     protected List<T> getExpectedAtHeight(int from, int to, int height, Comparator<T> comp, Filter<T> filter) {
         List<T> latest = getAllLatest();
-        Map<DbKey, List<T>> dbKeyListMap = groupByDbKey(latest, table.getDbKeyFactory());
         List<T> all = getAll();
+        Map<DbKey, List<T>> dbKeyListMap = groupByDbKey(all, table.getDbKeyFactory());
         List<T> expected = all.stream().filter(e -> {
             if (e.getHeight() <= height && filter.test(e)) {
                 if (latest.contains(e)) {
@@ -642,16 +665,25 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetCountByDbClauseWithLastHeight() {
+        Block mock = mock(Block.class);
+        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
+        getBlockchain().setLastBlock(mock);
         testGetCountByDbClauseWithHeight(0);
     }
 
     @Test
     public void testGetCountByDbClauseWithNextHeight() {
+        Block mock = mock(Block.class);
+        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
+        getBlockchain().setLastBlock(mock);
         testGetCountByDbClauseWithHeight(1);
     }
 
     @Test
     public void testGetCountByDbClauseWithMinHeight() {
+        Block mock = mock(Block.class);
+        doReturn(sortByHeightDesc(getAll()).get(0).getHeight() + 1).when(mock).getHeight();
+        getBlockchain().setLastBlock(mock);
         List<T> all = getAllLatest();
         testGetCountByDbClauseWithHeight(all.size() - 1);
     }
@@ -738,9 +770,16 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     @Test
     public void testInsertAlreadyExist() {
         T value = getAllLatest().get(1);
-        Assertions.assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.inTransaction(extension, (con) -> {
+            value.setDbId(sortByHeightDesc(getAll()).get(0).getDbId() + 1);
+            value.setHeight(value.getHeight() + 1);
             table.insert(value);
-        }));
+            T t = table.get(table.getDbKeyFactory().newKey(value));
+            assertEquals(t, value);
+            assertInCache(t);
+        });
+        T actual = table.get(table.getDbKeyFactory().newKey(value));
+        assertEquals(value, actual);
     }
 
 

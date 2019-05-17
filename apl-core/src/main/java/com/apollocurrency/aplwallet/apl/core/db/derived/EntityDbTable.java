@@ -46,9 +46,9 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
 
     private final String defaultSort;
     private final String fullTextSearchColumns;
-    private static Blockchain blockchain;
-    private static BlockchainProcessor blockchainProcessor;
-    private static FullTextSearchService fullText;
+    private  Blockchain blockchain;
+    private  BlockchainProcessor blockchainProcessor;
+    private  FullTextSearchService fullText;
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);

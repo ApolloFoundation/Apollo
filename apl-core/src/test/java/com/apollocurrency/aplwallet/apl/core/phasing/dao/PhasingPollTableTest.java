@@ -309,4 +309,15 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         PhasingPoll phasingPoll = table.get(1);
         assertNull(phasingPoll);
     }
+
+    @Override
+    @Test
+    public void testInsertAlreadyExist() {
+        PhasingPoll value = ptd.POLL_1;
+        Assertions.assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+            table.insert(value);
+        }));
+    }
+
+
 }

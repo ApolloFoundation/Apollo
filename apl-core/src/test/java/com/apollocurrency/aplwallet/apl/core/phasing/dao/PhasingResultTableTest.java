@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -35,7 +36,9 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -45,7 +48,7 @@ import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-public class PhasingResultTest extends EntityDbTableTest<PhasingPollResult> {
+public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -72,7 +75,7 @@ public class PhasingResultTest extends EntityDbTableTest<PhasingPollResult> {
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
 
-    public PhasingResultTest() {
+    public PhasingResultTableTest() {
         super(PhasingPollResult.class);
     }
 
@@ -109,4 +112,12 @@ public class PhasingResultTest extends EntityDbTableTest<PhasingPollResult> {
         return new ArrayList<>(List.of(ptd.SHARD_RESULT_0, ptd.RESULT_0, ptd.RESULT_1, ptd.RESULT_2, ptd.RESULT_3));
     }
 
+    @Override
+    @Test
+    public void testInsertAlreadyExist() {
+        PhasingPollResult value = ptd.RESULT_1;
+        Assertions.assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+            table.insert(value);
+        }));
+    }
 }

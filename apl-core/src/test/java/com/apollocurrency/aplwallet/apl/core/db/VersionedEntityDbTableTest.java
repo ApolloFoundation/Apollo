@@ -55,7 +55,7 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
             assertInCache(t);
             assertEquals(t, table.get(table.getDbKeyFactory().newKey(t)));
             List<T> all = CollectionUtil.toList(table.getAll(0, Integer.MAX_VALUE));
-            assertEquals(allLatest, all);
+            assertEquals(allLatest.stream().sorted(getDefaultComparator()).collect(Collectors.toList()), all);
             assertListInCache(allLatest);
         });
         assertListNotInCache(allLatest);
@@ -74,7 +74,8 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
             assertEquals(t, table.get(table.getDbKeyFactory().newKey(t)));
             List<T> all = CollectionUtil.toList(table.getAll(0, Integer.MAX_VALUE));
             allLatest.set(0, t);
-            assertEquals(allLatest, all);
+            List<T> expected = allLatest.stream().sorted(getDefaultComparator()).collect(Collectors.toList());
+            assertEquals(expected, all);
             assertListInCache(allLatest);
         });
         assertListNotInCache(allLatest);
