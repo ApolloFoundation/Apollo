@@ -34,10 +34,11 @@ import org.slf4j.Logger;
 public class CvsExporterImpl implements CvsExporter {
     private static final Logger log = getLogger(CvsExporterImpl.class);
 
-    private Path dataExportPath;
+    private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private ShardDaoJdbc shardDaoJdbc;
-    private Set<String> excludeColumnNamesInDerivedTables;
+    private Set<String> excludeColumnNamesInDerivedTables; // excluded column
+    private Set<String> excludeTables; // skipped tables
     private CsvWriter csvWriter;
 
     @Inject
@@ -49,7 +50,10 @@ public class CvsExporterImpl implements CvsExporter {
         excludeColumnNamesInDerivedTables = new HashSet<>(1) {{
           add("DB_ID");
         }};
-        csvWriter = new CsvWriterImpl(dataExportPath, excludeColumnNamesInDerivedTables, "DB_ID");
+        this.excludeTables = new HashSet<>(1) {{
+            add("genesis_public_key");
+        }};
+        csvWriter = new CsvWriterImpl(this.dataExportPath, excludeColumnNamesInDerivedTables, "DB_ID");
         csvWriter.setOptions("fieldDelimiter="); // do not put "" around column/values
     }
 
@@ -59,10 +63,16 @@ public class CvsExporterImpl implements CvsExporter {
     @Override
     public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit) {
         Objects.requireNonNull(derivedTableInterface, "derivedTableInterface is NULL");
+        // skip hard coded table
+        if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
+            // skip not needed table
+            log.debug("Skipped unnecessary Table = {}", derivedTableInterface.toString());
+        }
         if (csvWriter.getDefaultPaginationColumnName() != null
                 && !csvWriter.getDefaultPaginationColumnName().equalsIgnoreCase("DB_ID")) {
             csvWriter.setDefaultPaginationColumnName("DB_ID");
         }
+        long start = System.currentTimeMillis();
         int processedCount = 0;
         int totalCount = 0;
         // prepare connection + statement
@@ -80,7 +90,8 @@ public class CvsExporterImpl implements CvsExporter {
                             derivedTableInterface.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit), minMaxDbId );
                     totalCount += processedCount;
                 } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {}", derivedTableInterface.toString(), totalCount);
+                log.trace("Table = {}, exported rows = {} in {} sec", derivedTableInterface.toString(), totalCount,
+                        (System.currentTimeMillis() - start) / 1000);
             } else {
                 // skipped empty table
                 log.debug("Skipped exporting Table = {}", derivedTableInterface.toString());

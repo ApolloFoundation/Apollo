@@ -37,6 +37,6 @@ public class DbTestData {
         }
     }
     public static DbProperties getDbFileProperties(String fileName) {
-        return getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0", fileName), Paths.get(fileName).getParent().toAbsolutePath().toString());
+        return getDbUrlProps(String.format("jdbc:h2:file:%s;TRACE_LEVEL_FILE=0", fileName), Paths.get(fileName).getParent().toAbsolutePath().toString());
     }
 }

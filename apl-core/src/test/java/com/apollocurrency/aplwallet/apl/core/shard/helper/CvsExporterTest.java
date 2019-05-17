@@ -21,9 +21,14 @@ import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -108,13 +113,16 @@ class CvsExporterTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
+//    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
+//    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath"));
     private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
+//    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -150,6 +158,8 @@ class CvsExporterTest {
             .build();
 
     @Inject
+    PropertiesHolder propertiesHolder;
+    @Inject
     JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private Blockchain blockchain;
@@ -166,8 +176,8 @@ class CvsExporterTest {
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
+//            return Path.of("/media/ylarin/PHOTO/java_projects/Apollo/apl-core/unit-test-perm" + (fileName !=null ? ("/" + fileName) : ""));
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -185,11 +195,18 @@ class CvsExporterTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
+        AccountTable.getInstance().init();
+        AccountInfoTable.getInstance().init();
+        Alias.init();
         PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811"));
         AccountAssetTable.getInstance().init();
-        GenesisPublicKeyTable.getInstance().init();
+//        GenesisPublicKeyTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
+        AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
+        accountLedgerTable.init();
+        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
+        accountGuaranteedBalanceTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
         purchaseTable.init();
     }
@@ -197,28 +214,34 @@ class CvsExporterTest {
     @Test
     void exportDerivedTables() {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+//        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir();
         cvsExporter = new CvsExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
         int targetHeight = 8000;
+//        int targetHeight = 2_000_000;
         int batchLimit = 1; // used for pagination and partial commit
 
+        long start = System.currentTimeMillis();
         result.forEach(item -> {
+            long start2 = System.currentTimeMillis();
             long exportedRows = cvsExporter.exportDerivedTable(item, targetHeight, batchLimit);
-            log.debug("Processed Tables = {}, exported = '{}' rows", result, exportedRows);
+            log.debug("Processed Table = {}, exported = '{}' rows in {} secs", item, exportedRows, (System.currentTimeMillis() - start2) / 1000 );
         });
-        log.debug("Processed Tables = {}", result);
+        log.debug("Processed Tables = [{}] in {} sec", result.size(), (System.currentTimeMillis() - start) / 1000 );
         String[] extensions =  new String[]{"csv"};
         Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false) ;
         assertNotNull(filesInFolder);
         assertTrue(filesInFolder.size() > 0);
         log.debug("Processed Tables = [{}]", filesInFolder.size());
+        log.debug("Processed list = '{}' in {} sec", result, (System.currentTimeMillis() - start) / 1000 );
     }
 
     @Test
     void exportShardTable() {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+//        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir();
         cvsExporter = new CvsExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 

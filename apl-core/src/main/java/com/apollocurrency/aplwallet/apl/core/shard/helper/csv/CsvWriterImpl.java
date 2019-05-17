@@ -180,7 +180,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
                         meta.getPrecision(i + 1), meta.getScale(i + 1));
             }
-            log.debug("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
+            log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
             if (writeColumnHeader) {
                 log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
                 writeHeaderRow(columnsMetaData);
@@ -254,7 +254,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     }
                     rowColumnNames[i] = o == null ? null : o.toString();
                 }
-                log.debug("Row = {}", Arrays.toString(rowColumnNames));
+                log.trace("Row = {}", Arrays.toString(rowColumnNames));
                 writeRow(rowColumnNames);
                 rows++;
                 minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
