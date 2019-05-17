@@ -192,7 +192,8 @@ public final class AplCore {
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 GlobalSync sync = CDI.current().select(GlobalSync.class).get();
                 transactionProcessor.init();
-                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, CDI.current().select(PublicKeyTable.class).get());
+                PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 AppStatus.getInstance().update("Account ledger initialization...");

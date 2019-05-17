@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
@@ -48,7 +49,7 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
     }
 
     @Override
-    protected DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return dexOfferMapper.map(rs, null);
     }
 

@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
@@ -94,7 +95,7 @@ class DataTagDaoTest {
 
     @Test
     void getDataTagAllById() throws Exception {
-        List<DataTag> result = dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
+        List<DataTag> result = dataTagDao.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertNotNull(result);
         assertEquals(4, result.size());
     }
