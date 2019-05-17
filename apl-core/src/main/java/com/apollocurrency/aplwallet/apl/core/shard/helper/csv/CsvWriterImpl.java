@@ -34,22 +34,18 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-//@Singleton
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
 
     private Writer output;
     private StringBuffer outputBuffer = new StringBuffer(400);
-//    private boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     private Set<String> excludeColumn = new HashSet<>();
     private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
     private String defaultPaginationColumnName = "DB_ID";
 
-//    @Inject
-    public CsvWriterImpl(/*@Named("dataExportDir") */Path dataExportPath, Set<String> excludeColumnNames,
-                         String paginationColumnName) {
+    public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, String paginationColumnName) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
         if (excludeColumnNames != null && excludeColumnNames.size() > 0) {
             // assign non empty Set
@@ -57,9 +53,29 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
         }
         if (paginationColumnName != null && !paginationColumnName.isEmpty()) {
-            // assign non empty Set
+            // assign non empty Value
             this.defaultPaginationColumnName = paginationColumnName;
             log.debug("Config paginationColumnName column = {}", paginationColumnName);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDefaultPaginationColumnName() {
+        return defaultPaginationColumnName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultPaginationColumnName(String defaultPaginationColumnName) {
+        if (defaultPaginationColumnName != null && !defaultPaginationColumnName.isEmpty()) {
+            // assign non empty Value
+            this.defaultPaginationColumnName = defaultPaginationColumnName;
+            log.debug("Config paginationColumnName column = {}", defaultPaginationColumnName);
         }
     }
 
@@ -243,9 +259,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 rows++;
                 minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
             }
+/*
             if (rows == 1) {
                 minMaxDbId.incrementMin(); // increase by one in order to advance further on result set
             }
+*/
             if (closeWhenNotAppend) {
                 output.close(); // close file on 'write mode'
             } else {
