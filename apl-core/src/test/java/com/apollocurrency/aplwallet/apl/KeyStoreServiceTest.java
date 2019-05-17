@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -168,27 +169,27 @@ public class KeyStoreServiceTest {
     }
 
 //    @Test
-    public void testDeleteKey() {
+    public void testDeleteKey() throws ParameterException{
         KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
         assertEquals(KeyStoreService.Status.OK, status);
     }
 
     @Test
     @Execution(ExecutionMode.SAME_THREAD)
-    public void testDeleteNotFound() {
+    public void testDeleteNotFound() throws ParameterException{
         KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT2));
         assertEquals(KeyStoreService.Status.BAD_CREDENTIALS, status);
     }
 
     @Test
     @Execution(ExecutionMode.SAME_THREAD)
-    public void testDeleteIncorrectPassphrase() {
+    public void testDeleteIncorrectPassphrase() throws ParameterException  {
         KeyStoreService.Status status = keyStore.deleteKeyStore(PASSPHRASE + "0", Convert.parseAccountId(ACCOUNT1));
         assertEquals(KeyStoreService.Status.BAD_CREDENTIALS, status);
     }
 
 //    @Test
-    public void testDeleteIOError() throws IOException {
+    public void testDeleteIOError() throws IOException, ParameterException {
         VaultKeyStoreServiceImpl spiedKeyStore = Mockito.spy(keyStore);
         doThrow(new IOException()).when(spiedKeyStore).deleteFile(any(Path.class));
         KeyStoreService.Status status = spiedKeyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
@@ -198,7 +199,7 @@ public class KeyStoreServiceTest {
 
     @Test
     @Execution(ExecutionMode.SAME_THREAD)
-    public void testDeleteNotAvailable() throws IOException {
+    public void testDeleteNotAvailable() throws IOException, ParameterException {
         Path path = tempDirectory.resolve(".local");
         try {
             Files.createFile(path);
