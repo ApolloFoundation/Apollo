@@ -94,6 +94,7 @@ public class ResponseBuilder {
         }
         String stringJsonEntity;
         try {
+            //this conversion is necessary for POST methods to produce TEXT/HTML content
             stringJsonEntity = mapper.writeValueAsString(entity);
         } catch (JsonProcessingException e) {
             ErrorInfo internalError = ApiErrors.JSON_SERIALIZATION_EXCEPTION;

@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.Setter;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -41,11 +42,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
 @Path("/networking")
 public class NetworkEndpoint {
 
-    @Inject
+    @Inject @Setter
     private Converter<Peer, PeerDTO> converter;
 
-    @Inject
+    @Inject @Setter
     private NetworkService service;
+
+
 
     @Path("/myinfo")
     @GET
@@ -59,7 +62,7 @@ public class NetworkEndpoint {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = MyInfoDTO.class)))
             })
-    public Response getPeer(@Context HttpServletRequest request) {
+    public Response getMyInfo(@Context HttpServletRequest request) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         MyInfoDTO dto = new MyInfoDTO(request.getRemoteHost(), request.getRemoteAddr());
         return response.bind(dto).build();
