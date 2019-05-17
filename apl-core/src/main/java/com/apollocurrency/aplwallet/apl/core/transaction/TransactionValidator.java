@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.antifraud.AntifraudValidator;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
