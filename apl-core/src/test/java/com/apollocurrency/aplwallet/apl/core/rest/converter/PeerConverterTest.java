@@ -59,7 +59,7 @@ class PeerConverterTest {
         assertFalse(stringJSON.contains("null"), String.format("Given value contains NULL: %s",stringJSON));
     }
 
-    private Peer createPeer(final String host, final String announcedAddress){
+    private static Peer createPeer(final String host, final String announcedAddress){
         Peer peer = new Peer() {
             @Override
             public int compareTo(Peer o) {
