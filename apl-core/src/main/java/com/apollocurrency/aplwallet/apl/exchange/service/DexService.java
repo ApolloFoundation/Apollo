@@ -59,7 +59,6 @@ public class DexService {
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
-    @Transactional
     public void saveOffer (DexOffer offer){
         dexOfferTable.insert(offer);
     }

@@ -14,6 +14,7 @@ import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class DexCancelOfferTransaction extends DEX {
 
@@ -57,10 +58,6 @@ public class DexCancelOfferTransaction extends DEX {
             throw new AplException.NotValidException("Can cancel only Open orders.");
         }
 
-        if(dexService.isThereAnotherCancelUnconfirmedTx(orderTransactionId, transaction.getId())){
-            throw new AplException.NotValidException("There is another cancel transaction for this order in the unconfirmed tx pool already.");
-        }
-
     }
 
     @Override
@@ -79,6 +76,12 @@ public class DexCancelOfferTransaction extends DEX {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
 
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        DexOfferCancelAttachment attachment = (DexOfferCancelAttachment) transaction.getAttachment();
+        return isDuplicate(DEX.DEX_CANCEL_OFFER_TRANSACTION, Long.toUnsignedString(attachment.getTransactionId()), duplicates, true);
     }
 
     @Override
