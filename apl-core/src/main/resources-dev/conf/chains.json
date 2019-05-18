@@ -241,6 +241,14 @@
             "adaptiveBlockTime": 10
           }
         }
+      },
+      {
+        "height": 552500,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 70,
+        "minBlockTimeLimit": 50,
+        "maxBalance": 30000000000
       }
     ]
   },
