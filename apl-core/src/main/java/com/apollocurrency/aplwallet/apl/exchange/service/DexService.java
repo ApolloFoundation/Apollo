@@ -103,8 +103,8 @@ public class DexService {
     }
 
 
-    public void closeOverdueOrders(){
-        List<DexOffer> offers = dexOfferDao.getOverdueOrders(epochTime.getEpochTime());
+    public void closeOverdueOrders(Integer time){
+        List<DexOffer> offers = dexOfferDao.getOverdueOrders(time);
 
         for (DexOffer offer : offers) {
             try {
