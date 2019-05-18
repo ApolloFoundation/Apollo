@@ -17,9 +17,7 @@ import org.jboss.resteasy.core.Dispatcher;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.MediaType;
@@ -61,14 +59,6 @@ class NetworkEndpointTest {
         when(service.getInboundPeers()).thenReturn(List.of(peer));
         when(service.getPeersByStateAndService(true, null, 0)).thenReturn(Collections.EMPTY_LIST);
         when(service.getPeersByStateAndService(false, null, 0)).thenReturn(List.of(peer));
-    }
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test

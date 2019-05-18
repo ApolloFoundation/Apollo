@@ -6,21 +6,19 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.MyInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
-import com.apollocurrency.aplwallet.api.response.*;
-import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.api.response.GetPeersResponse;
+import com.apollocurrency.aplwallet.api.response.GetPeersSimpleResponse;
+import com.apollocurrency.aplwallet.api.response.ResponseBase;
+import com.apollocurrency.aplwallet.api.response.ResponseDone;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
-import io.swagger.annotations.ApiParam;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.Setter;
 
@@ -32,8 +30,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
 
 /**
  * Apollo network endpoint
@@ -81,7 +77,7 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = PeerDTO.class)))
     })
     public Response getPeer(
-            @ApiParam(name = "peer", value = "The certain peer IP address.", type = "string", required = true)
+            @Parameter(description = "The certain peer IP address.", required = true)
             @QueryParam("peer") String peerAddress ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -114,10 +110,7 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = PeerDTO.class)))
             }
     )
-    public Response addOrReplacePeer(
-            @RequestBody(content = @Content(
-                    schema = @Schema( description = "The certain peer IP address.", required = true)))
-            @FormParam("peer") String peerAddress ) {
+    public Response addOrReplacePeer( @FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.ok();
 
         if (peerAddress == null) {
@@ -150,14 +143,14 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = GetPeersResponse.class)))
     })
     public Response getPeersList(
-            @ApiParam(value = "include active only peers")
-            @QueryParam("active") @DefaultValue("false") Boolean active,
-            @ApiParam(value = "include peers in certain state (NON_CONNECTED, CONNECTED, DISCONNECTED)")
-            @QueryParam("state") String stateValue,
-            @ApiParam(value = "include peer which provides services (HALLMARK, PRUNABLE, API, API_SSL, CORS)")
-            @QueryParam("service") List<String> serviceValues,
-            @ApiParam(value = "include additional peer information otherwise the host only.")
-            @QueryParam("includePeerInfo") @DefaultValue("false") Boolean includePeerInfo ) {
+            @Parameter(description = "include active only peers") @QueryParam("active") @DefaultValue("false") Boolean active,
+            @Parameter(description = "include peers in certain state (NON_CONNECTED, CONNECTED, DISCONNECTED).",
+                    schema = @Schema(allowableValues = {"NON_CONNECTED", "CONNECTED", "DISCONNECTED"}))
+                        @QueryParam("state") String stateValue,
+            @Parameter(description = "include peer which provides services (HALLMARK, PRUNABLE, API, API_SSL, CORS)")
+                        @QueryParam("service") List<String> serviceValues,
+            @Parameter(description = "include additional peer information otherwise the host only.")
+                        @QueryParam("includePeerInfo") @DefaultValue("false") Boolean includePeerInfo ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
 
@@ -193,14 +186,13 @@ public class NetworkEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns inbound peers list.",
-            description = "Returns a list of inbound peers." +
-                    " An inbound peer is a peer that has sent a request to this peer " +
-                    "within the previous 30 minutes.",
+            description = "Returns a list of inbound peers. An inbound peer is a peer that has sent a request" +
+                         " to this peer within the previous 30 minutes.",
             tags = {"networking"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = GetPeersResponse.class)))
+                                    schema = @Schema( implementation = GetPeersResponse.class)))
     })
     public Response getInboundPeersList(
             @Parameter(description = "include additional peer information otherwise the host only.")
@@ -228,10 +220,7 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
-    public Response addPeerInBlackList(
-            @RequestBody(content = @Content(
-                    schema = @Schema( description = "The certain peer IP address.", required = true)))
-            @FormParam("peer") String peerAddress ) {
+    public Response addPeerInBlackList( @FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.done();
 
         if (peerAddress == null) {
@@ -262,10 +251,7 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
-    public Response addAPIProxyPeerInBlackList(
-            @RequestBody(content = @Content(
-                    schema = @Schema( description = "The certain peer IP address.", required = true)))
-            @FormParam("peer") String peerAddress ) {
+    public Response addAPIProxyPeerInBlackList(@FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
 
         if (peerAddress == null) {
@@ -298,10 +284,7 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = PeerDTO.class)))
             }
     )
-    public Response setAPIProxyPeer(
-            @RequestBody(content = @Content(
-                    schema = @Schema( description = "The certain peer IP address.", required = true)))
-            @FormParam("peer") String peerAddress ) {
+    public Response setAPIProxyPeer( @FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         Peer peer;
         if (peerAddress == null) {
