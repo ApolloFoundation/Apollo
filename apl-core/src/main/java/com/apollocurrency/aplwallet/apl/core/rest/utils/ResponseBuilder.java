@@ -6,7 +6,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
-import com.apollocurrency.aplwallet.api.dto.DTO;
+import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.apollocurrency.aplwallet.api.response.ResponseDone;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
@@ -20,8 +20,8 @@ public class ResponseBuilder {
 
     private static ObjectMapper mapper = new ObjectMapper();
 
-    private long startRequestTime;
-    protected DTO dto;
+    private final long startRequestTime;
+    protected BaseDTO dto;
     protected ResponseBase response;
     protected int status;
 
@@ -73,7 +73,7 @@ public class ResponseBuilder {
         return this;
     }
 
-    public ResponseBuilder bind(DTO dto){
+    public ResponseBuilder bind(BaseDTO dto){
         this.dto = dto;
         this.response = null;
         return this;

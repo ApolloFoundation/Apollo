@@ -28,7 +28,7 @@ public class NewApiRegistry {
         apis.put("getDexOrders", "/rest/dex/order");
         apis.put("getDexWidthraw", "/rest/dex/widthraw");
 
-        apis.put("getMyInfo", "/rest/networking/myinfo"); //GET
+        apis.put("getMyInfo", "/rest/networking/peer/mypeerinfo"); //GET
         apis.put("getPeer", "/rest/networking/peer"); //GET
         apis.put("addPeer", "/rest/networking/peer"); //POST
         apis.put("getPeers", "/rest/networking/peer/all"); //GET

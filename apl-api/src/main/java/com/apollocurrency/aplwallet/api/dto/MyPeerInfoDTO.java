@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor
-public class MyInfoDTO extends DTO {
+public class MyPeerInfoDTO extends BaseDTO {
     private String host;
     private String address;
 }

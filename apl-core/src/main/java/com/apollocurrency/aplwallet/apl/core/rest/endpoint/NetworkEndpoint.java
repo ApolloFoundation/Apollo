@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.MyInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.MyPeerInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.response.GetPeersResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersSimpleResponse;
@@ -39,14 +39,14 @@ import java.util.stream.Collectors;
 public class NetworkEndpoint {
 
     @Inject @Setter
-    private Converter<Peer, PeerDTO> converter;
+    private Converter<Peer, PeerDTO> peerConverter;
 
     @Inject @Setter
     private NetworkService service;
 
 
 
-    @Path("/myinfo")
+    @Path("/peer/mypeerinfo")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -56,11 +56,11 @@ public class NetworkEndpoint {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = MyInfoDTO.class)))
+                                    schema = @Schema(implementation = MyPeerInfoDTO.class)))
             })
     public Response getMyInfo(@Context HttpServletRequest request) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        MyInfoDTO dto = new MyInfoDTO(request.getRemoteHost(), request.getRemoteAddr());
+        MyPeerInfoDTO dto = new MyPeerInfoDTO(request.getRemoteHost(), request.getRemoteAddr());
         return response.bind(dto).build();
     }
 
@@ -92,7 +92,7 @@ public class NetworkEndpoint {
             return response.error( ApiErrors.UNKNOWN_VALUE, "peer", peerAddress).build();
         }
 
-        return response.bind(converter.convert(peer)).build();
+        return response.bind(peerConverter.convert(peer)).build();
     }
 
     @Path("/peer")
@@ -124,7 +124,7 @@ public class NetworkEndpoint {
         }
 
         boolean isNewlyAdded = service.addPeer(peer, peerAddress);
-        PeerDTO dto = converter.convert(peer);
+        PeerDTO dto = peerConverter.convert(peer);
         dto.setIsNewlyAdded(isNewlyAdded);
 
         return response.bind(dto).build();
@@ -142,6 +142,9 @@ public class NetworkEndpoint {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = GetPeersResponse.class)))
     })
+    //TODO: need to be divided into two separated methods
+    // cause currently, this GET returns two different responses (GetPeersResponse or GetPeersSimpleResponse)
+    // that depend on the value of the includePeerInfo parameter.
     public Response getPeersList(
             @Parameter(description = "include active only peers") @QueryParam("active") @DefaultValue("false") Boolean active,
             @Parameter(description = "include peers in certain state (NON_CONNECTED, CONNECTED, DISCONNECTED).",
@@ -194,6 +197,9 @@ public class NetworkEndpoint {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema( implementation = GetPeersResponse.class)))
     })
+    //TODO: need to be divided into two separated path
+    // cause currently, this GET returns two different responses (GetPeersResponse or GetPeersSimpleResponse)
+    // that depend on the value of the includePeerInfo parameter.
     public Response getInboundPeersList(
             @Parameter(description = "include additional peer information otherwise the host only.")
             @QueryParam("includePeerInfo") @DefaultValue("false") Boolean includePeerInfo ) {
@@ -241,8 +247,8 @@ public class NetworkEndpoint {
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Add api proxy peer in the black list.",
-            description = "Add api proxy peer in the black list.",
+            summary = "Add peer in the proxy black list.",
+            description = "Add peer in the proxy black list.",
             method = "POST",
             tags = {"networking"},
             responses = {
@@ -251,7 +257,7 @@ public class NetworkEndpoint {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
-    public Response addAPIProxyPeerInBlackList(@FormParam("peer") String peerAddress ) {
+    public Response addPeerInProxyBlackList(@FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
 
         if (peerAddress == null) {
@@ -264,7 +270,7 @@ public class NetworkEndpoint {
             return response.error( ApiErrors.UNKNOWN_VALUE, "peer", peerAddress).build();
         }
 
-        ResponseDone body = new ResponseDone(service.putAPIProxyPeerInBlackList(peer));
+        ResponseDone body = new ResponseDone(service.putPeerInProxyBlackList(peer));
 
         return response.bind(body).build();
     }
@@ -309,13 +315,13 @@ public class NetworkEndpoint {
             service.setForcedPeer(peer);
         }
 
-        return response.bind(converter.convert(peer)).build();
+        return response.bind(peerConverter.convert(peer)).build();
     }
 
     private ResponseBase mapResponse(List<Peer> peers, boolean includePeerInfo){
         if (includePeerInfo){
             GetPeersResponse peersResponse = new GetPeersResponse();
-            peersResponse.setPeers(converter.convert(peers));
+            peersResponse.setPeers(peerConverter.convert(peers));
             return peersResponse;
         }else{
             GetPeersSimpleResponse peersSimpleResponse = new GetPeersSimpleResponse();

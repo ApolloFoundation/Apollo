@@ -19,8 +19,19 @@ public interface NetworkService {
      */
     Peer findPeerByAddress(String peerAddress);
 
+    /**
+     * Get peer by ip address.
+     * @param peerAddress peer address
+     * @return The peer or <code>null</code> if peer can't be created.
+     */
     Peer findOrCreatePeerByAddress(String peerAddress);
 
+    /**
+     * Add the peer
+     * @param peer peer
+     * @param peerAddress peer address
+     * @return <code>true</code> if peer was successfully added.
+     */
     boolean addPeer(Peer peer, String peerAddress);
 
     /**
@@ -40,9 +51,24 @@ public interface NetworkService {
     List<Peer> getInboundPeers();
 
 
+    /**
+     * Put the peer in the blacklist
+     * @param peerAddress peer address
+     * @return the peer corresponded the peerAddress.
+     */
     Peer putPeerInBlackList(String peerAddress);
 
-    boolean putAPIProxyPeerInBlackList(Peer peer);
+    /**
+     * Put the peer in the API proxy blacklist
+     * @param peer
+     * @return
+     */
+    boolean putPeerInProxyBlackList(Peer peer);
 
+    /**
+     * Set the forced peer
+     * @param peer peer
+     * @return the forced peer
+     */
     Peer setForcedPeer(Peer peer);
 }

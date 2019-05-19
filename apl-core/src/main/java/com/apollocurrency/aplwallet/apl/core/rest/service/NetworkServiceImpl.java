@@ -61,7 +61,7 @@ public class NetworkServiceImpl implements NetworkService {
     }
 
     @Override
-    public boolean putAPIProxyPeerInBlackList(Peer peer){
+    public boolean putPeerInProxyBlackList(Peer peer){
         return APIProxy.getInstance().blacklistHost(peer.getHost());
     }
 

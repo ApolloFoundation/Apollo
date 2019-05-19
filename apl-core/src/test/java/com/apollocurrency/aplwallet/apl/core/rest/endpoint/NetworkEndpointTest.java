@@ -49,7 +49,7 @@ class NetworkEndpointTest {
         dispatcher = MockDispatcherFactory.createDispatcher();
 
         NetworkEndpoint endpoint = new NetworkEndpoint();
-        endpoint.setConverter(new PeerConverter());
+        endpoint.setPeerConverter(new PeerConverter());
         dispatcher.getRegistry().addSingletonResource(endpoint);
 
         NetworkService service = mock(NetworkService.class);

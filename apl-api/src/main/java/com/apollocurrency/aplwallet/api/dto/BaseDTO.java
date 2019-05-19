@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class DTO {
+public class BaseDTO {
     /**
      * Time in milliseconds that took from incoming request to response
      */
