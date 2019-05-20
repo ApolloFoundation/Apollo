@@ -458,7 +458,7 @@ public final class Account {
 
     private void save() {
         if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
-            AccountTable.getInstance().delete(this, true);
+            AccountTable.getInstance().delete(this, true, blockchain.getHeight());
         } else {
             AccountTable.getInstance().insert(this);
         }
