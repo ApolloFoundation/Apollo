@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.mapper;
 
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DerivedEntityMapper;
+import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -15,7 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 
-public class DGSPurchaseMapper extends DerivedEntityMapper<DGSPurchase> {
+public class DGSPurchaseMapper extends VersionedDerivedEntityMapper<DGSPurchase> {
 
     public DGSPurchaseMapper(KeyFactory<DGSPurchase> keyFactory) {
         super(keyFactory);

@@ -245,13 +245,11 @@ public class DGSPurchase extends VersionedDerivedEntity {
                 refundATM == that.refundATM &&
                 Objects.equals(note, that.note) &&
                 Objects.equals(encryptedGoods, that.encryptedGoods) &&
-                Objects.equals(refundNote, that.refundNote) &&
-                Objects.equals(dgsFeedbacks, that.dgsFeedbacks) &&
-                Objects.equals(publicFeedbacks, that.publicFeedbacks);
+                Objects.equals(refundNote, that.refundNote);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), id, buyerId, goodsId, sellerId, quantity, priceATM, deadline, note, timestamp, isPending, encryptedGoods, goodsIsText, refundNote, hasPublicFeedbacks, hasFeedbacks, dgsFeedbacks, publicFeedbacks, discountATM, refundATM);
+        return Objects.hash(super.hashCode(), id, buyerId, goodsId, sellerId, quantity, priceATM, deadline, note, timestamp, isPending, encryptedGoods, goodsIsText, refundNote, hasPublicFeedbacks, hasFeedbacks, discountATM, refundATM);
     }
 }
