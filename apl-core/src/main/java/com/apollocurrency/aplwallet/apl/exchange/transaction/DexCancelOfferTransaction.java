@@ -55,7 +55,7 @@ public class DexCancelOfferTransaction extends DEX {
         }
 
         if(!OfferStatus.OPEN.equals(offer.getStatus())) {
-            throw new AplException.NotValidException("Can cancel only Open orders.");
+            throw new AplException.NotValidException("Can cancel only Open orders. Order Id: " + offer.getId() + ", status: " + offer.getStatus());
         }
 
     }
