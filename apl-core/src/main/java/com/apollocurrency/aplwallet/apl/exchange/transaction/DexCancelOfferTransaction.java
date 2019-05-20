@@ -47,7 +47,7 @@ public class DexCancelOfferTransaction extends DEX {
 
         DexOffer offer = dexService.getOfferByTransactionId(orderTransactionId);
         if(offer == null) {
-            throw new AplException.NotValidException("Order was not found. Transaction: " + orderTransactionId);
+            throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
 
         if(!Long.valueOf(offer.getAccountId()).equals(transaction.getSenderId())){
@@ -55,7 +55,8 @@ public class DexCancelOfferTransaction extends DEX {
         }
 
         if(!OfferStatus.OPEN.equals(offer.getStatus())) {
-            throw new AplException.NotValidException("Can cancel only Open orders.");
+            throw new AplException.NotValidException("Can cancel only Open orders. Order Id: " + offer.getId() + ", order status: " + offer.getStatus()
+                    + " , Cancel Tx id:" + transaction.getId() + ", BlockId: " + transaction.getECBlockId() );
         }
 
     }
