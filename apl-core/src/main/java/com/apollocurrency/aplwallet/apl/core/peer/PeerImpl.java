@@ -211,9 +211,14 @@ public final class PeerImpl implements Peer {
     }
 
     void setApplication(String application) {
-        if (application == null || application.length() > Peers.MAX_APPLICATION_LENGTH) {
-            throw new IllegalArgumentException("Invalid application");
+        if (application == null 
+                || application.length() > Peers.MAX_APPLICATION_LENGTH
+                || ! application.equalsIgnoreCase(Constants.APPLICATION)
+           ) {
+            LOG.debug("Invalid application: {} from host:{}",application,host);
+            throw new IllegalArgumentException("Invalid application");            
         }
+        
         this.application = application;
     }
 
