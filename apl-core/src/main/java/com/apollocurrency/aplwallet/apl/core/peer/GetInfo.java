@@ -93,7 +93,12 @@ final class GetInfo extends PeerRequestHandler {
         if (application == null) {
             application = "?";
         }
-        peerImpl.setApplication(application.trim());
+        try{
+          peerImpl.setApplication(application.trim());
+        }catch(RuntimeException e){
+            LOG.debug("Invalid application. IP: {}, application: {}", peerImpl.getHost(),application);
+            peerImpl.blacklist(e);
+        }
 
         Version version = null;
         try {
@@ -103,9 +108,7 @@ final class GetInfo extends PeerRequestHandler {
             LOG.error("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("PEER-GetINFO: IP: {}, version {}", peerImpl.getHost(), version);
-        }
+        LOG.debug("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), application, version);
         peerImpl.setVersion(version);
 
         String platform = (String)request.get("platform");
