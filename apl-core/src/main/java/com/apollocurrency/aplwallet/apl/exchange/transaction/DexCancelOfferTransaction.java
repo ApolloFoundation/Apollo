@@ -55,8 +55,8 @@ public class DexCancelOfferTransaction extends DEX {
         }
 
         if(!OfferStatus.OPEN.equals(offer.getStatus())) {
-            throw new AplException.NotValidException("Can cancel only Open orders. Order Id/Tx: " + offer.getId() + "/" + offer.getTransactionId()
-                    + ", order status: " + offer.getStatus() + " , Cancel Tx id:" + transaction.getId() + ", BlockId: " + transaction.getECBlockId() );
+            throw new AplException.NotCurrentlyValidException("Can cancel only Open orders. Order Id/Tx: " + offer.getId() + "/" + Long.toUnsignedString(offer.getTransactionId())
+                    + ", order status: " + offer.getStatus() + " , Cancel Tx id:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()) );
         }
 
     }
