@@ -137,7 +137,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             Block mock = mock(Block.class);
             doReturn(Integer.MAX_VALUE).when(mock).getHeight();
             getBlockchain().setLastBlock(mock);
-            Map.Entry<DbKey, List<T>> entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3);
+            Map.Entry<DbKey, List<T>> entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true);
             List<T> sorted = sortByHeightDesc(entries.getValue());
             T latest = sorted.get(0);
             T notLatest = sorted.get(1);
@@ -371,7 +371,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         List<Integer> heights = getHeights(allExpectedData);
         int upperHeight = heights.get(1);
         int lowerHeight = heights.get(2);
-        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() <= upperHeight && t.getHeight() >= lowerHeight).collect(Collectors.toList()).subList(0, 1);
+        List<T> expected = allExpectedData.stream().filter(t -> t.getHeight() <= upperHeight && t.getHeight() >= lowerHeight).sorted(getDefaultComparator()).collect(Collectors.toList()).subList(0, 1);
         List<T> all = CollectionUtil.toList(table.getManyBy(new DbClause.IntClause("height", DbClause.Op.GTE, lowerHeight).and(new DbClause.IntClause("height", DbClause.Op.LTE, upperHeight)), 0, 0));
         assertEquals(expected, all);
     }

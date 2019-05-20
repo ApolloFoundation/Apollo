@@ -103,8 +103,8 @@ public class DGSTestData {
     public final DGSGoods GOODS_12 = createGoods(66,	2267824434322963112L	    ,9211698109297098287L	,"Another product"	,"Just another produc"	            ,new String[]{"tag","batman"}	        ,true	,"tag batman"	                ,41824604	,3	        ,150000000000L	,false	    ,542828	    ,true );
     public final DGSGoods GOODS_13 = createGoods(67,	-9001112213900824483L	,3705364957971254799L    ,"asdffasdf"	        ,"asdf"	                        ,new String[]{"asdf"}	                ,true	,"asdf"	                    ,37965044	,2	        ,500000000	    ,false	    ,542860	    ,false );
 
-    
-    
+    public final DGSGoods NEW_GOODS = createGoods(GOODS_13.getDbId() + 1,	100	    ,200	,"New product"	,"New product description"	            ,new String[]{"new","product"}	        ,true	,"tag batman"	                ,500	,8	        ,19000000000L	,false	    ,GOODS_13.getHeight() + 1	    ,true );
+
     
     public final DGSTag TAG_0  = createTag(36	        ,"product"	,2	                ,4	            ,541839	,false    );
     public final DGSTag TAG_1  = createTag(37	        ,"some"	    ,1	                ,1	            ,541839	,false    );
