@@ -3,16 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.DispatcherType;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -23,7 +20,13 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.DoSFilter;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.DispatcherType;
 
 /**
  * Peer HTTP server that handles http requests and PeerWebSockets
@@ -47,7 +50,7 @@ public class PeerHttpServer {
      private static List<Integer> externalPorts=new ArrayList<>();
      
     @Inject
-    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp) {
+    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, BlockchainConfig config) {
         this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
@@ -92,6 +95,9 @@ public class PeerHttpServer {
                 gzipHandler.setMinGzipSize(Peers.MIN_COMPRESS_SIZE);
                 ctxHandler.setGzipHandler(gzipHandler);
             }
+            FilterHolder filterHolder = new FilterHolder();
+            filterHolder.setFilter(new ChainIdFilter(config));
+            ctxHandler.addFilter(filterHolder, "/*", null);
             peerServer.setHandler(ctxHandler);
             peerServer.setStopAtShutdown(true);
             
