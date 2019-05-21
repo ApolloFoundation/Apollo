@@ -25,8 +25,8 @@ public class FileLoader {
     public Path getResourcePath(){
         ClassLoader classLoader = getClass().getClassLoader();
         // "logback-test.xml" should be present in resource folder, otherwise it fails
-//        File file = new File(classLoader.getResource("logback-test.xml").getFile()); // usually we have it there
-        File file = new File("/media/ylarin/PHOTO/java_projects/Apollo/tmp/public_key.csv"); // usually we have it there
+        File file = new File(classLoader.getResource("logback-test.xml").getFile()); // usually we have it there
+//        File file = new File("/media/ylarin/PHOTO/java_projects/Apollo/tmp/public_key.csv"); // usually we have it there
         log.trace(file.getAbsolutePath());
         return new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator))).toPath();
     }
