@@ -31,8 +31,8 @@ import org.slf4j.Logger;
  * {@inheritDoc}
  */
 @Singleton
-public class CvsExporterImpl implements CvsExporter {
-    private static final Logger log = getLogger(CvsExporterImpl.class);
+public class CsvExporterImpl implements CsvExporter {
+    private static final Logger log = getLogger(CsvExporterImpl.class);
 
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
@@ -42,7 +42,7 @@ public class CvsExporterImpl implements CvsExporter {
     private CsvWriter csvWriter;
 
     @Inject
-    public CvsExporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager,
+    public CsvExporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager,
                            ShardDaoJdbc shardDaoJdbc) {
         this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
@@ -66,7 +66,8 @@ public class CvsExporterImpl implements CvsExporter {
         // skip hard coded table
         if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
             // skip not needed table
-            log.debug("Skipped unnecessary Table = {}", derivedTableInterface.toString());
+            log.debug("Skipped excluded Table = {}", derivedTableInterface.toString());
+            return -1;
         }
         if (csvWriter.getDefaultPaginationColumnName() != null
                 && !csvWriter.getDefaultPaginationColumnName().equalsIgnoreCase("DB_ID")) {

@@ -292,6 +292,11 @@
             <version>1.5.21</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <repositories>

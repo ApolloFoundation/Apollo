@@ -46,11 +46,12 @@ public class ShardDaoJdbcImpl implements ShardDaoJdbc {
     }
 
     private MinMaxDbId getIfPresent(ResultSet rs) throws SQLException {
-        MinMaxDbId shardRecovery = null;
+        MinMaxDbId minMaxDbId = null;
         if (rs.next()) {
-            shardRecovery = rowMapper.map(rs, null);
+            minMaxDbId = rowMapper.map(rs, null);
         }
-        return shardRecovery;
+        log.trace("Retrieved MinMaxDbID = {}", minMaxDbId);
+        return minMaxDbId;
     }
 
     /**

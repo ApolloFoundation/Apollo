@@ -6,9 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +19,6 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
@@ -45,8 +41,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     private boolean endOfLine;
     private boolean endOfFile;
 
-//    @Inject
-    public CsvReaderImpl(/*@Named("dataExportDir") */Path dataExportPath) {
+    public CsvReaderImpl(Path dataExportPath) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
     }
 
@@ -443,7 +438,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         String columnName = columnWithMetaData.substring(0, starTypeDelimiter);
         int endTypeDelimiter = columnWithMetaData.lastIndexOf(fieldTypeSeparatorEnd + "");
         String columnTypeInfo = columnWithMetaData.substring(starTypeDelimiter + 1, endTypeDelimiter);
-        log.debug("Column '{}' TypeInfo to parse '{}'", columnName, columnTypeInfo);
+        log.trace("Column '{}' TypeInfo to parse '{}'", columnName, columnTypeInfo);
         String[] typePrecisionScale = columnTypeInfo.split("\\|");
 
         if (typePrecisionScale.length != 3) {

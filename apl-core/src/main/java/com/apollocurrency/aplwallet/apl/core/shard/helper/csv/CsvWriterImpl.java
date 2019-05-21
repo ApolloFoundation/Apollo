@@ -9,9 +9,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Array;
 import java.sql.Connection;
@@ -29,6 +31,7 @@ import java.util.Set;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 /**
@@ -242,6 +245,50 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             break;
                         case Types.NVARCHAR:
                         case Types.VARBINARY:
+                        case Types.BINARY:
+/*
+                            o = rs.getString(i + 1);
+                            if (o != null) {
+//                                o = "'" + ((String)o).toUpperCase() + "'";
+                                o = ((String)o).toUpperCase();
+                            } else {
+                                o = nullString;
+                            }
+                            break;
+*/
+
+/*
+                            InputStream inputStream = rs.getBinaryStream(i + 1);
+                            try (inputStream) {
+                                o = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                            } catch (Exception e) {
+                                o = nullString;
+                                log.error("Binary stream error", e);
+                            }
+                            break;
+*/
+/*
+                            InputStream inputStream = rs.getBinaryStream(i + 1);
+                            StringBuffer sb = new StringBuffer();
+                            if (inputStream != null) {
+                                byte[] buf = new byte[1024];
+                                int len = 0;
+                                try {
+                                    while ((len += inputStream.read(buf)) != -1) {
+    //                                    out.write(buf, 0, len);
+                                        sb.append(Convert.toHexString(buf));
+//                                        sb.append(buf);
+                                    }
+                                } finally {
+                                    inputStream.close();
+                                }
+                                log.trace("len = {}", len);
+                                o = sb.toString();
+                            } else {
+                                o = nullString;
+                            }
+                            break;
+*/
                         case Types.VARCHAR:
                         default:
                             o = rs.getString(i + 1);

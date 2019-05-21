@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
@@ -108,8 +107,8 @@ import org.slf4j.Logger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-class CvsExporterTest {
-    private static final Logger log = getLogger(CvsExporterTest.class);
+class CsvExporterTest {
+    private static final Logger log = getLogger(CsvExporterTest.class);
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
@@ -168,9 +167,9 @@ class CvsExporterTest {
     @Inject
     ShardDaoJdbc shardDaoJdbc;
 
-    CvsExporter cvsExporter;
+    CsvExporter cvsExporter;
 
-    public CvsExporterTest() throws Exception {
+    public CsvExporterTest() throws Exception {
     }
 
     private Path createPath(String fileName) {
@@ -215,7 +214,7 @@ class CvsExporterTest {
     void exportDerivedTables() {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 //        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir();
-        cvsExporter = new CvsExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
+        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
@@ -242,7 +241,7 @@ class CvsExporterTest {
     void exportShardTable() {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 //        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir();
-        cvsExporter = new CvsExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
+        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 
         String tableName = "shard";

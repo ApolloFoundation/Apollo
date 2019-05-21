@@ -7,17 +7,18 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 
 /**
- * Helper interface for exporting table data from one Db into CSV
+ * Component's interface for exporting table data from one Db into CSV
+ * Configuration parameters are supplied in implementation Constructor.
  *
  * @author yuriy.larin
  */
-public interface CvsExporter {
+public interface CsvExporter {
 
     /**
      * Exports one specified table and returns number of exported rows
      * The CSV file put into folder specified by implementation component
      *
-     * @param tableInterface table tp export
+     * @param tableInterface table to export
      * @param targetHeight target blockchain height
      * @param batchLimit rows in batch to process
      * @return exported quantity
