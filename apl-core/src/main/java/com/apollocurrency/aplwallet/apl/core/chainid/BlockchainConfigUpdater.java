@@ -50,19 +50,14 @@ public class BlockchainConfigUpdater {
     }
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-        tryUpdateConfig(block.getHeight());
-    }
-    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        tryUpdateConfig(block.getHeight() - 1);
-    }
-
-    public void tryUpdateConfig(int height) {
-        BlockchainProperties bp = chain.getBlockchainProperties().get(height);
+        BlockchainProperties bp = chain.getBlockchainProperties().get(block.getHeight());
         if (bp != null) {
             blockchainConfig.setCurrentConfig(new HeightConfig(bp));
         }
     }
-
+    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        updateToHeight(block.getHeight() - 1);
+    }
 
     public void reset() {
         updateToHeight(0);
@@ -81,11 +76,10 @@ public class BlockchainConfigUpdater {
     void updateToHeight(int height) {
 
         HeightConfig latestConfig = getConfigAtHeight(height);
-        if (blockchainConfig.getCurrentConfig() != null) {
+        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+        if (currentConfig != null && latestConfig != null && currentConfig.getHeight() != latestConfig.getHeight()) {
             LOG.debug("Update to {} at height {}", latestConfig, height);
             blockchainConfig.setCurrentConfig(latestConfig);
-        } else {
-            LOG.error("No configs at all! Proceed with old config {}", blockchainConfig.getCurrentConfig());
         }
     }
 
