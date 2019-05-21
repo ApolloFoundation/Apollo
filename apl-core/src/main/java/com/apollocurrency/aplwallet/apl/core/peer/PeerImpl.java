@@ -441,6 +441,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void remove() {
+        setState(State.NON_CONNECTED);
         webSocket.close();
         Peers.removePeer(this);
         Peers.notifyListeners(this, Peers.Event.REMOVE);
@@ -708,14 +709,12 @@ public final class PeerImpl implements Peer {
                 }
                 String app = (String)response.get("application");
                 if(!setApplication(app)){
-                    setState(State.NON_CONNECTED);
                     remove();
                     return;
                 }
                 Object chainIdObject = response.get("chainId");
                 if (chainIdObject == null) {
                     LOG.debug("Peer: {} has NULL chainId, removing",getHost());
-                    setState(State.NON_CONNECTED);
                     remove();
                     return;
                 }else{
@@ -723,7 +722,6 @@ public final class PeerImpl implements Peer {
                    UUID peerChainId=UUID.fromString(chainIdstr);
                    if(!peerChainId.equals(targetChainId)){
                     LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),chainIdstr);
-                    setState(State.NON_CONNECTED);
                     remove();
                     return;                        
                    }     
