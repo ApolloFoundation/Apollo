@@ -76,10 +76,6 @@ public class DGSPurchase extends VersionedDerivedEntity {
 
 
 
-    public List<DGSFeedback> getDgsFeedbacks() {
-        return dgsFeedbacks;
-    }
-
     public void setFeedbacks(List<DGSFeedback> dgsFeedbacks) {
         this.dgsFeedbacks = dgsFeedbacks;
     }
