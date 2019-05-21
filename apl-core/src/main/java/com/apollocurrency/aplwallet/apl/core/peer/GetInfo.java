@@ -93,11 +93,9 @@ final class GetInfo extends PeerRequestHandler {
         if (application == null) {
             application = "?";
         }
-        try{
-          peerImpl.setApplication(application.trim());
-        }catch(RuntimeException e){
-            LOG.debug("Invalid application. IP: {}, application: {}", peerImpl.getHost(),application);
-            peerImpl.blacklist(e);
+        if(!peerImpl.setApplication(application.trim())){
+            LOG.debug("Invalid application. IP: {}, application: {}, removng", peerImpl.getHost(),application);
+            peerImpl.remove();
         }
 
         Version version = null;
