@@ -11,16 +11,16 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import org.slf4j.Logger;
 
 /**
@@ -66,7 +67,7 @@ public class CsvImporterImpl implements CsvImporter {
      * {@inheritDoc}
      */
     @Override
-    public long importCsv(String tableName, int batchLimit, boolean cleanTarget) {
+    public long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws SQLException {
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
         if (!tableName.isEmpty() && excludeTables.contains(tableName.toLowerCase())) {
@@ -77,12 +78,11 @@ public class CsvImporterImpl implements CsvImporter {
         int importedCount = 0;
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
-//        Statement stm = null;
 
         String inputFileName = tableName + ((CsvAbstractBase)csvReader).getFileNameExtension();
         File file = new File(this.dataExportPath.toString(), inputFileName);
         if(!file.exists()) {
-            log.debug("Table/File is not found/exist, skipping : {}", file);
+            log.warn("Table/File is not found/exist, skipping : {}", file);
             return -1;
         }
 
@@ -97,14 +97,14 @@ public class CsvImporterImpl implements CsvImporter {
             } catch (SQLException e) {
                 String error = String.format("Error cleaning up table's data '%s'", tableName);
                 log.error(error, e);
+                throw e;
             }
         }
 
         // open CSV Reader and db connection
         try (ResultSet rs = csvReader.read(
                 inputFileName, null, null);
-//             Connection con = databaseManager.getDataSource().getConnection()) {
-             Connection con = databaseManager.getDataSource().begin()) {
+             Connection con = databaseManager.getDataSource().getConnection()) {
 
             // get CSV meta data info
             ResultSetMetaData meta = rs.getMetaData();
@@ -118,51 +118,57 @@ public class CsvImporterImpl implements CsvImporter {
             columnNames.deleteCharAt(columnNames.lastIndexOf(",")); // remove latest tail comma
             columnsValues.deleteCharAt(columnsValues.lastIndexOf(",")); // remove latest tail comma
             sqlInsert.append(columnNames).append(") VALUES").append(" (").append(columnsValues).append(")");
-//            sqlInsert.append(columnNames).append(") VALUES").append(" (");
             log.debug("SQL = {}", sqlInsert.toString()); // composed insert
             // precompile insert SQL
             preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
-//            stm = con.createStatement();
 
             // loop over CSV data reading line by line, column by column
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
-//                    if (object instanceof String && ((String) object).startsWith("X'")) {
-                    if (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY) {
-                        preparedInsertStatement.setBytes(i + 1, ((String)object).getBytes(StandardCharsets.UTF_8));
-//                        preparedInsertStatement.setBytes(i + 1, Convert.parseHexString((String)object));
-//                        InputStream is = new ByteArrayInputStream( ((String)object).getBytes(StandardCharsets.UTF_8) );
-//                        preparedInsertStatement.setBinaryStream(i + 1, is);
+                    log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
 
+                    if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
+                        InputStream is = null;
+                        try {
+                            is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                            preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
+                        } catch (SQLException e) {
+                            log.error("Binary/Varbinary reading error = " + object, e);
+                            throw e;
+                        } finally {
+                            if (is != null) {
+                                try {
+                                    is.close();
+                                } catch (IOException e) {} // ignore error here
+                            }
+                        }
+                    } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
+                        String objectArray = (String)object;
+                        Object[] split = objectArray.split(",");
+                        SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(split);
+                        preparedInsertStatement.setArray(i + 1, simpleArray);
                     } else {
                         preparedInsertStatement.setObject(i + 1, object);
                     }
-                    log.trace("[{}] = {}\n", i+ 1, object);
-//                    columnsValues.append(object).append(",");
                 }
-//                columnsValues.deleteCharAt(columnsValues.lastIndexOf(",")); // remove latest tail comma
-//                sql = new StringBuffer(sqlInsert).append(columnsValues).append(")");
-//                log.trace("sql = {}", sql);
+
+                log.trace("sql = {}", sqlInsert.toString());
                 importedCount += preparedInsertStatement.executeUpdate();
-                log.trace("sql = {}", sql);
-//                importedCount += stm.executeUpdate(sql.toString());
+
                 if (batchLimit % importedCount == 0) {
                     con.commit();
                 }
-                columnsValues.setLength(0);
             }
             con.commit(); // final commit
         } catch (SQLException e) {
             log.error("Error on importing data on table = \n'{}'", sql, e);
+            throw e;
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);
             }
-//            if (stm != null) {
-//                DbUtils.close(stm);
-//            }
-            // reset all buffers
+            // reset all temporal buffers
             sqlInsert.setLength(0);
             columnNames.setLength(0);
             columnsValues.setLength(0);
@@ -171,6 +177,7 @@ public class CsvImporterImpl implements CsvImporter {
     }
 
 /*
+    // Version for using plain 'insert into values ()' string with non precompiled Stmt
     @Override
     public long importCsv(String tableName, int batchLimit, boolean cleanTarget) {
         Objects.requireNonNull(tableName, "tableName is NULL");

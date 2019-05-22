@@ -17,15 +17,14 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -104,6 +103,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.base.Throwables;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -111,6 +111,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -206,6 +207,8 @@ class CsvWriterReaderDerivedTablesTest {
         purchaseTable.init();
     }
 
+    @DisplayName("Gather all derived tables, export data up to height = 8000," +
+            " delete rows up to height = 8000, import data back into db table")
     @Test
     void testExportAndImportData() {
         DirProvider dirProvider = mock(DirProvider.class);
@@ -263,19 +266,28 @@ class CsvWriterReaderDerivedTablesTest {
 
                     int imported = importCsv(item.toString(), batchLimit);
                     log.debug("Table = {}, imported rows = {}", item.toString(), imported);
-                    assertEquals(minMaxDbId.getCount(), imported, "incorrect value for " + item.toString());
+                    assertEquals(minMaxDbId.getCount(), imported, "incorrect value for '" + item.toString() + "'");
 
                 }
             } catch (SQLException e) {
                 log.error("Exception", e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
 
         });
         log.debug("Processed Tables = {}", result);
     }
 
-/*
-    private int importCsv(String itemName, int batchLimit) {
+    /**
+     * Example for  real implementation importing data
+     *
+     * @param itemName
+     * @param batchLimit
+     * @return
+     * @throws SQLException
+     */
+    private int importCsv(String itemName, int batchLimit) throws SQLException {
         int importedCount = 0;
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
@@ -306,17 +318,28 @@ class CsvWriterReaderDerivedTablesTest {
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
-//                    if (object instanceof String && ((String) object).startsWith("X'")) {
-                    if (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY) {
-//                        preparedInsertStatement.setBytes(i + 1, ((String)object).getBytes());
-//                        preparedInsertStatement.setBytes(i + 1, Convert.parseHexString((String)object));
-                        InputStream is = new ByteArrayInputStream( ((String)object).getBytes(StandardCharsets.UTF_8) );
-                        preparedInsertStatement.setBinaryStream(i + 1, is);
+                    log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
 
+                    if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
+                        InputStream is = null;
+                        try {
+                            is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                            preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
+                        } catch (SQLException e) {
+                            log.error("Binary/Varbinary reading error = " + object, e);
+                            throw e;
+                        } finally {
+                            if (is != null) {
+                                try {
+                                    is.close();
+                                } catch (IOException e) {} // ignore error here
+                            }
+                        }
+                    } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
+                        preparedInsertStatement.setObject(i + 1, object);
                     } else {
                         preparedInsertStatement.setObject(i + 1, object);
                     }
-                    log.trace("{}: {}\n", meta.getColumnName(i + 1), object);
                 }
                 log.trace("sql = {}", sqlInsert);
                 importedCount += preparedInsertStatement.executeUpdate();
@@ -327,6 +350,7 @@ class CsvWriterReaderDerivedTablesTest {
             con.commit(); // final commit
         } catch (SQLException e) {
             log.error("Error on importing data on table = '{}'", itemName, e);
+            throw e;
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);
@@ -334,8 +358,9 @@ class CsvWriterReaderDerivedTablesTest {
         }
         return importedCount;
     }
-*/
 
+/*
+    // Version for using plain 'insert into values ()' string with non precompiled Stmt
     private int importCsv(String itemName, int batchLimit) {
         int importedCount = 0;
         int columnsCount = 0;
@@ -388,6 +413,7 @@ class CsvWriterReaderDerivedTablesTest {
         }
         return importedCount;
     }
+*/
 
     /**
      * Delete rows in table

@@ -112,16 +112,16 @@ class CsvExporterTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
-//    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString()));
+//    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString())); // prod data test
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
-//    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath"));
+//    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
     private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-//    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time);
+//    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -175,7 +175,7 @@ class CsvExporterTest {
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-//            return Path.of("/media/ylarin/PHOTO/java_projects/Apollo/apl-core/unit-test-perm" + (fileName !=null ? ("/" + fileName) : ""));
+//            return Path.of("/Apollo/apl-core/unit-test-perm" + (fileName !=null ? ("/" + fileName) : "")); // prod data test
         } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -213,19 +213,24 @@ class CsvExporterTest {
     @Test
     void exportDerivedTables() {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
-//        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir();
+//        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir(); // prod data test
         cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
         int targetHeight = 8000;
-//        int targetHeight = 2_000_000;
+//        int targetHeight = 2_000_000; // prod data test
         int batchLimit = 1; // used for pagination and partial commit
+        int[] tablesWithDataCount = new int[1]; // some table doesn't have exported data
 
         long start = System.currentTimeMillis();
         result.forEach(item -> {
             long start2 = System.currentTimeMillis();
-            long exportedRows = cvsExporter.exportDerivedTable(item, targetHeight, batchLimit);
+            long exportedRows = 0;
+            exportedRows = cvsExporter.exportDerivedTable(item, targetHeight, batchLimit);
+            if (exportedRows > 0) {
+                tablesWithDataCount[0] = tablesWithDataCount[0] + 1;
+            }
             log.debug("Processed Table = {}, exported = '{}' rows in {} secs", item, exportedRows, (System.currentTimeMillis() - start2) / 1000 );
         });
         log.debug("Processed Tables = [{}] in {} sec", result.size(), (System.currentTimeMillis() - start) / 1000 );
@@ -233,6 +238,7 @@ class CsvExporterTest {
         Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false) ;
         assertNotNull(filesInFolder);
         assertTrue(filesInFolder.size() > 0);
+        assertEquals(tablesWithDataCount[0], filesInFolder.size(), "wrong number processed/exported tables and real CSV files in folder");
         log.debug("Processed Tables = [{}]", filesInFolder.size());
         log.debug("Processed list = '{}' in {} sec", result, (System.currentTimeMillis() - start) / 1000 );
     }
@@ -240,7 +246,7 @@ class CsvExporterTest {
     @Test
     void exportShardTable() {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
-//        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir();
+//        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir(); // prod data test
         cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 

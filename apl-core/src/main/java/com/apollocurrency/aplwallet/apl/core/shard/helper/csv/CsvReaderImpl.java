@@ -192,6 +192,13 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         list.toArray(columnNames);
     }
 
+    /**
+     * Key method for reading one column value as string.
+     * It reads HEADER column first and data column in row.
+     *
+     * @return
+     * @throws IOException
+     */
     private String readValue() throws IOException {
         endOfLine = false;
         inputBufferStart = inputBufferPos;
@@ -264,6 +271,24 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                 }
                 endOfLine = true;
                 return null;
+            } else if (arrayDelimiterStart != 0 && ch == arrayDelimiterStart) { // check '('
+                // start SQL Array processing written as = (x, y, z)
+                // read until of 'arrayDelimiterEnd' symbol
+                inputBufferStart = inputBufferPos;
+                while (true) {
+                    ch = readChar();
+                    if (ch == '\n' || ch < 0 || ch == '\r' || ch == arrayDelimiterEnd) {
+                        break;
+                    }
+                }
+                String s = new String(inputBuffer,
+                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
+                if (!preserveWhitespace) {
+                    s = s.trim();
+                }
+                inputBufferStart = -1; // reset
+                inputBufferPos++; // skip closing ')'
+                return readNull(s);
             } else {
                 // un-delimited value
                 while (true) {

@@ -100,16 +100,16 @@ class CsvImporterTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
-    //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString()));
+    //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString()));// prod data test
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
-    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath"));
+    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath"));// prod data test
     private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time);
+    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time);// prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -150,11 +150,11 @@ class CsvImporterTest {
     JdbiHandleFactory jdbiHandleFactory;
     CsvImporter csvImporter;
 
-    private Set<String> tables = new HashSet<>(4) {{
-//        add("account_control_phasing");
-//        add("phasing_poll");
-//        add("purchase");
-//        add("shard");
+    private Set<String> tables = new HashSet<>(5) {{
+        add("shard");
+        add("account_control_phasing");
+        add("phasing_poll");
+        add("purchase");
         add("public_key");
     }};
 
@@ -179,27 +179,10 @@ class CsvImporterTest {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
-        // init several derived tables
-/*
-        AccountCurrencyTable.getInstance().init();
-        AccountTable.getInstance().init();
-        AccountInfoTable.getInstance().init();
-        Alias.init();
-        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811"));
-        AccountAssetTable.getInstance().init();
-        PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
-        publicKeyTable.init();
-        AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
-        accountLedgerTable.init();
-        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
-        accountGuaranteedBalanceTable.init();
-        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
-        purchaseTable.init();
-*/
     }
 
     @Test
-    void notFoundFile() {
+    void notFoundFile() throws SQLException {
         FileLoader fileLoader = new FileLoader();
         doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
         csvImporter = new CsvImporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger());
@@ -216,9 +199,10 @@ class CsvImporterTest {
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
-            long result = csvImporter.importCsv(tableName, 1, true);
+            long result = csvImporter.importCsv(tableName, 1, false);
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
+
             try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
                  PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
             ) {
@@ -228,15 +212,10 @@ class CsvImporterTest {
                     count = rs.getLong("count");
                 }
                 assertTrue(count > 0);
+                assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
             } catch (Exception e) {
                 log.error("Error", e);
             }
         }
-/*
-        long result = csvImporter.importCsv("shard", 1, false);
-        assertTrue(result > 0);
-        MinMaxDbId minMaxDbId = daoJdbc.getMinMaxId(extension.getDatabaseManger().getDataSource(), 6);
-        assertEquals(6, minMaxDbId.getMaxDbId());
-*/
     }
 }

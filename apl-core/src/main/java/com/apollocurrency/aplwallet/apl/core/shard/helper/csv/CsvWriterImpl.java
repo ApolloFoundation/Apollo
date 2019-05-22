@@ -24,6 +24,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -31,7 +32,6 @@ import java.util.Set;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 /**
@@ -196,6 +196,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     switch (columnsMetaData[i].getSqlTypeInt()) {
                         case Types.BLOB:
                             o = rs.getBlob(i + 1);
+                            if (o == null) {
+                                o = nullString;
+                            }
                             break;
                         case Types.BIGINT:
                         case Types.BIT:
@@ -207,6 +210,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         case Types.SMALLINT:
                         case Types.TINYINT:
                             o = rs.getString(i + 1);
+                            if (o == null) {
+                                o = nullString;
+                            }
                             break;
                         case Types.DATE:
                             date = rs.getDate(i + 1);
@@ -222,7 +228,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             break;
                         case Types.ARRAY:
                             Array array = rs.getArray(i + 1);
-//                            o = array != null ? array.getArray() : nullString;
                             if (array != null && array.getArray() instanceof Object[] && ((Object[])array.getArray()).length > 0) {
                                 Object[] objectArray = (Object[]) array.getArray();
                                 StringBuilder outputValue = new StringBuilder(objectArray.length + 2);
@@ -246,24 +251,28 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         case Types.NVARCHAR:
                         case Types.VARBINARY:
                         case Types.BINARY:
-/*
                             o = rs.getString(i + 1);
                             if (o != null) {
-//                                o = "'" + ((String)o).toUpperCase() + "'";
-                                o = ((String)o).toUpperCase();
+                                o = Base64.getEncoder().encodeToString(((String)o).getBytes(StandardCharsets.UTF_8));
                             } else {
                                 o = nullString;
                             }
                             break;
-*/
-
 /*
-                            InputStream inputStream = rs.getBinaryStream(i + 1);
-                            try (inputStream) {
-                                o = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                            InputStream inputStream = null;
+                            try {
+                                inputStream = rs.getBinaryStream(i + 1);
+//                                o = Base64.getEncoder().encodeToString(
+//                                        new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).getBytes());
+                                o = Base64.getEncoder().encodeToString(inputStream.readAllBytes());
                             } catch (Exception e) {
-                                o = nullString;
+//                                o = nullString;
                                 log.error("Binary stream error", e);
+                                throw e;
+                            } finally {
+                                if (inputStream != null) {
+                                    inputStream.close();
+                                }
                             }
                             break;
 */

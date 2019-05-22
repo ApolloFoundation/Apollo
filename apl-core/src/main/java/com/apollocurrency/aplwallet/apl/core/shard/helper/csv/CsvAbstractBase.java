@@ -61,6 +61,8 @@ public abstract class CsvAbstractBase {
     protected boolean caseSensitiveColumnNames; // config param
     protected boolean preserveWhitespace; // config param
     protected char lineComment;
+    protected char arrayDelimiterStart = '('; // start sql array
+    protected char arrayDelimiterEnd = ')'; // finish sql array
 
     // CVS WRITER only config parameters
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!

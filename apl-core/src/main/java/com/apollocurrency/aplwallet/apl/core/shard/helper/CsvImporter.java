@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import java.sql.SQLException;
+
 /**
  * Component's interface for importing table data into Db from CSV file.
  * Configuration parameters are supplied in implementation Constructor.
@@ -22,6 +24,6 @@ public interface CsvImporter {
      * @param cleanTarget true if we want to cleanup target table
      * @return imported quantity
      */
-    long importCsv(String tableName, int batchLimit, boolean cleanTarget);
+    long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws SQLException;
 
 }
