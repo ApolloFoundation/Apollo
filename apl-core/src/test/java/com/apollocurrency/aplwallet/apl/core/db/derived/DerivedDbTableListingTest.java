@@ -1,21 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
@@ -48,8 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -64,7 +49,6 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -81,13 +65,18 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.inject.Inject;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -95,12 +84,10 @@ class DerivedDbTableListingTest {
     private static final Logger log = getLogger(DerivedDbTableListingTest.class);
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("fullTextSearchDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(Map.of("currency", List.of("code","name", "description"), "tagged_data", List.of("name","description","tags")));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     private NtpTime time = mock(NtpTime.class);
-    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
-    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
@@ -128,8 +115,8 @@ class DerivedDbTableListingTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class))
-            .addBeans(MockBean.of(ftlService, FullTextSearchService.class))
+            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();

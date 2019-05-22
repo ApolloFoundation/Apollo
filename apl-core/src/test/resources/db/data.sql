@@ -22,7 +22,7 @@ delete from PUBLIC.TAGGED_DATA_TIMESTAMP;
 delete from PUBLIC.DATA_TAG;
 delete from PUBLIC.TAGGED_DATA_EXTEND;
 delete from PUBLIC.TAGGED_DATA;
-delete from goods;
+delete from PUBLIC.GOODS;
 delete from purchase;
 delete from tag;
 delete from purchase_feedback;
@@ -69,10 +69,12 @@ INSERT INTO PUBLIC.UPDATE_STATUS (transaction_id, updated) VALUES (
 );
 
 insert into account
-(DB_ID  	,ID  	        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
-(10          ,50            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE),
-(20          ,100           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true ),
-(30          ,200           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true ),
+(DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
+(10          ,50                            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE),
+(20          ,100                           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true ),
+(30          ,200                           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true ),
+(40          ,7821792282123976600           , 15025000000000    , 14725000000000        ,false                  ,0                  , null              ,105000     ,true ),
+(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true ),
 ;
 
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
@@ -219,11 +221,11 @@ INSERT into PUBLIC.TAGGED_DATA_EXTEND
 
 --Digital goods store
 
-INSERT into goods
+INSERT into PUBLIC.GOODS
 (DB_ID,  	ID,  	            SELLER_ID,  	        NAME,  	                DESCRIPTION,  	            PARSED_TAGS,  	        HAS_IMAGE,  	TAGS,  	            TIMESTAMP,  QUANTITY,  	PRICE,  	    DELISTED,  	 HEIGHT,  	LATEST) values
-(54,	350597963087434976	    ,9211698109297098287	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,2	        ,100000000000	,FALSE	    ,541839	    ,FALSE),
-(55,	350597963087434976	    ,9211698109297098287	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,1	        ,100000000000	,FALSE	    ,541867	    ,FALSE),
-(56,	350597963087434976	    ,9211698109297098287	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
+(54,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,2	        ,100000000000	,FALSE	    ,541839	    ,FALSE),
+(55,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,1	        ,100000000000	,FALSE	    ,541867	    ,FALSE),
+(56,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
 (57,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,1	        ,100000000	    ,FALSE	    ,541986	    ,FALSE),
 (58,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,0	        ,100000000	    ,FALSE	    ,542026	    ,TRUE ),
 (59,	-2208439159357779035	,9211698109297098287	,'1'		        , null	                        ,()                         ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
@@ -239,12 +241,12 @@ INSERT into goods
 
 INSERT INTO purchase
 (DB_ID  	,ID  	        ,BUYER_ID  	            ,GOODS_ID  	            ,SELLER_ID  	    ,QUANTITY  	,PRICE  	,DEADLINE  	,NOTE  	,NONCE  ,TIMESTAMP  ,PENDING  	,GOODS  	                                                                                                                        ,GOODS_NONCE  	                                                    ,GOODS_IS_TEXT  	,REFUND_NOTE  	,REFUND_NONCE  	,HAS_FEEDBACK_NOTES  	,HAS_PUBLIC_FEEDBACKS  	,DISCOUNT  	,REFUND  	,HEIGHT  	,LATEST) VALUES
-(50	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,9211698109297098287	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,100000000	,0	        ,541915	    ,FALSE),
+(50	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,100000000	,0	        ,541915	    ,FALSE),
 (51	,7938514984365421132	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056760	,null	,null	,41815146	,FALSE	,X'cf07cf9eef82aa48108a0ed23b17178ff7d4c915d589a8adaa9775f50777e47ec3b73067b53c924c0f75c4487351f37e'	                                ,X'53da1333f562e1e33ec6294d050000a538d1ca3471e86cd49f2285aa98057236'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,300000000	,0	        ,541918	    ,FALSE),
 (52	,5168710752758706151	,7821792282123976600	,-9127861922199955586	,9211698109297098287	,1	,500000000	    ,171922753	,null	,null	,41282338	,TRUE	,null	                                                                                                                                ,null	                                                                ,FALSE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,0	        ,0	        ,541921	    ,TRUE ),
 (53	,2646157157844538473	,9211698109297098287	,-3940436337202836661	,9211698109297098287	,1	,10000000000	,167789481	,null	,null	,36547867	,FALSE	,X'0d6a37a914fbb9694d7d80fc1fdb782503e42f6b5fb36ebefa1e29fdb2c45c68f608c8d8b48b169ce7b030c8fb7ad780'	                                ,X'd35a6bfb98047c9a979fb0865e18f41242e5389e15e81be4843118c45430300b'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,0	        ,0	        ,541923	    ,FALSE ),
-(54	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,9211698109297098287	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,FALSE	                ,TRUE	                 ,100000000	,0	        ,541965	    ,FALSE),
-(55	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,9211698109297098287	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,TRUE	                ,TRUE	                 ,100000000	,0	        ,542010	    ,TRUE ),
+(54	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,FALSE	                ,TRUE	                 ,100000000	,0	        ,541965	    ,FALSE),
+(55	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,TRUE	                ,TRUE	                 ,100000000	,0	        ,542010	    ,TRUE ),
 (56	,-3910276708092716563	,7821792282123976600	,-1443882373390424300	,9211698109297098287	,1	,100000000	    ,173058296	,null	,null	,41816681	,TRUE	,null	                                                                                                                                ,null	                                                                ,FALSE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,0	        ,0	        ,542026	    ,FALSE),
 (57	,-1155069143692520623	,3705364957971254799	,-2208439159357779035	,9211698109297098287	,1	,100000000	    ,173058317	,null	,null	,41816705	,TRUE	,null	                                                                                                                                ,null	                                                                ,FALSE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,0	        ,0	        ,542029	    ,FALSE),
 (58	,7938514984365421132	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056760	,null	,null	,41815146	,FALSE	,X'cf07cf9eef82aa48108a0ed23b17178ff7d4c915d589a8adaa9775f50777e47ec3b73067b53c924c0f75c4487351f37e'	                                ,X'53da1333f562e1e33ec6294d050000a538d1ca3471e86cd49f2285aa98057236'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,300000000	,100000000	,542650	    ,TRUE ),
