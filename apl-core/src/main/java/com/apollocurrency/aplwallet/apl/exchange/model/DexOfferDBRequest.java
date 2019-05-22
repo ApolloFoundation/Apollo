@@ -15,8 +15,11 @@ public class DexOfferDBRequest {
     private OfferStatus status;
     private BigDecimal minAskPrice;
     private BigDecimal maxBidPrice;
+    private Integer offset;
+    private Integer limit;
 
-    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, Long accountId, OfferStatus status, BigDecimal minAskPrice, BigDecimal maxBidPrice) {
+    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, Long accountId, OfferStatus status,
+                             BigDecimal minAskPrice, BigDecimal maxBidPrice, Integer offset, Integer limit) {
         this.type = type != null ? type.ordinal() : null;
         this.currentTime = currentTime;
         this.offerCur = offerCur != null ? offerCur.ordinal() : null;
@@ -25,6 +28,8 @@ public class DexOfferDBRequest {
         this.maxBidPrice = maxBidPrice;
         this.accountId = accountId;
         this.status = status;
+        this.offset = offset;
+        this.limit = limit;
     }
 
     public DexOfferDBRequest() {
@@ -92,5 +97,21 @@ public class DexOfferDBRequest {
 
     public void setStatus(OfferStatus status) {
         this.status = status;
+    }
+
+    public Integer getOffset() {
+        return offset;
+    }
+
+    public void setOffset(Integer offset) {
+        this.offset = offset;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
     }
 }

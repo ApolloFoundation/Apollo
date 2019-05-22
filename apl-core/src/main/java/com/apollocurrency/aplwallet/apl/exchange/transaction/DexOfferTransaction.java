@@ -56,43 +56,41 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
         if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+            throw new AplException.NotValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
         }
 
         try {
             DexCurrencies.getType(attachment.getOfferCurrency());
             DexCurrencies.getType(attachment.getPairCurrency());
         } catch (Exception ex){
-            throw new AplException.NotCurrentlyValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+            throw new AplException.NotValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
         }
 
         if (attachment.getPairRate() <= 0 ) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("pairRate", String.format("Should be more than zero."))));
+            throw new AplException.NotValidException(JSON.toString(incorrect("pairRate", String.format("Should be more than zero."))));
         }
         if (attachment.getOfferAmount() <= 0) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero."))));
+            throw new AplException.NotValidException(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero."))));
         }
 
         try {
             Math.multiplyExact(attachment.getPairRate(), attachment.getOfferAmount());
         } catch (ArithmeticException ex){
-            throw new AplException.NotCurrentlyValidException("PairRate or OfferAmount is too big.");
+            throw new AplException.NotValidException("PairRate or OfferAmount is too big.");
         }
 
 
         Integer currentTime = epochTime.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
+            throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
         if (dexService.shouldFreezeAPL(attachment.getType(), attachment.getOfferCurrency())) {
-            Long fee = transaction.getFeeATM();
             Long amountATM = attachment.getOfferAmount();
-            long totalAmountATM = Math.addExact(amountATM, fee);
             Account sender = Account.getAccount(transaction.getSenderId());
 
-            if (sender.getUnconfirmedBalanceATM() < totalAmountATM) {
-                throw new AplException.NotCurrentlyValidException("Not enough money.");
+            if (sender.getUnconfirmedBalanceATM() < amountATM) {
+                throw new AplException.NotValidException("Not enough money.");
             }
         }
     }
