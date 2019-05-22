@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -227,6 +228,8 @@ public class Apollo {
                 .recursiveScanPackages(BlockchainConfig.class)
                 .recursiveScanPackages(DatabaseManager.class)
                 .recursiveScanPackages(FullTextConfig.class)
+                .recursiveScanPackages(PeerConverter.class)
+                .annotatedDiscoveryMode()
                 .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()

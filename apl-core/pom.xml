@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.32.01</version>
+        <version>1.33.0</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -62,7 +62,7 @@
             <groupId>com.googlecode.json-simple</groupId>
             <artifactId>json-simple</artifactId>
         </dependency>
-        <!-- json-simple should be gone after new REST completion -->      
+        <!-- json-simple should be gone after new REST completion -->
 
         <!-- REST:  Need to put api here because strange things happens without it  -->
         <dependency>
@@ -87,7 +87,7 @@
 
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jackson-provider</artifactId>
+            <artifactId>resteasy-jackson2-provider</artifactId>
         </dependency>
 <!-- we do not need validation at the moment, but keep in mind that it is interface
      only and requires implementation laso, e.g hybernate-validator        
@@ -99,6 +99,18 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-cdi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
         </dependency>
 
         <!-- Swagger runtime dependencies -->
@@ -114,21 +126,6 @@
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-models</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>2.3.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>2.3.0.1</version>
         </dependency>
    
         <dependency>
@@ -247,6 +244,11 @@
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Ethereum API -->
         <dependency>
@@ -322,7 +324,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/src/main/resources/io/firstbridge/fbc/core/model/i18n</outputDirectory>
+                            <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${basedir}/src/test/resources/i18n</directory>

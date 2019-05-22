@@ -65,7 +65,7 @@ then
     fi
     
 #may be we have to remove garbage    
-    rm -f $1/*.sh
+#    rm -f $1/*.sh
     rm -f $1/*.bat
     rm -f $1/*.vbs
     rm -rf $1/META-INF
