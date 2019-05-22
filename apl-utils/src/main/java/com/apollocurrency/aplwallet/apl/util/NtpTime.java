@@ -50,7 +50,7 @@ public class NtpTime {
             LOG.warn(e.getMessage() + ". Keep prev offset: " + timeOffset, e);
         }
         catch (IOException e) {
-            LOG.warn(e.getMessage(), e);
+            LOG.warn("NTP exception: {}",e.getMessage());
             timeOffset = 0;
         }
     }
