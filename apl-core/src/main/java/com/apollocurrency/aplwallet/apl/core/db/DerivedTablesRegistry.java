@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
-
 import java.util.Collection;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;

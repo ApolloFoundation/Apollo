@@ -49,6 +49,11 @@ public interface DirProvider {
      */
     Path getAppBaseDir();
 
+    /**
+     * @return base data directory to keep exported CSV files
+     */
+    Path getDataExportDir();
+
 
         /**
      * Path to directory where a project is installed or top project dir if we're in IDE or tests
