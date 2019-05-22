@@ -27,7 +27,7 @@ public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
             return tag.getDbKey();
         }
     };
-    private static final DGSTagMapper MAPPER = new DGSTagMapper();
+    private static final DGSTagMapper MAPPER = new DGSTagMapper(KEY_FACTORY);
     public static final String TABLE_NAME = "tag";
 
 

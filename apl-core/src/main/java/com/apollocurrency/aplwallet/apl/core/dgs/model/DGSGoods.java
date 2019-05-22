@@ -5,13 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
-public class DGSGoods {
+import java.util.Arrays;
+import java.util.Objects;
+
+public class DGSGoods extends VersionedDerivedEntity {
     private final long id;
-    private DbKey dbKey;
     private final long sellerId;
     private final String name;
     private final String description;
@@ -22,17 +24,10 @@ public class DGSGoods {
     private int quantity;
     private long priceATM;
     private boolean delisted;
-    private int height;
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
 
     public DGSGoods(Transaction transaction, DigitalGoodsListing attachment, int timestamp) {
+        super(null, transaction.getHeight());
         this.id = transaction.getId();
         this.sellerId = transaction.getSenderId();
         this.name = attachment.getName();
@@ -46,13 +41,10 @@ public class DGSGoods {
         this.hasImage = transaction.getPrunablePlainMessage() != null;
     }
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
 
-    public DGSGoods(long id, DbKey dbKey, long sellerId, String name, String description, String tags, String[] parsedTags, int timestamp, boolean hasImage, int quantity, long priceATM, boolean delisted, int height) {
+    public DGSGoods(Long dbId, Integer height, long id, long sellerId, String name, String description, String tags, String[] parsedTags, int timestamp, boolean hasImage, int quantity, long priceATM, boolean delisted) {
+        super(dbId, height);
         this.id = id;
-        this.dbKey = dbKey;
         this.sellerId = sellerId;
         this.name = name;
         this.description = description;
@@ -63,13 +55,7 @@ public class DGSGoods {
         this.quantity = quantity;
         this.priceATM = priceATM;
         this.delisted = delisted;
-        this.height = height;
     }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
-
 
     public long getId() {
         return id;
@@ -99,10 +85,6 @@ public class DGSGoods {
         return quantity;
     }
 
-    public boolean isHasImage() {
-        return hasImage;
-    }
-
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
@@ -129,5 +111,31 @@ public class DGSGoods {
 
     public boolean hasImage() {
         return hasImage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DGSGoods)) return false;
+        if (!super.equals(o)) return false;
+        DGSGoods dgsGoods = (DGSGoods) o;
+        return id == dgsGoods.id &&
+                sellerId == dgsGoods.sellerId &&
+                timestamp == dgsGoods.timestamp &&
+                hasImage == dgsGoods.hasImage &&
+                quantity == dgsGoods.quantity &&
+                priceATM == dgsGoods.priceATM &&
+                delisted == dgsGoods.delisted &&
+                Objects.equals(name, dgsGoods.name) &&
+                Objects.equals(description, dgsGoods.description) &&
+                Objects.equals(tags, dgsGoods.tags) &&
+                Arrays.equals(parsedTags, dgsGoods.parsedTags);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), id, sellerId, name, description, tags, timestamp, hasImage, quantity, priceATM, delisted);
+        result = 31 * result + Arrays.hashCode(parsedTags);
+        return result;
     }
 }

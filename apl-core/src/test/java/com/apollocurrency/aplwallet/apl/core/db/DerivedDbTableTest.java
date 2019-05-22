@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,12 +53,22 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     public void testGetAll() throws SQLException {
         List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
-        assertEquals(getAll(), all);
+        List<T> expected = sortByHeightAsc(getAll());
+        assertEquals(expected, all);
     }
 
     @Test
-    public void testTrim() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(0));
+    public void testTrimForZeroHeight() throws SQLException {
+        testTrim(0);
+    }
+
+    @Test
+    public void testTrimForMaxHeight() throws SQLException {
+        testTrim(sortByHeightDesc(getAll()).get(0).getHeight());
+    }
+
+    public void testTrim(int height) throws SQLException {
+        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height));
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -65,7 +76,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     }
 
     @Test
-    public void testDelete() {
+    public void testDelete() throws SQLException {
         assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.delete(mock(clazz)));
     }
 
@@ -85,27 +96,27 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testRollbackToNegativeHeight() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(-1));
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertTrue(all.isEmpty(), "Derived table " + derivedDbTable.toString() + " should not have any entries after rollback to -1 height");
+        testRollback(0);
     }
 
     @Test
     public void testRollbackToLastEntry() throws SQLException {
         List<Integer> heights = getHeights();
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(heights.get(0)));
-
-        List<T> all = getAll();
-        List<T> actualValues = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(all, actualValues);
+        testRollback(heights.get(0));
     }
 
     @Test
     public void testRollbackToFirstEntry() throws SQLException {
         List<Integer> heights = getHeights();
         Integer rollbackHeight = heights.get(heights.size() - 1);
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(rollbackHeight));
-        assertEquals(sublistByHeight(getAll(), rollbackHeight), derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues());
+        testRollback(rollbackHeight);
+    }
+
+    public void testRollback(int height) throws SQLException {
+        List<T> expected = sublistByHeight(getAll(), height);
+        DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(height));
+        List<T> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(expected, actual);
     }
 
 
@@ -165,9 +176,6 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         return groupByDbKey(getAll(), keyFactory);
     }
 
-    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(KeyFactory<T> keyFactory, int size) {
-        return getEntryWithListOfSize(getAll(), keyFactory, size);
-    }
     protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size) {
         return groupByDbKey(data, keyFactory)
                 .entrySet()
@@ -176,6 +184,17 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
                 .findFirst()
                 .get();
     }
+
+    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size, boolean skipDeleted) {
+        return groupByDbKey(data, keyFactory)
+                .entrySet()
+                .stream()
+                .filter(entry-> !skipDeleted || entry.getValue().stream().anyMatch(e -> ((VersionedDerivedEntity) e).isLatest()))
+                .filter(entry -> getHeights(entry.getValue()).size() == size)
+                .findFirst()
+                .get();
+    }
+
 
     protected abstract List<T> getAll();
 }

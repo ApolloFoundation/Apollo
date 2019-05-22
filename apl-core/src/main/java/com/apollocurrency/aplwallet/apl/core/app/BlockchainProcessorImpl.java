@@ -274,7 +274,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 final Block commonBlock = lookupBlockhain().getBlock(commonBlockId);
                 if (commonBlock == null || lookupBlockhain().getHeight() - commonBlock.getHeight() >= 720) {
                     if (commonBlock != null) {
-                        log.debug(peer + " advertised chain with better difficulty, but the last common block is at height " + commonBlock.getHeight());
+                        log.debug("Peer {} advertised chain with better difficulty, but the last common block is at height {}, peer info - {}", peer.getAnnouncedAddress(), commonBlock.getHeight(), peer);
                     }
                     return;
                 }
@@ -561,7 +561,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
-                log.debug(slowestPeer.getHost() + " took " + maxResponseTime + " ms, disconnecting");
+                log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate();
             }
             //
@@ -593,7 +593,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 int myForkSize = lookupBlockhain().getHeight() - startHeight;
                 if (!forkBlocks.isEmpty() && myForkSize < 720) {
-                    log.debug("Will process a fork of " + forkBlocks.size() + " blocks, mine is " + myForkSize);
+                    log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
             } finally {
@@ -624,7 +624,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
 
             if (pushedForkBlocks > 0 && lookupBlockhain().getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
-                log.debug("Pop off caused by peer " + peer.getHost() + ", blacklisting");
+                log.debug("Pop off caused by peer {}, blacklisting",peer.getHost());
                 peer.blacklist("Pop off");
                 List<Block> peerPoppedOffBlocks = popOffTo(commonBlock);
                 pushedForkBlocks = 0;
@@ -645,7 +645,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             } else {
-                log.debug("Switched to peer's fork");
+                log.debug("Switched to peer's fork, peer addr: {}",peer.getHost());
                 for (Block block : myPoppedOffBlocks) {
                     lookupTransactionProcessor().processLater(block.getTransactions());
                 }
@@ -1041,7 +1041,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
 
-            selectUnconfirmedTransactions(duplicates, blockchain.getLastBlock(), -1).forEach(
+            selectUnconfirmedTransactions(duplicates, blockchain.getLastBlock(), -1, Integer.MAX_VALUE).forEach(
                     unconfirmedTransaction -> {
                         Transaction transaction = unconfirmedTransaction.getTransaction();
                         if (transaction.getPhasing() == null && filter.test(transaction)) {
@@ -1465,7 +1465,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
 
     public SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
-            Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp) {
+            Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
         DbIterator<UnconfirmedTransaction> allUnconfirmedTransactions = lookupTransactionProcessor().getAllUnconfirmedTransactions();
@@ -1480,6 +1480,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
+        txSelectLoop:
         while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
             int prevNumberOfNewTransactions = sortedTransactions.size();
             for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
@@ -1503,6 +1504,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     continue;
                 }
                 sortedTransactions.add(unconfirmedTransaction);
+                if (sortedTransactions.size() == limit) {
+                    break txSelectLoop;
+                }
                 payloadLength += transactionLength;
             }
             if (sortedTransactions.size() == prevNumberOfNewTransactions) {
@@ -1518,11 +1522,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingInt(UnconfirmedTransaction::getHeight)
             .thenComparingLong(UnconfirmedTransaction::getId);
 
-    public SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp) {
+    public SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp, int limit) {
         //TODo What is duplicates list for?
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         List <Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(lookupBlockhain().getHeight() + 1);
-
         for (Transaction phasedTransaction : phasedTransactions) {
             try {
                 transactionValidator.validate(phasedTransaction);
@@ -1530,10 +1533,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (AplException.ValidationException ignore) {
             }
         }
-
 //        validate and insert in unconfirmed_transaction db table all waiting transaction
         lookupTransactionProcessor().processWaitingTransactions();
-        SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp);
+        SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp, limit);
         return sortedTransactions;
     }
 
@@ -1541,7 +1543,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException {
 
         Block previousBlock = lookupBlockhain().getLastBlock();
-        SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp);
+        SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;

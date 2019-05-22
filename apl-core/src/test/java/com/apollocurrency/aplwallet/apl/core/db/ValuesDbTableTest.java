@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static java.util.stream.Collectors.toMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -19,13 +18,11 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ValuesDbTableTest<T extends DerivedEntity> extends DerivedDbTableTest<T> {
+public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
     private DbKey INCORRECT_DB_KEY = new DbKey() {
         @Override
         public int setPK(PreparedStatement pstmt) throws SQLException {
@@ -53,15 +50,15 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     public void setUp() {
         super.setUp();
         table = getTable();
-        assertNotNull(getEntryWithListOfSize(table.getDbKeyFactory(),2));
-        assertNotNull(getEntryWithListOfSize(table.getDbKeyFactory(),3));
+        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),2));
+        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),3));
     }
 
     ValuesDbTable<T> table ;
 
     @Test
     public void testGetByDbKey() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 3);
+        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3);
         List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         List<T> result = table.get(dbKey);
@@ -76,6 +73,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
     }
 
     @Override
+    @Test
     public void testInsert() {
         List<T> toInsert = dataToInsert();
         DbUtils.inTransaction(extension, (con) -> {
@@ -91,7 +89,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
 
     @Test
     public void testGetInCached() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 2);
+        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
         List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         DbUtils.inTransaction(extension, con -> {
@@ -104,7 +102,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
 
     @Test
     public void testGetFromDeletedCache() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(table.getDbKeyFactory(), 2);
+        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
         List<T> values = sortByHeightAsc(entry.getValue());
         DbKey dbKey = entry.getKey();
         DbUtils.inTransaction(extension, con -> {
@@ -131,67 +129,6 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
         assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
     }
 
-    @Test
-    public void testTrimNothing() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> table.trim(0));
-        List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(getAll(), allValues);
-    }
-
-    @Override
-    @Test
-    public void testTrim() throws SQLException {
-        if (table.isMultiversion()) {
-            int trimHeight = getTrimHeight();
-            DbUtils.inTransaction(extension, con-> table.trim(trimHeight));
-            List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            assertEquals(getAllAfterTrim(), allValues);
-        } else {
-            super.testTrim();
-        }
-    }
-
-
-    protected Map<DbKey, List<T>> getDuplicates() {
-        return groupByDbKey(table.getDbKeyFactory())
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue()
-                        .stream()
-                        .map(DerivedEntity::getHeight)
-                        .distinct()
-                        .count() > 1)
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    protected int getTrimHeight() {
-        Map<DbKey, List<T>> duplicates = getDuplicates();
-        Integer maxDuplicatesHeight = duplicates.values()
-                .stream()
-                .map(l -> l
-                        .stream()
-                        .map(DerivedEntity::getHeight)
-                        .max(Comparator.naturalOrder())
-                        .get())
-                .max(Comparator.naturalOrder())
-                .get();
-
-        return maxDuplicatesHeight + 1;
-    }
-
-    protected List<T> getAllAfterTrim() {
-        Map<DbKey, List<T>> duplicates = getDuplicates();
-        List<T> removed = new ArrayList<>();
-                duplicates.values()
-                        .forEach(l ->
-                        {
-                            Integer maxHeight = l.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get();
-                            l.stream().filter(e-> e.getHeight() < maxHeight).forEach(removed::add);
-                        });
-        List<T> allExpectedData = new ArrayList<>(getAll());
-        removed.forEach(allExpectedData::remove);
-        return allExpectedData;
-    }
 
     public void assertInCache(List<T> values) {
         List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
@@ -225,4 +162,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends Derived
 
     protected abstract List<T> dataToInsert();
 
+    protected List<T> getAllLatest() {
+        return getAll();
+    }
 }

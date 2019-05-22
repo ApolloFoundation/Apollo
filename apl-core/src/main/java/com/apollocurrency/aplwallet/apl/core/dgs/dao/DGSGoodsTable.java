@@ -29,7 +29,7 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
             return goods.getDbKey();
         }
     };
-    private static final DGSGoodsMapper MAPPER = new DGSGoodsMapper();
+    private static final DGSGoodsMapper MAPPER = new DGSGoodsMapper(KEY_FACTORY);
 
     private static final String TABLE_NAME = "goods";
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
