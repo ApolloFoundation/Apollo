@@ -235,7 +235,7 @@ INSERT into PUBLIC.GOODS
 (63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,()	                        ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
 (64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                        ,('test')	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
 (65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                        ,('qwe')	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
-(66,	2267824434322963112	    ,9211698109297098287	,'Another product'	,'Just another produc'	        ,('tag','batman')	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
+(66,	-9127861922199955586    ,9211698109297098287	,'Another product'	,'Just another produc'	        ,('tag','batman')	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
 (67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,FALSE ),
 ;
 

@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app.observer;
+package com.apollocurrency.aplwallet.apl.core.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -10,23 +10,22 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-public class DigitalGoodsStoreObserver {
+@Singleton
+public class DGSObserver {
     private DGSService service;
 
-    public DGSService lookupDGService() {
-        if (service == null) {
-            service = CDI.current().select(DGSService.class).get();
-        }
-        return service;
+    @Inject
+    public DGSObserver(DGSService service) {
+        this.service = service;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
@@ -34,7 +33,7 @@ public class DigitalGoodsStoreObserver {
             return;
         }
         List<DGSPurchase> expiredPurchases = new ArrayList<>();
-        try (DbIterator<DGSPurchase> iterator = lookupDGService().getExpiredPendingPurchases(block)) {
+        try (DbIterator<DGSPurchase> iterator = service.getExpiredPendingPurchases(block)) {
             while (iterator.hasNext()) {
                 expiredPurchases.add(iterator.next());
             }
