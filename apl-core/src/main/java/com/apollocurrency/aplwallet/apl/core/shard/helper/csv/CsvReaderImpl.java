@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-//@Singleton
 public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource {
     private static final Logger log = getLogger(CsvReaderImpl.class);
 
@@ -196,7 +195,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
      * Key method for reading one column value as string.
      * It reads HEADER column first and data column in row.
      *
-     * @return
+     * @return one column data OR NULL (for header or data row)
      * @throws IOException
      */
     private String readValue() throws IOException {
