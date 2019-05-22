@@ -274,8 +274,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 final Block commonBlock = lookupBlockhain().getBlock(commonBlockId);
                 if (commonBlock == null || lookupBlockhain().getHeight() - commonBlock.getHeight() >= 720) {
                     if (commonBlock != null) {
-                        log.debug("Peer "+peer.getAnnouncedAddress() + " advertised chain with better difficulty, but the last common block is at height " 
-                                + commonBlock.getHeight()+"Peer info:"+peer);
+                        log.debug("Peer {} advertised chain with better difficulty, but the last common block is at height {}, peer info - {}", peer.getAnnouncedAddress(), commonBlock.getHeight(), peer);
                     }
                     return;
                 }
@@ -562,7 +561,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
-                log.debug("Solwest peer "+slowestPeer.getHost() + " took " + maxResponseTime + " ms, disconnecting");
+                log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate();
             }
             //
@@ -594,7 +593,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 int myForkSize = lookupBlockhain().getHeight() - startHeight;
                 if (!forkBlocks.isEmpty() && myForkSize < 720) {
-                    log.debug("Will process a fork of " + forkBlocks.size() + " blocks, mine is " + myForkSize+"; feed peer addr: "+feederPeer.getHost());
+                    log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
             } finally {
@@ -625,7 +624,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
 
             if (pushedForkBlocks > 0 && lookupBlockhain().getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
-                log.debug("Pop off caused by peer " + peer.getHost() + ", blacklisting");
+                log.debug("Pop off caused by peer {}, blacklisting",peer.getHost());
                 peer.blacklist("Pop off");
                 List<Block> peerPoppedOffBlocks = popOffTo(commonBlock);
                 pushedForkBlocks = 0;
