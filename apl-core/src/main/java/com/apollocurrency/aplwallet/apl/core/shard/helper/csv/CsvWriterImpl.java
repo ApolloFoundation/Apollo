@@ -435,6 +435,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         CsvFileUtils.closeSilently(output);
         output = null;
         columnsMetaData = null;
+        excludeColumnIndex.clear();
     }
 
 }

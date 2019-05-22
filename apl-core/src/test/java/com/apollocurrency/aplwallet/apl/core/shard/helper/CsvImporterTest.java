@@ -199,7 +199,7 @@ class CsvImporterTest {
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
-            long result = csvImporter.importCsv(tableName, 1, false);
+            long result = csvImporter.importCsv(tableName, 1, true);
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
 
