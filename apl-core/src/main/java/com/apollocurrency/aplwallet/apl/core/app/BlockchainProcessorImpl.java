@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -43,16 +42,11 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -106,17 +100,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger log = getLogger(BlockchainProcessorImpl.class);
 
-    // TODO: YL remove static instance later
-   private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-   private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+   private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+   private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
    private DexService dexService;
    private  BlockchainConfigUpdater blockchainConfigUpdater;
 
 
     private FullTextSearchService fullTextSearchProvider;
 
-    private static Blockchain blockchain;
-    private static TransactionProcessor transactionProcessor;
+    private Blockchain blockchain;
+    private TransactionProcessor transactionProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private DatabaseManager databaseManager;
 

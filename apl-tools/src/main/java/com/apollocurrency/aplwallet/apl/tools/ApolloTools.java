@@ -87,6 +87,7 @@ public class ApolloTools {
                 StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
                 StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
                 "",
+                "",
                 ""
         );
     }

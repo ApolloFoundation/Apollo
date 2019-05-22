@@ -25,6 +25,12 @@ public interface DataTransferManagementReceiver {
 
     MigrateState getCurrentState();
 
+    /**
+     * Create database BACKUP-BEFORE-0000001.zip file before sharding in case configured setting
+     * apl.sharding.backupDb=true
+     *
+     * @return MigrateState.MAIN_DB_BACKUPED if success, MigrateState.FAILED otherwise
+     */
     MigrateState createBackup();
 
     MigrateState addOrCreateShard(DbVersion dbVersion);

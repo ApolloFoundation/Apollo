@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 
@@ -132,7 +133,9 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         return databaseManager;
     }
 
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -155,6 +158,53 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     protected abstract T load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
+                                    MinMaxDbId minMaxDbId, int limit) throws SQLException {
+        Objects.requireNonNull(con, "connnection is NULL");
+        Objects.requireNonNull(pstmt, "prepared statement is NULL");
+        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
+        try {
+            pstmt.setLong(1, minMaxDbId.getMinDbId());
+            pstmt.setLong(2, minMaxDbId.getMaxDbId());
+            pstmt.setLong(3, limit);
+            return pstmt.executeQuery();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MinMaxDbId getMinMaxDbId(int height) throws SQLException {
+        // select MIN and MAX dbId values in one query
+        String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_DB_ID, " +
+                "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count from %s where HEIGHT <= ?",  table);
+        long dbIdMin = -1;
+        long dbIdMax = -1;
+        MinMaxDbId minMaxDbId = new MinMaxDbId();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
+            pstmt.setInt(1, height);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    dbIdMin = rs.getLong("min_db_id");
+                    dbIdMax = rs.getLong("max_db_id");
+                    long rowCount = rs.getLong("count");
+                    minMaxDbId = new MinMaxDbId(dbIdMin - 1, dbIdMax + 1); // plus/minus one in Max/Min value
+                    minMaxDbId.setCount(rowCount);
+                }
+            }
+        }
+        return minMaxDbId;
+    }
 
     @Override
     public final String toString() {

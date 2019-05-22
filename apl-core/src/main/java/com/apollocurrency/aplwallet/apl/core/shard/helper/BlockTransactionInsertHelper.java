@@ -177,56 +177,54 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     }
 
     private void formatBindValues(ResultSet rs, int i) throws SQLException {
-//        for (int i = 0; i < numColumns; i++) {
-            java.util.Date d = null;
-            switch (columnTypes[i]) {
-                case Types.BIGINT:
-                case Types.BIT:
-                case Types.BOOLEAN:
-                case Types.DECIMAL:
-                case Types.DOUBLE:
-                case Types.FLOAT:
-                case Types.INTEGER:
-                case Types.SMALLINT:
-                case Types.TINYINT:
-                    String v = rs.getString(i + 1);
-                    columnValues.append(v);
-                    break;
+        java.util.Date d = null;
+        switch (columnTypes[i]) {
+            case Types.BIGINT:
+            case Types.BIT:
+            case Types.BOOLEAN:
+            case Types.DECIMAL:
+            case Types.DOUBLE:
+            case Types.FLOAT:
+            case Types.INTEGER:
+            case Types.SMALLINT:
+            case Types.TINYINT:
+                String v = rs.getString(i + 1);
+                columnValues.append(v);
+                break;
 
-                case Types.DATE:
-                    d = rs.getDate(i + 1);
-                case Types.TIME:
-                    if (d == null) d = rs.getTime(i + 1);
-                case Types.TIMESTAMP:
-                    if (d == null) d = rs.getTimestamp(i + 1);
+            case Types.DATE:
+                d = rs.getDate(i + 1);
+            case Types.TIME:
+                if (d == null) d = rs.getTime(i + 1);
+            case Types.TIMESTAMP:
+                if (d == null) d = rs.getTimestamp(i + 1);
 
-                    if (d == null) {
-                        columnValues.append("null");
-                    } else {
-                        columnValues.append("TO_DATE('").append(super.dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
-                    }
-                    break;
+                if (d == null) {
+                    columnValues.append("null");
+                } else {
+                    columnValues.append("TO_DATE('").append(super.dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
+                }
+                break;
 
-                default:
-                    v = rs.getString(i + 1);
-                    if (v != null) {
-                        columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
-                    } else {
-                        columnValues.append("null");
-                    }
-                    break;
-            }
-            if (i != columnTypes.length - 1) {
-                columnValues.append(",");
-            }
-//        }
+            default:
+                v = rs.getString(i + 1);
+                if (v != null) {
+                    columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
+                } else {
+                    columnValues.append("null");
+                }
+                break;
+        }
+        if (i != columnTypes.length - 1) {
+            columnValues.append(",");
+        }
     }
 
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {
         if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
+            sqlSelectUpperBound = "SELECT IFNULL(max(DB_ID), 0) as DB_ID from BLOCK where HEIGHT = ?";
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);

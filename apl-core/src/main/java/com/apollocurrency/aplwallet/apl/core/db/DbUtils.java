@@ -13,22 +13,26 @@
  * Removal or modification of this copyright notice is prohibited.
  *
  */
-
 /*
  * Copyright © 2018 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import org.slf4j.Logger;
-
-import java.sql.*;
-import java.util.Arrays;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Arrays;
+
+import org.slf4j.Logger;
+
 public final class DbUtils {
-    private static final Logger LOG = getLogger(DbUtils.class);
+    private static final Logger log = getLogger(DbUtils.class);
 
     public static void close(AutoCloseable... closeables) {
         for (AutoCloseable closeable : closeables) {
@@ -40,13 +44,26 @@ public final class DbUtils {
         }
     }
 
+    /**
+     * Close a result set without throwing an exception.
+     *
+     * @param rs the result set or null
+     */
+    public static void closeSilently(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException ignore) {}
+        }
+    }
+
     public static void rollback(Connection con) {
         try {
             if (con != null) {
                 con.rollback();
             }
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            log.error(e.toString(), e);
         }
 
     }
