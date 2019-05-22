@@ -20,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -48,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
@@ -55,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -86,6 +91,7 @@ public class DGSServiceTest {
             DGSFeedbackTable.class,
             DGSGoodsTable.class,
             DGSTagTable.class,
+            AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class,
@@ -94,6 +100,7 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
+            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .build();
@@ -102,6 +109,8 @@ public class DGSServiceTest {
 
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
+    @Inject
+    AccountTable accountTable;
 
     DGSTestData dtd;
 
@@ -1007,8 +1016,191 @@ public class DGSServiceTest {
 
     @Test
     void testChangeGoodsPrice() {
+        doReturn(100_000).when(blockchain).getHeight();
+        DbUtils.inTransaction(extension, (con)-> {
+            service.changePrice(dtd.GOODS_5.getId(), 100);
+        });
+        dtd.GOODS_5.setPriceATM(100);
+        dtd.GOODS_5.setHeight(100_000);
+        dtd.GOODS_5.setDbId(dtd.GOODS_13.getDbId() + 1);
+        DGSGoods goods = service.getGoods(dtd.GOODS_5.getId());
+        assertEquals(dtd.GOODS_5, goods);
+    }
+
+    @Test
+    void testChangePriceForDelistedGoods() {
+        assertThrows(IllegalStateException.class, () -> service.changePrice(dtd.GOODS_8.getId(), 100));
+    }
+
+    @Test
+    void testChangeQuantityFoGoodsWithZeroQuantity() {
+        doReturn(100_000).when(blockchain).getHeight();
+        DbUtils.inTransaction(extension, (con)-> {
+            service.changeQuantity(dtd.GOODS_2.getId(), 1);
+        });
+        dtd.GOODS_2.setQuantity(1);
+        dtd.GOODS_2.setHeight(100_000);
+        dtd.GOODS_2.setDbId(dtd.GOODS_13.getDbId() + 1);
+        DGSGoods goods = service.getGoods(dtd.GOODS_2.getId());
+        assertEquals(dtd.GOODS_2, goods);
+        List<DGSTag> tags = CollectionUtil.toList(service.getAllTags(0, Integer.MAX_VALUE));
+        List<DGSTag> expectedTags = new ArrayList<>();
+        expectedTags.add(dtd.TAG_4);
+        expectedTags.add(dtd.TAG_5);
+        expectedTags.add(dtd.TAG_6);
+        long initialDbId = dtd.TAG_12.getDbId();
+        for (DGSTag expectedTag : expectedTags) {
+            expectedTag.setDbId(++initialDbId);
+            expectedTag.setHeight(100_000);
+            expectedTag.setInStockCount(expectedTag.getInStockCount() + 1);
+            expectedTag.setTotalCount(expectedTag.getTotalCount() + 1);
+        }
+        assertTrue(tags.containsAll(expectedTags));
+    }
+    @Test
+    void testChangeQuantityFoGoodsWithQuantityGreaterThanZero() {
+        doReturn(100_000).when(blockchain).getHeight();
+        DbUtils.inTransaction(extension, (con)-> {
+            service.changeQuantity(dtd.GOODS_12.getId(), -1);
+        });
+        dtd.GOODS_12.setQuantity(2);
+        dtd.GOODS_12.setHeight(100_000);
+        dtd.GOODS_12.setDbId(dtd.GOODS_13.getDbId() + 1);
+        DGSGoods goods = service.getGoods(dtd.GOODS_12.getId());
+        assertEquals(dtd.GOODS_12, goods);
 
     }
+    @Test
+    void testChangeQuantityToNegative() {
+        doReturn(100_000).when(blockchain).getHeight();
+        DbUtils.inTransaction(extension, (con)-> {
+            service.changeQuantity(dtd.GOODS_12.getId(), -5);
+        });
+        dtd.GOODS_12.setQuantity(0);
+        dtd.GOODS_12.setHeight(100_000);
+        dtd.GOODS_12.setDbId(dtd.GOODS_13.getDbId() + 1);
+        DGSGoods goods = service.getGoods(dtd.GOODS_12.getId());
+        assertEquals(dtd.GOODS_12, goods);
+
+        List<DGSTag> expectedTags = new ArrayList<>();
+        expectedTags.add(dtd.TAG_11);
+        expectedTags.add(dtd.TAG_12);
+        long initialDbId = dtd.TAG_12.getDbId();
+        for (DGSTag expectedTag : expectedTags) {
+            expectedTag.setDbId(++initialDbId);
+            expectedTag.setHeight(100_000);
+            expectedTag.setInStockCount(expectedTag.getInStockCount() - 1);
+        }
+        List<DGSTag> tags = CollectionUtil.toList(service.getAllTags(0, Integer.MAX_VALUE));
+        assertTrue(tags.containsAll(expectedTags));
+    }
+
+    @Test
+    void testChangeQuantityToMaxValue() {
+        doReturn(100_000).when(blockchain).getHeight();
+        DbUtils.inTransaction(extension, (con)-> {
+            service.changeQuantity(dtd.GOODS_12.getId(), Constants.MAX_DGS_LISTING_QUANTITY + 1);
+        });
+        dtd.GOODS_12.setQuantity(Constants.MAX_DGS_LISTING_QUANTITY);
+        dtd.GOODS_12.setHeight(100_000);
+        dtd.GOODS_12.setDbId(dtd.GOODS_13.getDbId() + 1);
+        DGSGoods goods = service.getGoods(dtd.GOODS_12.getId());
+        assertEquals(dtd.GOODS_12, goods);
+    }
+
+    @Test
+    void testChangeQuantityForDelistedGoods() {
+        assertThrows(IllegalStateException.class, () -> service.changeQuantity(dtd.GOODS_8.getId(), 1));
+    }
+
+    @Test
+    void testPurchaseWithTagDelisting() {
+        Transaction purchaseTransaction = mock(Transaction.class);
+        int height = 100_000;
+        long txId = 100L;
+        long senderId = 200L;
+
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(500_000).when(blockchain).getLastBlockTimestamp();
+        EncryptedMessageAppendix note = new EncryptedMessageAppendix(new EncryptedData("Image".getBytes(), new byte[32]), false, true);
+        doReturn(note).when(purchaseTransaction).getEncryptedMessage();
+        doReturn(height).when(purchaseTransaction).getHeight();
+        doReturn(txId).when(purchaseTransaction).getId();
+        doReturn(senderId).when(purchaseTransaction).getSenderId();
+
+        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000);
+        DbUtils.inTransaction(extension, (con)-> {
+            service.purchase(purchaseTransaction, digitalGoodsPurchase);
+        });
+        DGSPurchase expected = new DGSPurchase(dtd.PURCHASE_18.getDbId() + 1, height, txId, senderId, dtd.GOODS_12.getId(), dtd.GOODS_12.getSellerId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000, note.getEncryptedData(), 500_000, true, null, false, null, false, false, null, null, 0, 0);
+        DGSPurchase purchase = service.getPurchase(txId);
+        assertEquals(expected, purchase);
+        purchase = service.getPendingPurchase(txId);
+        assertEquals(expected, purchase);
+
+        List<DGSTag> expectedTags = new ArrayList<>();
+        expectedTags.add(dtd.TAG_11);
+        expectedTags.add(dtd.TAG_12);
+        long initialDbId = dtd.TAG_12.getDbId();
+        for (DGSTag expectedTag : expectedTags) {
+            expectedTag.setDbId(++initialDbId);
+            expectedTag.setHeight(100_000);
+            expectedTag.setInStockCount(expectedTag.getInStockCount() - 1);
+        }
+        List<DGSTag> tags = CollectionUtil.toList(service.getAllTags(0, Integer.MAX_VALUE));
+        assertTrue(tags.containsAll(expectedTags));
+    }
+
+    @Test
+    void testPurchaseForDelistedGoods() {
+        Account.init(extension.getDatabaseManger(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Transaction purchaseTransaction = mock(Transaction.class);
+        int height = 100_000;
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(50L).when(purchaseTransaction).getSenderId();
+        Account account = Account.getAccount(50);
+        long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
+        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
+        DbUtils.inTransaction(extension, (con)-> {
+            service.purchase(purchaseTransaction, digitalGoodsPurchase);
+        });
+        account = Account.getAccount(50);
+        long unconfirmedBalance = account.getUnconfirmedBalanceATM();
+        assertEquals(initialUnconfirmedBalance + 4 * dtd.GOODS_8.getPriceATM(), unconfirmedBalance);
+    }
+
+    @Test
+    void testPurchaseWhenPriceNotMatch() {
+        Account.init(extension.getDatabaseManger(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Transaction purchaseTransaction = mock(Transaction.class);
+        int height = 100_000;
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(50L).when(purchaseTransaction).getSenderId();
+        Account account = Account.getAccount(50);
+        long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
+        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
+        DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
+        account = Account.getAccount(50);
+        long unconfirmedBalance = account.getUnconfirmedBalanceATM();
+        assertEquals(initialUnconfirmedBalance +  2 * (dtd.GOODS_12.getPriceATM() + 1), unconfirmedBalance);
+    }
+
+    @Test
+    void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
+        Account.init(extension.getDatabaseManger(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Transaction purchaseTransaction = mock(Transaction.class);
+        int height = 100_000;
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(50L).when(purchaseTransaction).getSenderId();
+        Account account = Account.getAccount(50);
+        long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
+        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
+        DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
+        account = Account.getAccount(50);
+        long unconfirmedBalance = account.getUnconfirmedBalanceATM();
+        assertEquals(initialUnconfirmedBalance +  2 * (dtd.GOODS_9.getPriceATM()), unconfirmedBalance);
+    }
+
 
 
 

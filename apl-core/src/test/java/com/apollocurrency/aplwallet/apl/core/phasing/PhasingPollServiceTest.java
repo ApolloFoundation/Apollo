@@ -15,6 +15,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -96,6 +97,7 @@ public class PhasingPollServiceTest {
             PhasingPollLinkedTransactionTable.class,
             PhasingVoteTable.class,
             PublicKeyTable.class,
+            AccountTable.class,
             FullTextConfigImpl.class,
             AccountGuaranteedBalanceTable.class,
             DerivedDbTablesRegistryImpl.class,
@@ -113,6 +115,8 @@ public class PhasingPollServiceTest {
     Blockchain blockchain;
     @Inject
     PublicKeyTable publicKeyTable;
+    @Inject
+    AccountTable accountTable;
     PhasingTestData ptd;
     TransactionTestData ttd;
     BlockTestData btd;
@@ -351,7 +355,7 @@ public class PhasingPollServiceTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        Account.init(extension.getDatabaseManger(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable);
+        Account.init(extension.getDatabaseManger(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = service.countVotes(ptd.POLL_3);
 

@@ -26,6 +26,11 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 
+    public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
+        super(table, dbKeyFactory, true, null, init);
+
+    }
+
     @Override
     public boolean delete(T t) { //TODO remove blockchain
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();

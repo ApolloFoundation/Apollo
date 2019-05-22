@@ -95,6 +95,7 @@ public final class Account {
     private static DatabaseManager databaseManager;
     private static GlobalSync sync;
     private static PublicKeyTable publicKeyTable;
+    private static AccountTable accountTable;
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
            
     
@@ -119,7 +120,8 @@ public final class Account {
                             BlockchainConfig blockchainConfigParam,
                             Blockchain blockchainParam,
                             GlobalSync globalSync,
-                            PublicKeyTable pkTable
+                            PublicKeyTable pkTable,
+                            AccountTable accTable
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -127,6 +129,7 @@ public final class Account {
         blockchain = blockchainParam;
         publicKeyTable = pkTable;
         sync = globalSync;
+        accountTable = accTable;
         CDI.current().select(AccountGuaranteedBalanceTable.class).get();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
@@ -257,16 +260,16 @@ public final class Account {
     }
 
     public static int getActiveLeaseCount() {
-        return AccountTable.getInstance().getCount(new DbClause.NotNullClause("active_lessee_id"));
+        return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
     }
 
     public static Account getAccount(long id) {
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey != null) {
-                account = AccountTable.getInstance().newEntity(dbKey);
+                account = accountTable.newEntity(dbKey);
                 account.publicKey = publicKey;
             }
         }
@@ -275,7 +278,7 @@ public final class Account {
 
     public static Account getAccount(long id, int height) {
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey, height);
+        Account account = accountTable.get(dbKey, height);
         if (account == null) {
             PublicKey publicKey = getPublicKey(dbKey, height);
             if (publicKey != null) {
@@ -326,8 +329,15 @@ public final class Account {
             throw new RuntimeException(e.toString(), e);
         }
     }
+    public  static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
+        try {
+            return accountTable.getTopHolders(con, numberOfTopAccounts);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
-    
     public static long getTotalSupply() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
@@ -370,9 +380,9 @@ public final class Account {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
-            account = AccountTable.getInstance().newEntity(dbKey);
+            account = accountTable.newEntity(dbKey);
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null) {
                 if (isGenesis) {
@@ -458,9 +468,9 @@ public final class Account {
 
     private void save() {
         if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
-            AccountTable.getInstance().delete(this, true, blockchain.getHeight());
+            accountTable.delete(this, true, blockchain.getHeight());
         } else {
-            AccountTable.getInstance().insert(this);
+            accountTable.insert(this);
         }
     }
 
@@ -594,11 +604,11 @@ public final class Account {
     }
 
     public DbIterator<Account> getLessors() {
-        return AccountTable.getInstance().getManyBy(new DbClause.LongClause("active_lessee_id", id), 0, -1, " ORDER BY id ASC ");
+        return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), 0, -1, " ORDER BY id ASC ");
     }
 
     public DbIterator<Account> getLessors(int height) {
-        return AccountTable.getInstance().getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
+        return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
     }
 
     public long getGuaranteedBalanceATM() {
@@ -744,7 +754,7 @@ public final class Account {
         EnumSet<ControlType> newControls = EnumSet.of(control);
         newControls.addAll(controls);
         controls = Collections.unmodifiableSet(newControls);
-        AccountTable.getInstance().insert(this);
+        accountTable.insert(this);
     }
 
     public void removeControl(ControlType control) {

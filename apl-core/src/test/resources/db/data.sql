@@ -67,9 +67,13 @@ INSERT INTO PUBLIC.TRANSACTION
 INSERT INTO PUBLIC.UPDATE_STATUS (transaction_id, updated) VALUES (
   -1536976186224925700, TRUE
 );
-INSERT INTO PUBLIC.ACCOUNT (ID, BALANCE, UNCONFIRMED_BALANCE, FORGED_BALANCE, ACTIVE_LESSEE_ID, HEIGHT,LATEST)
-VALUES (100, 100000000, 100000000, 0, null,	104595, true ),--1
- (200, 250000000, 200000000, 0, null,	104670, true );--2
+
+insert into account
+(DB_ID  	,ID  	        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
+(10          ,50            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE),
+(20          ,100           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true ),
+(30          ,200           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true ),
+;
 
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
 (100, X'a3f312570b65671a7101', true),
