@@ -15,6 +15,7 @@ import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -678,9 +679,7 @@ public class DGSServiceTest {
     @Test
     void testSetPendingForPurchase() {
         dtd.PURCHASE_8.setHeight(dtd.PURCHASE_8.getHeight() + 10_000);
-        DbUtils.inTransaction(extension, (con)-> {
-            service.setPending(dtd.PURCHASE_8, true);
-        });
+        DbUtils.inTransaction(extension, (con)-> service.setPending(dtd.PURCHASE_8, true));
         DGSPurchase pendingPurchase = service.getPendingPurchase(dtd.PURCHASE_8.getId());
         dtd.PURCHASE_8.setDbId(dtd.PURCHASE_18.getDbId() + 1);
         assertEquals(dtd.PURCHASE_8, pendingPurchase);
@@ -959,6 +958,58 @@ public class DGSServiceTest {
         List<DGSTag> tags = CollectionUtil.toList(service.getTagsLike("s", false, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.TAG_5, dtd.TAG_10), tags);
     }
+
+    @Test
+    void testGetTagsLikeInStock() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getTagsLike("s", true, 0, Integer.MAX_VALUE));
+        assertEquals(List.of(dtd.TAG_10), tags);
+    }
+
+    @Test
+    void testGetTagsLinkeWithPagination() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getTagsLike("s", false, 0, 0));
+        assertEquals(List.of(dtd.TAG_5), tags);
+    }
+
+    @Test
+    void testDelistGoods() {
+        doReturn(100_000).when(blockchain).getHeight();
+        DbUtils.inTransaction(extension, (con)-> {
+            service.delistGoods(dtd.GOODS_12.getId());
+        });
+        DGSGoods goods = service.getGoods(dtd.GOODS_12.getId());
+        dtd.GOODS_12.setHeight(100_000);
+        dtd.GOODS_12.setDbId(dtd.GOODS_13.getDbId() + 1);
+        dtd.GOODS_12.setDelisted(true);
+        assertEquals(dtd.GOODS_12, goods);
+        List<DGSTag> allTags = CollectionUtil.toList(service.getAllTags(0, Integer.MAX_VALUE));
+        List<DGSTag> expectedTags = new ArrayList<>();
+        expectedTags.add(dtd.TAG_11);
+        expectedTags.add(dtd.TAG_12);
+        long initialDbId = dtd.TAG_12.getDbId();
+        for (DGSTag expectedTag : expectedTags) {
+            expectedTag.setDbId(++initialDbId);
+            expectedTag.setHeight(100_000);
+            expectedTag.setInStockCount(expectedTag.getInStockCount() - 1);
+        }
+        assertTrue(allTags.containsAll(expectedTags));
+    }
+
+    @Test
+    void testDelistAlreadyDelistedGoods() {
+        assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> service.delistGoods(dtd.GOODS_8.getId())));
+    }
+
+    @Test
+    void testDelistForUnknownTag() {
+        assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> service.delistGoods(dtd.GOODS_11.getId())));
+    }
+
+    @Test
+    void testChangeGoodsPrice() {
+
+    }
+
 
 
 }
