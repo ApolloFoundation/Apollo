@@ -184,7 +184,7 @@ public class DGSServiceImpl implements DGSService {
     }
 
 
-    public void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback) {
+    private void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback) {
 
         if (getPublicFeedbacks(dgsPurchase) == null) {
             dgsPurchase.setPublicFeedbacks(new ArrayList<>());
@@ -209,12 +209,12 @@ public class DGSServiceImpl implements DGSService {
         return dgsPurchase.getPublicFeedbacks();
     }
 
-    public void setDiscountATM(DGSPurchase dgsPurchase, long discountATM) {
+    private void setDiscountATM(DGSPurchase dgsPurchase, long discountATM) {
         dgsPurchase.setDiscountATM(discountATM);
         purchaseTable.insert(dgsPurchase);
     }
 
-    public void setRefundATM(DGSPurchase dgsPurchase, long refundATM) {
+    private void setRefundATM(DGSPurchase dgsPurchase, long refundATM) {
         dgsPurchase.setRefundATM(refundATM);
         purchaseTable.insert(dgsPurchase);
     }

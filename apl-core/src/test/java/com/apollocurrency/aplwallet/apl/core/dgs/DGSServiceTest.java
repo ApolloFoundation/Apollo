@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -41,8 +42,15 @@ import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -739,44 +747,218 @@ public class DGSServiceTest {
             DGSPublicFeedback publicFeedback = new DGSPublicFeedback(0L, blockchain.getHeight(), "New public feedback added", dtd.PURCHASE_16.getId());
             expected.add(publicFeedback);
 
-            service.addPublicFeedback(dtd.PURCHASE_16, publicFeedback.getFeedback());
-            assertEquals(expected, dtd.PURCHASE_16.getPublicFeedbacks());
+            service.feedback(dtd.PURCHASE_16.getId(), null, new MessageAppendix(publicFeedback.getFeedback()));
         });
-        expected.get(0).setDbId(tdCopy.PUBLIC_FEEDBACK_13.getDbId() + 1);
-        expected.get(1).setDbId(tdCopy.PUBLIC_FEEDBACK_13.getDbId() + 2);
-        expected.get(2).setDbId(tdCopy.PUBLIC_FEEDBACK_13.getDbId() + 3);
-        List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(dtd.PURCHASE_16);
-        assertEquals(expected, feedbacks);
         DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_16.getId());
         assertEquals(tdCopy.PURCHASE_16.getHeight(), purchase.getHeight());
+        long initialId = tdCopy.PUBLIC_FEEDBACK_13.getDbId();
+        for (DGSPublicFeedback dgsFeedback : expected) {
+            dgsFeedback.setDbId(++initialId);
+        }
+        List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(purchase);
+        assertEquals(expected, feedbacks);
+
     }
 
     @Test
     void testAddPublicFeedbackForPurchaseWithoutPublicFeedbacks() {
         doReturn(dtd.PURCHASE_18.getHeight() + 1000).when(blockchain).getHeight();
-        List<DGSPublicFeedback> expected = new ArrayList<>();
+        DGSPublicFeedback expected = new DGSPublicFeedback(0L, blockchain.getHeight(), "New public feedback added", dtd.PURCHASE_2.getId());
+        dtd.PURCHASE_2.setHeight(dtd.PURCHASE_18.getHeight() + 1000);
+        dtd.PURCHASE_2.setDbId(dtd.PURCHASE_18.getDbId());
+        DbUtils.inTransaction(extension, (con)-> {
+            service.feedback(dtd.PURCHASE_2.getId(), null, new MessageAppendix(expected.getFeedback()));
+        });
+        DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
+        assertEquals(blockchain.getHeight(), purchase.getHeight());
+        assertTrue(purchase.hasPublicFeedbacks());
+
+        expected.setDbId(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1);
+        List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(purchase);
+        assertEquals(List.of(expected), feedbacks);
+    }
+
+    @Test
+    void testAddFeedback() {
+        doReturn(dtd.PURCHASE_18.getHeight() + 2000).when(blockchain).getHeight();
+        DGSTestData tdCopy = new DGSTestData();
+        List<DGSFeedback> expected = new ArrayList<>(tdCopy.PURCHASE_5.getFeedbacks());
+        expected.forEach(e-> e.setHeight(blockchain.getHeight()));
+        DbUtils.inTransaction(extension, (con)-> {
+
+            dtd.PURCHASE_14.setHeight(dtd.PURCHASE_18.getHeight() + 2000);
+
+            DGSFeedback feedback = new DGSFeedback(0L, blockchain.getHeight(), dtd.PURCHASE_5.getId(), new EncryptedData(new byte[32], new byte[32]));
+            expected.add(feedback);
+
+            service.feedback(dtd.PURCHASE_5.getId(), new EncryptedMessageAppendix(feedback.getFeedbackEncryptedData(), false, true), null);
+        });
+        long initialId = tdCopy.FEEDBACK_11.getDbId();
+        for (DGSFeedback dgsFeedback : expected) {
+            dgsFeedback.setDbId(++initialId);
+        }
+        DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_5.getId());
+        assertEquals(tdCopy.PURCHASE_5.getHeight(), purchase.getHeight());
+        List<DGSFeedback> feedbacks = service.getFeedbacks(purchase);
+        assertEquals(expected, feedbacks);
+    }
+
+    @Test
+    void testAddFeedbackForPurchaseWithoutPublicFeedbacks() {
+        doReturn(dtd.PURCHASE_18.getHeight() + 1000).when(blockchain).getHeight();
+        List<DGSFeedback> expected = new ArrayList<>();
         DbUtils.inTransaction(extension, (con)-> {
 
             dtd.PURCHASE_2.setHeight(dtd.PURCHASE_18.getHeight() + 1000);
             dtd.PURCHASE_2.setDbId(dtd.PURCHASE_18.getDbId());
 
-            DGSPublicFeedback publicFeedback = new DGSPublicFeedback(0L, blockchain.getHeight(), "New public feedback added", dtd.PURCHASE_2.getId());
-            expected.add(publicFeedback);
+            DGSFeedback feedback = new DGSFeedback(0L, blockchain.getHeight(), dtd.PURCHASE_2.getId(), new EncryptedData("New feedback added".getBytes(), new byte[32]));
+            expected.add(feedback);
 
-            service.addPublicFeedback(dtd.PURCHASE_2, publicFeedback.getFeedback());
-            assertEquals(expected, dtd.PURCHASE_2.getPublicFeedbacks());
+            service.feedback(dtd.PURCHASE_2.getId(), new EncryptedMessageAppendix(feedback.getFeedbackEncryptedData(), true, false), null);
         });
-        expected.get(0).setDbId(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1);
-        List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(dtd.PURCHASE_2);
+        expected.get(0).setDbId(dtd.FEEDBACK_11.getDbId() + 1);
+        DGSPurchase savedPurchase = service.getPurchase(dtd.PURCHASE_2.getId());
+        List<DGSFeedback> feedbacks = service.getFeedbacks(savedPurchase);
         assertEquals(expected, feedbacks);
-        DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
-        assertEquals(blockchain.getHeight(), purchase.getHeight());
-        assertTrue(purchase.hasPublicFeedbacks());
+        assertEquals(blockchain.getHeight(), savedPurchase.getHeight());
+        assertTrue(savedPurchase.hasFeedbacks());
     }
 
+    @Test
+    void testAddPublicFeedbackWithEncryptedFeedback() {
+        int blockchainHeight = dtd.PURCHASE_18.getHeight() + 4000;
+        doReturn(blockchainHeight).when(blockchain).getHeight();
+
+        DGSTestData tdCopy = new DGSTestData();
+        List<DGSFeedback> expectedFeedbacks = new ArrayList<>(tdCopy.PURCHASE_5.getFeedbacks());
+        expectedFeedbacks.forEach(e-> e.setHeight(blockchainHeight));
+        DGSFeedback expectedFeedback = new DGSFeedback(0L, blockchainHeight, dtd.PURCHASE_5.getId(), new EncryptedData(new byte[32], new byte[32]));
+        expectedFeedbacks.add(expectedFeedback);
+        List<DGSPublicFeedback> expectedPublicFeedbacks = new ArrayList<>(tdCopy.PURCHASE_5.getPublicFeedbacks());
+        expectedPublicFeedbacks.forEach(e->e.setHeight(blockchainHeight));
+        DGSPublicFeedback expectedPublicFeedback = new DGSPublicFeedback(0L, blockchainHeight, "New public feedback", tdCopy.PURCHASE_5.getId());
+        expectedPublicFeedbacks.add(expectedPublicFeedback);
+        long initialEncryptedFeedbackId = tdCopy.FEEDBACK_11.getDbId();
+        for (DGSFeedback dgsFeedback : expectedFeedbacks) {
+            dgsFeedback.setDbId(++initialEncryptedFeedbackId);
+        }
+        long initialPublicFeedbackId = tdCopy.PUBLIC_FEEDBACK_13.getDbId();
+        for (DGSPublicFeedback publicFeedback : expectedPublicFeedbacks) {
+            publicFeedback.setDbId(++initialPublicFeedbackId);
+        }
+        DbUtils.inTransaction(extension, (con)-> {
+            service.feedback(dtd.PURCHASE_5.getId(), new EncryptedMessageAppendix(expectedFeedback.getFeedbackEncryptedData(), false, true), new MessageAppendix(expectedPublicFeedback.getFeedback()));
+        });
 
 
+        DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_5.getId());
+        assertTrue(purchase.hasPublicFeedbacks());
+        assertTrue(purchase.hasFeedbacks());
+        assertEquals(tdCopy.PURCHASE_5.getHeight(), purchase.getHeight());
+        List<DGSFeedback> feedbacks = service.getFeedbacks(purchase);
+        assertEquals(expectedFeedbacks, feedbacks);
+        List<DGSPublicFeedback> publicFeedbacks = service.getPublicFeedbacks(purchase);
+        assertEquals(expectedPublicFeedbacks, publicFeedbacks);
+    }
 
+    @Test
+    void testAddPublicFeedbackWithEncryptedFeedbackToPurchaseWithoutFeedbacks() {
+        int blockchainHeight = dtd.PURCHASE_18.getHeight() + 4000;
+        doReturn(blockchainHeight).when(blockchain).getHeight();
+
+        DGSTestData tdCopy = new DGSTestData();
+        DGSFeedback expectedFeedback = new DGSFeedback(dtd.FEEDBACK_11.getDbId() + 1, blockchainHeight, dtd.PURCHASE_2.getId(), new EncryptedData("New encrypted feedback".getBytes(), new byte[32]));
+        DGSPublicFeedback expectedPublicFeedback = new DGSPublicFeedback(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1, blockchainHeight, "New public feedback", tdCopy.PURCHASE_2.getId());
+        DbUtils.inTransaction(extension, (con)-> service.feedback(dtd.PURCHASE_2.getId(), new EncryptedMessageAppendix(expectedFeedback.getFeedbackEncryptedData(), false, true), new MessageAppendix(expectedPublicFeedback.getFeedback())));
+
+
+        DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
+        assertTrue(purchase.hasPublicFeedbacks());
+        assertTrue(purchase.hasFeedbacks());
+        assertEquals(blockchainHeight, purchase.getHeight());
+        List<DGSFeedback> feedbacks = service.getFeedbacks(purchase);
+        assertEquals(List.of(expectedFeedback), feedbacks);
+        List<DGSPublicFeedback> publicFeedbacks = service.getPublicFeedbacks(purchase);
+        assertEquals(List.of(expectedPublicFeedback), publicFeedbacks);
+    }
+
+    @Test
+    void testListGoods() {
+        Transaction listTransaction = mock(Transaction.class);
+        int height = 100_000;
+        long txId = 100L;
+        long senderId = 200L;
+        String tag1 = dtd.TAG_5.getTag();
+        String tag2 = dtd.TAG_10.getTag();
+        String tag3 = "newtag";
+        String tag4 = "batman";
+        doReturn(height).when(blockchain).getHeight();
+        PrunablePlainMessageAppendix image = new PrunablePlainMessageAppendix("Image");
+        doReturn(100_000).when(blockchain).getLastBlockTimestamp();
+        doReturn(image).when(listTransaction).getPrunablePlainMessage();
+        doReturn(height).when(listTransaction).getHeight();
+        doReturn(txId).when(listTransaction).getId();
+        doReturn(senderId).when(listTransaction).getSenderId();
+        String tags = String.join(",", List.of(tag1, tag2, tag3, tag4));
+        DGSGoods expected = new DGSGoods(dtd.GOODS_13.getDbId() + 1, height, txId, senderId, "Test goods", "Test", tags, new String[] {tag1,tag2,tag3}, 100_000, true, 2, 100_000_000, false);
+        DigitalGoodsListing digitalGoodsListing = new DigitalGoodsListing("Test goods", "Test", tags, 2, 100_000_000);
+        DbUtils.inTransaction(extension, (con)-> {
+            service.listGoods(listTransaction, digitalGoodsListing);
+        });
+        DGSGoods actual = service.getGoods(txId);
+        assertEquals(expected, actual);
+        List<DGSTag> dgsTags = CollectionUtil.toList(service.getAllTags(0, Integer.MAX_VALUE));
+        DGSTag expectedTag1 = new DGSTag(dtd.TAG_12.getDbId() + 1, height, tag1, dtd.TAG_5.getInStockCount() + 1, dtd.TAG_5.getTotalCount() + 1);
+        DGSTag expectedTag2 = new DGSTag(dtd.TAG_12.getDbId() + 2, height, tag2, dtd.TAG_10.getInStockCount() + 1, dtd.TAG_10.getTotalCount() + 1);
+        DGSTag expectedTag3 = new DGSTag(dtd.TAG_12.getDbId() + 3, height, tag3, 1, 1);
+        assertEquals(7, dgsTags.size());
+        assertEquals(7, service.getTagsCount());
+        assertTrue(dgsTags.contains(expectedTag1));
+        assertTrue(dgsTags.contains(expectedTag2));
+        assertTrue(dgsTags.contains(expectedTag3));
+
+    }
+
+    @Test
+    void testGetTagsCount() {
+        assertEquals(6, service.getTagsCount());
+    }
+
+    @Test
+    void testGetCountInStock() {
+        assertEquals(4, service.getCountInStock());
+    }
+
+    @Test
+    void testGetAllTags() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getAllTags(0, Integer.MAX_VALUE));
+        assertEquals(List.of(dtd.TAG_10, dtd.TAG_4, dtd.TAG_11, dtd.TAG_12, dtd.TAG_6, dtd.TAG_5), tags);
+    }
+
+    @Test
+    void testGetAllTagsWithPagination() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getAllTags(1, 4));
+        assertEquals(List.of(dtd.TAG_4, dtd.TAG_11, dtd.TAG_12, dtd.TAG_6), tags);
+    }
+
+    @Test
+    void testGetAllInStockTags() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getInStockTags(0, Integer.MAX_VALUE));
+        assertEquals(List.of(dtd.TAG_10, dtd.TAG_4, dtd.TAG_11, dtd.TAG_12), tags);
+    }
+
+    @Test
+    void testGetAllInStockTagsWithPagination() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getInStockTags(1, 2));
+        assertEquals(List.of(dtd.TAG_4, dtd.TAG_11), tags);
+    }
+
+    @Test
+    void testGetTagsLike() {
+        List<DGSTag> tags = CollectionUtil.toList(service.getTagsLike("s", false, 0, Integer.MAX_VALUE));
+        assertEquals(List.of(dtd.TAG_5, dtd.TAG_10), tags);
+    }
 
 
 }

@@ -68,14 +68,9 @@ public interface DGSService {
 
     List<DGSPublicFeedback> getPublicFeedbacks(DGSPurchase dgsPurchase);
 
-    void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback);
-
-    void setRefundATM(DGSPurchase dgsPurchase, long refundATM);
-
     void listGoods(Transaction transaction, DigitalGoodsListing attachment);
 
     int getTagsCount();
-
 
     int getCountInStock();
 
