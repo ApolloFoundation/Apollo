@@ -258,46 +258,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 o = nullString;
                             }
                             break;
-/*
-                            InputStream inputStream = null;
-                            try {
-                                inputStream = rs.getBinaryStream(i + 1);
-//                                o = Base64.getEncoder().encodeToString(
-//                                        new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).getBytes());
-                                o = Base64.getEncoder().encodeToString(inputStream.readAllBytes());
-                            } catch (Exception e) {
-//                                o = nullString;
-                                log.error("Binary stream error", e);
-                                throw e;
-                            } finally {
-                                if (inputStream != null) {
-                                    inputStream.close();
-                                }
-                            }
-                            break;
-*/
-/*
-                            InputStream inputStream = rs.getBinaryStream(i + 1);
-                            StringBuffer sb = new StringBuffer();
-                            if (inputStream != null) {
-                                byte[] buf = new byte[1024];
-                                int len = 0;
-                                try {
-                                    while ((len += inputStream.read(buf)) != -1) {
-    //                                    out.write(buf, 0, len);
-                                        sb.append(Convert.toHexString(buf));
-//                                        sb.append(buf);
-                                    }
-                                } finally {
-                                    inputStream.close();
-                                }
-                                log.trace("len = {}", len);
-                                o = sb.toString();
-                            } else {
-                                o = nullString;
-                            }
-                            break;
-*/
                         case Types.VARCHAR:
                         default:
                             o = rs.getString(i + 1);
