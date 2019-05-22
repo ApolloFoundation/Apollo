@@ -238,11 +238,17 @@ public final class PeerImpl implements Peer {
         return pi.application;
     }
 
-    void setApplication(String application) {
-        if (application == null || application.length() > Peers.MAX_APPLICATION_LENGTH) {
-            throw new IllegalArgumentException("Invalid application");
-        }
-        pi.application = application;
+    boolean setApplication(String application) {
+        boolean res = true;
+        if (application == null 
+                || application.length() > Peers.MAX_APPLICATION_LENGTH
+                || ! application.equalsIgnoreCase(Constants.APPLICATION)
+           ) {
+            LOG.debug("Invalid application: {} from host:{}",application,host);
+            res=false;
+        }        
+        this.pi.application = application;
+        return res;
     }
 
     @Override
@@ -398,7 +404,7 @@ public final class PeerImpl implements Peer {
             return;
         }
         if (! isBlacklisted()) {
-            LOG.error("Connect error", cause);
+            LOG.trace("Connect error", cause);
             if (cause instanceof IOException || cause instanceof ParseException || cause instanceof IllegalArgumentException) {
                 LOG.debug("Blacklisting " + host + " because of: " + cause.toString());
             } else {
@@ -450,6 +456,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void remove() {
+        setState(State.NON_CONNECTED);
         webSocket.close();
         Peers.removePeer(this);
         Peers.notifyListeners(this, Peers.Event.REMOVE);
@@ -584,7 +591,7 @@ public final class PeerImpl implements Peer {
                 //
                 String urlString = "http://" + getHostWithPort() + "/apl";
                 URL url = new URL(urlString);
-                LOG.debug("Connecting to URL = {}...", urlString);
+                LOG.trace("Connecting to URL = {}...", urlString);
                 if (communicationLoggingMask != 0)
                     log = "\"" + url.toString() + "\": " + JSON.toString(request);
                 connection = (HttpURLConnection) url.openConnection();
@@ -732,6 +739,7 @@ public final class PeerImpl implements Peer {
             }
             JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE, true);
             if (response != null) {
+                //TODO: parse in new_pi
                 prev_pi = pi;
                 pi = mapper.convertValue(response, PeerInfo.class);
                 if (pi.errorCode != null && pi.errorCode!=0) {
@@ -739,10 +747,31 @@ public final class PeerImpl implements Peer {
                     LOG.debug("NULL or error response from {}",host);
                     return;
                 }
+                String app = (String)response.get("application");
+                if(!setApplication(app)){
+                    remove();
+                    return;
+                }
+                Object chainIdObject = response.get("chainId");
+                if (chainIdObject == null) {
+                    LOG.debug("Peer: {} has NULL chainId, removing",getHost());
+                    remove();
+                    return;
+                }else{
+                   String chainIdstr= chainIdObject.toString();
+                   UUID peerChainId=UUID.fromString(chainIdstr);
+                   if(!peerChainId.equals(targetChainId)){
+                    LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),chainIdstr);
+                    remove();
+                    return;                        
+                   }     
+                   chainId.set(peerChainId);     
+                }    
                 String servicesString = (String)response.get("services");
-                long origServices = services;
+                long origServices = services;                
                 services = (servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-
+                setApiPort(response.get("apiPort"));
+                setApiSSLPort(response.get("apiSSLPort"));
                 setDisabledAPIs(response.get("disabledAPIs"));
                 setBlockchainState(response.get("blockchainState"));
                 lastUpdated = lastConnectAttempt;
@@ -757,6 +786,11 @@ public final class PeerImpl implements Peer {
                     return;
                 }
                 chainId.set(UUID.fromString(pi.chainId));
+
+                setPlatform((String) response.get("platform"));
+ //               shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
+                analyzeHallmark((String) response.get("hallmark"));
+                
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     String newAnnouncedAddress =pi.announcedAddress;
                     if (newAnnouncedAddress != null) {

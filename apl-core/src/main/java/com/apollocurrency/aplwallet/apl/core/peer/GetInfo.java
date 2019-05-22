@@ -99,7 +99,11 @@ final class GetInfo extends PeerRequestHandler {
         if (pi.application == null) {
             pi.application = "?";
         }
-        peerImpl.setApplication(pi.application.trim());
+
+        if(!peerImpl.setApplication(pi.application.trim())){
+            LOG.debug("Invalid application. IP: {}, application: {}, removng", peerImpl.getHost(),pi.application);
+            peerImpl.remove();
+        }
 
         Version version = null;
         try {
@@ -109,9 +113,7 @@ final class GetInfo extends PeerRequestHandler {
             LOG.error("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("PEER-GetINFO: Addr: {}, version {}",announcedAddress, version);
-        }
+        LOG.debug("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.application, version);
         peerImpl.setVersion(version);
 
         if (pi.platform == null) {

@@ -59,7 +59,6 @@ public class DexService {
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
-    @Transactional
     public void saveOffer (DexOffer offer){
         dexOfferTable.insert(offer);
     }
@@ -104,8 +103,8 @@ public class DexService {
     }
 
 
-    public void closeOverdueOrders(){
-        List<DexOffer> offers = dexOfferDao.getOverdueOrders(epochTime.getEpochTime());
+    public void closeOverdueOrders(Integer time){
+        List<DexOffer> offers = dexOfferDao.getOverdueOrders(time);
 
         for (DexOffer offer : offers) {
             try {

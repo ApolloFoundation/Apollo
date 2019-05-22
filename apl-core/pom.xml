@@ -250,6 +250,13 @@
             <scope>provided</scope>
         </dependency>
 
+        
+        <dependency>
+            <groupId>com.apollocurrency.antifraud</groupId>
+            <artifactId>antifraud</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        
         <!-- Ethereum API -->
         <dependency>
             <groupId>org.web3j</groupId>
