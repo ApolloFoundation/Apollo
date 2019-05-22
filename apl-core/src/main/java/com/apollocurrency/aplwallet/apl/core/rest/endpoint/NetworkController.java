@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 
 @Path("/networking")
-public class NetworkEndpoint {
+public class NetworkController {
 
     @Inject @Setter
     private Converter<Peer, PeerDTO> peerConverter;

@@ -27,20 +27,20 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 @Path("/control")
-public class BackendControlEndpoint {
-    private static final Logger log = LoggerFactory.getLogger(BackendControlEndpoint.class);
+public class BackendControlController {
+    private static final Logger log = LoggerFactory.getLogger(BackendControlController.class);
     private BackendControlService bcService;
     /**
      * Empty constructor re quired by REstEasy
      */
 
 
-    public BackendControlEndpoint() {
+    public BackendControlController() {
        log.debug("Empty BackendControlEndpoint created"); 
     }
 
     @Inject
-    public BackendControlEndpoint(BackendControlService bcService) {
+    public BackendControlController(BackendControlService bcService) {
         this.bcService = bcService;
     }
 

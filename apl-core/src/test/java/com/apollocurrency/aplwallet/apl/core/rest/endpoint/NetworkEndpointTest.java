@@ -48,7 +48,7 @@ class NetworkEndpointTest {
     static void setupClass(){
         dispatcher = MockDispatcherFactory.createDispatcher();
 
-        NetworkEndpoint endpoint = new NetworkEndpoint();
+        NetworkController endpoint = new NetworkController();
         endpoint.setPeerConverter(new PeerConverter());
         dispatcher.getRegistry().addSingletonResource(endpoint);
 
