@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -218,7 +218,7 @@ public class Apollo {
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
                 .recursiveScanPackages(Updater.class)
-                .recursiveScanPackages(ServerInfoEndpoint.class)
+                .recursiveScanPackages(ServerInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
                 .recursiveScanPackages(Account.class)
                 .recursiveScanPackages(TransactionType.class)
