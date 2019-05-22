@@ -282,9 +282,9 @@ class CsvWriterReaderDerivedTablesTest {
     /**
      * Example for  real implementation importing data
      *
-     * @param itemName
-     * @param batchLimit
-     * @return
+     * @param itemName table name
+     * @param batchLimit rows in batch before commit
+     * @return processed rows number
      * @throws SQLException
      */
     private int importCsv(String itemName, int batchLimit) throws SQLException {
@@ -358,62 +358,6 @@ class CsvWriterReaderDerivedTablesTest {
         }
         return importedCount;
     }
-
-/*
-    // Version for using plain 'insert into values ()' string with non precompiled Stmt
-    private int importCsv(String itemName, int batchLimit) {
-        int importedCount = 0;
-        int columnsCount = 0;
-        Statement stm = null;
-        // open CSV Reader and db connection
-        try (ResultSet rs = csvReader.read(
-                itemName, null, null);
-             Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
-
-            // get CSV meta data info
-            ResultSetMetaData meta = rs.getMetaData();
-            columnsCount = meta.getColumnCount(); // columns count is main
-            // create SQL insert statement
-            StringBuffer sqlInsert = new StringBuffer(600);
-            StringBuffer columnNames = new StringBuffer(200);
-            StringBuffer columnsValues = new StringBuffer(200);
-            sqlInsert.append("INSERT INTO ").append(itemName).append(" (");
-            for (int i = 0; i < columnsCount; i++) {
-                columnNames.append( meta.getColumnLabel(i + 1)).append(",");
-            }
-            columnNames.deleteCharAt(columnNames.lastIndexOf(",")); // remove latest tail comma
-            sqlInsert.append(columnNames).append(") VALUES").append(" (");
-            log.debug("SQL = {}", sqlInsert.toString()); // composed insert
-            // precompile insert SQL
-            stm = con.createStatement();
-
-            // loop over CSV data reading line by line, column by column
-            while (rs.next()) {
-                for (int i = 0; i < columnsCount; i++) {
-                    String object = rs.getString(i + 1);
-                    log.trace("{}: {}\n", object, rs.getString(i + 1));
-                    columnsValues.append(object).append(",");
-                }
-                columnsValues.deleteCharAt(columnsValues.lastIndexOf(",")); // remove latest tail comma
-                StringBuffer sql = new StringBuffer(sqlInsert).append(columnsValues).append(")");
-                log.trace("sql = {}", sql);
-                importedCount += stm.executeUpdate(sql.toString());
-                if (batchLimit % importedCount == 0) {
-                    con.commit();
-                }
-                columnsValues.setLength(0);
-            }
-            con.commit(); // final commit
-        } catch (SQLException e) {
-            log.error("Error on importing data on table = '{}'", itemName, e);
-        } finally {
-            if (stm != null) {
-                DbUtils.close(stm);
-            }
-        }
-        return importedCount;
-    }
-*/
 
     /**
      * Delete rows in table
