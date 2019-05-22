@@ -67,10 +67,11 @@ public final class PopOff extends AbstractAPIRequestHandler {
         } finally {
             blockchainProcessor.setGetMoreBlocks(true);
         }
-        JSONArray blocksJSON = new JSONArray();
-        blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
+        //usually we do not need those blocks in output
+        //JSONArray blocksJSON = new JSONArray();
+        //blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
         JSONObject response = new JSONObject();
-        response.put("blocks", blocksJSON);
+        //response.put("blocks", blocksJSON);
         if (keepTransactions) {
             blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getTransactions()));
         }

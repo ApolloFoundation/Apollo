@@ -52,12 +52,12 @@ public interface BlockchainProcessor {
 
     void fullReset();
 
-    SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp);
+    SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp, int limit);
 
     void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException;
 
     SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
-            Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp);
+            Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
 
     void scan(int height, boolean validate);
 

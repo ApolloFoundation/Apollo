@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.antifraud.AntifraudValidator;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -67,22 +68,10 @@ public class TransactionValidator {
                 throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
             }
         }
-
-        String[] blacklist = {"APL-SP4G-XZ46-U4BN-9Y37G", "APL-CUWX-8NH7-5GGF-9WYCY"};
         
-        int blockchainHeight = blockchain.getHeight();
+        if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
+                transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
         
-        if (blockchainHeight > 1820000)
-        {
-            for (String blacklistedAccId : blacklist)
-            {
-                if ((transaction.getSenderId() == Convert.parseAccountId(blacklistedAccId)) && (transaction.getRecipientId() != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
-                {
-                    throw new AplException.NotValidException("Bad request");
-                }
-            };
-        }
-
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             appendage.loadPrunable(transaction);
@@ -100,7 +89,7 @@ public class TransactionValidator {
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
-
+        int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
             if (feeATM < minimumFeeATM) {
