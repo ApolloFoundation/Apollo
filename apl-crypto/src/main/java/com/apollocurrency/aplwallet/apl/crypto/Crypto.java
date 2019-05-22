@@ -396,7 +396,7 @@ public final class Crypto {
         }
         catch (Exception e)
         {
-            LOG.debug(e.getMessage());
+            LOG.trace(e.getMessage());
             
             return cryptogramm;
         }

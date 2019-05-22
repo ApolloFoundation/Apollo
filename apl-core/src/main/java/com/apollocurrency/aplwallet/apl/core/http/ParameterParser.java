@@ -477,8 +477,7 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            byte[] secretBytes = Helper2FA.findAplSecretBytes(senderId, passphrase);
-            return secretBytes == null ? null : secretBytes;
+            return Helper2FA.findAplSecretBytes(senderId, passphrase);
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
@@ -536,11 +535,9 @@ public final class ParameterParser {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-
                         byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
-                        if (secretBytes != null) {
-                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
-                        }
+
+                        return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
                 } else {
 

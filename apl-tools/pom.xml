@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.31.1</version>
+        <version>1.32.13</version>
     </parent>
 
     <artifactId>apl-tools</artifactId>
