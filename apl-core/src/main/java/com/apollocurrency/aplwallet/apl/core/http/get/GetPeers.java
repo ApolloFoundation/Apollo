@@ -36,6 +36,7 @@ import java.util.Collection;
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
+@Deprecated
 public final class GetPeers extends AbstractAPIRequestHandler {
 
     public GetPeers() {

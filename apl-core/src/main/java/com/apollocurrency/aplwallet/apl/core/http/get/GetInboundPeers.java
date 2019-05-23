@@ -57,6 +57,7 @@ import javax.enterprise.inject.Vetoed;
  */
 
 @Vetoed
+@Deprecated
 public final class GetInboundPeers extends AbstractAPIRequestHandler {
 
 

@@ -39,6 +39,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_P
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
+@Deprecated
 public class SetAPIProxyPeer extends AbstractAPIRequestHandler {
 
     public SetAPIProxyPeer() {
@@ -48,6 +49,7 @@ public class SetAPIProxyPeer extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         String peerAddress = Convert.emptyToNull(request.getParameter("peer"));
+
         if (peerAddress == null) {
             Peer peer = APIProxy.getInstance().setForcedPeer(null);
             if (peer == null) {

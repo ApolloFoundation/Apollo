@@ -1131,7 +1131,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validatePhasedTransactions(previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-                dexService.closeOverdueOrders();
+                dexService.closeOverdueOrders(block.getTimestamp());
 
                 block.setPrevious(previousLastBlock);
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
@@ -1370,20 +1370,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (!dataSource.isInTransaction()) {
                 try {
                     dataSource.begin();
-                    return popOffToInTransaction(commonBlock);
+                    return popOffToInTransaction(commonBlock,dataSource);
                 } finally {
                     dataSource.commit();
                 }
             } else {
-                return popOffToInTransaction(commonBlock);
+                return popOffToInTransaction(commonBlock,dataSource);
             }
         } finally {
             globalSync.writeUnlock();
         }
     }
 
-    public List<Block> popOffToInTransaction(Block commonBlock) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+    public List<Block> popOffToInTransaction(Block commonBlock, TransactionalDataSource dataSource) {
         if (commonBlock.getHeight() < getMinRollbackHeight()) {
             log.info("Rollback to height " + commonBlock.getHeight() + " not supported, will do a full rescan");
             popOffWithRescan(commonBlock.getHeight() + 1);
@@ -1416,7 +1415,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.rollback(false);
             Block lastBlock = blockchain.findLastBlock();
             lookupBlockhain().setLastBlock(lastBlock);
-            popOffToInTransaction(lastBlock);
+            popOffToInTransaction(lastBlock,dataSource);
             throw e;
         }
         return poppedOffBlocks;

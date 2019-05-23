@@ -210,11 +210,18 @@ public final class PeerImpl implements Peer {
         return application;
     }
 
-    void setApplication(String application) {
-        if (application == null || application.length() > Peers.MAX_APPLICATION_LENGTH) {
-            throw new IllegalArgumentException("Invalid application");
+    boolean setApplication(String application) {
+        boolean res = true;
+        if (application == null 
+                || application.length() > Peers.MAX_APPLICATION_LENGTH
+                || ! application.equalsIgnoreCase(Constants.APPLICATION)
+           ) {
+            LOG.debug("Invalid application: {} from host:{}",application,host);
+            res=false;
         }
+        
         this.application = application;
+        return res;
     }
 
     @Override
@@ -382,7 +389,7 @@ public final class PeerImpl implements Peer {
             return;
         }
         if (! isBlacklisted()) {
-            LOG.error("Connect error", cause);
+            LOG.trace("Connect error", cause);
             if (cause instanceof IOException || cause instanceof ParseException || cause instanceof IllegalArgumentException) {
                 LOG.debug("Blacklisting " + host + " because of: " + cause.toString());
             } else {
@@ -434,6 +441,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void remove() {
+        setState(State.NON_CONNECTED);
         webSocket.close();
         Peers.removePeer(this);
         Peers.notifyListeners(this, Peers.Event.REMOVE);
@@ -699,10 +707,29 @@ public final class PeerImpl implements Peer {
                     setState(State.NON_CONNECTED);
                     return;
                 }
+                String app = (String)response.get("application");
+                if(!setApplication(app)){
+                    remove();
+                    return;
+                }
+                Object chainIdObject = response.get("chainId");
+                if (chainIdObject == null) {
+                    LOG.debug("Peer: {} has NULL chainId, removing",getHost());
+                    remove();
+                    return;
+                }else{
+                   String chainIdstr= chainIdObject.toString();
+                   UUID peerChainId=UUID.fromString(chainIdstr);
+                   if(!peerChainId.equals(targetChainId)){
+                    LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),chainIdstr);
+                    remove();
+                    return;                        
+                   }     
+                   chainId.set(peerChainId);     
+                }    
                 String servicesString = (String)response.get("services");
-                long origServices = services;
+                long origServices = services;                
                 services = (servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-                setApplication((String)response.get("application"));
                 setApiPort(response.get("apiPort"));
                 setApiSSLPort(response.get("apiSSLPort"));
                 setDisabledAPIs(response.get("disabledAPIs"));
@@ -715,12 +742,7 @@ public final class PeerImpl implements Peer {
                 setPlatform((String) response.get("platform"));
                 shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
                 analyzeHallmark((String) response.get("hallmark"));
-                Object chainIdObject = response.get("chainId");
-                if (chainIdObject == null || !UUID.fromString(chainIdObject.toString()).equals(targetChainId)) {
-                    remove();
-                    return;
-                }
-                chainId.set(UUID.fromString(chainIdObject.toString()));
+                
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     String newAnnouncedAddress = Convert.emptyToNull((String) response.get("announcedAddress"));
                     if (newAnnouncedAddress != null) {

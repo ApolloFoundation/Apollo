@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.antifraud.AntifraudValidator;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -68,8 +69,10 @@ public class TransactionValidator {
             }
         }
 
+        if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
+                transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
-
+/* // TODO: YL after merge with APL-527-implement-sharding. Do we need it ??
         String[] blacklist = {"APL-SP4G-XZ46-U4BN-9Y37G", "APL-CUWX-8NH7-5GGF-9WYCY"};
 
         int blockchainHeight = blockchain.getHeight();
@@ -84,6 +87,7 @@ public class TransactionValidator {
                 }
             };
         }
+*/
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
@@ -102,6 +106,7 @@ public class TransactionValidator {
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
+        int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
             if (feeATM < minimumFeeATM) {

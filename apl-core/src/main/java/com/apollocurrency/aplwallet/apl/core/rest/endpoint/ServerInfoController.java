@@ -25,16 +25,16 @@ import org.slf4j.LoggerFactory;
  */
 
 @Path("/serverinfo")
-public class ServerInfoEndpoint {
-    private static final Logger log = LoggerFactory.getLogger(ServerInfoEndpoint.class);
+public class ServerInfoController {
+    private static final Logger log = LoggerFactory.getLogger(ServerInfoController.class);
     private  ServerInfoService siService;
 
     @Inject
-    public ServerInfoEndpoint(ServerInfoService siService) {
+    public ServerInfoController(ServerInfoService siService) {
         this.siService = siService;
     }
 
-    public ServerInfoEndpoint() {
+    public ServerInfoController() {
       log.debug("Empty ServerInfoEndpoint created");
     }
 

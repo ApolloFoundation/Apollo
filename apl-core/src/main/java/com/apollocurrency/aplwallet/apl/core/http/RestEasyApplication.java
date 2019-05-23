@@ -3,11 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BackendControlEndpoint;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoEndpoint;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.*;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
 import javax.ws.rs.ApplicationPath;
@@ -27,12 +23,13 @@ public class RestEasyApplication extends Application  {
 
         HashSet<Class<?>> set = new HashSet<>();
         set.add(Metadata.class);
-        set.add(ServerInfoEndpoint.class);
+        set.add(ServerInfoController.class);
         set.add(KeyStoreController.class);
+        set.add(NetworkController.class);
         // Transfer Eth, doesn't use yet.
 //        set.add(WalletEthController.class);
         set.add(DexController.class);
-        set.add(BackendControlEndpoint.class);
+        set.add(BackendControlController.class);
 
 
         //TODO: add all endpoints below
