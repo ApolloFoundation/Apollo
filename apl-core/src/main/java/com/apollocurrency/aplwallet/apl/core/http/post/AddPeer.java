@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import org.apache.http.annotation.Obsolete;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

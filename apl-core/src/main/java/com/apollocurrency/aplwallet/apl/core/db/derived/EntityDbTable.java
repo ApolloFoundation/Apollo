@@ -46,7 +46,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
 
     private final String defaultSort;
     private final String fullTextSearchColumns;
-    private Blockchain blockchain;
+    private  Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private FullTextSearchService fullText;
 
