@@ -11,14 +11,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
@@ -105,6 +97,14 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Set;
+import java.util.UUID;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -202,10 +202,10 @@ class CsvExporterTest {
         Account.init(extension.getDatabaseManger(), propertiesHolder, null, null, blockchain, null, null, accountTable);
         AccountInfoTable.getInstance().init();
         Alias.init();
-//        PhasingOnly.get(Long.parseUnsignedLong("7995581942006468815")); // works OK!
-//        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811")); // error, doesn't load from db !!
-//        PhasingOnly.get(Long.parseLong("-8446384352342482748")); // error, doesn't load from db !!
-        PhasingOnly.get(Long.parseLong("-4013722529644937202")); // works OK!
+        PhasingOnly.get(7995581942006468815L); // works OK!
+        PhasingOnly.get(2728325718715804811L); // error, doesn't load from db !!
+        PhasingOnly.get(-8446384352342482748L); // error, doesn't load from db !!
+        PhasingOnly.get(-4013722529644937202L); // works OK!
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
