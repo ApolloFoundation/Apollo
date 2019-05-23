@@ -36,7 +36,7 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
 
 
     public DGSGoodsTable() {
-        super(TABLE_NAME, KEY_FACTORY, FULL_TEXT_SEARCH_COLUMNS);
+        super(TABLE_NAME, KEY_FACTORY, FULL_TEXT_SEARCH_COLUMNS, false);
     }
 
     @Override

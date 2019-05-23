@@ -188,20 +188,20 @@ public class BlockchainImpl implements Blockchain {
     public List<Long> getBlockIdsAfter(long blockId, int limit) {
         // Check the block cache
         lookupBlockDao();
-        List<Long> result = new ArrayList<>(blockDao.getBlockCacheSize());
-        synchronized (blockDao.getBlockCache()) {
-            Block block = blockDao.getBlockCache().get(blockId);
-            if (block != null) {
-                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
-                for (Block cacheBlock : cacheMap) {
-                    if (result.size() >= limit) {
-                        break;
-                    }
-                    result.add(cacheBlock.getId());
-                }
-                return result;
-            }
-        }
+        List<Long> result = new ArrayList<>();
+//        synchronized (blockDao.getBlockCache()) {
+//            Block block = blockDao.getBlockCache().get(blockId);
+//            if (block != null) {
+//                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+//                for (Block cacheBlock : cacheMap) {
+//                    if (result.size() >= limit) {
+//                        break;
+//                    }
+//                    result.add(cacheBlock.getId());
+//                }
+//                return result;
+//            }
+//        }
         return blockDao.getBlockIdsAfter(blockId, limit, result);
     }
 
@@ -218,20 +218,20 @@ public class BlockchainImpl implements Blockchain {
         }
         // Check the block cache
         lookupBlockDao();
-        List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
-        synchronized (blockDao.getBlockCache()) {
-            Block block = blockDao.getBlockCache().get(blockId);
-            if (block != null) {
-                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
-                for (Block cacheBlock : cacheMap) {
-                    if (result.size() >= limit) {
-                        break;
-                    }
-                    result.add(cacheBlock);
-                }
-                return result;
-            }
-        }
+        List<Block> result = new ArrayList<>();
+//        synchronized (blockDao.getBlockCache()) {
+//            Block block = blockDao.getBlockCache().get(blockId);
+//            if (block != null) {
+//                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+//                for (Block cacheBlock : cacheMap) {
+//                    if (result.size() >= limit) {
+//                        break;
+//                    }
+//                    result.add(cacheBlock);
+//                }
+//                return result;
+//            }
+//        }
         return blockDao.getBlocksAfter(blockId, limit, result);
     }
 
@@ -242,21 +242,21 @@ public class BlockchainImpl implements Blockchain {
         }
         // Check the block cache
         lookupBlockDao();
-        List<Block> result = new ArrayList<>(blockDao.getBlockCacheSize());
-        synchronized (blockDao.getBlockCache()) {
-            Block block = blockDao.getBlockCache().get(blockId);
-            if (block != null) {
-                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
-                int index = 0;
-                for (Block cacheBlock : cacheMap) {
-                    if (result.size() >= blockList.size() || cacheBlock.getId() != blockList.get(index++)) {
-                        break;
-                    }
-                    result.add(cacheBlock);
-                }
-                return result;
-            }
-        }
+        List<Block> result = new ArrayList<>();
+//        synchronized (blockDao.getBlockCache()) {
+//            Block block = blockDao.getBlockCache().get(blockId);
+//            if (block != null) {
+//                Collection<Block> cacheMap = blockDao.getHeightMap().tailMap(block.getHeight() + 1).values();
+//                int index = 0;
+//                for (Block cacheBlock : cacheMap) {
+//                    if (result.size() >= blockList.size() || cacheBlock.getId() != blockList.get(index++)) {
+//                        break;
+//                    }
+//                    result.add(cacheBlock);
+//                }
+//                return result;
+//            }
+//        }
         return blockDao.getBlocksAfter(blockId, blockList, result);
     }
 
@@ -306,11 +306,6 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void deleteAll() {
         lookupBlockDao().deleteAll();
-    }
-
-    @Override
-    public Map<Long, Transaction> getTransactionCache() {
-        return lookupBlockDao().getTransactionCache();
     }
 
     @Override

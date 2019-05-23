@@ -61,28 +61,21 @@ public class BlockDaoImpl implements BlockDao {
 
     private static final int DEFAULT_BLOCK_CACHE_SIZE = 10;
     private int blockCacheSize;
-    private final Map<Long, Block> blockCache;
-    private final SortedMap<Integer, Block> heightMap;
-    private final Map<Long, Transaction> transactionCache;
     private final DerivedTablesRegistry tablesRegistry;
     private DatabaseManager databaseManager;
     private TransactionDao transactionDao;
     private BlockIndexDao blockIndexDao;
 
 
-    public BlockDaoImpl(int blockCacheSize, Map<Long, Block> blockCache, SortedMap<Integer, Block> heightMap,
-                        Map<Long, Transaction> transactionCache, DerivedTablesRegistry tablesRegistry, DatabaseManager databaseManager) {
+    public BlockDaoImpl(int blockCacheSize, DerivedTablesRegistry tablesRegistry, DatabaseManager databaseManager) {
         this.blockCacheSize = blockCacheSize;
-        this.blockCache = blockCache == null ? new HashMap<>() : blockCache;
-        this.heightMap = heightMap == null ? new TreeMap<>() : heightMap;
-        this.transactionCache = transactionCache == null ? new HashMap<>() : transactionCache;
         this.tablesRegistry = Objects.requireNonNull(tablesRegistry, "Derived table registry cannot be null");
         this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
     }
 
     @Inject
     public BlockDaoImpl(DerivedTablesRegistry derivedDbTablesRegistry, DatabaseManager databaseManager) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, new HashMap<>(), new TreeMap<>(), new HashMap<>(), derivedDbTablesRegistry, databaseManager);
+        this(DEFAULT_BLOCK_CACHE_SIZE, derivedDbTablesRegistry, databaseManager);
     }
 
     private TransactionDao lookupTransactionDao() {
@@ -100,23 +93,17 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     private void clearBlockCache() {
-        synchronized (blockCache) {
-            blockCache.clear();
-            heightMap.clear();
-            transactionCache.clear();
-        }
+//        synchronized (blockCache) {
+//            blockCache.clear();
+//            heightMap.clear();
+//            transactionCache.clear();
+//        }
     }
 
     @Transactional(readOnly = true)
     @Override
     public Block findBlock(long blockId) {
         // Check the block cache
-        synchronized (blockCache) {
-            Block block = blockCache.get(blockId);
-            if (block != null) {
-                return block;
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         try (Connection con = dataSource.getConnection();
@@ -172,12 +159,6 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public boolean hasBlock(long blockId, int height) {
         // Check the block cache
-        synchronized(blockCache) {
-            Block block = blockCache.get(blockId);
-            if (block != null) {
-                return block.getHeight() <= height;
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         try (Connection con = dataSource.getConnection();
@@ -196,12 +177,6 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public long findBlockIdAtHeight(int height) {
         // Check the cache
-        synchronized(blockCache) {
-            Block block = heightMap.get(height);
-            if (block != null) {
-                return block.getId();
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
         try (Connection con = dataSource.getConnection();
@@ -218,26 +193,10 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
-    @Override
-    public Map<Long, Block> getBlockCache() {
-        return blockCache;
-    }
-
-    @Override
-    public SortedMap<Integer, Block> getHeightMap() {
-        return heightMap;
-    }
-
     @Transactional(readOnly = true)
     @Override
     public Block findBlockAtHeight(int height) {
         // Check the cache
-        synchronized(blockCache) {
-            Block block = heightMap.get(height);
-            if (block != null) {
-                return block;
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
         try (Connection con = dataSource.getConnection();
@@ -255,16 +214,6 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    @Override
-    public int getBlockCacheSize() {
-        return blockCacheSize;
-    }
-
-    @Override
-    public Map<Long, Transaction> getTransactionCache() {
-        return transactionCache;
     }
 
     @Override
@@ -638,13 +587,14 @@ public class BlockDaoImpl implements BlockDao {
                     pstmt.setLong(2, block.getPreviousBlockId());
                     pstmt.executeUpdate();
                 }
-                Block previousBlock;
-                synchronized (blockCache) {
-                    previousBlock = blockCache.get(block.getPreviousBlockId());
-                }
-                if (previousBlock != null) {
-                    previousBlock.setNextBlockId(block.getId());
-                }
+//                Update next block id for cached block
+//                Block previousBlock;
+//                synchronized (blockCache) {
+//                    previousBlock = blockCache.get(block.getPreviousBlockId());
+//                }
+//                if (previousBlock != null) {
+//                    previousBlock.setNextBlockId(block.getId());
+//                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -742,7 +692,7 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            clearBlockCache();
+//            clearBlockCache();
         }
     }
 
@@ -781,7 +731,7 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            clearBlockCache();
+//            clearBlockCache();
         }
     }
 

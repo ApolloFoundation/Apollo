@@ -28,7 +28,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface Blockchain {
@@ -87,7 +86,7 @@ public interface Blockchain {
 
     void deleteAll();
 
-    Map<Long, Transaction> getTransactionCache();
+//    Map<Long, Transaction> getTransactionCache();
 
     Transaction getTransaction(long transactionId);
 

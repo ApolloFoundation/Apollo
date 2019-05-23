@@ -8,8 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -21,7 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -34,16 +38,22 @@ public class ShardObserver {
     private ShardMigrationExecutor shardMigrationExecutor;
     private ShardRecoveryDao shardRecoveryDao;
     private ShardDao shardDao;
+    private Event<Boolean> trimEvent;
+    private boolean trimDerivedTables;
 
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
                          ShardMigrationExecutor shardMigrationExecutor,
-                         ShardDao shardDao, ShardRecoveryDao recoveryDao) {
+                         ShardDao shardDao, ShardRecoveryDao recoveryDao,
+                         @Property("apl.trimDerivedTables") boolean trimDerivedTables,
+                         Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.shardMigrationExecutor = Objects.requireNonNull(shardMigrationExecutor, "shard migration executor is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(recoveryDao, "shard recovery dao cannot be null");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
+        this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
+        this.trimDerivedTables = trimDerivedTables;
     }
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
@@ -56,13 +66,23 @@ public class ShardObserver {
         if (currentConfig.isShardingEnabled()) {
             int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
+                updateTrimConfig(false);
                 // quick create records for new Shard and Recovery process for later use
                 shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
                 shardDao.saveShard(new Shard(minRollbackHeight)); // store shard with HEIGHT ONLY
-                res = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight));
+                res = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight)).handle((success, ex)-> {
+                    updateTrimConfig(true);
+                    return success;
+                });
             }
         }
         return res;
+    }
+
+    private void updateTrimConfig(boolean enableTrim) {
+        if (trimDerivedTables) {
+            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
+        }
     }
 
     public boolean performSharding(int minRollbackHeight) {
@@ -89,5 +109,6 @@ public class ShardObserver {
         }
         return result;
     }
+
 
 }

@@ -99,12 +99,6 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return transaction.getHeight() <= height ? transaction : null;
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
@@ -147,13 +141,6 @@ public class TransactionDaoImpl implements TransactionDao {
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
@@ -183,12 +170,6 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public boolean hasTransaction(long transactionId, int height) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height);
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
@@ -213,13 +194,6 @@ public class TransactionDaoImpl implements TransactionDao {
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.getFullHash(), fullHash));
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
@@ -237,12 +211,6 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public byte[] getFullHash(long transactionId) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return transaction.getFullHash();
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
@@ -278,12 +246,6 @@ public class TransactionDaoImpl implements TransactionDao {
     @Transactional(readOnly = true)
     public List<Transaction> findBlockTransactions(long blockId) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Block block = blockDao.getBlockCache().get(blockId);
-            if (block != null) {
-                return block.getTransactions();
-            }
-        }
         // Search the database
         TransactionalDataSource dataSource = getDataSourceWithShardingByBlockId(blockId);
         try (Connection con = dataSource.getConnection()) {

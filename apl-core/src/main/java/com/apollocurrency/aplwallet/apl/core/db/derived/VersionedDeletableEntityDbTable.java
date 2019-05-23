@@ -26,6 +26,10 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 
+    public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns, boolean init) {
+        super(table, dbKeyFactory,true, fullTextSearchColumns, init);
+    }
+
     public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
         super(table, dbKeyFactory, true, null, init);
 

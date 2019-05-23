@@ -45,8 +45,8 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
         super(table, dbKeyFactory, multiversion, true);
     }
 
-    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory) {
-        super(table, dbKeyFactory, false, init);
+    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory, boolean multiversion) {
+        super(table, dbKeyFactory, multiversion, init);
     }
 
     public final List<T> get(DbKey dbKey) {

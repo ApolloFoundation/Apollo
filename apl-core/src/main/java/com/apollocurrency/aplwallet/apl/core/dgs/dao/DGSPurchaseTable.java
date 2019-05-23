@@ -34,7 +34,7 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
     private static final String TABLE = "purchase";
 
     public DGSPurchaseTable() {
-        super(TABLE, KEY_FACTORY);
+        super(TABLE, KEY_FACTORY, false);
     }
 
     @Override

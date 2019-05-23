@@ -36,6 +36,10 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
         super(table, dbKeyFactory, true);
     }
 
+    public VersionedDeletableValuesDbTable(String table, boolean init, KeyFactory<T> dbKeyFactory) {
+        super(table, init, dbKeyFactory, true);
+    }
+
     public boolean delete(T t, int height) {
 
         if (t == null) {

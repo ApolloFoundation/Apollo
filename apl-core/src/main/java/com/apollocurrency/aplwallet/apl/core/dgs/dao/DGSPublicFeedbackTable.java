@@ -33,7 +33,7 @@ public class DGSPublicFeedbackTable extends VersionedDeletableValuesDbTable<DGSP
     private static final String TABLE_NAME = "purchase_public_feedback";
 
     protected DGSPublicFeedbackTable() {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, false, KEY_FACTORY);
     }
 
     private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper(KEY_FACTORY);

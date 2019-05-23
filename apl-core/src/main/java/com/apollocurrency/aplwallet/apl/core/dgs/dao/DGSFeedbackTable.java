@@ -34,7 +34,7 @@ public class DGSFeedbackTable extends VersionedDeletableValuesDbTable<DGSFeedbac
     private static final DGSFeedbackMapper MAPPER = new DGSFeedbackMapper(KEY_FACTORY);
 
     public DGSFeedbackTable() {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, false, KEY_FACTORY);
     }
 
     @Override

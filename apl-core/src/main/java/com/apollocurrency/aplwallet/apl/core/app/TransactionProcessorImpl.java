@@ -631,7 +631,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         globalSync.writeLock();
         try {
             for (Transaction transaction : transactions) {
-                blockchain.getTransactionCache().remove(transaction.getId());
+//                blockchain.getTransactionCache().remove(transaction.getId());
                 if (blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }

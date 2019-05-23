@@ -32,7 +32,7 @@ public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
 
 
     public DGSTagTable() {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, KEY_FACTORY, false);
     }
 
     @Override

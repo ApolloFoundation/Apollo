@@ -4,17 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
@@ -28,6 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
@@ -48,18 +53,27 @@ public class ShardObserverTest {
     @Mock
     ShardRecoveryDao recoveryDao;
     private ShardObserver shardObserver;
+    private Event firedEvent;
 
     @BeforeEach
     void setUp() {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+    }
+
+    private void prepare(boolean withMockEvent, boolean trim) {
+        firedEvent = mock(Event.class);
+        if (withMockEvent) {
+            doReturn(firedEvent).when(firedEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        }
         shardObserver = new ShardObserver(
                 blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
-                shardDao, recoveryDao);
+                shardDao, recoveryDao, trim, firedEvent);
     }
 
     @Test
     void testSkipShardingWhenShardingIsDisabled() throws ExecutionException, InterruptedException {
+        prepare(false, true);
         doReturn(false).when(heightConfig).isShardingEnabled();
 
         CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
@@ -70,6 +84,7 @@ public class ShardObserverTest {
 
     @Test
     void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() throws ExecutionException, InterruptedException {
+        prepare(false, true);
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -82,6 +97,7 @@ public class ShardObserverTest {
 
     @Test
     void testDoNotShardWhenMinRollbackHeightIsZero() throws ExecutionException, InterruptedException {
+        prepare(false, true);
         doReturn(0).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
 
@@ -93,6 +109,7 @@ public class ShardObserverTest {
 
     @Test
     void testShardSuccessful() throws ExecutionException, InterruptedException {
+        prepare(true, true);
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -102,19 +119,37 @@ public class ShardObserverTest {
 
         assertTrue(created);
         verify(shardMigrationExecutor, times(1)).executeAllOperations();
+        verify(firedEvent, times(1)).fire(true);
+        verify(firedEvent, times(1)).fire(false);
     }
 
     @Test
     void testShardWhenShardExecutorThrowAnyException() throws ExecutionException, InterruptedException {
+        prepare(true, true);
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
 //        doReturn(new byte[]{1,2}).when(shardMigrationExecutor).calculateHash(DEFAULT_MIN_ROLLBACK_HEIGHT);
         doThrow(new RuntimeException()).when(shardMigrationExecutor).executeAllOperations();
-
         CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
 
         assertFalse(c.get());
         verify(shardMigrationExecutor, times(1)).executeAllOperations();
+        verify(firedEvent, times(1)).fire(true);
+        verify(firedEvent, times(1)).fire(false);
+    }
+
+    @Test
+    void testShardWhenShardTrimWasNotEnabled() throws ExecutionException, InterruptedException {
+        prepare(false, false);
+        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
+        doReturn(true).when(heightConfig).isShardingEnabled();
+        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
+
+        assertTrue(c.get());
+        verify(shardMigrationExecutor, times(1)).executeAllOperations();
+        verify(firedEvent, never()).fire(true);
+        verify(firedEvent, never()).fire(false);
     }
 }

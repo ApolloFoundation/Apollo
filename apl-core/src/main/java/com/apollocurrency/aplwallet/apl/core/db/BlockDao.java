@@ -4,16 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 
 public interface BlockDao {
 
@@ -25,15 +22,15 @@ public interface BlockDao {
 
     long findBlockIdAtHeight(int height);
 
-    Map<Long, Block> getBlockCache();
+//    Map<Long, Block> getBlockCache();
 
-    SortedMap<Integer, Block> getHeightMap();
+//    SortedMap<Integer, Block> getHeightMap();
 
     Block findBlockAtHeight(int height);
 
-    int getBlockCacheSize();
+//    int getBlockCacheSize();
 
-    Map<Long, Transaction> getTransactionCache();
+//    Map<Long, Transaction> getTransactionCache();
 
     Block findLastBlock();
 
