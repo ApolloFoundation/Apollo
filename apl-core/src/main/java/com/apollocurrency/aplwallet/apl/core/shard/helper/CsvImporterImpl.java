@@ -48,7 +48,6 @@ public class CsvImporterImpl implements CsvImporter {
     private StringBuffer sqlInsert = new StringBuffer(300);
     private StringBuffer columnNames = new StringBuffer(200);
     private StringBuffer columnsValues = new StringBuffer(100);
-    private StringBuffer sql = null;
 
 
     @Inject
@@ -61,7 +60,6 @@ public class CsvImporterImpl implements CsvImporter {
         csvReader = new CsvReaderImpl(this.dataExportPath);
         csvReader.setOptions("fieldDelimiter="); // do not put "" around column/values
     }
-
 
     /**
      * {@inheritDoc}
@@ -162,7 +160,7 @@ public class CsvImporterImpl implements CsvImporter {
             }
             con.commit(); // final commit
         } catch (SQLException e) {
-            log.error("Error on importing data on table = \n'{}'", sql, e);
+            log.error("Error on importing data on table = '{}'", tableName, e);
             throw e;
         } finally {
             if (preparedInsertStatement != null) {
