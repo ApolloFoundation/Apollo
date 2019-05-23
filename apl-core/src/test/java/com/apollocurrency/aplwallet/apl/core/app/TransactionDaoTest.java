@@ -7,14 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -37,6 +31,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class TransactionDaoTest {
@@ -137,7 +136,7 @@ class TransactionDaoTest {
     @Test
     void getTransactionCount() {
         int count = dao.getTransactionCount();
-        assertEquals(13, count);
+        assertEquals(14, count);
     }
 
     @Test
@@ -150,7 +149,7 @@ class TransactionDaoTest {
     @Test
     void getTransactionsFromAccount() {
         int count = dao.getTransactionCount(9211698109297098287L, (byte)0, (byte)0);
-        assertEquals(8, count);
+        assertEquals(9, count);
     }
 
 

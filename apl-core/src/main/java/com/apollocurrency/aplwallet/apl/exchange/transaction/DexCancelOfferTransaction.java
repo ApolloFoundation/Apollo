@@ -14,6 +14,7 @@ import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class DexCancelOfferTransaction extends DEX {
 
@@ -46,7 +47,7 @@ public class DexCancelOfferTransaction extends DEX {
 
         DexOffer offer = dexService.getOfferByTransactionId(orderTransactionId);
         if(offer == null) {
-            throw new AplException.NotValidException("Order was not found. Transaction: " + orderTransactionId);
+            throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
 
         if(!Long.valueOf(offer.getAccountId()).equals(transaction.getSenderId())){
@@ -54,11 +55,8 @@ public class DexCancelOfferTransaction extends DEX {
         }
 
         if(!OfferStatus.OPEN.equals(offer.getStatus())) {
-            throw new AplException.NotValidException("Can cancel only Open orders.");
-        }
-
-        if(dexService.isThereAnotherCancelUnconfirmedTx(orderTransactionId, transaction.getId())){
-            throw new AplException.NotValidException("There is another cancel transaction for this order in the unconfirmed tx pool already.");
+            throw new AplException.NotCurrentlyValidException("Can cancel only Open orders. Order Id/Tx: " + offer.getId() + "/" + Long.toUnsignedString(offer.getTransactionId())
+                    + ", order status: " + offer.getStatus() + " , Cancel Tx id:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()) );
         }
 
     }
@@ -79,6 +77,12 @@ public class DexCancelOfferTransaction extends DEX {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
 
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        DexOfferCancelAttachment attachment = (DexOfferCancelAttachment) transaction.getAttachment();
+        return isDuplicate(DEX.DEX_CANCEL_OFFER_TRANSACTION, Long.toUnsignedString(attachment.getTransactionId()), duplicates, true);
     }
 
     @Override

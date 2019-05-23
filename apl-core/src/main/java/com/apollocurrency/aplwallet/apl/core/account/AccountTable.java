@@ -19,11 +19,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.EnumSet;
+import javax.inject.Singleton;
 
 /**
  *
  * @author al
  */
+@Singleton
 public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
@@ -38,12 +40,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
 
     };
-    private static final AccountTable accountTable = new AccountTable();
-    
-    public static AccountTable getInstance(){
-        return accountTable;
-    }
-    
+
     public static DbKey newKey(long id){
         return accountDbKeyFactory.newKey(id);
     }
@@ -53,7 +50,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     }
     
     public AccountTable() {
-        super("account", accountDbKeyFactory);
+        super("account", accountDbKeyFactory, false);
     }
 
     @Override
@@ -122,12 +119,12 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             }
         }
     }
-     public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+     public  DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
                             " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
-            return AccountTable.getInstance().getManyBy(con, pstmt, false);
+            return getManyBy(con, pstmt, false);
     }
      
     public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {

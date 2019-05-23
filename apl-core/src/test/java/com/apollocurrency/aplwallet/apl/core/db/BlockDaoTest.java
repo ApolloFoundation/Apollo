@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_TIMESTAMP;
@@ -12,13 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-
-import javax.inject.Inject;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -44,6 +36,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Set;
+import javax.inject.Inject;
 
 @EnableWeld
 class BlockDaoTest {
@@ -101,7 +98,7 @@ class BlockDaoTest {
     @Test
     void findLastBlock() {
         Block block = blockDao.findLastBlock();
-        assertEquals(block.getId(), BLOCK_11_ID);
+        assertEquals(block.getId(), testData.LAST_BLOCK.getId());
     }
 
     @Test

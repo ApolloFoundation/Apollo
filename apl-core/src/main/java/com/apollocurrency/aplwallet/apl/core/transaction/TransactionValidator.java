@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.antifraud.AntifraudValidator;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -67,6 +68,26 @@ public class TransactionValidator {
                 throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
             }
         }
+
+        if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
+                transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
+
+/* // TODO: YL after merge with APL-527-implement-sharding. Do we need it ??
+        String[] blacklist = {"APL-SP4G-XZ46-U4BN-9Y37G", "APL-CUWX-8NH7-5GGF-9WYCY"};
+
+        int blockchainHeight = blockchain.getHeight();
+
+        if (blockchainHeight > 1820000)
+        {
+            for (String blacklistedAccId : blacklist)
+            {
+                if ((transaction.getSenderId() == Convert.parseAccountId(blacklistedAccId)) && (transaction.getRecipientId() != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
+                {
+                    throw new AplException.NotValidException("Bad request");
+                }
+            };
+        }
+*/
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {

@@ -20,6 +20,6 @@ import javax.enterprise.inject.spi.CDI;
 public class FullTextStoredProcedures {
     public static ResultSet search(String schema, String table, String queryText, int limit, int offset)
             throws SQLException {
-        return CDI.current().select(FullTextSearchServiceImpl.class).get().search(schema, table, queryText, limit, offset);
+        return CDI.current().select(FullTextSearchService.class).get().search(schema, table, queryText, limit, offset);
     }
 }

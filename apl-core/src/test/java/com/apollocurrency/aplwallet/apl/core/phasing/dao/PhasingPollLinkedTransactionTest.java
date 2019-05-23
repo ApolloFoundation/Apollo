@@ -147,7 +147,7 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
 
     @Override
     protected List<PhasingPollLinkedTransaction> dataToInsert() {
-        return List.of(ptd.NEW_LINKED_TRANSACTION_1, ptd.NEW_LINKED_TRANSACTION_2, ptd.NEW_LINKED_TRANSACTION_3);
+        return List.of(ptd.NEW_LINKED_TRANSACTION_1, ptd.NEW_LINKED_TRANSACTION_2);
     }
 
 }

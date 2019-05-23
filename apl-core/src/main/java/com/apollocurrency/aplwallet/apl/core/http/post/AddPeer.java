@@ -36,6 +36,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_P
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
+@Deprecated
 public class AddPeer extends AbstractAPIRequestHandler {
 
     public AddPeer() {

@@ -121,7 +121,7 @@ public abstract class MigrationExecutor {
     }
 
     private void delete(Path path, Path excluded) throws IOException {
-        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(path, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!file.startsWith(excluded)) {
@@ -129,6 +129,7 @@ public abstract class MigrationExecutor {
                 }
                 return FileVisitResult.CONTINUE;
             }
+
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 if (!excluded.startsWith(dir)) {

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
@@ -119,7 +120,7 @@ class CsvExporterTest {
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
 //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
-    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
+    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(), ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
 //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -144,11 +145,13 @@ class CsvExporterTest {
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
+            AccountTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class))
             .addBeans(MockBean.of(ftlService, FullTextSearchService.class))
@@ -156,6 +159,8 @@ class CsvExporterTest {
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
 
+    @Inject
+    AccountTable accountTable;
     @Inject
     PropertiesHolder propertiesHolder;
     @Inject
@@ -194,12 +199,14 @@ class CsvExporterTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
-        AccountTable.getInstance().init();
+        Account.init(extension.getDatabaseManger(), propertiesHolder, null, null, blockchain, null, null, accountTable);
         AccountInfoTable.getInstance().init();
         Alias.init();
-        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811"));
+//        PhasingOnly.get(Long.parseUnsignedLong("7995581942006468815")); // works OK!
+//        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811")); // error, doesn't load from db !!
+//        PhasingOnly.get(Long.parseLong("-8446384352342482748")); // error, doesn't load from db !!
+        PhasingOnly.get(Long.parseLong("-4013722529644937202")); // works OK!
         AccountAssetTable.getInstance().init();
-//        GenesisPublicKeyTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         AccountLedgerTable accountLedgerTable = new AccountLedgerTable();

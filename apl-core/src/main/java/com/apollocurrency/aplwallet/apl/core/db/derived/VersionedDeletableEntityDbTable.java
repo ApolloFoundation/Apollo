@@ -26,12 +26,18 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         super(table, dbKeyFactory, true, fullTextSearchColumns);
     }
 
-    @Override
-    public boolean delete(T t) {
-        return delete(t, false);
+    public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
+        super(table, dbKeyFactory, true, null, init);
+
     }
 
-    public final boolean delete(T t, boolean keepInCache) {
+    @Override
+    public boolean delete(T t) { //TODO remove blockchain
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        return delete(t, false, blockchain.getHeight());
+    }
+
+    public final boolean delete(T t, boolean keepInCache, int height) {
         if (t == null) {
             return false;
         }
@@ -39,14 +45,14 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+
         KeyFactory<T> keyFactory = getDbKeyFactory();
         DbKey dbKey = keyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table
                      + keyFactory.getPKClause() + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
-            pstmtCount.setInt(i, blockchain.getHeight());
+            pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table

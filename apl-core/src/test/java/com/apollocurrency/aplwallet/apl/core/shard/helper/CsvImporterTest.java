@@ -107,7 +107,7 @@ class CsvImporterTest {
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
     //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath"));// prod data test
-    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
+    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(), ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
     //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time);// prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -151,11 +151,11 @@ class CsvImporterTest {
     CsvImporter csvImporter;
 
     private Set<String> tables = new HashSet<>(5) {{
-        add("shard");
         add("account_control_phasing");
         add("phasing_poll");
-        add("purchase");
         add("public_key");
+        add("purchase");
+        add("shard");
     }};
 
     public CsvImporterTest() throws Exception {}

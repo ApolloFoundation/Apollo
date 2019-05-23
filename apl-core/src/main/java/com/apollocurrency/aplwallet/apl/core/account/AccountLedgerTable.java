@@ -7,7 +7,6 @@ import static com.apollocurrency.aplwallet.apl.core.account.AccountLedger.proper
 import static com.apollocurrency.aplwallet.apl.core.account.AccountLedger.trimKeep;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
@@ -22,7 +21,7 @@ import javax.enterprise.inject.spi.CDI;
  * Account ledger table
  */
 public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
-    private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
         /**
          * Create the account ledger table
          */

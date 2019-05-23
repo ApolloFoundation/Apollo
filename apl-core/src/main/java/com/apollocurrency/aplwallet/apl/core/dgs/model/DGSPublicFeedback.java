@@ -4,42 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 
 import java.util.Objects;
 
-public class DGSPublicFeedback {
+public class DGSPublicFeedback extends VersionedDerivedEntity {
     private String feedback;
     private Long id;
-    private int height;
-    private DbKey dbKey;
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
 
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
-
-    public DGSPublicFeedback(String feedback, Long id, int height) {
+    public DGSPublicFeedback(Long dbId, Integer height, String feedback, Long id) {
+        super(dbId, height);
         this.feedback = feedback;
         this.id = id;
-        this.height = height;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof DGSPublicFeedback)) return false;
+        if (!super.equals(o)) return false;
         DGSPublicFeedback that = (DGSPublicFeedback) o;
         return Objects.equals(feedback, that.feedback) &&
                 Objects.equals(id, that.id);
@@ -47,7 +31,7 @@ public class DGSPublicFeedback {
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedback, id);
+        return Objects.hash(super.hashCode(), feedback, id);
     }
 
     public String getFeedback() {

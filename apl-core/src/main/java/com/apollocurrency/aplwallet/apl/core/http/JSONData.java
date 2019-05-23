@@ -418,7 +418,7 @@ public final class JSONData {
             long totalSupply = AccountTable.getTotalSupply(con);
             long totalAccounts = AccountTable.getTotalNumberOfAccounts(con);
             long totalAmountOnTopAccounts = AccountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            try(DbIterator<Account> topHolders = AccountTable.getTopHolders(con, numberOfAccounts)) {
+            try(DbIterator<Account> topHolders = Account.getTopHolders(con, numberOfAccounts)) {
                 return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
             }
         }

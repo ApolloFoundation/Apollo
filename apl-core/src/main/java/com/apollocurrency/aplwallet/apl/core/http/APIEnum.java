@@ -305,6 +305,7 @@ import com.apollocurrency.aplwallet.apl.core.http.post.TransferAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransferCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.TrimDerivedTables;
 import com.apollocurrency.aplwallet.apl.core.http.post.UploadTaggedData;
+import org.apache.http.annotation.Obsolete;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
@@ -406,11 +407,11 @@ public enum APIEnum {
     GET_DGS_TAGS_LIKE("getDGSTagsLike", new GetDGSTagsLike()),
     GET_GUARANTEED_BALANCE("getGuaranteedBalance", new GetGuaranteedBalance()),
     GET_E_C_BLOCK("getECBlock", new GetECBlock()),
-    GET_INBOUND_PEERS("getInboundPeers", new GetInboundPeers()),
+    @Obsolete GET_INBOUND_PEERS("getInboundPeers", new GetInboundPeers()),
     GET_PLUGINS("getPlugins", new GetPlugins()),
-    GET_MY_INFO("getMyInfo", new GetMyInfo()),
-    GET_PEER("getPeer", new GetPeer()),
-    GET_PEERS("getPeers", new GetPeers()),
+    @Obsolete GET_MY_INFO("getMyInfo", new GetMyInfo()),
+    @Obsolete GET_PEER("getPeer", new GetPeer()),
+    @Obsolete GET_PEERS("getPeers", new GetPeers()),
     GET_PHASING_POLL("getPhasingPoll", new GetPhasingPoll()),
     GET_PHASING_POLLS("getPhasingPolls", new GetPhasingPolls()),
     GET_PHASING_POLL_VOTES("getPhasingPollVotes", new GetPhasingPollVotes()),
@@ -540,8 +541,8 @@ public enum APIEnum {
     POP_OFF("popOff", new PopOff()),
     SCAN("scan", new Scan()),
     LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
-    ADD_PEER("addPeer", new AddPeer()),
-    BLACKLIST_PEER("blacklistPeer", new BlacklistPeer()),
+    @Obsolete ADD_PEER("addPeer", new AddPeer()),
+    @Obsolete BLACKLIST_PEER("blacklistPeer", new BlacklistPeer()),
     DUMP_PEERS("dumpPeers", new DumpPeers()),
     GET_LOG("getLog", new GetLog()),
     GET_STACK_TRACES("getStackTraces", new GetStackTraces()),
@@ -561,10 +562,10 @@ public enum APIEnum {
     GET_FUNDING_MONITOR("getFundingMonitor", new GetFundingMonitor()),
     DOWNLOAD_PRUNABLE_MESSAGE("downloadPrunableMessage", new DownloadPrunableMessage()),
     GET_SHARED_KEY("getSharedKey", new GetSharedKey()),
-    SET_API_PROXY_PEER("setAPIProxyPeer", new SetAPIProxyPeer()),
+    @Obsolete SET_API_PROXY_PEER("setAPIProxyPeer", new SetAPIProxyPeer()),
     SEND_TRANSACTION("sendTransaction", new SendTransaction()),
     GET_ASSET_DIVIDENDS("getAssetDividends", new GetAssetDividends()),
-    BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", new BlacklistAPIProxyPeer()),
+    @Obsolete BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", new BlacklistAPIProxyPeer()),
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", new GetNextBlockGeneratorsTemp()),
     GET_SCHEDULED_TRANSACTIONS("getScheduledTransactions", new GetScheduledTransactions()),
     SCHEDULE_CURRENCY_BUY("scheduleCurrencyBuy", new ScheduleCurrencyBuy()),
