@@ -22,7 +22,8 @@ public class PropertiesHolder {
 
     private Properties properties;
 
-    public PropertiesHolder() {}
+    public PropertiesHolder() {
+    }
 
     public void init(Properties properties){
         this.properties = properties;

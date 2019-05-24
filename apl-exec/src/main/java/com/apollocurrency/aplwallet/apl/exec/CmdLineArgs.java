@@ -37,10 +37,8 @@ public class CmdLineArgs {
     public String pidFile = "";
     @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
     public boolean startMint;
-    @Parameter(names = {"--testent", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
-    public int testnetIdx;
-    @Parameter(names = {"--restart", "-r"}, help = true, description = "Use saved command line arguments from previous start")
-    public boolean restart;
+    @Parameter(names = {"--testnet", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
+    public int testnetIdx=0;
     
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
