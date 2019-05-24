@@ -48,7 +48,7 @@ public abstract class CsvAbstractBase {
     protected ColumnMetaData[] columnsMetaData; // full meta data about sql table columns
 
     protected String lineSeparator = LINE_SEPARATOR;
-    protected String nullString = "null";// "";
+    protected String nullString = "null";// it's better do not change that value
 
     protected char escapeCharacter = '\"';
     protected char fieldDelimiter = '\"';
@@ -61,8 +61,8 @@ public abstract class CsvAbstractBase {
     protected boolean caseSensitiveColumnNames; // config param
     protected boolean preserveWhitespace; // config param
     protected char lineComment;
-    protected char arrayDelimiterStart = '('; // start sql array
-    protected char arrayDelimiterEnd = ')'; // finish sql array
+    protected char arrayStartToken = '('; // start sql array
+    protected char arrayEndToken = ')'; // finish sql array
 
     // CVS WRITER only config parameters
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
