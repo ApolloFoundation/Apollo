@@ -183,4 +183,18 @@ public abstract class AplException extends Exception {
         }
     }
 
+    public static final class ExecutiveProcessException extends Exception {
+        public ExecutiveProcessException() {
+            super();
+        }
+
+        public ExecutiveProcessException(String message) {
+            super(message);
+        }
+
+        public ExecutiveProcessException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }

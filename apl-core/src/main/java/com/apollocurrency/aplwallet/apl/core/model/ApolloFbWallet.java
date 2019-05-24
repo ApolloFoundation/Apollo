@@ -11,6 +11,8 @@ import io.firstbridge.cryptolib.container.FbWallet;
 import io.firstbridge.cryptolib.container.KeyRecord;
 import io.firstbridge.cryptolib.container.KeyTypes;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class ApolloFbWallet extends FbWallet {
@@ -22,6 +24,11 @@ public class ApolloFbWallet extends FbWallet {
 
     public static final String APL_PRIVATE_KEY_ALIAS = "apl_priv";
     public static final String ETH_PRIVATE_KEY_ALIAS = "eth_priv";
+    /**
+     * Use only ETH_PRIVATE_KEY_ALIAS, we shouldn't split eth and erc20 tokes.
+     * Because ERC20 should connect to the main eth address
+     */
+    @Deprecated
     public static final String PAX_PRIVATE_KEY_ALIAS = "pax_priv";
 
     private static final Integer HEXADECIMAL = 16;
@@ -42,12 +49,13 @@ public class ApolloFbWallet extends FbWallet {
         return new AplWalletKey(Convert.parseHexString(secret));
     }
 
-    public EthWalletKey getEthWalletKey(){
-        return getEthOrToken(ETH_PRIVATE_KEY_ALIAS);
-    }
+    public  List<EthWalletKey> getEthWalletKeys(){
+        List<EthWalletKey> ethWalletKeys = new ArrayList<>();
+        ethWalletKeys.add(getEthOrToken(ETH_PRIVATE_KEY_ALIAS));
 
-    public EthWalletKey getPaxWalletKey(){
-        return getEthOrToken(PAX_PRIVATE_KEY_ALIAS);
+        //For backward compatibility
+        ethWalletKeys.add(getEthOrToken(PAX_PRIVATE_KEY_ALIAS));
+        return ethWalletKeys;
     }
 
     private EthWalletKey getEthOrToken(String alias){
@@ -86,16 +94,8 @@ public class ApolloFbWallet extends FbWallet {
     }
 
     public void addEthKey(EthWalletKey ethWalletKey){
-        createEthOrEthTokenWallet(ethWalletKey, ETH_PRIVATE_KEY_ALIAS);
-    }
-
-    public void addPaxKey(EthWalletKey ethWalletKey){
-       createEthOrEthTokenWallet(ethWalletKey, PAX_PRIVATE_KEY_ALIAS);
-    }
-
-    private void createEthOrEthTokenWallet(EthWalletKey ethWalletKey, String alias){
         DataRecord dr = new DataRecord();
-        dr.alias = alias;
+        dr.alias = ETH_PRIVATE_KEY_ALIAS;
         dr.data = ethWalletKey.getCredentials().getEcKeyPair().getPrivateKey().toString(HEXADECIMAL);
         dr.encoding = "HEX";
         KeyRecord kr = new KeyRecord();
@@ -105,7 +105,5 @@ public class ApolloFbWallet extends FbWallet {
         this.addData(dr);
         this.addKey(kr);
     }
-
-
 
 }

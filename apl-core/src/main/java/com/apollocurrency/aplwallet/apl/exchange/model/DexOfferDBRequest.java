@@ -32,9 +32,6 @@ public class DexOfferDBRequest {
         this.limit = limit;
     }
 
-    public DexOfferDBRequest() {
-    }
-
     public Integer getType() {
         return type;
     }
