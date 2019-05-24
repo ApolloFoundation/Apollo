@@ -107,11 +107,13 @@ public class CsvImporterImpl implements CsvImporter {
             // create SQL insert statement
             sqlInsert.append("INSERT INTO ").append(tableName).append(" (");
             for (int i = 0; i < columnsCount; i++) {
-                columnNames.append( meta.getColumnLabel(i + 1)).append(",");
-                columnsValues.append("?").append(",");
+                columnNames.append( meta.getColumnLabel(i + 1));
+                columnsValues.append("?");
+                if (i != columnsCount - 1) {
+                    columnNames.append(",");
+                    columnsValues.append(",");
+                }
             }
-            columnNames.deleteCharAt(columnNames.lastIndexOf(",")); // remove latest tail comma
-            columnsValues.deleteCharAt(columnsValues.lastIndexOf(",")); // remove latest tail comma
             sqlInsert.append(columnNames).append(") VALUES").append(" (").append(columnsValues).append(")");
             log.debug("SQL = {}", sqlInsert.toString()); // composed insert
             // precompile insert SQL
