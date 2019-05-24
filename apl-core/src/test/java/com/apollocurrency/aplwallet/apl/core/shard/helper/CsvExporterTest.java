@@ -214,12 +214,6 @@ class CsvExporterTest {
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
-//        AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
-//        accountLedgerTable.init();
-//        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
-//        accountGuaranteedBalanceTable.init();
-//        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
-//        purchaseTable.init();
     }
 
     @Test
@@ -260,7 +254,6 @@ class CsvExporterTest {
             Object next = iterator.next();
             String fileName = ((File)next).getName();
             log.trace("File in folder = {}", fileName);
-//            fileName = fileName.substring(0, fileName.lastIndexOf(".")); // remove extra extension
             int readCount = importCsvAndCheckContent(fileName, dirProvider.getDataExportDir());
             assertTrue(readCount > 0);
         }
