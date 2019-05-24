@@ -72,7 +72,7 @@ public interface Blockchain {
 
     List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
 
-    List<Block> getBlocksAfter(long blockId, int limit);
+//    List<Block> getBlocksAfter(long blockId, int limit);
 
     List<Block> getBlocksAfter(long blockId, List<Long> blockList);
 
@@ -140,6 +140,6 @@ public interface Blockchain {
 
     DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
-    Set<Long> getBlockGenerators(int startHeight);
+    Set<Long> getBlockGenerators(int limit);
 
 }

@@ -121,7 +121,7 @@ public class TransactionValidator {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " exceeds blockchain height " + blockchainHeight);
                 }
-                if (CDI.current().select(BlockDaoImpl.class).get().findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
+                if (CDI.current().select(BlockDaoImpl.class).get().findBlockIdAtHeight(ecBlockHeight, ) != ecBlockId) {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
                             + ", transaction was generated on a fork");

@@ -91,7 +91,7 @@ class BlockDaoTest {
 
     @Test
     void findByBlockId() {
-        Block block = blockDao.findBlock(BLOCK_0_ID);
+        Block block = blockDao.findBlock(BLOCK_0_ID, );
         assertEquals(block.getId(), BLOCK_0_ID);
     }
 
@@ -103,7 +103,7 @@ class BlockDaoTest {
 
     @Test
     void hasLastBlockFromTo() {
-        boolean isBlock = blockDao.hasBlock(testData.BLOCK_3.getId(), BLOCK_3_HEIGHT);
+        boolean isBlock = blockDao.hasBlock(testData.BLOCK_3.getId(), BLOCK_3_HEIGHT, );
         assertTrue(isBlock);
     }
 
@@ -121,7 +121,7 @@ class BlockDaoTest {
 
     @Test
     void findBlockAtHeight() {
-        Block block = blockDao.findBlockAtHeight(BLOCK_7_HEIGHT);
+        Block block = blockDao.findBlockAtHeight(BLOCK_7_HEIGHT, );
         assertEquals(block.getTimestamp(), BLOCK_7_TIMESTAMP);
     }
 
@@ -157,7 +157,7 @@ class BlockDaoTest {
 
     @Test
     void getGenerators() {
-        Set<Long> count = blockDao.getBlockGenerators(BLOCK_0_HEIGHT);
+        Set<Long> count = blockDao.getBlockGenerators(BLOCK_0_HEIGHT, );
         assertNotNull(count);
         assertEquals(2 , count.size());
     }

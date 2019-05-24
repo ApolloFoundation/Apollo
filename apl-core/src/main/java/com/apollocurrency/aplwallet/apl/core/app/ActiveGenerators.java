@@ -53,7 +53,7 @@ public class ActiveGenerators {
     @PostConstruct
     public void init() {
         if (!generatorsInitialized) {
-            activeGeneratorIds.addAll(blockchain.getBlockGenerators(Math.max(1, blockchain.getHeight() - 10000)));
+            activeGeneratorIds.addAll(blockchain.getBlockGenerators(250));
             activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
             LOG.debug(activeGeneratorIds.size() + " block generators found");
             generatorsInitialized = true;
