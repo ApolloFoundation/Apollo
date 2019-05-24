@@ -15,7 +15,10 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -72,6 +75,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -113,16 +118,16 @@ class CsvExporterTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
-//    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString())); // prod data test
+    //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString())); // prod data test
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private NtpTime time = mock(NtpTime.class);
     private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
-//    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
+    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
     private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(), ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-//    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
+    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -145,7 +150,7 @@ class CsvExporterTest {
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
-            AccountTable.class,
+            AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
@@ -209,16 +214,16 @@ class CsvExporterTest {
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
-        AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
-        accountLedgerTable.init();
-        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
-        accountGuaranteedBalanceTable.init();
-        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
-        purchaseTable.init();
+//        AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
+//        accountLedgerTable.init();
+//        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
+//        accountGuaranteedBalanceTable.init();
+//        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
+//        purchaseTable.init();
     }
 
     @Test
-    void exportDerivedTables() {
+    void exportDerivedTables() throws Exception {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 //        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir(); // prod data test
         cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
@@ -238,20 +243,31 @@ class CsvExporterTest {
             if (exportedRows > 0) {
                 tablesWithDataCount[0] = tablesWithDataCount[0] + 1;
             }
-            log.debug("Processed Table = {}, exported = '{}' rows in {} secs", item, exportedRows, (System.currentTimeMillis() - start2) / 1000 );
+            log.debug("Processed Table = {}, exported = '{}' rows in {} secs", item, exportedRows, (System.currentTimeMillis() - start2) / 1000);
         });
-        log.debug("Processed Tables = [{}] in {} sec", result.size(), (System.currentTimeMillis() - start) / 1000 );
-        String[] extensions =  new String[]{"csv"};
-        Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false) ;
+        log.debug("Total Tables = [{}] in {} sec", result.size(), (System.currentTimeMillis() - start) / 1000);
+        String[] extensions = new String[]{"csv"};
+        Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false);
         assertNotNull(filesInFolder);
         assertTrue(filesInFolder.size() > 0);
         assertEquals(tablesWithDataCount[0], filesInFolder.size(), "wrong number processed/exported tables and real CSV files in folder");
-        log.debug("Processed Tables = [{}]", filesInFolder.size());
-        log.debug("Processed list = '{}' in {} sec", result, (System.currentTimeMillis() - start) / 1000 );
+        log.debug("Exported Tables with data = [{}]", filesInFolder.size());
+        log.debug("Processed list = '{}' in {} sec", result, (System.currentTimeMillis() - start) / 1000);
+
+        // check if csv content is not empty
+        Iterator iterator = filesInFolder.iterator();
+        while (iterator.hasNext()) {
+            Object next = iterator.next();
+            String fileName = ((File)next).getName();
+            log.trace("File in folder = {}", fileName);
+//            fileName = fileName.substring(0, fileName.lastIndexOf(".")); // remove extra extension
+            int readCount = importCsvAndCheckContent(fileName, dirProvider.getDataExportDir());
+            assertTrue(readCount > 0);
+        }
     }
 
     @Test
-    void exportShardTable() {
+    void exportShardTable() throws Exception {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 //        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir(); // prod data test
         cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
@@ -264,11 +280,52 @@ class CsvExporterTest {
         long exportedRows = cvsExporter.exportShardTable(targetHeight, batchLimit);
         log.debug("Processed Tables = {}, exported = '{}' rows", tableName, exportedRows);
 
-        String[] extensions =  new String[]{"csv"};
-        Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false) ;
+        String[] extensions = new String[]{"csv"};
+        Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false);
         assertNotNull(filesInFolder);
         assertEquals(1, filesInFolder.size());
-        ((File)filesInFolder.iterator().next()).getName().equalsIgnoreCase(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
+        ((File) filesInFolder.iterator().next()).getName().equalsIgnoreCase(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
+
+        // check if csv content is not empty
+        Iterator iterator = filesInFolder.iterator();
+        while (iterator.hasNext()) {
+            Object next = iterator.next();
+            String fileName = ((File)next).getName();
+            log.trace("File in folder = {}", fileName);
+            int readCount = importCsvAndCheckContent(fileName, dirProvider.getDataExportDir());
+            assertTrue(readCount > 0);
+        }
+
         log.debug("Processed Table = [{}]", filesInFolder.size());
+    }
+
+    private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {
+        int readRowsFromFile = 0;
+
+        // open CSV Reader and read data
+        try (CsvReader csvReader = new CsvReaderImpl(dataExportDir);
+             ResultSet rs = csvReader.read(itemName, null, null) ) {
+            csvReader.setOptions("fieldDelimiter="); // do not put ""
+
+            // get CSV meta data info
+            ResultSetMetaData meta = rs.getMetaData();
+            int columnsCount = meta.getColumnCount(); // columns count is main
+            StringBuffer columnNames = new StringBuffer(200);
+
+            for (int i = 0; i < columnsCount; i++) {
+                columnNames.append(meta.getColumnLabel(i + 1)).append(",");
+            }
+            log.debug("'{}' column HEADERS = {}", itemName, columnNames.toString()); // read headers
+            assertTrue(columnNames.toString().length() > 0, "headers row is empty for '" + itemName + "'");
+
+            while (rs.next()) {
+                for (int j = 0; j < columnsCount; j++) {
+                    Object object = rs.getObject(j + 1); // can be NULL sometimes
+                    log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1) , object);
+                }
+                readRowsFromFile++;
+            }
+        }
+        return readRowsFromFile;
     }
 }

@@ -182,7 +182,7 @@ class CsvImporterTest {
     }
 
     @Test
-    void notFoundFile() throws SQLException {
+    void notFoundFile() throws Exception {
         FileLoader fileLoader = new FileLoader();
         doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
         csvImporter = new CsvImporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger());
@@ -192,7 +192,7 @@ class CsvImporterTest {
     }
 
     @Test
-    void importCsv() throws SQLException {
+    void importCsv() throws Exception {
         FileLoader fileLoader = new FileLoader();
         doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
         csvImporter = new CsvImporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger());
