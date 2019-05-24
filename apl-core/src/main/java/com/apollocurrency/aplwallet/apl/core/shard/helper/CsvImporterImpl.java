@@ -21,7 +21,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
