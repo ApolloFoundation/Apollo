@@ -238,8 +238,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     }
                                     outputValue.append(o1.toString()).append(",");
                                     if (j == objectArray.length - 1) {
-                                        // remove latest "comma" then  append ")"
-                                        outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")");
+                                        // there is a bug in H2 parser, so let's make one extra comma at the end
+                                        // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
+                                        outputValue.append(")");
                                     }
                                 }
                                 o = outputValue.toString();
