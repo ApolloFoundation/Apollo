@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -79,7 +81,22 @@ public class Apollo {
     private static AplCore core;
 
     private PropertiesHolder propertiesHolder;
-
+    
+    private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG","TRACE"};
+    
+    private static void setLogLevel(int logLevel, String packageName) {
+        if(logLevel>VALID_LOG_LEVELS.length-1){
+            logLevel=VALID_LOG_LEVELS.length-1;
+        }
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+ 
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
+        System.out.println(packageName + " current logger level: " + logger.getLevel()
+                +" New level: "+VALID_LOG_LEVELS[logLevel]);
+ 
+        logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+    }
+   
     private void initCore() {
 
         AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
@@ -198,7 +215,7 @@ public class Apollo {
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
-
+        setLogLevel(args.debug, "com.apolloacurrecny");
         log = LoggerFactory.getLogger(Apollo.class);
         
 //check webUI
@@ -233,7 +250,7 @@ public class Apollo {
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
 //TODO:  turn it on periodically in development processto check CDI errors
-//                .devMode() // enable for dev only
+                .devMode() // enable for dev only
                 .build();
 
         // init config holders
@@ -248,7 +265,7 @@ public class Apollo {
             app.initAppStatusMsg();
             app.initCore();
             app.launchDesktopApplication();
-            app.initUpdater(args.updateAttachmentFile, args.debug);
+            app.initUpdater(args.updateAttachmentFile, args.debug>2);
 /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
