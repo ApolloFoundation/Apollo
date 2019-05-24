@@ -2366,7 +2366,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
 
         private final Object[] value;
 
-        SimpleArray(Object[] value) {
+        public SimpleArray(Object[] value) {
             this.value = value;
         }
 

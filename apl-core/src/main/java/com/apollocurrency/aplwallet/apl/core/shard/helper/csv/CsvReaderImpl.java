@@ -6,9 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +19,6 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
@@ -32,8 +28,8 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-//@Singleton
-public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource {
+public class CsvReaderImpl extends CsvAbstractBase
+        implements CsvReader, SimpleRowSource, AutoCloseable {
     private static final Logger log = getLogger(CsvReaderImpl.class);
 
     private Reader input;
@@ -45,8 +41,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     private boolean endOfLine;
     private boolean endOfFile;
 
-//    @Inject
-    public CsvReaderImpl(/*@Named("dataExportDir") */Path dataExportPath) {
+    public CsvReaderImpl(Path dataExportPath) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
     }
 
@@ -106,7 +101,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
             try {
                 InputStream in = CsvFileUtils.newInputStream(
                         this.dataExportPath,
-                        !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
+                        !this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
                 );
                 in = new BufferedInputStream(in, IO_BUFFER_SIZE);
                 input = new InputStreamReader(in, characterSet);
@@ -197,6 +192,13 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         list.toArray(columnNames);
     }
 
+    /**
+     * Key method for reading one column value as string.
+     * It reads HEADER column first and data column in row.
+     *
+     * @return one column data OR NULL (for header or data row)
+     * @throws IOException
+     */
     private String readValue() throws IOException {
         endOfLine = false;
         inputBufferStart = inputBufferPos;
@@ -269,6 +271,24 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                 }
                 endOfLine = true;
                 return null;
+            } else if (arrayStartToken != 0 && ch == arrayStartToken) { // check '('
+                // start SQL Array processing written as = (x, y, z)
+                // read until of 'arrayEndToken' symbol
+                inputBufferStart = inputBufferPos;
+                while (true) {
+                    ch = readChar();
+                    if (ch == '\n' || ch < 0 || ch == '\r' || ch == arrayEndToken) {
+                        break;
+                    }
+                }
+                String s = new String(inputBuffer,
+                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
+                if (!preserveWhitespace) {
+                    s = s.trim();
+                }
+                inputBufferStart = -1; // reset
+                inputBufferPos++; // skip closing ')'
+                return readNull(s);
             } else {
                 // un-delimited value
                 while (true) {
@@ -443,7 +463,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         String columnName = columnWithMetaData.substring(0, starTypeDelimiter);
         int endTypeDelimiter = columnWithMetaData.lastIndexOf(fieldTypeSeparatorEnd + "");
         String columnTypeInfo = columnWithMetaData.substring(starTypeDelimiter + 1, endTypeDelimiter);
-        log.debug("Column '{}' TypeInfo to parse '{}'", columnName, columnTypeInfo);
+        log.trace("Column '{}' TypeInfo to parse '{}'", columnName, columnTypeInfo);
         String[] typePrecisionScale = columnTypeInfo.split("\\|");
 
         if (typePrecisionScale.length != 3) {

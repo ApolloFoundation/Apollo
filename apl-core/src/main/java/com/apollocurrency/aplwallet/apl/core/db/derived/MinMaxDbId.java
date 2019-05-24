@@ -16,6 +16,12 @@ public class MinMaxDbId {
         this.maxDbId = maxDbId;
     }
 
+    public MinMaxDbId(long minDbId, long maxDbId, long count) {
+        this.minDbId = minDbId;
+        this.maxDbId = maxDbId;
+        this.count = count;
+    }
+
     public MinMaxDbId() {
     }
 
@@ -70,5 +76,37 @@ public class MinMaxDbId {
         sb.append(", count=").append(count);
         sb.append('}');
         return sb.toString();
+    }
+
+    public static MinMaxDbIdBuilder builder() {
+        return new MinMaxDbIdBuilder();
+    }
+
+    public static final class MinMaxDbIdBuilder {
+        private long minDbId = -1L;
+        private long maxDbId = -1L;
+        private long count;
+
+        private MinMaxDbIdBuilder() {
+        }
+
+        public MinMaxDbIdBuilder minDbId(Long minDbId) {
+            this.minDbId = minDbId;
+            return this;
+        }
+
+        public MinMaxDbIdBuilder maxDbId(long maxDbId) {
+            this.maxDbId = maxDbId;
+            return this;
+        }
+
+        public MinMaxDbIdBuilder count(Long count) {
+            this.count = count;
+            return this;
+        }
+
+        public MinMaxDbId build() {
+            return new MinMaxDbId(minDbId, maxDbId, count);
+        }
     }
 }

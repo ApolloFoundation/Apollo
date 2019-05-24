@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class NetworkEndpointTest {
+class NetworkControllerTest {
     private static final String PEER_ADDRESS = "192.168.2.68";
     private static final String WRONG_PEER_ADDRESS = "10.0.0.1";
     private static final String ANNOUNCED_ADDRESS = "10.10.10.10";

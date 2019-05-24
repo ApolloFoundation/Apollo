@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
  *
  * @author yuriy.larin
  */
-public interface CsvWriter {
+public interface CsvWriter extends AutoCloseable {
 
     /**
      * Writes the result set to a file in the CSV format.
@@ -50,11 +50,6 @@ public interface CsvWriter {
     int append(String outputFileName, ResultSet rs, MinMaxDbId minMaxDbId) throws SQLException;
 
     /**
-     * Method is used with 'append' mode for explicit releasing resources
-     */
-    void close();
-
-    /**
      * Writes the result set of a query to a file in the CSV format.
      *
      * @param conn the connection
@@ -83,4 +78,18 @@ public interface CsvWriter {
      * @return the character set
      */
     String setOptions(String options);
+
+    /**
+     * Different tables can have different pagination column name
+     * @return return current pagination column
+     */
+    String getDefaultPaginationColumnName();
+
+    /**
+     * Set new column name for paginating
+     *
+     * @param defaultPaginationColumnName new column name
+     */
+    void setDefaultPaginationColumnName(String defaultPaginationColumnName);
+
 }
