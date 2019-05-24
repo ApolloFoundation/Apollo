@@ -14,7 +14,6 @@ import java.util.List;
 
 public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
 
-    public static final String DEFAULT_CONFIG_DIR = "conf";
     private ConfigDirProvider dirProvider;
     private boolean ignoreResources;
     private boolean ignoreUserConfig;
@@ -34,7 +33,13 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         }
         this.dirProvider = dirProvider;
         this.ignoreResources = ignoreResources;
-        this.configDir = configDir;
+        if(!StringUtils.isBlank(configDir)){
+            this.configDir = configDir;
+        }else if(dirProvider!=null){
+            this.configDir=dirProvider.getConfigDirectoryName();
+        }else{
+            this.configDir="conf";
+        }
         this.resourceName = resourceName;
     }
 
@@ -66,7 +71,7 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
 
     private void loadFromResources() {
         // using '/' as separator instead of platform dependent File.separator
-        String fn = DEFAULT_CONFIG_DIR + "/" + resourceName;
+        String fn = configDir + "/" + resourceName;
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream(fn)) {
             T defaultConfig = read(is);

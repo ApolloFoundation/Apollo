@@ -35,12 +35,13 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         }
     }
     
-    protected String getConfDirName(){
+    @Override
+    public String getConfigDirectoryName(){
         return CONF_DIRS[netIndex];
     }
     @Override
     public String getInstallationConfigDirectory() {
-        return DirProvider.getBinDir().resolve(getConfDirName()).toAbsolutePath().toString();
+        return DirProvider.getBinDir().resolve(getConfigDirectoryName()).toAbsolutePath().toString();
     }
 
     @Override
@@ -53,7 +54,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         String res =
             isService
                 ? getInstallationConfigDirectory()
-                : Paths.get(System.getProperty("user.home"), "." + applicationName, getConfDirName()).toAbsolutePath().toString();
+                : Paths.get(System.getProperty("user.home"), "." + applicationName, getConfigDirectoryName()).toAbsolutePath().toString();
         return res;
     }
 }
