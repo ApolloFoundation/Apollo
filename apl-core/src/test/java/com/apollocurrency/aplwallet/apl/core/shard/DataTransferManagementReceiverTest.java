@@ -212,7 +212,7 @@ class DataTransferManagementReceiverTest {
 
             state = managementReceiver.createBackup();
             assertEquals(MAIN_DB_BACKUPED, state);
-            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-0000004.zip")));
+            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4.zip")));
 
             // start sharding process
             state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());

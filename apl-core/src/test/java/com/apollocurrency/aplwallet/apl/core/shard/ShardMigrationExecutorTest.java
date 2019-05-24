@@ -180,7 +180,7 @@ class ShardMigrationExecutorTest {
             BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(managementReceiver);
             state = shardMigrationExecutor.executeOperation(beforeShardCommand);
             assertEquals(MAIN_DB_BACKUPED, state);
-            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-0000004.zip")));
+            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4.zip")));
 
             CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                     new ShardInitTableSchemaVersion());
