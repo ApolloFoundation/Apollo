@@ -15,7 +15,7 @@ import java.sql.SQLException;
  *
  * @author yuriy.larin
  */
-public interface CsvReader {
+public interface CsvReader extends AutoCloseable {
 
     /**
      * Reads from the CSV file and returns a result set. The rows in the result

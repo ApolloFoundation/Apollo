@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
  *
  * @author yuriy.larin
  */
-public interface CsvWriter {
+public interface CsvWriter extends AutoCloseable {
 
     /**
      * Writes the result set to a file in the CSV format.
@@ -48,11 +48,6 @@ public interface CsvWriter {
      * @return the number of rows written
      */
     int append(String outputFileName, ResultSet rs, MinMaxDbId minMaxDbId) throws SQLException;
-
-    /**
-     * Method is used with 'append' mode for explicit releasing resources
-     */
-    void close();
 
     /**
      * Writes the result set of a query to a file in the CSV format.

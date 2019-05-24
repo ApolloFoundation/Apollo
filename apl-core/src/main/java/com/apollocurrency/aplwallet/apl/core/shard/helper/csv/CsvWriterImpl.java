@@ -141,7 +141,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         if (output == null) {
             try {
                 OutputStream out = CsvFileUtils.newOutputStream(this.dataExportPath,
-                        !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName,
+                        !this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName,
                         appendMode);
                 out = new BufferedOutputStream(out, IO_BUFFER_SIZE);
                 output = new BufferedWriter(new OutputStreamWriter(out, characterSet));

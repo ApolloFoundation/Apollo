@@ -28,7 +28,8 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource {
+public class CsvReaderImpl extends CsvAbstractBase
+        implements CsvReader, SimpleRowSource, AutoCloseable {
     private static final Logger log = getLogger(CsvReaderImpl.class);
 
     private Reader input;
@@ -100,7 +101,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
             try {
                 InputStream in = CsvFileUtils.newInputStream(
                         this.dataExportPath,
-                        !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
+                        !this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
                 );
                 in = new BufferedInputStream(in, IO_BUFFER_SIZE);
                 input = new InputStreamReader(in, characterSet);
@@ -270,13 +271,13 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                 }
                 endOfLine = true;
                 return null;
-            } else if (arrayDelimiterStart != 0 && ch == arrayDelimiterStart) { // check '('
+            } else if (arrayStartToken != 0 && ch == arrayStartToken) { // check '('
                 // start SQL Array processing written as = (x, y, z)
-                // read until of 'arrayDelimiterEnd' symbol
+                // read until of 'arrayEndToken' symbol
                 inputBufferStart = inputBufferPos;
                 while (true) {
                     ch = readChar();
-                    if (ch == '\n' || ch < 0 || ch == '\r' || ch == arrayDelimiterEnd) {
+                    if (ch == '\n' || ch < 0 || ch == '\r' || ch == arrayEndToken) {
                         break;
                     }
                 }
