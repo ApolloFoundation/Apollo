@@ -83,7 +83,9 @@ public class ApolloTools {
             "socksProxyHost",
             "socksProxyPort",
             "apl.enablePeerUPnP");
-    private static void setLogLevel(int logLevel, String packageName) {
+    
+    private static void setLogLevel(int logLevel) {
+        String packageName = "com.apollocurrency.aplwallet.apl";
         if (logLevel > VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
@@ -95,6 +97,7 @@ public class ApolloTools {
 
         logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
     }
+    
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
         return new PredefinedDirLocations(
                 StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir,
@@ -240,7 +243,7 @@ public class ApolloTools {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
-        setLogLevel(args.debug, "com.apolloacurrecny");
+        setLogLevel(args.debug);
         if (jc.getParsedCommand() == null) {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());

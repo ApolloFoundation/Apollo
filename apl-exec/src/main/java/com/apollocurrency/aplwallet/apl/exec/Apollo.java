@@ -92,7 +92,8 @@ public class Apollo {
 
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
-    private static void setLogLevel(int logLevel, String packageName) {
+    private static void setLogLevel(int logLevel) {
+        String packageName = "com.apollocurrency.aplwallet.apl";
         if (logLevel > VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
@@ -253,7 +254,7 @@ public class Apollo {
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
-        setLogLevel(args.debug, "com.apolloacurrecny");
+        setLogLevel(args.debug);
 
 //check webUI
         System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
