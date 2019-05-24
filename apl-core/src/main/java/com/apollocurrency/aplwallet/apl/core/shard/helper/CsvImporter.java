@@ -24,6 +24,6 @@ public interface CsvImporter {
      * @param cleanTarget true if we want to cleanup target table
      * @return imported quantity
      */
-    long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws SQLException;
+    long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws Exception;
 
 }

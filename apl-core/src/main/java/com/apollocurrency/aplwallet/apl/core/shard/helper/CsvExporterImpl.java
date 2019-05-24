@@ -13,8 +13,6 @@ import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -39,7 +37,6 @@ public class CsvExporterImpl implements CsvExporter {
     private ShardDaoJdbc shardDaoJdbc;
     private Set<String> excludeColumnNamesInDerivedTables; // excluded column
     private Set<String> excludeTables; // skipped tables
-    private CsvWriter csvWriter;
 
     @Inject
     public CsvExporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager,
@@ -47,14 +44,8 @@ public class CsvExporterImpl implements CsvExporter {
         this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.shardDaoJdbc = Objects.requireNonNull(shardDaoJdbc, "shardDaoJdbc is NULL");
-        excludeColumnNamesInDerivedTables = new HashSet<>(1) {{
-          add("DB_ID");
-        }};
-        this.excludeTables = new HashSet<>(1) {{
-            add("genesis_public_key");
-        }};
-        csvWriter = new CsvWriterImpl(this.dataExportPath, excludeColumnNamesInDerivedTables, "DB_ID");
-        csvWriter.setOptions("fieldDelimiter="); // do not put "" around column/values
+        excludeColumnNamesInDerivedTables = Set.of("DB_ID");
+        this.excludeTables = Set.of("genesis_public_key");
     }
 
     /**
@@ -69,18 +60,17 @@ public class CsvExporterImpl implements CsvExporter {
             log.debug("Skipped excluded Table = {}", derivedTableInterface.toString());
             return -1;
         }
-        if (csvWriter.getDefaultPaginationColumnName() != null
-                && !csvWriter.getDefaultPaginationColumnName().equalsIgnoreCase("DB_ID")) {
-            csvWriter.setDefaultPaginationColumnName("DB_ID");
-        }
+
         long start = System.currentTimeMillis();
         int processedCount = 0;
         int totalCount = 0;
-        // prepare connection + statement
+        // prepare connection + statement + writer
         try (Connection con = this.databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? limit ?")) {
-            // select Min, Max DbId + rows count
+                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? limit ?");
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludeColumnNamesInDerivedTables, "DB_ID");
+        ) {
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes 'comma' around values in csv            // select Min, Max DbId + rows count
             MinMaxDbId minMaxDbId = derivedTableInterface.getMinMaxDbId(targetHeight);
             log.debug("Table = {}, Min/Max = {} at height = {}", derivedTableInterface.toString(), minMaxDbId, targetHeight);
 
@@ -97,12 +87,8 @@ public class CsvExporterImpl implements CsvExporter {
                 // skipped empty table
                 log.debug("Skipped exporting Table = {}", derivedTableInterface.toString());
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("Exporting derived table exception " + derivedTableInterface.toString(), e);
-        } finally {
-            if (csvWriter != null) {
-                csvWriter.close(); // close CSV file
-            }
         }
         return totalCount;
     }
@@ -112,19 +98,17 @@ public class CsvExporterImpl implements CsvExporter {
      */
     @Override
     public long exportShardTable(int targetHeight, int batchLimit) {
-        if (csvWriter.getDefaultPaginationColumnName() != null
-                && !csvWriter.getDefaultPaginationColumnName().equalsIgnoreCase("SHARD_ID")) {
-            csvWriter.setDefaultPaginationColumnName("SHARD_ID");
-        }
         int processedCount = 0;
         int totalCount = 0;
         String tableName = "shard";
-        // prepare connection + statement
+        // prepare connection + statement + writer
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "select * from SHARD where shard_id > ? and shard_id < ? limit ?")) {
-            // select Min, Max DbId + rows count
+                     "select * from SHARD where shard_id > ? and shard_id < ? limit ?");
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludeColumnNamesInDerivedTables, "SHARD_ID");
+             ) {
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes 'comma' around values in csv            // select Min, Max DbId + rows count            // select Min, Max DbId + rows count
             MinMaxDbId minMaxDbId = shardDaoJdbc.getMinMaxId(dataSource, targetHeight);
             log.debug("Table = {}, Min/Max = {} at height = {}", tableName, minMaxDbId, targetHeight);
 
@@ -140,12 +124,8 @@ public class CsvExporterImpl implements CsvExporter {
                 // skipped empty table
                 log.debug("Skipped exporting Table = {}", tableName);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("Exporting derived table exception " + tableName, e);
-        } finally {
-            if (csvWriter != null) {
-                csvWriter.close(); // close CSV file
-            }
         }
         return totalCount;
     }

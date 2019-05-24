@@ -43,29 +43,19 @@ public class CsvImporterImpl implements CsvImporter {
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private Set<String> excludeTables; // skipped tables
-    private CsvReader csvReader;
-
-    private StringBuffer sqlInsert = new StringBuffer(300);
-    private StringBuffer columnNames = new StringBuffer(200);
-    private StringBuffer columnsValues = new StringBuffer(100);
-
 
     @Inject
     public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
         this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.excludeTables = new HashSet<>(1) {{
-//            add("genesis_public_key");
-        }};
-        csvReader = new CsvReaderImpl(this.dataExportPath);
-        csvReader.setOptions("fieldDelimiter="); // do not put "" around column/values
+        this.excludeTables = Set.of("genesis_public_key");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws SQLException {
+    public long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws Exception {
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
         if (!tableName.isEmpty() && excludeTables.contains(tableName.toLowerCase())) {
@@ -77,7 +67,8 @@ public class CsvImporterImpl implements CsvImporter {
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
 
-        String inputFileName = tableName + ((CsvAbstractBase)csvReader).getFileNameExtension();
+        // file 'extension' should be checked on file instance actually
+        String inputFileName = tableName + CsvAbstractBase.CSV_FILE_EXTENSION; // getFileNameExtension() would be better
         File file = new File(this.dataExportPath.toString(), inputFileName);
         if(!file.exists()) {
             log.warn("Table/File is not found/exist, skipping : {}", file);
@@ -88,7 +79,7 @@ public class CsvImporterImpl implements CsvImporter {
         if (cleanTarget) {
             // remove all data from table before importing
             try (Connection con = databaseManager.getDataSource().getConnection();
-                 PreparedStatement preparedDelete = con.prepareStatement("DELETE from " + tableName)) {
+                 PreparedStatement preparedDelete = con.prepareStatement("TRUNCATE TABLE " + tableName)) {
                 log.trace("Deleting data from '{}'", tableName);
                 int deleted = preparedDelete.executeUpdate();
                 log.trace("Deleted [{}] rows from '{}'", tableName, deleted);
@@ -99,10 +90,16 @@ public class CsvImporterImpl implements CsvImporter {
             }
         }
 
+        StringBuilder sqlInsert = new StringBuilder(300);
+        StringBuilder columnNames = new StringBuilder(200);
+        StringBuilder columnsValues = new StringBuilder(100);
+
         // open CSV Reader and db connection
-        try (ResultSet rs = csvReader.read(
+        try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
+                ResultSet rs = csvReader.read(
                 inputFileName, null, null);
              Connection con = databaseManager.getDataSource().getConnection()) {
+            csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
 
             // get CSV meta data info
             ResultSetMetaData meta = rs.getMetaData();
@@ -130,6 +127,7 @@ public class CsvImporterImpl implements CsvImporter {
                         InputStream is = null;
                         try {
                             is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                            // meta.getPrecision(i + 1) - is very IMPORTANT here for H2 db !!!
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
                         } catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);
@@ -159,17 +157,10 @@ public class CsvImporterImpl implements CsvImporter {
                 }
             }
             con.commit(); // final commit
-        } catch (SQLException e) {
-            log.error("Error on importing data on table = '{}'", tableName, e);
-            throw e;
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);
             }
-            // reset all temporal buffers
-            sqlInsert.setLength(0);
-            columnNames.setLength(0);
-            columnsValues.setLength(0);
         }
         return importedCount;
     }
