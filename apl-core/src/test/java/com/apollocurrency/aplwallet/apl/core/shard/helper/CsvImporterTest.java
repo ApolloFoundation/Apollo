@@ -100,16 +100,10 @@ class CsvImporterTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
-    //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString()));// prod data test
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private NtpTime time = mock(NtpTime.class);
-    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
-    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath"));// prod data test
-    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(), ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
-    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time);// prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -138,9 +132,6 @@ class CsvImporterTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class))
-            .addBeans(MockBean.of(ftlService, FullTextSearchService.class))
-            .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
 
@@ -178,7 +169,6 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         FileLoader fileLoader = new FileLoader();
-//        doReturn().when(dirProvider).getDataExportDir();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
@@ -188,7 +178,6 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         FileLoader fileLoader = new FileLoader();
-//        doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
 

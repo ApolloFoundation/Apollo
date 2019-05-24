@@ -123,11 +123,11 @@ class CsvExporterTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private NtpTime time = mock(NtpTime.class);
-    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, temporaryFolderExtension.newFolder("indexDirPath").toPath());
-    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
-    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(), ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC");
+//    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
+//    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(),
+//        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
+//    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -158,8 +158,8 @@ class CsvExporterTest {
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class))
-            .addBeans(MockBean.of(ftlService, FullTextSearchService.class))
+//            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
+//            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
