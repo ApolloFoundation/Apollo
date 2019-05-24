@@ -23,7 +23,7 @@ public class PropertiesHolder {
     private Properties properties;
 
     public PropertiesHolder() {
-        LOG.trace("Default constructor");
+     //   LOG.trace("Default constructor");
     }
 
     public void init(Properties properties){
