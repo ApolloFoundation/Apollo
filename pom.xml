@@ -37,6 +37,7 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
+        <module>apl-conf</module>
         <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
 <!--
