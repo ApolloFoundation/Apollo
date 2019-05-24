@@ -150,13 +150,7 @@ class CsvImporterTest {
     JdbiHandleFactory jdbiHandleFactory;
     CsvImporter csvImporter;
 
-    private Set<String> tables = new HashSet<>(5) {{
-        add("account_control_phasing");
-        add("phasing_poll");
-        add("public_key");
-        add("purchase");
-        add("shard");
-    }};
+    private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard");
 
     public CsvImporterTest() throws Exception {}
 
@@ -184,8 +178,8 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
-        csvImporter = new CsvImporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger());
+//        doReturn().when(dirProvider).getDataExportDir();
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -194,8 +188,8 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
-        csvImporter = new CsvImporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger());
+//        doReturn(fileLoader.getResourcePath()).when(dirProvider).getDataExportDir();
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
