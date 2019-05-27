@@ -109,8 +109,8 @@ public class FileDownloader {
         Set<PeerFileInfo> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
         for(Peer p: knownPeers){
-            PeerFileInfo pi=new PeerFileInfo(p, fileID);
-            res.add(pi);
+ //           PeerFileInfo pi=new PeerFileInfo(p, fileID);
+//            res.add(pi);
         }
         //TODO: should we connect to more peers and get more peers here?
         return res;

@@ -240,10 +240,6 @@ public class EntityProducer {
                 return Peer.TrustLevel.NOT_TRUSTED;
             }
 
-            @Override
-            public BigInteger retreiveHash(String entityId) {
-                return null;
-            }
         };
         return peer;
     }
