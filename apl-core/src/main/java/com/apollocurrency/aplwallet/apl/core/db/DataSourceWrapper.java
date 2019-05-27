@@ -215,7 +215,7 @@ public class DataSourceWrapper implements DataSource {
         try {
             Connection connection = dataSource.getConnection();
             Statement st = connection.createStatement();
-            st.executeUpdate("ALTER TABLE transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32) DEFAULT NULL");
+            st.executeUpdate("ALTER TABLE IF EXISTS transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32) DEFAULT NULL");
             st.execute("SHUTDOWN COMPACT");
         }
         catch (SQLException e) {
