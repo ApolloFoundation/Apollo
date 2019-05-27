@@ -32,7 +32,7 @@ public class ConfigDirProviderTest {
         }
     }
 
-    public static final String SYSTEM_CONFIG_DIR = "/etc/" + APPLICATION_NAME;
+    public static final String SYSTEM_CONFIG_DIR = "/etc/" + APPLICATION_NAME+"/conf";
 
     @BeforeEach
     public void setUp() {
@@ -40,14 +40,14 @@ public class ConfigDirProviderTest {
     }
     @Test
     public void testUnixUserModeConfigDirProvider() {
-        UnixConfigDirProvider unixConfigDirProvider = new UnixConfigDirProvider(APPLICATION_NAME, false);
+        UnixConfigDirProvider unixConfigDirProvider = new UnixConfigDirProvider(APPLICATION_NAME, false,0);
         assertEquals(SYSTEM_CONFIG_DIR, unixConfigDirProvider.getSysConfigDirectory());
         assertEquals(USER_HOME_CONFIG_DIRECTORY, unixConfigDirProvider.getUserConfigDirectory());
         assertEquals(INSTALLATION_CONFIG_DIR, unixConfigDirProvider.getInstallationConfigDirectory());
     }
     @Test
     public void testUnixServiceModeConfigDirProvider() {
-        UnixConfigDirProvider unixConfigDirProvider = new UnixConfigDirProvider(APPLICATION_NAME, true);
+        UnixConfigDirProvider unixConfigDirProvider = new UnixConfigDirProvider(APPLICATION_NAME, true,0);
         assertEquals(SYSTEM_CONFIG_DIR, unixConfigDirProvider.getSysConfigDirectory());
         assertEquals(INSTALLATION_CONFIG_DIR, unixConfigDirProvider.getUserConfigDirectory());
         assertEquals(INSTALLATION_CONFIG_DIR, unixConfigDirProvider.getInstallationConfigDirectory());
@@ -55,14 +55,14 @@ public class ConfigDirProviderTest {
 
     @Test
     public void testDefaultConfigDirProviderInUserMode() {
-        DefaultConfigDirProvider defaultConfigDirProvider =  new DefaultConfigDirProvider(APPLICATION_NAME, false);
+        DefaultConfigDirProvider defaultConfigDirProvider =  new DefaultConfigDirProvider(APPLICATION_NAME, false,0);
         assertEquals(INSTALLATION_CONFIG_DIR, defaultConfigDirProvider.getSysConfigDirectory());
         assertEquals(USER_HOME_CONFIG_DIRECTORY,defaultConfigDirProvider.getUserConfigDirectory());
         assertEquals(INSTALLATION_CONFIG_DIR, defaultConfigDirProvider.getInstallationConfigDirectory());
     }
     @Test
     public void testDefaultConfigDirProviderInServiceMode() {
-        DefaultConfigDirProvider defaultConfigDirProvider =  new DefaultConfigDirProvider(APPLICATION_NAME, true);
+        DefaultConfigDirProvider defaultConfigDirProvider =  new DefaultConfigDirProvider(APPLICATION_NAME, true,0);
         assertEquals(INSTALLATION_CONFIG_DIR, defaultConfigDirProvider.getSysConfigDirectory());
         assertEquals(INSTALLATION_CONFIG_DIR,defaultConfigDirProvider.getUserConfigDirectory());
         assertEquals(INSTALLATION_CONFIG_DIR, defaultConfigDirProvider.getInstallationConfigDirectory());

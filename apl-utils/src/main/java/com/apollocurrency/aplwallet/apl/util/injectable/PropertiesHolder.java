@@ -22,7 +22,9 @@ public class PropertiesHolder {
 
     private Properties properties;
 
-    public PropertiesHolder() {}
+    public PropertiesHolder() {
+     //   LOG.trace("Default constructor");
+    }
 
     public void init(Properties properties){
         this.properties = properties;

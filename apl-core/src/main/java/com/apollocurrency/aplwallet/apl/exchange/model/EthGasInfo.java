@@ -6,13 +6,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EthGasInfo {
-
-
-    private Double fastSpeedPrice;
-
-    private Double averageSpeedPrice;
-
-    private Double safeLowSpeedPrice;
+    /**
+     * Gwei
+     */
+    private Long fastSpeedPrice;
+    /**
+     * Gwei
+     */
+    private Long averageSpeedPrice;
+    /**
+     * Gwei
+     */
+    private Long safeLowSpeedPrice;
 
 
 
@@ -25,30 +30,30 @@ public class EthGasInfo {
         return ethGasInfoDto;
     }
 
-    public Double getFastSpeedPrice() {
+    public Long getFastSpeedPrice() {
         return fastSpeedPrice;
     }
 
     @JsonProperty("fast")
-    public void setFastSpeedPrice(Double fastSpeedPrice) {
+    public void setFastSpeedPrice(Long fastSpeedPrice) {
         this.fastSpeedPrice = fastSpeedPrice;
     }
 
-    public Double getAverageSpeedPrice() {
+    public Long getAverageSpeedPrice() {
         return averageSpeedPrice;
     }
 
     @JsonProperty("average")
-    public void setAverageSpeedPrice(Double averageSpeedPrice) {
+    public void setAverageSpeedPrice(Long averageSpeedPrice) {
         this.averageSpeedPrice = averageSpeedPrice;
     }
 
-    public Double getSafeLowSpeedPrice() {
+    public Long getSafeLowSpeedPrice() {
         return safeLowSpeedPrice;
     }
 
     @JsonProperty("safeLow")
-    public void setSafeLowSpeedPrice(Double safeLowSpeedPrice) {
+    public void setSafeLowSpeedPrice(Long safeLowSpeedPrice) {
         this.safeLowSpeedPrice = safeLowSpeedPrice;
     }
 }

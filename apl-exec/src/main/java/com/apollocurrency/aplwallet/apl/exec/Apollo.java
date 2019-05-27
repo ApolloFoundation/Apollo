@@ -1,6 +1,9 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
+import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -40,6 +43,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +65,10 @@ import javax.enterprise.inject.spi.CDI;
  */
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
+    public static final String PID_FILE="apl.pid";
+    public static final String CMD_FILE="apl.cmdline";
+    public static final String APP_FILE="apl.app";
+
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
             "socksProxyHost",
             "socksProxyPort",
@@ -79,6 +89,55 @@ public class Apollo {
     private static AplCore core;
 
     private PropertiesHolder propertiesHolder;
+
+    private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
+
+    private static void setLogLevel(int logLevel) {
+        String packageName = "com.apollocurrency.aplwallet.apl";
+        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
+            logLevel = VALID_LOG_LEVELS.length - 1;
+        }
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
+        System.out.println(packageName + " current logger level: " + logger.getLevel()
+                + " New level: " + VALID_LOG_LEVELS[logLevel]);
+
+        logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+    }
+
+    public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
+        boolean res = true;
+        Long pid = ProcessHandle.current().pid();
+        String cmdline = "";
+        for (String s : argv) {
+            cmdline = cmdline + s + " ";
+        }
+        Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
+        String home = hp.toString()+File.separator;
+        String path = pidPath.isEmpty() ? home + PID_FILE : pidPath;
+        try (PrintWriter out = new PrintWriter(path)) {
+            out.println(pid.toString());
+        } catch (FileNotFoundException ex) {
+            System.err.println("Can not write PID to: "+path);
+            res=false;
+        }
+        path=home + CMD_FILE;
+        try (PrintWriter out = new PrintWriter(path)) {
+            out.println(cmdline);
+        } catch (FileNotFoundException ex) {
+            System.err.println("Can not write command line args file to: "+path);
+            res=false;
+        }
+        path=home + APP_FILE;
+        try (PrintWriter out = new PrintWriter(home + APP_FILE)) {
+            out.println(DirProvider.getBinDir());
+        } catch (FileNotFoundException ex) {
+            System.err.println("Can not write Apollo start path file to: "+path);
+            res=false;
+        }
+        return res;
+    }
 
     private void initCore() {
 
@@ -132,14 +191,15 @@ public class Apollo {
 
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
-                customDirLocations.getDbDir().isEmpty()    ? StringUtils.isBlank(args.dbDir) ? vars.dbDir  : args.dbDir : customDirLocations.getDbDir().get(),
-                StringUtils.isBlank(args.logDir)           ? vars.logDir           : args.logDir,
+                customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
+                StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-                StringUtils.isBlank(args.pidFile)          ? vars.pidFile          : args.pidFile,
+                StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
                 StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
                 StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir
         );
     }
+
     /**
      * @param argv the command line arguments
      */
@@ -153,8 +213,7 @@ public class Apollo {
         jc.setProgramName(Constants.APPLICATION);
         try {
             jc.parse(argv);
-        }
-        catch (RuntimeException ex) {
+        } catch (RuntimeException ex) {
             System.err.println("Error parsing command line arguments.");
             System.err.println(ex.getMessage());
             jc.usage();
@@ -172,10 +231,11 @@ public class Apollo {
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
-
+//cheat classloader to get access to package resources
+        ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME);
+        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.testnetIdx);
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
@@ -188,32 +248,37 @@ public class Apollo {
                 configDirProvider,
                 StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
                 args.isResourceIgnored()
-                );
+        );
 // init application data dir provider
 
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args,envVars, customDirLocations));
+        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
-
         log = LoggerFactory.getLogger(Apollo.class);
-        
+        setLogLevel(args.debug);
+
 //check webUI
         System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
-/* at the moment we do it in build time
+        /* at the moment we do it in build time
 
         Future<Boolean> unzipRes;
         WebUiExtractor we = new WebUiExtractor(dirProvider);
         ExecutorService execService = Executors.newFixedThreadPool(1);
         unzipRes = execService.submit(we);
-*/
+         */
 
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init();
+        //save command line params and PID
+        if(!saveStartParams(argv, args.pidFile,configDirProvider)){
+            System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
+        }
+
         //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
@@ -233,7 +298,7 @@ public class Apollo {
                 .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
-//TODO:  turn it on periodically in development processto check CDI errors
+                //TODO:  turn it on periodically in development processto check CDI errors
 //                .devMode() // enable for dev only
                 .build();
 
@@ -249,13 +314,13 @@ public class Apollo {
             app.initAppStatusMsg();
             app.initCore();
             app.launchDesktopApplication();
-            app.initUpdater(args.updateAttachmentFile, args.debug);
-/*            if(unzipRes.get()!=true){
+            app.initUpdater(args.updateAttachmentFile, args.debug > 2);
+            /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
-*/  
-            if(args.startMint){
-                AplCoreRuntime.getInstance().startMinter(); 
+             */
+            if (args.startMint) {
+                AplCoreRuntime.getInstance().startMinter();
             }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
