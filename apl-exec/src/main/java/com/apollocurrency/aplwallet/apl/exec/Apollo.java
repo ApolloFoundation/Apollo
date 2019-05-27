@@ -107,7 +107,7 @@ public class Apollo {
     }
 
     public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
-        boolean res = false;
+        boolean res = true;
         Long pid = ProcessHandle.current().pid();
         String cmdline = "";
         for (String s : argv) {
