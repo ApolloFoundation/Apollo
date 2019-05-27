@@ -58,7 +58,6 @@ public class BlockDaoImpl implements BlockDao {
     private final DerivedTablesRegistry tablesRegistry;
     private DatabaseManager databaseManager;
     private TransactionDao transactionDao;
-    private BlockIndexDao blockIndexDao;
 
 
     public BlockDaoImpl(int blockCacheSize, DerivedTablesRegistry tablesRegistry, DatabaseManager databaseManager) {
@@ -79,12 +78,6 @@ public class BlockDaoImpl implements BlockDao {
         return transactionDao;
     }
 
-    private BlockIndexDao lookupBlockIndexDao() {
-        if (blockIndexDao == null) {
-            this.blockIndexDao = CDI.current().select(BlockIndexDao.class).get();
-        }
-        return blockIndexDao;
-    }
 
     private void clearBlockCache() {
 //        synchronized (blockCache) {

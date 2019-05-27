@@ -517,7 +517,7 @@ public class TransactionDaoImpl implements TransactionDao {
     public List<Transaction> getTransactions(int fromDbId, int toDbId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM transaction where DB_ID >= ? and DB_ID < ?")) {
+             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM transaction where DB_ID >= ? and DB_ID < ? order by height asc, transaction_index asc")) {
             pstmt.setLong(1, fromDbId);
             pstmt.setLong(2, toDbId);
             return loadTransactionList(conn, pstmt);
