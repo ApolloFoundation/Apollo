@@ -98,7 +98,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Wallets balances"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("ethAddresses") List<String> ethAddresses
+    public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
         ) throws NotFoundException {
 
         for (String ethAddress : ethAddresses) {
