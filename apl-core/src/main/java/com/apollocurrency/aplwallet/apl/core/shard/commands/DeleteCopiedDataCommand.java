@@ -36,7 +36,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         tableNameList.add(BLOCK_TABLE_NAME);
-        tableNameList.add(TRANSACTION_TABLE_NAME);
+//        tableNameList.add(TRANSACTION_TABLE_NAME); // TODO: YL uncomment when transaction deletion is ready
     }
 
     public DeleteCopiedDataCommand(

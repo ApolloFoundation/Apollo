@@ -25,8 +25,6 @@ import java.sql.Types;
 public class BlockTransactionInsertHelper extends AbstractHelper {
     private static final Logger log = getLogger(BlockTransactionInsertHelper.class);
 
-    private String sqlDeleteFromBottomBound;
-
     @Override
     public long processOperation(Connection sourceConnect, Connection targetConnect,
                                  TableOperationParams operationParams)
