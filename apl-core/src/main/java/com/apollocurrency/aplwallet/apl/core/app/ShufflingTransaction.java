@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -438,6 +439,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         public boolean isPruned(long transactionId) {
             Transaction transaction = blockchain.getTransaction(transactionId);
+
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -701,13 +703,13 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = blockchain.findTransactionByFullHash(participant.getDataTransactionFullHash(),
-                    blockchain.getHeight());
-            if (dataProcessingTransaction == null) {
+
+            if (!blockchain.hasTransactionByFullHash(participant.getDataTransactionFullHash(),
+                    blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }
-            ShufflingProcessingAttachment shufflingProcessing = (ShufflingProcessingAttachment) dataProcessingTransaction.getAttachment();
-            if (!Arrays.equals(shufflingProcessing.getHash(), attachment.getHash())) {
+            byte[][] shufflingData = ShufflingParticipant.getData(participant.getDataTransactionFullHash());
+            if (shufflingData == null || !Arrays.equals(getDataHash(shufflingData), attachment.getHash())) {
                 throw new AplException.NotValidException("Blame data hash doesn't match processing data hash");
             }
             byte[][] keySeeds = attachment.getKeySeeds();
@@ -719,6 +721,14 @@ public abstract class ShufflingTransaction extends TransactionType {
                     throw new AplException.NotValidException("Invalid keySeed: " + Convert.toHexString(keySeed));
                 }
             }
+        }
+
+        private byte[] getDataHash(byte[][] data) {
+            MessageDigest digest = Crypto.sha256();
+            for (byte[] bytes : data) {
+                digest.update(bytes);
+            }
+            return digest.digest();
         }
 
         @Override

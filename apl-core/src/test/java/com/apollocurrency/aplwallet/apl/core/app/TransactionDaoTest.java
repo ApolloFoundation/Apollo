@@ -88,47 +88,47 @@ class TransactionDaoTest {
 
     @Test
     void findByBlockId() {
-        List<Transaction> transactions = dao.findBlockTransactions(BLOCK_0_ID);
+        List<Transaction> transactions = dao.findBlockTransactions(BLOCK_0_ID, extension.getDatabaseManger().getDataSource());
         assertNotNull(transactions);
         assertEquals(2, transactions.size());
     }
 
     @Test
     void findTransactionId() {
-        Transaction transaction = dao.findTransaction(testData.TRANSACTION_0.getId());
+        Transaction transaction = dao.findTransaction(testData.TRANSACTION_0.getId(), extension.getDatabaseManger().getDataSource());
         assertNotNull(transaction);
         assertEquals(testData.TRANSACTION_0.getId(), transaction.getId());
     }
 
     @Test
     void findTransactionIdHeight() {
-        Transaction transaction = dao.findTransaction(testData.TRANSACTION_1.getId(), testData.TRANSACTION_1.getHeight());
+        Transaction transaction = dao.findTransaction(testData.TRANSACTION_1.getId(), testData.TRANSACTION_1.getHeight(), extension.getDatabaseManger().getDataSource());
         assertNotNull(transaction);
         assertEquals(testData.TRANSACTION_1.getId(), transaction.getId());
     }
 
     @Test
     void findTransactionByFullHash() {
-        Transaction transaction = dao.findTransactionByFullHash(testData.TRANSACTION_5.getFullHash(), testData.TRANSACTION_5.getHeight());
+        Transaction transaction = dao.findTransactionByFullHash(testData.TRANSACTION_5.getFullHash(), testData.TRANSACTION_5.getHeight(), extension.getDatabaseManger().getDataSource());
         assertNotNull(transaction);
         assertEquals(testData.TRANSACTION_5.getId(), transaction.getId());
     }
 
     @Test
     void hasTransactionBy() {
-        boolean isFound = dao.hasTransaction(testData.TRANSACTION_5.getId(), testData.TRANSACTION_5.getHeight());
+        boolean isFound = dao.hasTransaction(testData.TRANSACTION_5.getId(), testData.TRANSACTION_5.getHeight(), extension.getDatabaseManger().getDataSource());
         assertTrue(isFound);
     }
 
     @Test
     void hasTransactionByFullHash() {
-        boolean isFound = dao.hasTransactionByFullHash(testData.TRANSACTION_5.getFullHash(), testData.TRANSACTION_5.getHeight());
+        boolean isFound = dao.hasTransactionByFullHash(testData.TRANSACTION_5.getFullHash(), testData.TRANSACTION_5.getHeight(), extension.getDatabaseManger().getDataSource());
         assertTrue(isFound);
     }
 
     @Test
     void getFullHash() {
-        byte[] fullHash = dao.getFullHash(testData.TRANSACTION_5.getId());
+        byte[] fullHash = dao.getFullHash(testData.TRANSACTION_5.getId(), extension.getDatabaseManger().getDataSource());
         assertNotNull(fullHash);
         assertArrayEquals(testData.TRANSACTION_5.getFullHash(), fullHash);
     }

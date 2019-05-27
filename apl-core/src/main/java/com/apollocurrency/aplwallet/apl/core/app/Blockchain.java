@@ -132,6 +132,10 @@ public interface Blockchain {
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 
+    List<Transaction> getBlockTransactions(long blockId);
+
+    boolean hasBlock(long blockId, int height);
+
     int getTransactionCount(long accountId, byte type, byte subtype);
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);

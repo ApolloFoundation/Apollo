@@ -91,7 +91,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static DatabaseManager databaseManager;
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static final boolean testUnconfirmedTransactions = propertiesHolder.getBooleanProperty("apl.testUnconfirmedTransactions");
     private static int maxUnconfirmedTransactions;
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -218,7 +217,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return () -> {
             try {
                 try {
-                    if (lookupBlockchainProcessor().isDownloading() && !testUnconfirmedTransactions) {
+                    if (lookupBlockchainProcessor().isDownloading()) {
                         return;
                     }
                     List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
@@ -263,7 +262,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 List<Transaction> transactionList = new ArrayList<>();
@@ -295,7 +294,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 Peer peer = Peers.getAnyPeer(Peer.State.CONNECTED, true);
@@ -338,7 +337,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 processWaitingTransactions();
@@ -678,7 +677,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
+        if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock()) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -744,7 +743,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         try {
             try {
                 dataSource.begin();
-                if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
+                if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock()) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
                 DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());

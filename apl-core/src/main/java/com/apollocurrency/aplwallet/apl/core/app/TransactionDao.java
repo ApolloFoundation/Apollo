@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
@@ -12,27 +13,27 @@ import java.util.List;
 
 public interface TransactionDao {
 
-    Transaction findTransaction(long transactionId);
+    Transaction findTransaction(long transactionId, TransactionalDataSource dataSource);
 
-    Transaction findTransaction(long transactionId, int height);
+    Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource);
 
-    Transaction findTransactionByFullHash(byte[] fullHash);
+    Transaction findTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource);
 
-    Transaction findTransactionByFullHash(byte[] fullHash, int height);
+    Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource);
 
-    boolean hasTransaction(long transactionId);
+    boolean hasTransaction(long transactionId, TransactionalDataSource dataSource);
 
-    boolean hasTransaction(long transactionId, int height);
+    boolean hasTransaction(long transactionId, int height, TransactionalDataSource dataSource);
 
-    boolean hasTransactionByFullHash(byte[] fullHash);
+    boolean hasTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource);
 
-    boolean hasTransactionByFullHash(byte[] fullHash, int height);
+    boolean hasTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource);
 
-    byte[] getFullHash(long transactionId);
+    byte[] getFullHash(long transactionId, TransactionalDataSource dataSource);
 
     Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException;
 
-    List<Transaction> findBlockTransactions(long blockId);
+    List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource);
 
     List<Transaction> findBlockTransactions(Connection con, long blockId);
 

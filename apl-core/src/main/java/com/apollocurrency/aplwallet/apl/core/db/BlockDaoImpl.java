@@ -455,7 +455,7 @@ public class BlockDaoImpl implements BlockDao {
              PreparedStatement pstmt = con.prepareStatement(
                      "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id having count > 1 limit ?")) {
             pstmt.setInt(1, startHeight);
-            pstmt.setInt(1, limit);
+            pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     generators.add(rs.getLong("generator_id"));

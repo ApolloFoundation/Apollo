@@ -13,13 +13,11 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import javax.enterprise.inject.spi.CDI;
 
 /**
@@ -177,21 +175,14 @@ public abstract class Data extends TransactionType {
             if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
-            Transaction uploadTransaction = blockchain.findTransaction(attachment.getTaggedDataId(), blockchain.getHeight());
-            if (uploadTransaction == null) {
+            if (blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
             }
-            if (uploadTransaction.getType() != TAGGED_DATA_UPLOAD) {
-                throw new AplException.NotValidException("Transaction " + Long.toUnsignedString(attachment.getTaggedDataId()) + " is not a tagged data upload");
-            }
-            if (attachment.getData() != null) {
-                TaggedDataUploadAttachment taggedDataUploadAttachment = (TaggedDataUploadAttachment) uploadTransaction.getAttachment();
-                if (!Arrays.equals(attachment.getHash(), taggedDataUploadAttachment.getHash())) {
-                    throw new AplException.NotValidException("Hashes don't match! Extend hash: " + Convert.toHexString(attachment.getHash()) + " upload hash: " + Convert.toHexString(taggedDataUploadAttachment.getHash()));
-                }
-            }
             TaggedData taggedData = lookupTaggedDataService().getData(attachment.getTaggedDataId());
-            if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
+            if (taggedData == null) {
+                throw new AplException.NotCurrentlyValidException("Tagged data " + attachment.getTaggedDataId() + " not exist. Nothing to extend.");
+            }
+            if (taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
             }
         }

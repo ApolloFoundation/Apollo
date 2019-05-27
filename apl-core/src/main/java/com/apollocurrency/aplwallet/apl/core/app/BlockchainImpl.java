@@ -124,7 +124,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public boolean hasBlock(long blockId) {
-        return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId);
+        return hasBlock(blockId, Integer.MAX_VALUE);
     }
 
 /*
@@ -305,39 +305,41 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public Transaction getTransaction(long transactionId) {
-        return transactionDao.findTransaction(transactionId);
+        return findTransaction(transactionId, Integer.MAX_VALUE);
     }
 
     @Override
     public Transaction findTransaction(long transactionId, int height) {
-        return transactionDao.findTransaction(transactionId, height);
+        TransactionalDataSource datasource = getDatasourceWithShardingByTransactionId(transactionId);
+        return transactionDao.findTransaction(transactionId, height, datasource);
     }
 
     @Override
     public Transaction getTransactionByFullHash(String fullHash) {
-        return transactionDao.findTransactionByFullHash(Convert.parseHexString(fullHash));
+        return findTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash) {
-        return transactionDao.findTransactionByFullHash(fullHash);
+        return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
-        return transactionDao.findTransactionByFullHash(fullHash, height);
+        TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
+        return transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
-        return transactionDao.hasTransaction(transactionId) || transactionIndexDao.getByTransactionId(transactionId) != null;
+        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) || transactionIndexDao.getByTransactionId(transactionId) != null;
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId, int height) {
-        boolean hasTransaction = transactionDao.hasTransaction(transactionId, height);
+        boolean hasTransaction = transactionDao.hasTransaction(transactionId, height, databaseManager.getDataSource());
         if (!hasTransaction) {
             Integer transactionHeight = transactionIndexDao.getTransactionHeightByTransactionId(transactionId);
             hasTransaction = transactionHeight != null && transactionHeight <= height;
@@ -355,7 +357,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash) {
-        return transactionDao.hasTransactionByFullHash(fullHash) || hasShardTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+        return transactionDao.hasTransactionByFullHash(fullHash, databaseManager.getDataSource()) || hasShardTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
     private boolean hasShardTransactionByFullHash(byte[] fullHash, int height) {
@@ -370,13 +372,13 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
-        return transactionDao.hasTransactionByFullHash(fullHash, height) || hasShardTransactionByFullHash(fullHash, height);
+        return transactionDao.hasTransactionByFullHash(fullHash, height, databaseManager.getDataSource()) || hasShardTransactionByFullHash(fullHash, height);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
-        Transaction transaction = transactionDao.findTransactionByFullHash(fullHash, heightLimit);
+        Transaction transaction = transactionDao.findTransactionByFullHash(fullHash, heightLimit, databaseManager.getDataSource());
         Integer txHeight = null;
         if (transaction != null) {
             txHeight = transaction.getHeight();
@@ -389,7 +391,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public byte[] getFullHash(long transactionId) {
-        byte[] fullHash = transactionDao.getFullHash(transactionId);
+        byte[] fullHash = transactionDao.getFullHash(transactionId, databaseManager.getDataSource());
         if (fullHash == null) {
             TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(transactionId);
             fullHash = getTransactionIndexFullHash(transactionIndex);
@@ -450,6 +452,17 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public List<Transaction> getBlockTransactions(long blockId) {
+        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
+        return transactionDao.findBlockTransactions(blockId, dataSource);
+    }
+
+    @Override
+    public boolean hasBlock(long blockId, int height) {
+        return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId, height, databaseManager.getDataSource());
+    }
+
+    @Override
     public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         return transactionDao.getTransactions(type, subtype, from, to);
     }
@@ -495,6 +508,11 @@ public class BlockchainImpl implements Blockchain {
 
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
         Long shardId = blockIndexDao.getShardIdByBlockHeight(blockHeight);
+        return getShardDataSourceOrDefault(shardId);
+    }
+
+    private TransactionalDataSource getDatasourceWithShardingByTransactionId(long transactionId) {
+        Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
         return getShardDataSourceOrDefault(shardId);
     }
 
