@@ -94,7 +94,7 @@ public class Apollo {
 
     private static void setLogLevel(int logLevel) {
         String packageName = "com.apollocurrency.aplwallet.apl";
-        if (logLevel > VALID_LOG_LEVELS.length - 1) {
+        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -106,7 +106,8 @@ public class Apollo {
         logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
     }
 
-    public static void saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
+    public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
+        boolean res = false;
         Long pid = ProcessHandle.current().pid();
         String cmdline = "";
         for (String s : argv) {
@@ -119,19 +120,23 @@ public class Apollo {
             out.println(pid.toString());
         } catch (FileNotFoundException ex) {
             System.err.println("Can not write PID to: "+path);
+            res=false;
         }
         path=home + CMD_FILE;
         try (PrintWriter out = new PrintWriter(path)) {
             out.println(cmdline);
         } catch (FileNotFoundException ex) {
             System.err.println("Can not write command line args file to: "+path);
+            res=false;
         }
         path=home + APP_FILE;
         try (PrintWriter out = new PrintWriter(home + APP_FILE)) {
             out.println(DirProvider.getBinDir());
         } catch (FileNotFoundException ex) {
             System.err.println("Can not write Apollo start path file to: "+path);
+            res=false;
         }
+        return res;
     }
 
     private void initCore() {
@@ -269,7 +274,9 @@ public class Apollo {
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init();
         //save command line params and PID
-        saveStartParams(argv, args.pidFile,configDirProvider);
+        if(!saveStartParams(argv, args.pidFile,configDirProvider)){
+            System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
+        }
 
         //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
