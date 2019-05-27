@@ -16,7 +16,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 TOR_DIR=${APL_TOP_DIR}/${TOR_DIST_DIR}
 echo Tor dir  = ${TOR_DIR}
 if [ -x ${TOR_DIR} ];  then
-    TOR_CMD="${TOR_DIR}/tor"
+    TOR_CMD="${TOR_DIR}/tor &"
 else
   if [[ -n $(type -p tor) ]]
   then
