@@ -37,6 +37,7 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
+        <module>apl-conf</module>
         <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
 <!--
@@ -120,13 +121,8 @@
     </properties>
 
 <!-- We have following profiles: prod, dev, debug
-     1. prod: profile for production network with appropriate resources
-     2. dev:  profile for development, contains resources for man testnet
-         Default profile:  debug
-         Resources for profiles:
-             dev:  resources-dev
-             prod: resources-prod
-             debug: the same as dev but without zip assembly
+     1. prod: profile for release with build of all zips and sha-256 sums 
+     2. dev:  profile for development, no extra build artefacts
 -->
     <profiles>
         <!-- The Configuration of the development profile -->
@@ -138,38 +134,8 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPhase>package</zipExecutionPhase>
-            </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-dev</directory>
-                    </resource>
-                </resources>
-            </build>
-        </profile>
-        <!-- The Configuration of the debug profile -->
-        <profile>
-            <id>debug</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
                 <zipExecutionPhase>none</zipExecutionPhase>
             </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-dev</directory>
-                    </resource>
-                </resources>
-            </build>
         </profile>
         <!-- The Configuration of the production profile -->
         <profile>
@@ -182,16 +148,6 @@
             <properties>
                 <zipExecutionPhase>package</zipExecutionPhase>
             </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-prod</directory>
-                    </resource>
-                </resources>
-            </build>
         </profile>
     </profiles>
 
