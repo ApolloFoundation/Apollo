@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import java.math.BigInteger;
 import java.util.Set;
 import java.util.UUID;
 
@@ -153,7 +152,5 @@ public interface Peer extends Comparable<Peer> {
     public boolean isTrusted();
     
     public TrustLevel getTrustLevel();
-    
-    public BigInteger retreiveHash(String entityId);
     
 }
