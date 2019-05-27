@@ -182,6 +182,7 @@ public class ChainsConfigLoaderTest {
         Mockito.doReturn(installationFolder.getPath()).when(configDirProvider).getInstallationConfigDirectory();
         Mockito.doReturn(sysConfigDir.getPath()).when(configDirProvider).getSysConfigDirectory();
         Mockito.doReturn(userConfigFolder.getPath()).when(configDirProvider).getUserConfigDirectory();
+        Mockito.doReturn("conf").when(configDirProvider).getConfigDirectoryName();
         Chain chain1 = CHAIN1.copy();
         chain1.setChainId(UUID.randomUUID());
         Chain chain2 = CHAIN1.copy();

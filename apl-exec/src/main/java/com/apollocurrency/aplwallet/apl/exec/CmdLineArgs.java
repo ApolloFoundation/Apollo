@@ -8,10 +8,8 @@ import com.beust.jcommander.Parameter;
  * @author alukin@gmail.com
  */
 public class CmdLineArgs {
-    @Parameter(names = {"--debug", "-d"}, description = "Debug mode")
-    public boolean debug = false;
-    @Parameter(names = {"--verbose", "-v"}, description = "Verbosity level 0-9")
-    public Integer verbose = 1;
+    @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
+    public int debug = 2;
     @Parameter(names = {"--help", "-h"}, help = true, description = "Print help message")
     public boolean help;
     @Parameter(names = {"--service-mode", "-s"}, help = true, description = "Run in service mode with current system user")
@@ -39,6 +37,8 @@ public class CmdLineArgs {
     public String pidFile = "";
     @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
     public boolean startMint;
+    @Parameter(names = {"--testnet", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
+    public int testnetIdx=0;
     
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
