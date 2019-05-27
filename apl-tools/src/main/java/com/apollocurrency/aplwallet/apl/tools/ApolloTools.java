@@ -86,7 +86,7 @@ public class ApolloTools {
     
     private static void setLogLevel(int logLevel) {
         String packageName = "com.apollocurrency.aplwallet.apl";
-        if (logLevel > VALID_LOG_LEVELS.length - 1) {
+        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
