@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import java.math.BigInteger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

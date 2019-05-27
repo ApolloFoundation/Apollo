@@ -9,8 +9,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.math.BigInteger;
-import java.util.UUID;
-import javax.inject.Inject;
 import org.json.simple.JSONObject;
 
 /**
@@ -23,7 +21,7 @@ public class PeerClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Peer peer;
     
-    @Inject
+
     public PeerClient(Peer peer) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());        
