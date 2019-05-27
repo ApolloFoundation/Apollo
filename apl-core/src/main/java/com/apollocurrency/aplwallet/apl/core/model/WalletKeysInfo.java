@@ -16,14 +16,12 @@ import java.util.List;
 public class WalletKeysInfo {
 
     private AplWalletKey aplWalletKey;
-    private EthWalletKey ethWalletKey;
-    private EthWalletKey paxWalletKey;
+    private List<EthWalletKey> ethWalletKeys = new ArrayList<>();
     private String passphrase;
 
     public WalletKeysInfo(ApolloFbWallet apolloWallet, String passphrase) {
         this.aplWalletKey = apolloWallet.getAplWalletKey();
-        this.ethWalletKey = apolloWallet.getEthWalletKey();
-        this.paxWalletKey = apolloWallet.getPaxWalletKey();
+        ethWalletKeys.addAll(apolloWallet.getEthWalletKeys());
         this.passphrase = passphrase;
     }
 
@@ -35,24 +33,8 @@ public class WalletKeysInfo {
         this.aplWalletKey = aplWalletKey;
     }
 
-    public EthWalletKey getEthWalletKey() {
-        return ethWalletKey;
-    }
-
-    public EthWalletKey getPaxWalletKey() {
-        return paxWalletKey;
-    }
-
-    public void setPaxWalletKey(EthWalletKey paxWalletKey) {
-        this.paxWalletKey = paxWalletKey;
-    }
-
-    public void setEthWalletKey(EthWalletKey ethWalletKey) {
-        this.ethWalletKey = ethWalletKey;
-    }
-
-    public String getEthAddress() {
-        return ethWalletKey.getCredentials().getAddress();
+    public List<EthWalletKey> getEthWalletKeys() {
+        return ethWalletKeys;
     }
 
     public Long getAplId() {
@@ -67,18 +49,32 @@ public class WalletKeysInfo {
         this.passphrase = passphrase;
     }
 
+    public EthWalletKey getEthWalletForAddress(String address){
+        for (EthWalletKey ethWalletKey : ethWalletKeys) {
+            if(ethWalletKey.getCredentials().getAddress().equals(address)){
+               return ethWalletKey;
+            }
+        }
+        return null;
+    }
+
+
     @Deprecated
     public JSONObject toJSON() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("apl", getAplWalletKey().toJSON());
-        jsonObject.put("eth", getEthWalletKey().toJSON());
-        jsonObject.put("pax", getPaxWalletKey().toJSON());
+
+        List<JSONObject> ethWallets = new ArrayList<>();
+        for (EthWalletKey ethWallet : getEthWalletKeys()) {
+            ethWallets.add(ethWallet.toJSON());
+        }
+
+        jsonObject.put("eth", ethWallets);
 
          //For backward compatibility.
         jsonObject.put("account", getAplId());
         jsonObject.put("accountRS", Convert2.rsAccount(getAplId()));
         jsonObject.put("publicKey", Convert.toHexString(getAplWalletKey().getPublicKey()));
-        jsonObject.put("ethAddress", getEthAddress());
 
         if (!StringUtils.isBlank(passphrase)) {
             jsonObject.put("passphrase", passphrase);
@@ -92,27 +88,14 @@ public class WalletKeysInfo {
 
         JSONObject ethObject = new JSONObject();
         List<JSONObject> ethWallets = new ArrayList<>();
-        ethWallets.add(getEthWalletKey().toJSON());
+        for (EthWalletKey ethWallet : getEthWalletKeys()) {
+            ethWallets.add(ethWallet.toJSON());
+        }
+
         ethObject.put("currency", "eth");
         ethObject.put("wallets", ethWallets);
 
-        JSONObject paxObject = new JSONObject();
-        List<JSONObject> paxWallets = new ArrayList<>();
-        paxWallets.add(getPaxWalletKey().toJSON());
-        paxObject.put("currency", "pax");
-        paxObject.put("wallets", paxWallets);
-
-        //Apl info don't use right now.
-
-//        JSONObject aplObject = new JSONObject();
-//        List<JSONObject> aplWallets = new ArrayList<>();
-//        aplWallets.add(getAplWalletKey().toJSON());
-//        aplObject.put("currency", "apl");
-//        aplObject.put("wallets", aplWallets);
-
         currencies.add(ethObject);
-        currencies.add(paxObject);
-//        currencies.add(aplObject);
 
         jsonObject.put("currencies", currencies);
 
