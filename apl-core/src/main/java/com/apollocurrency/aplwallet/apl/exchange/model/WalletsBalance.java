@@ -7,7 +7,7 @@ import java.util.List;
 
 public class WalletsBalance {
 
-    @JsonProperty("ethWalletsBalance")
+    @JsonProperty("eth")
     private List<EthWalletBalanceInfo> ethWalletsBalance;
 
     public WalletsBalance(List<EthWalletBalanceInfo> ethWalletsBalance) {

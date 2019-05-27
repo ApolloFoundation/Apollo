@@ -39,10 +39,18 @@ public class CmdLineArgs {
     public String pidFile = "";
     @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
     public boolean startMint;
-    @Parameter(names = {"--testnet", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
-    public int testnetIdx=0;
-    
+    @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-3]. 0 means mainnet, 1 - 1st testnet and so on")
+    public int netIdx=0;
+    @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
+    public boolean isTestnet = false;
+
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
+    }
+    public int getNetIdx(){
+        if(isTestnet){
+            netIdx=1;
+        }
+        return netIdx;
     }
 }
