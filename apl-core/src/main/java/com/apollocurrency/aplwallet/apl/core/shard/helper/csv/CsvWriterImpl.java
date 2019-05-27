@@ -9,9 +9,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Array;
 import java.sql.Connection;
@@ -22,6 +24,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -34,22 +37,18 @@ import org.slf4j.Logger;
 /**
  * {@inheritDoc}
  */
-//@Singleton
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
 
     private Writer output;
     private StringBuffer outputBuffer = new StringBuffer(400);
-//    private boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     private Set<String> excludeColumn = new HashSet<>();
     private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
     private String defaultPaginationColumnName = "DB_ID";
 
-//    @Inject
-    public CsvWriterImpl(/*@Named("dataExportDir") */Path dataExportPath, Set<String> excludeColumnNames,
-                         String paginationColumnName) {
+    public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, String paginationColumnName) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
         if (excludeColumnNames != null && excludeColumnNames.size() > 0) {
             // assign non empty Set
@@ -57,9 +56,29 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
         }
         if (paginationColumnName != null && !paginationColumnName.isEmpty()) {
-            // assign non empty Set
+            // assign non empty Value
             this.defaultPaginationColumnName = paginationColumnName;
             log.debug("Config paginationColumnName column = {}", paginationColumnName);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDefaultPaginationColumnName() {
+        return defaultPaginationColumnName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultPaginationColumnName(String defaultPaginationColumnName) {
+        if (defaultPaginationColumnName != null && !defaultPaginationColumnName.isEmpty()) {
+            // assign non empty Value
+            this.defaultPaginationColumnName = defaultPaginationColumnName;
+            log.debug("Config paginationColumnName column = {}", defaultPaginationColumnName);
         }
     }
 
@@ -122,7 +141,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         if (output == null) {
             try {
                 OutputStream out = CsvFileUtils.newOutputStream(this.dataExportPath,
-                        !this.fileName.contains(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName,
+                        !this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName,
                         appendMode);
                 out = new BufferedOutputStream(out, IO_BUFFER_SIZE);
                 output = new BufferedWriter(new OutputStreamWriter(out, characterSet));
@@ -164,7 +183,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
                         meta.getPrecision(i + 1), meta.getScale(i + 1));
             }
-            log.debug("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
+            log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
             if (writeColumnHeader) {
                 log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
                 writeHeaderRow(columnsMetaData);
@@ -177,6 +196,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     switch (columnsMetaData[i].getSqlTypeInt()) {
                         case Types.BLOB:
                             o = rs.getBlob(i + 1);
+                            if (o == null) {
+                                o = nullString;
+                            }
                             break;
                         case Types.BIGINT:
                         case Types.BIT:
@@ -188,6 +210,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         case Types.SMALLINT:
                         case Types.TINYINT:
                             o = rs.getString(i + 1);
+                            if (o == null) {
+                                o = nullString;
+                            }
                             break;
                         case Types.DATE:
                             date = rs.getDate(i + 1);
@@ -203,7 +228,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             break;
                         case Types.ARRAY:
                             Array array = rs.getArray(i + 1);
-//                            o = array != null ? array.getArray() : nullString;
                             if (array != null && array.getArray() instanceof Object[] && ((Object[])array.getArray()).length > 0) {
                                 Object[] objectArray = (Object[]) array.getArray();
                                 StringBuilder outputValue = new StringBuilder(objectArray.length + 2);
@@ -214,8 +238,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     }
                                     outputValue.append(o1.toString()).append(",");
                                     if (j == objectArray.length - 1) {
-                                        // remove latest "comma" then  append ")"
-                                        outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")");
+                                        // there is a bug in H2 parser, so let's make one extra comma at the end
+                                        // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
+                                        outputValue.append(")");
                                     }
                                 }
                                 o = outputValue.toString();
@@ -226,6 +251,14 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             break;
                         case Types.NVARCHAR:
                         case Types.VARBINARY:
+                        case Types.BINARY:
+                            o = rs.getString(i + 1);
+                            if (o != null) {
+                                o = Base64.getEncoder().encodeToString(((String)o).getBytes(StandardCharsets.UTF_8));
+                            } else {
+                                o = nullString;
+                            }
+                            break;
                         case Types.VARCHAR:
                         default:
                             o = rs.getString(i + 1);
@@ -238,14 +271,16 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     }
                     rowColumnNames[i] = o == null ? null : o.toString();
                 }
-                log.debug("Row = {}", Arrays.toString(rowColumnNames));
+                log.trace("Row = {}", Arrays.toString(rowColumnNames));
                 writeRow(rowColumnNames);
                 rows++;
                 minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
             }
+/*
             if (rows == 1) {
                 minMaxDbId.incrementMin(); // increase by one in order to advance further on result set
             }
+*/
             if (closeWhenNotAppend) {
                 output.close(); // close file on 'write mode'
             } else {
@@ -401,6 +436,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         CsvFileUtils.closeSilently(output);
         output = null;
         columnsMetaData = null;
+        excludeColumnIndex.clear();
     }
 
 }

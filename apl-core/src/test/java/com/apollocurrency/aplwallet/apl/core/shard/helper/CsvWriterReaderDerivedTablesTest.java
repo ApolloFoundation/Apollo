@@ -81,6 +81,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.base.Throwables;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -88,6 +89,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -95,18 +97,23 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.inject.Inject;
 
@@ -147,8 +154,6 @@ class CsvWriterReaderDerivedTablesTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
@@ -159,8 +164,6 @@ class CsvWriterReaderDerivedTablesTest {
     private Blockchain blockchain;
     @Inject
     DerivedTablesRegistry registry;
-    CsvWriter csvWriter;
-    CsvReader csvReader;
 
     public CsvWriterReaderDerivedTablesTest() throws Exception {}
 
@@ -186,7 +189,7 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
-        PhasingOnly.get(Long.parseUnsignedLong("2728325718715804811"));
+        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
         AccountAssetTable.getInstance().init();
         GenesisPublicKeyTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
@@ -195,20 +198,15 @@ class CsvWriterReaderDerivedTablesTest {
         purchaseTable.init();
     }
 
+    @DisplayName("Gather all derived tables, export data up to height = 8000," +
+            " delete rows up to height = 8000, import data back into db table")
     @Test
     void testExportAndImportData() {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
         // init columns excludes from export
-        HashSet<String> excludeColumnNames = new HashSet<>();
-        excludeColumnNames.add("DB_ID");
-//        excludeColumnNames.add("PUBLIC_KEY");
-//        excludeColumnNames.add("LATEST");
+        Set<String> excludeColumnNames = Set.of("DB_ID", "LATEST");
         // init Cvs reader, writer components
-        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, "DB_ID");
-        csvWriter.setOptions("fieldDelimiter="); // do not put ""
-        csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
-        csvReader.setOptions("fieldDelimiter="); // do not put ""
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
 
@@ -223,11 +221,14 @@ class CsvWriterReaderDerivedTablesTest {
             long maxDbValue = 0;
             int processedCount = 0;
             int totalCount = 0;
-            int batchLimit = 2; // used for pagination and partial commit
+            int batchLimit = 1; // used for pagination and partial commit
 
-            // prepare connection + statement
+            // prepare connection + statement + writer
             try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?")) {
+                 PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?");
+                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, "DB_ID");
+                 ) {
+                csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
                 MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
                 minDbValue = minMaxDbId.getMinDbId();
@@ -242,7 +243,6 @@ class CsvWriterReaderDerivedTablesTest {
                                 item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit), minMaxDbId );
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
-                    csvWriter.close(); // close CSV file
 
                     log.debug("Table = {}, exported rows = {}", item.toString(), totalCount);
                     assertEquals(minMaxDbId.getCount(), totalCount);
@@ -250,26 +250,40 @@ class CsvWriterReaderDerivedTablesTest {
                     int deletedCount = dropDataByName(minDbValue, maxDbValue, item.toString()); // drop exported data only
                     assertEquals(minMaxDbId.getCount(), deletedCount);
 
-                    int imported = importCsv(item.toString(), batchLimit);
+                    int imported = importCsv(item.toString(), batchLimit, dirProvider.getDataExportDir());
                     log.debug("Table = {}, imported rows = {}", item.toString(), imported);
-                    assertEquals(minMaxDbId.getCount(), imported);
+                    assertEquals(minMaxDbId.getCount(), imported, "incorrect value for '" + item.toString() + "'");
 
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error("Exception", e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
 
         });
         log.debug("Processed Tables = {}", result);
     }
 
-    private int importCsv(String itemName, int batchLimit) {
+    /**
+     * Example for  real implementation importing data
+     *
+     * @param itemName table name
+     * @param batchLimit rows in batch before commit
+     * @return processed rows number
+     * @throws Exception
+     */
+    private int importCsv(String itemName, int batchLimit, Path dataExportDir) throws Exception {
         int importedCount = 0;
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
+
         // open CSV Reader and db connection
-        try (ResultSet rs = csvReader.read(itemName + CSV_FILE_EXTENSION, null, null);
-             Connection con = extension.getDatabaseManger().getDataSource().getConnection()) {
+        try (CsvReader csvReader = new CsvReaderImpl(dataExportDir);
+             ResultSet rs = csvReader.read(itemName + CSV_FILE_EXTENSION, null, null);
+             Connection con = extension.getDatabaseManger().getDataSource().getConnection()
+        ) {
+            csvReader.setOptions("fieldDelimiter="); // do not put ""
 
             // get CSV meta data info
             ResultSetMetaData meta = rs.getMetaData();
@@ -280,11 +294,13 @@ class CsvWriterReaderDerivedTablesTest {
             StringBuffer columnsValues = new StringBuffer(200);
             sqlInsert.append("INSERT INTO ").append(itemName.toString()).append(" (");
             for (int i = 0; i < columnsCount; i++) {
-                columnNames.append( meta.getColumnLabel(i + 1)).append(",");
-                columnsValues.append("?").append(",");
+                columnNames.append( meta.getColumnLabel(i + 1));
+                columnsValues.append("?");
+                if (i != columnsCount - 1) {
+                    columnNames.append(",");
+                    columnsValues.append(",");
+                }
             }
-            columnNames.deleteCharAt(columnNames.lastIndexOf(",")); // remove latest tail comma
-            columnsValues.deleteCharAt(columnsValues.lastIndexOf(",")); // remove latest tail comma
             sqlInsert.append(columnNames).append(") VALUES").append("(").append(columnsValues).append(")");
             log.debug("SQL = {}", sqlInsert.toString()); // composed insert
             // precompile insert SQL
@@ -294,27 +310,45 @@ class CsvWriterReaderDerivedTablesTest {
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
-                    preparedInsertStatement.setObject(i + 1, object);
-                    log.trace("{}: {}\n", object, rs.getString(i + 1));
-                    importedCount++;
+                    log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
+
+                    if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
+                        InputStream is = null;
+                        try {
+                            is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                            preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
+                        } catch (SQLException e) {
+                            log.error("Binary/Varbinary reading error = " + object, e);
+                            throw e;
+                        } finally {
+                            if (is != null) {
+                                try {
+                                    is.close();
+                                } catch (IOException e) {} // ignore error here
+                            }
+                        }
+                    } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
+                        preparedInsertStatement.setObject(i + 1, object);
+                    } else {
+                        preparedInsertStatement.setObject(i + 1, object);
+                    }
                 }
-                if (batchLimit % (importedCount / columnsCount) == 0) {
+                log.trace("sql = {}", sqlInsert);
+                importedCount += preparedInsertStatement.executeUpdate();
+                if (batchLimit % importedCount == 0) {
                     con.commit();
                 }
             }
             con.commit(); // final commit
-        } catch (SQLException e) {
-            log.error("Error on importing data on table = '{}'", itemName.toString());
+        } catch (Exception e) {
+            log.error("Error on importing data on table = '{}'", itemName, e);
+            throw e;
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);
             }
         }
-        if (columnsCount > 0) {
-            return importedCount / columnsCount;
-        } else {
-            return importedCount;
-        }
+        return importedCount;
     }
 
     /**
@@ -345,10 +379,10 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            csvReader = new CsvReaderImpl(null);
+            CsvReader csvReader = new CsvReaderImpl(null);
         });
 
-        csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
+        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
         csvReader.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
@@ -367,10 +401,10 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            csvWriter = new CsvWriterImpl(null, Collections.emptySet(), null);
+            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet(), null);
         });
 
-        csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet(), null);
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet(), null);
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
