@@ -165,6 +165,7 @@ public class DataSourceWrapper implements DataSource {
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         config.setLeakDetectionThreshold(120_000); // 2 minutes
         log.debug("Creating DataSource pool, path = {}", dbUrl);
+        updateTransactionTable(config);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
 /*
@@ -204,6 +205,23 @@ public class DataSourceWrapper implements DataSource {
         initialized = true;
         shutdown = false;
         return jdbi;
+    }
+
+    private void updateTransactionTable(HikariConfig config) {
+        HikariDataSource dataSource = new HikariDataSource(config);
+        // We should keep this bad code here, to make update for transaction table
+        // Also we will shutdown datasource after update, otherwise - database will be corrupted
+        // TODO find more elegant solution
+        try {
+            Connection connection = dataSource.getConnection();
+            Statement st = connection.createStatement();
+            st.executeUpdate("ALTER TABLE IF EXISTS transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32) DEFAULT NULL");
+            st.execute("SHUTDOWN COMPACT");
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Unable to add sender_public_key column to transaction table", e);
+        }
+        dataSource.close();
     }
 
     public void shutdown() {

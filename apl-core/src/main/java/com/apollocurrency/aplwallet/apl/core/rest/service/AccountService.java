@@ -55,13 +55,11 @@ public class AccountService {
     }
 
     public ApolloFbWallet generateUserAccounts(byte[] secretApl) {
-
         ApolloFbWallet apolloWallet = new ApolloFbWallet();
         AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : new AplWalletKey(secretApl);
 
         apolloWallet.addAplKey(aplAccount);
         apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
-        apolloWallet.addPaxKey(AccountGeneratorUtil.generateEth());
         return apolloWallet;
     }
 }

@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -13,7 +15,9 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.ApiError;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
@@ -26,6 +30,8 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +39,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ethereum.util.blockchain.EtherUtil;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 
@@ -68,6 +75,7 @@ public class DexController {
     private EpochTime epochTime;
     private DexEthService dexEthService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
+    private ObjectMapper mapper = new ObjectMapper();
 
 
     @Inject
@@ -86,15 +94,27 @@ public class DexController {
     @Path("/balance")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Balances of cryptocurrency wallets",
-            description = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/BTC/PAX) balances")
+            description = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Wallets balances"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getBalances(@QueryParam("eth") String ethAddress, @QueryParam("pax") String paxAddress)
-            throws NotFoundException {
-        return Response.ok(service.getBalances(ethAddress, paxAddress).balanceToJson()).build();
-    }
+    public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
+        ) throws NotFoundException {
 
+        for (String ethAddress : ethAddresses) {
+            if(!EthUtil.isAddressValid(ethAddress)){
+                return Response.status(Response.Status.OK).entity(incorrect("ethAddress", "Address length is not correct.")).build();
+            }
+        }
+
+        WalletsBalance customerWalletsBalance = service.getBalances(new GetBalancesRequest(ethAddresses));
+
+        try {
+            return Response.ok(mapper.writeValueAsString(customerWalletsBalance)).build();
+        } catch (JsonProcessingException e) {
+            return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.incorrect("Response processing exception."))).build();
+        }
+    }
 
     @GET
     @Path("/history")
@@ -253,7 +273,6 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
                                          @Context HttpServletRequest req) throws NotFoundException {
-
         try{
             Long transactionId;
             Account account = ParameterParser.getSenderAccount(req);
@@ -281,7 +300,6 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "There is another cancel transaction for this order in the unconfirmed tx pool already."))).build();
             }
 
-
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
@@ -298,20 +316,55 @@ public class DexController {
     }
 
     @POST
-    @Path("/widthraw")
+    @Path("/withdraw")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Widthraw cryptocurrency", description = "dexWidthraw endpoint provides transfer of Ethereum")
+    @Operation(tags = {"dex"}, summary = "Widthraw cryptocurrency", description = "dexWidthraw endpoint provides transferEth of Ethereum/Pax")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Wallets balances"),
+            @ApiResponse(responseCode = "200", description = "Transaction hash"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response dexWidthrawPost( @NotNull  @QueryParam("account") String account, @NotNull  @QueryParam("secretPhrase") String secretPhrase, @NotNull  @QueryParam("amount") BigDecimal amount, @NotNull  @QueryParam("address") String address, @NotNull  @QueryParam("cryptocurrency") String cryptocurrency,@Context SecurityContext securityContext)
-            throws NotFoundException {
-        boolean status = service.widthraw(account,secretPhrase,amount,address,cryptocurrency);
+    public Response dexWithdrawPost(
+                                    @NotNull @Parameter(description = "amount eth for withdraw") @FormParam("amount") BigDecimal amount,
+                                    @NotNull @Parameter(description = "Send from address") @FormParam("fromAddress") String fromAddress,
+                                    @NotNull @Parameter(description = "Send to address") @FormParam("toAddress") String toAddress,
+                                    @NotNull @Parameter(description = "Transfer fee in GWei") @FormParam("transferFee") Long transferFee,
+                                    @NotNull @Parameter(description = "crypto currency for withdraw:ETH=1/PAX=2") @FormParam("cryptocurrency") Byte cryptocurrency,
+                                    @Context HttpServletRequest req) {
+        DexCurrencies currencies = null;
+        String passphrase;
+        Account sender;
+        try{
+            passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            sender = ParameterParser.getSenderAccount(req);
 
-        if(!status){
-            return Response.ok(new ApiError("Not Found", 404)).build();
+            if (cryptocurrency != null) {
+                currencies = DexCurrencies.getType(cryptocurrency);
+            }
+        } catch (Exception ex){
+            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+        }
+
+        if (currencies == null || DexCurrencies.APL.equals(currencies)) {
+            return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("cryptocurrency", "Withdraw can work only with Eth or Pax."))).build();
+        }
+
+        if(!EthUtil.isAddressValid(toAddress)){
+            return Response.status(Response.Status.OK).entity(incorrect("toAddress", "Address length is not correct.")).build();
+        }
+        if(!EthUtil.isAddressValid(fromAddress)){
+            return Response.status(Response.Status.OK).entity(incorrect("fromAddress", "Address length is not correct.")).build();
+        }
+
+        String transaction;
+        try {
+            transaction = service.withdraw(sender.getId(), passphrase, fromAddress, toAddress, amount, currencies, transferFee);
+        } catch (AplException.ExecutiveProcessException e){
+            return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
+        }
+
+        if(StringUtils.isBlank(transaction)){
+            return Response.ok(JSON.toString(JSONResponses.error("Transfer didn't send."))).build();
         } else {
-            return Response.ok().build();
+            return Response.ok(new WithdrawResponse(transaction)).build();
         }
     }
 

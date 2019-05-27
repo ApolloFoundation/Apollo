@@ -1272,7 +1272,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void accept(Block block, List<Transaction> validPhasedTransactions, List<Transaction> invalidPhasedTransactions,
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
+        long processStart = System.currentTimeMillis();
         try {
+            log.trace("Accepting block: {} height: {} systime: {}",block.getId(),block.getHeight(),processStart);
             isProcessingBlock = true;
             for (Transaction transaction : block.getTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
@@ -1355,6 +1357,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } finally {
             isProcessingBlock = false;
             AccountLedger.clearEntries();
+            log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-processStart );
         }
     }
 
