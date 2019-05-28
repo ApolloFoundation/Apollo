@@ -373,7 +373,7 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM block WHERE version = ? ORDER BY block_timestamp DESC LIMIT 1 OFFSET ?)")) {
+                     "SELECT * FROM block WHERE version = ? ORDER BY timestamp DESC LIMIT 1 OFFSET ?")) {
             int i = 0;
             pstmt.setInt(++i, version);
             pstmt.setInt(++i, skipCount);
@@ -389,37 +389,6 @@ public class BlockDaoImpl implements BlockDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
-    @Override
-    public Block findAdaptiveBlock(int skipCount) {
-        return findBlockWithVersion(skipCount, Block.ADAPTIVE_BLOCK_VERSION);
-    }
-
-    @Override
-    public Block findLastAdaptiveBlock() {
-        return findAdaptiveBlock(0);
-    }
-
-    @Override
-    public Block findInstantBlock(int skipCount) {
-        return findBlockWithVersion(skipCount, Block.INSTANT_BLOCK_VERSION);
-    }
-
-    @Override
-    public Block findLastInstantBlock() {
-        return findInstantBlock(0);
-    }
-
-    @Override
-    public Block findRegularBlock(int skipCount) {
-        return findBlockWithVersion(skipCount, Block.REGULAR_BLOCK_VERSION);
-    }
-
-    @Override
-    public Block findRegularBlock() {
-        return findRegularBlock(0);
-    }
-
 
     @Override
     public Block findLastBlock(int timestamp) {

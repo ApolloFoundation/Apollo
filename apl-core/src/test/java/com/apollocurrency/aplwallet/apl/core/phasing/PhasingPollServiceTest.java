@@ -483,7 +483,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetByHoldingId() throws SQLException {
-        blockchain.setLastBlock(btd.LAST_BLOCK);
+        blockchain.setLastBlock(btd.BLOCK_12);
         List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100));
         assertEquals(List.of(ttd.TRANSACTION_13), transactions);
     }
@@ -504,7 +504,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetSenderPhasedTransactionFeesAtLastPollHeight() throws SQLException {
-        blockchain.setLastBlock(btd.LAST_BLOCK);
+        blockchain.setLastBlock(btd.BLOCK_12);
         long actualFee = service.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId());
         long expectedFee = ttd.TRANSACTION_13.getFeeATM();
         assertEquals(expectedFee, actualFee);

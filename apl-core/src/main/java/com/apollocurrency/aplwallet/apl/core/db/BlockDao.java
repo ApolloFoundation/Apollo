@@ -56,19 +56,8 @@ public interface BlockDao {
 
     Block findBlockWithVersion(int skipCount, int version);
 
-    Block findAdaptiveBlock(int skipCount);
-
-    Block findLastAdaptiveBlock();
-
-    Block findInstantBlock(int skipCount);
-
-    Block findLastInstantBlock();
-
-    Block findRegularBlock(int skipCount);
 
     List<byte[]> getBlockSignaturesFrom(int from, int to);
-
-    Block findRegularBlock();
 
     Block findLastBlock(int timestamp);
 

@@ -20,6 +20,7 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -33,11 +34,13 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -76,6 +79,7 @@ class BlockDaoTest {
             EpochTime.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
@@ -227,6 +231,17 @@ class BlockDaoTest {
     }
 
     @Test
+    void testDeleteBlocksFromHeightWhenBlockIdNotFound() {
+        blockDao.deleteBlocksFromHeight(Integer.MIN_VALUE);
+
+        Block lastBlock = blockDao.findLastBlock();
+        assertEquals(td.LAST_BLOCK, lastBlock);
+
+        Long blockCount = blockDao.getBlockCount(0, Integer.MAX_VALUE);
+        assertEquals(15, blockCount);
+    }
+
+    @Test
     void testGetBlocksAfter() {
         List<Long> targetBlockIds = List.of(BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID, BLOCK_8_ID, BLOCK_9_ID);
         ArrayList<Block> result = new ArrayList<>();
@@ -244,6 +259,16 @@ class BlockDaoTest {
         List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_5.getId(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 4);
 
         assertEquals(List.of(td.BLOCK_6, td.BLOCK_7), blocksAfter);
+    }
+
+    @Test
+    void testGetBlocksAfterWithId() {
+        List<Long> targetBlockIds = List.of(BLOCK_8_ID, BLOCK_9_ID, BLOCK_11_ID);
+        ArrayList<Block> result = new ArrayList<>();
+
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_7.getId(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
+
+        assertEquals(List.of(td.BLOCK_8, td.BLOCK_9), blocksAfter);
     }
 
     @Test
@@ -284,7 +309,49 @@ class BlockDaoTest {
         }
     }
 
+    @Test
+    void testFindBlockIdAtHeight() {
+        long blockId = blockDao.findBlockIdAtHeight(td.BLOCK_8.getHeight(), extension.getDatabaseManger().getDataSource());
 
+        assertEquals(td.BLOCK_8.getId(), blockId);
+    }
 
+    @Test
+    void testFindBlockIdAtHeightNotFound() {
+        assertThrows(RuntimeException.class, () -> blockDao.findBlockIdAtHeight(Integer.MIN_VALUE, extension.getDatabaseManger().getDataSource()));
+    }
+
+    @Test
+    void testFindBlockWithVersion() {
+        Block block = blockDao.findBlockWithVersion(0, 3);
+
+        assertEquals(block, td.BLOCK_13);
+    }
+
+    @Test
+    void testFindBlockWithVersionWhenBlocksSkipped() {
+        Block block = blockDao.findBlockWithVersion(2, 6);
+
+        assertEquals(block, td.BLOCK_8);
+    }
+
+    @Test
+    void testSaveBlock() {
+        DbUtils.inTransaction(extension, (con)-> {
+            blockDao.saveBlock(con, td.NEW_BLOCK);
+            blockDao.commit(td.NEW_BLOCK);
+        });
+        Block lastBlock = blockDao.findLastBlock();
+        assertEquals(td.NEW_BLOCK, lastBlock);
+        Block block = blockDao.findBlock(td.LAST_BLOCK.getId(), extension.getDatabaseManger().getDataSource());
+        assertEquals(td.NEW_BLOCK.getId(), block.getNextBlockId());
+    }
+
+    @Test
+    void testCommitBlock() {
+        DbUtils.inTransaction(extension, (con)-> blockDao.commit(td.BLOCK_5));
+        Block block = blockDao.findBlock(td.BLOCK_5.getId(), extension.getDatabaseManger().getDataSource());
+        assertEquals(0, block.getNextBlockId());
+    }
 
 }
