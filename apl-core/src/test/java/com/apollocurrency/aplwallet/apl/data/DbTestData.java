@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
 
@@ -22,14 +23,13 @@ public class DbTestData {
             .defaultLockTimeout(10 * 1000);
 
     public static DbProperties getInMemDbProps() {
-        return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong(), null);
+        return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong());
     }
 
-    private static DbProperties getDbUrlProps(String url, String dbDir) {
+    private static DbProperties getDbUrlProps(String url) {
         try {
             DbProperties dbProperties = DB_PROPERTIES.deepCopy();
             dbProperties.dbUrl(url);
-            dbProperties.dbDir(dbDir);
             return dbProperties;
         }
         catch (CloneNotSupportedException e) {
@@ -37,6 +37,10 @@ public class DbTestData {
         }
     }
     public static DbProperties getDbFileProperties(String fileName) {
-        return getDbUrlProps(String.format("jdbc:h2:file:%s;TRACE_LEVEL_FILE=0", fileName), Paths.get(fileName).getParent().toAbsolutePath().toString());
+        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0", fileName));
+        Path filePath = Paths.get(fileName).toAbsolutePath();
+        dbProperties.dbDir(filePath.getParent().toString());
+        dbProperties.dbFileName(filePath.getFileName().toString());
+        return dbProperties;
     }
 }

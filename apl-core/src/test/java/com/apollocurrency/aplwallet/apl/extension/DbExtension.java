@@ -45,8 +45,13 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(DbProperties dbProperties) {
-        this(dbProperties, null);
+        this(dbProperties, null, null, null);
     }
+
+    public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
+        manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
+    }
+
 
     public DbExtension(Map<String, List<String>> tableWithColumns) {
         this();
@@ -64,8 +69,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         return luceneFullTextSearchEngine;
     }
 
-    public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
-        manipulator = new DbManipulator(dbProperties, propertiesHolder);
+    public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
+        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension() {
