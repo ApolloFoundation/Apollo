@@ -13,8 +13,10 @@ import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOp
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PRUNABLE_MESSAGE_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHUFFLING_DATA_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TAGGED_DATA_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -127,7 +130,7 @@ class DataTransferManagementReceiverTest {
     @Inject
     private TransactionIndexDao transactionIndexDao;
     @Inject
-    private BlockDao blockDao;
+    private Blockchain blockchain;
     @Inject
     private ShardDao shardDao;
     @Inject
@@ -218,33 +221,43 @@ class DataTransferManagementReceiverTest {
             state = managementReceiver.addOrCreateShard(new ShardInitTableSchemaVersion());
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
+            // checks before COPYING blocks / transactions
+            long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
+            assertEquals(14, count); // total blocks in main db
+            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(14, count); // total transactions in main db
+
             List<String> tableNameList = new ArrayList<>();
             tableNameList.add(BLOCK_TABLE_NAME);
             tableNameList.add(TRANSACTION_TABLE_NAME);
             TransactionTestData td = new TransactionTestData();
             Set<Long> dbIds = new HashSet<>();
             dbIds.add(td.DB_ID_0);
-            dbIds.add(td.DB_ID_3);
-            dbIds.add(td.DB_ID_10);
+            dbIds.add(td.DB_ID_2);
+            dbIds.add(td.DB_ID_5);
             CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
 
             state = managementReceiver.copyDataToShard(paramInfo);
             assertEquals(MigrateState.DATA_COPIED_TO_SHARD, state);
 //        assertEquals(MigrateState.FAILED, state);
 
+            // check after COPY
             TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            long count = blockDao.getBlockCount(shardDataSource, 0, (int) snapshotBlockHeight);
-            assertEquals(8, count);
+            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(8, count); // blocks in shard db
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(4, count);// transactions in shard db
 
             state = managementReceiver.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
             assertEquals(SHARD_SCHEMA_FULL, state);
 
-            tableNameList.clear();
-            tableNameList.add(PUBLIC_KEY_TABLE_NAME);
-//        tableNameList.add(TAGGED_DATA_TABLE_NAME); // ! skip in test
-            tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
-            tableNameList.add(DATA_TAG_TABLE_NAME);
-            tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
+//            tableNameList.clear();
+//            tableNameList.add(PUBLIC_KEY_TABLE_NAME);
+//            tableNameList.add(TAGGED_DATA_TABLE_NAME);
+//            tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
+//            tableNameList.add(DATA_TAG_TABLE_NAME);
+//            tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
 
 //            paramInfo.setTableNameList(tableNameList);
 //            state = managementReceiver.relinkDataToSnapshotBlock(paramInfo);
@@ -263,18 +276,30 @@ class DataTransferManagementReceiverTest {
             long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
             assertEquals(8, blockIndexCount);
             long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-            assertEquals(5, trIndexCount);
+            assertEquals(4, trIndexCount);
 
             tableNameList.clear();
             tableNameList.add(BLOCK_TABLE_NAME);
+            tableNameList.add(TRANSACTION_TABLE_NAME);
 
             paramInfo.setTableNameList(tableNameList);
             state = managementReceiver.deleteCopiedData(paramInfo);
             assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-            count = blockDao.getBlockCount((int) snapshotBlockHeight, 105000);
-            assertEquals(5, count);
+            // checks after COPY + DELETE...
+            count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(6, count); // total blocks left in main db
+            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(10, count); // total transactions left in main db
+
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(8, count); // blocks in shard
+
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(4, count); // transactions in shard
 
             paramInfo.setShardHash(shardHash);
             state = managementReceiver.addShardInfo(paramInfo);

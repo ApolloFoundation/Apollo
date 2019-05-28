@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
@@ -170,6 +171,11 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void commit(Block block) {
         lookupBlockDao().commit(block);
+    }
+
+    @Override
+    public Long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
+        return lookupBlockDao().getBlockCount(dataSource, from, to);
     }
 
     @Override
@@ -418,6 +424,10 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public int getTransactionCount() {
         return transactionDao.getTransactionCount();
+    }
+
+    public Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
+        return transactionDao.getTransactionCount(dataSource, from, to);
     }
 
 /*

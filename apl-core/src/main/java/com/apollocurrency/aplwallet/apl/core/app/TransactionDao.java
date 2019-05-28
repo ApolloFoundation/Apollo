@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
@@ -41,6 +42,8 @@ public interface TransactionDao {
     void saveTransactions(Connection con, List<Transaction> transactions);
 
     int getTransactionCount();
+
+    Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
     List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException;
 

@@ -64,9 +64,9 @@ public class BlockDeleteHelper extends AbstractHelper {
                 this.preparedInsertStatement.close();
             }
         }
-        log.debug("Deleted '{}' = [{}] within {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("Deleted '{}' = [{} / {}] within {} secs", operationParams.tableName, totalProcessedCount, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
 
-        log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("Total (with CONSTRAINTS) '{}' = [{} / {}] in {} secs", operationParams.tableName, totalProcessedCount, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
         return totalSelectedRows;
     }
 
@@ -76,6 +76,7 @@ public class BlockDeleteHelper extends AbstractHelper {
         long start = System.currentTimeMillis();
         int rows = 0;
         int processedRows = 0;
+        boolean excludeRows = operationParams.dbIdsExclusionSet.isPresent();
         try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { // handle rows here
                 if (rsmd == null) {
@@ -94,15 +95,15 @@ public class BlockDeleteHelper extends AbstractHelper {
                     }
                 }
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
-/*
-                preparedInsertStatement.setObject(1, paginateResultWrapper.lowerBoundColumnValue);
-                preparedInsertStatement.addBatch();
-*/
                 rows++;
+                if (excludeRows // skip transaction db_id
+                        && TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) // only phased transactions
+                        && operationParams.dbIdsExclusionSet.get().contains(paginateResultWrapper.lowerBoundColumnValue)) {
+                    log.trace("Skip excluded '{}' DB_ID = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
+                    continue;
+                }
                 try {
                     preparedInsertStatement.setObject(1, paginateResultWrapper.lowerBoundColumnValue);
-//                    preparedInsertStatement.setObject(2, paginateResultWrapper.upperBoundColumnValue);
-//                    preparedInsertStatement.setObject(3, operationParams.batchCommitSize);
                     processedRows += preparedInsertStatement.executeUpdate();
                     log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
                 } catch (Exception e) {
@@ -113,19 +114,7 @@ public class BlockDeleteHelper extends AbstractHelper {
                 }
             }
         }
-/*
-        try {
-            int[] array = preparedInsertStatement.executeBatch();
-            totalSelectedRows += rows;
-            processedRows += array != null ? array.length : 0;
-            log.trace("Deleting '{}' into {} : column {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
-        } catch (Exception e) {
-            log.error("Failed Deleting '{}' into {}, {}={}", rows, currentTableName, BASE_COLUMN_NAME, paginateResultWrapper.lowerBoundColumnValue);
-            log.error("Failed Deleting " + currentTableName, e);
-            sourceConnect.rollback();
-            throw e;
-        }
-*/
+
         totalSelectedRows += rows;
         totalProcessedCount += processedRows;
         log.debug("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={} in {}", currentTableName,

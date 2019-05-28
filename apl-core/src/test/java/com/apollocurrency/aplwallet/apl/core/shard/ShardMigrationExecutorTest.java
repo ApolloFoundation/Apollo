@@ -11,6 +11,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_B
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -29,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -137,8 +137,8 @@ class ShardMigrationExecutorTest {
     private Blockchain blockchain;
     @Inject
     private TransactionIndexDao transactionIndexDao;
-    @Inject
-    private BlockDao blockDao;
+//    @Inject
+//    private BlockDao blockDao;
     @Inject
     private ShardDao shardDao;
     @Inject
@@ -187,19 +187,33 @@ class ShardMigrationExecutorTest {
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
+            // checks before COPYING blocks / transactions
+            long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
+            assertEquals(14, count); // total blocks in main db
+            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(14, count); // total transactions in main db
+
             TransactionTestData td = new TransactionTestData();
             Set<Long> dbIds = new HashSet<>();
-            dbIds.add(td.DB_ID_6);
-            dbIds.add(td.DB_ID_10);
+//            dbIds.add(td.DB_ID_6);
+//            dbIds.add(td.DB_ID_10);
+            dbIds.add(td.DB_ID_0);
+            dbIds.add(td.DB_ID_2);
+            dbIds.add(td.DB_ID_5);
+
             CopyDataCommand copyDataCommand = new CopyDataCommand(
                     managementReceiver, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(copyDataCommand);
 //        assertEquals(FAILED, state);
             assertEquals(DATA_COPIED_TO_SHARD, state);
 
+            // check after COPY
             TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            long count = blockDao.getBlockCount(shardDataSource, 0, (int) snapshotBlockHeight);
-            assertEquals(8, count);
+            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(8, count); // blocks in shard db
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(4, count);// transactions in shard db
 
             createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
                     new ShardAddConstraintsSchemaVersion());
@@ -219,19 +233,29 @@ class ShardMigrationExecutorTest {
             long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
             assertEquals(8, blockIndexCount);
             long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-            assertEquals(6, trIndexCount);
+            assertEquals(4, trIndexCount);
 
-            Transaction tx = blockchain.getTransaction(td.TRANSACTION_0.getId());
+            Transaction tx = blockchain.getTransaction(td.TRANSACTION_2.getId());
+            assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
 
-            assertEquals(td.TRANSACTION_0, tx); // check that transaction was ignored
-
-            DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, snapshotBlockHeight);
+            DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
 //        assertEquals(FAILED, state);
             assertEquals(DATA_REMOVED_FROM_MAIN, state);
 
-            count = blockDao.getBlockCount((int) snapshotBlockHeight, 105000);
-            assertEquals(5, count);
+            // checks after COPY + DELETE...
+            count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(6, count); // total blocks left in main db
+            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(10, count); // total transactions left in main db
+
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(8, count); // blocks in shard
+
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(4, count); // transactions in shard
 
             byte[] shardHash = "000000000".getBytes();
             FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, shardHash);

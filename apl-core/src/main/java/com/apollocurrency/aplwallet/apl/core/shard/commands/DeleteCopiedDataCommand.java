@@ -25,18 +25,18 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private int snapshotBlockHeight;
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                                   int commitBatchSize, int snapshotBlockHeight, Set<Long> exludedTxs) {
-        this(dataTransferManagement, snapshotBlockHeight);
+                                   int commitBatchSize, int snapshotBlockHeight, Set<Long> excludedTxs) {
+        this(dataTransferManagement, snapshotBlockHeight, excludedTxs);
         this.commitBatchSize = commitBatchSize;
-        this.excludedTxs = exludedTxs;
     }
 
     public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                                   int snapshotBlockHeight) {
+                                   int snapshotBlockHeight, Set<Long> excludedTxs) {
         this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
+        this.excludedTxs = Objects.requireNonNull(excludedTxs, "excludedTxs set is NULL");
         tableNameList.add(BLOCK_TABLE_NAME);
-//        tableNameList.add(TRANSACTION_TABLE_NAME); // TODO: YL uncomment when transaction deletion is ready
+        tableNameList.add(TRANSACTION_TABLE_NAME);
     }
 
     public DeleteCopiedDataCommand(
