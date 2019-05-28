@@ -2,21 +2,27 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -38,7 +44,8 @@ import javax.inject.Inject;
 class BlockchainTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockchainTestDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockchainTestDb").toAbsolutePath().toString()), "db/shard-main-data.sql", null);
+
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
@@ -52,6 +59,7 @@ class BlockchainTest {
             EpochTime.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
@@ -61,7 +69,7 @@ class BlockchainTest {
     @Inject
     private Blockchain blockchain;
     private TransactionTestData testData;
-    private BlockTestData blockTestData;
+    private BlockTestData btd;
 
     private Path createPath(String fileName) {
         try {
@@ -75,7 +83,17 @@ class BlockchainTest {
     @BeforeEach
     void setUp() {
         testData = new TransactionTestData();
-        blockTestData = new BlockTestData();
+        btd = new BlockTestData();
+        TransactionalDataSource shardDatasource1 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(1L);
+        TransactionalDataSource shardDatasource2 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(2L);
+        initDbAndPopulate(shardDatasource1, "db/shard1-data.sql");
+        initDbAndPopulate(shardDatasource2, "db/shard2-data.sql");
+    }
+
+    private void initDbAndPopulate(DataSourceWrapper dataSourceWrapper, String dataScriptPath) {
+        DbPopulator dbPopulator = new DbPopulator(dataSourceWrapper, "db/schema.sql", dataScriptPath);
+        dbPopulator.initDb();
+        dbPopulator.populateDb();
     }
 
     @AfterEach
@@ -113,15 +131,81 @@ class BlockchainTest {
         assertTrue(hasTransaction);
     }
 
+    @Test
+    void testGetHeight() {
+        blockchain.setLastBlock(btd.BLOCK_13);
+
+        assertEquals(btd.BLOCK_13.getHeight(), blockchain.getHeight());
+        assertEquals(btd.BLOCK_13, blockchain.getLastBlock());
+    }
+
+    @Test
+    void testGetHeightWhenLastBlockWasNotSet() {
+        assertEquals(0, blockchain.getHeight());
+        assertNull(blockchain.getLastBlock());
+    }
+
+    @Test
+    void testGetLastBlockTimestamp() {
+        blockchain.setLastBlock(btd.BLOCK_10);
+
+        assertEquals(btd.BLOCK_10.getTimestamp(), blockchain.getLastBlockTimestamp());
+    }
+
+    @Test
+    void testGetLastBlockTimestampWhenLastBlockWasNotSet() {
+        assertEquals(0, blockchain.getLastBlockTimestamp());
+    }
+
+    @Test
+    void testGetLastBlockByTimestampWhichGreateOrEqualToLastBlock() {
+        blockchain.setLastBlock(btd.BLOCK_8);
+        Block lastBlock = blockchain.getLastBlock(btd.BLOCK_8.getTimestamp());
+
+        assertEquals(btd.BLOCK_8, lastBlock);
+
+        lastBlock = blockchain.getLastBlock(Integer.MAX_VALUE);
+
+        assertEquals(btd.BLOCK_8, lastBlock);
+    }
+
+    @Test
+    void testGetLastBlockByTimestampWhichLessThanLastBlockTimestamp() {
+        blockchain.setLastBlock(btd.BLOCK_6);
+
+        Block lastBlock = blockchain.getLastBlock(btd.BLOCK_5.getTimestamp() - 1);
+
+        assertEquals(btd.BLOCK_4, lastBlock);
+    }
+
+    @Test
+    void testGetBlockByBlockIdWhenLastBlockHasSameId() {
+        blockchain.setLastBlock(btd.BLOCK_5);
+
+        Block block = blockchain.getBlock(btd.BLOCK_5.getId());
+
+        assertEquals(btd.BLOCK_5, block);
+    }
+
+    @Test
+    void testGetBlockByBlockId() {
+        blockchain.setLastBlock(btd.BLOCK_10);
+
+        Block block = blockchain.getBlock(btd.BLOCK_5.getId());
+
+        assertEquals(btd.BLOCK_5, block);
+    }
+
+
 /*
     // COMMENTED OUT tests because they still creates Weld container and do not shutdown it!!!
 
     @Disabled // doesn't work, but creates additional Weld container which it not shutdown later
     @Test
     void getBlock() {
-        Block block = blockchain.getBlock(blockTestData.BLOCK_0.getId());
+        Block block = blockchain.getBlock(btd.BLOCK_0.getId());
         assertNotNull(block);
-        assertEquals(blockTestData.BLOCK_0.getId(), block.getId());
+        assertEquals(btd.BLOCK_0.getId(), block.getId());
     }
 
     @Disabled // doesn't work, but creates additional Weld container which it not shutdown later
@@ -129,7 +213,7 @@ class BlockchainTest {
     void getLastBlock() {
         Block block = blockchain.getLastBlock();
         assertNotNull(block);
-        assertEquals(blockTestData.LAST_BLOCK.getId(), block.getId());
+        assertEquals(btd.LAST_BLOCK.getId(), block.getId());
     }
 */
 

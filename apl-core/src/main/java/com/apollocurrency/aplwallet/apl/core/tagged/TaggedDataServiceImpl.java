@@ -98,13 +98,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         taggedDataExtendDao.insert(taggedDataExtendList);
         if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.getTimestamp()) {
             TaggedData taggedData = taggedDataDao.get(dbKey);
-            //TODO check possible error for sharded blockchain
-            if (taggedData == null && attachment.getData() != null) {
-                Transaction uploadTransaction = blockchain.getTransaction(taggedDataId);
-                taggedData = new TaggedData(uploadTransaction, attachment,
-                        blockchain.getLastBlockTimestamp(), blockchain.getHeight());
-                dataTagDao.add(taggedData);
-            }
             if (taggedData != null) {
                 taggedData.setTransactionTimestamp(timestamp.getTimestamp());
                 taggedData.setBlockTimestamp(blockchain.getLastBlockTimestamp());

@@ -203,6 +203,27 @@ public abstract class DbClause {
 
     }
 
+    public static final class BytesClause extends DbClause {
+
+        private final byte[] value;
+
+        public BytesClause(String columnName, byte[] value) {
+            super(" " + columnName + " = ? ");
+            this.value = value;
+        }
+
+        public BytesClause(String columnName, Op operator, byte[] value) {
+            super(" " + columnName + operator.operator() + "? ");
+            this.value = value;
+        }
+
+        @Override
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setBytes(index, value);
+            return index + 1;
+        }
+    }
+
     public static final class BooleanClause extends DbClause {
 
         private final boolean value;
@@ -219,6 +240,7 @@ public abstract class DbClause {
         }
 
     }
+
     public static final class TimestampClause extends DbClause {
 
         private final Timestamp value;
