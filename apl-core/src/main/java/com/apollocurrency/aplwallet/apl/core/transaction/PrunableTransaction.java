@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import java.util.Objects;
+
 public class PrunableTransaction {
 
     private final long id;
@@ -46,5 +48,18 @@ public class PrunableTransaction {
 
     public boolean hasPrunableEncryptedMessage() {
         return prunableEncryptedMessage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PrunableTransaction)) return false;
+        PrunableTransaction that = (PrunableTransaction) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

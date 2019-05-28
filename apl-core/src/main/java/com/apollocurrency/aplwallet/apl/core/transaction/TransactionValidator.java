@@ -5,7 +5,6 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -13,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -72,22 +70,6 @@ public class TransactionValidator {
         if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
                 transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
-/* // TODO: YL after merge with APL-527-implement-sharding. Do we need it ??
-        String[] blacklist = {"APL-SP4G-XZ46-U4BN-9Y37G", "APL-CUWX-8NH7-5GGF-9WYCY"};
-
-        int blockchainHeight = blockchain.getHeight();
-
-        if (blockchainHeight > 1820000)
-        {
-            for (String blacklistedAccId : blacklist)
-            {
-                if ((transaction.getSenderId() == Convert.parseAccountId(blacklistedAccId)) && (transaction.getRecipientId() != Convert.parseAccountId("APL-C6X3-XDBF-Q2YV-HV4LJ")))
-                {
-                    throw new AplException.NotValidException("Bad request");
-                }
-            };
-        }
-*/
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
@@ -121,7 +103,7 @@ public class TransactionValidator {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " exceeds blockchain height " + blockchainHeight);
                 }
-                if (CDI.current().select(BlockDaoImpl.class).get().findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
+                if (blockchain.getBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
                             + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
                             + ", transaction was generated on a fork");

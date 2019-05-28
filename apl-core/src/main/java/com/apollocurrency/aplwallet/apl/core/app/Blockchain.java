@@ -72,7 +72,7 @@ public interface Blockchain {
 
     List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
 
-    List<Block> getBlocksAfter(long blockId, int limit);
+//    List<Block> getBlocksAfter(long blockId, int limit);
 
     List<Block> getBlocksAfter(long blockId, List<Long> blockList);
 
@@ -132,6 +132,10 @@ public interface Blockchain {
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 
+    List<Transaction> getBlockTransactions(long blockId);
+
+    boolean hasBlock(long blockId, int height);
+
     int getTransactionCount(long accountId, byte type, byte subtype);
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
@@ -140,6 +144,6 @@ public interface Blockchain {
 
     DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
-    Set<Long> getBlockGenerators(int startHeight);
+    Set<Long> getBlockGenerators(int limit);
 
 }

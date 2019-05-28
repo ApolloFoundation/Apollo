@@ -316,6 +316,11 @@ public final class ShufflingParticipant {
         return shufflingData != null ? shufflingData.data : null;
     }
 
+    public static byte[][] getData(byte[] fullHash) {
+        ShufflingData shufflingData = shufflingDataTable.getBy(new DbClause.BytesClause("data_transaction_full_hash", fullHash));
+        return shufflingData != null ? shufflingData.data : null;
+    }
+
     void setData(byte[][] data, int timestamp) {
         if (data != null && timeService.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, blockchain.getHeight()));

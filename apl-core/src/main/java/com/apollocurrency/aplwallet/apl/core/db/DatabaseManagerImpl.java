@@ -223,6 +223,14 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TransactionalDataSource getShardDataSourceById(long shardId) {
+        return connectedShardDataSourceMap.get(shardId);
+    }
+
     @Override
     public DbProperties getBaseDbProperties() {
         return baseDbProperties;

@@ -14,19 +14,19 @@ import java.util.Set;
 
 public interface BlockDao {
 
-    Block findBlock(long blockId);
+    Block findBlock(long blockId, TransactionalDataSource dataSource);
 
     boolean hasBlock(long blockId);
 
-    boolean hasBlock(long blockId, int height);
+    boolean hasBlock(long blockId, int height, TransactionalDataSource dataSource);
 
-    long findBlockIdAtHeight(int height);
+    long findBlockIdAtHeight(int height, TransactionalDataSource dataSource);
 
 //    Map<Long, Block> getBlockCache();
 
 //    SortedMap<Integer, Block> getHeightMap();
 
-    Block findBlockAtHeight(int height);
+    Block findBlockAtHeight(int height, TransactionalDataSource dataSource);
 
 //    int getBlockCacheSize();
 
@@ -48,31 +48,20 @@ public interface BlockDao {
 
     int getBlockCount(long accountId);
 
-    List<Long> getBlockIdsAfter(long blockId, int limit, List<Long> result);
+    List<Long> getBlockIdsAfter(long blockId, int limit);
 
-    List<Block> getBlocksAfter(long blockId, int limit, List<Block> result);
+//    List<Block> getBlocksAfter(long blockId, int limit, List<Block> result);
 
-    List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result);
+    List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
 
     Block findBlockWithVersion(int skipCount, int version);
 
-    Block findAdaptiveBlock(int skipCount);
-
-    Block findLastAdaptiveBlock();
-
-    Block findInstantBlock(int skipCount);
-
-    Block findLastInstantBlock();
-
-    Block findRegularBlock(int skipCount);
 
     List<byte[]> getBlockSignaturesFrom(int from, int to);
 
-    Block findRegularBlock();
-
     Block findLastBlock(int timestamp);
 
-    Set<Long> getBlockGenerators(int startHeight);
+    Set<Long> getBlockGenerators(int startHeight, int limit);
 
     Block loadBlock(Connection con, ResultSet rs);
 
@@ -85,7 +74,12 @@ public interface BlockDao {
 
     void deleteBlocksFromHeight(int height);
 
-    // relying on cascade triggers in the database to delete the transactions and public keys for all deleted blocks
+    /**
+     * Assume, that all derived tables were already rolled back
+     * This method will delete blocks and transactions at height greater than or equal to height of block specified by blockId
+     * @param blockId id of the block, after which all blocks with transactions should be deleted inclusive
+     * @return current last block in blockchain after deletion
+     */
     Block deleteBlocksFrom(long blockId);
 
     void deleteAll();
