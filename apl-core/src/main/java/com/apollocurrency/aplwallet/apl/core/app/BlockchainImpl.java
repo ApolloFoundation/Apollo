@@ -50,7 +50,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class BlockchainImpl implements Blockchain {
-
+    /**
+     * Specify offset from current height to retrieve block generators [currentHeight - offset; currentHeight] for further tracking generator hitTime
+     */
+    private static final int MAX_BLOCK_GENERATOR_OFFSET = 10_000;
     private BlockDao blockDao;
     private TransactionDao transactionDao;
     private BlockchainConfig blockchainConfig;
@@ -485,7 +488,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public Set<Long> getBlockGenerators(int limit) {
-        int startHeight = getHeight() - 10_000;
+        int startHeight = getHeight() - MAX_BLOCK_GENERATOR_OFFSET;
         return blockDao.getBlockGenerators(startHeight, limit);
     }
 

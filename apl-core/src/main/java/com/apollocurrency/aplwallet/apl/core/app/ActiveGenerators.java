@@ -22,7 +22,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ActiveGenerators {
     private static final Logger LOG = LoggerFactory.getLogger(ActiveGenerators.class);
-
+    private static final int MAX_TRACKED_GENERATORS = 50;
     private Blockchain blockchain;
     /**
      * Active block generators
@@ -53,7 +53,7 @@ public class ActiveGenerators {
     @PostConstruct
     public void init() {
         if (!generatorsInitialized) {
-            activeGeneratorIds.addAll(blockchain.getBlockGenerators(250));
+            activeGeneratorIds.addAll(blockchain.getBlockGenerators(MAX_TRACKED_GENERATORS));
             activeGeneratorIds.forEach(activeGeneratorId -> activeGenerators.add(new ActiveGenerator(activeGeneratorId)));
             LOG.debug(activeGeneratorIds.size() + " block generators found");
             generatorsInitialized = true;
