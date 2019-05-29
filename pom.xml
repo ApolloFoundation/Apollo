@@ -40,12 +40,12 @@
         <module>apl-conf</module>
         <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
-<!--
-     Tt is a whole mess at the moment. commented out. Please!!! Integration test
-     SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
-     ant it MUST use REST API only!
--->
-<!--        <module>apl-tests</module> -->
+        <!--
+             Tt is a whole mess at the moment. commented out. Please!!! Integration test
+             SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
+             ant it MUST use REST API only!
+        -->
+        <!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
@@ -120,10 +120,10 @@
 
     </properties>
 
-<!-- We have following profiles: prod, dev, debug
-     1. prod: profile for release with build of all zips and sha-256 sums 
-     2. dev:  profile for development, no extra build artefacts, faster builds for developers
--->
+    <!-- We have following profiles: prod, dev, debug
+         1. prod: profile for release with build of all zips and sha-256 sums
+         2. dev:  profile for development, no extra build artefacts, faster builds for developers
+    -->
     <profiles>
         <!-- The Configuration of the development profile -->
         <profile>
@@ -357,13 +357,13 @@
                 <artifactId>jta</artifactId>
                 <version>1.1</version>
             </dependency>
-<!--
-            <dependency>
-                <groupId>com.atomikos</groupId>
-                <artifactId>transactions-jta</artifactId>
-                <version>4.0.6</version>
-            </dependency>
--->
+            <!--
+                        <dependency>
+                            <groupId>com.atomikos</groupId>
+                            <artifactId>transactions-jta</artifactId>
+                            <version>4.0.6</version>
+                        </dependency>
+            -->
 
             <!--2fa api-->
             <dependency>
@@ -668,14 +668,14 @@
                         <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                     <dependencies>
-<!--
-                        JDK 11
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm</artifactId>
-                            <version>6.2</version>
-                        </dependency>
--->
+                        <!--
+                                                JDK 11
+                                                <dependency>
+                                                    <groupId>org.ow2.asm</groupId>
+                                                    <artifactId>asm</artifactId>
+                                                    <version>6.2</version>
+                                                </dependency>
+                        -->
                         <dependency>
                             <groupId>org.apache.maven.wagon</groupId>
                             <artifactId>wagon-webdav-jackrabbit</artifactId>

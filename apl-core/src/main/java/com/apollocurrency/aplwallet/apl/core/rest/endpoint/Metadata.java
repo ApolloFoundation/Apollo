@@ -16,9 +16,9 @@ import io.swagger.v3.oas.annotations.info.License;
     @Info(
             title = "Apollo REST API",            
             version = "0.0.1",
-            description = "Apollo REST API, OoenAPI/Swagger 2.0 compatible, Work in progress",
+            description = "Apollo REST API, OpenAPI/Swagger 2.0 compatible, Work in progress",
             license = @License(name = "Apollo PUBLIC LICENSE", url = "https://apollocurrency.com/"),
-            contact = @Contact(url = "https://github.com/ApolloFoundation/Apollo", name = "Apollo team", email = "info@gigagantics-server.com")
+            contact = @Contact(url = "https://github.com/ApolloFoundation/Apollo", name = "Apollo team", email = "info@apollocurrency.com")
     )
 )
 public class Metadata {
