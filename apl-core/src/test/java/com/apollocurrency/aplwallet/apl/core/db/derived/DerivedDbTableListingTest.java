@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -88,13 +87,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import javax.inject.Inject;
-
-import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -153,8 +145,6 @@ class DerivedDbTableListingTest {
     @Inject
     AccountTable accountTable;
     @Inject
-    JdbiHandleFactory jdbiHandleFactory;
-    @Inject
     DerivedTablesRegistry registry;
 
     public DerivedDbTableListingTest() throws Exception {}
@@ -170,7 +160,6 @@ class DerivedDbTableListingTest {
 
     @AfterEach
     void cleanup() {
-        jdbiHandleFactory.close();
         registry.getDerivedTables().clear();
     }
 

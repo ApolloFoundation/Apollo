@@ -48,7 +48,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -85,8 +84,6 @@ class BlockDaoTest {
             .build();
 
     @Inject
-    private  JdbiHandleFactory jdbiHandleFactory;
-    @Inject
     private BlockDao blockDao;
     @Inject
     private TransactionDaoImpl transactionDao;
@@ -108,10 +105,7 @@ class BlockDaoTest {
         txd = new TransactionTestData();
     }
 
-    @AfterEach
-    void shutdown() {
-        jdbiHandleFactory.close();
-    }
+
 
     @Test
     void findByBlockId() {
