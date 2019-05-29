@@ -117,6 +117,10 @@ public class Apollo {
         }
         Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
         String home = hp.toString()+File.separator;
+        File dir = new File(home);
+        if(!dir.exists()){
+            dir.mkdirs();
+        }
         String path = pidPath.isEmpty() ? home + PID_FILE : pidPath;
         try (PrintWriter out = new PrintWriter(path)) {
             out.println(pid.toString());
