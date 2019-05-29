@@ -52,17 +52,8 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
@@ -91,7 +82,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -107,7 +97,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.UUID;
 import javax.inject.Inject;
 
@@ -144,9 +133,7 @@ class CsvExporterTest {
             ReferencedTransactionDaoImpl.class,
             TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
             DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
-            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class,
-            KeyFactoryProducer.class, FeeCalculator.class,
+            DataTagDao.class, KeyFactoryProducer.class, FeeCalculator.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
@@ -157,6 +144,7 @@ class CsvExporterTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
 //            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
@@ -168,8 +156,6 @@ class CsvExporterTest {
     AccountTable accountTable;
     @Inject
     PropertiesHolder propertiesHolder;
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -191,11 +177,6 @@ class CsvExporterTest {
         }
     }
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-//        registry.getDerivedTables().clear();
-    }
 
     @BeforeEach
     void setUp() {

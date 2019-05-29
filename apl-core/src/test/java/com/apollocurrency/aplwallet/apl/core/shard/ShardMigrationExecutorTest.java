@@ -126,8 +126,6 @@ class ShardMigrationExecutorTest {
             .build();
 
     @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
-    @Inject
     private DataTransferManagementReceiver managementReceiver;
     @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
@@ -158,7 +156,6 @@ class ShardMigrationExecutorTest {
 
     @AfterEach
     void tearDown() {
-        jdbiHandleFactory.close();
         extension.getDatabaseManger().shutdown();
     }
 

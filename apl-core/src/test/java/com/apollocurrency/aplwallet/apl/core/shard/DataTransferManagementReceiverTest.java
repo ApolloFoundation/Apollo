@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -68,7 +69,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -114,12 +114,11 @@ class DataTransferManagementReceiverTest {
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
 
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private DataTransferManagementReceiver managementReceiver;
     @Inject
@@ -161,15 +160,6 @@ class DataTransferManagementReceiverTest {
     }
 */
 
-    @AfterEach
-    void tearDown() {
-        jdbiHandleFactory.close();
-/*
-        // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
-        extension.getDatabaseManger().shutdown();
-        FileUtils.deleteQuietly(pathToDb.toFile()); // remove after every test
-*/
-    }
 
     @Test
     void createShardDb() throws IOException {

@@ -71,7 +71,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -119,16 +118,10 @@ public class DGSServiceTest {
     DGSGoodsTable goodsTable;
 
     @Inject
-    JdbiHandleFactory jdbiHandleFactory;
-    @Inject
     AccountTable accountTable;
 
     DGSTestData dtd;
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
 
     @BeforeEach
     public void setUp() {
