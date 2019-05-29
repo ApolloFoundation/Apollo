@@ -32,4 +32,10 @@ public interface ConfigDirProvider {
      * @return 
      */
     public String getConfigDirectoryName();
+    /**
+     * Gets config directory depending on run mode. In user mode it is getUserConfigDirectory()
+     * In service mode it is getSysConfigDirectory()
+     */
+    public String getConfigDirectory();
+
 }
