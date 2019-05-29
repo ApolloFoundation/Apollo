@@ -45,7 +45,7 @@ public class JdbiHandleFactory {
     public Handle open() {
         Handle handle = getCurrentHandle();
         if (handle != null) {
-            return handle;
+            throw new IllegalStateException("Unable to open new handle. Previous is still opened");
         }
         handle = jdbi.open();
         currentHandleThreadLocal.set(handle);
@@ -60,9 +60,23 @@ public class JdbiHandleFactory {
     private Handle requireOpenHandle(String action) {
         Handle handle = getCurrentHandle();
         if (handle == null) {
-            throw new IllegalStateException("Unable to " + action + " transaction. Handle is null");
+            throw new IllegalStateException("Unable to " + action + ". Handle is null");
         } else {
             return handle;
+        }
+    }
+
+    protected boolean currentHandleOpened() {
+        return getCurrentHandle() != null;
+    }
+
+    protected void setReadOnly(boolean readOnly) {
+        Handle handle = requireOpenHandle("SetReadOnly");
+        if (handle.isInTransaction()) {
+            throw new IllegalStateException("Unable to set read only for handle in transaction");
+        }
+        if (readOnly != handle.isReadOnly()) {
+            handle.setReadOnly(readOnly);
         }
     }
 

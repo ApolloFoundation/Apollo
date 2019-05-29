@@ -35,9 +35,15 @@ public class JdbiTransactionalInterceptor {
 
         boolean readOnly = (annotation != null && annotation.readOnly())
                 || (annotation2 != null && annotation2.readOnly());
+        boolean createHandle = !jdbiHandleFactory.currentHandleOpened();
+        if (createHandle) {
+             jdbiHandleFactory.open();
+        }
         try {
             if (!readOnly) {
                 jdbiHandleFactory.begin();
+            } else if (createHandle) {
+                jdbiHandleFactory.setReadOnly(true);
             }
             Object result = ctx.proceed();
 
@@ -52,6 +58,10 @@ public class JdbiTransactionalInterceptor {
             }
             log.error(e.getMessage(), e);
             throw e;
+        } finally {
+            if (createHandle) {
+                jdbiHandleFactory.close();
+            }
         }
     }
 }
