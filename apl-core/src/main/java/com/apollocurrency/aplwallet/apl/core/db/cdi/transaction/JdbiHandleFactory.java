@@ -30,16 +30,20 @@ public class JdbiHandleFactory {
         return handle != null && handle.isInTransaction();
     }
 
-    public Handle getCurrentHandle() {
-        Handle handle = currentHandleThreadLocal.get();
+    public Handle getOrOpenHandle() {
+        Handle handle = getCurrentHandle();
         if (handle == null) {
             handle = open();
         }
         return handle;
     }
 
+    public Handle getCurrentHandle() {
+        return currentHandleThreadLocal.get();
+    }
+
     public Handle open() {
-        Handle handle = currentHandleThreadLocal.get();
+        Handle handle = getCurrentHandle();
         if (handle != null) {
             return handle;
         }
@@ -49,22 +53,31 @@ public class JdbiHandleFactory {
     }
 
     protected void begin() {
-        Handle handle = getCurrentHandle();
+        Handle handle = requireOpenHandle("begin");
         handle.begin();
     }
 
-    protected void commit() {
+    private Handle requireOpenHandle(String action) {
         Handle handle = getCurrentHandle();
+        if (handle == null) {
+            throw new IllegalStateException("Unable to " + action + " transaction. Handle is null");
+        } else {
+            return handle;
+        }
+    }
+
+    protected void commit() {
+        Handle handle = requireOpenHandle("commit");
         handle.commit();
     }
 
     protected void rollback() {
-        Handle handle = getCurrentHandle();
+        Handle handle = requireOpenHandle("rollback");
         handle.rollback();
     }
 
     public void close() {
-        Handle handle = getCurrentHandle();
+        Handle handle = requireOpenHandle("close");
         handle.close();
         currentHandleThreadLocal.remove();
     }

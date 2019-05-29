@@ -30,7 +30,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -65,8 +64,6 @@ class BlockchainTest {
             .build();
 
     @Inject
-    private  JdbiHandleFactory jdbiHandleFactory;
-    @Inject
     private Blockchain blockchain;
     private TransactionTestData testData;
     private BlockTestData btd;
@@ -96,10 +93,7 @@ class BlockchainTest {
         dbPopulator.populateDb();
     }
 
-    @AfterEach
-    void shutdown() {
-        jdbiHandleFactory.close();
-    }
+
 
     @Test
     void findLastBlock() {
@@ -188,7 +182,7 @@ class BlockchainTest {
     }
 
     @Test
-    void testGetBlockByBlockId() {
+    void testGetBlockByBlockIdFromSecondShardDataSource() {
         blockchain.setLastBlock(btd.BLOCK_10);
 
         Block block = blockchain.getBlock(btd.BLOCK_5.getId());
@@ -196,25 +190,13 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_5, block);
     }
 
-
-/*
-    // COMMENTED OUT tests because they still creates Weld container and do not shutdown it!!!
-
-    @Disabled // doesn't work, but creates additional Weld container which it not shutdown later
     @Test
-    void getBlock() {
-        Block block = blockchain.getBlock(btd.BLOCK_0.getId());
-        assertNotNull(block);
-        assertEquals(btd.BLOCK_0.getId(), block.getId());
-    }
+    void testGetBlockByBlockIdFirstShardDataSource() {
+        blockchain.setLastBlock(btd.BLOCK_13);
 
-    @Disabled // doesn't work, but creates additional Weld container which it not shutdown later
-    @Test
-    void getLastBlock() {
-        Block block = blockchain.getLastBlock();
-        assertNotNull(block);
-        assertEquals(btd.LAST_BLOCK.getId(), block.getId());
+        Block block = blockchain.getBlock(btd.BLOCK_1.getId());
+
+        assertEquals(btd.BLOCK_1, block);
     }
-*/
 
 }

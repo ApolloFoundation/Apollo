@@ -59,7 +59,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -121,9 +120,6 @@ public class PhasingPollServiceTest {
     TransactionTestData ttd;
     BlockTestData btd;
 
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
-
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
@@ -133,10 +129,7 @@ public class PhasingPollServiceTest {
         }
     }
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
+
 
     @BeforeEach
     void setUp() {

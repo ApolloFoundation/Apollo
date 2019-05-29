@@ -43,7 +43,6 @@ public interface BlockIndexDao {
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT shard_id FROM block_index where block_id = :blockId")
-    @RegisterRowMapper(BlockIndexRowMapper.class)
     Long getShardIdByBlockId(@Bind("blockId") long blockId);
 
     @Transactional(readOnly = true)
@@ -53,7 +52,6 @@ public interface BlockIndexDao {
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT shard_id FROM block_index where block_height = :blockHeight")
-    @RegisterRowMapper(BlockIndexRowMapper.class)
     Long getShardIdByBlockHeight(@Bind("blockHeight") int blockHeight);
 
     @Transactional(readOnly = true)
