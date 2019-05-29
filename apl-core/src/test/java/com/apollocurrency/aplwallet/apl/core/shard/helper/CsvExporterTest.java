@@ -132,6 +132,7 @@ class CsvExporterTest {
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     private DirProvider dirProvider = mock(DirProvider.class);
+    private ShardExportDirProducer shardExportDirProducer = mock(ShardExportDirProducer.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -219,8 +220,10 @@ class CsvExporterTest {
     @Test
     void exportDerivedTables() throws Exception {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(shardExportDirProducer).getDataExportDir();
 //        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir(); // prod data test
-        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
+        cvsExporter = new CsvExporterImpl(shardExportDirProducer, extension.getDatabaseManger(), shardDaoJdbc);
+//        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
@@ -262,8 +265,10 @@ class CsvExporterTest {
     @Test
     void exportShardTable() throws Exception {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(shardExportDirProducer).getDataExportDir();
 //        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir(); // prod data test
-        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
+        cvsExporter = new CsvExporterImpl(shardExportDirProducer, extension.getDatabaseManger(), shardDaoJdbc);
+//        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
         assertNotNull(cvsExporter);
 
         String tableName = "shard";
