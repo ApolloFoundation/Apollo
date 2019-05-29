@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.EntityDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -43,7 +44,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +78,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -90,17 +91,10 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     PhasingTestData ptd;
     TransactionTestData ttd;
 
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
     private BlockTestData btd;
 
     public PhasingPollTableTest() {
         super(PhasingPoll.class);
-    }
-
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
     }
 
     @BeforeEach

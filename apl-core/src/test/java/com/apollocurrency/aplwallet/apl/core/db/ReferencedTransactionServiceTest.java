@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -35,20 +36,17 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import javax.inject.Inject;
 
 @EnableWeld
 public class ReferencedTransactionServiceTest {
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
 
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
@@ -69,6 +67,7 @@ public class ReferencedTransactionServiceTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
@@ -84,10 +83,6 @@ public class ReferencedTransactionServiceTest {
         }
     }
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
 
     @BeforeEach
     void setUp() {

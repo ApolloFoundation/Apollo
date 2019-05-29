@@ -49,15 +49,8 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
@@ -87,7 +80,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -110,7 +102,6 @@ import java.sql.Types;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,8 +133,7 @@ class CsvWriterReaderDerivedTablesTest {
             ReferencedTransactionDaoImpl.class,
             TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
             DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
-            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class,
+            DataTagDao.class,
             KeyFactoryProducer.class, FeeCalculator.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
@@ -154,12 +144,11 @@ class CsvWriterReaderDerivedTablesTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
 
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -176,11 +165,6 @@ class CsvWriterReaderDerivedTablesTest {
         }
     }
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-//        registry.getDerivedTables().clear();
-    }
 
     @BeforeEach
     void setUp() {

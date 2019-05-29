@@ -7,30 +7,16 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -46,13 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -84,7 +64,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -92,6 +71,15 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Set;
+import java.util.UUID;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -137,8 +125,6 @@ class CsvImporterTest {
 
     @Inject
     private ShardDaoJdbc daoJdbc;
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
     CsvImporter csvImporter;
 
     private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard");
@@ -151,12 +137,6 @@ class CsvImporterTest {
         } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-//        registry.getDerivedTables().clear();
     }
 
     @BeforeEach

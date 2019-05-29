@@ -30,7 +30,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -40,8 +39,6 @@ import javax.inject.Inject;
 @EnableWeld
 class ShardRecoveryDaoTest {
 
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
     @RegisterExtension
     static DbExtension extension = new DbExtension();
     @WeldSetup
@@ -59,10 +56,6 @@ class ShardRecoveryDaoTest {
     @Inject
     private ShardRecoveryDao dao;
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
 
     @Test
     void testGetAllForEmpty() {

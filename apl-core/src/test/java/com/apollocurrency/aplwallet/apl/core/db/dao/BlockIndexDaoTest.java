@@ -34,7 +34,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -48,8 +47,6 @@ public class BlockIndexDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
-    @Inject
-    private  JdbiHandleFactory jdbiHandleFactory;
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
@@ -68,10 +65,6 @@ public class BlockIndexDaoTest {
     @Inject
     private TransactionIndexDao transactionIndexDao;
 
-    @AfterEach
-    void shutdown() {
-        jdbiHandleFactory.close();
-    }
 
     @Test
     void testGetAll() {

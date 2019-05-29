@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -20,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -29,7 +31,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -42,8 +43,6 @@ import javax.inject.Inject;
 public class TransactionIndexDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
-    @Inject
-    private  JdbiHandleFactory jdbiHandleFactory;
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
@@ -53,6 +52,7 @@ public class TransactionIndexDaoTest {
             DerivedDbTablesRegistryImpl.class,
             JdbiHandleFactory.class, BlockIndexDao.class, TransactionIndexDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
             .build();
@@ -60,10 +60,6 @@ public class TransactionIndexDaoTest {
     @Inject
     TransactionIndexDao dao;
 
-    @AfterEach
-    void shutdown() {
-        jdbiHandleFactory.close();
-    }
     @Test
     void testGetAll() {
         List<TransactionIndex> result = dao.getAllTransactionIndex();

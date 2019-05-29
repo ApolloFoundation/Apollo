@@ -73,7 +73,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
@@ -122,14 +121,12 @@ class ShardEngineTest {
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(exportDirProducer, ShardExportDirProducer.class))
-            .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
 
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
     @Inject
     private ShardEngine shardEngine;
     @Inject
@@ -179,15 +176,6 @@ class ShardEngineTest {
     }
 */
 
-    @AfterEach
-    void tearDown() {
-        jdbiHandleFactory.close();
-/*
-        // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
-        extension.getDatabaseManger().shutdown();
-        FileUtils.deleteQuietly(pathToDb.toFile()); // remove after every test
-*/
-    }
 
     @Test
     void createShardDb() throws IOException {

@@ -1,12 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-
-import javax.inject.Inject;
-
-import java.sql.SQLException;
-import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -20,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
@@ -35,12 +31,15 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+
+import java.sql.SQLException;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -69,13 +68,6 @@ class TaggedDataTimestampDaoTest {
     TaggedTestData tagtd;
     TransactionTestData ttd;
 
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
-
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
 
     @BeforeEach
     void setUp() throws Exception {
