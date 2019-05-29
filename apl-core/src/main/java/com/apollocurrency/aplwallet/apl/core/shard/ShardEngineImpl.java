@@ -5,17 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPIED_TO_SHARD;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINKED_IN_MAIN;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINK_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -32,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
@@ -52,8 +55,8 @@ import javax.inject.Singleton;
  * {@inheritDoc}
  */
 @Singleton
-public class DataTransferManagementReceiverImpl implements DataTransferManagementReceiver {
-    private static final Logger log = getLogger(DataTransferManagementReceiverImpl.class);
+public class ShardEngineImpl implements ShardEngine {
+    private static final Logger log = getLogger(ShardEngineImpl.class);
 
     private MigrateState state = MigrateState.INIT;
     private DatabaseManager databaseManager;
@@ -62,16 +65,21 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private Optional<Long> createdShardId;
     private TransactionalDataSource createdShardSource;
     private ShardRecoveryDaoJdbc shardRecoveryDao;
+    private CsvExporter csvExporter;
+    private DerivedTablesRegistry registry;
 
-    public DataTransferManagementReceiverImpl() {
+    public ShardEngineImpl() {
     }
 
     @Inject
-    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService,
-                                              ShardRecoveryDaoJdbc shardRecoveryDao) {
+    public ShardEngineImpl(DatabaseManager databaseManager, TrimService trimService,
+                           ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
+                           DerivedTablesRegistry registry) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
+        this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
+        this.registry = Objects.requireNonNull(registry, "registry is NULL");
     }
 
     @Override
@@ -149,6 +157,11 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         return state;
     }
 
+    /**
+     * Create new Recovery info record (if it's missing in specified dataSource) or load existing one.
+     *
+     * @param sourceDataSource usually main db (but can be different)
+     */
     private void loadAndRefreshRecovery(TransactionalDataSource sourceDataSource) {
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         log.trace("Latest = {}", recovery);
@@ -168,6 +181,10 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         }
     }
 
+    /**
+     * Check mandatory parameters
+     * @param paramInfo common parameters
+     */
     private void checkRequiredParameters(CommandParamInfo paramInfo) {
         Objects.requireNonNull(paramInfo, "paramInfo is NULL");
         Objects.requireNonNull(paramInfo.getTableNameList(), "table Name List is NULL");
@@ -189,9 +206,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         // check previous state
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > DATA_COPIED_TO_SHARD.getValue()) {
+                && recovery.getState().getValue() > DATA_COPY_TO_SHARD_FINISHED.getValue()) {
             // skip to next step
-            return state = DATA_COPIED_TO_SHARD;
+            return state = DATA_COPY_TO_SHARD_FINISHED;
         } else { // that is needed in case separate step execution, when previous step was missed in code
             recovery = new ShardRecovery(DATA_COPY_TO_SHARD_STARTED);
         }
@@ -228,7 +245,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
             }
-            state = DATA_COPIED_TO_SHARD;
+            state = DATA_COPY_TO_SHARD_FINISHED;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
         } catch (Exception e) {
@@ -248,6 +265,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     /**
      * {@inheritDoc}
      */
+/*
     @Override
     @Deprecated
     public MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo) {
@@ -303,6 +321,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         log.debug("RELINK Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
+*/
 
     private void processOneTableByHelper(CommandParamInfo paramInfo, Connection sourceConnect,
                                          String tableName, long start,
@@ -339,9 +358,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > SECONDARY_INDEX_UPDATED.getValue()) {
+                && recovery.getState().getValue() > SECONDARY_INDEX_FINISHED.getValue()) {
             // skip to next step
-            return state = SECONDARY_INDEX_UPDATED;
+            return state = SECONDARY_INDEX_FINISHED;
         } else {
             // that is needed in case separate step execution, when previous step was missed in code
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
@@ -360,7 +379,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, SECONDARY_INDEX_STARTED);
             }
-            state = SECONDARY_INDEX_UPDATED;
+            state = SECONDARY_INDEX_FINISHED;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
         } catch (Exception e) {
@@ -375,6 +394,66 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         }
         log.debug("UPDATE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
 
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MigrateState exportCsv(CommandParamInfo paramInfo) {
+        checkRequiredParameters(paramInfo);
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", paramInfo.getTableNameList().size());
+
+        String currentTable = null;
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        if (recovery != null && recovery.getState() != null
+                && recovery.getState().getValue() > CSV_EXPORT_FINISHED.getValue()) {
+            // skip to next step
+            return state = CSV_EXPORT_FINISHED;
+        } else {
+            // that is needed in case separate step execution, when previous step was missed in code
+            recovery = new ShardRecovery(CSV_EXPORT_STARTED);
+        }
+
+        // TODO: export as CSV data for all : derived tables, shard, block_index, transaction_shard_index
+        // TODO: keep recovery data on export
+
+        state = CSV_EXPORT_FINISHED;
+//        updateToFinalStepState(sourceDataSource.begin(), recovery, state);
+        log.debug("EXPORT Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MigrateState archiveCsv(CommandParamInfo paramInfo) {
+        checkRequiredParameters(paramInfo);
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting ZIP ARCHIVE data update from [{}] tables...", paramInfo.getTableNameList().size());
+
+        String currentTable = null;
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        if (recovery != null && recovery.getState() != null
+                && recovery.getState().getValue() > ZIP_ARCHIVE_FINISHED.getValue()) {
+            // skip to next step
+            return state = ZIP_ARCHIVE_FINISHED;
+        } else {
+            // that is needed in case separate step execution, when previous step was missed in code
+            recovery = new ShardRecovery(ZIP_ARCHIVE_STARTED);
+        }
+
+        // TODO: put into archive CSV for all : derived tables, shard, block_index, transaction_shard_index + compute CRC/hash and update column value in SHARD
+        // TODO: keep recovery data on export
+
+        state = ZIP_ARCHIVE_FINISHED;
+//        updateToFinalStepState(sourceDataSource.begin(), recovery, state);
+        log.debug("ZIP ARCHIVE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 

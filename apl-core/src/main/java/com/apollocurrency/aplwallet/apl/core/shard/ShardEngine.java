@@ -10,11 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 
 /**
  * Interface for different operation executed during sharding process.
- * Those are transferring data between main database and shard database, relinking data in main db, removing copied data.
+ * Those are transferring data between main database and shard database, data export into csv file,
+ * zipping csv into archive, removing copied data, updating shard table record.
  *
  * @author yuriy.larin
  */
-public interface DataTransferManagementReceiver {
+public interface ShardEngine {
 
     /**
      * Downloading shard process in percent
@@ -33,13 +34,30 @@ public interface DataTransferManagementReceiver {
      */
     MigrateState createBackup();
 
+    /**
+     * Create either 'initial' shard db with tables only or full schema with all indexes/constrains/PK/FK
+     *
+     * @param dbVersion supplied schema name class
+     * @return state enum - MigrateState.SHARD_SCHEMA_CREATED or MigrateState.SHARD_SCHEMA_FULL if success, MigrateState.FAILED otherwise
+     */
     MigrateState addOrCreateShard(DbVersion dbVersion);
 
+    /**
+     * Copy block + transaction data excluding phased transaction into shard db
+     *
+     * @param paramInfo configured params
+     * @return MigrateState.DATA_COPY_TO_SHARD_STARTED,
+     */
     MigrateState copyDataToShard(CommandParamInfo paramInfo);
 
-    MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo);
+//    @Deprecated
+//    MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo);
 
     MigrateState updateSecondaryIndex(CommandParamInfo paramInfo);
+
+    MigrateState exportCsv(CommandParamInfo paramInfo);
+
+    MigrateState archiveCsv(CommandParamInfo paramInfo);
 
     MigrateState deleteCopiedData(CommandParamInfo paramInfo);
 
