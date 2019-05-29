@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
@@ -24,39 +24,41 @@ import java.util.Set;
 public class ReLinkDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(ReLinkDataCommand.class);
 
-    private DataTransferManagementReceiver dataTransferManagement;
+    private ShardEngine shardEngine;
     private List<String> tableNameList;
     private int commitBatchSize;
     private int snapshotBlockHeight;
     private Set<Long> dbIdsExclusionList;
 
-    public ReLinkDataCommand(DataTransferManagementReceiver dataTransferManagement,
-                             int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, Set<Long> dbIdsExlusionList) {
-        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
+    public ReLinkDataCommand(ShardEngine shardEngine,
+                             int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, Set<Long> dbIdsExclusionList) {
+        this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.commitBatchSize = commitBatchSize <= 0 ? DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
-        this.dbIdsExclusionList = dbIdsExlusionList == null ? Collections.emptySet() : dbIdsExlusionList;
+        this.dbIdsExclusionList = dbIdsExclusionList == null ? Collections.emptySet() : dbIdsExclusionList;
         this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
     }
 
-    public ReLinkDataCommand(DataTransferManagementReceiver dataTransferManagement,
+    public ReLinkDataCommand(ShardEngine shardEngine,
                              int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(dataTransferManagement,  null, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
+        this(shardEngine,  null, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
         //TODO move it to another class
+/*
         tableNameList.add(TRANSACTION_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);
         tableNameList.add(TAGGED_DATA_TABLE_NAME);
         tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
         tableNameList.add(DATA_TAG_TABLE_NAME);
         tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
+*/
     }
 
     public ReLinkDataCommand(
-            DataTransferManagementReceiver dataTransferManagement,
+            ShardEngine shardEngine,
             List<String> tableNameList,
             int commitBatchSize,
             int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(dataTransferManagement, commitBatchSize, snapshotBlockHeight, tableNameList, dbIdsExclusionList);
+        this(shardEngine, commitBatchSize, snapshotBlockHeight, tableNameList, dbIdsExclusionList);
     }
 
     public void addTable(String table) {
@@ -72,7 +74,8 @@ public class ReLinkDataCommand implements DataMigrateOperation {
         log.debug("Update Linked Data Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
                 this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, dbIdsExclusionList);
-        return dataTransferManagement.relinkDataToSnapshotBlock(paramInfo);
+//        return shardEngine.relinkDataToSnapshotBlock(paramInfo);
+        return null;
     }
 
     @Override
