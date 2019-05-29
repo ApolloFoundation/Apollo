@@ -51,10 +51,17 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getUserConfigDirectory() {
+        String res = Paths.get(System.getProperty("user.home"), "." + applicationName, getConfigDirectoryName()).toAbsolutePath().toString();
+        return res;
+    }
+
+    @Override
+    public String getConfigDirectory() {
         String res =
             isService
-                ? getInstallationConfigDirectory()
-                : Paths.get(System.getProperty("user.home"), "." + applicationName, getConfigDirectoryName()).toAbsolutePath().toString();
+                ? getSysConfigDirectory()
+                : getUserConfigDirectory();
         return res;
+       
     }
 }
