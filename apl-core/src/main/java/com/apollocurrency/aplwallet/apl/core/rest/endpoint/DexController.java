@@ -353,6 +353,9 @@ public class DexController {
         if(!EthUtil.isAddressValid(fromAddress)){
             return Response.status(Response.Status.OK).entity(incorrect("fromAddress", "Address length is not correct.")).build();
         }
+        if(transferFee < 1 || transferFee > Integer.MAX_VALUE){
+            return Response.status(Response.Status.OK).entity(incorrect("transferFee", String.format("value %d not in range [%d-%d]", transferFee, 1, Integer.MAX_VALUE))).build();
+        }
 
         String transaction;
         try {
