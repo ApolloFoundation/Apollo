@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import java.sql.SQLException;
+import java.nio.file.Path;
 
 /**
  * Component's interface for importing table data into Db from CSV file.
@@ -13,6 +13,13 @@ import java.sql.SQLException;
  * @author yuriy.larin
  */
 public interface CsvImporter {
+
+    /**
+     * Return path to data export/import folder
+     *
+     * @return path to folder
+     */
+    Path getDataExportPath();
 
     /**
      * Import one specified table and returns number of imported rows

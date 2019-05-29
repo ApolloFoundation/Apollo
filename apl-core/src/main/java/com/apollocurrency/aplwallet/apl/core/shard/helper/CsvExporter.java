@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import java.nio.file.Path;
+
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 
 /**
@@ -13,6 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
  * @author yuriy.larin
  */
 public interface CsvExporter {
+
+    /**
+     * Return path to CSV data export folder
+     *
+     * @return path to folder
+     */
+    Path getDataExportPath();
 
     /**
      * Exports one specified table and returns number of exported rows

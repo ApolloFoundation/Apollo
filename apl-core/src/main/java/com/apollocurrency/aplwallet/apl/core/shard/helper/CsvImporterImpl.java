@@ -44,10 +44,22 @@ public class CsvImporterImpl implements CsvImporter {
     private Set<String> excludeTables; // skipped tables
 
     @Inject
-    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
-        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
+//    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
+    public CsvImporterImpl(ShardExportDirProducer exportDirProducer, DatabaseManager databaseManager) {
+        Objects.requireNonNull(exportDirProducer, "exportDirProducer is NULL");
+        Objects.requireNonNull(exportDirProducer.getDataExportDir(), "exportDirProducer 'data Path' is NULL");
+        this.dataExportPath = exportDirProducer.getDataExportDir();
+//        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of("genesis_public_key");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path getDataExportPath() {
+        return this.dataExportPath;
     }
 
     /**
