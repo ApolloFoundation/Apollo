@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
@@ -18,21 +18,21 @@ import java.util.Set;
 public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(DeleteCopiedDataCommand.class);
 
-    private DataTransferManagementReceiver dataTransferManagement;
+    private ShardEngine shardEngine;
     private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private Set<Long> excludedTxs;
     private int snapshotBlockHeight;
 
-    public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
+    public DeleteCopiedDataCommand(ShardEngine shardEngine,
                                    int commitBatchSize, int snapshotBlockHeight, Set<Long> excludedTxs) {
-        this(dataTransferManagement, snapshotBlockHeight, excludedTxs);
+        this(shardEngine, snapshotBlockHeight, excludedTxs);
         this.commitBatchSize = commitBatchSize;
     }
 
-    public DeleteCopiedDataCommand(DataTransferManagementReceiver dataTransferManagement,
+    public DeleteCopiedDataCommand(ShardEngine shardEngine,
                                    int snapshotBlockHeight, Set<Long> excludedTxs) {
-        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
+        this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.excludedTxs = Objects.requireNonNull(excludedTxs, "excludedTxs set is NULL");
         tableNameList.add(BLOCK_TABLE_NAME);
@@ -40,11 +40,11 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     }
 
     public DeleteCopiedDataCommand(
-            DataTransferManagementReceiver dataTransferManagement,
+            ShardEngine shardEngine,
             List<String> tableNameList,
             int commitBatchSize,
             int snapshotBlockHeight) {
-        this.dataTransferManagement = Objects.requireNonNull(dataTransferManagement, "dataTransferManagement is NULL");
+        this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.tableNameList = Objects.requireNonNull(tableNameList, "tableNameList is NULL");
         this.commitBatchSize = commitBatchSize;
         this.snapshotBlockHeight = snapshotBlockHeight;
@@ -58,7 +58,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
         log.debug("Delete Block/Transaction Data from main DB Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
                 this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, excludedTxs);
-        return dataTransferManagement.deleteCopiedData(paramInfo);
+        return shardEngine.deleteCopiedData(paramInfo);
     }
 
     @Override
