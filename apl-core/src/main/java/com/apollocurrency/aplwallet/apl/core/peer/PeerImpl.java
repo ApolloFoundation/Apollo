@@ -749,7 +749,7 @@ public final class PeerImpl implements Peer {
                     return;
                 }
 
-                if (npi.chainId == null || !UUID.fromString(pi.chainId).equals(targetChainId)) {
+                if (npi.chainId == null || ! targetChainId.equals(UUID.fromString(npi.chainId))) {
                     LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),npi.chainId);
                     remove();
                     return;

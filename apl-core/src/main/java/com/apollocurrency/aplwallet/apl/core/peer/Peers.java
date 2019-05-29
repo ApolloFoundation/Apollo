@@ -594,7 +594,7 @@ public final class Peers {
             String oldHost = selfAnnouncedAddresses.put(newAnnouncedAddress, peer.getHostWithPort());
             if (oldHost != null && !peer.getHost().equals(oldHost)) {
                 LOG.debug("Announced address " + newAnnouncedAddress + " now maps to peer " + peer.getHost()+":"+peer.getPort()
-                        + ", removing old peer " + oldHost+":"+oldPeer.getPort());
+                        + ", removing old peer " + oldHost);
                 oldPeer = peers.remove(oldHost);
                 if (oldPeer != null) {
                     notifyListeners(oldPeer, Event.REMOVE);
