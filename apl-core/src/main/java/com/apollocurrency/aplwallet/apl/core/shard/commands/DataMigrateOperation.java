@@ -26,12 +26,14 @@ public interface DataMigrateOperation {
     /**
      * Constant table names are used for step 4
      */
-    String GENESIS_PUBLIC_KEY_TABLE_NAME = "GENESIS_PUBLIC_KEY";
-    String PUBLIC_KEY_TABLE_NAME = "PUBLIC_KEY";
-    String TAGGED_DATA_TABLE_NAME = "TAGGED_DATA";
-    String SHUFFLING_DATA_TABLE_NAME = "SHUFFLING_DATA";
-    String DATA_TAG_TABLE_NAME = "DATA_TAG";
-    String PRUNABLE_MESSAGE_TABLE_NAME = "PRUNABLE_MESSAGE";
+//    String GENESIS_PUBLIC_KEY_TABLE_NAME = "GENESIS_PUBLIC_KEY";
+//    String PUBLIC_KEY_TABLE_NAME = "PUBLIC_KEY";
+//    String TAGGED_DATA_TABLE_NAME = "TAGGED_DATA";
+//    String SHUFFLING_DATA_TABLE_NAME = "SHUFFLING_DATA";
+//    String DATA_TAG_TABLE_NAME = "DATA_TAG";
+//    String PRUNABLE_MESSAGE_TABLE_NAME = "PRUNABLE_MESSAGE";
+
+    String SHARD_TABLE_NAME = "SHARD";
 
     /**
      * Constant table names are used for step 5
