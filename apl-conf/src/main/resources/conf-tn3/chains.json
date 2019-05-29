@@ -319,6 +319,20 @@
         "maxBalance": 30000000000
       },
       {
+        "height": 100,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
         "height": 2000,
         "maxNumberOfTransactions": 300,
         "blockTime": 2,
