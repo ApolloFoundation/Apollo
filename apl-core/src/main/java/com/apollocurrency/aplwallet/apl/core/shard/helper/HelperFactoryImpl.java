@@ -6,12 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DATA_TAG_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PRUNABLE_MESSAGE_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHUFFLING_DATA_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TAGGED_DATA_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 
@@ -34,9 +28,10 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
                 if (!relink) {
                     return Optional.of(new BlockTransactionInsertHelper());
                 } else {
-                    return Optional.of(new RelinkingToSnapshotBlockHelper());
+                    return Optional.of(new SecondaryIndexInsertHelper());
                 }
             }
+/*
             case GENESIS_PUBLIC_KEY_TABLE_NAME :
             case PUBLIC_KEY_TABLE_NAME :
             case TAGGED_DATA_TABLE_NAME :
@@ -44,6 +39,7 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
             case DATA_TAG_TABLE_NAME :
             case PRUNABLE_MESSAGE_TABLE_NAME :
                 return Optional.of(new RelinkingToSnapshotBlockHelper());
+*/
             case BLOCK_INDEX_TABLE_NAME :
             case TRANSACTION_SHARD_INDEX_TABLE_NAME : {
                 return Optional.of(new SecondaryIndexInsertHelper());
