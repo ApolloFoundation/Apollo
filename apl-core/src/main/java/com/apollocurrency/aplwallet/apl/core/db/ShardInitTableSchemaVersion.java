@@ -49,6 +49,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "type TINYINT NOT NULL, " +
                         "subtype TINYINT NOT NULL, " +
                         "sender_id BIGINT NOT NULL, " +
+                        "sender_public_key BINARY(32), "+
                         "block_timestamp INT NOT NULL, " +
                         "referenced_transaction_full_hash BINARY(32), " +
                         "phased BOOLEAN NOT NULL DEFAULT FALSE, " +
@@ -65,17 +66,13 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
 
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS referenced_transaction (db_id IDENTITY, transaction_id BIGINT NOT NULL, "
-                        + "FOREIGN KEY (transaction_id) REFERENCES transaction (id) ON DELETE CASCADE, "
-                        + "referenced_transaction_id BIGINT NOT NULL)");
-            case 4:
                 apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
-            case 5:
+            case 4:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, value)");
-            case 6:
-                return 6;
-            case 24:
-                return 24;
+            case 5:
+                return 5;
+            case 23:
+                return 23;
             default:
                 throw new RuntimeException("Shard CREATE TABLES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -39,7 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -180,15 +180,15 @@ public final class Shuffling {
 
     };
 
-    private static final VersionedEntityDbTable<Shuffling> shufflingTable = new VersionedEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<Shuffling> shufflingTable = new VersionedDeletableEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
 
         @Override
-        protected Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Shuffling(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Shuffling shuffling) throws SQLException {
+        public void save(Connection con, Shuffling shuffling) throws SQLException {
             shuffling.save(con);
         }
 
@@ -358,16 +358,6 @@ public final class Shuffling {
         this.assigneeAccountId = rs.getLong("assignee_account_id");
         this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
-    }
-
-    private Shuffling(long id, DbKey dbKey, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.holdingId = holdingId;
-        this.holdingType = holdingType;
-        this.issuerId = issuerId;
-        this.amount = amount;
-        this.participantCount = participantCount;
     }
 
     private void save(Connection con) throws SQLException {

@@ -21,6 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -29,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -39,10 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -100,17 +100,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class BlockchainProcessorImpl implements BlockchainProcessor {
     private static final Logger log = getLogger(BlockchainProcessorImpl.class);
 
-    // TODO: YL remove static instance later
-   private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-   private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+   private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+   private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
    private DexService dexService;
    private  BlockchainConfigUpdater blockchainConfigUpdater;
 
 
     private FullTextSearchService fullTextSearchProvider;
 
-    private static Blockchain blockchain;
-    private static TransactionProcessor transactionProcessor;
+    private Blockchain blockchain;
+    private TransactionProcessor transactionProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private DatabaseManager databaseManager;
 
@@ -275,8 +274,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 final Block commonBlock = lookupBlockhain().getBlock(commonBlockId);
                 if (commonBlock == null || lookupBlockhain().getHeight() - commonBlock.getHeight() >= 720) {
                     if (commonBlock != null) {
-                        log.debug("Peer "+peer.getAnnouncedAddress() + " advertised chain with better difficulty, but the last common block is at height " 
-                                + commonBlock.getHeight()+"Peer info:"+peer);
+                        log.debug("Peer {} advertised chain with better difficulty, but the last common block is at height {}, peer info - {}", peer.getAnnouncedAddress(), commonBlock.getHeight(), peer);
                     }
                     return;
                 }
@@ -563,7 +561,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
-                log.debug("Solwest peer "+slowestPeer.getHost() + " took " + maxResponseTime + " ms, disconnecting");
+                log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate();
             }
             //
@@ -595,7 +593,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 int myForkSize = lookupBlockhain().getHeight() - startHeight;
                 if (!forkBlocks.isEmpty() && myForkSize < 720) {
-                    log.debug("Will process a fork of " + forkBlocks.size() + " blocks, mine is " + myForkSize+"; feed peer addr: "+feederPeer.getHost());
+                    log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
             } finally {
@@ -626,7 +624,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
 
             if (pushedForkBlocks > 0 && lookupBlockhain().getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
-                log.debug("Pop off caused by peer " + peer.getHost() + ", blacklisting");
+                log.debug("Pop off caused by peer {}, blacklisting",peer.getHost());
                 peer.blacklist("Pop off");
                 List<Block> peerPoppedOffBlocks = popOffTo(commonBlock);
                 pushedForkBlocks = 0;
@@ -1091,7 +1089,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
             Genesis.apply();
-            for (DerivedDbTable table : dbTables.getDerivedTables()) {
+            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.createSearchIndex(con);
             }
             blockchain.commit(genesisBlock);
@@ -1408,7 +1406,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 block = popLastBlock();
             }
             long rollbackStartTime = System.currentTimeMillis();
-            for (DerivedDbTable table : dbTables.getDerivedTables()) {
+            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.rollback(commonBlock.getHeight());
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
@@ -1660,7 +1658,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.debug("Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                 }
-                for (DerivedDbTable table : dbTables.getDerivedTables()) {
+                for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                     if (height == 0) {
                         table.truncate();
                     } else {
@@ -1679,6 +1677,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
+                lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
                 if (shutdown) {
                     log.info("Scan will be performed at next start");
                     new Thread(() -> System.exit(0)).start();
@@ -1760,14 +1759,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
                 if (height == 0) {
-                    for (DerivedDbTable table : dbTables.getDerivedTables()) {
+                    for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                         table.createSearchIndex(con);
                     }
                 }
                 pstmtDone.executeUpdate();
                 dataSource.commit(false);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
-                log.info("...done at height " + blockchain.getHeight());
+                log.info("Scan done at height " + blockchain.getHeight());
                 if (height == 0 && validate) {
                     log.info("SUCCESSFULLY PERFORMED FULL RESCAN WITH VALIDATION");
                 }

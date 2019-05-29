@@ -33,6 +33,8 @@ public class ApplicationDataMigrationManager {
     private PublicKeyMigrator publicKeyMigrator;
     @Inject
     private ReferencedTransactionMigrator referencedTransactionMigrator;
+    @Inject
+    private TransactionPublicKeyMigrator transactionPublicKeyMigrator;
 
     public void executeDataMigration() {
         try {
@@ -59,6 +61,7 @@ public class ApplicationDataMigrationManager {
             }
             publicKeyMigrator.migrate();
             referencedTransactionMigrator.migrate();
+            transactionPublicKeyMigrator.migrate();
         }
         catch (IOException e) {
             LOG.error("Fatal error. Cannot proceed data migration", e);

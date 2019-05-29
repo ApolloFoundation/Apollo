@@ -26,8 +26,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -141,15 +141,15 @@ public final class ShufflingParticipant {
 
     };
 
-    private static final VersionedEntityDbTable<ShufflingParticipant> shufflingParticipantTable = new VersionedEntityDbTable<ShufflingParticipant>("shuffling_participant", shufflingParticipantDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<ShufflingParticipant> shufflingParticipantTable = new VersionedDeletableEntityDbTable<ShufflingParticipant>("shuffling_participant", shufflingParticipantDbKeyFactory) {
 
         @Override
-        protected ShufflingParticipant load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public ShufflingParticipant load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new ShufflingParticipant(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, ShufflingParticipant participant) throws SQLException {
+        public void save(Connection con, ShufflingParticipant participant) throws SQLException {
             participant.save(con);
         }
 
@@ -164,15 +164,15 @@ public final class ShufflingParticipant {
 
     };
 
-    private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<ShufflingData>("shuffling_data", shufflingDataDbKeyFactory) {
+    private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<>("shuffling_data", shufflingDataDbKeyFactory) {
 
         @Override
-        protected ShufflingData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public ShufflingData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new ShufflingData(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, ShufflingData shufflingData) throws SQLException {
+        public void save(Connection con, ShufflingData shufflingData) throws SQLException {
             shufflingData.save(con);
         }
 
@@ -313,6 +313,11 @@ public final class ShufflingParticipant {
 
     public static byte[][] getData(long shufflingId, long accountId) {
         ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
+        return shufflingData != null ? shufflingData.data : null;
+    }
+
+    public static byte[][] getData(byte[] fullHash) {
+        ShufflingData shufflingData = shufflingDataTable.getBy(new DbClause.BytesClause("data_transaction_full_hash", fullHash));
         return shufflingData != null ? shufflingData.data : null;
     }
 

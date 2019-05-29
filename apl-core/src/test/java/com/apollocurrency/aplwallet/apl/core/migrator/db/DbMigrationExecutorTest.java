@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -71,7 +72,8 @@ public class DbMigrationExecutorTest {
             BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
             FullTextConfigImpl.class, EpochTime.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
+            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+            .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchService.class))
             .build();
@@ -160,7 +162,7 @@ public class DbMigrationExecutorTest {
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
         BlockTestData btd = new BlockTestData();
-        Assertions.assertEquals(btd.BLOCK_11.getHeight(), migratedHeight);
+        Assertions.assertEquals(btd.LAST_BLOCK.getHeight(), migratedHeight);
 
     }
 }

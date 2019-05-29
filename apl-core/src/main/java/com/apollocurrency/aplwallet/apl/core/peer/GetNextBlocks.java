@@ -36,10 +36,16 @@ import javax.enterprise.inject.Vetoed;
 final class GetNextBlocks extends PeerRequestHandler {
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
+    static final JSONStreamAware NO_BLOCK_ID_LIST;
+
     static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.TOO_MANY_BLOCKS_REQUESTED);
-        TOO_MANY_BLOCKS_REQUESTED = JSON.prepare(response);
+        JSONObject tooManyBlocksResponse = new JSONObject();
+        tooManyBlocksResponse.put("error", Errors.TOO_MANY_BLOCKS_REQUESTED);
+        TOO_MANY_BLOCKS_REQUESTED = JSON.prepare(tooManyBlocksResponse);
+
+        JSONObject noBlockIdListResponse = new JSONObject();
+        noBlockIdListResponse.put("error", Errors.NO_BLOCK_ID_LIST);
+        NO_BLOCK_ID_LIST = JSON.prepare(noBlockIdListResponse);
     }
 
     public GetNextBlocks() {}
@@ -52,22 +58,17 @@ final class GetNextBlocks extends PeerRequestHandler {
         JSONArray nextBlocksArray = new JSONArray();
         List<? extends Block> blocks;
         long blockId = Convert.parseUnsignedLong((String) request.get("blockId"));
-        List<String> stringList = (List<String>)request.get("blockIds");
+        List<String> stringList = (List<String>) request.get("blockIds");
         Blockchain blockchain = lookupBlockchain();
-        if (stringList != null) {
-            if (stringList.size() > 36) {
-                return TOO_MANY_BLOCKS_REQUESTED;
-            }
-            List<Long> idList = new ArrayList<>();
-            stringList.forEach(stringId -> idList.add(Convert.parseUnsignedLong(stringId)));
-            blocks = blockchain.getBlocksAfter(blockId, idList);
-        } else {
-            long limit = Convert.parseLong(request.get("limit"));
-            if (limit > 36) {
-                return TOO_MANY_BLOCKS_REQUESTED;
-            }
-            blocks = blockchain.getBlocksAfter(blockId, limit > 0 ? (int)limit : 36);
+        if (stringList == null) {
+            return NO_BLOCK_ID_LIST;
         }
+        if (stringList.size() > 36) {
+            return TOO_MANY_BLOCKS_REQUESTED;
+        }
+        List<Long> idList = new ArrayList<>();
+        stringList.forEach(stringId -> idList.add(Convert.parseUnsignedLong(stringId)));
+        blocks = blockchain.getBlocksAfter(blockId, idList);
         blocks.forEach(block -> nextBlocksArray.add(block.getJSONObject()));
         response.put("nextBlocks", nextBlocksArray);
 

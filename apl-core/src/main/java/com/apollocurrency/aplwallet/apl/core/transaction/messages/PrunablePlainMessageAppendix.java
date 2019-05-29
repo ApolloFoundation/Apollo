@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -101,22 +100,22 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 32;
     }
 
     @Override
-    int getMyFullSize() {
+    public int getMyFullSize() {
         return getMessage() == null ? 0 : getMessage().length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.put(getHash());
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         if (prunableMessage != null) {
             json.put("message", Convert.toString(prunableMessage.getMessage(), prunableMessage.messageIsText()));
             json.put("messageIsText", prunableMessage.messageIsText());

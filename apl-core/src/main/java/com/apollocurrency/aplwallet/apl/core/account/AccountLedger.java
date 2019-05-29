@@ -23,12 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -86,7 +85,7 @@ public class AccountLedger {
     public static final int trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
 
     /** Blockchain */
-    private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     /** Blockchain processor */
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();

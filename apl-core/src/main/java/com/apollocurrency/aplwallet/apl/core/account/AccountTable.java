@@ -10,7 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,12 +19,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.EnumSet;
+import javax.inject.Singleton;
 
 /**
  *
  * @author al
  */
-public class AccountTable extends VersionedEntityDbTable<Account> {
+@Singleton
+public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
         @Override
@@ -37,12 +40,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
         }
 
     };
-    private static final AccountTable accountTable = new AccountTable();
-    
-    public static AccountTable getInstance(){
-        return accountTable;
-    }
-    
+
     public static DbKey newKey(long id){
         return accountDbKeyFactory.newKey(id);
     }
@@ -52,11 +50,11 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
     
     public AccountTable() {
-        super("account", accountDbKeyFactory);
+        super("account", accountDbKeyFactory, false);
     }
 
     @Override
-    protected Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         long id = rs.getLong("id");
         Account res = new Account(id);
         res.dbKey = dbKey;
@@ -73,7 +71,7 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    protected void save(Connection con, Account account) throws SQLException {
+    public void save(Connection con, Account account) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, account.id);
@@ -88,11 +86,11 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
     }
 
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
+    public void trim(int height) {
         if (height <= Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height, dataSource);
+        super.trim(height);
     }
 
     @Override
@@ -121,12 +119,12 @@ public class AccountTable extends VersionedEntityDbTable<Account> {
             }
         }
     }
-     public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+     public  DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
                             " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
-            return AccountTable.getInstance().getManyBy(con, pstmt, false);
+            return getManyBy(con, pstmt, false);
     }
      
     public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {

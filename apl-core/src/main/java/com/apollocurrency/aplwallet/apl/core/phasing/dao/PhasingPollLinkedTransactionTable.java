@@ -9,8 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollLinkedTransactionMapper;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.sql.Connection;
@@ -24,40 +25,44 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll, byte[]> {
+public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPollLinkedTransaction> {
     public static final String TABLE_NAME = "phasing_poll_linked_transaction";
-    private static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("transaction_id") {
+    private static final LongKeyFactory<PhasingPollLinkedTransaction> KEY_FACTORY = new LongKeyFactory<PhasingPollLinkedTransaction>("transaction_id") {
         @Override
-        public DbKey newKey(PhasingPoll poll) {
-            return new LongKey(poll.getId());
+        public DbKey newKey(PhasingPollLinkedTransaction poll) {
+            if (poll.getDbKey() == null) {
+                poll.setDbKey(new LongKey(poll.getPollId()));
+            }
+            return poll.getDbKey();
         }
     };
+    private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper(KEY_FACTORY);
     private final Blockchain blockchain;
 
     @Inject
     public PhasingPollLinkedTransactionTable(Blockchain blockchain) {
-        super(TABLE_NAME, false, KEY_FACTORY);
+        super(TABLE_NAME, false, KEY_FACTORY, false);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
     @Override
-    protected byte[] load(Connection con, ResultSet rs) throws SQLException {
-        return rs.getBytes("linked_full_hash");
+    public PhasingPollLinkedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        return MAPPER.map(rs, null);
     }
 
-    public List<byte[]> get(long id) {
+    public List<PhasingPollLinkedTransaction> get(long id) {
         return get(KEY_FACTORY.newKey(id));
     }
 
     @Override
-    protected void save(Connection con, PhasingPoll poll, byte[] linkedFullHash) throws SQLException {
+    public void save(Connection con, PhasingPollLinkedTransaction linkedTransaction) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (transaction_id, "
                 + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
-            pstmt.setLong(++i, poll.getId());
-            pstmt.setBytes(++i, linkedFullHash);
-            pstmt.setLong(++i, Convert.fullHashToId(linkedFullHash));
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setLong(++i, linkedTransaction.getPollId());
+            pstmt.setBytes(++i, linkedTransaction.getFullHash());
+            pstmt.setLong(++i, linkedTransaction.getTransactionId());
+            pstmt.setInt(++i, linkedTransaction.getHeight());
             pstmt.executeUpdate();
         }
     }

@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -91,7 +91,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static DatabaseManager databaseManager;
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static final boolean testUnconfirmedTransactions = propertiesHolder.getBooleanProperty("apl.testUnconfirmedTransactions");
     private static int maxUnconfirmedTransactions;
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -124,15 +123,15 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
         return
-                new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", keyFactory) {
+                new EntityDbTable<>("unconfirmed_transaction", keyFactory) {
 
                     @Override
-                    protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                    public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                         return new UnconfirmedTransaction(rs);
                     }
 
                     @Override
-                    protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+                    public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
                         unconfirmedTransaction.save(con);
                         if (transactionCache.size() < maxUnconfirmedTransactions) {
                             DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
@@ -218,7 +217,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return () -> {
             try {
                 try {
-                    if (lookupBlockchainProcessor().isDownloading() && !testUnconfirmedTransactions) {
+                    if (lookupBlockchainProcessor().isDownloading()) {
                         return;
                     }
                     List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
@@ -263,7 +262,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 List<Transaction> transactionList = new ArrayList<>();
@@ -295,7 +294,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 Peer peer = Peers.getAnyPeer(Peer.State.CONNECTED, true);
@@ -338,7 +337,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 processWaitingTransactions();
@@ -631,7 +630,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         globalSync.writeLock();
         try {
             for (Transaction transaction : transactions) {
-                blockchain.getTransactionCache().remove(transaction.getId());
+//                blockchain.getTransactionCache().remove(transaction.getId());
                 if (blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
@@ -678,7 +677,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
+        if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock()) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -744,7 +743,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         try {
             try {
                 dataSource.begin();
-                if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
+                if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock()) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
                 DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());

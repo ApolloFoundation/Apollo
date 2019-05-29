@@ -6,8 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import java.util.Collection;
 
-public interface DerivedTablesRegistry {
-    void registerDerivedTable(DerivedDbTable table);
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 
-    Collection<DerivedDbTable> getDerivedTables();
+public interface DerivedTablesRegistry {
+    void registerDerivedTable(DerivedTableInterface table);
+
+    Collection<DerivedTableInterface> getDerivedTables();
 }

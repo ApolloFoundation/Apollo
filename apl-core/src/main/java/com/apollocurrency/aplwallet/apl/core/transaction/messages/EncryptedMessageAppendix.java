@@ -43,7 +43,7 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         JSONObject encryptedMessageJSON = new JSONObject();
         super.putMyJSON(encryptedMessageJSON);
         json.put("encryptedMessage", encryptedMessageJSON);

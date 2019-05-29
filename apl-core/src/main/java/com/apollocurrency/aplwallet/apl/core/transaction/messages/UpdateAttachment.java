@@ -71,12 +71,12 @@ public abstract class UpdateAttachment extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length + 2 + url.getFirst().length + 2 + url.getSecond().length + 1 + Convert.toBytes(version.toString()).length + 2 + hash.length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] platform = Convert.toBytes(this.platform.toString());
         byte[] architecture = Convert.toBytes(this.architecture.toString());
         byte[] version = Convert.toBytes(this.version.toString());
@@ -95,7 +95,7 @@ public abstract class UpdateAttachment extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("platform", platform.toString());
         attachment.put("architecture", architecture.toString());
         JSONObject urlJson = new JSONObject();

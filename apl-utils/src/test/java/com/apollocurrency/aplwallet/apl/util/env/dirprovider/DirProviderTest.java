@@ -72,7 +72,7 @@ public class DirProviderTest {
         Path customLogPath = basePath.resolve("log");
         Path customDbPath = basePath.resolve("db");
         PredefinedDirLocations predefinedDirLocations = new PredefinedDirLocations(customDbPath.toString(),
-                customLogPath.toString(), null, null, null);
+                customLogPath.toString(), null, null, null, null);
 
         UserModeDirProvider dirProvider = new UserModeDirProvider(APPLICATION_NAME, CHAIN_ID, predefinedDirLocations);
         assertEquals(USER_MODE_PID_FILE, dirProvider.getPIDFile());
@@ -87,7 +87,7 @@ public class DirProviderTest {
         Path customLogPath = basePath.resolve("log");
         Path customPidPath = basePath.resolve("pid");
         PredefinedDirLocations predefinedDirLocations = new PredefinedDirLocations(null,
-                customLogPath.toString(), null, customPidPath.toString(), null);
+                customLogPath.toString(), null, customPidPath.toString(), null, null);
 
         ServiceModeDirProvider dirProvider = new ServiceModeDirProvider(APPLICATION_NAME, CHAIN_ID, predefinedDirLocations);
         assertEquals(customPidPath, dirProvider.getPIDFile());
@@ -103,7 +103,7 @@ public class DirProviderTest {
         Path customLogPath = basePath.resolve("log");
         Path customPidPath = basePath.resolve("pid");
         PredefinedDirLocations predefinedDirLocations = new PredefinedDirLocations(null,
-                customLogPath.toString(), null, customPidPath.toString(), null);
+                customLogPath.toString(), null, customPidPath.toString(), null, null);
 
         UnixServiceModeDirProvider dirProvider = new UnixServiceModeDirProvider(APPLICATION_NAME, CHAIN_ID, predefinedDirLocations);
         assertEquals(customPidPath, dirProvider.getPIDFile());

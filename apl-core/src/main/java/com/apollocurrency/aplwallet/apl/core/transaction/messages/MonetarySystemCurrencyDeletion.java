@@ -32,17 +32,17 @@ public final class MonetarySystemCurrencyDeletion extends AbstractAttachment imp
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(currencyId);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("currency", Long.toUnsignedString(currencyId));
     }
 

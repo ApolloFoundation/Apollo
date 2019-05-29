@@ -7,9 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingVoteMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 
 import java.sql.Connection;
@@ -24,9 +25,13 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     static final LinkKeyFactory<PhasingVote> KEY_FACTORY = new LinkKeyFactory<PhasingVote>("transaction_id", "voter_id") {
         @Override
         public DbKey newKey(PhasingVote vote) {
-            return new LinkKey(vote.getPhasedTransactionId(), vote.getVoterId());
+            if (vote.getDbKey() == null) {
+                vote.setDbKey(new LinkKey(vote.getPhasedTransactionId(), vote.getVoterId()));
+            }
+            return vote.getDbKey();
         }
     };
+    private static final PhasingVoteMapper MAPPER = new PhasingVoteMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_vote";
 
 
@@ -35,12 +40,12 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     }
 
     @Override
-    protected PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new PhasingVote(rs);
+    public PhasingVote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        return MAPPER.map(rs, null);
     }
 
     @Override
-    protected void save(Connection con, PhasingVote vote) throws SQLException {
+    public void save(Connection con, PhasingVote vote) throws SQLException {
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_vote (vote_id, transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?, ?)")) {
@@ -48,7 +53,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
             pstmt.setLong(++i, vote.getVoteId());
             pstmt.setLong(++i, vote.getPhasedTransactionId());
             pstmt.setLong(++i, vote.getVoterId());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, vote.getHeight());
             pstmt.executeUpdate();
         }
     }

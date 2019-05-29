@@ -5,14 +5,14 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import javax.enterprise.inject.spi.CDI;
-import org.json.simple.JSONObject;
 
 /**
  *
@@ -20,7 +20,7 @@ import org.json.simple.JSONObject;
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
     
-    protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);

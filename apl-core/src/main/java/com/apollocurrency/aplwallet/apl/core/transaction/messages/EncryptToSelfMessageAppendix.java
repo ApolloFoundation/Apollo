@@ -42,7 +42,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         JSONObject encryptToSelfMessageJSON = new JSONObject();
         super.putMyJSON(encryptToSelfMessageJSON);
         json.put("encryptToSelfMessage", encryptToSelfMessageJSON);

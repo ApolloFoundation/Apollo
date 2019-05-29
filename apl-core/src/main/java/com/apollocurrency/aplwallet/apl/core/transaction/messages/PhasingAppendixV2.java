@@ -44,18 +44,18 @@ public class PhasingAppendixV2 extends PhasingAppendix {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return super.getMySize() + 4;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
         buffer.putInt(finishTime);
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         super.putMyJSON(json);
         json.put("phasingFinishTime", finishTime);
     }

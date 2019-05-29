@@ -27,7 +27,7 @@
     <logger name="com.apollocurrency.aplwallet" level="INFO"/>
     <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
     <!--Uncomment next line to enable trim duration logging-->
-    <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedEntityDbTable" level="trace"/>-->
+    <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->
     <logger name="org.eclipse.jetty" level="off" additivity="false"/>
     <logger name="javax.servlet.level" level="off" additivity="false"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>

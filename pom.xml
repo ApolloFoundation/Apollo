@@ -123,7 +123,7 @@
 
 <!-- We have following profiles: prod, dev, debug
      1. prod: profile for release with build of all zips and sha-256 sums 
-     2. dev:  profile for development, no extra build artefacts
+     2. dev:  profile for development, no extra build artefacts, faster builds for developers
 -->
     <profiles>
         <!-- The Configuration of the development profile -->
@@ -142,6 +142,7 @@
         <profile>
             <id>prod</id>
             <activation>
+                <activeByDefault>true</activeByDefault>
                 <property>
                     <name>production</name>
                 </property>

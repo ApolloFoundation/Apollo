@@ -4,21 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -27,12 +26,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
 
 public class BlockEventSourceProcessor implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(BlockEventSourceProcessor.class);
     private final BlockEventSource eventSource;
     private final long accountId;
     private final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -76,12 +77,13 @@ public class BlockEventSourceProcessor implements Runnable {
         }
         JSONArray purchasesJSON = new JSONArray();
 
-        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {
+//        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {
+        try (DbIterator<DGSPurchase> purchases = service.getPendingSellerPurchases(accountId, 0, 9)) {
             while (purchases.hasNext()) {
-                purchasesJSON.add(JSONData.purchase(purchases.next()));
+                purchasesJSON.add(JSONData.purchase(service, purchases.next()));
             }
         }
-        int sellerPurchaseCount = DigitalGoodsStore.Purchase.getSellerPurchaseCount(accountId, false, false);
+        int sellerPurchaseCount = service.getSellerPurchaseCount(accountId, false, false);
         int aliasCount = Alias.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
         try (DbIterator<AccountAsset> accountAssets = AccountAssetTable.getAccountAssets(accountId, -1, 0, 2)) {

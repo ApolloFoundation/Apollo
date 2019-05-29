@@ -106,6 +106,8 @@ public interface Transaction {
 
     byte[] getSenderPublicKey();
 
+    boolean shouldSavePublicKey();
+
     long getRecipientId();
 
     int getHeight();
