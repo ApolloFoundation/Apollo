@@ -12,12 +12,10 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 
 /**
@@ -54,11 +52,11 @@ public class FileDownloader {
     
     public PeerValidityDecisionMaker.Decision prepareForDownloading(){
         PeerValidityDecisionMaker.Decision res;
-        Set<PeerFileInfo> allPeers = getAllAvailablePeers();
+        Set<Peer> allPeers = getAllAvailablePeers();
         PeersList pl = new PeersList();
-        allPeers.forEach((pi) -> {
-            pl.add(pi);
-        });
+//        allPeers.forEach((pi) -> {
+//            pl.add(pi);
+//        });
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
         res=pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();
@@ -105,14 +103,10 @@ public class FileDownloader {
        return status;
     }
     
-    public Set<PeerFileInfo> getAllAvailablePeers(){
-        Set<PeerFileInfo> res = new HashSet<>();
+    public Set<Peer> getAllAvailablePeers(){
+        Set<Peer> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
-        for(Peer p: knownPeers){
- //           PeerFileInfo pi=new PeerFileInfo(p, fileID);
-//            res.add(pi);
-        }
-        //TODO: should we connect to more peers and get more peers here?
+        res.addAll(knownPeers);
         return res;
     }
 }
