@@ -498,12 +498,17 @@ public final class ParameterParser {
     }
 
     public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
-        String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
+        return getSecretPhrase(req, null, isMandatory);
+    }
+    public static String getSecretPhrase(HttpServletRequest req, String secretPhraseParamName, boolean isMandatory) throws ParameterException {
+        if (StringUtils.isBlank(secretPhraseParamName)) {
+            secretPhraseParamName = "secretPhrase";
+        }
+        String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParamName));
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
         return API.elGamalDecrypt(secretPhrase);
-       
     }
 
     
@@ -527,7 +532,7 @@ public final class ParameterParser {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
-        String secretPhrase = getSecretPhrase(req, false);
+        String secretPhrase = getSecretPhrase(req, secretPhraseParam, false);
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));

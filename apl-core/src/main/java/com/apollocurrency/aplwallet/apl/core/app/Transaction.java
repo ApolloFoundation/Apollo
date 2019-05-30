@@ -96,6 +96,8 @@ public interface Transaction {
 
     void setFeeATM(long feeATM);
 
+    void sign(byte[] keySeed) throws AplException.NotValidException;
+
     long getId();
 
     long getDbId();
