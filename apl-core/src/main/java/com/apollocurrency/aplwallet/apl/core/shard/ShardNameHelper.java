@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 
-    private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%07d";
+    private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d";
 
     public static String getShardNameByShardId(Long shardId) {
         if (shardId == null || shardId < 0) {

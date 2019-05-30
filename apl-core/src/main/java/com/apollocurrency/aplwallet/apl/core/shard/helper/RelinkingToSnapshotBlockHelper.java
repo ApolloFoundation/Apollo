@@ -3,8 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -44,6 +42,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
         assignMainBottomTopSelectSql();
         recoveryValue = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
 
+/*
         // select upper, bottom DB_ID
         this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
 
@@ -117,6 +116,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
             executeUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }
+*/
         log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
         return totalSelectedRows;
     }
@@ -141,7 +141,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
         paginateResultWrapper.lowerBoundColumnValue += batchCommitSize;
         // update recovery state + db_id value
         recoveryValue.setObjectName(currentTableName);
-        recoveryValue.setState(MigrateState.DATA_RELINK_STARTED);
+//        recoveryValue.setState(MigrateState.DATA_RELINK_STARTED);
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
         shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue); // update recovery info

@@ -150,6 +150,9 @@ class TransactionDaoTest {
     void getTransactionCount() {
         int count = dao.getTransactionCount();
         assertEquals(15, count);
+
+        long countLong = dao.getTransactionCount(null, 0, 8000);
+        assertEquals(7, countLong);
     }
 
     @Test

@@ -688,7 +688,7 @@ public class AplDbVersion extends DbVersion {
             case 252:
                 // SHARDING meta-info inside main database
                 apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY, " +
-                        "shard_height INT not null, shard_state BIGINT)");
+                        "shard_height INT not null default 0, shard_state BIGINT default 0, zip_hash_crc VARBINARY)");
             case 253:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 254:
@@ -747,7 +747,9 @@ public class AplDbVersion extends DbVersion {
             case 278:
                 apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
             case 279:
-                return 279;
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS zip_hash_crc VARBINARY");
+            case 280:
+                return 280;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

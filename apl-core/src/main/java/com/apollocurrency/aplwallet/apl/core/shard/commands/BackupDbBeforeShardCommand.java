@@ -8,7 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
@@ -20,11 +20,11 @@ import org.slf4j.Logger;
 public class BackupDbBeforeShardCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(BackupDbBeforeShardCommand.class);
 
-    private DataTransferManagementReceiver dataTransferManagement;
+    private ShardEngine shardEngine;
 
-   public BackupDbBeforeShardCommand(DataTransferManagementReceiver dataTransferManagement) {
-        this.dataTransferManagement = Objects.requireNonNull(
-                dataTransferManagement, "dataTransferManagement is NULL");
+   public BackupDbBeforeShardCommand(ShardEngine shardEngine) {
+        this.shardEngine = Objects.requireNonNull(
+                shardEngine, "shardEngine is NULL");
     }
 
     /**
@@ -33,7 +33,7 @@ public class BackupDbBeforeShardCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Create DB BACKUP Command execute...");
-        return dataTransferManagement.createBackup();
+        return shardEngine.createBackup();
     }
 
     @Override
