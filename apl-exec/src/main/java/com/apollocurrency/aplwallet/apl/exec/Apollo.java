@@ -299,7 +299,8 @@ public class Apollo {
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
                 .annotatedDiscoveryMode()
-                .interceptors(JdbiTransactionalInterceptor.class)
+// we already have it in beans.xml in core                
+//                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development processto check CDI errors
