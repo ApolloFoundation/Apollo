@@ -116,4 +116,9 @@ public final class PeerAddress implements Comparable{
        }  
        return res;
     }
+    
+    @Override
+    public String toString(){
+        return "host:"+host+" name:"+hostName+" port: "+port;
+    }
 }

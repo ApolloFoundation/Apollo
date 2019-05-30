@@ -74,10 +74,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Level;
 import javax.enterprise.inject.spi.CDI;
 import org.slf4j.LoggerFactory;
-
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
 public final class Peers {
     private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
@@ -578,28 +577,27 @@ public final class Peers {
         return peer;
     }
 
-    static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {        
+    static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
+        if (StringUtils.isBlank(newAnnouncedAddress)){
+            LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring",peer.getHostWithPort());
+        } 
+        PeerAddress newPa = new PeerAddress(propertiesHolder,newAnnouncedAddress);
         Peer oldPeer = peers.get(peer.getHostWithPort());
         if (oldPeer != null) {
-            String oldAnnouncedAddress = oldPeer.getAnnouncedAddress();
-            if (oldAnnouncedAddress != null && !oldAnnouncedAddress.isEmpty()
-                    && newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()
-                    && !oldAnnouncedAddress.equals(newAnnouncedAddress)) {
-                LOG.debug("Removing old announced address " + oldAnnouncedAddress + " for peer " + oldPeer.getHost()+":"+oldPeer.getPort());
-                PeerAddress pa = new PeerAddress(propertiesHolder,oldAnnouncedAddress);
-                selfAnnouncedAddresses.remove(pa.getAddrWithPort());
+            PeerAddress oldPa = new PeerAddress(propertiesHolder,oldPeer.getAnnouncedAddress());
+            if (newPa.compareTo(oldPa)!=0) {
+                LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost()+":"+oldPeer.getPort());                
+                selfAnnouncedAddresses.remove(newPa.getAddrWithPort());
             }
         }
-        if (newAnnouncedAddress != null && !newAnnouncedAddress.isEmpty()) {
-            String oldHost = selfAnnouncedAddresses.put(newAnnouncedAddress, peer.getHostWithPort());
-            if (oldHost != null && !peer.getHost().equals(oldHost)) {
-                LOG.debug("Announced address " + newAnnouncedAddress + " now maps to peer " + peer.getHost()+":"+peer.getPort()
+        String oldHost = selfAnnouncedAddresses.put(newPa.getAddrWithPort(), peer.getHostWithPort());
+        if (oldHost != null && !peer.getHost().equalsIgnoreCase(oldHost)) {
+             LOG.debug("Announced address " + newPa.getAddrWithPort() + " now maps to peer " + peer.getHost()+":"+peer.getPort()
                         + ", removing old peer " + oldHost);
                 oldPeer = peers.remove(oldHost);
                 if (oldPeer != null) {
                     notifyListeners(oldPeer, Event.REMOVE);
                 }
-            }
         }
         try {
             peer.setAnnouncedAddress(newAnnouncedAddress);

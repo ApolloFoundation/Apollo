@@ -754,6 +754,14 @@ public final class PeerImpl implements Peer {
                     remove();
                     return;
                 }
+                Version peerVersion = new Version(newPi.version);
+                setVersion(peerVersion);
+                if(isOldVersion){
+                    LOG.debug("PEER-Connect host{}: version: {} is too old, blacklisting",host, peerVersion);
+                    blacklist("Old version: "+peerVersion.toString());
+                    return;
+                }
+                
                 chainId.set(UUID.fromString(newPi.chainId));     
                 String servicesString = (String)response.get("services");
                 long origServices = services;                
@@ -763,9 +771,7 @@ public final class PeerImpl implements Peer {
                 setDisabledAPIs(newPi.disabledAPIs);
                 setBlockchainState(newPi.blockchainState);
                 lastUpdated = lastConnectAttempt;
-                Version peerVersion = new Version(newPi.version);
-                LOG.trace("PEER-Connect: version {}", peerVersion);
-                setVersion(peerVersion);
+
                 setPlatform(newPi.platform);
                 analyzeHallmark(newPi.hallmark);
                 setShareAddress(newPi.shareAddress);
@@ -773,15 +779,11 @@ public final class PeerImpl implements Peer {
                 if (!Peers.ignorePeerAnnouncedAddress) {
                     if (newPi.announcedAddress != null) {
                             if (!verifyAnnouncedAddress(newPi.announcedAddress)) {
-                                LOG.debug("Connect: new announced address for " + host + " not accepted");
-                                if (!verifyAnnouncedAddress(newPi.announcedAddress)) {
-                                    LOG.debug("Connect: old announced address for " + host + " no longer valid");
-                                    Peers.setAnnouncedAddress(this, host);
-                                }
+                                LOG.debug("Connect: new announced address: {} for host: {}  not accepted", newPi.announcedAddress, host);
                                 setState(State.NON_CONNECTED);
                                 return;
                             }
-                            if (!newPi.announcedAddress.equals(pi.announcedAddress)) {
+                            if (!newPi.announcedAddress.equalsIgnoreCase(pi.announcedAddress)) {
                                 LOG.debug("Connect: peer " + host + " has new announced address " + newPi.announcedAddress + ", old is " + pi.announcedAddress);
                                 int oldPort = getPort();
                                 Peers.setAnnouncedAddress(this, newPi.announcedAddress);
@@ -796,25 +798,21 @@ public final class PeerImpl implements Peer {
                     }
                 }
 
-                if (newPi.announcedAddress == null) {
-                    if (hallmark == null){// || hallmark.getPort() == Peers.getDefaultPeerPort()) {
-                        Peers.setAnnouncedAddress(this, host);
-                        LOG.debug("Connected to peer without announced address, setting to " + host);
-                    } else {
-                        setState(State.NON_CONNECTED);
-                        return;
-                    }
-                }
-                
-                if (!isOldVersion) {
-                    setState(State.CONNECTED);
-                    if (services != origServices) {
+//TODO: check hallmark logic
+//                if (newPi.announcedAddress == null) {
+//                    if (hallmark == null){// || hallmark.getPort() == Peers.getDefaultPeerPort()) {
+//                        Peers.setAnnouncedAddress(this, host);
+//                        LOG.debug("Connected to peer without announced address, setting to " + host);
+//                    } else {
+//                        setState(State.NON_CONNECTED);
+//                        return;
+//                    }
+//                }
+                  setState(State.CONNECTED);
+                  if (services != origServices) {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
-                    }
-                } else if (!isBlacklisted()) {
-                    blacklist("Old version: " + this.version);
-                }
-            } else {
+                  }
+               } else {
                 //LOG.debug("Failed to connect to peer " + peerAddress);
                 setState(State.NON_CONNECTED);
             }
