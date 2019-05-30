@@ -325,19 +325,18 @@ public class ShardEngineImpl implements ShardEngine {
 
     private void processOneTableByHelper(CommandParamInfo paramInfo, Connection sourceConnect,
                                          String tableName, long start,
-                                         Optional<BatchedPaginationOperation> paginationOperationHelper) throws Exception {
+                                         BatchedPaginationOperation paginationOperationHelper) throws Exception {
         TableOperationParams operationParams = new TableOperationParams(
                 tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId, Optional.ofNullable(paramInfo.getDbIdExclusionSet()));
 
-        if (!paginationOperationHelper.isPresent()) { // should never happen from outside code, but better to play safe
+        if (paginationOperationHelper == null) { // should never happen from outside code, but better to play safe
             String error = "OperationHelper is NOT PRESENT... Fatal error in sharding code...";
             log.error(error);
             throw new IllegalStateException(error);
         }
-        BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
-        batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao); // mandatory assignment
+        paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao); // mandatory assignment
 
-        long totalCount = batchedPaginationOperation.processOperation(
+        long totalCount = paginationOperationHelper.processOperation(
                 sourceConnect, null, operationParams);
 
         sourceConnect.commit();
@@ -373,7 +372,7 @@ public class ShardEngineImpl implements ShardEngine {
 
                 Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
                 if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
@@ -486,7 +485,7 @@ public class ShardEngineImpl implements ShardEngine {
 
                 Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
                 if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }

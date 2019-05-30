@@ -166,14 +166,14 @@ public class Shard {
         sb.append(", shardHash=");
         if (shardHash == null) sb.append("null");
         else {
-            sb.append('[').append(shardHash).append(']');
+            sb.append('[').append(Convert.toHexString(shardHash)).append(']');
         }
         sb.append(", shardState=").append(shardState);
         sb.append(", shardHeight=").append(shardHeight);
         sb.append(", zipHashCrc=");
         if (zipHashCrc == null) sb.append("null");
         else {
-            sb.append('[').append(zipHashCrc).append(']');
+            sb.append('[').append(Convert.toHexString(zipHashCrc)).append(']');
         }
         sb.append('}');
         return sb.toString();

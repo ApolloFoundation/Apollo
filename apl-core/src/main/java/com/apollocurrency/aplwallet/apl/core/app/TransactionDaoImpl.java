@@ -331,12 +331,12 @@ public class TransactionDaoImpl implements TransactionDao {
             dataSource = databaseManager.getDataSource();
         }
         try (Connection con = dataSource.getConnection()) {
-            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) as transactionCount FROM transaction WHERE height >= ? AND height < ?");
+            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM transaction WHERE height >= ? AND height < ?");
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getLong("transactionCount");
+                    return rs.getLong(1);
                 }
             }
         } catch (SQLException e) {
