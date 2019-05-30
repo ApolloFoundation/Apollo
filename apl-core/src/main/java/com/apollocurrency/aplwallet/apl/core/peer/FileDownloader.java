@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 
 /**
@@ -23,6 +24,7 @@ import javax.inject.Inject;
  * @author alukin@gmail.com
  */
 public class FileDownloader {
+    @Vetoed
     public class Status{
         double completed;
         int chunksTotal;
@@ -30,7 +32,7 @@ public class FileDownloader {
         List<String> peers; 
     }
     
-    private final String fileID;
+    private String fileID;
     private FileDownloadInfo downloadInfo;    
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
@@ -39,11 +41,12 @@ public class FileDownloader {
     @Inject
     DownloadableFilesManager manager;
     
-    public FileDownloader(String fileID) {
-        this.fileID = fileID;
+    public FileDownloader() {      
     }
     
-
+    public void startDownload(String fileID){
+         this.fileID = fileID; 
+    }
     public Status getDownloadStatus(){
         status.completed=1.0D*status.chunksTotal/status.chunksReady;
         return status;

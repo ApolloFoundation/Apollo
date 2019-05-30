@@ -9,5 +9,4 @@ package com.apollocurrency.aplwallet.api.p2p;
  */
 public class FileDownloadInfoResponse extends BaseP2PResonse{
     public FileDownloadInfo downloadInfo=new FileDownloadInfo(); 
-    public FileInfo fileInfo = new FileInfo();
 }
