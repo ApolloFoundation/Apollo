@@ -54,7 +54,10 @@ public class ApolloFbWallet extends FbWallet {
         ethWalletKeys.add(getEthOrToken(ETH_PRIVATE_KEY_ALIAS));
 
         //For backward compatibility
-        ethWalletKeys.add(getEthOrToken(PAX_PRIVATE_KEY_ALIAS));
+        EthWalletKey pax = getEthOrToken(PAX_PRIVATE_KEY_ALIAS);
+        if(pax != null) {
+            ethWalletKeys.add(pax);
+        }
         return ethWalletKeys;
     }
 
@@ -64,9 +67,7 @@ public class ApolloFbWallet extends FbWallet {
                 .map(dataRecord -> dataRecord.data)
                 .findFirst().orElse(null);
 
-        EthWalletKey ethWalletKey = new EthWalletKey(Convert.parseHexString(secret));
-
-        return ethWalletKey;
+        return secret != null ? new EthWalletKey(Convert.parseHexString(secret)) : null;
     }
 
     public void addAplKey(AplWalletKey aplWalletKey){
