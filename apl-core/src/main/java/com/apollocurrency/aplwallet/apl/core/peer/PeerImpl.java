@@ -734,11 +734,11 @@ public final class PeerImpl implements Peer {
                 }
             }
             JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE, true);
-            PeerInfo npi = new PeerInfo();
+            PeerInfo newPi = new PeerInfo();
             if (response != null) {
                 //TODO: parse in new_pi
-                npi = mapper.convertValue(response, PeerInfo.class);
-                if (npi.errorCode != null && npi.errorCode!=0) {
+                newPi = mapper.convertValue(response, PeerInfo.class);
+                if (newPi.errorCode != null && newPi.errorCode!=0) {
                     setState(State.NON_CONNECTED);
                     LOG.debug("NULL or error response from {}",host);
                     return;
@@ -749,43 +749,42 @@ public final class PeerImpl implements Peer {
                     return;
                 }
 
-                if (npi.chainId == null || ! targetChainId.equals(UUID.fromString(npi.chainId))) {
-                    LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),npi.chainId);
+                if (newPi.chainId == null || ! targetChainId.equals(UUID.fromString(newPi.chainId))) {
+                    LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),newPi.chainId);
                     remove();
                     return;
                 }
-                chainId.set(UUID.fromString(npi.chainId));     
+                chainId.set(UUID.fromString(newPi.chainId));     
                 String servicesString = (String)response.get("services");
                 long origServices = services;                
                 services = (servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-                setApiPort(npi.apiPort);
-                setApiSSLPort(npi.apiSSLPort);
-                setDisabledAPIs(npi.disabledAPIs);
-                setBlockchainState(npi.blockchainState);
+                setApiPort(newPi.apiPort);
+                setApiSSLPort(newPi.apiSSLPort);
+                setDisabledAPIs(newPi.disabledAPIs);
+                setBlockchainState(newPi.blockchainState);
                 lastUpdated = lastConnectAttempt;
-                Version peerVersion = new Version(npi.version);
+                Version peerVersion = new Version(newPi.version);
                 LOG.trace("PEER-Connect: version {}", peerVersion);
                 setVersion(peerVersion);
-                setPlatform(npi.platform);
-                analyzeHallmark(npi.hallmark);
-
- //               shareAddress = Boolean.TRUE.equals(response.get("shareAddress"));
+                setPlatform(newPi.platform);
+                analyzeHallmark(newPi.hallmark);
+                setShareAddress(newPi.shareAddress);
+ 
                 if (!Peers.ignorePeerAnnouncedAddress) {
-                    String newAnnouncedAddress =npi.announcedAddress;
-                    if (newAnnouncedAddress != null) {
-                            if (!verifyAnnouncedAddress(newAnnouncedAddress)) {
+                    if (newPi.announcedAddress != null) {
+                            if (!verifyAnnouncedAddress(newPi.announcedAddress)) {
                                 LOG.debug("Connect: new announced address for " + host + " not accepted");
-                                if (!verifyAnnouncedAddress(npi.announcedAddress)) {
+                                if (!verifyAnnouncedAddress(newPi.announcedAddress)) {
                                     LOG.debug("Connect: old announced address for " + host + " no longer valid");
                                     Peers.setAnnouncedAddress(this, host);
                                 }
                                 setState(State.NON_CONNECTED);
                                 return;
                             }
-                            if (!newAnnouncedAddress.equals(npi.announcedAddress)) {
-                                LOG.debug("Connect: peer " + host + " has new announced address " + newAnnouncedAddress + ", old is " + npi.announcedAddress);
+                            if (!newPi.announcedAddress.equals(pi.announcedAddress)) {
+                                LOG.debug("Connect: peer " + host + " has new announced address " + newPi.announcedAddress + ", old is " + pi.announcedAddress);
                                 int oldPort = getPort();
-                                Peers.setAnnouncedAddress(this, newAnnouncedAddress);
+                                Peers.setAnnouncedAddress(this, newPi.announcedAddress);
                                 if (getPort() != oldPort) {
                                     // force checking connectivity to new announced port
                                     setState(State.NON_CONNECTED);
@@ -797,7 +796,7 @@ public final class PeerImpl implements Peer {
                     }
                 }
 
-                if (npi.announcedAddress == null) {
+                if (newPi.announcedAddress == null) {
                     if (hallmark == null){// || hallmark.getPort() == Peers.getDefaultPeerPort()) {
                         Peers.setAnnouncedAddress(this, host);
                         LOG.debug("Connected to peer without announced address, setting to " + host);
