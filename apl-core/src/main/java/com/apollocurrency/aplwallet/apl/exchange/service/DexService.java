@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
