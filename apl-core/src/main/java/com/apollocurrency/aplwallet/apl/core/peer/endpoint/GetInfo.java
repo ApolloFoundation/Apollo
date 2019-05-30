@@ -18,10 +18,13 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -37,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Vetoed
-final class GetInfo extends PeerRequestHandler {
+public final class GetInfo extends PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private  ObjectMapper mapper = new ObjectMapper();
@@ -59,7 +62,7 @@ final class GetInfo extends PeerRequestHandler {
     }
 
     @Override
-    JSONStreamAware processRequest(JSONObject req, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
         peerImpl.setLastUpdated(timeService.getEpochTime());
@@ -138,7 +141,7 @@ final class GetInfo extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+   public  boolean rejectWhileDownloading() {
         return false;
     }
 

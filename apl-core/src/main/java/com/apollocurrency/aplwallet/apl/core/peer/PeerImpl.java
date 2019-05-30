@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -164,7 +165,7 @@ public final class PeerImpl implements Peer {
         return state;
     }
 
-    void setState(State state) {
+    public void setState(State state) {
         if (state != State.CONNECTED)
             webSocket.close();
         if (this.state == state) {
@@ -210,7 +211,7 @@ public final class PeerImpl implements Peer {
         return version;
     }
 
-    void setVersion(Version version) {
+    public void setVersion(Version version) {
         boolean versionChanged = version == null || !version.equals(this.version);
         this.version = version;
         isOldVersion = false;
@@ -234,7 +235,7 @@ public final class PeerImpl implements Peer {
         return pi.application;
     }
 
-    boolean setApplication(String application) {
+    public boolean setApplication(String application) {
         boolean res = true;
         if (application == null 
                 || application.length() > Peers.MAX_APPLICATION_LENGTH
@@ -252,7 +253,7 @@ public final class PeerImpl implements Peer {
         return pi.platform;
     }
 
-    void setPlatform(String platform) {
+    public void setPlatform(String platform) {
         if (platform != null && platform.length() > PeerHttpServer.MAX_PLATFORM_LENGTH) {
             throw new IllegalArgumentException("Invalid platform length: " + platform.length());
         }
@@ -280,7 +281,7 @@ public final class PeerImpl implements Peer {
         return pi.apiPort;
     }
 
-    void setApiPort(Object apiPortValue) {
+    public void setApiPort(Object apiPortValue) {
         if (apiPortValue != null) {
             try {
                 pi.apiPort = (Integer)apiPortValue;
@@ -295,7 +296,7 @@ public final class PeerImpl implements Peer {
         return pi.apiSSLPort;
     }
 
-    void setApiSSLPort(Object apiSSLPortValue) {
+    public void setApiSSLPort(Object apiSSLPortValue) {
         if (apiSSLPortValue != null) {
             try {
                 pi.apiSSLPort = (Integer)apiSSLPortValue;
@@ -310,7 +311,7 @@ public final class PeerImpl implements Peer {
         return Collections.unmodifiableSet(disabledAPIs);
     }
 
-    void setDisabledAPIs(Object apiSetBase64) {
+    public void setDisabledAPIs(Object apiSetBase64) {
         if (apiSetBase64 instanceof String) {
             disabledAPIs = APIEnum.base64StringToEnumSet((String) apiSetBase64);
         }
@@ -326,7 +327,7 @@ public final class PeerImpl implements Peer {
         return blockchainState;
     }
 
-    void setBlockchainState(Object blockchainStateObj) {
+    public void setBlockchainState(Object blockchainStateObj) {
         if (blockchainStateObj instanceof Integer) {
             int blockchainStateInt = (int)blockchainStateObj;
             if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
@@ -340,7 +341,7 @@ public final class PeerImpl implements Peer {
         return pi.shareAddress;
     }
 
-    void setShareAddress(boolean shareAddress) {
+    public void setShareAddress(boolean shareAddress) {
         pi.shareAddress = shareAddress;
     }
 
@@ -463,7 +464,7 @@ public final class PeerImpl implements Peer {
         return lastUpdated;
     }
 
-    void setLastUpdated(int lastUpdated) {
+    public void setLastUpdated(int lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
 
@@ -472,7 +473,7 @@ public final class PeerImpl implements Peer {
         return lastInboundRequest != 0;
     }
 
-    int getLastInboundRequest() {
+    public int getLastInboundRequest() {
         return lastInboundRequest;
     }
 
@@ -821,7 +822,7 @@ public final class PeerImpl implements Peer {
         }
     }
 
-    boolean verifyAnnouncedAddress(String newAnnouncedAddress) {
+    public boolean verifyAnnouncedAddress(String newAnnouncedAddress) {
         if (newAnnouncedAddress == null || newAnnouncedAddress.isEmpty()) {
             return true;
         }
@@ -847,7 +848,7 @@ public final class PeerImpl implements Peer {
         return false;
     }
 
-    boolean analyzeHallmark(final String hallmarkString) {
+    public boolean analyzeHallmark(final String hallmarkString) {
         if (isLightClient) {
             return true;
         }
@@ -963,13 +964,13 @@ public final class PeerImpl implements Peer {
         }
     }
 
-    long getServices() {
+    public long getServices() {
         synchronized (this) {
             return services;
         }
     }
 
-    void setServices(long services) {
+    public void setServices(long services) {
         synchronized (this) {
             this.services = services;
         }
@@ -1061,7 +1062,7 @@ public final class PeerImpl implements Peer {
 
 
 
-    void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
+    public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
         pi.apiServerIdleTimeout=apiServerIdleTimeout;
     }
 }

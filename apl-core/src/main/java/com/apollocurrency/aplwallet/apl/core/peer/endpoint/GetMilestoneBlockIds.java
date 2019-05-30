@@ -18,10 +18,11 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -32,14 +33,14 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
-final class GetMilestoneBlockIds extends PeerRequestHandler {
+public final class GetMilestoneBlockIds extends PeerRequestHandler {
     private static final Logger LOG = getLogger(GetMilestoneBlockIds.class);
 
     public GetMilestoneBlockIds() {}
 
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
         JSONObject response = new JSONObject();
         try {
@@ -101,7 +102,7 @@ final class GetMilestoneBlockIds extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return true;
     }
 

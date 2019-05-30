@@ -102,7 +102,7 @@ public final class Peers {
     static int connectTimeout;
     static int readTimeout;
     static int blacklistingPeriod;
-    static boolean getMorePeers;
+    public static boolean getMorePeers;
     static int MAX_REQUEST_SIZE;
     static int MAX_RESPONSE_SIZE;
     static int MAX_MESSAGE_SIZE;
@@ -126,12 +126,12 @@ public final class Peers {
     private static int sendToPeersLimit;
     static boolean usePeersDb;
     static boolean savePeers;
-    static boolean ignorePeerAnnouncedAddress;
+    public static boolean ignorePeerAnnouncedAddress;
     static boolean cjdnsOnly;
     static final int MAX_APPLICATION_LENGTH = 20;
 
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 100;
-    static  boolean hideErrorDetails;
+    public static  boolean hideErrorDetails;
 
     private static final int sendTransactionsBatchSize = 10;
 
@@ -153,7 +153,7 @@ public final class Peers {
 
     static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
-    static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
+    public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
     
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
     
@@ -423,7 +423,7 @@ public final class Peers {
         return listeners.removeListener(listener, eventType);
     }
 
-    static void notifyListeners(Peer peer, Event eventType) {
+    public static void notifyListeners(Peer peer, Event eventType) {
         listeners.notify(peer, eventType);
     }
 
@@ -514,7 +514,7 @@ public final class Peers {
         }
     }
 
-    static PeerImpl findOrCreatePeer(String host) {
+    public static PeerImpl findOrCreatePeer(String host) {
         try {
             InetAddress inetAddress = InetAddress.getByName(host);
             return findOrCreatePeer(inetAddress, null, true);
@@ -523,7 +523,7 @@ public final class Peers {
         }
     }
     
-    static boolean isMyAddress(PeerAddress pa){
+    public static boolean isMyAddress(PeerAddress pa){
         
         //TODO: many ports: http, https, ssl
         if((pa.isLocal() && myPort==pa.getPort())){
@@ -544,7 +544,7 @@ public final class Peers {
         return false;
     }
     
-    static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
+    public static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
 
         String host = inetAddress.getHostAddress();
         if (cjdnsOnly && !host.substring(0,2).equals("fc")) {
@@ -577,7 +577,7 @@ public final class Peers {
         return peer;
     }
 
-    static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
+    public static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
         if (StringUtils.isBlank(newAnnouncedAddress)){
             LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring",peer.getHostWithPort());
         } 

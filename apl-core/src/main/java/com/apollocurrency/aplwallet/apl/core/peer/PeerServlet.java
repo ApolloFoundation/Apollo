@@ -20,6 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessBlock;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerResponses;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetTransactions;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetMilestoneBlockIds;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetUnconfirmedTransactions;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlockIds;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlocks;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetPeers;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;

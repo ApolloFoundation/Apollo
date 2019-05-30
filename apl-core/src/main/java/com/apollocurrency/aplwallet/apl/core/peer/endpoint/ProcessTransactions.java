@@ -18,8 +18,9 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;
@@ -30,14 +31,14 @@ import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
-final class ProcessTransactions extends PeerRequestHandler {
+public final class ProcessTransactions extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessTransactions.class);
 
     public ProcessTransactions() {}
 
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
         try {
             lookupTransactionProcessor().processPeerTransactions(request);
@@ -51,7 +52,7 @@ final class ProcessTransactions extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return true;
     }
 

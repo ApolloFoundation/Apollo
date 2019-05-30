@@ -1,11 +1,12 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import javax.inject.Inject;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -19,7 +20,7 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
     DownloadableFilesManager fm;
     
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         FileDownloadInfoResponse res = new FileDownloadInfoResponse();
         FileDownloadInfoRequest rq = mapper.convertValue(request, FileDownloadInfoRequest.class);
         res.downloadInfo = fm.getFileDownloadInfo(rq.fileId);
@@ -28,7 +29,7 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
        return false;
     }
     

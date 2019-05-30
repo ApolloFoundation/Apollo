@@ -1,11 +1,12 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkResonse;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.io.IOException;
 import java.util.Base64;
@@ -23,7 +24,7 @@ public class GetFileChunk extends PeerRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GetFileChunk.class);
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         FileChunkResonse res = new FileChunkResonse();
 
         FileChunkRequest fcr = mapper.convertValue(request, FileChunkRequest.class);
@@ -50,7 +51,7 @@ public class GetFileChunk extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return false;
     }
 

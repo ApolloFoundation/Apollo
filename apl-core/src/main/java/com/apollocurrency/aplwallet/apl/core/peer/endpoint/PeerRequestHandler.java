@@ -17,7 +17,7 @@
 /*
  * Copyright © 2018 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
@@ -36,11 +37,11 @@ import org.json.simple.JSONStreamAware;
  *
  * @author al
  */
-abstract class PeerRequestHandler {
+public abstract class PeerRequestHandler {
     
-    abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
+    public abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
 
-    abstract boolean rejectWhileDownloading();
+    public abstract boolean rejectWhileDownloading();
 
     protected boolean isChainIdProtected() {
         return true;
