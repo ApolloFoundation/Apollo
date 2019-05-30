@@ -762,6 +762,11 @@ public final class PeerImpl implements Peer {
                     blacklist("Old version: "+peerVersion.toString());
                     return;
                 }
+                if(!analyzeHallmark(newPi.hallmark)){
+                    LOG.debug("PEER-Connect host{}: version: {} hallmark failed, blacklisting",host, peerVersion); 
+                    blacklist("Old version: "+peerVersion.toString());
+                    return;
+                }
                 
                 chainId.set(UUID.fromString(newPi.chainId));     
                 String servicesString = (String)response.get("services");
@@ -774,7 +779,6 @@ public final class PeerImpl implements Peer {
                 lastUpdated = lastConnectAttempt;
 
                 setPlatform(newPi.platform);
-                analyzeHallmark(newPi.hallmark);
                 setShareAddress(newPi.shareAddress);
  
                 if (!Peers.ignorePeerAnnouncedAddress) {
