@@ -25,8 +25,6 @@ import java.sql.Types;
 public class BlockTransactionInsertHelper extends AbstractHelper {
     private static final Logger log = getLogger(BlockTransactionInsertHelper.class);
 
-    private String sqlDeleteFromBottomBound;
-
     @Override
     public long processOperation(Connection sourceConnect, Connection targetConnect,
                                  TableOperationParams operationParams)
@@ -48,7 +46,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         // do selection and insertion process
         long startSelect = doStartSelectAndInsert(sourceConnect, targetConnect, operationParams);
 
-        log.debug("'{}' inserted records [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("'{}' inserted records [{} / {}] in {} secs", operationParams.tableName, totalProcessedCount, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
         return totalSelectedRows;
     }
 
@@ -111,13 +109,16 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 extractMetaDataCreateInsert(targetConnect, rs);
                 rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
-                if (excludeRows && operationParams.dbIdsExclusionSet.get().contains(rs.getLong(BASE_COLUMN_NAME))) {
+                if (excludeRows // skip transaction db_id
+                        && TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) // only phased transactions
+                        && operationParams.dbIdsExclusionSet.get().contains(paginateResultWrapper.lowerBoundColumnValue)) {
+                    log.trace("Skip excluded '{}' DB_ID = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
                     continue;
                 }
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         Object object = rs.getObject(i + 1);
-                        formatBindValues(rs, i);// format readable values inside 'columnValues'
+//                        formatBindValues(rs, i);// format readable values in 'columnValues' buffer
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                     processedRows += preparedInsertStatement.executeUpdate();

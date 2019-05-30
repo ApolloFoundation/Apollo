@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import java.nio.file.Path;
@@ -39,13 +38,25 @@ public class CsvExporterImpl implements CsvExporter {
     private Set<String> excludeTables; // skipped tables
 
     @Inject
-    public CsvExporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager,
+    public CsvExporterImpl(ShardExportDirProducer exportDirProducer, DatabaseManager databaseManager,
+//    public CsvExporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager,
                            ShardDaoJdbc shardDaoJdbc) {
-        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
+        Objects.requireNonNull(exportDirProducer, "exportDirProducer is NULL");
+        Objects.requireNonNull(exportDirProducer.getDataExportDir(), "exportDirProducer 'data Path' is NULL");
+        this.dataExportPath = exportDirProducer.getDataExportDir();
+//        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.shardDaoJdbc = Objects.requireNonNull(shardDaoJdbc, "shardDaoJdbc is NULL");
         excludeColumnNamesInDerivedTables = Set.of("DB_ID");
         this.excludeTables = Set.of("genesis_public_key");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path getDataExportPath() {
+        return this.dataExportPath;
     }
 
     /**

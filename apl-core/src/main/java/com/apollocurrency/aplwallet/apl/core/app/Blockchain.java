@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
@@ -63,6 +64,8 @@ public interface Blockchain {
     void saveBlock(Connection con, Block block);
 
     void commit(Block block);
+
+    Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
 
     int getBlockCount(long accountId);
 
@@ -122,6 +125,8 @@ public interface Blockchain {
     Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException;
 
     int getTransactionCount();
+
+    Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
 //    DbIterator<Transaction> getAllTransactions();
 

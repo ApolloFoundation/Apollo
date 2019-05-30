@@ -9,6 +9,7 @@ import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARDS;
 import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_0;
 import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
 import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_2;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -106,6 +107,11 @@ class ShardDaoTest {
 
         assertNotNull(found);
         assertEquals(NOT_SAVED_SHARD, found);
+        assertEquals(NOT_SAVED_SHARD.getShardId(), found.getShardId());
+        assertEquals(NOT_SAVED_SHARD.getShardState(), found.getShardState());
+        assertArrayEquals(NOT_SAVED_SHARD.getShardHash(), found.getShardHash());
+        assertEquals(NOT_SAVED_SHARD.getShardHeight(), found.getShardHeight());
+        assertArrayEquals(NOT_SAVED_SHARD.getZipHashCrc(), found.getZipHashCrc());
 
         List<Shard> actual = dao.getAllShard();
         List<Shard> expected = new ArrayList<>(SHARDS);
@@ -127,6 +133,11 @@ class ShardDaoTest {
         Shard found = dao.getShardById(SHARD_0.getShardId());
 
         assertEquals(copy, found);
+        assertEquals(copy.getShardId(), found.getShardId());
+        assertEquals(copy.getShardState(), found.getShardState());
+        assertArrayEquals(copy.getShardHash(), found.getShardHash());
+        assertEquals(copy.getShardHeight(), found.getShardHeight());
+        assertArrayEquals(copy.getZipHashCrc(), found.getZipHashCrc());
 
         List<Shard> allShards = dao.getAllShard();
 

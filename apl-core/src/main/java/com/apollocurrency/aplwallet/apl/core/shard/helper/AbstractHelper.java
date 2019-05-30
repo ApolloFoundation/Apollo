@@ -48,6 +48,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     String sqlToExecuteWithPaging;
     String sqlSelectUpperBound;
     String sqlSelectBottomBound;
+    String sqlDeleteFromBottomBound;
+
     Long upperBoundIdValue;
     Long lowerBoundIdValue;
     ShardRecovery recoveryValue; // updated on every loop

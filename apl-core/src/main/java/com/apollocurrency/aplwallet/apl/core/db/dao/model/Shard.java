@@ -13,13 +13,16 @@ public class Shard {
     private byte[] shardHash;
     private Long shardState;
     private Integer shardHeight;
+    private byte[] zipHashCrc;
 
     public Shard() {
     }
 
     public Shard copy() {
         byte[] shardHashCopy = Arrays.copyOf(shardHash, shardHash.length);
-        return new Shard(shardId, shardHashCopy, shardHeight);
+        byte[] shardZipHashCrcCopy = zipHashCrc != null && zipHashCrc.length > 0 ?
+                Arrays.copyOf(zipHashCrc, zipHashCrc.length) : null;
+        return new Shard(shardId, shardHashCopy, shardState, shardHeight, shardZipHashCrcCopy);
     }
 
     public Shard(Integer shardHeight) {
@@ -31,10 +34,11 @@ public class Shard {
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Integer shardHeight) {
+    public Shard(Long shardId, byte[] shardHash, Integer shardHeight, byte[] zipHashCrc) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardHeight = shardHeight;
+        this.zipHashCrc = zipHashCrc;
     }
 
     public Shard(Long shardId, String shardHash, Integer shardHeight) {
@@ -43,11 +47,12 @@ public class Shard {
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight) {
+    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight, byte[] zipHashCrc) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
         this.shardHeight = shardHeight;
+        this.zipHashCrc = zipHashCrc;
     }
 
     @Override
@@ -57,13 +62,16 @@ public class Shard {
         Shard shard = (Shard) o;
         return Objects.equals(shardId, shard.shardId) &&
                 Arrays.equals(shardHash, shard.shardHash) &&
-                Objects.equals(shardHeight, shard.shardHeight);
+                Objects.equals(shardState, shard.shardState) &&
+                Objects.equals(shardHeight, shard.shardHeight) &&
+                Arrays.equals(zipHashCrc, shard.zipHashCrc);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(shardId, shardHeight);
+        int result = Objects.hash(shardId, shardState, shardHeight);
         result = 31 * result + Arrays.hashCode(shardHash);
+        result = 31 * result + Arrays.hashCode(zipHashCrc);
         return result;
     }
 
@@ -99,6 +107,14 @@ public class Shard {
         this.shardHeight = shardHeight;
     }
 
+    public byte[] getZipHashCrc() {
+        return zipHashCrc;
+    }
+
+    public void setZipHashCrc(byte[] zipHashCrc) {
+        this.zipHashCrc = zipHashCrc;
+    }
+
     public static ShardBuilder builder() {
         return new ShardBuilder();
     }
@@ -108,6 +124,7 @@ public class Shard {
         private byte[] shardHash;
         private Long shardState;
         private Integer shardHeight;
+        private byte[] zipHashCrc;
 
         private ShardBuilder() {
         }
@@ -132,8 +149,33 @@ public class Shard {
             return this;
         }
 
-        public Shard build() {
-            return new Shard(shardId, shardHash, shardState, shardHeight);
+        public ShardBuilder zipHashCrc(byte[] zipHashCrc) {
+            this.zipHashCrc= zipHashCrc;
+            return this;
         }
+
+        public Shard build() {
+            return new Shard(shardId, shardHash, shardState, shardHeight, zipHashCrc);
+        }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Shard{");
+        sb.append("shardId=").append(shardId);
+        sb.append(", shardHash=");
+        if (shardHash == null) sb.append("null");
+        else {
+            sb.append('[').append(Convert.toHexString(shardHash)).append(']');
+        }
+        sb.append(", shardState=").append(shardState);
+        sb.append(", shardHeight=").append(shardHeight);
+        sb.append(", zipHashCrc=");
+        if (zipHashCrc == null) sb.append("null");
+        else {
+            sb.append('[').append(Convert.toHexString(zipHashCrc)).append(']');
+        }
+        sb.append('}');
+        return sb.toString();
     }
 }

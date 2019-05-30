@@ -5,17 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPIED_TO_SHARD;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINKED_IN_MAIN;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_RELINK_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
@@ -32,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
@@ -52,8 +55,8 @@ import javax.inject.Singleton;
  * {@inheritDoc}
  */
 @Singleton
-public class DataTransferManagementReceiverImpl implements DataTransferManagementReceiver {
-    private static final Logger log = getLogger(DataTransferManagementReceiverImpl.class);
+public class ShardEngineImpl implements ShardEngine {
+    private static final Logger log = getLogger(ShardEngineImpl.class);
 
     private MigrateState state = MigrateState.INIT;
     private DatabaseManager databaseManager;
@@ -62,16 +65,21 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private Optional<Long> createdShardId;
     private TransactionalDataSource createdShardSource;
     private ShardRecoveryDaoJdbc shardRecoveryDao;
+    private CsvExporter csvExporter;
+    private DerivedTablesRegistry registry;
 
-    public DataTransferManagementReceiverImpl() {
+    public ShardEngineImpl() {
     }
 
     @Inject
-    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService,
-                                              ShardRecoveryDaoJdbc shardRecoveryDao) {
+    public ShardEngineImpl(DatabaseManager databaseManager, TrimService trimService,
+                           ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
+                           DerivedTablesRegistry registry) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
+        this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
+        this.registry = Objects.requireNonNull(registry, "registry is NULL");
     }
 
     @Override
@@ -110,13 +118,12 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             log.debug("BACKUP by SQL={} was successful", sql);
             state = MigrateState.MAIN_DB_BACKUPED;
             loadAndRefreshRecovery(sourceDataSource);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             log.error("ERROR on backup db before sharding, sql = " + sql, e);
             state = FAILED;
         }
         log.debug("BACKUP db before shard ({}) in {} secs", state.name(),
-                (System.currentTimeMillis() - start) / 1000);
+                (System.currentTimeMillis() - start)/1000);
         return state;
     }
 
@@ -130,7 +137,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
         try {
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            createdShardSource = ((ShardManagement) databaseManager).createAndAddShard(null, dbVersion);
+            createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(null, dbVersion);
             createdShardId = createdShardSource.getDbIdentity(); // MANDATORY ACTION FOR SUCCESS completion !!
             if (dbVersion instanceof ShardAddConstraintsSchemaVersion
                     || dbVersion instanceof AplDbVersion) {
@@ -140,17 +147,21 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             }
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
         }
         log.debug("INIT shard db={} by schema={} ({}) in {} secs",
                 createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
-                (System.currentTimeMillis() - start) / 1000);
+                (System.currentTimeMillis() - start)/1000);
         return state;
     }
 
+    /**
+     * Create new Recovery info record (if it's missing in specified dataSource) or load existing one.
+     *
+     * @param sourceDataSource usually main db (but can be different)
+     */
     private void loadAndRefreshRecovery(TransactionalDataSource sourceDataSource) {
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         log.trace("Latest = {}", recovery);
@@ -170,6 +181,10 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         }
     }
 
+    /**
+     * Check mandatory parameters
+     * @param paramInfo common parameters
+     */
     private void checkRequiredParameters(CommandParamInfo paramInfo) {
         Objects.requireNonNull(paramInfo, "paramInfo is NULL");
         Objects.requireNonNull(paramInfo.getTableNameList(), "table Name List is NULL");
@@ -191,9 +206,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         // check previous state
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > DATA_COPIED_TO_SHARD.getValue()) {
+                && recovery.getState().getValue() > DATA_COPY_TO_SHARD_FINISHED.getValue()) {
             // skip to next step
-            return state = DATA_COPIED_TO_SHARD;
+            return state = DATA_COPY_TO_SHARD_FINISHED;
         } else { // that is needed in case separate step execution, when previous step was missed in code
             recovery = new ShardRecovery(DATA_COPY_TO_SHARD_STARTED);
         }
@@ -202,7 +217,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         Connection targetConnect = null;
 
         String currentTable = null;
-        try (Connection sourceConnect = sourceDataSource.getConnection()) {
+        try (Connection sourceConnect = sourceDataSource.getConnection() ) {
             for (String tableName : paramInfo.getTableNameList()) {
                 long start = System.currentTimeMillis();
                 if (!targetDataSource.isInTransaction()) {
@@ -210,45 +225,47 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 }
                 currentTable = tableName;
 
-                BatchedPaginationOperation batchedPaginationOperation = helperFactory.createSelectInsertHelper(tableName);
-                Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
-                TableOperationParams operationParams = new TableOperationParams(
-                        tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
-                        targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
+                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
+                if (paginationOperationHelper.isPresent()) {
+                    Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
+                    TableOperationParams operationParams = new TableOperationParams(
+                            tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
+                            targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
 
-                ;
-                batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
+                    BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
+                    batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
 
-                long totalCount = batchedPaginationOperation.processOperation(
-                        sourceConnect, targetConnect, operationParams);
-                targetDataSource.commit(false);
-                log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start) / 1000);
-                batchedPaginationOperation.reset();
-
+                    long totalCount = batchedPaginationOperation.processOperation(
+                            sourceConnect, targetConnect, operationParams);
+                    targetDataSource.commit(false);
+                    log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
+                    batchedPaginationOperation.reset();
+                } else {
+                    log.warn("NO processing HELPER class for table '{}'", tableName);
+                }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
             }
-            state = DATA_COPIED_TO_SHARD;
+            state = DATA_COPY_TO_SHARD_FINISHED;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error COPY processing table = '" + currentTable + "'", e);
             targetDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
-        }
-        finally {
+        } finally {
             if (targetConnect != null) {
                 targetDataSource.commit();
             }
         }
-        log.debug("COPY Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
+        log.debug("COPY Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
     /**
      * {@inheritDoc}
      */
+/*
     @Override
     @Deprecated
     public MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo) {
@@ -267,55 +284,59 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             recovery = new ShardRecovery(DATA_RELINK_STARTED);
         }
 
-        try (Connection sourceConnect = sourceDataSource.begin()) {
+        try ( Connection sourceConnect = sourceDataSource.begin() ) {
 
             long startTrim = System.currentTimeMillis();
             currentTable = PUBLIC_KEY_TABLE_NAME; // assign name for trim
             log.debug("Start trimming '{}' to HEIGHT '{}'", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight());
-            trimService.doTrimDerivedTablesOnHeight(paramInfo.getSnapshotBlockHeight().intValue()); // TRIM 'PUBLIC_KEY' table before processing
-            log.debug("Trimmed '{}' to HEIGHT '{}' within {} sec", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight(), (System.currentTimeMillis() - startTrim) / 1000);
+//            trimService.doTrimDerivedTables(paramInfo.getSnapshotBlockHeight().intValue(), sourceDataSource); // TRIM 'PUBLIC_KEY' table before processing
+            log.debug("Trimmed '{}' to HEIGHT '{}' within {} sec", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight(), (System.currentTimeMillis() - startTrim)/1000);
 
             for (String tableName : paramInfo.getTableNameList()) {
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
+                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName, true);
+                if (paginationOperationHelper.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
+                    paginationOperationHelper.get().reset();
+                } else {
+                    log.warn("NO processing HELPER class for table '{}'", tableName);
+                }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_RELINK_STARTED);
             }
             state = DATA_RELINKED_IN_MAIN;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error RELINK processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
-        }
-        finally {
+        } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
         }
-        log.debug("RELINK Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
+        log.debug("RELINK Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
+*/
 
     private void processOneTableByHelper(CommandParamInfo paramInfo, Connection sourceConnect,
                                          String tableName, long start,
-                                         BatchedPaginationOperation batchedPaginationOperation) throws Exception {
+                                         BatchedPaginationOperation paginationOperationHelper) throws Exception {
         TableOperationParams operationParams = new TableOperationParams(
                 tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId, Optional.ofNullable(paramInfo.getDbIdExclusionSet()));
 
-        if (batchedPaginationOperation == null) { // should never happen from outside code, but better to play safe
+        if (paginationOperationHelper == null) { // should never happen from outside code, but better to play safe
             String error = "OperationHelper is NOT PRESENT... Fatal error in sharding code...";
             log.error(error);
             throw new IllegalStateException(error);
         }
-        batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao); // mandatory assignment
+        paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao); // mandatory assignment
 
-        long totalCount = batchedPaginationOperation.processOperation(
+        long totalCount = paginationOperationHelper.processOperation(
                 sourceConnect, null, operationParams);
 
         sourceConnect.commit();
@@ -336,9 +357,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > SECONDARY_INDEX_UPDATED.getValue()) {
+                && recovery.getState().getValue() > SECONDARY_INDEX_FINISHED.getValue()) {
             // skip to next step
-            return state = SECONDARY_INDEX_UPDATED;
+            return state = SECONDARY_INDEX_FINISHED;
         } else {
             // that is needed in case separate step execution, when previous step was missed in code
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
@@ -349,31 +370,89 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                if (createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
+                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
+                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, SECONDARY_INDEX_STARTED);
             }
-            state = SECONDARY_INDEX_UPDATED;
+            state = SECONDARY_INDEX_FINISHED;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error UPDATE S/Index processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
-        }
-        finally {
+        } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
         }
-        log.debug("UPDATE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
+        log.debug("UPDATE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
 
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MigrateState exportCsv(CommandParamInfo paramInfo) {
+        checkRequiredParameters(paramInfo);
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", paramInfo.getTableNameList().size());
+
+        String currentTable = null;
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        if (recovery != null && recovery.getState() != null
+                && recovery.getState().getValue() > CSV_EXPORT_FINISHED.getValue()) {
+            // skip to next step
+            return state = CSV_EXPORT_FINISHED;
+        } else {
+            // that is needed in case separate step execution, when previous step was missed in code
+            recovery = new ShardRecovery(CSV_EXPORT_STARTED);
+        }
+
+        // TODO: export as CSV data for all : derived tables, shard, block_index, transaction_shard_index
+        // TODO: keep recovery data on export
+
+        state = CSV_EXPORT_FINISHED;
+//        updateToFinalStepState(sourceDataSource.begin(), recovery, state);
+        log.debug("EXPORT Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MigrateState archiveCsv(CommandParamInfo paramInfo) {
+        checkRequiredParameters(paramInfo);
+        long startAllTables = System.currentTimeMillis();
+        log.debug("Starting ZIP ARCHIVE data update from [{}] tables...", paramInfo.getTableNameList().size());
+
+        String currentTable = null;
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        if (recovery != null && recovery.getState() != null
+                && recovery.getState().getValue() > ZIP_ARCHIVE_FINISHED.getValue()) {
+            // skip to next step
+            return state = ZIP_ARCHIVE_FINISHED;
+        } else {
+            // that is needed in case separate step execution, when previous step was missed in code
+            recovery = new ShardRecovery(ZIP_ARCHIVE_STARTED);
+        }
+
+        // TODO: put into archive CSV for all : derived tables, shard, block_index, transaction_shard_index + compute CRC/hash and update column value in SHARD
+        // TODO: keep recovery data on export
+
+        state = ZIP_ARCHIVE_FINISHED;
+//        updateToFinalStepState(sourceDataSource.begin(), recovery, state);
+        log.debug("ZIP ARCHIVE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -404,9 +483,9 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                BatchedPaginationOperation paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
-                if (createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
+                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
+                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
@@ -415,19 +494,17 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             state = DATA_REMOVED_FROM_MAIN;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error DELETE processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
-        }
-        finally {
+        } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
         }
-        log.debug("DELETE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables) / 1000);
+        log.debug("DELETE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -461,8 +538,8 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
         }
 
         try (Connection sourceConnect = sourceDataSource.begin();
-             PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(
-                     "UPDATE SHARD SET SHARD_HASH = ?, SHARD_STATE = ? WHERE SHARD_ID = ?")) {
+            PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(
+                    "UPDATE SHARD SET SHARD_HASH = ?, SHARD_STATE = ? WHERE SHARD_ID = ?")) {
             preparedInsertStatement.setBytes(1, paramInfo.getShardHash());
 //            preparedInsertStatement.setLong(1, paramInfo.getSnapshotBlockHeight());
             preparedInsertStatement.setLong(2, SHARD_PERCENTAGE_FULL); // 100% full shard is present on current node
@@ -475,14 +552,12 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
             result = shardRecoveryDao.hardDeleteShardRecovery(sourceConnect, recovery.getShardRecoveryId());
             sourceConnect.commit();
             log.debug("Shard Recovery is deleted = '{}'", result);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error creating Shard record in main db", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
-        }
-        finally {
+        } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
@@ -493,8 +568,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
     /**
      * Update previous info with table name just processed in loop
-     *
-     * @param currentTable    table name to be put into table
+     * @param currentTable table name to be put into table
      * @param inProgressState progress state value
      * @return updated and stored instance
      */
@@ -517,8 +591,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
     /**
      * Store final step state, when all tables were processed
-     *
-     * @param recovery       current recovery
+     * @param recovery current recovery
      * @param finalStepState final state
      */
     private void updateToFinalStepState(Connection connection, ShardRecovery recovery, MigrateState finalStepState) {
@@ -532,14 +605,13 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
 
     /**
      * Method is need for separate steps execution to extract 'createdShardId' value
-     *
      * @param dbVersion shard schema class
      * @return shard data source
      */
     private TransactionalDataSource initializeAssignShardDataSource(DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         if (createdShardSource == null) {
-            createdShardSource = ((ShardManagement) databaseManager).getOrCreateShardDataSourceById(null, dbVersion);
+            createdShardSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(null, dbVersion);
             createdShardId = createdShardSource.getDbIdentity();
             return createdShardSource;
         }

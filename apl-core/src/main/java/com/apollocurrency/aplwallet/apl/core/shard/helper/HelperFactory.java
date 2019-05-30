@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import java.util.Optional;
+
 /**
  * Factory for creation helper used for processing specified table
  * @param <T>
@@ -18,14 +20,16 @@ public interface HelperFactory<T> {
      * @param helperTableName table name
      * @return table specific helper class OR Empty
      */
-     T createSelectInsertHelper(String helperTableName);
+     Optional<T> createSelectInsertHelper(String helperTableName);
 
+     Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName, boolean relink);
 
     /**
      * Create specified helper class. There are helpers used for deleting
+     * @param helperTableName
      * @param helperTableName table name
      * @return table specific helper class OR Empty
      */
-    T createDeleteHelper(String helperTableName);
+    Optional<T> createDeleteHelper(String helperTableName);
 
 }

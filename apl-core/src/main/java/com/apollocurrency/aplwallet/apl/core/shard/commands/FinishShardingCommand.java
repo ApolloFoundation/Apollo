@@ -8,7 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
@@ -20,17 +20,17 @@ import org.slf4j.Logger;
 public class FinishShardingCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(FinishShardingCommand.class);
 
-    private DataTransferManagementReceiver dataTransferManagement;
+    private ShardEngine shardEngine;
     private byte[] shardHash;
 
-    public FinishShardingCommand(DataTransferManagementReceiver dataTransferManagement) {
-        this.dataTransferManagement = Objects.requireNonNull(
-                dataTransferManagement, "dataTransferManagement is NULL");
+    public FinishShardingCommand(ShardEngine shardEngine) {
+        this.shardEngine = Objects.requireNonNull(
+                shardEngine, "shardEngine is NULL");
     }
 
-    public FinishShardingCommand(DataTransferManagementReceiver dataTransferManagement, byte[] shardHash) {
-        this.dataTransferManagement = Objects.requireNonNull(
-                dataTransferManagement, "dataTransferManagement is NULL");
+    public FinishShardingCommand(ShardEngine shardEngine, byte[] shardHash) {
+        this.shardEngine = Objects.requireNonNull(
+                shardEngine, "shardEngine is NULL");
         this.shardHash = Objects.requireNonNull(
                 shardHash, "shardHash is NULL");
     }
@@ -42,7 +42,7 @@ public class FinishShardingCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(this.shardHash);
-        return dataTransferManagement.addShardInfo(paramInfo);
+        return shardEngine.addShardInfo(paramInfo);
     }
 
     @Override
