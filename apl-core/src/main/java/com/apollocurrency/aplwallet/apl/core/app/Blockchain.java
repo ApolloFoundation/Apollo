@@ -66,6 +66,9 @@ public interface Blockchain {
 
     int getBlockCount(long accountId);
 
+
+    Block getShardIntialBlock();
+
 //    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
@@ -78,7 +81,7 @@ public interface Blockchain {
 
     long getBlockIdAtHeight(int height);
 
-    Block getECBlock(int timestamp);
+    EcBlockData getECBlock(int timestamp);
 
     void deleteBlocksFromHeight(int height);
 

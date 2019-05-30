@@ -114,7 +114,7 @@ public class ShardMigrationExecutor {
 
     private byte[] calculateHash(int height) {
         int lastShardHeight = getHeight();
-        byte[] hash = shardHashCalculator.calculateHash(lastShardHeight + 1, height);
+        byte[] hash = shardHashCalculator.calculateHash(lastShardHeight, height);
         return hash;
     }
 

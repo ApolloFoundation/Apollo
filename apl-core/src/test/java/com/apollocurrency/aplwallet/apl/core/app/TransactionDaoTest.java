@@ -10,36 +10,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import javax.inject.Inject;
 
 @EnableWeld
 class TransactionDaoTest {
@@ -49,25 +39,18 @@ class TransactionDaoTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionDaoImpl.class, BlockchainImpl.class,
-            JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class,
-            DerivedDbTablesRegistryImpl.class,
-            EpochTime.class)
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+    public WeldInitiator weld = WeldInitiator.from()
+            .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
-    @Inject
     private TransactionDao dao;
     private TransactionTestData td;
-    private BlockTestData blockTestData;
 
     private Path createPath(String fileName) {
         try {
@@ -81,7 +64,7 @@ class TransactionDaoTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
-        blockTestData = new BlockTestData();
+        dao = new TransactionDaoImpl(extension.getDatabaseManger());
     }
 
 

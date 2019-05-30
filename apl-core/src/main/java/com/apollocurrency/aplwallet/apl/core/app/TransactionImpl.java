@@ -118,7 +118,7 @@ public class TransactionImpl implements Transaction {
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
                 lookupAndInjectBlockchain();
-                Block ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
+                EcBlockData ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }

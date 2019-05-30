@@ -216,4 +216,18 @@ public class BlockIndexDaoTest {
         List<TransactionIndex> transactionIndexList = transactionIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId(), Integer.MAX_VALUE);
         assertEquals(0, transactionIndexList.size());
     }
+
+    @Test
+    void testGetBlockIdsAfterHeight() {
+        List<Long> blockIdsAfter = blockIndexDao.getBlockIdsAfter(BLOCK_INDEX_1.getBlockHeight(), 2);
+
+        assertEquals(List.of(BLOCK_INDEX_2.getBlockId(), BLOCK_INDEX_0.getBlockId()), blockIdsAfter);
+    }
+
+    @Test
+    void testGetHeight() {
+        Integer height = blockIndexDao.getHeight(BLOCK_INDEX_0.getBlockId());
+
+        assertEquals(BLOCK_INDEX_0.getBlockHeight(), height);
+    }
 }

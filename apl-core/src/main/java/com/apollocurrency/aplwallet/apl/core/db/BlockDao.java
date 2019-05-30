@@ -48,11 +48,11 @@ public interface BlockDao {
 
     int getBlockCount(long accountId);
 
-    List<Long> getBlockIdsAfter(long blockId, int limit);
+    List<Long> getBlockIdsAfter(int height, int limit);
 
 //    List<Block> getBlocksAfter(long blockId, int limit, List<Block> result);
 
-    List<Block> getBlocksAfter(long blockId, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
+    List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
 
     Block findBlockWithVersion(int skipCount, int version);
 
@@ -64,8 +64,6 @@ public interface BlockDao {
     Set<Long> getBlockGenerators(int startHeight, int limit);
 
     Block loadBlock(Connection con, ResultSet rs);
-
-    Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
 
     void saveBlock(Connection con, Block block);
 
