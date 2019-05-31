@@ -83,7 +83,7 @@ public class BlockIndexDaoTest {
     void testGetShardIdByBlockId() {
         Long shardId = blockIndexDao.getShardIdByBlockId(BLOCK_INDEX_1.getBlockId());
         assertNotNull(shardId);
-        assertEquals(BLOCK_INDEX_1.getShardId(), shardId);
+        assertEquals(1, shardId);
     }
 
     @Test
@@ -160,7 +160,7 @@ public class BlockIndexDaoTest {
         BlockIndex blockIndex = blockIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId());
         assertEquals(blockIndex, copy);
         List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
-        assertEquals(Arrays.asList(BLOCK_INDEX_0, copy, BLOCK_INDEX_2), allBlockIndex);
+        assertEquals(Arrays.asList( BLOCK_INDEX_2, BLOCK_INDEX_0, copy), allBlockIndex);
     }
 
     @Test
@@ -205,6 +205,6 @@ public class BlockIndexDaoTest {
     void testDelete() {
         int deleteCount = blockIndexDao.hardBlockIndex(BLOCK_INDEX_1);
         assertEquals(1, deleteCount);
-        assertEquals(Arrays.asList(BLOCK_INDEX_0, BLOCK_INDEX_2), blockIndexDao.getAllBlockIndex());
+        assertEquals(Arrays.asList( BLOCK_INDEX_2, BLOCK_INDEX_0), blockIndexDao.getAllBlockIndex());
     }
 }

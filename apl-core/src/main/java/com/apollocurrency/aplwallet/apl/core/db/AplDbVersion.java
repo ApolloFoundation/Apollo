@@ -694,11 +694,11 @@ public class AplDbVersion extends DbVersion {
             case 254:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shard_height_index on shard (shard_height DESC, shard_id)");
             case 255:
-                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
+                apply("CREATE TABLE IF NOT EXISTS block_index (block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 256:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
             case 257:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
             case 258:
                 apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, transaction_index SMALLINT NOT NULL, height INT NOT NULL)");
             case 259:
@@ -762,7 +762,17 @@ public class AplDbVersion extends DbVersion {
             case 286:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
             case 287:
-                return 287;
+                apply("DROP INDEX IF EXISTS block_index_block_id_shard_id_idx");
+            case 288:
+                apply("DROP INDEX IF EXISTS block_index_block_height_shard_id_idx");
+            case 289:
+                apply("ALTER TABLE block_index DROP COLUMN IF EXISTS shard_id");
+            case 290:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
+            case 291:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
+            case 292:
+                return 292;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

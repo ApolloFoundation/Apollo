@@ -111,7 +111,7 @@ public class TransactionIndexDaoTest {
     void testGetShardIdByTransactionId() {
         Long shardId = dao.getShardIdByTransactionId(IndexTestData.TRANSACTION_INDEX_1.getTransactionId());
         assertNotNull(shardId);
-        assertEquals(IndexTestData.BLOCK_INDEX_1.getShardId(), shardId);
+        assertEquals(1, shardId);
     }
     @Test
     void testInsert() {
@@ -171,10 +171,10 @@ public class TransactionIndexDaoTest {
     }
 
     @Test
-    void testCountTransctionIndexesByShardId() {
-        Long shardId = IndexTestData.BLOCK_INDEX_1.getShardId();
+    void testCountTransactionIndexesByShardId() {
 
-        long count = dao.countTransactionIndexByShardId(shardId);
+
+        long count = dao.countTransactionIndexByShardId(1L);
 
         assertEquals(3, count);
     }
