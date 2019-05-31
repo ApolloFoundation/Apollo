@@ -18,12 +18,15 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
+
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;
@@ -32,13 +35,13 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 @Vetoed
-final class ProcessBlock extends PeerRequestHandler {
+public final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
 
     public ProcessBlock() {}
 
     @Override
-    JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
+    public JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
         String previousBlockId = (String)request.get("previousBlock");
         Block lastBlock = lookupBlockchain().getLastBlock();
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
@@ -48,7 +51,7 @@ final class ProcessBlock extends PeerRequestHandler {
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
                         && (lastBlock.getTimestamp() > peerBlockTimestamp ||
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
-            Peers.peersService.submit(() -> {
+            Peers.peersExecutorService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");
                     lookupBlockchainProcessor().processPeerBlock(request);
@@ -63,7 +66,7 @@ final class ProcessBlock extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return true;
     }
 

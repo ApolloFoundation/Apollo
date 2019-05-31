@@ -107,7 +107,7 @@ public class GetPrivateAccountLedger extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         response.put("entries", responseEntries);
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

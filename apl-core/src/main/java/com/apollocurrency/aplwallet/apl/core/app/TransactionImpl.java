@@ -1020,7 +1020,6 @@ public class TransactionImpl implements Transaction {
         return flags;
     }
 
-
     public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Runtime environment for AplCores (singleton)
+ * TODO: make it injectable singleton
  * @author alukin@gmail.com
  */
 @Vetoed
