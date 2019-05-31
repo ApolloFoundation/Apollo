@@ -17,8 +17,8 @@ public class CmdLineArgs {
     @Parameter(description = "[command arguments]")    
     public String command;
     
-    @Parameter(names = {"--debug", "-d"}, description = "Debug mode")
-    public boolean debug = false;
+    @Parameter(names = {"--debug", "-d"}, description = "Debug levele [0-4]")
+    public int debug = 2;
     @Parameter(names = {"--verbose", "-v"}, description = "Verbosity level 0-9")
     public Integer verbose = 1;
     @Parameter(names = "--help", help = true, description = "Print help message")
@@ -35,7 +35,8 @@ public class CmdLineArgs {
     public String dbDir = "";
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
-     
+    @Parameter(names = {"--testnet", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
+    public int testnetIdx=0;     
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
     }    

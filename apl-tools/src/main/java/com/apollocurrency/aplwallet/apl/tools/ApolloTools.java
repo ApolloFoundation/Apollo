@@ -3,6 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.tools;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.tools.cmdline.CmdLineArgs;
@@ -18,6 +21,8 @@ import com.apollocurrency.aplwallet.apl.tools.impl.GeneratePublicKey;
 import com.apollocurrency.aplwallet.apl.tools.impl.SignTransactions;
 import com.apollocurrency.aplwallet.apl.tools.impl.UpdaterUrlUtils;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.HeightMonitor;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeersConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
@@ -33,9 +38,11 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -45,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main entry point to all Apollo tools. This is Swiss Army Knife for all Apollo
@@ -53,7 +61,7 @@ import java.util.stream.Collectors;
  * @author alukin@gmail.com
  */
 public class ApolloTools {
-
+    private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
     private static Logger log;
     private static final CmdLineArgs args = new CmdLineArgs();
     private static final CompactDbCmd compactDb = new CompactDbCmd();
@@ -75,7 +83,21 @@ public class ApolloTools {
             "socksProxyHost",
             "socksProxyPort",
             "apl.enablePeerUPnP");
+    
+    private static void setLogLevel(int logLevel) {
+        String packageName = "com.apollocurrency.aplwallet.apl";
+        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
+            logLevel = VALID_LOG_LEVELS.length - 1;
+        }
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
+        System.out.println(packageName + " current logger level: " + logger.getLevel()
+                + " New level: " + VALID_LOG_LEVELS[logLevel]);
+
+        logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+    }
+    
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
         return new PredefinedDirLocations(
                 StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir,
@@ -86,10 +108,10 @@ public class ApolloTools {
         );
     }
 
-    private void readConfigs() {
+    private void readConfigs(int netIdx) {
         RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME);
+        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME, netIdx);
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
@@ -147,10 +169,12 @@ public class ApolloTools {
     private int heightMonitor() {
         try {
             String peerFile = heightMonitorCmd.peerFile;
-            List<String> peerIps = Files.readAllLines(Paths.get(peerFile));
-            HeightMonitor hm = new HeightMonitor(peerIps, heightMonitorCmd.intervals, heightMonitorCmd.frequency, heightMonitorCmd.port);
-            hm.start();
-            Runtime.getRuntime().addShutdownHook(new Thread(hm::stop));
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+            PeersConfig peersConfig = objectMapper.readValue(new File(peerFile), PeersConfig.class);
+            HeightMonitor hm = new HeightMonitor(heightMonitorCmd.frequency);
+            HeightMonitorConfig config = new HeightMonitorConfig(peersConfig, heightMonitorCmd.intervals, heightMonitorCmd.port);
+            hm.start(config);
             return 0;
         }
         catch (IOException e) {
@@ -219,11 +243,12 @@ public class ApolloTools {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
+        setLogLevel(args.debug);
         if (jc.getParsedCommand() == null) {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.CMD)) {
-            toolsApp.readConfigs();
+            toolsApp.readConfigs(args.testnetIdx);
             System.exit(toolsApp.compactDB());
         } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
             toolsApp.heightMonitor();

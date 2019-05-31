@@ -13,7 +13,10 @@ set DB_FILE=b5d7b6.jar
 set DB_URL="https://s3.amazonaws.com/updates.apollowallet.org/database/%DB_FILE%"
 echo "Downloading and Exctracting %DB_FILE% into %DB_LOCATION%"
 cd %DB_LOCATION%
-%DIRP%\..\curl -k --output %DB_FILE% %DB_URL%
+"%DIRP%\..\curl" -k --output %DB_FILE% %DB_URL%
 %JAR_CMD% -v -x -f %DB_FILE%
 @REM DEL META-INF
 @REM DEL %DB_FILE%
+
+
+

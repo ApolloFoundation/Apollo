@@ -21,11 +21,10 @@ public class EpochTime implements Time {
         this.ntpTime = ntpTime;
     }
 
-    public int getTime() {
-        return Convert2.toEpochTime(ntpTime.getTime());
-        //return Convert.toEpochTime(System.currentTimeMillis());
-    }
-
+    /**
+     *  Time since genesis block.
+     * @return int (time in seconds).
+     */
     public int getEpochTime() {
         return Convert2.toEpochTime(ntpTime.getTime());
     }

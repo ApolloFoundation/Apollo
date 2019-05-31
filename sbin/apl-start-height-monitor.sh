@@ -17,6 +17,6 @@ SCRIPT=`realpath -s $0`
 DIR=`dirname $SCRIPT`
  . ${DIR}/../bin/apl-common.sh
 
-${JAVA_CMD}  -jar ${APL_TOOLS_JAR} heightmon --peers ${APL_TOP_DIR}/peers.txt
+${JAVA_CMD}  -jar ${APL_TOOLS_JAR} heightmon --peers ${APL_TOP_DIR}/peers.json
 exit $?
 

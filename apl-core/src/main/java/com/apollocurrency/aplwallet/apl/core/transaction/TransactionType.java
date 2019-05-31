@@ -20,30 +20,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
+
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public abstract class TransactionType {
@@ -58,6 +58,7 @@ public abstract class TransactionType {
     public static final byte TYPE_DATA = 6;
     public static final byte TYPE_SHUFFLING = 7;
     public static final byte TYPE_UPDATE = 8;
+    public static final byte TYPE_DEX = 9;
 
     public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
@@ -102,6 +103,10 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
+
+    public static final byte SUBTYPE_DEX_OFFER = 0;
+    public static final byte SUBTYPE_DEX_OFFER_CANCEL = 1;
+
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -222,6 +227,14 @@ public abstract class TransactionType {
                     default:
                         return null;
                 }
+            case TYPE_DEX:
+                switch (subtype) {
+                    case SUBTYPE_DEX_OFFER :
+                        return DEX.DEX_OFFER_TRANSACTION;
+                    case SUBTYPE_DEX_OFFER_CANCEL :
+                        return DEX.DEX_CANCEL_OFFER_TRANSACTION;
+                }
+
             default:
                 return null;
         }
@@ -339,6 +352,10 @@ public abstract class TransactionType {
         return canHaveRecipient();
     }
 
+    /**
+     * Is not used.
+     */
+    @Deprecated
     public abstract boolean isPhasingSafe();
 
     public boolean isPhasable() {

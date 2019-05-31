@@ -49,6 +49,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_C
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -476,8 +477,7 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            byte[] secretBytes = Helper2FA.findAplSecretBytes(senderId, passphrase);
-            return secretBytes == null ? null : secretBytes;
+            return Helper2FA.findAplSecretBytes(senderId, passphrase);
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
@@ -535,11 +535,9 @@ public final class ParameterParser {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-
                         byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
-                        if (secretBytes != null) {
-                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
-                        }
+
+                        return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
                 } else {
 
@@ -571,6 +569,9 @@ public final class ParameterParser {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
+        if (publicKey == null) {
+            throw new ParameterException(UNKNOWN_PUBLIC_KEY);
+        }
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
@@ -757,7 +758,7 @@ public final class ParameterParser {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
                 return Transaction.newTransactionBuilder(json);
-            } catch (AplException.ValidationException | RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionJSON");
@@ -768,7 +769,7 @@ public final class ParameterParser {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
                 return Transaction.newTransactionBuilder(bytes, prunableAttachments);
-            } catch (AplException.ValidationException|RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionBytes");

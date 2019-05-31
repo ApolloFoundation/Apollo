@@ -29,6 +29,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
+@Deprecated
 public final class GetMyInfo extends AbstractAPIRequestHandler {
 
     public GetMyInfo() {

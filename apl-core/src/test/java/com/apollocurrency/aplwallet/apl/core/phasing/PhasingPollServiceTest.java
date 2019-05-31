@@ -13,16 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Consumer;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -68,6 +58,16 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollServiceTest {
@@ -104,6 +104,7 @@ public class PhasingPollServiceTest {
     Blockchain blockchain;
     PhasingTestData ptd;
     TransactionTestData ttd;
+    BlockTestData btd;
 
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
@@ -126,6 +127,7 @@ public class PhasingPollServiceTest {
     void setUp() {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
+        btd = new BlockTestData();
     }
 
     @Test
@@ -226,7 +228,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetFinishingTransactions() {
-        List<Transaction> finishingTransactions = CollectionUtil.toList(phasingPollService.getFinishingTransactions(ptd.POLL_2.getFinishHeight()));
+        List<Transaction> finishingTransactions = phasingPollService.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
         assertEquals(Arrays.asList(ttd.TRANSACTION_7), finishingTransactions);
     }
@@ -234,7 +236,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetFinishingTransactionsWhenNoTransactionsAtHeight() {
-        List<Transaction> finishingTransactions = CollectionUtil.toList(phasingPollService.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1));
+        List<Transaction> finishingTransactions = phasingPollService.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1);
 
         assertTrue(finishingTransactions.isEmpty(), "No transactions should be found at height");
     }
@@ -279,10 +281,11 @@ public class PhasingPollServiceTest {
     @Test
     void testFinishPollNotApproved() throws SQLException {
         inTransaction(con -> {
+            blockchain.setLastBlock(btd.BLOCK_10);
             phasingPollService.finish(ptd.POLL_3, 1);
 
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), 1, false, 1);
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), 1, false, btd.BLOCK_10.getHeight());
 
             assertEquals(expected, result);
         });
@@ -291,9 +294,10 @@ public class PhasingPollServiceTest {
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
         inTransaction(con -> {
+            blockchain.setLastBlock(btd.BLOCK_11);
             phasingPollService.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
             PhasingPollResult result = phasingPollService.getResult(ptd.POLL_3.getId());
-            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true, 1);
+            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true, btd.BLOCK_11.getHeight());
 
             assertEquals(expected, result);
         });

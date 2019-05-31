@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.30.6</version>
+    <version>1.33.0</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -37,14 +37,15 @@
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
+        <module>apl-conf</module>
         <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
-<!--
-     Tt is a whole mess at the moment. commented out. Please!!! Integration test
-     SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
-     ant it MUST use REST API only!
--->
-<!--        <module>apl-tests</module> -->
+        <!--
+             Tt is a whole mess at the moment. commented out. Please!!! Integration test
+             SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
+             ant it MUST use REST API only!
+        -->
+        <!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
@@ -60,7 +61,7 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-        <web-wallet.version>2.4.5</web-wallet.version>
+        <web-wallet.version>2.5.10</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 
@@ -119,15 +120,10 @@
 
     </properties>
 
-<!-- We have following profiles: prod, dev, debug
-     1. prod: profile for production network with appropriate resources
-     2. dev:  profile for development, contains resources for man testnet
-         Default profile:  debug
-         Resources for profiles:
-             dev:  resources-dev
-             prod: resources-prod
-             debug: the same as dev but without zip assembly
--->
+    <!-- We have following profiles: prod, dev, debug
+         1. prod: profile for release with build of all zips and sha-256 sums 
+         2. dev:  profile for development, no extra build artefacts
+    -->
     <profiles>
         <!-- The Configuration of the development profile -->
         <profile>
@@ -138,38 +134,8 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPhase>package</zipExecutionPhase>
-            </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-dev</directory>
-                    </resource>
-                </resources>
-            </build>
-        </profile>
-        <!-- The Configuration of the debug profile -->
-        <profile>
-            <id>debug</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
                 <zipExecutionPhase>none</zipExecutionPhase>
             </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-dev</directory>
-                    </resource>
-                </resources>
-            </build>
         </profile>
         <!-- The Configuration of the production profile -->
         <profile>
@@ -178,20 +144,11 @@
                 <property>
                     <name>production</name>
                 </property>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
                 <zipExecutionPhase>package</zipExecutionPhase>
             </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-prod</directory>
-                    </resource>
-                </resources>
-            </build>
         </profile>
     </profiles>
 
@@ -400,13 +357,13 @@
                 <artifactId>jta</artifactId>
                 <version>1.1</version>
             </dependency>
-<!--
-            <dependency>
-                <groupId>com.atomikos</groupId>
-                <artifactId>transactions-jta</artifactId>
-                <version>4.0.6</version>
-            </dependency>
--->
+            <!--
+                        <dependency>
+                            <groupId>com.atomikos</groupId>
+                            <artifactId>transactions-jta</artifactId>
+                            <version>4.0.6</version>
+                        </dependency>
+            -->
 
             <!--2fa api-->
             <dependency>
@@ -711,14 +668,14 @@
                         <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                     <dependencies>
-<!--
-                        JDK 11
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm</artifactId>
-                            <version>6.2</version>
-                        </dependency>
--->
+                        <!--
+                                                JDK 11
+                                                <dependency>
+                                                    <groupId>org.ow2.asm</groupId>
+                                                    <artifactId>asm</artifactId>
+                                                    <version>6.2</version>
+                                                </dependency>
+                        -->
                         <dependency>
                             <groupId>org.apache.maven.wagon</groupId>
                             <artifactId>wagon-webdav-jackrabbit</artifactId>

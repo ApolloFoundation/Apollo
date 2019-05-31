@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,6 +22,8 @@ import java.util.Objects;
 import java.util.Random;
 
 class MerkleTreeTest {
+    private static final Logger log = getLogger(MerkleTreeTest.class);
+
     static final String data1 = "123";
     static final String data2 = "1234";
     static final String data3 = "12345";
@@ -317,8 +322,7 @@ class MerkleTreeTest {
         while (counter-- > 0) {
             tree.appendLeaf(data1.getBytes());
         }
-        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000);
-        System.out.println(tree.getRoot());
+        log.debug("Time: {} sec - {}", (System.currentTimeMillis() - start) / 1000, tree.getRoot());
     }
 
     @Test
@@ -331,9 +335,7 @@ class MerkleTreeTest {
             bytesToAdd.add(data1.getBytes());
         }
         MerkleTree tree = new MerkleTree(sha256(), bytesToAdd);
-        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000);
-        System.out.println(tree.getRoot());
-        System.out.println(tree.getNodes().size());
+        log.debug("Time: {} sec - {}, [{}]", (System.currentTimeMillis() - start) / 1000, tree.getRoot(), tree.getNodes().size());
     }
 
     private MessageDigest sha256() {

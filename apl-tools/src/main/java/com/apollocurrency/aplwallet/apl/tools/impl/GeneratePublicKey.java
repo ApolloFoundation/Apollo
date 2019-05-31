@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 //TODO: add vault wallets support
 public class GeneratePublicKey {
-    private static final Logger LOG = getLogger(GeneratePublicKey.class);
+    private static final Logger log = getLogger(GeneratePublicKey.class);
 
 
     public static void doInteractive(){
@@ -58,6 +58,6 @@ public class GeneratePublicKey {
 
     private static void printPublicKey(String secretPhrase) {
         byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-        System.out.println(Convert.toHexString(publicKey));
+        log.debug(Convert.toHexString(publicKey));
     }
 }

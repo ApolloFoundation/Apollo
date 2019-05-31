@@ -4,17 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -60,41 +61,41 @@ public class BlockchainConfigTest {
     @Test
     public void testInitBlockchainConfig() {
         blockchainConfig.updateChain(chain);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateBlockchainConfig() {
         blockchainConfigUpdater.updateChain(chain);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateToHeight() {
         blockchainConfigUpdater.updateChain(chain);
-        blockchainConfigUpdater.updateToHeight(99, true);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
-        blockchainConfigUpdater.updateToHeight(100, true);
-        Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
-        blockchainConfigUpdater.updateToHeight(100, false);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
-        blockchainConfigUpdater.updateToHeight(201, true);
-        Assertions.assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
-        blockchainConfigUpdater.updateToHeight(0, false);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
-        blockchainConfigUpdater.updateToHeight(0, true);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(99);
+        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(100);
+        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(201);
+        assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(199);
+        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(200);
+        assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(0);
+        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testRollback() {
         blockchainConfigUpdater.updateChain(chain);
-        blockchainConfigUpdater.updateToHeight(102, true);
-        Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        blockchainConfigUpdater.updateToHeight(102);
+        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.rollback(100);
-        Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.rollback(99);
-        Assertions.assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
@@ -103,16 +104,16 @@ public class BlockchainConfigTest {
         Block block = Mockito.mock(Block.class);
         Mockito.doReturn(100).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
-        Assertions.assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
 
     }
     @Test
     public void testChangeListenerOnPopped() {
         blockchainConfigUpdater.updateChain(chain);
         Block block = Mockito.mock(Block.class);
-        Mockito.doReturn(200).when(block).getHeight();
+        Mockito.doReturn(201).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
-        Assertions.assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
 
     }
 

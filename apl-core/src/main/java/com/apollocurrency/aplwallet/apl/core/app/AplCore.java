@@ -95,13 +95,8 @@ public final class AplCore {
 
 
     public static int getEpochTime() { // left for awhile
-        return time.getTime();
+        return time.getEpochTime();
     }
-
-    static void setTime(Time time) { // left for awhile
-        AplCore.time = time;
-    }
-
 
     public void init() {
 

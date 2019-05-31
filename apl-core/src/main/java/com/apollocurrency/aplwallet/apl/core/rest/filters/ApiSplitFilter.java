@@ -49,10 +49,10 @@ public class ApiSplitFilter implements Filter{
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
         //to fix CORS
-//        resp.setHeader("Access-Control-Allow-Origin", "*");
-//        resp.setHeader("Access-Control-Allow-Credentials", "true");
-//        resp.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-//        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+        resp.setHeader("Access-Control-Allow-Credentials", "true");
+        resp.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
         String rqType = request.getParameter("requestType");
         logger.trace("========= RequestType IS EMPTY!==========");

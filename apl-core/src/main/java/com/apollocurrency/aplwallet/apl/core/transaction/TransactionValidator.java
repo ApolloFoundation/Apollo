@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.antifraud.AntifraudValidator;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -67,13 +68,17 @@ public class TransactionValidator {
                 throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
             }
         }
-
+        
+        if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
+                transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
+        
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             appendage.loadPrunable(transaction);
-            if (! appendage.verifyVersion()) {
-                throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
-            }
+            //TODO Why does it need? Take a look how to use it.
+//            if (! appendage.verifyVersion()) {
+//                throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
+//            }
             if (validatingAtFinish) {
                 appendage.validateAtFinish(transaction, blockchain.getHeight());
             } else {

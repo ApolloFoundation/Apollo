@@ -47,14 +47,17 @@ public class NtpTime {
             timeOffset = offsetValue;
         }
         catch (SocketTimeoutException | UnknownHostException e) {
-            LOG.warn(e.getMessage() + ". Keep prev offset: " + timeOffset, e);
+            LOG.warn("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
         }
         catch (IOException e) {
-            LOG.warn(e.getMessage(), e);
+            LOG.warn("NTP exception: {}",e.getMessage());
             timeOffset = 0;
         }
     }
-    
+
+    /**
+     * @return current time in Millis.
+     */
     public long getTime() {
         return System.currentTimeMillis() + timeOffset;
     }

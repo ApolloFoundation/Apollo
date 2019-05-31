@@ -7,11 +7,13 @@ package com.apollocurrency.aplwallet.apl.updater;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +33,7 @@ import java.util.stream.Stream;
 //TODO: Rewrite using mockito
 @Disabled
 public class UpdaterUtilTest {
+    private static final Logger log = getLogger(UpdaterUtilTest.class);
 
     private final static String CERTIFICATE_MOCK_PREFIX = "CERTIFICATE_MOCK_";
 
@@ -63,7 +66,7 @@ public class UpdaterUtilTest {
 
         assertNotNull(result);
         for(CertificatePair pair : result) {
-            System.out.println("pair: [" + pair.getFirstCertificate().toString() + ", " + pair.getSecondCertificate().toString() + "]");
+            log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
 
         assertEquals(result.size(), 6);

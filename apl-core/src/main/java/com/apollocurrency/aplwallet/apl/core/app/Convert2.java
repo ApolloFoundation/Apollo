@@ -45,6 +45,11 @@ public final class Convert2 {
         return epochTime * 1000L + Genesis.EPOCH_BEGINNING - 500L;
     }
 
+    /**
+     * Time after genesis block.
+     * @param currentTime (milliseconds)
+     * @return seconds
+     */
     public static int toEpochTime(long currentTime) {
         return (int)((currentTime - Genesis.EPOCH_BEGINNING + 500) / 1000);
     }
