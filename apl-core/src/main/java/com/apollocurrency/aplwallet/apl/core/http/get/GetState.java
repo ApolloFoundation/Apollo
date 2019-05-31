@@ -44,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
@@ -55,7 +56,6 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private UPnP upnp = CDI.current().select(UPnP.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
@@ -69,7 +69,7 @@ public final class GetState extends AbstractAPIRequestHandler {
 
         JSONObject response = new GetBlockchainStatus().processRequest(req);
 
-        if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && API.checkPassword(req)) {
+        if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && apw.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
             response.put("numberOfAccounts", Account.getCount());
             response.put("numberOfAssets", Asset.getCount());
@@ -107,9 +107,9 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
-        response.put("peerPort", Peers.getDefaultPeerPort());
+        response.put("peerPort", Peers.myPort);
         response.put("isOffline", propertiesHolder.isOffline());
-        response.put("needsAdminPassword", !API.disableAdminPassword);
+        response.put("needsAdminPassword", !apw.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());
         InetAddress externalAddress = upnp.getExternalAddress();
         if (externalAddress != null) {

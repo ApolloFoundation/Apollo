@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
         request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
         request.put("chainId", blockchainConfig.getChain().getChainId());
         long startTime = System.currentTimeMillis();
-        JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(), 10 * 1024 * 1024, false);
+        JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),  Peers.MAX_RESPONSE_SIZE);
         responseTime = System.currentTimeMillis() - startTime;
         if (response == null) {
             return null;

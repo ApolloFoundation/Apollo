@@ -18,10 +18,11 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
@@ -33,7 +34,7 @@ import java.util.List;
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-final class GetNextBlocks extends PeerRequestHandler {
+public final class GetNextBlocks extends PeerRequestHandler {
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
     static final JSONStreamAware NO_BLOCK_ID_LIST;
@@ -52,7 +53,7 @@ final class GetNextBlocks extends PeerRequestHandler {
 
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
         JSONObject response = new JSONObject();
         JSONArray nextBlocksArray = new JSONArray();
@@ -76,7 +77,7 @@ final class GetNextBlocks extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return true;
     }
 

@@ -62,7 +62,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
             }
             return JSONData.generator(generator, elapsedTime);
         } else {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
             JSONObject response = new JSONObject();
             JSONArray generators = new JSONArray();
             Generator.getSortedForgers().forEach(generator -> generators.add(JSONData.generator(generator, elapsedTime)));

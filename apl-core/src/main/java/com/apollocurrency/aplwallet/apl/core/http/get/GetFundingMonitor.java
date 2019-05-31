@@ -77,7 +77,7 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
         long account = ParameterParser.getAccountId(req, false);
         boolean includeMonitoredAccounts = "true".equalsIgnoreCase(req.getParameter("includeMonitoredAccounts"));
         if (keySeed == null) {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
         }
         List<FundingMonitor> monitors;
         if (keySeed != null || account != 0) {

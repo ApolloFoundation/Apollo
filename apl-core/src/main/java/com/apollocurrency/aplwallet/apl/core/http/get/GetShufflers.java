@@ -67,7 +67,7 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
                 shufflers = shuffler == null ? Collections.emptyList() : Collections.singletonList(shuffler);
             }
         } else {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length == 0) {
                 shufflers = Shuffler.getAccountShufflers(accountId);
             } else if (accountId == 0 && shufflingFullHash.length > 0) {

@@ -7,6 +7,7 @@
 package com.apollocurrency.aplwallet.apl.testutil;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -214,9 +215,30 @@ public class EntityProducer {
             }
 
             @Override
-            public JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect) {
+            public JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize) {
                 return null;
             }
+
+            @Override
+            public String getHostWithPort() {
+                return null;
+            }
+
+            @Override
+            public void handshake(UUID targetChainId) {
+               
+            }
+
+            @Override
+            public boolean isTrusted() {
+                return false;
+            }
+
+            @Override
+            public Peer.TrustLevel getTrustLevel() {
+                return Peer.TrustLevel.NOT_TRUSTED;
+            }
+
         };
         return peer;
     }
