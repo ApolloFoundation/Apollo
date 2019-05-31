@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
@@ -108,7 +109,6 @@ public class Apollo {
 
     public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
         boolean res = true;
-        Long pid = ProcessHandle.current().pid();
         String cmdline = "";
         for (String s : argv) {
             cmdline = cmdline + s + " ";
@@ -121,7 +121,7 @@ public class Apollo {
         }
         String path = pidPath.isEmpty() ? home + PID_FILE : pidPath;
         try (PrintWriter out = new PrintWriter(path)) {
-            out.println(pid.toString());
+            out.println(RuntimeParams.getProcessId());
         } catch (FileNotFoundException ex) {
             System.err.println("Can not write PID to: "+path);
             res=false;
@@ -159,29 +159,6 @@ public class Apollo {
         UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
 
         updaterCore.init(attachmentFilePath, debug);
-    }
-
-    private void initAppStatusMsg() {
-        AppStatus.setUpdater(new AppStatusUpdater() {
-            @Override
-            public void updateStatus(String status) {
-                runtimeMode.updateAppStatus(status);
-            }
-
-            @Override
-            public void alert(String message) {
-                runtimeMode.alert(message);
-            }
-
-            @Override
-            public void error(String message) {
-                runtimeMode.displayError(message);
-            }
-        });
-    }
-
-    private void launchDesktopApplication() {
-        runtimeMode.launchDesktopApplication();
     }
 
     public static void shutdown() {
@@ -314,9 +291,7 @@ public class Apollo {
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
-            app.initAppStatusMsg();
             app.initCore();
-            app.launchDesktopApplication();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");

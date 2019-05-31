@@ -58,12 +58,9 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
 
-import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -133,10 +130,6 @@ public final class AplCore {
         AplCore.shutdown = true;
     }
 
-    private static void setServerStatus(ServerStatus status, URI wallet) {
-        AplCoreRuntime.getInstance().setServerStatus(status, wallet);
-    }
-
     private static volatile boolean initialized = false;
 
 
@@ -167,7 +160,7 @@ public final class AplCore {
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 AppStatus.getInstance().update("Database initialization...");
-                setServerStatus(ServerStatus.BEFORE_DATABASE, null);
+ //               setServerStatus(ServerStatus.BEFORE_DATABASE, null);
 
 //                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
@@ -182,7 +175,7 @@ public final class AplCore {
                 blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 
                 databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
-                setServerStatus(ServerStatus.AFTER_DATABASE, null);
+//                setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
 
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
@@ -251,7 +244,7 @@ public final class AplCore {
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
-                setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
+ //               setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
 
             }
             catch (final RuntimeException e) {

@@ -35,32 +35,12 @@ public class UserMode implements RuntimeMode {
     }
 
     @Override
-    public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {
-        LOG.info("Server status: {}", status.getMessage());
-    }
-
-
-    @Override
     public void shutdown() {}
 
     @Override
     public void alert(String message) {
         LOG.warn(message);
     }
-
-//    @Override
-//    public void recoverDb() {
-        //simple db removing
-//        try {
-//TODO           Db.tryToDeleteDb();
-//            LOG.info("Db was removed successfully. Please, restart the application!");
-//            System.exit(0);
-//        }
-//        catch (IOException e) {
-//            LOG.error("Cannot delete db", e);
-//            System.exit(1);
-//        }
-//    }
 
     @Override
     public void updateAppStatus(String newStatus) {

@@ -8,7 +8,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import javax.enterprise.inject.spi.CDI;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
@@ -65,10 +63,6 @@ public class AplCoreRuntime {
     
     public static AplCoreRuntime getInstance() {
         return AplCoreRuntimeHolder.INSTANCE;
-    }
-
-    void setServerStatus(ServerStatus status, URI wallet) {
-        runtimeMode.setServerStatus(status, wallet, dirProvider.getLogsDir().toFile());
     }
     
     public void shutdown(){
