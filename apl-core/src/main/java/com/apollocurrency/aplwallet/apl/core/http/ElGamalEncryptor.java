@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 
 /**
@@ -23,9 +24,9 @@ public class ElGamalEncryptor {
     private volatile static boolean threadStarted = false;
     
     public ElGamalEncryptor() {
-        init();
     }
-
+    
+    @PostConstruct
     public final void init() {
       if(!threadStarted){  
         serverKeysGenerator.setDaemon(true);

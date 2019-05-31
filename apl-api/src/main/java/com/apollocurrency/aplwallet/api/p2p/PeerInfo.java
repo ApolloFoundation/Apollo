@@ -54,7 +54,8 @@ public class PeerInfo extends BaseP2PResonse{
     public String announcedAddress; 
     
     /**
-     * Weight of node in some cluster that prioritised forging. See haklllmark.
+     * Weight is used for blockchain downloading, getting more peers and retrieving 
+     * transactions from peers. See Peers.getWeightedPeer or Peers.getAnyPeer
      */
     public Integer weight;
 
@@ -147,22 +148,12 @@ public class PeerInfo extends BaseP2PResonse{
      */
     public Integer blockTime;
     
-    // new Vimana-related request parameters
-    
     /**
      * ID of blockchain. This ID used to distinguish and separate
      * networks with the same application
      * New!
      */    
     public String chainId=null;
-
-    /**
-     * Business - related ID. Could be any Long number.
-     * This is optional parameter and could be used 
-     * for additional filtration of peers.
-     * New!
-     */
-    public Long businessCode=null;
 
     /**
      * PEM-encoded X.509 Certificate of host as String, including
