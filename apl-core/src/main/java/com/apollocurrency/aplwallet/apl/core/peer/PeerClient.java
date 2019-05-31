@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * PeerClient represents requests of P2P subsystem
- *
+ * TODO: move P2P requests here
  * @author alukin@gmail.com
  */
 public class PeerClient {
