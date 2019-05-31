@@ -53,8 +53,8 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_shard_id_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_shard_id_idx");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-            executeUpdateQuery(sourceConnect, "alter table transaction_shard_index drop constraint IF EXISTS fk_transaction_shard_index_block_id");
-            executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_index_shard_1_idx");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_height_transaction_index_idx");
+            executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_transaction_id_height_idx");
         }
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
@@ -92,10 +92,9 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                     "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
-                    "ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS " +
-                            "fk_transaction_shard_index_block_id FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
+                    "CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_height_transaction_index_idx ON transaction_shard_index (height, transaction_index)");
             executeUpdateQuery(sourceConnect,
-                    "CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
+                    "CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
         }
 
         log.debug("Total (with CONSTRAINTS) '{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
@@ -173,7 +172,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             log.trace(sqlSelectBottomBound);
         } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
             sqlToExecuteWithPaging =
-                    "select ID, FULL_HASH, BLOCK_ID, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+                    "select ID, FULL_HASH, HEIGHT, TRANSACTION_INDEX, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
                     "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
@@ -199,8 +198,8 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                 sqlInsertString.append("insert into BLOCK_INDEX (shard_id, block_id, block_height)")
                         .append(" values (").append("?, ?, ?").append(")");
             } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, partial_transaction_hash, block_id)")
-                        .append(" values (").append("?, ?, ?").append(")");
+                sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, partial_transaction_hash, height, transaction_index)")
+                        .append(" values (").append("?, ?, ?, ?").append(")");
             }
             // precompile sql
             if (preparedInsertStatement == null) {

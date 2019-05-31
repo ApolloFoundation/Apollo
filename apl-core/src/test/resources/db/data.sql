@@ -88,11 +88,11 @@ INSERT into PUBLIC.BLOCK_INDEX (shard_id, block_id, block_height) VALUES
 (1, 1, 1),
 (2, 2, 2)
 ;
-INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_hash, block_id) VALUES
-(100,X'cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e' ,3),
-(101,X'2270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d' ,1),
-(102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' ,1),
-(103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' ,1)
+INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_hash, height, transaction_index) VALUES
+(100,X'cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e' ,30, 0),
+(101,X'2270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d' ,1 , 0),
+(102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' ,1 , 1),
+(103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' ,1 , 2)
 ;
 INSERT into PUBLIC.SHARD (shard_id, shard_hash, shard_height, shard_state, zip_hash_crc) VALUES
 (1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 1, 0, null),
@@ -158,7 +158,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (280);
+INSERT into version values (287);
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
