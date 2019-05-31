@@ -198,7 +198,7 @@ public class DesktopSystemTray {
         //addDataRow(statusPanel, "Working offline", "" + propertiesHolder.isOffline());
         addDataRow(statusPanel, "Working offline", "" + "false");        
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
-        addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
+        addDataRow(statusPanel, "Peer port", String.valueOf(Constants.DEFAULT_PEER_PORT));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
         addDataRow(statusPanel, "User folder", String.valueOf(Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).toAbsolutePath()));
 //        addDataRow(statusPanel, "Database URL", dataSource == null ? "unavailable" : dataSource.getUrl());

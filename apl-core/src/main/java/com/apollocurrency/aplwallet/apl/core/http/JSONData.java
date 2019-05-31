@@ -728,7 +728,7 @@ public final class JSONData {
         JSONArray resultsJson = new JSONArray();
         for (PollOptionResult option : results) {
             JSONObject optionJSON = new JSONObject();
-            if (option != null) {
+            if (!option.isUndefined()) {
                 optionJSON.put("result", String.valueOf(option.getResult()));
                 optionJSON.put("weight", String.valueOf(option.getWeight()));
             } else {

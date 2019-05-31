@@ -67,7 +67,7 @@ public class PeerWebSocket {
     private static final int FLAG_COMPRESSED = 1;
 
     /** Our WebSocket message version */
-    private static final int VERSION = 1;
+    private static final int WS_VERSION = 1;
 
     /** Create the WebSocket client */
     private static WebSocketClient peerClient;
@@ -85,7 +85,7 @@ public class PeerWebSocket {
     }
 
     /** Negotiated WebSocket message version */
-    private int version = VERSION;
+    private int version = WS_VERSION;
 
     /** Thread pool for server request processing */
     private static final ExecutorService threadPool = new QueuedThreadPool(
@@ -337,7 +337,7 @@ public class PeerWebSocket {
         lock.lock();
         try {
             ByteBuffer buf = ByteBuffer.wrap(inbuf, off, len);
-            version = Math.min(buf.getInt(), VERSION);
+            version = Math.min(buf.getInt(), WS_VERSION);
             Long requestId = buf.getLong();
             int flags = buf.getInt();
             int length = buf.getInt();

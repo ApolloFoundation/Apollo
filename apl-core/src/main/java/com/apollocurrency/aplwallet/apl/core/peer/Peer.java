@@ -31,7 +31,7 @@ import org.json.simple.JSONStreamAware;
 public interface Peer extends Comparable<Peer> {
 
     enum State {
-        NON_CONNECTED, CONNECTED, DISCONNECTED
+        NON_CONNECTED, CONNECTED, CONNECTED_SECURE, DISCONNECTED
     }
 
     enum Service {
@@ -51,12 +51,22 @@ public interface Peer extends Comparable<Peer> {
             return code;
         }
     }
+    
+    enum TrustLevel{
+        NOT_TRUSTED(0),
+        REGISTERED(1),
+        TRUSTED(2),
+        SYSTEM_TRUSTED(3);
+        
+        private final int code;
 
-    enum BlockchainState {
-        UP_TO_DATE,
-        DOWNLOADING,
-        LIGHT_CLIENT,
-        FORK
+        private TrustLevel(int code) {
+            this.code = code;
+        }
+        
+        public long getCode() {
+            return code;
+        }
     }
 
     boolean providesService(Service service);
@@ -66,7 +76,9 @@ public interface Peer extends Comparable<Peer> {
     String getHost();
 
     int getPort();
-
+    
+    String getHostWithPort();
+    
     String getAnnouncedAddress();
 
     State getState();
@@ -133,6 +145,12 @@ public interface Peer extends Comparable<Peer> {
 
     JSONObject send(JSONStreamAware request, UUID chainId);
 
-    JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect);
-
+    JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize);
+    
+    public void handshake(UUID targetChainId);
+    
+    public boolean isTrusted();
+    
+    public TrustLevel getTrustLevel();
+    
 }

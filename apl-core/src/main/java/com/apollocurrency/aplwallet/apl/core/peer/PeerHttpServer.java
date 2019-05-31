@@ -3,10 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -34,43 +36,78 @@ public class PeerHttpServer {
     
      private static final Logger LOG = getLogger(PeerHttpServer.class);
      
-     static final int MAX_PLATFORM_LENGTH = 30;
-    
-     private PropertiesHolder propertiesHolder;
+     public static final int MAX_PLATFORM_LENGTH = 30;
+     public static final int DEFAULT_PEER_PORT=47874;
+     public static final int DEFAULT_PEER_PORT_TLS=48743;
      boolean shareMyAddress;
-     int myPeerServerPort;
+     private int myPeerServerPort;
+     private final int myPeerServerPortTLS;
+     private final boolean useTLS;
      boolean enablePeerUPnP;    
-     String myPlatform;
-     String myAddress;
-     Server peerServer;
-     UPnP upnp;
+     private final String myPlatform;
+     private String myAddress;
+     private PeerAddress myExtAddress;
+     private final Server peerServer;
+     private final UPnP upnp;
+     private final String host;
+     private final int idleTimeout; 
      private static List<Integer> externalPorts=new ArrayList<>();
      
+    public boolean isShareMyAddress() {
+        return shareMyAddress;
+    }
+
+    public int getMyPeerServerPort() {
+        return myPeerServerPort;
+    }
+
+    public int getMyPeerServerPortTLS() {
+        return myPeerServerPortTLS;
+    }
+
+    public String getMyPlatform() {
+        return myPlatform;
+    }
+
+    public String getMyAddress() {
+        return myAddress;
+    }
+    
+    public PeerAddress getMyExtAddress(){
+        return myExtAddress;
+    }
+
     @Inject
-    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp) {
-        this.propertiesHolder = propertiesHolder;
+    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator) {
         this.upnp = upnp;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
-        myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort");
+        myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort",DEFAULT_PEER_PORT);
+        myPeerServerPortTLS = propertiesHolder.getIntProperty("apl.myPeerServerPortTLS", DEFAULT_PEER_PORT_TLS);
+        useTLS=propertiesHolder.getBooleanProperty("apl.peerUseTLS");
+        host = propertiesHolder.getStringProperty("apl.peerServerHost");
         String platform = propertiesHolder.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
         if (platform.length() > MAX_PLATFORM_LENGTH) {
             platform = platform.substring(0, MAX_PLATFORM_LENGTH);
-        }
-        enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
-        
+        }        
         myPlatform = platform;
+        
+        enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
+        idleTimeout = propertiesHolder.getIntProperty("apl.peerServerIdleTimeout");
+        
+        //get configured external adderes from config. UPnP should be disabled, in other case
+        // UPnP re-writes this
         myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());      
-        Peers.shutdown = false;
+        if(myAddress!=null){
+            myExtAddress = new PeerAddress(propertiesHolder, myAddress);
+        }
         if (shareMyAddress) {
             peerServer = new Server();
-            ServerConnector connector = new ServerConnector(peerServer);
-            final int port = myPeerServerPort;
-            connector.setPort(port);
-            final String host = propertiesHolder.getStringProperty("apl.peerServerHost");
-            connector.setHost(host);
-            connector.setIdleTimeout(propertiesHolder.getIntProperty("apl.peerServerIdleTimeout"));
-            connector.setReuseAddress(true);
-            peerServer.addConnector(connector);
+            
+            conCreator.addHttpConnector(host, myPeerServerPort, peerServer, idleTimeout);
+            if(useTLS){
+                conCreator.addHttpSConnector(host, myPeerServerPort, peerServer, idleTimeout);
+            }
+            
             ServletContextHandler ctxHandler = new ServletContextHandler();
             ctxHandler.setContextPath("/");
             //add Weld listener
@@ -93,35 +130,44 @@ public class PeerHttpServer {
                 ctxHandler.setGzipHandler(gzipHandler);
             }
             peerServer.setHandler(ctxHandler);
-            peerServer.setStopAtShutdown(true);
             
-            ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
-                try {
-                    if (enablePeerUPnP) {
-                        if(!upnp.isInited()){
-                            upnp.init();
-                        }
-                        Connector[] peerConnectors = peerServer.getConnectors();
-                        for (Connector peerConnector : peerConnectors) {
-                            if (peerConnector instanceof ServerConnector) {
-                                externalPorts.add(upnp.addPort(((ServerConnector) peerConnector).getPort(),"Peer2Peer"));
-                            }
-                        }
-                        if(!externalPorts.isEmpty()){
-                            myPeerServerPort=externalPorts.get(0);
+            if (enablePeerUPnP && upnp.isAvailable()) {
+                Connector[] peerConnectors = peerServer.getConnectors();
+                for (Connector peerConnector : peerConnectors) {
+                    if (peerConnector instanceof ServerConnector) {
+                        int port = upnp.addPort(((ServerConnector) peerConnector).getPort(), "Peer2Peer");
+                        if(port>0){
+                          externalPorts.add(port);
                         }
                     }
-                    peerServer.start();
-                    LOG.info("Started peer networking server at " + host + ":" + port);
-                } catch (Exception e) {
-                    LOG.error("Failed to start peer networking server", e);
-                    throw new RuntimeException(e.toString(), e);
                 }
-            }, true);
+                //TODO: check
+                if (!externalPorts.isEmpty()) {
+                    myPeerServerPort = externalPorts.get(0);
+                    myAddress = upnp.getExternalAddress().getHostAddress();
+                    myExtAddress=new PeerAddress(propertiesHolder, myAddress);
+                }
+            }           
+            
+            peerServer.setStopAtShutdown(true);
+            
+
         } else {
             peerServer = null;
             LOG.info("shareMyAddress is disabled, will not start peer networking server");
         }
+    }
+    
+    public void start(){
+               ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
+                try {
+                    peerServer.start();
+                    LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                } catch (Exception e) {
+                    LOG.error("Failed to start peer networking server", e);
+                    throw new RuntimeException(e.toString(), e);
+                }
+            }, true);     
     }
     
     public void shutdown(){
@@ -166,4 +212,8 @@ public class PeerHttpServer {
         }
         return res;
     }    
+
+    public InetAddress getExternalAddress() {
+        return upnp.getExternalAddress();
+    }
 }

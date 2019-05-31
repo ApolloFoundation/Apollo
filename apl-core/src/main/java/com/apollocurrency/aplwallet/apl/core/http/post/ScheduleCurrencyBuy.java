@@ -130,7 +130,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                         }
                     }
                 }
-                if (API.checkPassword(req)) {
+                if (apw.checkPassword(req)) {
                     LOG.debug("Scheduling transaction " + transaction.getStringId());
                     TransactionScheduler.schedule(filter, transaction);
                     response.put("scheduled", true);

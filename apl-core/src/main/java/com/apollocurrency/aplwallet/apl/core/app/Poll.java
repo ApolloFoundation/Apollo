@@ -316,7 +316,6 @@ public final class Poll extends AbstractPoll {
         } else {
             return countResults(voteWeighting);
         }
-
     }
 
     public List<PollOptionResult> getResults() {

@@ -63,8 +63,6 @@ public class BlockchainImpl implements Blockchain {
     private BlockIndexDao blockIndexDao;
     private DatabaseManager databaseManager;
 
-    public BlockchainImpl() {
-    }
 
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
@@ -164,12 +162,18 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
-        return blockDao.loadBlock(con, rs, loadTransactions);
+        Block block = blockDao.loadBlock(con, rs);
+        if (loadTransactions) {
+            List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
+            block.setTransactions(blockTransactions);
+        }
+        return block;
     }
 
     @Override
     public void saveBlock(Connection con, Block block) {
         blockDao.saveBlock(con, block);
+        transactionDao.saveTransactions(con, block.getTransactions());
     }
 
     @Override
@@ -214,9 +218,9 @@ public class BlockchainImpl implements Blockchain {
 //                return result;
 //            }
 //        }
-        BlockIndex blockIndex = blockIndexDao.getByBlockId(blockId);
-        if (blockIndex != null) {
-            result.addAll(blockIndexDao.getBlockIdsAfter(blockIndex.getBlockHeight(), limit));
+        Integer height = blockIndexDao.getHeight(blockId);
+        if (height != null) {
+            result.addAll(blockIndexDao.getBlockIdsAfter(height, limit));
         }
         long lastBlockId = blockId;
         int idsRemaining = limit;
@@ -224,9 +228,25 @@ public class BlockchainImpl implements Blockchain {
             lastBlockId = result.get(result.size() - 1);
             idsRemaining -= result.size();
         }
-        List<Long> remainingIds = blockDao.getBlockIdsAfter(lastBlockId, idsRemaining);
-        result.addAll(remainingIds);
+        Integer lastBlockHeight = getBlockHeight(lastBlockId);
+        if (idsRemaining > 0 && lastBlockHeight != null) {
+            List<Long> remainingIds = blockDao.getBlockIdsAfter(lastBlockHeight, idsRemaining);
+            result.addAll(remainingIds);
+        }
         return result;
+    }
+
+
+
+    private Integer getBlockHeight(long blockId) {
+        Integer height = blockIndexDao.getHeight(blockId);
+        if (height == null) {
+            Block block = blockDao.findBlock(blockId, databaseManager.getDataSource());
+            if (block != null) {
+                height = block.getHeight();
+            }
+        }
+        return height;
     }
 
     @Override
@@ -243,19 +263,23 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result = new ArrayList<>();
         TransactionalDataSource dataSource;
-        long fromBlockId = blockId;
-        int prevSize;
-        do {
-            dataSource = getDataSourceWithSharding(fromBlockId); //should return datasource, where such block exist or default datasource
-            prevSize = result.size();
-            blockDao.getBlocksAfter(fromBlockId, blockIdList, result, dataSource, prevSize);
-            if (result.size() - 1 < 0) {
-                fromBlockId = blockId;
-            } else {
-                fromBlockId = blockIdList.get(result.size() - 1);
-            }
-        } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && getDataSourceWithSharding(fromBlockId) != dataSource);
-
+        Integer fromBlockHeight = getBlockHeight(blockId);
+        if (fromBlockHeight != null) {
+            int prevSize;
+            do {
+                dataSource = getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
+                prevSize = result.size();
+                blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, dataSource, prevSize);
+                for (int i = prevSize; i < result.size(); i++) {
+                    Block block = result.get(i);
+                    List<Transaction> blockTransactions = transactionDao.findBlockTransactions(block.getId(), dataSource);
+                    block.setTransactions(blockTransactions);
+                }
+                if (result.size() - 1 >= 0) {
+                    fromBlockHeight = getBlockHeight(blockIdList.get(result.size() - 1));
+                }
+            } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
+        }
         return result;
     }
 
@@ -268,7 +292,11 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
+        BlockIndex blockIndex = blockIndexDao.getByBlockHeight(height);
+        if (blockIndex != null) {
+            return blockIndex.getBlockId();
+        }
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         return blockDao.findBlockIdAtHeight(height, dataSource);
     }
 
@@ -286,14 +314,26 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    public Block getECBlock(int timestamp) {
+    @Transactional(readOnly = true)
+    public Block getShardInitialBlock() {
+        return getBlockAtHeight(getGenesisHeight());
+    }
+
+    private int getGenesisHeight() {
+        Integer lastShardHeight = blockIndexDao.getLastHeight();
+        return lastShardHeight != null ? lastShardHeight + 1 : 0;
+    }
+
+    @Override
+    public EcBlockData getECBlock(int timestamp) {
         Block block = getLastBlock(timestamp);
+        Block shardInitialBlock = getShardInitialBlock();
         if (block == null) {
-            return getBlockAtHeight(0);
+            return new EcBlockData(shardInitialBlock.getId(), shardInitialBlock.getHeight());
         }
-        int height = Math.max(block.getHeight() - 720, 0);
-        TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
-        return blockDao.findBlockAtHeight(height, dataSource);
+        int height = Math.max(block.getHeight() - 720, shardInitialBlock.getHeight());
+        Block ecBlock = blockDao.findBlockAtHeight(height, databaseManager.getDataSource());
+        return new EcBlockData(ecBlock.getId(), ecBlock.getHeight());
     }
 
     @Override
@@ -365,7 +405,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash) {
-        return transactionDao.hasTransactionByFullHash(fullHash, databaseManager.getDataSource()) || hasShardTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+        return hasTransactionByFullHash(fullHash, Integer.MAX_VALUE);
     }
 
     private boolean hasShardTransactionByFullHash(byte[] fullHash, int height) {
