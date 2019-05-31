@@ -743,7 +743,7 @@ public class AplDbVersion extends DbVersion {
             case 276:
                 apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_FF");
             case 277:
-                apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction (block_id)");
             case 278:
                 apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
             case 279:
