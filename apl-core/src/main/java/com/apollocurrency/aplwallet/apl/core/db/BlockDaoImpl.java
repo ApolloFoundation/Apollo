@@ -624,10 +624,8 @@ public class BlockDaoImpl implements BlockDao {
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             try {
-                stmt.executeUpdate("SET REFERENTIAL_INTEGRITY FALSE");
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-                stmt.executeUpdate("SET REFERENTIAL_INTEGRITY TRUE");
             }
             catch (SQLException e) {
                 dataSource.rollback(false);

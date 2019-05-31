@@ -1089,7 +1089,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            genesisBlockId = blockchain.getShardIntialBlock().getId();
+            genesisBlockId = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
             return;
         }

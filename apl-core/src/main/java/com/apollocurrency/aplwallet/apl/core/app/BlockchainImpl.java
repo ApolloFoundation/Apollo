@@ -310,7 +310,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     @Transactional(readOnly = true)
-    public Block getShardIntialBlock() {
+    public Block getShardInitialBlock() {
         return getBlockAtHeight(getGenesisHeight());
     }
 
@@ -322,7 +322,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public EcBlockData getECBlock(int timestamp) {
         Block block = getLastBlock(timestamp);
-        Block shardInitialBlock = getShardIntialBlock();
+        Block shardInitialBlock = getShardInitialBlock();
         if (block == null) {
             return new EcBlockData(shardInitialBlock.getId(), shardInitialBlock.getHeight());
         }

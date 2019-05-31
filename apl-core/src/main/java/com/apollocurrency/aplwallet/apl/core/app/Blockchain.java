@@ -67,7 +67,7 @@ public interface Blockchain {
     int getBlockCount(long accountId);
 
 
-    Block getShardIntialBlock();
+    Block getShardInitialBlock();
 
 //    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 

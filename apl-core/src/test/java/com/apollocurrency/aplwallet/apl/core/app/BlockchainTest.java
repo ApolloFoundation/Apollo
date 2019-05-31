@@ -500,7 +500,7 @@ class BlockchainTest {
     void testGetShardInitialBlock() {
         blockchain.setLastBlock(btd.BLOCK_12);
 
-        Block shardIntialBlock = blockchain.getShardIntialBlock();
+        Block shardIntialBlock = blockchain.getShardInitialBlock();
 
         assertEquals(btd.BLOCK_10, shardIntialBlock);
     }
