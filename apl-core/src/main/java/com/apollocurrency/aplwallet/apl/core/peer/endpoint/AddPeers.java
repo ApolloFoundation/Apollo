@@ -18,8 +18,11 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -27,17 +30,17 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 @Vetoed
-final class AddPeers extends PeerRequestHandler {
+public final class AddPeers extends PeerRequestHandler {
 
     public AddPeers() {}
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         final JSONArray peers = (JSONArray)request.get("peers");
         if (peers != null && Peers.getMorePeers && !Peers.hasTooManyKnownPeers()) {
             final JSONArray services = (JSONArray)request.get("services");
             final boolean setServices = (services != null && services.size() == peers.size());
-            Peers.peersService.submit(() -> {
+            Peers.peersExecutorService.submit(() -> {
                 for (int i=0; i<peers.size(); i++) {
                     String announcedAddress = (String)peers.get(i);
                     PeerImpl newPeer = Peers.findOrCreatePeer(announcedAddress, true);
@@ -56,7 +59,7 @@ final class AddPeers extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return false;
     }
 

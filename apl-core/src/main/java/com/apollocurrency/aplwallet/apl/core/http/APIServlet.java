@@ -33,9 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -50,6 +48,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -57,18 +56,25 @@ import javax.servlet.http.HttpServletResponse;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
+    
+    private final PropertiesHolder propertiesHolder; 
+    
+    private final boolean enforcePost;
+    public static Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
+    public static Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
 
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
-    private static final boolean enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
-    public static final Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
-    public static final Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-//    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private final Blockchain blockchain;//
+    private final GlobalSync globalSync; // = CDI.current().select(GlobalSync.class).get();
+    private final AdminPasswordVerifier apw; // =  CDI.current().select(AdminPasswordVerifier.class).get();
 
-    static {
+    @Inject
+    public APIServlet() {
+        this.propertiesHolder=CDI.current().select(PropertiesHolder.class).get();
+        this.blockchain= CDI.current().select(BlockchainImpl.class).get();
+        this.globalSync=CDI.current().select(GlobalSync.class).get();
+        this.apw=CDI.current().select(AdminPasswordVerifier.class).get();
 
+        
         Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
         Map<String, AbstractAPIRequestHandler> disabledMap = new HashMap<>();
 
@@ -103,10 +109,15 @@ public final class APIServlet extends HttpServlet {
         if (!API.disabledAPITags.isEmpty()) {
             LOG.info("Disabled APITags: " + API.disabledAPITags);
         }
-
         apiRequestHandlers = Collections.unmodifiableMap(map);
         disabledRequestHandlers = disabledMap.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(disabledMap);
+        enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     }
+    
+    @Override
+    public void init(){
+        LOG.debug("API servlet init");
+    }       
 
     public static AbstractAPIRequestHandler getAPIRequestHandler(String requestType) {
         return apiRequestHandlers.get(requestType);
@@ -166,7 +177,7 @@ public final class APIServlet extends HttpServlet {
             }
 
             if (apiRequestHandler.requirePassword()) {
-                API.verifyPassword(req);
+                apw.verifyPassword(req);
             }
             String accountName2FA = apiRequestHandler.vaultAccountName();
             if (apiRequestHandler.is2FAProtected()) {

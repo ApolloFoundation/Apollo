@@ -309,7 +309,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 request.put("exclude", exclude);
                 request.put("chainId", blockchainConfig.getChain().getChainId());
                 JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),
-                        10 * 1024 * 1024, false);
+                         Peers.MAX_RESPONSE_SIZE);
                 if (response == null) {
                     return;
                 }

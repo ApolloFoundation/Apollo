@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -50,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.peer.FileDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -86,7 +86,8 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
-
+    private API apiServer;
+    
     public AplCore() {
     }
 
@@ -115,7 +116,7 @@ public final class AplCore {
     public void shutdown() {
         LOG.info("Shutting down...");
         AddOns.shutdown();
-        API.shutdown();
+        apiServer.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
         if (blockchainProcessor != null) {
@@ -161,7 +162,8 @@ public final class AplCore {
                 }                
 
                 //try to start API as early as possible
-                API.init();
+                apiServer = CDI.current().select(API.class).get();
+                apiServer.start();
 
 //                CDI.current().select(NtpTime.class).get().start();
 
@@ -183,6 +185,7 @@ public final class AplCore {
                 blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 
                 databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
+
                 setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
 
@@ -255,7 +258,10 @@ public final class AplCore {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
                 setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
-
+                //File download debug
+//                FileDownloader fdl = new FileDownloader("testFile");
+//                fdl.prepareForDownloading();
+//                fdl.download();
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
