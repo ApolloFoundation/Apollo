@@ -95,7 +95,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
         }
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

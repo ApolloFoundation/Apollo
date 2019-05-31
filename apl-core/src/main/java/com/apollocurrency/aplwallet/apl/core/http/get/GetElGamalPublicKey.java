@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import javax.servlet.http.HttpServletRequest;
 
 
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -27,8 +26,8 @@ public final class GetElGamalPublicKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         
         JSONObject response = new JSONObject();
-        response.put("ElGamalX", API.getServerElGamalPublicKey().getPrivateKeyX().toString(16));
-        response.put("ElGamalY", API.getServerElGamalPublicKey().getPrivateKeyY().toString(16));
+        response.put("ElGamalX", elGamal.getServerElGamalPublicKey().getPrivateKeyX().toString(16));
+        response.put("ElGamalY", elGamal.getServerElGamalPublicKey().getPrivateKeyY().toString(16));
         return response;
     }
 }

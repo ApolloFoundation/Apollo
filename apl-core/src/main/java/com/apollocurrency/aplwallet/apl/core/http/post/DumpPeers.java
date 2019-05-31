@@ -64,7 +64,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         int weight =
                 ParameterParser.getInt(req, "weight", 0, (int) CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL(),
                 false);
-        boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && API.checkPassword(req);
+        boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && apw.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();
             Peers.getAllPeers().forEach(peer -> connects.add(() -> {

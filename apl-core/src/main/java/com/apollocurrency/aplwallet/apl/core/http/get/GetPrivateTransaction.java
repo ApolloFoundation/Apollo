@@ -82,7 +82,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
                 response = JSONData.transaction(transaction, false, false);
             }
         }
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

@@ -79,6 +79,7 @@
         <apache-commons-io.version>1.4</apache-commons-io.version>
         <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <apache-commons-net.version>3.6</apache-commons-net.version>
+        <apache-commons-math3.version>3.6.1</apache-commons-math3.version>
 
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
@@ -124,6 +125,7 @@
          1. prod: profile for release with build of all zips and sha-256 sums
          2. dev:  profile for development, no extra build artefacts, faster builds for developers
     -->
+
     <profiles>
         <!-- The Configuration of the development profile -->
         <profile>
@@ -453,6 +455,11 @@
                 <artifactId>commons-codec</artifactId>
                 <version>${apache-commons-codec.version}</version>
             </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>${apache-commons-math3.version}</version>
+        </dependency>            
             <!--JDBI libs-->
             <dependency>
                 <groupId>com.zaxxer</groupId>

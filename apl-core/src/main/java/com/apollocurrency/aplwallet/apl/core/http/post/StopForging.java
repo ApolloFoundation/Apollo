@@ -49,7 +49,7 @@ public final class StopForging extends AbstractAPIRequestHandler {
             response.put("foundAndStopped", generator != null);
             response.put("forgersCount", Generator.getGeneratorCount());
         } else {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
             int count = Generator.stopForging();
             response.put("stopped", count);
         }

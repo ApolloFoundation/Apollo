@@ -18,9 +18,10 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -31,13 +32,13 @@ import java.util.SortedSet;
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-final class GetUnconfirmedTransactions extends PeerRequestHandler {
+public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     public GetUnconfirmedTransactions() {}
 
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
         List<String> exclude = (List<String>)request.get("exclude");
         if (exclude == null) {
@@ -59,7 +60,7 @@ final class GetUnconfirmedTransactions extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return true;
     }
 

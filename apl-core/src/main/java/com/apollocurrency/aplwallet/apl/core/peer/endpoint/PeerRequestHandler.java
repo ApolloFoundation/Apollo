@@ -17,7 +17,7 @@
 /*
  * Copyright © 2018 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -25,6 +25,10 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -33,11 +37,11 @@ import org.json.simple.JSONStreamAware;
  *
  * @author al
  */
-abstract class PeerRequestHandler {
+public abstract class PeerRequestHandler {
     
-    abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
+    public abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
 
-    abstract boolean rejectWhileDownloading();
+    public abstract boolean rejectWhileDownloading();
 
     protected boolean isChainIdProtected() {
         return true;
@@ -45,7 +49,13 @@ abstract class PeerRequestHandler {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private TransactionProcessor transactionProcessor;
-
+    protected ObjectMapper mapper = new ObjectMapper();
+    
+    public PeerRequestHandler(){
+        mapper.registerModule(new JsonOrgModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+    
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) {
             blockchain = CDI.current().select(BlockchainImpl.class).get();

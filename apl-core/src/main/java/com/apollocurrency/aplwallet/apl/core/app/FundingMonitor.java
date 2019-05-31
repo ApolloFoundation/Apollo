@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
@@ -85,6 +86,7 @@ public class FundingMonitor {
     private static PropertiesHolder propertiesLoader;
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
+    private static FeeCalculator feeCalculator = new FeeCalculator();
     private static TransactionProcessor transactionProcessor;
     private static GlobalSync globalSync; // prevent fail on node shutdown
     /** Maximum number of monitors */
@@ -668,8 +670,12 @@ public class FundingMonitor {
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                     monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
+
             builder.recipientId(monitoredAccount.accountId);
-            Transaction transaction = builder.build(monitor.keySeed);
+            Transaction transaction = builder.build(null);
+            long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
+            transaction.setFeeATM(minimumFeeATM);
+            transaction.sign(monitor.keySeed);
             if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -705,7 +711,9 @@ public class FundingMonitor {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
-            Transaction transaction = builder.build(monitor.keySeed);
+            Transaction transaction = builder.build(null);
+            transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
+            transaction.sign(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -741,7 +749,9 @@ public class FundingMonitor {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                     0, 0, (short)1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
-            Transaction transaction = builder.build(monitor.keySeed);
+            Transaction transaction = builder.build(null);
+            transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
+            transaction.sign(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));

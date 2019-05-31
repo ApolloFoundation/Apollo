@@ -34,6 +34,11 @@ public interface BlockIndexDao {
     @SqlQuery("SELECT shard_id FROM shard where shard_height > :blockHeight ORDER BY shard_height LIMIT 1")
     Long getShardIdByBlockHeight(@Bind("blockHeight") int blockHeight);
 
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT block_height FROM block_index where block_id = :id")
+    Integer getHeight(@Bind("id") long id);
+
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM block_index order by block_height")
     @RegisterRowMapper(BlockIndexRowMapper.class)

@@ -18,10 +18,11 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
@@ -39,9 +40,9 @@ public class GetTransactions extends PeerRequestHandler {
     public GetTransactions() {}
 
     @Override
-    JSONStreamAware processRequest(JSONObject request, Peer peer) {
+    public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         if (!propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
-            return PeerServlet.UNSUPPORTED_REQUEST_TYPE;
+            return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
         }
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();
@@ -66,7 +67,7 @@ public class GetTransactions extends PeerRequestHandler {
     }
 
     @Override
-    boolean rejectWhileDownloading() {
+    public boolean rejectWhileDownloading() {
         return true;
     }
 }

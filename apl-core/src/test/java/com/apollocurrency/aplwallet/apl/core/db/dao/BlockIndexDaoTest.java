@@ -207,4 +207,18 @@ public class BlockIndexDaoTest {
         assertEquals(1, deleteCount);
         assertEquals(Arrays.asList( BLOCK_INDEX_2, BLOCK_INDEX_0), blockIndexDao.getAllBlockIndex());
     }
+
+    @Test
+    void testGetBlockIdsAfterHeight() {
+        List<Long> blockIdsAfter = blockIndexDao.getBlockIdsAfter(BLOCK_INDEX_1.getBlockHeight(), 2);
+
+        assertEquals(List.of(BLOCK_INDEX_2.getBlockId(), BLOCK_INDEX_0.getBlockId()), blockIdsAfter);
+    }
+
+    @Test
+    void testGetHeight() {
+        Integer height = blockIndexDao.getHeight(BLOCK_INDEX_0.getBlockId());
+
+        assertEquals(BLOCK_INDEX_0.getBlockHeight(), height);
+    }
 }

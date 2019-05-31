@@ -26,6 +26,7 @@ public class RestEasyApplication extends Application  {
         set.add(ServerInfoController.class);
         set.add(KeyStoreController.class);
         set.add(NetworkController.class);
+        set.add(DebugController.class);
         // Transfer Eth, doesn't use yet.
 //        set.add(WalletEthController.class);
         set.add(DexController.class);

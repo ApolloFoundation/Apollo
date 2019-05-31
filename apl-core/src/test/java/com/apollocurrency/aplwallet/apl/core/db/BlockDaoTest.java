@@ -25,15 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -41,25 +39,20 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
-
 @EnableWeld
 class BlockDaoTest {
 
@@ -68,24 +61,18 @@ class BlockDaoTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionDaoImpl.class, BlockchainImpl.class,
-            JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class, TransactionDaoImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            EpochTime.class)
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+    public WeldInitiator weld = WeldInitiator.from()
+            .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
-    @Inject
     private BlockDao blockDao;
-    @Inject
     private TransactionDaoImpl transactionDao;
     private BlockTestData td;
     private TransactionTestData txd;
@@ -103,6 +90,8 @@ class BlockDaoTest {
     void setUp() {
         td = new BlockTestData();
         txd = new TransactionTestData();
+        blockDao = new BlockDaoImpl(extension.getDatabaseManger());
+        transactionDao = new TransactionDaoImpl(extension.getDatabaseManger());
     }
 
 
@@ -240,7 +229,7 @@ class BlockDaoTest {
         List<Long> targetBlockIds = List.of(BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID, BLOCK_8_ID, BLOCK_9_ID);
         ArrayList<Block> result = new ArrayList<>();
 
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_3.getId(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_3.getHeight(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
 
         assertEquals(List.of(td.BLOCK_4, td.BLOCK_5, td.BLOCK_6, td.BLOCK_7, td.BLOCK_8, td.BLOCK_9), blocksAfter);
     }
@@ -250,7 +239,7 @@ class BlockDaoTest {
         List<Long> targetBlockIds = List.of(BLOCK_2_ID, BLOCK_3_ID, BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID);
         ArrayList<Block> result = new ArrayList<>();
 
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_5.getId(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 4);
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_5.getHeight(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 4);
 
         assertEquals(List.of(td.BLOCK_6, td.BLOCK_7), blocksAfter);
     }
@@ -260,14 +249,14 @@ class BlockDaoTest {
         List<Long> targetBlockIds = List.of(BLOCK_8_ID, BLOCK_9_ID, BLOCK_11_ID);
         ArrayList<Block> result = new ArrayList<>();
 
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_7.getId(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_7.getHeight(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
 
         assertEquals(List.of(td.BLOCK_8, td.BLOCK_9), blocksAfter);
     }
 
     @Test
     void testGetBlockIdsAfter() {
-        List<Long> ids = blockDao.getBlockIdsAfter(td.BLOCK_8.getId(), 3);
+        List<Long> ids = blockDao.getBlockIdsAfter(td.BLOCK_8.getHeight(), 3);
 
         assertEquals(List.of(BLOCK_9_ID, BLOCK_10_ID, BLOCK_11_ID), ids);
     }
