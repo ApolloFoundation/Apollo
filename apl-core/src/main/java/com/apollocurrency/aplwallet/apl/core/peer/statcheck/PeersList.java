@@ -24,9 +24,9 @@ public class PeersList {
     /**
      * get random peers or all if number is bigger then count of peers
      * @param number number of peers to get
-     * @return 
+     * @return set of peers that have requested file
      */
-    public Set<HasHashSum> getPeers(int number){        
+    public Set<HasHashSum> getPeersWithRequestedFile(int number){        
        Set<HasHashSum> res = new HashSet<>();
        Set<Integer> idxSet = new HashSet<>();
        if(number>=allPeers.size()){
@@ -38,7 +38,7 @@ public class PeersList {
          }
          idxSet.forEach((i) -> {
              HasHashSum p = allPeers.get(i);
-             if(p.retreiveHash()){
+             if(p.retreiveHash()!=null){
                res.add(allPeers.get(i));
              }
          });
@@ -58,7 +58,7 @@ public class PeersList {
         if(n<min){
             n=min;
         }
-        Set<HasHashSum> is = getPeers(n.intValue());
+        Set<HasHashSum> is = getPeersWithRequestedFile(n.intValue());
         return is;
     }
 }

@@ -3,12 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileInfoResponse;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import java.math.BigInteger;
 import org.json.simple.JSONObject;
 
 /**
@@ -19,7 +18,7 @@ import org.json.simple.JSONObject;
 public class PeerClient {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Peer peer;
+    private Peer peer;
     
 
     public PeerClient(Peer peer) {
@@ -31,17 +30,32 @@ public class PeerClient {
     public Peer gePeer(){
         return peer;
     }
-    public BigInteger retreiveHash(String entityId) {
+    
+    public boolean checkConnection(){
+        boolean res = false;
+        String announcedAddress = peer.getAnnouncedAddress();
+        Peer p = Peers.findOrCreatePeer(announcedAddress, true);
+        if(p!=null){
+            peer=p;
+            res=true;
+        }
+        return res;
+    }
+    
+    public FileDownloadInfo getFileInfo(String entityId){
+        if(!checkConnection()){
+            return null;
+        }        
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp = peer.send(req, peer.getChainId());
-        FileInfoResponse res = mapper.convertValue(resp, FileInfoResponse.class);
+        FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
         if (res.errorCode != null && res.errorCode != 0) {
             return null;
         }
-        byte[] hash = Convert.parseHexString(res.fileInfo.hash);
-        return new BigInteger(hash);
+        return res.downloadInfo;
     }
+    
 }

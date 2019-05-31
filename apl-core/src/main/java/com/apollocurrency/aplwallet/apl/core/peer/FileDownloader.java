@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerFileInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
@@ -53,13 +54,14 @@ public class FileDownloader {
     }
 
     
-    public PeerValidityDecisionMaker.Decision prepareForDownloading(){
-        PeerValidityDecisionMaker.Decision res;
+    public FileDownloadDecision prepareForDownloading(){
+        FileDownloadDecision res;
         Set<Peer> allPeers = getAllAvailablePeers();
         PeersList pl = new PeersList();
-//        allPeers.forEach((pi) -> {
-//            pl.add(pi);
-//        });
+        allPeers.forEach((pi) -> {
+            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
+            pl.add(pfi);
+        });
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
         res=pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();

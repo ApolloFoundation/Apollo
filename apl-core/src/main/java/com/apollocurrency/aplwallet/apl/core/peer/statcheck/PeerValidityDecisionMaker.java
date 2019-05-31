@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
 import java.math.BigInteger;
@@ -17,13 +20,6 @@ public class PeerValidityDecisionMaker {
     public final static int MIN_PEERS=20;
     public final static double MIN_PEERS_PRCENT=10.0;
     
-    public enum Decision{
-        AbsOK, //network is 100% consistent
-        OK,  //network is OK but contains some small number of bad hosts
-        Risky, // network contains significant number of bad hosts but still usable
-        NeedsInvestigation, //network contains critical number of bad host and may be unusable
-        Bad // network is unusable
-    }
     
     static int peersFirst=20;
     static int peersAddedLater=30;
@@ -128,7 +124,7 @@ public class PeerValidityDecisionMaker {
      * @return true is network is usable;
      */
     public boolean isNetworkUsable(){
-        Decision d = calcualteNetworkState();
+        FileDownloadDecision d = calcualteNetworkState();
         boolean usable = false;
         switch(d){
             case AbsOK: usable = true;
@@ -145,38 +141,38 @@ public class PeerValidityDecisionMaker {
      * Calculates usability of network by sampling
      * @return Decision from AbsOK to Bad
      */
-    public Decision calcualteNetworkState(){
+    public FileDownloadDecision calcualteNetworkState(){
          stats.crlear();
          calculateInitialProb(peersFirst);
          Map.Entry<BigInteger, ProbabInfo> mp = getMostProbable();
          //check most probable hash higher value
          double pMin=mp.getValue().frequency-mp.getValue().confidenceEpsilon;
          if(pMin>=trasholdAbsOK){
-             return Decision.AbsOK;
+             return FileDownloadDecision.AbsOK;
          }
          calculateByAddingPeers(peersAddedLater);
          Map.Entry<BigInteger, ProbabInfo> mp2 = getMostProbable();
          double pMin2=mp2.getValue().frequency-mp2.getValue().confidenceEpsilon;
          if(mp2.getKey()!=mp.getKey()){ //second portion of peers gives differrent most probable hash
              if(pMin2>trasholdInvestigation){
-                return Decision.NeedsInvestigation; 
+                return FileDownloadDecision.NeedsInvestigation; 
              }else{
-                return Decision.Bad;
+                return FileDownloadDecision.Bad;
              }
          }
          //second portion of peers gives the same most probable hash
          if(pMin2>=trasholdAbsOK){
-             return Decision.AbsOK;
+             return FileDownloadDecision.AbsOK;
          }
          if(pMin2>=trasholdOK){
-             return Decision.OK;
+             return FileDownloadDecision.OK;
          }
          if(pMin2>=trasholdRisky){
-             return Decision.Risky;
+             return FileDownloadDecision.Risky;
          }
          if(pMin2>=trasholdInvestigation){
-             return Decision.NeedsInvestigation;
+             return FileDownloadDecision.NeedsInvestigation;
          }
-         return Decision.Bad;
+         return FileDownloadDecision.Bad;
     }
 }

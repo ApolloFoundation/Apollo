@@ -31,7 +31,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetUnconfirmedTransac
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlockIds;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlocks;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
@@ -111,9 +110,6 @@ public final class PeerServlet extends WebSocketServlet {
                 break;
             case "processTransactions":
                 res = new ProcessTransactions();
-                break;
-            case "getFileInfo":
-                res = new GetFileInfo();
                 break;
             case "getFileDownloadInfo":
                 res = new GetFileDownloadInfo();

@@ -3,21 +3,21 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import java.math.BigInteger;
 
 /**
- *
+ * Download File info together with PeerClient and Peer
  * @author alukin@gmail.com
  */
 public class PeerFileInfo implements HasHashSum {
 
     private BigInteger hash;
-    private String peerAddress;
     private final PeerClient peerClient;
     private final String fileId;
-
+    private FileDownloadInfo fdi;
+    
     public PeerFileInfo(PeerClient peerClient, String fileId) {
         this.peerClient= peerClient;
         this.fileId = fileId;
@@ -30,14 +30,22 @@ public class PeerFileInfo implements HasHashSum {
 
     @Override
     public String getId() {
-        return peerAddress;
+        return peerClient.gePeer().getAnnouncedAddress();
+    }
+
+    public FileDownloadInfo getFdi() {
+        return fdi;
     }
 
 
     @Override
-    public boolean retreiveHash() {
-       hash = peerClient.retreiveHash(fileId);
-       return hash!=null;
+    public BigInteger retreiveHash() {
+       fdi = peerClient.getFileInfo(fileId);
+       if(fdi==null){
+           return null;
+       }
+       hash=new BigInteger(fdi.fileInfo.hash); 
+       return hash;
     }
 
 }
