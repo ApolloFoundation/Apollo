@@ -310,10 +310,7 @@ public final class API {
 
                 try {
 
-                    if (enableAPIUPnP) {
-                        if(!upnp.isInited()){
-                            upnp.init();
-                        }
+                    if (enableAPIUPnP && upnp.isAvailable()) {
                         Connector[] apiConnectors = apiServer.getConnectors();
                         for (Connector apiConnector : apiConnectors) {
                             if (apiConnector instanceof ServerConnector)
@@ -347,10 +344,8 @@ public final class API {
         if (apiServer != null) {
             try {
                 apiServer.stop();
-                if (enableAPIUPnP) {
-                    for (int extPort:externalPorts) {
-                            upnp.deletePort(extPort);
-                    }
+                for (int extPort:externalPorts) {
+                       upnp.deletePort(extPort);
                 }
             } catch (Exception e) {
                 LOG.info("Failed to stop API server", e);
