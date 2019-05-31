@@ -29,20 +29,25 @@ public class PeersList {
     public Set<HasHashSum> getPeersWithRequestedFile(int number){        
        Set<HasHashSum> res = new HashSet<>();
        Set<Integer> idxSet = new HashSet<>();
-       if(number>=allPeers.size()){
-           res.addAll(allPeers);
+       if(number>allPeers.size()){
+           for(int i=0; i<allPeers.size(); i++){
+               idxSet.add(i);
+           }
        }else{
          while(idxSet.size()<number){
              int i = (int)Math.round(Math.random()*(allPeers.size()-1));
              idxSet.add(i);
          }
-         idxSet.forEach((i) -> {
+       }
+       //well, now we have to get hash of entity from peers
+       //but there coud be not enough of them
+       //TODO: what to do if we have less? Just request bigger numbers?
+       idxSet.forEach((i) -> {
              HasHashSum p = allPeers.get(i);
              if(p.retreiveHash()!=null){
                res.add(allPeers.get(i));
              }
-         });
-       }
+       });       
        return res;
     }
     

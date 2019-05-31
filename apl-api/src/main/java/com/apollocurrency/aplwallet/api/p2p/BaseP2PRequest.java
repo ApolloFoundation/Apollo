@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.api.p2p;
  *
  * @author alukin@gmail.com
  */
-public class FileDownloadInfoRequest  extends BaseP2PRequest{
-    public String fileId;
-    public boolean full;
+public class BaseP2PRequest {
+    public Integer protocol = 1;
 }

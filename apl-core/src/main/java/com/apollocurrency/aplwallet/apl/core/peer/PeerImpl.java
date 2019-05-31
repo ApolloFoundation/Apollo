@@ -508,7 +508,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) {
-        return send(request, chainId, Peers.MAX_RESPONSE_SIZE, false);
+        return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
     }
     
 //    //TODO: implement
@@ -523,7 +523,7 @@ public final class PeerImpl implements Peer {
 //    }
     
     @Override
-    public JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize, boolean firstConnect) {
+    public JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
         if (LOG.isTraceEnabled()) {
             StringWriter out = new StringWriter();
             String reqAsString = null;
@@ -533,13 +533,7 @@ public final class PeerImpl implements Peer {
             } catch (IOException e) {
                 LOG.warn("IOExeception wile writing Peer request", e);
             }
-            LOG.trace("SEND() Request = '{}'\n, host='{}', firstConnect='{}'", reqAsString, host, firstConnect);
-        }
-        if (!firstConnect && !targetChainId.equals(this.chainId.get()) ) {
-            LOG.debug("Unable to send request to peer {} with chainId {}, expected {}",host, this.chainId.get() == null ? "null" : this.chainId.get(),
-                    targetChainId);
-            handshake(targetChainId);
-            return null;
+            LOG.trace("SEND() Request = '{}'\n, host='{}'", reqAsString, host);
         }
         JSONObject response = null;
         String log = "";
@@ -734,7 +728,7 @@ public final class PeerImpl implements Peer {
                     return;
                 }
             }
-            JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE, true);
+            JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE);
             PeerInfo newPi = new PeerInfo();
             if (response != null) {
                 //TODO: parse in new_pi

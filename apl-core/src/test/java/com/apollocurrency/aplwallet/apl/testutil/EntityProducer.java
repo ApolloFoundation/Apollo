@@ -215,7 +215,7 @@ public class EntityProducer {
             }
 
             @Override
-            public JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect) {
+            public JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize) {
                 return null;
             }
 

@@ -261,15 +261,7 @@ public final class PeerServlet extends WebSocketServlet {
             if (peerRequestHandler == null) {
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
-//            uncomment this to check requests from peers
-            //            if (peerRequestHandler.isChainIdProtected()) {
-//                UUID chainId = blockchainConfig.getChain().getChainId();
-//                Object chainIdObject = request.get("chainId");
-//                if (chainIdObject == null || !chainId.toString().equals((chainIdObject.toString()))) {
-//                    Peers.removePeer(peer);
-//                    return INCORRECT_CHAIN_ID;
-//                }
-//            }
+
             if (peer.getState() == Peer.State.DISCONNECTED) {
                 peer.setState(Peer.State.CONNECTED);
             }

@@ -103,9 +103,9 @@ public final class Peers {
     static int readTimeout;
     static int blacklistingPeriod;
     public static boolean getMorePeers;
-    static int MAX_REQUEST_SIZE;
-    static int MAX_RESPONSE_SIZE;
-    static int MAX_MESSAGE_SIZE;
+    public static int MAX_REQUEST_SIZE;
+    public static int MAX_RESPONSE_SIZE;
+    public static int MAX_MESSAGE_SIZE;
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
     static int webSocketIdleTimeout;
@@ -136,6 +136,7 @@ public final class Peers {
     private static final int sendTransactionsBatchSize = 10;
 
     private static JSONObject myPeerInfo;
+    public static PeerInfo myPI;
     private static List<Peer.Service> myServices;
     private static volatile BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
@@ -395,7 +396,7 @@ public final class Peers {
         mapper.registerModule(new JsonOrgModule()); 
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
-      
+        myPI=pi;
     }
     
     public static void shutdown() {

@@ -57,7 +57,7 @@ class GetMorePeersThread implements Runnable {
                 if (peer == null) {
                     return;
                 }
-                JSONObject response = peer.send(getPeersRequest, Peers.blockchainConfig.getChain().getChainId(), 10 * 1024 * 1024, false);
+                JSONObject response = peer.send(getPeersRequest, Peers.blockchainConfig.getChain().getChainId(),  Peers.MAX_RESPONSE_SIZE);
                 if (response == null) {
                     return;
                 }
@@ -103,7 +103,7 @@ class GetMorePeersThread implements Runnable {
                     request.put("peers", myPeers);
                     request.put("services", myServices); // Separate array for backwards compatibility
                     request.put("chainId", Peers.blockchainConfig.getChain().getChainId());
-                    peer.send(JSON.prepareRequest(request), Peers.blockchainConfig.getChain().getChainId(), 0, false);
+                    peer.send(JSON.prepareRequest(request), Peers.blockchainConfig.getChain().getChainId(), 0);
                 }
             } catch (Exception e) {
                 LOG.debug("Error requesting peers from a peer", e);

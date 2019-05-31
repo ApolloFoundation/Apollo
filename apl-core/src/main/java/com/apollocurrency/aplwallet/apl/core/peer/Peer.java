@@ -145,7 +145,7 @@ public interface Peer extends Comparable<Peer> {
 
     JSONObject send(JSONStreamAware request, UUID chainId);
 
-    JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect);
+    JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize);
     
     public void handshake(UUID targetChainId);
     
