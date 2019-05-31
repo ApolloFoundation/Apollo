@@ -279,7 +279,7 @@ public class TransactionImpl implements Transaction {
     private final long ecBlockId;
     private final byte version;
     private final int timestamp;
-    private final byte[] signature;
+    private volatile byte[] signature;
     private final AbstractAttachment attachment;
     private final MessageAppendix message;
     private final EncryptedMessageAppendix encryptedMessage;
@@ -324,9 +324,10 @@ public class TransactionImpl implements Transaction {
 		this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
         this.dbId = builder.dbId;
-        if (builder.feeATM <= 0) {
-            throw new IllegalArgumentException("Fee should be positive");
-        }
+        // set fee later
+        //        if (builder.feeATM <= 0) {
+//            throw new IllegalArgumentException("Fee should be positive");
+//        }
         this.feeATM = builder.feeATM;
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
@@ -376,6 +377,16 @@ public class TransactionImpl implements Transaction {
         } else {
             signature = null;
         }
+
+    }
+
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+
+        if (getSenderPublicKey() != null && ! Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
+            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
+        }
+        signature = Crypto.sign(bytes(), keySeed);
+        bytes = null;
 
     }
 

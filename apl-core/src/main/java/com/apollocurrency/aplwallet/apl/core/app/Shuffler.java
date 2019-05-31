@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -61,6 +62,7 @@ public final class Shuffler {
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private static FeeCalculator feeCalculator = new FeeCalculator();
     private static BlockchainProcessor blockchainProcessor;
 
     private static BlockchainProcessor lookupBlockchainProcessor() {
@@ -499,7 +501,10 @@ public final class Shuffler {
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
                     (short) 1440, attachment, blockchain.getLastBlockTimestamp());
-            Transaction transaction = builder.build(Crypto.getKeySeed(secretBytes));
+
+            Transaction transaction = builder.build(null);
+            transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
+            transaction.sign(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;
             Account participantAccount = Account.getAccount(this.accountId);
