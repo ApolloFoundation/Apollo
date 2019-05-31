@@ -912,9 +912,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void fullReset() {
         globalSync.writeLock();
         try {
+            setGetMoreBlocks(false);
             try {
-                setGetMoreBlocks(false);
-                blockchain.deleteAll();
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
+                dataSource.begin();
+                try {
+                    blockchain.deleteAll();
+                    dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
+                    dataSource.commit(false);
+                }
+                catch (Exception e) {
+                    dataSource.rollback(false);
+                }
+                finally {
+                    dataSource.commit();
+                }
                 addGenesisBlock();
             } finally {
                 setGetMoreBlocks(true);
@@ -1076,7 +1088,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            genesisBlockId = blockchain.getBlockIdAtHeight(0);
+            genesisBlockId = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
             return;
         }
@@ -1084,6 +1096,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         TransactionalDataSource dataSource = lookupDataSource();
         Connection con = dataSource.begin();
         try {
+            // we should start here shard downloading
+            // Maybe better to rename this method
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(genesisBlock);
             genesisBlockId = genesisBlock.getId();
