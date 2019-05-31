@@ -248,12 +248,12 @@ public final class AplCore {
 
             }
             catch (final RuntimeException e) {
-                if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
+                if (e.getMessage() == null || !e.getMessage().contains(SQLException.class.getName())) {
                     Throwable exception = e;
                     while (exception.getCause() != null) { //get root cause of RuntimeException
                         exception = exception.getCause();
                     }
-                    if (exception.getClass() != JdbcSQLException.class && exception.getClass() != SQLException.class) {
+                    if (exception.getClass() != SQLException.class) {
                         throw e; //re-throw non-db exception
                     }
                 }
