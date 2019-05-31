@@ -3,18 +3,19 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
-import com.apollocurrency.aplwallet.api.dto.BackendStatusInfo;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import javax.enterprise.context.ApplicationScoped;
 
 /**
  *
  * @author alukin@gmail.com
  */
-@Singleton
+@ApplicationScoped
 public class BackendControlService {
-    public BackendStatusInfo getStatus(){
-        BackendStatusInfo res = new BackendStatusInfo();
-        res.whatever = "Not ready yet, implement!";
+    
+    public NodeHWStatusInfo getHWStatus(){
+        NodeHWStatusInfo res = new NodeHWStatusInfo();
+        res.cpuCores = 4;
         return res;
     } 
 }

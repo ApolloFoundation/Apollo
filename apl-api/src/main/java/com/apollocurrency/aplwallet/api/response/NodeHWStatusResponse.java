@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.api.response;
 
-import com.apollocurrency.aplwallet.api.dto.BackendStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -12,14 +12,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @author alukin@gmail.com
  */
 
-public class BackendStatusResponse extends ResponseBase{
+public class NodeHWStatusResponse extends ResponseBase{
     /**
      * Message from server side to be displayed
      */
-    @Schema(name="DifferentModel", description="Sample model for the documentation")
+    @Schema(name="BackendStatusResponse", description="Status of node hardware")
     public String message;
     /**
      * Actual backend info
      */  
-    public BackendStatusInfo backendInfo;
+    public NodeHWStatusInfo backendInfo;
 }

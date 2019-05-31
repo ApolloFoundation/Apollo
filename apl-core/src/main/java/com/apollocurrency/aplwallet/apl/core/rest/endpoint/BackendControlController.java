@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.response.BackendStatusResponse;
+import com.apollocurrency.aplwallet.api.response.NodeHWStatusResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.BackendControlService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -54,13 +54,13 @@ public class BackendControlController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = BackendStatusResponse.class)))
+                                    schema = @Schema(implementation = NodeHWStatusResponse.class)))
             }
     )
     public Response getBackendStatus(@QueryParam("detailed") @DefaultValue("false") Boolean detailed) {
-        BackendStatusResponse statusResponse = new BackendStatusResponse();
+        NodeHWStatusResponse statusResponse = new NodeHWStatusResponse();
         statusResponse.message = "Seems that server is OK :) TODO: fill with resl data";
-        statusResponse.backendInfo = bcService.getStatus();
+        statusResponse.backendInfo = bcService.getHWStatus();
         if (detailed) {
             statusResponse.message += " Details: shit happens sometimes.";
         }
