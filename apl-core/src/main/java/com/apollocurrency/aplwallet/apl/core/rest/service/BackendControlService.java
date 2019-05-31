@@ -3,7 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 
 /**
@@ -18,4 +20,8 @@ public class BackendControlService {
         res.cpuCores = 4;
         return res;
     } 
+
+    public List<DurableTaskInfo> getNodeTasks() {
+        return null;
+    }
 }

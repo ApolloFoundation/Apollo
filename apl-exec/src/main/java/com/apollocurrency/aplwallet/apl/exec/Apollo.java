@@ -275,10 +275,10 @@ public class Apollo {
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
                 .annotatedDiscoveryMode()
-                .interceptors(JdbiTransactionalInterceptor.class)
+//                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
-                //TODO:  turn it on periodically in development processto check CDI errors
+                //TODO:  turn it on periodically in development process to check CDI errors
 //                .devMode() // enable for dev only
                 .build();
 
