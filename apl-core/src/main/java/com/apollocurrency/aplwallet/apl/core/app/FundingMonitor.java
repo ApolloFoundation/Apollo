@@ -86,7 +86,7 @@ public class FundingMonitor {
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static TransactionProcessor transactionProcessor;
-    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private static GlobalSync globalSync; // prevent fail on node shutdown
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -287,6 +287,9 @@ public class FundingMonitor {
         //
         FundingMonitor monitor = new FundingMonitor(holdingType, holdingId, property,
                 amount, threshold, interval, accountId, keySeed);
+        if (globalSync == null) { // prevent fail on node shutdown
+            globalSync = CDI.current().select(GlobalSync.class).get();
+        }
         globalSync.readLock();
         try {
             //

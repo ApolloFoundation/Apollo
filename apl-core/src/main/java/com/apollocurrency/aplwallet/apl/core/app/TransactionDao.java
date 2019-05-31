@@ -43,6 +43,8 @@ public interface TransactionDao {
 
     int getTransactionCount();
 
+    Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
+
     List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException;
 
 //    DbIterator<Transaction> getAllTransactions();

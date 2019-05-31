@@ -324,6 +324,28 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    @Override
+    public Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
+        if (dataSource == null) {
+            // select from main db
+            dataSource = databaseManager.getDataSource();
+        }
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM transaction WHERE height >= ? AND height < ?");
+            pstmt.setInt(1, from);
+            pstmt.setInt(2, to);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return 0L;
+    }
+
+
 /*
     @Override
     public DbIterator<Transaction> getAllTransactions() {

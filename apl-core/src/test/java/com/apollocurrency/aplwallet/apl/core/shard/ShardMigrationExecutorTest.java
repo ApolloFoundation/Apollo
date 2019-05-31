@@ -5,12 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPIED_TO_SHARD;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_BACKUPED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_UPDATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -29,12 +32,14 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -46,19 +51,19 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.CsvExportCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.DeleteCopiedDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
+import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.ShardExportDirProducer;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -101,32 +106,33 @@ class ShardMigrationExecutorTest {
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
 
+    ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(temporaryFolderExtension.newFolder().toPath());
+
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
             BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class, ReferencedTransactionDao.class,
             PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
-            DerivedDbTablesRegistryImpl.class, DataTransferManagementReceiverImpl.class, ShardRecoveryDao.class,
+            DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
-            PhasingPollServiceImpl.class, FullTextConfigImpl.class,
-            PhasingPollResultTable.class,
-            PhasingPollTable.class,
-            PhasingPollVoterTable.class,
-            PhasingPollLinkedTransactionTable.class,
-            PhasingVoteTable.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class, FullTextConfigImpl.class )
+            FullTextConfigImpl.class,
+            DerivedTablesRegistry.class,
+            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class,
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(exportDirProducer, ShardExportDirProducer.class))
+            .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .build();
 
     @Inject
-    private DataTransferManagementReceiver managementReceiver;
+    private ShardEngine shardEngine;
     @Inject
     private ShardMigrationExecutor shardMigrationExecutor;
     @Inject
@@ -136,11 +142,17 @@ class ShardMigrationExecutorTest {
     @Inject
     private TransactionIndexDao transactionIndexDao;
     @Inject
-    private BlockDao blockDao;
-    @Inject
     private ShardDao shardDao;
     @Inject
-    private ShardRecoveryDao recoveryDao;
+    private ShardRecoveryDaoJdbc shardRecoveryDaoJdbc;
+    @Inject
+    private ShardRecoveryDaoJdbc recoveryDao;
+    @Inject
+    private DerivedTablesRegistry registry;
+    @Inject
+    private CsvExporter cvsExporter;
+
+    public ShardMigrationExecutorTest() throws Exception {}
 
     @BeforeAll
     static void setUpAll() {
@@ -166,72 +178,115 @@ class ShardMigrationExecutorTest {
         AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
         try {
             int snapshotBlockHeight = 8000;
+
             // prepare an save Recovery + new Shard info
             ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
-            recoveryDao.saveShardRecovery(recovery);
+            recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
             Shard newShard = new Shard(snapshotBlockHeight);
             shardDao.saveShard(newShard);
 
             MigrateState state;
 
-            BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(managementReceiver);
+//1.        // create main db backup
+            BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
             state = shardMigrationExecutor.executeOperation(beforeShardCommand);
             assertEquals(MAIN_DB_BACKUPED, state);
-            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-0000004.zip")));
+            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4.zip")));
 
-            CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
+//2.        // create shard db with 'initial' schema
+            CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
                     new ShardInitTableSchemaVersion());
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
+            // checks before COPYING blocks / transactions
+            long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
+            assertEquals(14, count); // total blocks in main db
+            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(14, count); // total transactions in main db
+
             TransactionTestData td = new TransactionTestData();
             Set<Long> dbIds = new HashSet<>();
-            dbIds.add(td.DB_ID_6);
-            dbIds.add(td.DB_ID_10);
-            CopyDataCommand copyDataCommand = new CopyDataCommand(
-                    managementReceiver, snapshotBlockHeight, dbIds);
+//            dbIds.add(td.DB_ID_6);
+//            dbIds.add(td.DB_ID_10);
+            dbIds.add(td.DB_ID_0);
+            dbIds.add(td.DB_ID_2);
+            dbIds.add(td.DB_ID_5);
+
+//3-4.      // copy block + transaction data from main db into shard
+            CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(copyDataCommand);
 //        assertEquals(FAILED, state);
-            assertEquals(DATA_COPIED_TO_SHARD, state);
+            assertEquals(DATA_COPY_TO_SHARD_FINISHED, state);
 
+            // check after COPY
             TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            long count = blockDao.getBlockCount(shardDataSource, 0, (int) snapshotBlockHeight);
-            assertEquals(8, count);
+            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(8, count); // blocks in shard db
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(4, count);// transactions in shard db
 
-            createShardSchemaCommand = new CreateShardSchemaCommand(managementReceiver,
+//5.        // create shard db FULL schema
+            createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
                     new ShardAddConstraintsSchemaVersion());
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
 
-//            ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver, snapshotBlockHeight, dbIds);
+//            ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(shardEngine, snapshotBlockHeight, dbIds);
 //            state = shardMigrationExecutor.executeOperation(reLinkDataCommand);
 //            assertEquals(DATA_RELINKED_IN_MAIN, state);
 
-            UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(managementReceiver, snapshotBlockHeight, dbIds);
+//6-7.      // update secondary block + transaction indexes
+            UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
 //        assertEquals(FAILED, state);
-            assertEquals(SECONDARY_INDEX_UPDATED, state);
+            assertEquals(SECONDARY_INDEX_FINISHED, state);
 
             // check by secondary indexes
             long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
             assertEquals(8, blockIndexCount);
             long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-            assertEquals(6, trIndexCount);
+            assertEquals(4, trIndexCount);
 
-            Transaction tx = blockchain.getTransaction(td.TRANSACTION_0.getId());
+            Transaction tx = blockchain.getTransaction(td.TRANSACTION_2.getId());
+            assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
 
-            assertEquals(td.TRANSACTION_0, tx); // check that transaction was ignored
+//8-9.      // export 'derived', shard, secondary block + transaction indexes
+            CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, snapshotBlockHeight, dbIds);
+            state = shardMigrationExecutor.executeOperation(csvExportCommand);
+//        assertEquals(FAILED, state);
+            assertEquals(CSV_EXPORT_FINISHED, state);
 
-            DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(managementReceiver, snapshotBlockHeight);
+//10-11.    // archive CSV into zip
+            ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardEngine);
+            state = shardMigrationExecutor.executeOperation(zipArchiveCommand);
+//        assertEquals(FAILED, state);
+            assertEquals(ZIP_ARCHIVE_FINISHED, state);
+
+//12-13.    // delete block + transaction from main db
+            DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
 //        assertEquals(FAILED, state);
             assertEquals(DATA_REMOVED_FROM_MAIN, state);
 
-            count = blockDao.getBlockCount((int) snapshotBlockHeight, 105000);
-            assertEquals(5, count);
+            // checks after COPY + DELETE...
+            count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(6, count); // total blocks left in main db
+            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+            assertEquals(10, count); // total transactions left in main db
 
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(8, count); // blocks in shard
+
+            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+            assertEquals(4, count); // transactions in shard
+
+//14.       // complete shard process
             byte[] shardHash = "000000000".getBytes();
-            FinishShardingCommand finishShardingCommand = new FinishShardingCommand(managementReceiver, shardHash);
+            FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine, shardHash);
             state = shardMigrationExecutor.executeOperation(finishShardingCommand);
             assertEquals(COMPLETED, state);
         } finally {

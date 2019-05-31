@@ -149,7 +149,8 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(fileLoader.getResourcePath());
+        csvImporter = new CsvImporterImpl(exportDirProducer, extension.getDatabaseManger());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -158,7 +159,8 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(fileLoader.getResourcePath());
+        csvImporter = new CsvImporterImpl(exportDirProducer, extension.getDatabaseManger());
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {

@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
@@ -115,6 +114,10 @@ public class Apollo {
         }
         Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
         String home = hp.toString()+File.separator;
+        File dir = new File(home);
+        if(!dir.exists()){
+            dir.mkdirs();
+        }
         String path = pidPath.isEmpty() ? home + PID_FILE : pidPath;
         try (PrintWriter out = new PrintWriter(path)) {
             out.println(pid.toString());
@@ -295,7 +298,8 @@ public class Apollo {
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
                 .annotatedDiscoveryMode()
-                .interceptors(JdbiTransactionalInterceptor.class)
+// we already have it in beans.xml in core                
+//                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development processto check CDI errors

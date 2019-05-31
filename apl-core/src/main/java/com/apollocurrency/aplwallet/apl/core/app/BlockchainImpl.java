@@ -182,6 +182,11 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    public Long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
+        return blockDao.getBlockCount(dataSource, from, to);
+    }
+
+    @Override
     public int getBlockCount(long accountId) {
         return blockDao.getBlockCount(accountId);
     }
@@ -458,6 +463,10 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public int getTransactionCount() {
         return transactionDao.getTransactionCount();
+    }
+
+    public Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
+        return transactionDao.getTransactionCount(dataSource, from, to);
     }
 
 /*

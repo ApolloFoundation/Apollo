@@ -39,12 +39,13 @@ public interface ShardDao {
     long getMaxShardId();
 
     @Transactional
-    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_height) VALUES (:shardId, :shardHash, :shardHeight)")
+    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc) " +
+                        "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :zipHashCrc)")
     @RegisterRowMapper(ShardRowMapper.class)
     int saveShard(@BindBean Shard shard);
 
     @Transactional
-    @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_height =:shardHeight where shard_id =:shardId")
+    @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, zip_hash_crc =:zipHashCrc where shard_id =:shardId")
     @RegisterRowMapper(ShardRowMapper.class)
     int updateShard(@BindBean Shard shard);
 
