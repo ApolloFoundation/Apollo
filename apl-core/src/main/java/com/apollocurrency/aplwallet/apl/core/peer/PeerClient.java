@@ -8,12 +8,12 @@ import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import java.util.Objects;
-import java.util.UUID;
-import javax.inject.Inject;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * PeerClient represents requests of P2P subsystem
@@ -26,7 +26,6 @@ public class PeerClient {
     private Peer peer;
     private static final Logger LOG = LoggerFactory.getLogger(PeerClient.class);
     
-    @Inject
     public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P

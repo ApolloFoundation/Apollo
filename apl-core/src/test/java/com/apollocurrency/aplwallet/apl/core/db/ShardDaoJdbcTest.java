@@ -10,9 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -24,6 +21,9 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.sql.SQLException;
+import javax.inject.Inject;
 
 @EnableWeld
 class ShardDaoJdbcTest {
@@ -43,7 +43,7 @@ class ShardDaoJdbcTest {
     @Test
     void getMinMaxShardId() throws SQLException {
         assertNotNull(daoJdbc);
-        MinMaxDbId minMaxDbId= daoJdbc.getMinMaxId(extension.getDatabaseManger().getDataSource(), 3L);
+        MinMaxDbId minMaxDbId= daoJdbc.getMinMaxId(extension.getDatabaseManger().getDataSource(), SHARD_2.getShardHeight());
         assertNotNull(minMaxDbId );
         assertEquals(SHARD_0.getShardId() - 1, minMaxDbId.getMinDbId());
         assertEquals(SHARD_2.getShardId() + 1, minMaxDbId.getMaxDbId());

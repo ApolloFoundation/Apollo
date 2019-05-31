@@ -177,6 +177,14 @@ public class TransactionIndexDaoTest {
         long count = dao.countTransactionIndexByShardId(1L);
 
         assertEquals(3, count);
+
+        count = dao.countTransactionIndexByShardId(2L);
+
+        assertEquals(0, count);
+
+        count = dao.countTransactionIndexByShardId(3L);
+
+        assertEquals(1, count);
     }
 
     @Test
