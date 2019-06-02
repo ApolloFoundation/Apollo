@@ -144,7 +144,6 @@ public class Apollo {
             return;
         }
         UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
-
         updaterCore.init(attachmentFilePath, debug);
     }
 
@@ -277,11 +276,11 @@ public class Apollo {
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.setup(runtimeMode, dirProvider);
+        aplCoreRuntime.setup(runtimeMode, dirProvider, configDirProvider);
         
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
-            aplCoreRuntime.initAndAddCore();
+            aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");

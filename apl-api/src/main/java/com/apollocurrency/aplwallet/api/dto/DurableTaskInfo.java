@@ -25,19 +25,21 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DurableTaskInfo {
     @Schema(name="ID of task", description="Identificator of task")
-    String id;
+    public String id;
+    @Schema(name="Name of task", description="Short but descruiptive name of task")
+    public String name;    
     @Schema(name="Description of task", description="Description of task in one line")
-    String decription;
+    public String decription;
     @Schema(name="Task state", description="Task state in one line in human readable form")
-    String stateOfTask;
+    public String stateOfTask;
     @Schema(name="Task stafrt date", description="Task start date and time")
-    Date started;
+    public Date started;
     @Schema(name="Task finish date", description="Task start date and time")
-    Date finished;
+    public Date finished;
     @Schema(name="Task run duration", description="Task run duration, milliseconds")
-    Long durationMS;
+    public Long durationMS;
     @Schema(name="Task completion percent", description="Task completion percent")    
-    Double percentComplete;
+    public Double percentComplete;
     @Schema(name="Task messages", description="Task messages list")    
-    List<String> messages=new ArrayList<>();
+    public List<String> messages=new ArrayList<>();
 }

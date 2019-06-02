@@ -16,9 +16,11 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ public class AplCoreRuntime {
  
     private  RuntimeMode runtimeMode;
     private DirProvider dirProvider;
+    private ConfigDirProvider cofnDirProvider;
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
     private final BlockchainConfig blockchainConfig;
@@ -45,19 +48,24 @@ public class AplCoreRuntime {
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
+    private AplAppStatus aplAppStatus;
     
+    @Inject
     private AplCoreRuntime() {
+        aplAppStatus = CDI.current().select(AplAppStatus.class).get();
         propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+               
     }
 
-    public void setup(RuntimeMode runtimeMode, DirProvider dirProvider){
+    public void setup(RuntimeMode runtimeMode, DirProvider dirProvider, ConfigDirProvider cofnDirProvider){
         this.runtimeMode =runtimeMode;
         this.dirProvider = dirProvider;
+        this.cofnDirProvider=cofnDirProvider;
     }
     
-    public void initAndAddCore(){        
-        AplCore core = new AplCore();
+    public void addCoreAndInit(){        
+        AplCore core = new AplCore(propertiesHolder,this);
         addCore(core);
         core.init();
     }
@@ -101,6 +109,10 @@ public class AplCoreRuntime {
     }
     public DirProvider getDirProvider(){
         return dirProvider;
+    }
+    //TODO: we have different conf dirs fot different testnets
+    public String getConfDir() {
+        return cofnDirProvider.getConfigDirectoryName();
     }
     public static void logSystemProperties() {
         String[] loggedProperties = new String[] {
@@ -152,5 +164,9 @@ public class AplCoreRuntime {
         if(mintworker!=null){
             mintworker.stop();
         }
+    }
+
+    public AplAppStatus getAplAppStatus() {
+       return aplAppStatus;
     }
 }

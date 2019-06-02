@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
@@ -21,9 +23,10 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class AplAppStatus {
+    private static final Logger LOG = getLogger(AplAppStatus.class);
     public static final String[] TASK_STATES={"Starded","In progress","Finished","Cancelled"};
     private static final long ONE_DAY=3600*24;
-    private Map<String,DurableTaskInfo> tasks = new HashMap<>();
+    private final Map<String,DurableTaskInfo> tasks = new HashMap<>();
 
     @Inject
     public AplAppStatus() {
@@ -33,37 +36,47 @@ public class AplAppStatus {
         String key = UUID.randomUUID().toString();
         DurableTaskInfo info = new DurableTaskInfo();
         info.setId(key);
-        info.setPercentComplete(0.0D);
+        info.setName(name);
+        info.setPercentComplete(0.0);
         info.setDecription(descritption);
         info.setStarted(new Date());
         info.setStateOfTask(TASK_STATES[0]);
         tasks.put(key, info);
+        LOG.debug("Task: {} started",name);
         return key;
     }
     
-    public synchronized String durableTaskUpdate(String taskId, String state, Double percentComplete, String message){
+    public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message){
        DurableTaskInfo info =  tasks.get(taskId);
        if(info==null){
-           taskId=UUID.randomUUID().toString();
-           info=new DurableTaskInfo();
-           tasks.put(taskId, info);
+           taskId=durableTaskStart("Unnamed", "No Description");
+           info=tasks.get(taskId);
        }
-       info.setStateOfTask(state);
+       info.setStateOfTask(TASK_STATES[1]);
        info.setPercentComplete(percentComplete);
        if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
+           LOG.debug("Task: {} updated, %: {}, message: {}",info.name, percentComplete, message);
+       }else{
+           LOG.debug("Task: {} updated, %: {}",info.name, percentComplete);
        }
-       info.setDurationMS(info.getFinished().getTime()-System.currentTimeMillis());
+       info.setDurationMS(System.currentTimeMillis()-info.getStarted().getTime());
        return taskId;
     }
     
-    public synchronized void durableTaksFinished(String taskId, boolean isCancelled){
+    public synchronized void durableTaksFinished(String taskId, boolean isCancelled, String message){
         DurableTaskInfo info =  tasks.get(taskId);
         if(info==null){
             return;
         }
         info.setFinished(new Date());
         info.setDurationMS(info.getFinished().getTime()-info.getStarted().getTime());
+        if(!StringUtils.isBlank(message)){
+           info.getMessages().add(message);
+           LOG.debug("Task: {} finished with: {} duration, MS: {}",info.name,message,info.durationMS);
+        }else{        
+           LOG.debug("Task: {} finished. Duration: {}",info.name,info.durationMS);
+        }
         if(isCancelled){
             info.setStateOfTask(TASK_STATES[3]);
         }else{

@@ -31,10 +31,10 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -63,10 +63,13 @@ public final class Genesis {
     public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
+
+    private static AplAppStatus aplAppStatus = aplCoreRuntime.getAplAppStatus();
 
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
-
+    private static String genesisTaskId;
     static {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
@@ -117,9 +120,10 @@ public final class Genesis {
         TransactionalDataSource dataSource = lookupDataSource();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-        String loadingPublicKeysString = "Loading public keys";
+        
         LOG.debug("Loading public keys [{}]...", publicKeys.size());
-        AppStatus.getInstance().update(loadingPublicKeysString + "...");
+        genesisTaskId = aplAppStatus.durableTaskStart("Genesis accoun load", "Loading or creating Genesis accopunts");
+        aplAppStatus.durableTaskUpdate(genesisTaskId, 0.0, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
@@ -129,16 +133,13 @@ public final class Genesis {
             }
             if (publicKeys.size() > 20000 && count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
-                LOG.debug(message);
-                AppStatus.getInstance().update(message);
+                aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/publicKeys.size()*1.0)*50, message);
             }
         }
         LOG.debug("Loaded " + publicKeys.size() + " public keys");
         count = 0;
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
-        String loadingAmountsString = "Loading genesis amounts";
-        LOG.debug(loadingAmountsString);
-        AppStatus.getInstance().update(loadingAmountsString + "...");
+        aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis amounts");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
             Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
@@ -150,22 +151,24 @@ public final class Genesis {
             if (balances.size() > 10000 && count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, balances.size());
                 LOG.debug(message);
-                AppStatus.getInstance().update(message);
+                aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/balances.size()*1.0)*50, message);
             }
         }
         long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
-        LOG.debug(String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
+        String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
         Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
+        aplAppStatus.durableTaksFinished(genesisTaskId, false, message);
     }
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
-            String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
+            
+            String path = aplCoreRuntime.getConfDir()+File.separator+blockchainConfig.getChain().getGenesisLocation();
             try (InputStreamReader is = new InputStreamReader(
                     Genesis.class.getClassLoader().getResourceAsStream(path))) {
                 ObjectMapper objectMapper = new ObjectMapper();
