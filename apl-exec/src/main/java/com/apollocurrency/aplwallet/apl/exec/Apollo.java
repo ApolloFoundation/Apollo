@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
@@ -23,8 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
-import com.apollocurrency.aplwallet.apl.util.AppStatus;
-import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
@@ -87,10 +84,9 @@ public class Apollo {
 
     private static AplContainer container;
 
-    private static AplCore core;
-
     private PropertiesHolder propertiesHolder;
-
+    private static AplCoreRuntime aplCoreRuntime;
+    
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
@@ -143,15 +139,6 @@ public class Apollo {
         return res;
     }
 
-    private void initCore() {
-
-        AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
-        core = new AplCore();
-
-        AplCoreRuntime.getInstance().addCore(core);
-        core.init();
-    }
-
     private void initUpdater(String attachmentFilePath, boolean debug) {
         if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
@@ -162,7 +149,7 @@ public class Apollo {
     }
 
     public static void shutdown() {
-        AplCoreRuntime.getInstance().shutdown();
+        aplCoreRuntime.shutdown();
         try {
             container.shutdown();
         } catch (IllegalStateException e) {
@@ -289,16 +276,19 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        aplCoreRuntime.setup(runtimeMode, dirProvider);
+        
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
-            app.initCore();
+            aplCoreRuntime.initAndAddCore();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
              */
             if (args.startMint) {
-                AplCoreRuntime.getInstance().startMinter();
+                aplCoreRuntime.startMinter();
             }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());

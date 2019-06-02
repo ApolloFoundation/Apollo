@@ -25,7 +25,7 @@ public class APIErrorHandler extends ErrorPageErrorHandler {
     @Override
     public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if(response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND){
-            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+            String apiResourceBase = API.aplCoreRuntime.findWebUiDir();
 //propertiesLoader.getStringProperty("apl.apiResourceBase");
             String apiWelcomePage = propertiesLoader.getStringProperty("apl.apiWelcomeFile");
 

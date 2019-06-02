@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.response.NodeHWStatusResponse;
 import com.apollocurrency.aplwallet.api.response.NodeStatusResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.BackendControlService;
@@ -45,6 +46,7 @@ public class BackendControlController {
     public BackendControlController(BackendControlService bcService) {
         this.bcService = bcService;
     }
+
     @Path("/statushw")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -82,5 +84,22 @@ public class BackendControlController {
         statusResponse.nodeInfo = bcService.getHWStatus();
         statusResponse.tasks = bcService.getNodeTasks();
         return Response.status(Response.Status.OK).entity(statusResponse).build();
+    }
+    
+    @Path("/threads")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns backend threads status",
+            description = "Returns backend threads status",
+            tags = {"nodecontrol"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = NodeHWStatusResponse.class)))
+            }
+    )
+    public Response getBackendThreadss() {
+        RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
+        return Response.status(Response.Status.OK).entity(threadsResponse).build();
     }
 }

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 /**
@@ -22,6 +23,7 @@ import javax.inject.Inject;
 public class ApplicationDataMigrationManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
+    private static final AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
 
     @Inject
     private VaultKeystoreMigrationExecutor vaultKeystoreMigrationExecutor;
@@ -41,11 +43,11 @@ public class ApplicationDataMigrationManager {
 //            if (!StringUtils.isBlank(customDbDir)) {
 //                fileName = propertiesHolder.getStringProperty("apl.dbName");
 //            }
-            Path targetDbPath = AplCoreRuntime.getInstance().getDbDir().resolve(fileName);
+            Path targetDbPath = aplCoreRuntime.getDbDir().resolve(fileName);
             dbMigrationExecutor.performMigration(targetDbPath);
-            Path target2FADir = AplCoreRuntime.getInstance().get2FADir();
+            Path target2FADir = aplCoreRuntime.get2FADir();
             twoFactorAuthMigrationExecutor.performMigration(target2FADir);
-            Path targetKeystoreDir = AplCoreRuntime.getInstance().getVaultKeystoreDir();
+            Path targetKeystoreDir = aplCoreRuntime.getVaultKeystoreDir();
             vaultKeystoreMigrationExecutor.performMigration(targetKeystoreDir);
 
             if (!dbMigrationExecutor.isAutoCleanup()) {

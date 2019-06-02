@@ -109,7 +109,8 @@ public final class API {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
+    static AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+    
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     private static byte[] privateKey;
     private static byte[] publicKey;
@@ -258,7 +259,7 @@ public final class API {
                 https_config.setSecurePort(sslPort);
                 https_config.addCustomizer(new SecureRequestCustomizer());
                 sslContextFactory = new SslContextFactory();
-                String keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir()).resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath"))).toString();
+                String keyStorePath = Paths.get(aplCoreRuntime.getUserHomeDir()).resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath"))).toString();
                 LOG.info("Using keystore: " + keyStorePath);
                 sslContextFactory.setKeyStorePath(keyStorePath);
                 sslContextFactory.setKeyStorePassword(propertiesHolder.getStringProperty("apl.keyStorePassword", null, true));
@@ -296,7 +297,7 @@ public final class API {
             HandlerList apiHandlers = new HandlerList();
 
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+            String apiResourceBase = aplCoreRuntime.findWebUiDir();
             if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
                 ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
                 defaultServletHolder.setInitParameter("dirAllowed", "false");

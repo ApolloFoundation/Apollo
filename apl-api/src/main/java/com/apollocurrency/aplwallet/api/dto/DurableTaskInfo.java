@@ -34,6 +34,8 @@ public class DurableTaskInfo {
     Date started;
     @Schema(name="Task finish date", description="Task start date and time")
     Date finished;
+    @Schema(name="Task run duration", description="Task run duration, milliseconds")
+    Long durationMS;
     @Schema(name="Task completion percent", description="Task completion percent")    
     Double percentComplete;
     @Schema(name="Task messages", description="Task messages list")    

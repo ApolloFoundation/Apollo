@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * Runtime environment for AplCores (singleton)
  * @author alukin@gmail.com
  */
-@Vetoed
+@Singleton
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
     public final static String WEB_UI_DIR="webui";
@@ -38,18 +39,16 @@ public class AplCoreRuntime {
     private DirProvider dirProvider;
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private final BlockchainConfig blockchainConfig;
+    private final PropertiesHolder propertiesHolder;
     
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-   @Vetoed 
-    private static class AplCoreRuntimeHolder {
-        private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
-    } 
     
     private AplCoreRuntime() {
+        propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     }
 
     public void setup(RuntimeMode runtimeMode, DirProvider dirProvider){
@@ -57,12 +56,14 @@ public class AplCoreRuntime {
         this.dirProvider = dirProvider;
     }
     
-    public void addCore(AplCore core){
-        cores.add(core);
+    public void initAndAddCore(){        
+        AplCore core = new AplCore();
+        addCore(core);
+        core.init();
     }
     
-    public static AplCoreRuntime getInstance() {
-        return AplCoreRuntimeHolder.INSTANCE;
+    public void addCore(AplCore core){
+        cores.add(core);
     }
     
     public void shutdown(){

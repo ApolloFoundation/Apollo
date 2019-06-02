@@ -82,7 +82,9 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
-
+    //this should saty static
+    private static final AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+    
     public AplCore() {
     }
 
@@ -97,9 +99,9 @@ public final class AplCore {
 
     public void init() {
 
-        System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
+        System.out.printf("Runtime mode %s\n", aplCoreRuntime.getRuntimeMode().getClass().getName());
         LOG = getLogger(AplCore.class);
-        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppBaseDir());
+        LOG.debug("User home folder '{}'", aplCoreRuntime.getDirProvider().getAppBaseDir());
 //TODO: Do we really need this check?        
 //        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
