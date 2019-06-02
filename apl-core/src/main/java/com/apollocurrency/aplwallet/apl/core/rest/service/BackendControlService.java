@@ -39,7 +39,7 @@ public class BackendControlService {
         res.threadsRunning=java.lang.Thread.activeCount();
         res.cpuCount = Runtime.getRuntime().availableProcessors();
         res.cpuLoad = mxbean.getSystemLoadAverage();
-        res.OS=mxbean.getName()+" Version:"+mxbean.getVersion()+" Arch:"+mxbean.getArch();
+        res.operatingSystem=mxbean.getName()+" Version:"+mxbean.getVersion()+" Arch:"+mxbean.getArch();
         res.memoryTotal = Runtime.getRuntime().totalMemory();
         res.memoryFree  = Runtime.getRuntime().freeMemory();    
         return res;
@@ -61,6 +61,7 @@ public class BackendControlService {
            tdto.priority= ti.getPriority();
            tdto.isDaemon=ti.isDaemon();
            tdto.cpuTime=tmxb.getThreadCpuTime(tid);
+           res.threads.add(tdto);
        }
        return res;
     }

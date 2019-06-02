@@ -33,5 +33,5 @@ public class NodeHWStatusInfo {
     @Schema(name="Free disk space", description="Free disk space available to applicaion")
     public Long diskFree; 
     @Schema(name="Node OS", description="Operating system of node")
-    public String OS; 
+    public String operatingSystem; 
 }

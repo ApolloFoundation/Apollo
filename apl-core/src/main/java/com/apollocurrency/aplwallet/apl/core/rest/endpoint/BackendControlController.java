@@ -76,7 +76,7 @@ public class BackendControlController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = NodeHWStatusResponse.class)))
+                                    schema = @Schema(implementation = NodeStatusResponse.class)))
             }
     )
     public Response getBackendStatus(@QueryParam("detailed") @DefaultValue("false") Boolean detailed) {
@@ -95,7 +95,7 @@ public class BackendControlController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = NodeHWStatusResponse.class)))
+                                    schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
     public Response getBackendThreadss() {
