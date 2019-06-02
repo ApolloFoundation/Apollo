@@ -244,7 +244,7 @@ public final class AplCore {
                       @Override
                       public void run() {
                         LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
-                        aplAppStatus.clearFinished(60*5L); //5 min
+                        aplAppStatus.clearFinished(60*60L); //60 min
                       }
                    },
                    20,
