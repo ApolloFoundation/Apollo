@@ -238,8 +238,17 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  70.1, "Apollo cor cleaases initialization done");
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
-//TODO: this is debug, remove when DB pool is OK
-                ThreadPool.scheduleThread("Active connections logger", () -> LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections()), 15, TimeUnit.SECONDS);
+
+                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean", 
+                   new Runnable() {
+                      @Override
+                      public void run() {
+                        LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
+                        aplAppStatus.clearFinished(60*5L); //5 min
+                      }
+                   },
+                   20,
+                   TimeUnit.SECONDS);
                 ThreadPool.start();
 
                 try {
