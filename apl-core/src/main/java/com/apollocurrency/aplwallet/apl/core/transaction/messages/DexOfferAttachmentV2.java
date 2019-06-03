@@ -63,7 +63,7 @@ public class DexOfferAttachmentV2 extends DexOfferAttachment {
 
     @Override
     public byte getVersion() {
-        return Byte.valueOf("2");
+        return 2;
     }
 
     @Override

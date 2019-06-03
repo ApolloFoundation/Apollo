@@ -19,7 +19,7 @@ public class DexOfferAttachmentFactory {
             case 2 :
                 return new DexOfferAttachmentV2(buffer);
             default:
-                return null;
+                throw new UnsupportedOperationException("Version: " + version + ", not supported.");
         }
     }
 

@@ -66,6 +66,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -82,14 +83,17 @@ public class DexController {
     private DexEthService dexEthService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private ObjectMapper mapper = new ObjectMapper();
+    private EthereumWalletService ethereumWalletService;
 
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService) {
-        this.service = service;
-        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
-        this.epochTime = epochTime;
-        this.dexEthService = dexEthService;
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
+                         EthereumWalletService ethereumWalletService) {
+        this.service = Objects.requireNonNull(service,"DexService is null");
+        this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
+        this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
+        this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
+        this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService,"EthereumWalletService is null.");
     }
 
     //For DI
