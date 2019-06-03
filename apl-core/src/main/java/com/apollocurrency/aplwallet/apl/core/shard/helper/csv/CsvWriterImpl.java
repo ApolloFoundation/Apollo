@@ -6,10 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import org.slf4j.Logger;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -28,11 +32,6 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import org.slf4j.Logger;
 
 /**
  * {@inheritDoc}
@@ -86,23 +85,22 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      * {@inheritDoc}
      */
     @Override
-    public int write(Writer writer, ResultSet rs, MinMaxDbId minMaxDbId) throws SQLException {
+    public CsvExportData write(Writer writer, ResultSet rs) throws SQLException {
         this.output = writer;
-        return writeResultSet(rs, minMaxDbId, true);
+        return writeResultSet(rs, true);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int write(String outputFileName, ResultSet rs, MinMaxDbId minMaxDbId) throws SQLException {
+    public CsvExportData write(String outputFileName, ResultSet rs) throws SQLException {
         Objects.requireNonNull(outputFileName, "outputFileName is NULL");
         Objects.requireNonNull(rs, "resultSet is NULL");
-        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
         assignNewFileName(outputFileName, true);
         try {
             initWrite(false);
-            return writeResultSet(rs, minMaxDbId, true);
+            return writeResultSet(rs, true);
         } catch (IOException e) {
             throw new SQLException("IOException writing " + outputFileName, e);
         }
@@ -112,14 +110,14 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      * {@inheritDoc}
      */
     @Override
-    public int append(String outputFileName, ResultSet rs, MinMaxDbId minMaxDbId) throws SQLException {
+    public CsvExportData append(String outputFileName, ResultSet rs) throws SQLException {
         Objects.requireNonNull(outputFileName, "outputFileName is NULL");
         Objects.requireNonNull(rs, "resultSet is NULL");
-        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
+//        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
         assignNewFileName(outputFileName, false);
         try {
             initWrite(true);
-            return writeResultSet(rs, minMaxDbId, false);
+            return writeResultSet(rs, false);
         } catch (IOException e) {
             throw new SQLException("IOException writing " + outputFileName, e);
         }
@@ -129,12 +127,12 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      * {@inheritDoc}
      */
     @Override
-    public int write(Connection conn, String outputFileName, String sql, String charset, MinMaxDbId minMaxDbId) throws SQLException {
+    public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
         Statement stat = conn.createStatement();
         ResultSet rs = stat.executeQuery(sql);
-        int rows = write(outputFileName, rs, minMaxDbId);
+        CsvExportData exportData = write(outputFileName, rs);
         stat.close();
-        return rows;
+        return exportData;
     }
 
     private void initWrite(boolean appendMode) throws IOException {
@@ -166,8 +164,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         this.fileName = newFileName;
     }
 
-    private int writeResultSet(ResultSet rs, MinMaxDbId minMaxDbId, boolean closeWhenNotAppend) throws SQLException {
+    private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend) throws SQLException {
         try {
+            Object lastKey = null;
             int rows = 0;
             ResultSetMetaData meta = rs.getMetaData();
             int columnCount = meta.getColumnCount();
@@ -274,7 +273,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 log.trace("Row = {}", Arrays.toString(rowColumnNames));
                 writeRow(rowColumnNames);
                 rows++;
-                minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
+                lastKey = rs.getObject(defaultPaginationColumnName);
+//                minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
             }
 /*
             if (rows == 1) {
@@ -287,7 +287,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 output.flush(); // flush unfinished file on 'append mode'
             }
             log.debug("CSV file '{}' written rows=[{}]", fileName, rows);
-            return rows;
+            return new CsvExportData(rows, lastKey);
         } catch (IOException e) {
             log.error("IO exception", e);
             throw new SQLException(e);

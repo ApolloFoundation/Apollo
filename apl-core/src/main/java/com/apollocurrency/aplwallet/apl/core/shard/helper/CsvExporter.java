@@ -44,5 +44,6 @@ public interface CsvExporter {
      */
     long exportShardTable(int targetHeight, int batchLimit);
 
+    IndexExportData exportIndexes(int targetHeight, int batchLimit);
 
 }

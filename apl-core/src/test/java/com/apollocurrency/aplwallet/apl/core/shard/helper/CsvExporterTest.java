@@ -66,6 +66,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -73,7 +74,6 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
@@ -92,11 +92,13 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import javax.inject.Inject;
 
@@ -120,8 +122,13 @@ class CsvExporterTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
-    private DirProvider dirProvider = mock(DirProvider.class);
-    private ShardExportDirProducer shardExportDirProducer = mock(ShardExportDirProducer.class);
+    private List<String> blockIndexExportContent = List.of("BLOCK_ID(-5|19|0),BLOCK_HEIGHT(4|10|0)", "1,1", "2,2", "3,30");
+    private List<String> transactionIndexExportContent = List.of(
+            "TRANSACTION_ID(-5|19|0),PARTIAL_TRANSACTION_HASH(-3|2147483647|0),TRANSACTION_INDEX(5|5|0),HEIGHT(4|10|0)",
+            "101,MjI3MGEyYjAwZTNmNzBmYjVkNWQ4ZTBkYTNjNzkxOWVkZDRkMzM2ODE3NmU2ZjJk,0,1",
+            "102,Yjk2ZDVlOWY2NGU1MWM1OTc1MTM3MTc2OTFlZWVlYWYxOGEyNmE4NjQwMzRmNjJj,1,1",
+            "103,Y2NhNWExZjgyNWY5YjkxOGJlMDBmMzU0MDZmNzBiMTA4YjY2NTZiMjk5NzU1NTU4,2,1",
+            "100,Y2M2ZjE3MTkzNDc3MjA5Y2E1ODIxZDM3ZDM5MWU3MGFlNjY4ZGQxYzExZGQ3OThl,0,30");
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -164,7 +171,9 @@ class CsvExporterTest {
     @Inject
     ShardDaoJdbc shardDaoJdbc;
 
-    CsvExporter cvsExporter;
+    CsvExporter csvExporter;
+
+    private Path dataExportPath;
 
     public CsvExporterTest() throws Exception {
     }
@@ -196,17 +205,12 @@ class CsvExporterTest {
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
+        dataExportPath = createPath("csvExportDir");
+        csvExporter = new CsvExporterImpl(extension.getDatabaseManger(), dataExportPath, shardDaoJdbc);
     }
 
     @Test
     void exportDerivedTables() throws Exception {
-        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
-        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(shardExportDirProducer).getDataExportDir();
-//        doReturn(createPath("csv-export")).when(dirProvider).getDataExportDir(); // prod data test
-        cvsExporter = new CsvExporterImpl(shardExportDirProducer, extension.getDatabaseManger(), shardDaoJdbc);
-//        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
-        assertNotNull(cvsExporter);
-
         Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
         int targetHeight = 8000;
 //        int targetHeight = 2_000_000; // prod data test
@@ -217,7 +221,7 @@ class CsvExporterTest {
         result.forEach(item -> {
             long start2 = System.currentTimeMillis();
             long exportedRows = 0;
-            exportedRows = cvsExporter.exportDerivedTable(item, targetHeight, batchLimit);
+            exportedRows = csvExporter.exportDerivedTable(item, targetHeight, batchLimit);
             if (exportedRows > 0) {
                 tablesWithDataCount[0] = tablesWithDataCount[0] + 1;
             }
@@ -225,7 +229,7 @@ class CsvExporterTest {
         });
         log.debug("Total Tables = [{}] in {} sec", result.size(), (System.currentTimeMillis() - start) / 1000);
         String[] extensions = new String[]{"csv"};
-        Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false);
+        Collection filesInFolder = FileUtils.listFiles(dataExportPath.toFile(), extensions, false);
         assertNotNull(filesInFolder);
         assertTrue(filesInFolder.size() > 0);
         assertEquals(tablesWithDataCount[0], filesInFolder.size(), "wrong number processed/exported tables and real CSV files in folder");
@@ -233,34 +237,25 @@ class CsvExporterTest {
         log.debug("Processed list = '{}' in {} sec", result, (System.currentTimeMillis() - start) / 1000);
 
         // check if csv content is not empty
-        Iterator iterator = filesInFolder.iterator();
-        while (iterator.hasNext()) {
-            Object next = iterator.next();
-            String fileName = ((File)next).getName();
+        for (Object next : filesInFolder) {
+            String fileName = ((File) next).getName();
             log.trace("File in folder = {}", fileName);
-            int readCount = importCsvAndCheckContent(fileName, dirProvider.getDataExportDir());
+            int readCount = importCsvAndCheckContent(fileName, dataExportPath);
             assertTrue(readCount > 0);
         }
     }
 
     @Test
     void exportShardTable() throws Exception {
-        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
-        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(shardExportDirProducer).getDataExportDir();
-//        doReturn(createPath("csvExport")).when(dirProvider).getDataExportDir(); // prod data test
-        cvsExporter = new CsvExporterImpl(shardExportDirProducer, extension.getDatabaseManger(), shardDaoJdbc);
-//        cvsExporter = new CsvExporterImpl(dirProvider.getDataExportDir(), extension.getDatabaseManger(), shardDaoJdbc);
-        assertNotNull(cvsExporter);
-
         String tableName = "shard";
         int targetHeight = 3;
         int batchLimit = 1; // used for pagination and partial commit
 
-        long exportedRows = cvsExporter.exportShardTable(targetHeight, batchLimit);
+        long exportedRows = csvExporter.exportShardTable(targetHeight, batchLimit);
         log.debug("Processed Tables = {}, exported = '{}' rows", tableName, exportedRows);
 
         String[] extensions = new String[]{"csv"};
-        Collection filesInFolder = FileUtils.listFiles(dirProvider.getDataExportDir().toFile(), extensions, false);
+        Collection filesInFolder = FileUtils.listFiles(dataExportPath.toFile(), extensions, false);
         assertNotNull(filesInFolder);
         assertEquals(1, filesInFolder.size());
         ((File) filesInFolder.iterator().next()).getName().equalsIgnoreCase(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
@@ -271,11 +266,33 @@ class CsvExporterTest {
             Object next = iterator.next();
             String fileName = ((File)next).getName();
             log.trace("File in folder = {}", fileName);
-            int readCount = importCsvAndCheckContent(fileName, dirProvider.getDataExportDir());
+            int readCount = importCsvAndCheckContent(fileName, dataExportPath);
             assertTrue(readCount > 0);
         }
 
         log.debug("Processed Table = [{}]", filesInFolder.size());
+    }
+
+    @Test
+    void testExportIndexes() throws IOException {
+        IndexExportData exportData = csvExporter.exportIndexes(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
+        assertEquals(2, exportData.getBlocksExported());
+        assertEquals(3, exportData.getTxExported());
+        List<String> blockIndexCsv = Files.readAllLines(dataExportPath.resolve("block_index.csv"));
+        assertEquals(blockIndexExportContent.subList(0, 3), blockIndexCsv);
+        List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
+        assertEquals(transactionIndexExportContent.subList(0, 4), transactionIndexCsv);
+    }
+
+    @Test
+    void testExportAllIndexes() throws IOException {
+        IndexExportData exportData = csvExporter.exportIndexes(IndexTestData.BLOCK_INDEX_0.getBlockHeight() + 1, 2);
+        assertEquals(3, exportData.getBlocksExported());
+        assertEquals(4, exportData.getTxExported());
+        List<String> blockIndexCsv = Files.readAllLines(dataExportPath.resolve("block_index.csv"));
+        assertEquals(blockIndexExportContent, blockIndexCsv);
+        List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
+        assertEquals(transactionIndexExportContent, transactionIndexCsv);
     }
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {

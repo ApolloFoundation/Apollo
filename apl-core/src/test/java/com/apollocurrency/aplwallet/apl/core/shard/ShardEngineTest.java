@@ -58,7 +58,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.ShardExportDirProducer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -72,6 +71,7 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.literal.NamedLiteral;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -84,6 +84,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 
 @EnableWeld
@@ -105,8 +106,10 @@ class ShardEngineTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
-    ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(createPath("targetDb").toAbsolutePath());
-
+    private final Bean<Path> dataExportDir = MockBean.of(createPath("targetDb").toAbsolutePath(), Path.class);
+    {
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
+    }
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -121,7 +124,7 @@ class ShardEngineTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(exportDirProducer, ShardExportDirProducer.class))
+            .addBeans(dataExportDir)
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();

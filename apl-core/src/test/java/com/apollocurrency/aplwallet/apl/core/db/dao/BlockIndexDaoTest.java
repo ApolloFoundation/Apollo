@@ -236,4 +236,5 @@ public class BlockIndexDaoTest {
 
             assertEquals(1, count);
     }
+
 }

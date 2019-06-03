@@ -6,12 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import org.slf4j.Logger;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -23,14 +27,8 @@ import java.sql.Types;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
-import org.slf4j.Logger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * {@inheritDoc}
@@ -137,21 +135,15 @@ public class CsvImporterImpl implements CsvImporter {
                     log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
 
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
-                        InputStream is = null;
-                        try {
-                            is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                        try (InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(((String) object)))) {
                             // meta.getPrecision(i + 1) - is very IMPORTANT here for H2 db !!!
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
-                        } catch (SQLException e) {
+                        }
+                        catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);
                             throw e;
-                        } finally {
-                            if (is != null) {
-                                try {
-                                    is.close();
-                                } catch (IOException e) {} // ignore error here
-                            }
                         }
+                        // ignore error here
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
                         String objectArray = (String)object;
                         Object[] split = objectArray.split(",");
