@@ -31,7 +31,7 @@ public class AplAppStatus {
     public AplAppStatus() {
     }
     
-    public String durableTaskStart(String name, String descritption){
+    public String durableTaskStart(String name, String descritption, boolean isCrititcal){
         String key = UUID.randomUUID().toString();
         DurableTaskInfo info = new DurableTaskInfo();
         info.setId(key);
@@ -40,15 +40,20 @@ public class AplAppStatus {
         info.setDecription(descritption);
         info.setStarted(new Date());
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[0]);
+        info.setIsCrititcal(isCrititcal);
         tasks.put(key, info);
-        LOG.debug("Task: {} started",name);
+        if(isCrititcal){
+          LOG.info("Task: {} started",name);            
+        }else{
+            LOG.debug("Task: {} started",name);
+        }
         return key;
     }
     
     public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message){
        DurableTaskInfo info =  tasks.get(taskId);
        if(info==null){
-           taskId=durableTaskStart("Unnamed", "No Description");
+           taskId=durableTaskStart("Unnamed", "No Description", false);
            info=tasks.get(taskId);
        }
        info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);

@@ -33,6 +33,8 @@ public class DurableTaskInfo {
     public String name;    
     @Schema(name="Description of task", description="Description of task in one line")
     public String decription;
+    @Schema(name="Is task critical", description="Taks is critical and should be displayed on top of UI window")
+    public Boolean isCrititcal = false;
     @Schema(name="Task state", description="Task state in one line in human readable form", 
             allowableValues = {"Starded","In progress","Finished","Cancelled","Paused"})
     public String stateOfTask;

@@ -111,7 +111,7 @@ public final class AplCore {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
 //            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
 //        }
-        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init", "Apollo core initialization task");
+        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init", "Apollo core initialization task",true);
         startUp();
     }
 
@@ -157,7 +157,7 @@ public final class AplCore {
                 if(enableAPIUPnP || enablePeerUPnP){
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP upnp = CDI.current().select(UPnP.class).get();
-                    String upnpTid=aplAppStatus.durableTaskStart("UPnP init", "Tryin to get UPnP router");
+                    String upnpTid=aplAppStatus.durableTaskStart("UPnP init", "Tryin to get UPnP router",false);
                     upnp.init();
                     aplAppStatus.durableTaksFinished(upnpTid, false, "UPnP init done");
                 }                

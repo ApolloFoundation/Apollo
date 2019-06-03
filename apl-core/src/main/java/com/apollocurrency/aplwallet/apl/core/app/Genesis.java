@@ -122,7 +122,7 @@ public final class Genesis {
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         
         LOG.debug("Loading public keys [{}]...", publicKeys.size());
-        genesisTaskId = aplAppStatus.durableTaskStart("Genesis accoun load", "Loading or creating Genesis accopunts");
+        genesisTaskId = aplAppStatus.durableTaskStart("Genesis accoun load", "Loading or creating Genesis accopunts",true);
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.0, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
