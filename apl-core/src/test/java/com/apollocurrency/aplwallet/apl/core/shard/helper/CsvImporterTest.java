@@ -127,7 +127,7 @@ class CsvImporterTest {
     private ShardDaoJdbc daoJdbc;
     CsvImporter csvImporter;
 
-    private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard");
+    private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
 
     public CsvImporterTest() throws Exception {}
 
@@ -149,8 +149,7 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(fileLoader.getResourcePath());
-        csvImporter = new CsvImporterImpl(exportDirProducer, extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -159,8 +158,7 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(fileLoader.getResourcePath());
-        csvImporter = new CsvImporterImpl(exportDirProducer, extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {

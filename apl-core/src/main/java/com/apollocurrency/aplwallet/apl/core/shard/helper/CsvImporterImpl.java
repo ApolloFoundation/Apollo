@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
@@ -43,10 +44,9 @@ public class CsvImporterImpl implements CsvImporter {
 
     @Inject
 //    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
-    public CsvImporterImpl(ShardExportDirProducer exportDirProducer, DatabaseManager databaseManager) {
-        Objects.requireNonNull(exportDirProducer, "exportDirProducer is NULL");
-        Objects.requireNonNull(exportDirProducer.getDataExportDir(), "exportDirProducer 'data Path' is NULL");
-        this.dataExportPath = exportDirProducer.getDataExportDir();
+    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
+        Objects.requireNonNull(dataExportPath, "dataExport path is NULL");
+        this.dataExportPath = dataExportPath;
 //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of("genesis_public_key");
@@ -146,8 +146,20 @@ public class CsvImporterImpl implements CsvImporter {
                         // ignore error here
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
                         String objectArray = (String)object;
-                        Object[] split = objectArray.split(",");
-                        SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(split);
+                        String[] split = objectArray.split(",");
+                        Object[] actualArray = new Object[split.length];
+                        for (int j = 0; j < split.length; j++) { //find byte arrays
+                            String byteArrayCandidate = split[j];
+                            if (byteArrayCandidate.startsWith("b\'") && byteArrayCandidate.endsWith("\'")) {
+                                //byte array found
+                                byte[] actualValue = Base64.getDecoder().decode(byteArrayCandidate.substring(2, byteArrayCandidate.length() - 1));
+                                actualArray[j] = actualValue;
+                            } else {
+                                actualArray[j] = split[j];
+                            }
+                        }
+
+                        SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
                         preparedInsertStatement.setArray(i + 1, simpleArray);
                     } else {
                         preparedInsertStatement.setObject(i + 1, object);

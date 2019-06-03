@@ -229,13 +229,19 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             Array array = rs.getArray(i + 1);
                             if (array != null && array.getArray() instanceof Object[] && ((Object[])array.getArray()).length > 0) {
                                 Object[] objectArray = (Object[]) array.getArray();
-                                StringBuilder outputValue = new StringBuilder(objectArray.length + 2);
+                                StringBuilder outputValue = new StringBuilder();
                                 for (int j = 0; j < objectArray.length; j++) {
                                     Object o1 = objectArray[j];
                                     if (j == 0) {
                                         outputValue.append("(");
                                     }
-                                    outputValue.append(o1.toString()).append(",");
+                                    String objectValue;
+                                    if (o1 instanceof byte[]) {
+                                        objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
+                                    } else {
+                                        objectValue = o1.toString();
+                                    }
+                                    outputValue.append(objectValue).append(",");
                                     if (j == objectArray.length - 1) {
                                         // there is a bug in H2 parser, so let's make one extra comma at the end
                                         // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"

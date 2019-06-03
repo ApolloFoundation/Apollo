@@ -323,3 +323,8 @@ INSERT INTO PUBLIC.ACCOUNT_CONTROL_PHASING
 (30, -8446384352342482748, (2728325718715804811, 1344527020205736624), 0, 1, null, null, 0, 300000000, 12, 113, 2000, true),
 (40, -4013722529644937202, (-8446656647637444484, 1344527020205736624, -6724281675870110558), 0, 1, null, null, 0, 300000000, 12, 113, 3000, true),
 ;
+
+INSERT into shuffling_data
+(DB_ID  	,SHUFFLING_ID  	,ACCOUNT_ID  	,DATA  	                                            ,TRANSACTION_TIMESTAMP  	,HEIGHT ) VALUES
+(1          ,100            ,105            ,(X'ff112385a1f832bc', X'ffffff', X'1234567890')    ,150                        ,1),
+(2          ,101            ,110            ,(X'75849274935438',)                               ,250                        ,5);
