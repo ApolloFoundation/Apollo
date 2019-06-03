@@ -25,4 +25,6 @@ public class HeightMonitorCmd {
     @Parameter(names = {"--port", "-p"}, description = "Set api port for peers to send getBlocks requests. By default is set to 7876")
     public Integer port;
 
+    public static final String DEFAULT_PEERS_CONFIG_RESOURCES = "peersConfig-Default.json";
+
 }

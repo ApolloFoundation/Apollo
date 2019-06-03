@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.tools;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+
+import static com.apollocurrency.aplwallet.apl.tools.cmdline.HeightMonitorCmd.DEFAULT_PEERS_CONFIG_RESOURCES;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -44,6 +46,8 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -170,11 +174,37 @@ public class ApolloTools {
     private int heightMonitor() {
         try {
             String peerFile = heightMonitorCmd.peerFile;
+            // check and try to load config file from resources
+            if (peerFile == null || peerFile.isEmpty()) {
+                log.warn("'peerFile' config param was not supplied...LOADING DEFAULT from resources !!");
+                try (InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(DEFAULT_PEERS_CONFIG_RESOURCES) ) {
+                    if (inputStream != null) {
+                        URL resource = this.getClass().getClassLoader().getResource(DEFAULT_PEERS_CONFIG_RESOURCES);
+                        if (resource != null) {
+                            peerFile = resource.getPath();
+                            log.debug("Found 'Peers Config' in resources = {}", peerFile);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error loading from resource file", e);
+                    System.exit(1);
+                }
+            }
+            if (peerFile == null || peerFile.isEmpty()) {
+                log.warn("'peerFile' config param was neither loaded by supplied path nor found DEFAULT in resources !!");
+                System.exit(1);
+            }
+            File file = new File(peerFile);
+            if (!file.exists()) {
+                log.error("peerFile config was not found in path = {}", peerFile);
+                System.exit(1);
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-            PeersConfig peersConfig = objectMapper.readValue(new File(peerFile), PeersConfig.class);
+            PeersConfig peersConfig = objectMapper.readValue(file, PeersConfig.class);
             HeightMonitor hm = new HeightMonitor(heightMonitorCmd.frequency);
             HeightMonitorConfig config = new HeightMonitorConfig(peersConfig, heightMonitorCmd.intervals, heightMonitorCmd.port);
+            log.debug("Prepared start with params = {}", config);
             hm.start(config);
             return 0;
         }
