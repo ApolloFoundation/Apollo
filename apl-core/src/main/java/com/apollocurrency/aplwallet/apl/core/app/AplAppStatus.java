@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -26,7 +28,8 @@ public class AplAppStatus {
     private static final Logger LOG = getLogger(AplAppStatus.class);
     private static final long ONE_DAY=3600*24;
     private final Map<String,DurableTaskInfo> tasks = new HashMap<>();
-
+    private NumberFormat formatter = new DecimalFormat("#000.000");
+    
     @Inject
     public AplAppStatus() {
     }
@@ -51,6 +54,11 @@ public class AplAppStatus {
     }
     
     public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message){
+        return durableTaskUpdate(taskId,percentComplete,message,-1);
+    }
+    
+    public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message, int keepPrevMessages){
+    
        DurableTaskInfo info =  tasks.get(taskId);
        if(info==null){
            taskId=durableTaskStart("Unnamed", "No Description", false);
@@ -58,41 +66,51 @@ public class AplAppStatus {
        }
        info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
        info.setPercentComplete(percentComplete);
+       info.setDurationMS(System.currentTimeMillis()-info.getStarted().getTime());
        if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
-           LOG.debug("Task: {} updated, %: {}, message: {}",info.name, percentComplete, message);
-       }else{
-           LOG.debug("Task: {} updated, %: {}",info.name, percentComplete);
        }
-       info.setDurationMS(System.currentTimeMillis()-info.getStarted().getTime());
+       if(info.isCrititcal){
+          LOG.info("{}: update,%: {}, message: {}",info.name, formatter.format(percentComplete), message);           
+       }else{
+          LOG.debug("{}: update,%: {}, message: {}, duration: {}",info.name, formatter.format(percentComplete), message,info.durationMS);
+       }
+       if(keepPrevMessages>0){
+           int toDel = info.messages.size()-keepPrevMessages;
+           if(toDel>0){
+             for(int i=0;i<toDel;i++){  
+               info.messages.remove(0);
+             }
+           }
+       }
        return taskId;
     }
     
-    public synchronized void durableTaksPaused(String taskId, String message){
+    public synchronized void durableTaskPaused(String taskId, String message){
         DurableTaskInfo info =  tasks.get(taskId);
         if(info==null){
             return;
         }
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[4]);
-        LOG.debug("Task: {} paused, %: {}, message: {}",info.name,  message);
+        LOG.debug("{}: paused, %: {}, message: {}",info.name,  message);
         if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
         }        
     }
 
-    public synchronized void durableTaksContinue(String taskId, String message){
+    public synchronized void durableTaskContinue(String taskId, String message){
         DurableTaskInfo info =  tasks.get(taskId);
         if(info==null){
             return;
         }     
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
-        LOG.debug("Task: {} resumed, %: {}, message: {}",info.name,  message);
+        LOG.debug("{}: resumed, %: {}, message: {}",info.name,  message);
         if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
         }        
     }
 
-    public synchronized void durableTaksFinished(String taskId, boolean isCancelled, String message){
+    public synchronized void durableTaskFinished(String taskId, boolean isCancelled, String message){
         DurableTaskInfo info =  tasks.get(taskId);
         if(info==null){
             return;
@@ -101,9 +119,11 @@ public class AplAppStatus {
         info.setDurationMS(info.getFinished().getTime()-info.getStarted().getTime());
         if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
-           LOG.debug("Task: {} finished with: {} duration, MS: {}",info.name,message,info.durationMS);
+        }
+        if(info.isCrititcal){
+           LOG.debug("{}: finished with: {} duration, MS: {}",info.name,message,info.durationMS);
         }else{        
-           LOG.debug("Task: {} finished. Duration: {}",info.name,info.durationMS);
+           LOG.info("{}: finished with: {} duration, MS: {}",info.name,message,info.durationMS);
         }
         if(isCancelled){
             info.setStateOfTask(DurableTaskInfo.TASK_STATES[3]);

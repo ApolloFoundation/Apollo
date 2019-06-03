@@ -159,7 +159,7 @@ public final class AplCore {
                     UPnP upnp = CDI.current().select(UPnP.class).get();
                     String upnpTid=aplAppStatus.durableTaskStart("UPnP init", "Tryin to get UPnP router",false);
                     upnp.init();
-                    aplAppStatus.durableTaksFinished(upnpTid, false, "UPnP init done");
+                    aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
                 }                
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  1.0, "API initialization");
                         

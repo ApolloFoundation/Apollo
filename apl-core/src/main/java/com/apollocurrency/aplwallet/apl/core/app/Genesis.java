@@ -163,7 +163,7 @@ public final class Genesis {
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
-        aplAppStatus.durableTaksFinished(genesisTaskId, false, message);
+        aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
     }
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
