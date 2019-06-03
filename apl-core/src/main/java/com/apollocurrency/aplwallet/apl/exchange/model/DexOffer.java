@@ -6,11 +6,14 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 import com.apollocurrency.aplwallet.api.dto.DexOfferDto;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 
 public class DexOffer{
     private Long id;
     private Long transactionId;
     private Long accountId;
+    private String fromAddress;
+    private String toAddress;
 
     private OfferType type;
     private OfferStatus status;
@@ -34,6 +37,11 @@ public class DexOffer{
         this.pairRate = dexOfferAttachment.getPairRate();
         this.status = OfferStatus.getType(dexOfferAttachment.getStatus());
         this.finishTime = dexOfferAttachment.getFinishTime();
+
+        if(dexOfferAttachment instanceof DexOfferAttachmentV2){
+            this.fromAddress = ((DexOfferAttachmentV2)dexOfferAttachment).getFromAddress();
+            this.toAddress = ((DexOfferAttachmentV2)dexOfferAttachment).getToAddress();
+        }
     }
 
     //TODO discuss about this approach
@@ -42,6 +50,8 @@ public class DexOffer{
 
         dexOfferDto.id = Long.toUnsignedString(this.getTransactionId());
         dexOfferDto.accountId = Long.toUnsignedString(this.getAccountId());
+        dexOfferDto.fromAddress = this.getFromAddress();
+        dexOfferDto.toAddress = this.getToAddress();
         dexOfferDto.type = this.getType().ordinal();
         dexOfferDto.offerCurrency = this.getOfferCurrency().ordinal();
         dexOfferDto.offerAmount = this.getOfferAmount();
@@ -76,6 +86,14 @@ public class DexOffer{
 
     public void setAccountId(Long accountId) {
         this.accountId = accountId;
+    }
+
+    public String getFromAddress() {
+        return fromAddress;
+    }
+
+    public void setFromAddress(String fromAddress) {
+        this.fromAddress = fromAddress;
     }
 
     public OfferType getType() {
@@ -132,5 +150,13 @@ public class DexOffer{
 
     public void setStatus(OfferStatus status) {
         this.status = status;
+    }
+
+    public String getToAddress() {
+        return toAddress;
+    }
+
+    public void setToAddress(String toAddress) {
+        this.toAddress = toAddress;
     }
 }

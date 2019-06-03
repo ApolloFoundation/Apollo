@@ -10,6 +10,8 @@ public class DexOfferDto {
      */
     public String id;
     public String accountId;
+    public String fromAddress;
+    public String toAddress;
 
     public Integer type;
     public Integer offerCurrency;
