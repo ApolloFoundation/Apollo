@@ -32,6 +32,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
+    private static final AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
 
 //    @Inject
 /*
@@ -44,7 +45,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public void shutdownApplication() {
-        AplCoreRuntime.getInstance().shutdown();
+        aplCoreRuntime.shutdown();
  //       AplCore.removeShutdownHook();
     }
 

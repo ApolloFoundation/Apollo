@@ -8,7 +8,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import javax.enterprise.inject.spi.CDI;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +16,12 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Runtime environment for AplCores (singleton)
  * @author alukin@gmail.com
  */
-@Vetoed
+@Singleton
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
     public final static String WEB_UI_DIR="webui";
@@ -38,37 +39,39 @@ public class AplCoreRuntime {
  
     private  RuntimeMode runtimeMode;
     private DirProvider dirProvider;
+    private ConfigDirProvider cofnDirProvider;
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private final BlockchainConfig blockchainConfig;
+    private final PropertiesHolder propertiesHolder;
     
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-   @Vetoed 
-    private static class AplCoreRuntimeHolder {
-        private static final AplCoreRuntime INSTANCE = new AplCoreRuntime();
-    } 
+    private AplAppStatus aplAppStatus;
     
+    @Inject
     private AplCoreRuntime() {
+        aplAppStatus = CDI.current().select(AplAppStatus.class).get();
+        propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+               
     }
 
-    public void setup(RuntimeMode runtimeMode, DirProvider dirProvider){
+    public void setup(RuntimeMode runtimeMode, DirProvider dirProvider, ConfigDirProvider cofnDirProvider){
         this.runtimeMode =runtimeMode;
         this.dirProvider = dirProvider;
+        this.cofnDirProvider=cofnDirProvider;
+    }
+    
+    public void addCoreAndInit(){        
+        AplCore core = new AplCore(propertiesHolder,this);
+        addCore(core);
+        core.init();
     }
     
     public void addCore(AplCore core){
         cores.add(core);
-    }
-    
-    public static AplCoreRuntime getInstance() {
-        return AplCoreRuntimeHolder.INSTANCE;
-    }
-
-    void setServerStatus(ServerStatus status, URI wallet) {
-        runtimeMode.setServerStatus(status, wallet, dirProvider.getLogsDir().toFile());
     }
     
     public void shutdown(){
@@ -106,6 +109,10 @@ public class AplCoreRuntime {
     }
     public DirProvider getDirProvider(){
         return dirProvider;
+    }
+    //TODO: we have different conf dirs fot different testnets
+    public String getConfDir() {
+        return cofnDirProvider.getConfigDirectoryName();
     }
     public static void logSystemProperties() {
         String[] loggedProperties = new String[] {
@@ -157,5 +164,9 @@ public class AplCoreRuntime {
         if(mintworker!=null){
             mintworker.stop();
         }
+    }
+
+    public AplAppStatus getAplAppStatus() {
+       return aplAppStatus;
     }
 }

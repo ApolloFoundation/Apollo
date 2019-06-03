@@ -20,28 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import java.io.File;
-import java.net.URI;
-
 public interface RuntimeMode {
 
     void init();
 
-    void setServerStatus(ServerStatus status, URI wallet, File logFileDir);
-
-
     void shutdown();
 
     void alert(String message);
-//
-//    default void recoverDb() {
-//        alert("Db Failed! Try to manually remove it.");
-//    }
 
     default void updateAppStatus(String newStatus) {}
 
     void displayError(String errorMessage);
-    
-    default void launchDesktopApplication(){
-    }   
+  
 }
