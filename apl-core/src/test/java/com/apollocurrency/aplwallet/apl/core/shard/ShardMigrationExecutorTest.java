@@ -95,6 +95,8 @@ import java.util.Set;
 import javax.inject.Inject;
 import org.junit.jupiter.api.Disabled;
 
+//TODO: enable when sharding implementation will be merded in develop branch
+@Disabled
 @EnableWeld
 class ShardMigrationExecutorTest {
 
