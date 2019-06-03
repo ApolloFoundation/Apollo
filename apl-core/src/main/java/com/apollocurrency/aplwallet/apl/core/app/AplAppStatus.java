@@ -24,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class AplAppStatus {
     private static final Logger LOG = getLogger(AplAppStatus.class);
-    public static final String[] TASK_STATES={"Starded","In progress","Finished","Cancelled"};
     private static final long ONE_DAY=3600*24;
     private final Map<String,DurableTaskInfo> tasks = new HashMap<>();
 
@@ -40,7 +39,7 @@ public class AplAppStatus {
         info.setPercentComplete(0.0);
         info.setDecription(descritption);
         info.setStarted(new Date());
-        info.setStateOfTask(TASK_STATES[0]);
+        info.setStateOfTask(DurableTaskInfo.TASK_STATES[0]);
         tasks.put(key, info);
         LOG.debug("Task: {} started",name);
         return key;
@@ -52,7 +51,7 @@ public class AplAppStatus {
            taskId=durableTaskStart("Unnamed", "No Description");
            info=tasks.get(taskId);
        }
-       info.setStateOfTask(TASK_STATES[1]);
+       info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
        info.setPercentComplete(percentComplete);
        if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
@@ -64,6 +63,30 @@ public class AplAppStatus {
        return taskId;
     }
     
+    public synchronized void durableTaksPaused(String taskId, String message){
+        DurableTaskInfo info =  tasks.get(taskId);
+        if(info==null){
+            return;
+        }
+        info.setStateOfTask(DurableTaskInfo.TASK_STATES[4]);
+        LOG.debug("Task: {} paused, %: {}, message: {}",info.name,  message);
+        if(!StringUtils.isBlank(message)){
+           info.getMessages().add(message);
+        }        
+    }
+
+    public synchronized void durableTaksContinue(String taskId, String message){
+        DurableTaskInfo info =  tasks.get(taskId);
+        if(info==null){
+            return;
+        }     
+        info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
+        LOG.debug("Task: {} resumed, %: {}, message: {}",info.name,  message);
+        if(!StringUtils.isBlank(message)){
+           info.getMessages().add(message);
+        }        
+    }
+
     public synchronized void durableTaksFinished(String taskId, boolean isCancelled, String message){
         DurableTaskInfo info =  tasks.get(taskId);
         if(info==null){
@@ -78,9 +101,9 @@ public class AplAppStatus {
            LOG.debug("Task: {} finished. Duration: {}",info.name,info.durationMS);
         }
         if(isCancelled){
-            info.setStateOfTask(TASK_STATES[3]);
+            info.setStateOfTask(DurableTaskInfo.TASK_STATES[3]);
         }else{
-            info.setStateOfTask(TASK_STATES[2]);            
+            info.setStateOfTask(DurableTaskInfo.TASK_STATES[2]);            
         }
     }
     

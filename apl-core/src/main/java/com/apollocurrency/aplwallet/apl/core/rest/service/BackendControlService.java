@@ -45,8 +45,19 @@ public class BackendControlService {
         return res;
     } 
 
-    public List<DurableTaskInfo> getNodeTasks() {
-        return new ArrayList(appStatus.getTasksList());
+    public List<DurableTaskInfo> getNodeTasks(String state) {
+        ArrayList<DurableTaskInfo> res;
+        if(state.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[5])){ //"All
+            res = new ArrayList(appStatus.getTasksList());
+        }else{
+            res=new ArrayList<>();
+            for(DurableTaskInfo dti: appStatus.getTasksList()){
+                if(dti.stateOfTask.equalsIgnoreCase(state)){
+                    res.add(dti);
+                }
+            }
+        }
+        return res;
     }
     
     public RunningThreadsInfo getThreadsInfo(){

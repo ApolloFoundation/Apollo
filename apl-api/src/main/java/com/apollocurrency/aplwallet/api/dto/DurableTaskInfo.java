@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,13 +25,16 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DurableTaskInfo {
+    @JsonIgnore
+    public static final String[] TASK_STATES={"Starded","In progress","Finished","Cancelled","Paused","All"};
     @Schema(name="ID of task", description="Identificator of task")
     public String id;
     @Schema(name="Name of task", description="Short but descruiptive name of task")
     public String name;    
     @Schema(name="Description of task", description="Description of task in one line")
     public String decription;
-    @Schema(name="Task state", description="Task state in one line in human readable form")
+    @Schema(name="Task state", description="Task state in one line in human readable form", 
+            allowableValues = {"Starded","In progress","Finished","Cancelled","Paused"})
     public String stateOfTask;
     @Schema(name="Task stafrt date", description="Task start date and time")
     public Date started;

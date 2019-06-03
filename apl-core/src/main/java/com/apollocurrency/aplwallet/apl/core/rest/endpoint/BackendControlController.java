@@ -79,10 +79,10 @@ public class BackendControlController {
                                     schema = @Schema(implementation = NodeStatusResponse.class)))
             }
     )
-    public Response getBackendStatus(@QueryParam("detailed") @DefaultValue("false") Boolean detailed) {
+    public Response getBackendStatus(@QueryParam("status") @DefaultValue("All") String state) {
         NodeStatusResponse statusResponse = new NodeStatusResponse();
         statusResponse.nodeInfo = bcService.getHWStatus();
-        statusResponse.tasks = bcService.getNodeTasks();
+        statusResponse.tasks = bcService.getNodeTasks(state);
         return Response.status(Response.Status.OK).entity(statusResponse).build();
     }
     
@@ -98,8 +98,13 @@ public class BackendControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
-    public Response getBackendThreadss() {
-        RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
-        return Response.status(Response.Status.OK).entity(threadsResponse).build();
+    public Response getBackendThreadss(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+        boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
+        if(passwordOK){
+            RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
+            return Response.status(Response.Status.OK).entity(threadsResponse).build();
+        }else{
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
     }
 }
