@@ -539,7 +539,7 @@ public final class Peers {
         }
 
         PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
-        if(myExtAddr.compareTo(pa)==0){
+        if(pa.compareTo(myExtAddr)==0){
             return true;
         }
         return false;

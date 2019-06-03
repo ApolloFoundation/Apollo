@@ -131,14 +131,14 @@ public class PeerHttpServer {
             }
             peerServer.setHandler(ctxHandler);
             
-            if (enablePeerUPnP) {
-                if (!upnp.isInited()) {
-                    upnp.init();
-                }
+            if (enablePeerUPnP && upnp.isAvailable()) {
                 Connector[] peerConnectors = peerServer.getConnectors();
                 for (Connector peerConnector : peerConnectors) {
                     if (peerConnector instanceof ServerConnector) {
-                        externalPorts.add(upnp.addPort(((ServerConnector) peerConnector).getPort(), "Peer2Peer"));
+                        int port = upnp.addPort(((ServerConnector) peerConnector).getPort(), "Peer2Peer");
+                        if(port>0){
+                          externalPorts.add(port);
+                        }
                     }
                 }
                 //TODO: check
