@@ -18,10 +18,11 @@ import javax.inject.Named;
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
-    private static final AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+    private final AplCoreRuntime aplCoreRuntime;
     @Inject
-    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder) {
-        this.propertiesHolder = propertiesHolder;        
+    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder, AplCoreRuntime aplCoreRuntime) {
+        this.propertiesHolder = propertiesHolder;
+        this.aplCoreRuntime=aplCoreRuntime;
     }
 
     @Produces

@@ -23,7 +23,6 @@ import javax.inject.Inject;
 public class ApplicationDataMigrationManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
-    private static final AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
 
     @Inject
     private VaultKeystoreMigrationExecutor vaultKeystoreMigrationExecutor;
@@ -35,7 +34,9 @@ public class ApplicationDataMigrationManager {
     private PublicKeyMigrator publicKeyMigrator;
     @Inject
     private ReferencedTransactionMigrator referencedTransactionMigrator;
-
+    @Inject
+    private  AplCoreRuntime aplCoreRuntime;
+    
     public void executeDataMigration() {
         try {
 //            String customDbDir = propertiesHolder.getStringProperty("apl.customDbDir");

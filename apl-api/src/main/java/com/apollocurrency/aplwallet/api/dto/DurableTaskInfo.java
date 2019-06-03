@@ -38,7 +38,7 @@ public class DurableTaskInfo {
     @Schema(name="Task state", description="Task state in one line in human readable form", 
             allowableValues = {"Starded","In progress","Finished","Cancelled","Paused"})
     public String stateOfTask;
-    @Schema(name="Task stafrt date", description="Task start date and time")
+    @Schema(name="Task start date", description="Task start date and time")
     public Date started;
     @Schema(name="Task finish date", description="Task start date and time")
     public Date finished;
