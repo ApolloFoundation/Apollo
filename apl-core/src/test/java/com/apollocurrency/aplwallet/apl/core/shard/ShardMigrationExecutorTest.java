@@ -110,7 +110,7 @@ class ShardMigrationExecutorTest {
     private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     private final Bean<Path> dataExportDir = MockBean.of(temporaryFolderExtension.newFolder().toPath().toAbsolutePath(), Path.class);
-    private DirProvider dirProvider = mock(DirProvider.class);
+    private DirProvider dirProvider;
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
@@ -134,6 +134,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))              
             .build();
     @Inject
     private ShardEngine shardEngine;

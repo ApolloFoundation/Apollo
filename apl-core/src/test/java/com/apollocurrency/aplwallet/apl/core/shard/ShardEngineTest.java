@@ -105,7 +105,7 @@ class ShardEngineTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private final Bean<Path> dataExportDir = MockBean.of(createPath("targetDb").toAbsolutePath(), Path.class);
-    private DirProvider dirProvider = mock(DirProvider.class);
+    private DirProvider dirProvider;
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -122,6 +122,7 @@ class ShardEngineTest {
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(dataExportDir)
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))  
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
