@@ -37,8 +37,7 @@ public class DownloadableFilesManager {
     private String fileBaseDir="/home/at/testfiles";
     
     @Inject
-    public DownloadableFilesManager(AplCoreRuntime aplCoreRuntime) {
-        DirProvider dirProvider = aplCoreRuntime.getDirProvider();
+    public DownloadableFilesManager(DirProvider dirProvider) {
         fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
     }
     

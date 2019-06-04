@@ -122,6 +122,8 @@ class CsvWriterReaderDerivedTablesTest {
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
+    private DirProvider dirProvider = mock(DirProvider.class);
+        
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
@@ -139,6 +141,7 @@ class CsvWriterReaderDerivedTablesTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
+            DirProvider.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))

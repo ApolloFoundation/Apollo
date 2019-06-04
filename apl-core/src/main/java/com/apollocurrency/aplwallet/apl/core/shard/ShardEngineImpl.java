@@ -74,7 +74,7 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     @Inject
-    public ShardEngineImpl(AplCoreRuntime aplCoreRuntime,DatabaseManager databaseManager, TrimService trimService,
+    public ShardEngineImpl(DirProvider dirProvider,DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
                            DerivedTablesRegistry registry) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
@@ -82,7 +82,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
-        this.dirProvider = aplCoreRuntime.getDirProvider();
+        this.dirProvider = dirProvider;
     }
 
     @Override

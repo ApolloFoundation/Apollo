@@ -19,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -34,13 +33,12 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
-    public final static String WEB_UI_DIR="webui";
+
     private static Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private List<AplCore> cores = new ArrayList<>();
  
     private  RuntimeMode runtimeMode;
-    private DirProvider dirProvider;
-    private ConfigDirProvider cofnDirProvider;
+
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
     private final BlockchainConfig blockchainConfig;
@@ -59,14 +57,12 @@ public class AplCoreRuntime {
                
     }
 
-    public void setup(RuntimeMode runtimeMode, DirProvider dirProvider, ConfigDirProvider cofnDirProvider){
+    public void setup(RuntimeMode runtimeMode){
         this.runtimeMode =runtimeMode;
-        this.dirProvider = dirProvider;
-        this.cofnDirProvider=cofnDirProvider;
     }
     
     public void addCoreAndInit(){        
-        AplCore core = new AplCore(propertiesHolder,this);
+        AplCore core = new AplCore(propertiesHolder,aplAppStatus);
         addCore(core);
         core.init();
     }
@@ -87,33 +83,6 @@ public class AplCoreRuntime {
             }
         }
         runtimeMode.shutdown();
-    }
-
-    public Path getDbDir() {
-        return dirProvider.getDbDir();
-    }
-
-    public Path getVaultKeystoreDir() {
-        return dirProvider.getVaultKeystoreDir();
-    }
-
-    public Path get2FADir() {
-        return dirProvider.get2FADir();
-    }
-
-    public String getUserHomeDir() {
-        return dirProvider.getAppBaseDir().toString();
-    }
-
-    public RuntimeMode getRuntimeMode(){
-        return runtimeMode;
-    }
-    public DirProvider getDirProvider(){
-        return dirProvider;
-    }
-    //TODO: we have different conf dirs fot different testnets
-    public String getConfDir() {
-        return cofnDirProvider.getConfigDirectoryName();
     }
     public static void logSystemProperties() {
         String[] loggedProperties = new String[] {
@@ -140,19 +109,6 @@ public class AplCoreRuntime {
         LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
         LOG.debug("processId = {}", RuntimeParams.getProcessId());
     } 
-    
-    public String findWebUiDir(){
-// if we decide to unzip in runtime
-//        String dir = dirProvider.getAppHomeDir()+File.separator+WEB_UI_DIR;
-        String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
-        dir=dir+File.separator+"build";
-        File res = new File(dir);
-        if(!res.exists()){ //we are in develop IDE or tests
-            dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
-            res=new File(dir);
-        }
-        return res.getAbsolutePath();
-    }
     
     public void startMinter() {
         mintworker = new MintWorker(propertiesHolder, blockchainConfig);
