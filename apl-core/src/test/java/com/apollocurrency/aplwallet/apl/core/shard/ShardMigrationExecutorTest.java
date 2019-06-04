@@ -95,9 +95,7 @@ import java.util.Properties;
 import java.util.Set;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
-import org.junit.jupiter.api.Disabled;
-//TODO: resolve Weld injects
-@Disabled
+
 @EnableWeld
 class ShardMigrationExecutorTest {
 
@@ -112,7 +110,11 @@ class ShardMigrationExecutorTest {
     private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     private final Bean<Path> dataExportDir = MockBean.of(temporaryFolderExtension.newFolder().toPath().toAbsolutePath(), Path.class);
-    private DirProvider dirProvider;
+    private DirProvider dirProvider = mock(DirProvider.class);
+    {
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
+
+    }
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
@@ -132,11 +134,11 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(dirProvider, DirProvider.class))              
             .build();
     @Inject
     private ShardEngine shardEngine;

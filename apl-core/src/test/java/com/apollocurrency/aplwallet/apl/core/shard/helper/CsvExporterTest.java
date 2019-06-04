@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
@@ -94,8 +95,10 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Collection;
@@ -149,6 +152,7 @@ class CsvExporterTest {
             TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
             DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
             DataTagDao.class, KeyFactoryProducer.class, FeeCalculator.class,
+            DGSGoodsTable.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
@@ -173,6 +177,8 @@ class CsvExporterTest {
     AccountTable accountTable;
     @Inject
     PropertiesHolder propertiesHolder;
+    @Inject
+    DGSGoodsTable goodsTable;
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -311,6 +317,15 @@ class CsvExporterTest {
         assertEquals(2, exported);
         List<String> transactionCsv = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
         assertEquals(transactionExportContent, transactionCsv);
+    }
+
+    @Test
+    void testExportGoodsTable() throws URISyntaxException, IOException {
+        long exported = csvExporter.exportDerivedTable(goodsTable, 542100, 2);
+        assertEquals(6, exported);
+        List<String> goodsCsv = Files.readAllLines(dataExportPath.resolve("goods.csv"));
+        List<String> expectedGoodsCsv = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("goods.csv").toURI()));
+        assertEquals(expectedGoodsCsv.subList(0, 7), goodsCsv);
     }
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {

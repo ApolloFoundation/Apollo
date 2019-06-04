@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
@@ -146,19 +147,30 @@ public class CsvImporterImpl implements CsvImporter {
                         // ignore error here
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
                         String objectArray = (String)object;
-                        String[] split = objectArray.split(",");
-                        Object[] actualArray = new Object[split.length];
-                        for (int j = 0; j < split.length; j++) { //find byte arrays
-                            String byteArrayCandidate = split[j];
-                            if (byteArrayCandidate.startsWith("b\'") && byteArrayCandidate.endsWith("\'")) {
-                                //byte array found
-                                byte[] actualValue = Base64.getDecoder().decode(byteArrayCandidate.substring(2, byteArrayCandidate.length() - 1));
-                                actualArray[j] = actualValue;
-                            } else {
-                                actualArray[j] = split[j];
+                        Object[] actualArray;
+                        if (!StringUtils.isBlank(objectArray)) {
+                            String[] split = objectArray.split(",");
+                            actualArray = new Object[split.length];
+                            for (int j = 0; j < split.length; j++) {
+                                String value = split[j];
+                                if (value.startsWith("b\'") && value.endsWith("\'")) { //find byte arrays
+                                    //byte array found
+                                    byte[] actualValue = Base64.getDecoder().decode(value.substring(2, value.length() - 1));
+                                    actualArray[j] = actualValue;
+                                } else if (value.startsWith("\'") && value.endsWith("\'")) { //find string
+                                    actualArray[j] = split[j].substring(1, split[j].length() - 1);
+                                } else { // try to process long value
+                                    try {
+                                        actualArray[j] = Long.parseLong(split[j]);
+                                    }
+                                    catch (NumberFormatException e) { //throw exception, when specified value is not string, long or byte array
+                                        throw new RuntimeException("Value " + split[j] + " of unsupported type");
+                                    }
+                                }
                             }
+                        } else {
+                            actualArray = new Object[0];
                         }
-
                         SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
                         preparedInsertStatement.setArray(i + 1, simpleArray);
                     } else {
