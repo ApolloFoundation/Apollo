@@ -10,16 +10,20 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
- * zip-unziop directorys
+ * Class is used for zip-unzip directories
+ *
  * @author alukin@gmail.com
  */
 public class Zip {
@@ -34,6 +38,15 @@ public class Zip {
     * @return true if success
     */ 
     public boolean extract(String zipFile, String outputFolder) {
+        Objects.requireNonNull(zipFile, "zipFile is NULL");
+        Objects.requireNonNull(outputFolder, "outputFolder is NULL");
+        if (zipFile.isEmpty()) {
+            throw new IllegalArgumentException("'zipFile' value is empty");
+        }
+        if (outputFolder.isEmpty()) {
+            throw new IllegalArgumentException("'outputFolder' value is empty");
+        }
+        log.trace("Extracting file '{}' from outputFolder '{}'", zipFile, outputFolder);
         boolean res = true;
         byte[] buffer = new byte[BUF_SIZE];
 
@@ -89,22 +102,34 @@ public class Zip {
  * @param zipFile result zip file path
  * @param inputFolder folder to zip
  * @param filesTimeFromEpoch time in ms from Epoch for all file times
+ * @param filenameFilter NULL or implemented instance
  * @return true if success
  */
-    public boolean compress(String zipFile, String inputFolder, long filesTimeFromEpoch) {
-        boolean res = true;
+    public boolean compress(String zipFile, String inputFolder, long filesTimeFromEpoch,
+                            FilenameFilter filenameFilter) {
+        Objects.requireNonNull(zipFile, "zipFile is NULL");
+        Objects.requireNonNull(inputFolder, "inputFolder is NULL");
+        if (zipFile.isEmpty()) {
+            throw new IllegalArgumentException("'zipFile' value is empty");
+        }
+        if (inputFolder.isEmpty()) {
+            throw new IllegalArgumentException("'inputFolder' value is empty");
+        }
+        long start = System.currentTimeMillis();
+        log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
+        boolean result = true;
         File directory = new File(inputFolder);
-        List<String> fileList = getFileList(directory);
+        List<String> fileList = getFileList(directory, filenameFilter);
+        log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}", fileList.size(), Arrays.toString(fileList.toArray()) ,
+                inputFolder, filenameFilter);
 
         try (FileOutputStream fos = new FileOutputStream(zipFile);
                 ZipOutputStream zos = new ZipOutputStream(fos)) {
 
             for (String filePath : fileList) {
 
-                String name = filePath.substring(
-                        directory.getAbsolutePath().length() + 1,
-                        filePath.length());
-
+                String name = filePath.substring(directory.getAbsolutePath().length() + 1);
+                log.trace("processing zip entry '{}' as file in '{}'...", name, filePath);
                 ZipEntry zipEntry = new ZipEntry(name);
                 FileTime ft = FileTime.fromMillis(filesTimeFromEpoch);
                 zipEntry.setCreationTime(ft);
@@ -119,31 +144,40 @@ public class Zip {
                         zos.write(buffer, 0, length);
                     }
                     zos.closeEntry();
+                    log.trace("closed zip entry '{}'", name);
                 } catch (Exception e) {
-                    res = false;
+                    result = false;
                     log.error("Error creating zip file: {}", zipFile, e);
                 }
             }
         } catch (IOException e) {
-            res = false;
+            result = false;
             log.error("Error creating zip file: {}", zipFile, e);
         }
-        return res;
+        log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile, fileList.size(),
+                (System.currentTimeMillis() - start) / 1000 );
+        return result;
     }
 
-    private List<String> getFileList(File directory) {
+    private List<String> getFileList(File directory, FilenameFilter filenameFilter) {
         List<String> fileList = new ArrayList<>();
 
-        File[] files = directory.listFiles();
+        File[] files;
+        if (filenameFilter != null) {
+            files = directory.listFiles();
+        } else {
+            files = directory.listFiles(filenameFilter);
+        }
         if (files != null && files.length > 0) {
             for (File file : files) {
                 if (file.isFile()) {
                     fileList.add(file.getAbsolutePath());
                 } else {
-                    getFileList(file);
+                    getFileList(file, filenameFilter);
                 }
             }
         }
+        log.debug("Gathered [{}] files with filter = {}", files.length, filenameFilter);
         return fileList;
     }
 
