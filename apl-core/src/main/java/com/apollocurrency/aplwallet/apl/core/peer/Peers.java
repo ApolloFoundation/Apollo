@@ -106,6 +106,7 @@ public final class Peers {
     public static int MAX_REQUEST_SIZE;
     public static int MAX_RESPONSE_SIZE;
     public static int MAX_MESSAGE_SIZE;
+
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
     static int webSocketIdleTimeout;
@@ -172,9 +173,9 @@ public final class Peers {
     private Peers() {} // never
 
     public static void init() {
-        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
-        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
-        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
+        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024 + 300 * 1024);
+        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024 + 300 * 1024);
+        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 13 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails",true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS",true);
