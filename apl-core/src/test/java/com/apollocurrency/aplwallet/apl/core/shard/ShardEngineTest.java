@@ -86,6 +86,7 @@ import java.util.List;
 import java.util.Set;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 
 @EnableWeld
 class ShardEngineTest {
@@ -198,11 +199,12 @@ class ShardEngineTest {
         assertEquals(SHARD_SCHEMA_FULL, state);
     }
 
-    @Test
+    @Test           
     void createShardDbDoAllOperations() throws IOException {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
-        AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
+//TODO: do we need entire Apl Core here ?        
+//        AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
         blockIndexDao.hardDeleteAllBlockIndex();
         try { //AplCoreRuntime will be loaded we should setUp to null values for another tests
             long start = System.currentTimeMillis();
@@ -340,7 +342,7 @@ class ShardEngineTest {
             log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start) / 1000);
         }
         finally {
-            AplCoreRuntime.getInstance().setup(null, null);
+//            AplCoreRuntime.getInstance().setup(null, null);
         }
     }
 }

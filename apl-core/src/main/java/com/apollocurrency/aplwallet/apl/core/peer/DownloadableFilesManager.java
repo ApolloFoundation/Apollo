@@ -36,8 +36,9 @@ public class DownloadableFilesManager {
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
     private String fileBaseDir="/home/at/testfiles";
     
-    public DownloadableFilesManager() {
-        DirProvider dirProvider = AplCoreRuntime.getInstance().getDirProvider();
+    @Inject
+    public DownloadableFilesManager(AplCoreRuntime aplCoreRuntime) {
+        DirProvider dirProvider = aplCoreRuntime.getDirProvider();
         fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
     }
     

@@ -19,15 +19,13 @@ import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
 public class APIErrorHandler extends ErrorPageErrorHandler {
 
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
 
     @Override
     public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if(response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND){
-            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+            String apiResourceBase = API.aplCoreRuntime.findWebUiDir();
 //propertiesLoader.getStringProperty("apl.apiResourceBase");
-            String apiWelcomePage = propertiesLoader.getStringProperty("apl.apiWelcomeFile");
+            String apiWelcomePage = API.propertiesHolder.getStringProperty("apl.apiWelcomeFile");
 
             response.setContentType("text/html");
             response.setHeader("X-FRAME-OPTIONS", "SAMEORIGIN");

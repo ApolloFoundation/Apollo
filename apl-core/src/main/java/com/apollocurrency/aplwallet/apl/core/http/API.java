@@ -75,9 +75,10 @@ import org.jboss.weld.environment.servlet.Listener;
 @Singleton
 public final class API {
     private static final Logger LOG = getLogger(API.class);
-
-    // TODO: YL remove static instance later
-    private PropertiesHolder propertiesHolder;
+    
+    //TODO: remove statics after switch to RestEasy handlers
+    static PropertiesHolder propertiesHolder;
+    static AplCoreRuntime aplCoreRuntime;
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
   
@@ -110,8 +111,9 @@ public final class API {
     final boolean enableSSL;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder,UPnP upnp, JettyConnectorCreator jettyConnectorCreator){
+    public API(PropertiesHolder propertiesHolder,UPnP upnp, JettyConnectorCreator jettyConnectorCreator, AplCoreRuntime aplCoreRuntime){
         this.propertiesHolder=propertiesHolder;
+        this.aplCoreRuntime=aplCoreRuntime;
         this.upnp=upnp;
         this.jettyConnectorCreator=jettyConnectorCreator;
         maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
@@ -199,7 +201,7 @@ public final class API {
             HandlerList apiHandlers = new HandlerList();
 
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+            String apiResourceBase = aplCoreRuntime.findWebUiDir();
             if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
                 ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
                 defaultServletHolder.setInitParameter("dirAllowed", "false");

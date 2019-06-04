@@ -33,7 +33,7 @@ public class JettyConnectorCreator {
     
     @Inject
     public JettyConnectorCreator(PropertiesHolder propertiesHolder) {
-        keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir())
+        keyStorePath = Paths.get(API.aplCoreRuntime.getUserHomeDir())
                             .resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath")))
                             .toString();
         keyStorePassword=propertiesHolder.getStringProperty("apl.keyStorePassword", null, true);

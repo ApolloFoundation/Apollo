@@ -35,6 +35,8 @@ public class ApplicationDataMigrationManager {
     private ReferencedTransactionMigrator referencedTransactionMigrator;
     @Inject
     private TransactionPublicKeyMigrator transactionPublicKeyMigrator;
+    @Inject
+    private  AplCoreRuntime aplCoreRuntime;
 
     public void executeDataMigration() {
         try {
@@ -43,11 +45,11 @@ public class ApplicationDataMigrationManager {
 //            if (!StringUtils.isBlank(customDbDir)) {
 //                fileName = propertiesHolder.getStringProperty("apl.dbName");
 //            }
-            Path targetDbPath = AplCoreRuntime.getInstance().getDbDir().resolve(fileName);
+            Path targetDbPath = aplCoreRuntime.getDbDir().resolve(fileName);
             dbMigrationExecutor.performMigration(targetDbPath);
-            Path target2FADir = AplCoreRuntime.getInstance().get2FADir();
+            Path target2FADir = aplCoreRuntime.get2FADir();
             twoFactorAuthMigrationExecutor.performMigration(target2FADir);
-            Path targetKeystoreDir = AplCoreRuntime.getInstance().getVaultKeystoreDir();
+            Path targetKeystoreDir = aplCoreRuntime.getVaultKeystoreDir();
             vaultKeystoreMigrationExecutor.performMigration(targetKeystoreDir);
 
             if (!dbMigrationExecutor.isAutoCleanup()) {

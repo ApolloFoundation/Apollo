@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
 import java.nio.file.Files;
@@ -67,12 +68,13 @@ public class ShardEngineImpl implements ShardEngine {
     private ShardRecoveryDaoJdbc shardRecoveryDao;
     private CsvExporter csvExporter;
     private DerivedTablesRegistry registry;
-
+    private DirProvider dirProvider;
+    
     public ShardEngineImpl() {
     }
 
     @Inject
-    public ShardEngineImpl(DatabaseManager databaseManager, TrimService trimService,
+    public ShardEngineImpl(AplCoreRuntime aplCoreRuntime,DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
                            DerivedTablesRegistry registry) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
@@ -80,6 +82,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
+        this.dirProvider = aplCoreRuntime.getDirProvider();
     }
 
     @Override
@@ -105,7 +108,7 @@ public class ShardEngineImpl implements ShardEngine {
                 new ShardDataSourceCreateHelper(databaseManager);
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = AplCoreRuntime.getInstance().getDirProvider().getDbDir();
+        Path dbDir = dirProvider.getDbDir();
         String backupName = String.format("BACKUP-BEFORE-%s.zip", nextShardName);
         Path backupPath = dbDir.resolve(backupName);
         String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
