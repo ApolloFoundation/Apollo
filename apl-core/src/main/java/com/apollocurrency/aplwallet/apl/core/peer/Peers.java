@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -49,6 +50,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
@@ -75,8 +77,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.enterprise.inject.spi.CDI;
-import org.slf4j.LoggerFactory;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
 public final class Peers {
     private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
@@ -106,6 +106,7 @@ public final class Peers {
     public static int MAX_REQUEST_SIZE;
     public static int MAX_RESPONSE_SIZE;
     public static int MAX_MESSAGE_SIZE;
+
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
     static int webSocketIdleTimeout;
@@ -172,9 +173,9 @@ public final class Peers {
     private Peers() {} // never
 
     public static void init() {
-        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024);
-        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024);
-        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 10 * 1024 * 1024);
+        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
+        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
+        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 15 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails",true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS",true);

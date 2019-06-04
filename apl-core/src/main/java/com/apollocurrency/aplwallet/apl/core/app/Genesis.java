@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,9 +64,8 @@ public final class Genesis {
     public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
-
-    private static AplAppStatus aplAppStatus = aplCoreRuntime.getAplAppStatus();
+    private static  ConfigDirProvider configDirProvider = CDI.current().select(ConfigDirProvider.class).get();
+    private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
 
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
@@ -168,7 +168,7 @@ public final class Genesis {
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
             
-            String path = aplCoreRuntime.getConfDir()+File.separator+blockchainConfig.getChain().getGenesisLocation();
+            String path = configDirProvider.getConfigDirectoryName()+File.separator+blockchainConfig.getChain().getGenesisLocation();
             try (InputStreamReader is = new InputStreamReader(
                     Genesis.class.getClassLoader().getResourceAsStream(path))) {
                 ObjectMapper objectMapper = new ObjectMapper();

@@ -49,16 +49,15 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.FileDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -86,19 +85,16 @@ public final class AplCore {
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
     private API apiServer;
-
-    //this should saty static
-    private final AplCoreRuntime aplCoreRuntime;
+    private DirProvider dirProvider;
     
     @Inject
     @Setter
     private AplAppStatus aplAppStatus;
     private String initCoreTaskID;
     
-    public AplCore(PropertiesHolder propertiesHolder, AplCoreRuntime aplCoreRuntime) {
+    public AplCore(PropertiesHolder propertiesHolder, AplAppStatus aplAppStatus) {
         this.propertiesHolder=propertiesHolder;
-        this.aplCoreRuntime = aplCoreRuntime;
-        aplAppStatus = aplCoreRuntime.getAplAppStatus(); 
+        this.aplAppStatus = aplAppStatus; 
     }
 
     public static boolean isShutdown() {
@@ -107,9 +103,8 @@ public final class AplCore {
 
     public void init() {
 
-        System.out.printf("Runtime mode %s\n", aplCoreRuntime.getRuntimeMode().getClass().getName());
         LOG = getLogger(AplCore.class);
-        LOG.debug("Application home folder '{}'", aplCoreRuntime.getDirProvider().getAppBaseDir());
+        LOG.debug("Application home folder '{}'", dirProvider.getAppBaseDir());
 //TODO: Do we really need this check?        
 //        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
