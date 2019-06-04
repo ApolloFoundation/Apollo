@@ -19,7 +19,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHI
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -74,7 +73,7 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     @Inject
-    public ShardEngineImpl(AplCoreRuntime aplCoreRuntime,DatabaseManager databaseManager, TrimService trimService,
+    public ShardEngineImpl(DirProvider dirProvider,DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
                            DerivedTablesRegistry registry) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
@@ -82,7 +81,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
-        this.dirProvider = aplCoreRuntime.getDirProvider();
+        this.dirProvider = dirProvider;
     }
 
     @Override

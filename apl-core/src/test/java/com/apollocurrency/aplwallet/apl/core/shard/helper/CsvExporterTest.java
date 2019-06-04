@@ -21,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -76,6 +75,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
@@ -135,6 +135,8 @@ class CsvExporterTest {
             "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
             "3444674909301056677,1440,null,0,0,2500000000000,YTUyNDk3NGY5NGYxY2QyZmNjNmYxNzE5MzQ3NzIwOWNhNTgyMWQzN2QzOTFlNzBhZTY2OGRkMWMxMWRkNzk4ZQ==,1000,-468651855371775066,Mzc1ZWYxYzA1YWU1OWEyN2VmMjYzMzZhNTlhZmU2OTAxNGM2OGI5YmY0MzY0ZDViMWIyZmE0ZWJlMzAyMDIwYTg2OGFkMzY1ZjM1ZjBjYThkM2ViYWRkYzQ2OWVjZDNhN2M0OWRlYzVlNGQyZmFkNDFmNjcyODk3N2I3MzMzY2M=,35073712,5,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,9200,NjQwMDAwMDAwMDAwMDAwMGNjNmYxNzE5MzQ3NzIwOWNhNTgyMWQzN2QzOTFlNzBhZTY2OGRkMWMxMWRkNzk4ZQ==,FALSE,MDEwNTY2NzM2NDY2NzMwMzUxNDU1MjA1MDA2NjczNjQ2NjczMDFhZTE1MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMGFlMTUwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAx,1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
             "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,ZjI4YmU1YzU5ZDBiOTI0YWI5NmQ1ZTlmNjRlNTFjNTk3NTEzNzE3NjkxZWVlZWFmMThhMjZhODY0MDM0ZjYyYw==,1500,-7242168411665692630,OGFmZDNhOTFkMGUzMDExZTUwNWUwMzUzYjFmNzA4OWMwZDQwMTY3MmY4ZWQ1ZDBkZGMyMTA3ZTBiMTMwYWEwYmRkMTdmMDNiMmQ3NWVlZDhmY2M2NDVjZGE4OGI1YzgyYWMxYjYyMWMxNDJhYmFkOWIxYmI5NWRmNTE3YWE3MGM=,35078473,0,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,13800,YjdjNzQ1YWU0MzhkNTcyMTIyNzBhMmIwMGUzZjcwZmI1ZDVkOGUwZGEzYzc5MTllZGQ0ZDMzNjgxNzZlNmYyZA==,FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE");
+    private DirProvider dirProvider = mock(DirProvider.class);
+    
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
@@ -150,6 +152,7 @@ class CsvExporterTest {
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
+            DirProvider.class,
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
@@ -157,7 +160,6 @@ class CsvExporterTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
-            .addBeans(MockBean.of(mock(AplCoreRuntime.class), AplCoreRuntime.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
 //            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test

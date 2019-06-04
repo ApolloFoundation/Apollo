@@ -21,7 +21,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -107,12 +106,7 @@ class ShardEngineTest {
 
     private final Bean<Path> dataExportDir = MockBean.of(createPath("targetDb").toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
-    private final AplCoreRuntime runtime = mock(AplCoreRuntime.class);
 
-    {
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
-        doReturn(dirProvider).when(runtime).getDirProvider();
-    }
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -125,7 +119,6 @@ class ShardEngineTest {
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(runtime, AplCoreRuntime.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(dataExportDir)
