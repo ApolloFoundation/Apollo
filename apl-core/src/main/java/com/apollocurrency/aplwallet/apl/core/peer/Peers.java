@@ -111,9 +111,9 @@ public final class Peers {
     static int readTimeout;
     static int blacklistingPeriod;
     static boolean getMorePeers;
-    static final int MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 1024 * 1024 + 300 * 1024);
-    static final int MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 1024 * 1024 + 300 * 1024);
-    static final int MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 13 * 1024 * 1024);
+    static final int MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
+    static final int MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
+    static final int MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 15 * 1024 * 1024);
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
     static int webSocketIdleTimeout;
