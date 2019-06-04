@@ -111,6 +111,10 @@ class ShardMigrationExecutorTest {
 
     private final Bean<Path> dataExportDir = MockBean.of(temporaryFolderExtension.newFolder().toPath().toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
+    {
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
+
+    }
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
@@ -130,6 +134,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))

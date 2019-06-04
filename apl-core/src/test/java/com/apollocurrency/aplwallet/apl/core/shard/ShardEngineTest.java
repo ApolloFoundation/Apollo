@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -106,6 +107,10 @@ class ShardEngineTest {
 
     private final Bean<Path> dataExportDir = MockBean.of(createPath("targetDb").toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
+    {
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
+
+    }
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -121,6 +126,8 @@ class ShardEngineTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+            .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
