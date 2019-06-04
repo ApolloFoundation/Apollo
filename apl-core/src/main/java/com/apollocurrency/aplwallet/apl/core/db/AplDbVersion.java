@@ -729,50 +729,54 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY NOT NULL, transaction_id BIGINT NOT NULL, type TINYINT NOT NULL, " +
                         "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL, " +
                         "pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL, status TINYINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 271:
-                apply("ALTER TABLE prunable_message DROP CONSTRAINT IF EXISTS CONSTRAINT_B40");
-            case 272:
-                apply("ALTER TABLE tagged_data DROP CONSTRAINT IF EXISTS CONSTRAINT_8B9");
+            case 271 :
+                apply("ALTER TABLE dex_offer ADD IF NOT EXISTS from_address VARCHAR(120)");
+            case 272 :
+                apply("ALTER TABLE dex_offer ADD IF NOT EXISTS to_address VARCHAR(120)");
             case 273:
-                apply("ALTER TABLE public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_8E8");
+                apply("ALTER TABLE prunable_message DROP CONSTRAINT IF EXISTS CONSTRAINT_B40");
             case 274:
-                apply("ALTER TABLE shuffling_data DROP CONSTRAINT IF EXISTS CONSTRAINT_A08");
+                apply("ALTER TABLE tagged_data DROP CONSTRAINT IF EXISTS CONSTRAINT_8B9");
             case 275:
-                apply("ALTER TABLE data_tag DROP CONSTRAINT IF EXISTS CONSTRAINT_995");
+                apply("ALTER TABLE public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_8E8");
             case 276:
-                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_FF");
+                apply("ALTER TABLE shuffling_data DROP CONSTRAINT IF EXISTS CONSTRAINT_A08");
             case 277:
-                apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
+                apply("ALTER TABLE data_tag DROP CONSTRAINT IF EXISTS CONSTRAINT_995");
             case 278:
-                apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
+                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_FF");
             case 279:
-                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS zip_hash_crc VARBINARY");
+                apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
             case 280:
-                apply("ALTER TABLE transaction_shard_index DROP CONSTRAINT IF EXISTS fk_transaction_shard_index_block_id");
+                apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
             case 281:
-                apply("DROP INDEX IF EXISTS transaction_index_shard_1_idx");
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS zip_hash_crc VARBINARY");
             case 282:
-                apply("ALTER TABLE transaction_shard_index DROP COLUMN IF EXISTS block_id");
+                apply("ALTER TABLE transaction_shard_index DROP CONSTRAINT IF EXISTS fk_transaction_shard_index_block_id");
             case 283:
-                apply("ALTER TABLE transaction_shard_index ADD COLUMN IF NOT EXISTS height INT NOT NULL");
+                apply("DROP INDEX IF EXISTS transaction_index_shard_1_idx");
             case 284:
-                apply("ALTER TABLE transaction_shard_index ADD COLUMN IF NOT EXISTS transaction_index SMALLINT NOT NULL");
+                apply("ALTER TABLE transaction_shard_index DROP COLUMN IF EXISTS block_id");
             case 285:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_height_transaction_index_idx ON transaction_shard_index (height, transaction_index)");
+                apply("ALTER TABLE transaction_shard_index ADD COLUMN IF NOT EXISTS height INT NOT NULL");
             case 286:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
+                apply("ALTER TABLE transaction_shard_index ADD COLUMN IF NOT EXISTS transaction_index SMALLINT NOT NULL");
             case 287:
-                apply("DROP INDEX IF EXISTS block_index_block_id_shard_id_idx");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_height_transaction_index_idx ON transaction_shard_index (height, transaction_index)");
             case 288:
-                apply("DROP INDEX IF EXISTS block_index_block_height_shard_id_idx");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
             case 289:
-                apply("ALTER TABLE block_index DROP COLUMN IF EXISTS shard_id");
+                apply("DROP INDEX IF EXISTS block_index_block_id_shard_id_idx");
             case 290:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
+                apply("DROP INDEX IF EXISTS block_index_block_height_shard_id_idx");
             case 291:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
+                apply("ALTER TABLE block_index DROP COLUMN IF EXISTS shard_id");
             case 292:
-                return 292;
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
+            case 293:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
+            case 294:
+                return 294;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

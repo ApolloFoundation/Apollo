@@ -133,6 +133,7 @@ public final class Constants {
     //Eth/Pax
     public static final BigInteger GAS_LIMIT_ETHER_TX = BigInteger.valueOf(21_000);
     public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(100_000);
+    public static final Integer MAX_ADDRESS_LENGTH = 110;
 
     private Constants() {} // never
 

@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import org.ethereum.util.blockchain.EtherUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Convert;
@@ -35,6 +36,11 @@ public class EthUtil {
     public static BigInteger etherToWei(BigDecimal ether) {
         return Convert.toWei(ether, Convert.Unit.ETHER).toBigInteger();
     }
+    public static BigInteger gweiToWei(Long gwei) {
+        return EtherUtil.convert(gwei, EtherUtil.Unit.GWEI);
+    }
+
+
 
     public static boolean isAddressValid(String address){
         String regex = "^0x[0-9a-f]{40}$";
