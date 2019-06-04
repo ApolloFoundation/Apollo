@@ -3,14 +3,12 @@ package com.apollocurrency.aplwallet.apl.testutil;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
 
-public class FileLoader {
-    private static final Logger log = getLogger(FileLoader.class);
+public class ResourceFileLoader {
+    private static final Logger log = getLogger(ResourceFileLoader.class);
 
     public File getFile(String fileName){
         ClassLoader classLoader = getClass().getClassLoader();

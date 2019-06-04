@@ -306,7 +306,7 @@ class CsvExporterTest {
             // get CSV meta data info
             ResultSetMetaData meta = rs.getMetaData();
             int columnsCount = meta.getColumnCount(); // columns count is main
-            StringBuffer columnNames = new StringBuffer(200);
+            StringBuilder columnNames = new StringBuilder(200);
 
             for (int i = 0; i < columnsCount; i++) {
                 columnNames.append(meta.getColumnLabel(i + 1)).append(",");
