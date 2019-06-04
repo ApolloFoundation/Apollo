@@ -9,17 +9,19 @@ import java.util.Objects;
 public class TransactionIndex {
     private Long transactionId;
     private byte[] partialTransactionHash;
-    private Long blockId;
+    private Integer height;
+    private Short transactionIndex;
 
-    public TransactionIndex(Long transactionId, byte[] partialTransactionHash, Long blockId) {
+    public TransactionIndex(Long transactionId, byte[] partialTransactionHash, Integer height, Short transactionIndex) {
         this.transactionId = transactionId;
         this.partialTransactionHash = partialTransactionHash;
-        this.blockId = blockId;
+        this.height = height;
+        this.transactionIndex = transactionIndex;
     }
 
     public TransactionIndex copy() {
         byte[] hashCopy = Arrays.copyOf(partialTransactionHash, partialTransactionHash.length);
-        return new TransactionIndex(transactionId, hashCopy, blockId);
+        return new TransactionIndex(transactionId, hashCopy, height, transactionIndex);
     }
 
     @Override
@@ -28,13 +30,14 @@ public class TransactionIndex {
         if (!(o instanceof TransactionIndex)) return false;
         TransactionIndex that = (TransactionIndex) o;
         return Objects.equals(transactionId, that.transactionId) &&
-                Objects.equals(blockId, that.blockId) &&
-                Arrays.equals(partialTransactionHash, that.partialTransactionHash);
+                Arrays.equals(partialTransactionHash, that.partialTransactionHash) &&
+                Objects.equals(height, that.height) &&
+                Objects.equals(transactionIndex, that.transactionIndex);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(transactionId, blockId);
+        int result = Objects.hash(transactionId, height, transactionIndex);
         result = 31 * result + Arrays.hashCode(partialTransactionHash);
         return result;
     }
@@ -58,12 +61,20 @@ public class TransactionIndex {
         this.transactionId = transactionId;
     }
 
-    public Long getBlockId() {
-        return blockId;
+    public Integer getHeight() {
+        return height;
     }
 
-    public void setBlockId(Long blockId) {
-        this.blockId = blockId;
+    public void setHeight(Integer height) {
+        this.height = height;
+    }
+
+    public Short getTransactionIndex() {
+        return transactionIndex;
+    }
+
+    public void setTransactionIndex(Short transactionIndex) {
+        this.transactionIndex = transactionIndex;
     }
 
     public static TransactionIndexBuilder builder() {
@@ -72,7 +83,8 @@ public class TransactionIndex {
 
     public static final class TransactionIndexBuilder {
         private Long transactionId;
-        private Long blockId;
+        private Integer height;
+        private Short transactionIndex;
         private byte[] partialTransactionHash;
 
         private TransactionIndexBuilder() {
@@ -88,13 +100,18 @@ public class TransactionIndex {
             return this;
         }
 
-        public TransactionIndexBuilder blockId(Long blockId) {
-            this.blockId = blockId;
+        public TransactionIndexBuilder height(Integer height) {
+            this.height = height;
+            return this;
+        }
+
+        public TransactionIndexBuilder transactinIndex(Short transactionIndex) {
+            this.transactionIndex = transactionIndex;
             return this;
         }
 
         public TransactionIndex build() {
-            return new TransactionIndex(transactionId, partialTransactionHash, blockId);
+            return new TransactionIndex(transactionId, partialTransactionHash, height, transactionIndex);
         }
     }
 }

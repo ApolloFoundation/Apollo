@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,8 +17,6 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * zip-unziop directorys
@@ -25,7 +26,8 @@ public class Zip {
     private static final int BUF_SIZE=8192;
     
     private static final Logger log = LoggerFactory.getLogger(Zip.class);
-   /**
+
+    /**
     * Extract zip file into directory
     * @param zipFile zip file
     * @param outputFolder output directory

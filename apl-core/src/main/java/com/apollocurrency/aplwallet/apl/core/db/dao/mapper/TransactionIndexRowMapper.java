@@ -18,7 +18,8 @@ public class TransactionIndexRowMapper implements RowMapper<TransactionIndex> {
         return TransactionIndex.builder()
                 .transactionId(rs.getLong("transaction_id"))
                 .partialTransactionHash(rs.getBytes("partial_transaction_hash"))
-                .blockId(rs.getLong("block_id"))
+                .height(rs.getInt("height"))
+                .transactinIndex(rs.getShort("transaction_index"))
                 .build();
     }
 }

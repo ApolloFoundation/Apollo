@@ -55,7 +55,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -223,8 +222,13 @@ class CsvWriterReaderDerivedTablesTest {
                 // process non empty tables
                 if (minMaxDbId.getCount() > 0) {
                     do { // do exporting into csv with pagination
-                        processedCount = csvWriter.append(item.toString(),
-                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit), minMaxDbId );
+                        CsvExportData csvExportData = csvWriter.append(item.toString(),
+                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit));
+
+                        processedCount = csvExportData.getProcessCount();
+                        if (processedCount > 0) {
+                            minMaxDbId.setMinDbId((Long) csvExportData.getLastKey());
+                        }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
 
@@ -392,12 +396,6 @@ class CsvWriterReaderDerivedTablesTest {
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
-        assertThrows(NullPointerException.class, () -> {
-            csvWriter.write(tableName + CSV_FILE_EXTENSION, null, null);
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            csvWriter.write(tableName, new SimpleResultSet(), null);
-        });
+        assertThrows(NullPointerException.class, () -> csvWriter.write(tableName + CSV_FILE_EXTENSION, null));
     }
 }

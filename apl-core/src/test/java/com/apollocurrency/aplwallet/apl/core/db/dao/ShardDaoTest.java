@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -181,7 +180,7 @@ class ShardDaoTest {
 
     @Test
     void testGetShardAtHeight() {
-        Shard shardAtHeight = dao.getShardAtHeight(IndexTestData.BLOCK_INDEX_1.getBlockHeight());
-        assertEquals(shardAtHeight, SHARD_0);
+        Shard shardAtHeight = dao.getShardAtHeight(SHARD_1.getShardHeight());
+        assertEquals(shardAtHeight, SHARD_1);
     }
 }

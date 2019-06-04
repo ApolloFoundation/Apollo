@@ -30,10 +30,11 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -56,9 +57,9 @@ import javax.servlet.http.HttpServletResponse;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
-    
-    private final PropertiesHolder propertiesHolder; 
-    
+
+    private final PropertiesHolder propertiesHolder;
+
     private final boolean enforcePost;
     public static Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
@@ -74,7 +75,7 @@ public final class APIServlet extends HttpServlet {
         this.globalSync=CDI.current().select(GlobalSync.class).get();
         this.apw=CDI.current().select(AdminPasswordVerifier.class).get();
 
-        
+
         Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
         Map<String, AbstractAPIRequestHandler> disabledMap = new HashMap<>();
 
@@ -113,11 +114,11 @@ public final class APIServlet extends HttpServlet {
         disabledRequestHandlers = disabledMap.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(disabledMap);
         enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     }
-    
+
     @Override
     public void init(){
         LOG.debug("API servlet init");
-    }       
+    }
 
     public static AbstractAPIRequestHandler getAPIRequestHandler(String requestType) {
         return apiRequestHandlers.get(requestType);

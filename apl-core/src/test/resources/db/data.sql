@@ -28,6 +28,7 @@ delete from tag;
 delete from purchase_feedback;
 delete from purchase_public_feedback;
 delete from PUBLIC.ACCOUNT_CONTROL_PHASING;
+delete from shuffling_data;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -83,21 +84,21 @@ insert into account
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
 (100, X'a3f312570b65671a7101', true),
 (200, X'f3e0475e0db85a822037', false);
-INSERT into PUBLIC.BLOCK_INDEX (shard_id, block_id, block_height) VALUES
-(3, 3, 30),
-(1, 1, 1),
-(2, 2, 2)
+INSERT into PUBLIC.BLOCK_INDEX (block_id, block_height) VALUES
+(3, 30),
+(1, 1),
+(2, 2)
 ;
-INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_hash, block_id) VALUES
-(100,X'cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e' ,3),
-(101,X'2270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d' ,1),
-(102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' ,1),
-(103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' ,1)
+INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_hash, height, transaction_index) VALUES
+(100,X'cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e' ,30, 0),
+(101,X'2270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d' ,1 , 0),
+(102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' ,1 , 1),
+(103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' ,1 , 2)
 ;
 INSERT into PUBLIC.SHARD (shard_id, shard_hash, shard_height, shard_state, zip_hash_crc) VALUES
-(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 1, 0, null),
-(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 2, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d'),
-(3, X'931A8011F4BA1CDC0BCAE807032FE18B1E4F0B634F8DA6016E421D06C7E13693', 3, 0, null)
+(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 2, 0, null),
+(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 3, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d'),
+(3, X'931A8011F4BA1CDC0BCAE807032FE18B1E4F0B634F8DA6016E421D06C7E13693', 31, 0, null)
 ;
 INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_transaction_id, height) VALUES
 (10     , 100                    , 101                  ,100    ),
@@ -158,7 +159,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (280);
+INSERT into version values (287);
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
@@ -323,3 +324,8 @@ INSERT INTO PUBLIC.ACCOUNT_CONTROL_PHASING
 (30, -8446384352342482748, (2728325718715804811, 1344527020205736624), 0, 1, null, null, 0, 300000000, 12, 113, 2000, true),
 (40, -4013722529644937202, (-8446656647637444484, 1344527020205736624, -6724281675870110558), 0, 1, null, null, 0, 300000000, 12, 113, 3000, true),
 ;
+
+INSERT into shuffling_data
+(DB_ID  	,SHUFFLING_ID  	,ACCOUNT_ID  	,DATA  	                                            ,TRANSACTION_TIMESTAMP  	,HEIGHT ) VALUES
+(1          ,100            ,105            ,(X'ff112385a1f832bc', X'ffffff', X'1234567890')    ,150                        ,1),
+(2          ,101            ,110            ,(X'75849274935438',)                               ,250                        ,5);

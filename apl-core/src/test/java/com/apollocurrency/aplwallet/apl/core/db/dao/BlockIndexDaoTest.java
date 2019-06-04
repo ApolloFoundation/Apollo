@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -54,7 +53,7 @@ public class BlockIndexDaoTest {
             GlobalSync.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            JdbiHandleFactory.class, BlockIndexDao.class, TransactionIndexDao.class,
+            JdbiHandleFactory.class, BlockIndexDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
@@ -62,8 +61,6 @@ public class BlockIndexDaoTest {
 
     @Inject
     private BlockIndexDao blockIndexDao;
-    @Inject
-    private TransactionIndexDao transactionIndexDao;
 
 
     @Test
@@ -86,7 +83,7 @@ public class BlockIndexDaoTest {
     void testGetShardIdByBlockId() {
         Long shardId = blockIndexDao.getShardIdByBlockId(BLOCK_INDEX_1.getBlockId());
         assertNotNull(shardId);
-        assertEquals(BLOCK_INDEX_1.getShardId(), shardId);
+        assertEquals(1, shardId);
     }
 
     @Test
@@ -114,9 +111,6 @@ public class BlockIndexDaoTest {
         assertEquals(3, deleteCount);
         List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
         assertEquals(0, allBlockIndex.size());
-        // test cascade delete
-        List<TransactionIndex> allTransactionIndex = transactionIndexDao.getAllTransactionIndex();
-        assertEquals(0, allTransactionIndex.size());
     }
 
     @Test
@@ -166,7 +160,7 @@ public class BlockIndexDaoTest {
         BlockIndex blockIndex = blockIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId());
         assertEquals(blockIndex, copy);
         List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
-        assertEquals(Arrays.asList(BLOCK_INDEX_0, copy, BLOCK_INDEX_2), allBlockIndex);
+        assertEquals(Arrays.asList(BLOCK_INDEX_2, BLOCK_INDEX_0, copy), allBlockIndex);
     }
 
     @Test
@@ -211,10 +205,7 @@ public class BlockIndexDaoTest {
     void testDelete() {
         int deleteCount = blockIndexDao.hardBlockIndex(BLOCK_INDEX_1);
         assertEquals(1, deleteCount);
-        assertEquals(Arrays.asList(BLOCK_INDEX_0, BLOCK_INDEX_2), blockIndexDao.getAllBlockIndex());
-        // test cascade delete
-        List<TransactionIndex> transactionIndexList = transactionIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId(), Integer.MAX_VALUE);
-        assertEquals(0, transactionIndexList.size());
+        assertEquals(Arrays.asList(BLOCK_INDEX_2, BLOCK_INDEX_0), blockIndexDao.getAllBlockIndex());
     }
 
     @Test
@@ -230,4 +221,20 @@ public class BlockIndexDaoTest {
 
         assertEquals(BLOCK_INDEX_0.getBlockHeight(), height);
     }
+
+    @Test
+    void testCountByShardId() {
+            long count = blockIndexDao.countBlockIndexByShard(3L);
+
+            assertEquals(1, count);
+
+            count = blockIndexDao.countBlockIndexByShard(1L);
+
+            assertEquals(1, count);
+
+            count = blockIndexDao.countBlockIndexByShard(2L);
+
+            assertEquals(1, count);
+    }
+
 }
