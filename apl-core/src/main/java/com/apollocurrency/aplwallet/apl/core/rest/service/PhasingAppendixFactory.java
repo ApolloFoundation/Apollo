@@ -19,7 +19,6 @@ public class PhasingAppendixFactory {
 
         switch (version)  {
             case 1 :
-            case 3:
                 return new PhasingAppendix(buffer);
             case 2 :
                 return new PhasingAppendixV2(buffer);
