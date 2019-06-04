@@ -32,7 +32,6 @@ import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_IN
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -147,9 +146,9 @@ public class TransactionTestData {
             if (hasEncrypttoselfMessage) {
                 builder.appendix(new EncryptToSelfMessageAppendix(buffer));
             }
-            if (phased) {
-                builder.appendix(PhasingAppendixFactory.build(buffer));
-            }
+//            if (phased) {
+//                builder.appendix(PhasingAppendixFactory.build(buffer));
+//            }
             if (hasPrunableMessage) {
                 builder.appendix(new PrunablePlainMessageAppendix(buffer));
             }

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
@@ -21,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -71,7 +71,6 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.UserMode;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -97,7 +96,6 @@ import java.util.Properties;
 import java.util.Set;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 
 @EnableWeld
 class ShardMigrationExecutorTest {
@@ -113,8 +111,12 @@ class ShardMigrationExecutorTest {
     private static HeightConfig heightConfig = mock(HeightConfig.class);
 
     private final Bean<Path> dataExportDir = MockBean.of(temporaryFolderExtension.newFolder().toPath().toAbsolutePath(), Path.class);
+    private DirProvider dirProvider = mock(DirProvider.class);
+    private final AplCoreRuntime runtime = mock(AplCoreRuntime.class);
+
     {
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
+        doReturn(dirProvider).when(runtime).getDirProvider();
     }
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
@@ -129,19 +131,17 @@ class ShardMigrationExecutorTest {
             DerivedTablesRegistry.class,
             ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class,
-            AplCoreRuntime.class,
             AplAppStatus.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(runtime, AplCoreRuntime.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .build();
-    @Inject
-    AplCoreRuntime aplCoreRuntime;
     @Inject
     private ShardEngine shardEngine;
     @Inject
@@ -185,11 +185,9 @@ class ShardMigrationExecutorTest {
 
     @Test
     void executeAllOperations() throws IOException {
-        DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
         //TODO: YL, do we really need it all here?
         ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME, 1);
-        aplCoreRuntime.setup(new UserMode(), dirProvider, configDirProvider );
         try {
             int snapshotBlockHeight = 8000;
 

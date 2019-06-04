@@ -64,7 +64,6 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.UserMode;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -86,7 +85,6 @@ import java.util.List;
 import java.util.Set;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 
 @EnableWeld
 class ShardEngineTest {
@@ -108,8 +106,12 @@ class ShardEngineTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private final Bean<Path> dataExportDir = MockBean.of(createPath("targetDb").toAbsolutePath(), Path.class);
+    private DirProvider dirProvider = mock(DirProvider.class);
+    private final AplCoreRuntime runtime = mock(AplCoreRuntime.class);
+
     {
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
+        doReturn(dirProvider).when(runtime).getDirProvider();
     }
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -123,6 +125,7 @@ class ShardEngineTest {
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(runtime, AplCoreRuntime.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(dataExportDir)
@@ -201,7 +204,7 @@ class ShardEngineTest {
 
     @Test           
     void createShardDbDoAllOperations() throws IOException {
-        DirProvider dirProvider = mock(DirProvider.class);
+
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
 //TODO: do we need entire Apl Core here ?        
 //        AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
