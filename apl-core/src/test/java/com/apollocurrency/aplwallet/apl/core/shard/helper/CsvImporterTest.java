@@ -98,8 +98,8 @@ class CsvImporterTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
-    private DirProvider dirProvider = mock(DirProvider.class);
-
+    private DirProvider dirProvider;
+    
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
@@ -124,6 +124,7 @@ class CsvImporterTest {
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
 
