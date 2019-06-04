@@ -23,7 +23,7 @@ public class PhasingAppendixFactory {
             case 2 :
                 return new PhasingAppendixV2(buffer);
             default:
-                throw new UnsupportedOperationException("Version: " + version + ", not supported.");
+                throw new UnsupportedOperationException("Version: " + version + ", not supported by PhasingAppendixFactory");
         }
     }
 
