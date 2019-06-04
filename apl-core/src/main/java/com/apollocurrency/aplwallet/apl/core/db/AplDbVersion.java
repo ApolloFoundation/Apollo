@@ -734,7 +734,12 @@ public class AplDbVersion extends DbVersion {
                         "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL, " +
                         "pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL, status TINYINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 271 :
-                return 271;
+                apply("ALTER TABLE dex_offer ADD IF NOT EXISTS from_address VARCHAR(120)");
+            case 272 :
+                apply("ALTER TABLE dex_offer ADD IF NOT EXISTS to_address VARCHAR(120)");
+
+                case 273 :
+                return 273;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
