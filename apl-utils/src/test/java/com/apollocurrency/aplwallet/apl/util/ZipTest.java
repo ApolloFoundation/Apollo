@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -13,17 +14,26 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 
+@EnableWeld
 class ZipTest {
     private static final Logger log = getLogger(ZipTest.class);
 
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(ZipImpl.class)
+            .build();
+
+    @Inject
     private Zip zipComponent;
     private Path csvResourcesPath;
 
@@ -32,7 +42,6 @@ class ZipTest {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
         csvResourcesPath = resourceFileLoader.getResourcePath();
         assertNotNull(csvResourcesPath);
-        zipComponent = new Zip();
     }
 
     @Test
@@ -101,6 +110,5 @@ class ZipTest {
         assertThrows(IllegalArgumentException.class, () -> zipComponent.extract("", csvResourcesPath.toAbsolutePath().toString()));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.extract(csvResourcesPath.toAbsolutePath().toString(), ""));
-
     }
 }
