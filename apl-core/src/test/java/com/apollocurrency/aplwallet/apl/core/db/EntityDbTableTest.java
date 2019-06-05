@@ -35,9 +35,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
-    static {
-        System.setProperty("multiversion", "false");
-    }
 
     private DbKey THROWING_DB_KEY = createThrowingKey();
     private Comparator<T> DB_ID_HEIGHT_COMPARATOR = Comparator.comparing(T::getHeight).thenComparing(T::getDbId).reversed();
