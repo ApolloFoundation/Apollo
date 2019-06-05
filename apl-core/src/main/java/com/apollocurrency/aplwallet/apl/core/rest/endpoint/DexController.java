@@ -146,10 +146,8 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response createOffer(@Parameter(description = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("offerType") Byte offerType,
-                                @Parameter(description = "From address", required = true) @FormParam("fromAddress") String fromAddress,
-                                @Parameter(description = "To address", required = true) @FormParam("toAddress") String toAddress,
+                                @Parameter(description = "From address", required = true) @FormParam("walletAddress") String walletAddress,
                                 @Parameter(description = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
-                                @Parameter(description = "Offered currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("offerCurrency") Byte offerCurrency,
                                 @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
                                 @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
@@ -175,13 +173,17 @@ public class DexController {
 
         Integer currentTime = epochTime.getEpochTime();
         try {
+            Account account = ParameterParser.getSenderAccount(req);
             DexOffer offer = new DexOffer();
+            OfferType type = OfferType.getType(offerType);
+
             try {
-                offer.setType(OfferType.getType(offerType));
+                offer.setAccountId(account.getId());
+                offer.setType(type);
                 offer.setOfferAmount(offerAmount);
-                offer.setFromAddress(fromAddress);
-                offer.setToAddress(toAddress);
-                offer.setOfferCurrency(DexCurrencies.getType(offerCurrency));
+                offer.setFromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress);
+                offer.setToAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()));
+                offer.setOfferCurrency(DexCurrencies.APL);
                 offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
                 offer.setPairRate(pairRate);
                 offer.setStatus(OfferStatus.OPEN);
@@ -190,54 +192,49 @@ public class DexController {
                 return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
             }
 
-            if(OfferType.BUY.equals(offer.getType())){
-                return Response.ok(JSON.toString(incorrect("offerType", "Not supported type."))).build();
-            }
-
             if (offer.getOfferCurrency().equals(offer.getPairCurrency())) {
                 return Response.ok(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
-            Account account = ParameterParser.getSenderAccount(req);
 
-            if(offer.getOfferCurrency().isEthOrPax()){
-                if(!EthUtil.isAddressValid(fromAddress)) {
+
+            if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()){
+                if(!EthUtil.isAddressValid(offer.getFromAddress())) {
                     return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
                 }
                 try {
-                    Convert2.parseAPL(toAddress);
+                    Convert.parseAccountId(offer.getToAddress());
                 } catch (Exception ex){
                     return Response.ok(JSON.toString(incorrect("toAddress", " is not valid."))).build();
                 }
-            } else if(offer.getOfferCurrency().isApl()){
+            } else if(offer.getPairCurrency().isEthOrPax() && offer.getType().isSell()){
                 try {
-                    if (!Convert2.rsAccount(account.getId()).equals(fromAddress)) {
+                    if (!Convert2.rsAccount(account.getId()).equals(offer.getFromAddress())) {
                         return Response.ok(JSON.toString(incorrect("fromAddress", "You can use only your address."))).build();
                     }
                 } catch (Exception ex){
                     return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
                 }
 
-                if(!EthUtil.isAddressValid(toAddress)) {
+                if(!EthUtil.isAddressValid(offer.getToAddress())) {
                     return Response.ok(JSON.toString(incorrect("toAddress", " is not valid."))).build();
                 }
             }
 
-
             //If we should freeze APL
-            if (DexCurrencies.APL.equals(offer.getOfferCurrency())) {
+            if (offer.getType().isSell()) {
                 Long amountATM = offer.getOfferAmount();
                 if (account.getUnconfirmedBalanceATM() < amountATM) {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
-            } else if(DexCurrencies.ETH.equals(offer.getOfferCurrency())){
+            } else if(offer.getPairCurrency().isEth() && offer.getType().isBuy()){
                 Long amount = offer.getOfferAmount();
-                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(fromAddress);
+                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
                 if(balanceInfo.getEth()==null || balanceInfo.getEth().compareTo(EthUtil.gweiToWei(amount)) < 1){
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
-            } else if(DexCurrencies.PAX.equals(offer.getOfferCurrency())){
+            } else if(offer.getPairCurrency().isPax() && offer.getType().isBuy()){
                 Long amount = offer.getOfferAmount();
-                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(fromAddress);
+                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
                 if(balanceInfo.getPax()==null || balanceInfo.getPax().compareTo(EthUtil.gweiToWei(amount)) < 1){
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
@@ -268,7 +265,6 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getOffers(  @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
-                                @Parameter(description = "Criteria by Offered currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Byte offerCurrency,
                                 @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
                                 @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
                                 @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
@@ -278,7 +274,6 @@ public class DexController {
                                 @Context HttpServletRequest req) throws NotFoundException {
         OfferType type = null;
         OfferStatus offerStatus = null;
-        DexCurrencies offerCur = null;
         DexCurrencies pairCur = null;
         Integer currentTime = null;
         Long accountId = null;
@@ -287,9 +282,6 @@ public class DexController {
         try {
             if (orderType != null) {
                 type = OfferType.getType(orderType);
-            }
-            if (offerCurrency != null) {
-                offerCur = DexCurrencies.getType(offerCurrency);
             }
             if (pairCurrency != null) {
                 pairCur = DexCurrencies.getType(pairCurrency);
@@ -312,7 +304,7 @@ public class DexController {
         int offset = firstIndex > 0 ? firstIndex : 0;
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, offerCur, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
+        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, DexCurrencies.APL, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
         return Response.ok(offers.stream()
