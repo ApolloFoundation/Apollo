@@ -21,13 +21,13 @@ import org.eclipse.jetty.servlets.DoSFilter;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.DispatcherType;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.DispatcherType;
 
 /**
  * Peer HTTP server that handles http requests and PeerWebSockets
@@ -52,7 +52,7 @@ public class PeerHttpServer {
      private final Server peerServer;
      private final UPnP upnp;
      private final String host;
-     private final int idleTimeout; 
+     private final int idleTimeout;
      private static List<Integer> externalPorts=new ArrayList<>();
      
     public boolean isShareMyAddress() {
@@ -74,7 +74,7 @@ public class PeerHttpServer {
     public String getMyAddress() {
         return myAddress;
     }
-    
+
     public PeerAddress getMyExtAddress(){
         return myExtAddress;
     }
@@ -90,12 +90,12 @@ public class PeerHttpServer {
         String platform = propertiesHolder.getStringProperty("apl.myPlatform", System.getProperty("os.name") + " " + System.getProperty("os.arch"));
         if (platform.length() > MAX_PLATFORM_LENGTH) {
             platform = platform.substring(0, MAX_PLATFORM_LENGTH);
-        }        
+        }
         myPlatform = platform;
-        
+
         enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
         idleTimeout = propertiesHolder.getIntProperty("apl.peerServerIdleTimeout");
-        
+
         //get configured external adderes from config. UPnP should be disabled, in other case
         // UPnP re-writes this
         myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());      
@@ -104,12 +104,12 @@ public class PeerHttpServer {
         }
         if (shareMyAddress) {
             peerServer = new Server();
-            
+
             conCreator.addHttpConnector(host, myPeerServerPort, peerServer, idleTimeout);
             if(useTLS){
                 conCreator.addHttpSConnector(host, myPeerServerPort, peerServer, idleTimeout);
             }
-            
+
             ServletContextHandler ctxHandler = new ServletContextHandler();
             ctxHandler.setContextPath("/");
             //add Weld listener
@@ -149,17 +149,17 @@ public class PeerHttpServer {
                     myAddress = upnp.getExternalAddress().getHostAddress();
                     myExtAddress=new PeerAddress(propertiesHolder, myAddress);
                 }
-            }           
-            
+            }
+
             peerServer.setStopAtShutdown(true);
-            
+
 
         } else {
             peerServer = null;
             LOG.info("shareMyAddress is disabled, will not start peer networking server");
         }
     }
-    
+
     public void start(){
                ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
                 try {
@@ -169,7 +169,7 @@ public class PeerHttpServer {
                     LOG.error("Failed to start peer networking server", e);
                     throw new RuntimeException(e.toString(), e);
                 }
-            }, true);     
+            }, true);
     }
     
     public void shutdown(){

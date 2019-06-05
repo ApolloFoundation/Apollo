@@ -142,12 +142,12 @@ public final class Peers {
     private static volatile BlockchainState currentBlockchainState;
     private static volatile JSONStreamAware myPeerInfoRequest;
     private static volatile JSONStreamAware myPeerInfoResponse;
-    
+
     static boolean shutdown=false;
     static boolean suspend=false;
 
     private static final Listeners<Peer,Event> listeners = new Listeners<>();
-    
+
     // used by threads so shoudl be ConcurrentMap
     static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
     
@@ -158,18 +158,18 @@ public final class Peers {
     public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
     
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
-    
+
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
-    private  static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();  
+    private  static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
     public static int myPort;
-            
+
     private Peers() {} // never
 
     public static void init() {
@@ -279,9 +279,9 @@ public final class Peers {
         if (useWebSockets && useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
-        
+
         fillMyPeerInfo();
-        
+
         final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
 
         if (!propertiesHolder.isOffline()) {
@@ -315,7 +315,7 @@ public final class Peers {
         }
         peerHttpServer.start();
     }
-    
+
     private static void fillMyPeerInfo(){
         myPeerInfo = new JSONObject();
         PeerInfo pi = new PeerInfo();
@@ -392,14 +392,14 @@ public final class Peers {
         }
         pi.services=Long.toUnsignedString(services);
         myServices = Collections.unmodifiableList(servicesList);
-        
+
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonOrgModule()); 
+        mapper.registerModule(new JsonOrgModule());
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI=pi;
     }
-    
+
     public static void shutdown() {
         shutdown = true;
         peerHttpServer.shutdown();
@@ -494,7 +494,7 @@ public final class Peers {
             return peer;
         }
         try {
-            
+
             host = pAnnouncedAddress.getAddrWithPort();
             if (host == null) {
                 return null;
@@ -524,19 +524,19 @@ public final class Peers {
             return null;
         }
     }
-    
+
     public static boolean isMyAddress(PeerAddress pa){
-        
+
         //TODO: many ports: http, https, ssl
         if((pa.isLocal() && myPort==pa.getPort())){
             return true;
-        }  
+        }
         String ca = propertiesHolder.getStringProperty("apl.myAddress","");
         if(!ca.isEmpty()){
             PeerAddress myConfiguredAddr = new PeerAddress(propertiesHolder, ca);
             if (myConfiguredAddr.compareTo(pa)==0){
                 return true;
-            } 
+            }
         }
 
         PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
@@ -545,7 +545,7 @@ public final class Peers {
         }
         return false;
     }
-    
+
     public static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
 
         String host = inetAddress.getHostAddress();
@@ -558,11 +558,11 @@ public final class Peers {
         }
 
         PeerAddress pa = new PeerAddress(propertiesHolder,host);
-        
+
         if(isMyAddress(pa)){
             return null;
-        } 
-        
+        }
+
         PeerImpl peer;
         if ((peer = peers.get(pa.getAddrWithPort())) != null) {
             LOG.trace("Returning existing peer from map {}", peer);
@@ -582,13 +582,13 @@ public final class Peers {
     public static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
         if (StringUtils.isBlank(newAnnouncedAddress)){
             LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring",peer.getHostWithPort());
-        } 
+        }
         PeerAddress newPa = new PeerAddress(propertiesHolder,newAnnouncedAddress);
         Peer oldPeer = peers.get(peer.getHostWithPort());
         if (oldPeer != null) {
             PeerAddress oldPa = new PeerAddress(propertiesHolder,oldPeer.getAnnouncedAddress());
             if (newPa.compareTo(oldPa)!=0) {
-                LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost()+":"+oldPeer.getPort());                
+                LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost()+":"+oldPeer.getPort());
                 selfAnnouncedAddresses.remove(newPa.getAddrWithPort());
             }
         }
