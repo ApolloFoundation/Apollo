@@ -4,59 +4,80 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.Collection;
-import java.util.Set;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.Logger;
 
 class ZipTest {
+    private static final Logger log = getLogger(ZipTest.class);
 
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     private Zip zipComponent;
-    private Path targetPath;
-    private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
+    private Path csvResourcesPath;
 
     @BeforeEach
     void setUp() {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        targetPath = resourceFileLoader.getResourcePath();
-        assertNotNull(targetPath);
+        csvResourcesPath = resourceFileLoader.getResourcePath();
+        assertNotNull(csvResourcesPath);
         zipComponent = new Zip();
     }
 
     @Test
-    void extract() {
-
-    }
-
-    @Test
-    void compress() {
-        Instant backTo1970 = Instant.EPOCH; // in past
-        long filesTimeFromEpoch = backTo1970.toEpochMilli();
+    void compressAndExtractFiles() throws Exception {
         // create ZIP in temp folder for unit test
         String folderWithZip = temporaryFolderExtension.getRoot().toPath().toFile().getAbsolutePath();
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderWithZip + File.separator + zipFileName;
         // start creating zip for all CSV
-        boolean isCompressed = zipComponent.compress(zipFileInPath, targetPath.toAbsolutePath().toString(),
-                filesTimeFromEpoch, new SuffixFileFilter(".csv"));
-        assertTrue(isCompressed);
+        boolean isCompressed = zipComponent.compress(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
+                null, null);
+        assertTrue(isCompressed, "CSV files were NOT compressed into ZIP!!");
 
         String[] extensions = new String[]{"zip"};
+        // check ZIP is created
         Collection filesInFolder = FileUtils.listFiles(temporaryFolderExtension.getRoot().toPath().toFile(), extensions, false);
         assertNotNull(filesInFolder);
         assertEquals(1, filesInFolder.size());
+
+        // extract all csv files from ZIP and check CSV content
+        boolean isExtracted = zipComponent.extract(zipFileInPath, folderWithZip);
+        assertTrue(isExtracted, "CSV files were NOT extracted from ZIP!!");
+        extensions = new String[]{"csv"};
+        int csvFilesNumber = 0;
+        Iterator iterator = FileUtils.iterateFiles(temporaryFolderExtension.getRoot().toPath().toFile(), extensions, false);
+        while (iterator.hasNext()) {
+            Object csvFile = iterator.next();
+            log.debug("Reading extracted CSV '{}'", csvFile);
+            File file = new File(csvFile.toString());
+            // check CSV content
+            List lines = FileUtils.readLines(file);
+            assertTrue(lines.size() > 1, "CSV file" + csvFile + " is EMPTY !");
+            csvFilesNumber++; // count CSV files
+        }
+        assertEquals(7, csvFilesNumber);
+    }
+
+    @Test
+    void tryToCompressEmptyFolder() {
+        File folderNoCsvInside = temporaryFolderExtension.getRoot().toPath().toFile();
+        String zipFileName = "test-archive-csv-1.zip";
+        String zipFileInPath = folderNoCsvInside + File.separator + zipFileName;
+        assertThrows(RuntimeException.class, () ->
+                zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null)
+        );
     }
 
     @Test
@@ -68,18 +89,18 @@ class ZipTest {
                 "", null, -1L, null));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
-                "", targetPath.toAbsolutePath().toString(), -1L, null));
+                "", csvResourcesPath.toAbsolutePath().toString(), null, null));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
-                targetPath.toAbsolutePath().toString(), "", -1L, null));
+                csvResourcesPath.toAbsolutePath().toString(), "", null, null));
 
         assertThrows(NullPointerException.class, () -> zipComponent.extract(null, ""));
 
         assertThrows(NullPointerException.class, () -> zipComponent.extract("", null));
 
-        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract("", targetPath.toAbsolutePath().toString()));
+        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract("", csvResourcesPath.toAbsolutePath().toString()));
 
-        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract(targetPath.toAbsolutePath().toString(), ""));
+        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract(csvResourcesPath.toAbsolutePath().toString(), ""));
 
     }
 }

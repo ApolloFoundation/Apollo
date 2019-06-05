@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,9 +29,12 @@ import java.util.zip.ZipOutputStream;
  * @author alukin@gmail.com
  */
 public class Zip {
-    private static final int BUF_SIZE= 1042 * 2; // 2 Mb
-    
     private static final Logger log = LoggerFactory.getLogger(Zip.class);
+
+    private static final int BUF_SIZE= 1042 * 2; // 2 Mb
+    public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
+    public static FilenameFilter DEFAULT_CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
+
 
     /**
     * Extract zip file into directory
@@ -97,15 +102,16 @@ public class Zip {
     }
     
 /**
- * zip directory into file, change file times. It time is the same zip will be
- * exactly the same
- * @param zipFile result zip file path
+ * Compress all filtered files in directory into ZIP file, change file timestamp to be time exactly the same.
+ *
+ * @param zipFile result zip file with path
  * @param inputFolder folder to zip
- * @param filesTimeFromEpoch time in ms from Epoch for all file times
- * @param filenameFilter NULL or implemented instance
+ * @param filesTimeFromEpoch NULL (default will be assigned internally) or time in ms from Epoch for all file times
+ * @param filenameFilter NULL (CSV will be by default) or file filter instance
  * @return true if success
+ * @throws RuntimeException if there are no CSF file inside specified folder
  */
-    public boolean compress(String zipFile, String inputFolder, long filesTimeFromEpoch,
+    public boolean compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(inputFolder, "inputFolder is NULL");
@@ -119,17 +125,33 @@ public class Zip {
         log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
         boolean result = true;
         File directory = new File(inputFolder);
-//        List<String> fileList = getFileList(directory, filenameFilter);
+        if (filenameFilter == null) {
+            filenameFilter = DEFAULT_CSV_FILE_FILTER;
+        }
+        // get file(s) listing from folder by filter (no recursion for subfolders(s) !)
         File[] fileList = directory.listFiles(filenameFilter);
-//        log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}", fileList.size(), Arrays.toString(fileList.toArray()) ,
         log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}",
                 fileList != null ? fileList.length : -1, Arrays.toString(fileList) ,
                 inputFolder, filenameFilter);
+        // throw exception because it's a error/failure in case sharding process
+        if (fileList == null || fileList.length <= 0) {
+            String error = String.format(
+                    "Error on creating CSV zip archive, no csv file(s) were found in folder '%s' !", inputFolder);
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+
+        // assign permanent zip file entry info
+        FileTime ft;
+        if (filesTimeFromEpoch != null) {
+            ft = FileTime.fromMillis(filesTimeFromEpoch); // it's possible, but not quite correct
+        } else {
+            ft = FileTime.from(DEFAULT_BACK_TO_1970); // assign default, PREFERRED value!
+        }
 
         try (FileOutputStream fos = new FileOutputStream(zipFile);
                 ZipOutputStream zos = new ZipOutputStream(fos)) {
 
-//            for (String filePath : fileList) {
             for (int i = 0; i < fileList.length; i++) {
                 File file = fileList[i];
                 String filePath = file.getAbsolutePath();
@@ -137,7 +159,6 @@ public class Zip {
                 String name = filePath.substring(directory.getAbsolutePath().length() + 1);
                 log.trace("processing zip entry '{}' as file in '{}'...", name, filePath);
                 ZipEntry zipEntry = new ZipEntry(name);
-                FileTime ft = FileTime.fromMillis(filesTimeFromEpoch);
                 zipEntry.setCreationTime(ft);
                 zipEntry.setLastAccessTime(ft);
                 zipEntry.setLastModifiedTime(ft);
@@ -160,13 +181,12 @@ public class Zip {
             result = false;
             log.error("Error creating zip file: {}", zipFile, e);
         }
-//        log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile, fileList.size(),
         log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile,
-                fileList != null ? fileList.length : -1,
-                (System.currentTimeMillis() - start) / 1000 );
+                fileList.length, (System.currentTimeMillis() - start) / 1000 );
         return result;
     }
 
+    // Incorrect recursive listing, not used, can be removed later
     private List<String> getFileList(File directory, FilenameFilter filenameFilter) {
         List<String> fileList = new ArrayList<>();
 
