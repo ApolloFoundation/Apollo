@@ -83,7 +83,7 @@ public abstract class AbstractAPIRequestHandler {
         if (is2FAProtected()) {
             parameters.add("code2FA");
         }
-        parameters.add("elgamal");
+       
         this.parameters = Collections.unmodifiableList(parameters);
         this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
         this.fileParameter = fileParameter;
