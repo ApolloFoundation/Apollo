@@ -77,24 +77,25 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(EpochTime.class).get();
-    private final PropertiesHolder propertiesHolder;
+    private Time time;
+   
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
     private API apiServer;
-    private DirProvider dirProvider;
     
-    @Inject
-    @Setter
+    @Inject @Setter    
+    private PropertiesHolder propertiesHolder;
+    @Inject @Setter
+    private DirProvider dirProvider;    
+    @Inject  @Setter
     private AplAppStatus aplAppStatus;
     private String initCoreTaskID;
     
-    public AplCore(PropertiesHolder propertiesHolder, AplAppStatus aplAppStatus) {
-        this.propertiesHolder=propertiesHolder;
-        this.aplAppStatus = aplAppStatus; 
+    public AplCore() {
+        time = CDI.current().select(EpochTime.class).get();
     }
 
     public static boolean isShutdown() {

@@ -42,7 +42,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private Writer output;
     private StringBuffer outputBuffer = new StringBuffer(400);
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-
+    private static final String EMPTY_ARRAY = "()";
     private Set<String> excludeColumn = new HashSet<>();
     private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
     private String defaultPaginationColumnName = "DB_ID";
@@ -238,8 +238,12 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     String objectValue;
                                     if (o1 instanceof byte[]) {
                                         objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
-                                    } else {
+                                    } else if (o1 instanceof String){
+                                        objectValue = "\'" + o1.toString() + "\'";
+                                    } else if (o1 instanceof Long) {
                                         objectValue = o1.toString();
+                                    } else {
+                                        throw new RuntimeException("Unsupported array type: " + o1.getClass());
                                     }
                                     outputValue.append(objectValue).append(",");
                                     if (j == objectArray.length - 1) {
@@ -251,7 +255,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 o = outputValue.toString();
                                 break;
                             } else {
-                                o = array != null ? array.getArray() : nullString;
+                                o = array != null ? EMPTY_ARRAY : nullString;
                             }
                             break;
                         case Types.NVARCHAR:

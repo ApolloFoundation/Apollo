@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
@@ -121,8 +122,7 @@ class CsvWriterReaderDerivedTablesTest {
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-    private DirProvider dirProvider;
-        
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
@@ -134,6 +134,7 @@ class CsvWriterReaderDerivedTablesTest {
             ReferencedTransactionDaoImpl.class,
             TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
             DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
+            DGSGoodsTable.class,
             DataTagDao.class,
             KeyFactoryProducer.class, FeeCalculator.class,
             TaggedDataTimestampDao.class,
@@ -146,9 +147,9 @@ class CsvWriterReaderDerivedTablesTest {
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
+            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
-            .addBeans(MockBean.of(dirProvider, DirProvider.class))            
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
 
@@ -200,7 +201,7 @@ class CsvWriterReaderDerivedTablesTest {
         assertNotNull(result);
         log.debug("Processing [{}] tables", result.size());
 //        assertEquals(12, result.size()); // the real number is higher then initial, it's OK !
-        int targetHeight = 8000;
+        int targetHeight = Integer.MAX_VALUE;
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());

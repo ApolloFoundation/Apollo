@@ -205,8 +205,9 @@ public class Apollo {
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
-
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
+        
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
@@ -225,7 +226,8 @@ public class Apollo {
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
@@ -264,6 +266,7 @@ public class Apollo {
                 .recursiveScanPackages(DerivedTablesRegistry.class)
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
+                .recursiveScanPackages(DirProvider.class)
                 .annotatedDiscoveryMode()
 // we already have it in beans.xml in core                
 //                .interceptors(JdbiTransactionalInterceptor.class)
@@ -280,8 +283,7 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
-        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.setup(runtimeMode);
+        aplCoreRuntime = new AplCoreRuntime(runtimeMode);
         
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));

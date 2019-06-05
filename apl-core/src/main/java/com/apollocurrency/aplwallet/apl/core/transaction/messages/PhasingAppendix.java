@@ -38,7 +38,7 @@ import javax.enterprise.inject.spi.CDI;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
@@ -178,7 +178,7 @@ public class PhasingAppendix extends AbstractAppendix {
     public void generalValidation(Transaction transaction) throws AplException.ValidationException{
         params.validate();
 
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        lookupBlockchain();
 
         int currentHeight = blockchain.getHeight();
         if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
@@ -226,7 +226,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void validateFinishHeight(Integer finishHeight) throws AplException.NotCurrentlyValidException{
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        lookupBlockchain();
         Block lastBlock = blockchain.getLastBlock();
         int currentHeight = lastBlock.getHeight();
 
@@ -243,7 +243,7 @@ public class PhasingAppendix extends AbstractAppendix {
             throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
         }
 
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        lookupBlockchain();
         EpochTime timeService = CDI.current().select(EpochTime.class).get();
         Block lastBlock = blockchain.getLastBlock();
         int lastBlockHeight = lastBlock.getHeight();
@@ -263,7 +263,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private void checkLinkedTransaction(byte[] hash, int currentHeight, int transactionHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
-        Integer txHeight = blockchain.getTransactionHeight(hash, currentHeight);
+        Integer txHeight = lookupBlockchain().getTransactionHeight(hash, currentHeight);
         if (txHeight != null) {
 
             if (transactionHeight - txHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
@@ -349,6 +349,7 @@ public class PhasingAppendix extends AbstractAppendix {
     public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
         long result = phasingPollService.countVotes(poll);
+        lookupBlockchain();
         if (result >= poll.getQuorum()) {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {
                 try {
@@ -398,6 +399,13 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public PhasingParams getParams() {
         return params;
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(BlockchainImpl.class).get();
+        }
+        return blockchain;
     }
 
 }
