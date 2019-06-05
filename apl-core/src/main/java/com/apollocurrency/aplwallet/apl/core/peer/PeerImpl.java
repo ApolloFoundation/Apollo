@@ -511,8 +511,13 @@ public final class PeerImpl implements Peer {
         if(state!=PeerState.CONNECTED){
             LOG.trace("send() called before handshake(). Handshering");
             handshake(chainId);
-        }        
-        return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
+        }
+        if(state!=PeerState.CONNECTED){
+            LOG.error("Peer: {}  handshake failed.", getAnnouncedAddress());
+            return null;
+        }else{        
+            return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
+        }
     }
     
 //    //TODO: implement
