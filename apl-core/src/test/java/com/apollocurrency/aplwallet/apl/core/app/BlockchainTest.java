@@ -40,17 +40,19 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -59,6 +61,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -69,15 +72,13 @@ import java.util.List;
 import javax.inject.Inject;
 
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
+@Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
 class BlockchainTest {
 
-    @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockchainTestDb").toAbsolutePath().toString()), "db/shard-main-data.sql", null);
 
+    private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
+    static DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(blockchainTestDbPath.toAbsolutePath().toString()), "db/shard-main-data.sql", null);
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     EpochTime epochTime = mock(EpochTime.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -98,30 +99,44 @@ class BlockchainTest {
     private Blockchain blockchain;
     private TransactionTestData txd;
     private BlockTestData btd;
+    static DbPopulator shard1Populator;
+    static DbPopulator shard2Populator;
 
-    private Path createPath(String fileName) {
+
+    private static Path createPath(String fileName) {
         try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+            return Files.createTempDirectory(fileName);
         }
         catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
+    @BeforeAll
+    static void init() {
+        TransactionalDataSource shardDatasource1 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(1L);
+        TransactionalDataSource shardDatasource2 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(2L);
+        shard1Populator = initDb(shardDatasource1, "db/shard1-data.sql");
+        shard2Populator = initDb(shardDatasource2, "db/shard2-data.sql");
+    }
+
+    @AfterAll
+    static void shutdown() throws IOException {
+        FileUtils.deleteDirectory(blockchainTestDbPath.toFile());
+    }
+
     @BeforeEach
     void setUp() {
         txd = new TransactionTestData();
         btd = new BlockTestData();
-        TransactionalDataSource shardDatasource1 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(1L);
-        TransactionalDataSource shardDatasource2 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(2L);
-        initDbAndPopulate(shardDatasource1, "db/shard1-data.sql");
-        initDbAndPopulate(shardDatasource2, "db/shard2-data.sql");
+        shard1Populator.populateDb();
+        shard2Populator.populateDb();
     }
 
-    private void initDbAndPopulate(DataSourceWrapper dataSourceWrapper, String dataScriptPath) {
+    private static DbPopulator initDb(DataSourceWrapper dataSourceWrapper, String dataScriptPath) {
         DbPopulator dbPopulator = new DbPopulator(dataSourceWrapper, "db/schema.sql", dataScriptPath);
         dbPopulator.initDb();
-        dbPopulator.populateDb();
+        return dbPopulator;
     }
 
 

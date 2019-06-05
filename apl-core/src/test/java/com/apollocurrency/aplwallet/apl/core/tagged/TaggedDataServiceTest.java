@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -66,7 +65,6 @@ class TaggedDataServiceTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     private NtpTime time = mock(NtpTime.class);
-    private ConfigDirProvider  configDirProvider;
     @RegisterExtension
     DbExtension extension = new DbExtension(Map.of("tagged_data", List.of("name","description","tags")));
     @WeldSetup
@@ -82,7 +80,6 @@ class TaggedDataServiceTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            AplAppStatus.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
@@ -91,7 +88,6 @@ class TaggedDataServiceTest {
             .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
             .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(configDirProvider, ConfigDirProvider.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .build();
