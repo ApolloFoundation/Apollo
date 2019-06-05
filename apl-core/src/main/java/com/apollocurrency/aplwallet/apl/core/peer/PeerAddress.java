@@ -28,7 +28,7 @@ public final class PeerAddress implements Comparable{
     }
     
     public PeerAddress(PropertiesHolder propertiesHolder) {
-       this(propertiesHolder, 0, "127.0.0.1");
+       this(propertiesHolder, 0, "0.0.0.0");
        setPort(getDefaultPeerPort());
     }
     
