@@ -8,6 +8,7 @@ package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,8 @@ import lombok.Setter;
 @Getter @Setter
 public class TransportStatusResponse extends ResponseBase {
     
-    private Boolean done;
+    
+    @Schema(name="connected", description="Connection between core and transport status")
+    public Boolean connected;
     
 }

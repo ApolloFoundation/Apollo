@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionServiceImpl;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,19 +28,19 @@ public class TransportInteractionController {
 
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionController.class);
 
-    private TransportInteractionService  tiService;
-
-    
-    @Inject
-    public TransportInteractionController(TransportInteractionService tiService) {
-        this.tiService = tiService;
-    }
+//    private TransportInteractionService  tiService;
+//
+//    
+//     @Inject
+//     public TransportInteractionController(TransportInteractionService tiService) {
+//        this.tiService = tiService;
+//     }
 
     public TransportInteractionController() {
       log.debug("Empty ServerInfoEndpoint created");
     }
 
-     @Path("/")
+    @Path("/")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns transport status",
@@ -52,7 +53,8 @@ public class TransportInteractionController {
             }
     )
     public TransportStatusResponse getTransportStatusResponse(){        
-        TransportStatusResponse transportStatusResponse = tiService.getTransportStatusResponse();
+                
+        TransportStatusResponse transportStatusResponse = TransportInteractionServiceImpl.getInstance().getTransportStatusResponse();
         
         return transportStatusResponse;        
     }
