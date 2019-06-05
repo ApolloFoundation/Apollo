@@ -435,10 +435,10 @@ public final class Peers {
     }
 
     public static List<Peer> getActivePeers() {
-        return getPeers(peer -> peer.getState() != Peer.State.NON_CONNECTED);
+        return getPeers(peer -> peer.getState() != PeerState.NON_CONNECTED);
     }
 
-    public static List<Peer> getPeers(final Peer.State state) {
+    public static List<Peer> getPeers(final PeerState state) {
         return getPeers(peer -> peer.getState() == state);
     }
 
@@ -473,7 +473,7 @@ public final class Peers {
     }
 
     public static boolean hasTooManyOutboundConnections() {
-        return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null,
+        return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null,
                 maxNumberOfOutboundConnections).size() >= maxNumberOfOutboundConnections;
     }
 
@@ -678,7 +678,7 @@ public final class Peers {
                     continue;
                 }
 
-                if (!peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
+                if (!peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null
                         && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT) {
                     Future<JSONObject> futureResponse = peersExecutorService.submit(() -> peer.send(jsonRequest,
                             blockchainConfig.getChain().getChainId()));
@@ -707,11 +707,11 @@ public final class Peers {
         });
     }
 
-    public static Peer getAnyPeer(final Peer.State state, final boolean applyPullThreshold) {
+    public static Peer getAnyPeer(final PeerState state, final boolean applyPullThreshold) {
         return getWeightedPeer(getPublicPeers(state, applyPullThreshold));
     }
 
-    public static List<Peer> getPublicPeers(final Peer.State state, final boolean applyPullThreshold) {
+    public static List<Peer> getPublicPeers(final PeerState state, final boolean applyPullThreshold) {
         UUID chainId = blockchainConfig.getChain().getChainId();
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == state && chainId.equals(peer.getChainId()) && peer.getAnnouncedAddress() != null
                 && (!applyPullThreshold || !enableHallmarkProtection || peer.getWeight() >= pullThreshold));
@@ -754,7 +754,7 @@ public final class Peers {
     }
 
     static boolean hasEnoughConnectedPublicPeers(int limit) {
-        return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == Peer.State.CONNECTED && peer.getAnnouncedAddress() != null
+        return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null
                 && (! enableHallmarkProtection || peer.getWeight() > 0), limit).size() >= limit;
     }
 

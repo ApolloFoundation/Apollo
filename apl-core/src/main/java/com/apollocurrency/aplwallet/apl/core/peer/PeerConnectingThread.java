@@ -37,8 +37,8 @@ class PeerConnectingThread implements Runnable {
                 final int now = timeService.getEpochTime();
                 if (!Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
                     List<Future<?>> futures = new ArrayList<>();
-                    List<Peer> hallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != Peer.State.CONNECTED && now - peer.getLastConnectAttempt() > 600 && peer.providesService(Peer.Service.HALLMARK));
-                    List<Peer> nonhallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != Peer.State.CONNECTED && now - peer.getLastConnectAttempt() > 600 && !peer.providesService(Peer.Service.HALLMARK));
+                    List<Peer> hallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != PeerState.CONNECTED && now - peer.getLastConnectAttempt() > 600 && peer.providesService(Peer.Service.HALLMARK));
+                    List<Peer> nonhallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != PeerState.CONNECTED && now - peer.getLastConnectAttempt() > 600 && !peer.providesService(Peer.Service.HALLMARK));
                     if (!hallmarkedPeers.isEmpty() || !nonhallmarkedPeers.isEmpty()) {
                         Set<PeerImpl> connectSet = new HashSet<>();
                         for (int i = 0; i < 10; i++) {
@@ -54,7 +54,7 @@ class PeerConnectingThread implements Runnable {
                         }
                         connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
                             peer.handshake(Peers.blockchainConfig.getChain().getChainId());
-                            if (peer.getState() == Peer.State.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
+                            if (peer.getState() == PeerState.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
                                 peer.deactivate();
                             }
@@ -66,7 +66,7 @@ class PeerConnectingThread implements Runnable {
                     }
                 }
                 Peers.peers.values().forEach((peer) -> {
-                    if (peer.getState() == Peer.State.CONNECTED && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
+                    if (peer.getState() == PeerState.CONNECTED && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
                         Peers.peersExecutorService.submit(() -> peer.handshake(Peers.blockchainConfig.getChain().getChainId()));
                     }
                     if (peer.getLastInboundRequest() != 0 && now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {

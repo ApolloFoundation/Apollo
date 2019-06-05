@@ -81,7 +81,7 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
         request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
         request.put("chainId", blockchainConfig.getChain().getChainId());
         long startTime = System.currentTimeMillis();
-        JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),  Peers.MAX_RESPONSE_SIZE);
+        JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
         responseTime = System.currentTimeMillis() - startTime;
         if (response == null) {
             return null;

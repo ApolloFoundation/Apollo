@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -297,7 +298,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                Peer peer = Peers.getAnyPeer(Peer.State.CONNECTED, true);
+                Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
                 if (peer == null) {
                     return;
                 }
@@ -308,8 +309,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 Collections.sort(exclude);
                 request.put("exclude", exclude);
                 request.put("chainId", blockchainConfig.getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),
-                         Peers.MAX_RESPONSE_SIZE);
+                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return;
                 }

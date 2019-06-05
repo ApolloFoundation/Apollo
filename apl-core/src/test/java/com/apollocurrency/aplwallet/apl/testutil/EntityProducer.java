@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -21,7 +23,7 @@ public class EntityProducer {
 
 
     public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices){
-        final Peer.State state = active ? Peer.State.CONNECTED: Peer.State.NON_CONNECTED;
+        final PeerState state = active ? PeerState.CONNECTED: PeerState.NON_CONNECTED;
 
         Peer peer = new Peer() {
             @Override
@@ -55,7 +57,7 @@ public class EntityProducer {
             }
 
             @Override
-            public State getState() {
+            public PeerState getState() {
                 return state;
             }
 
@@ -215,11 +217,6 @@ public class EntityProducer {
             }
 
             @Override
-            public JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize) {
-                return null;
-            }
-
-            @Override
             public String getHostWithPort() {
                 return null;
             }
@@ -235,8 +232,8 @@ public class EntityProducer {
             }
 
             @Override
-            public Peer.TrustLevel getTrustLevel() {
-                return Peer.TrustLevel.NOT_TRUSTED;
+            public PeerTrustLevel getTrustLevel() {
+                return PeerTrustLevel.NOT_TRUSTED;
             }
 
         };

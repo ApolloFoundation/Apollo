@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import javax.enterprise.inject.spi.CDI;
 
@@ -82,7 +83,7 @@ public final class GetInfo extends PeerRequestHandler {
                             LOG.debug("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             Peers.setAnnouncedAddress(peerImpl, null);
                         }
-                        peerImpl.setState(Peer.State.NON_CONNECTED);
+                        peer.deactivate();
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
@@ -91,7 +92,7 @@ public final class GetInfo extends PeerRequestHandler {
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
                         if (peerImpl.getPort() != oldPort) {
                             // force checking connectivity to new announced port
-                            peerImpl.setState(Peer.State.NON_CONNECTED);
+                            peerImpl.deactivate();
                         }
                     }
                 } else {
