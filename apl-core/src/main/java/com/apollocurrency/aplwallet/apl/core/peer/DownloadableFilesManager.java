@@ -3,12 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +32,7 @@ import javax.inject.Singleton;
 //TODO: cache purging
 @Singleton
 public class DownloadableFilesManager {
+    private static final Logger log = getLogger(DownloadableFilesManager.class);
     
     public final static long FDI_TTL=7*24*3600*1000; //7 days in ms
     public final static int FILE_CHUNK_SIZE=32768;
@@ -37,7 +42,9 @@ public class DownloadableFilesManager {
     
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {
-        fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
+//        fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
+        this.fileBaseDir = dirProvider.getDataExportDir().toString();
+        log.debug("dataExportDir = {}", this.fileBaseDir);
     }
     
     public FileInfo getFileInfo(String fileId){
