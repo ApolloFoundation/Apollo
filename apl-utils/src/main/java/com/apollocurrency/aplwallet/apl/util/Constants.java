@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.util;
 import java.math.BigInteger;
 
 public final class Constants {
+
     public static final Version VERSION = new Version("1.34.0");
 
     public static final String APPLICATION = "Apollo";

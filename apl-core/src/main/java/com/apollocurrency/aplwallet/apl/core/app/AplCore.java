@@ -271,6 +271,7 @@ public final class AplCore {
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
+                aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore inited successfully");
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || !e.getMessage().contains(SQLException.class.getName())) {
@@ -287,6 +288,7 @@ public final class AplCore {
                 // AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
             }
             catch (Exception e) {
+                aplAppStatus.durableTaskFinished(initCoreTaskID, true, "AplCore init failed");
                 LOG.error(e.getMessage(), e);
                 System.exit(1);
             }
