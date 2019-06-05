@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -40,7 +41,7 @@ public final class GetPeers extends PeerRequestHandler {
         JSONArray services = new JSONArray();
         Peers.getAllPeers().forEach(otherPeer -> {
             if (!otherPeer.isBlacklisted() && otherPeer.getAnnouncedAddress() != null
-                    && otherPeer.getState() == Peer.State.CONNECTED && otherPeer.shareAddress()) {
+                    && otherPeer.getState() == PeerState.CONNECTED && otherPeer.shareAddress()) {
                 jsonArray.add(otherPeer.getAnnouncedAddress());
                 services.add(Long.toUnsignedString(((PeerImpl)otherPeer).getServices()));
             }

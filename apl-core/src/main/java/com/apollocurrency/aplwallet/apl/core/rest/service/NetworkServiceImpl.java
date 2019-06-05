@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class NetworkServiceImpl implements NetworkService {
     }
 
     @Override
-    public List<Peer> getPeersByStateAndService(boolean active, Peer.State state, final long services){
+    public List<Peer> getPeersByStateAndService(boolean active, PeerState state, final long services){
         List<Peer> result;
         List<Peer> peers = active ? Peers.getActivePeers() : state != null ? Peers.getPeers(state) : new ArrayList<>(Peers.getAllPeers());
 

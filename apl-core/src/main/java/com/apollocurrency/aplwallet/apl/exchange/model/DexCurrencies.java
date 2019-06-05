@@ -34,4 +34,10 @@ public enum  DexCurrencies {
     public boolean isApl(){
         return this.equals(DexCurrencies.APL);
     }
+    public boolean isEth(){
+        return this.equals(DexCurrencies.ETH);
+    }
+    public boolean isPax(){
+        return this.equals(DexCurrencies.PAX);
+    }
 }

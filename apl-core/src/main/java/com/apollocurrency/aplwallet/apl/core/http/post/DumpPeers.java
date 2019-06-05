@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
@@ -80,7 +81,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         }
         Set<String> addresses = new HashSet<>();
         Peers.getAllPeers().forEach(peer -> {
-                    if (peer.getState() == Peer.State.CONNECTED
+                    if (peer.getState() == PeerState.CONNECTED
                             && peer.shareAddress()
                             && !peer.isBlacklisted()
                             && peer.getVersion() != null && peer.getVersion().equals(version)

@@ -54,10 +54,4 @@ public final class Convert2 {
         return (int)((currentTime - Genesis.EPOCH_BEGINNING + 500) / 1000);
     }
 
-
-    public static long parseAPL(String apl) {
-        return Convert.parseStringFraction(apl, 8, CDI.current().select(BlockchainConfig .class).get().getCurrentConfig().getMaxBalanceAPL());
-    }
-
-
 }

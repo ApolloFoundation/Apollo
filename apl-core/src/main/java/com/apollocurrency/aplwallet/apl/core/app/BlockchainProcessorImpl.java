@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
@@ -182,10 +183,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
                 while (!peers.isEmpty()) {
                     Peer chkPeer = peers.get(ThreadLocalRandom.current().nextInt(peers.size()));
-                    if (chkPeer.getState() != Peer.State.CONNECTED) {
+                    if (chkPeer.getState() != PeerState.CONNECTED) {
                         Peers.connectPeer(chkPeer);
                     }
-                    if (chkPeer.getState() == Peer.State.CONNECTED) {
+                    if (chkPeer.getState() == PeerState.CONNECTED) {
                         peer = chkPeer;
                         break;
                     }
@@ -228,7 +229,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     request.put("requestType", "getTransactions");
                     request.put("transactionIds", requestList);
                     request.put("chainId", blockchainConfig.getChain().getChainId());
-                    JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),  Peers.MAX_RESPONSE_SIZE);
+                    JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
                     if (response == null) {
                         return;
                     }
@@ -513,10 +514,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         json.put("chainId", blockchainConfig.getChain().getChainId());
         JSONStreamAware request = JSON.prepareRequest(json);
         for (Peer peer : peers) {
-            if (peer.getState() != Peer.State.CONNECTED) {
+            if (peer.getState() != PeerState.CONNECTED) {
                 Peers.connectPeer(peer);
             }
-            if (peer.getState() != Peer.State.CONNECTED) {
+            if (peer.getState() != PeerState.CONNECTED) {
                 continue;
             }
             log.debug("Connected to archive peer " + peer.getHost());
@@ -1377,7 +1378,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long startTime = System.currentTimeMillis();
                 int numberOfForkConfirmations = lookupBlockhain().getHeight() > Constants.LAST_CHECKSUM_BLOCK - 720 ?
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-                connectedPublicPeers = Peers.getPublicPeers(Peer.State.CONNECTED, true);
+                connectedPublicPeers = Peers.getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     return;
                 }
