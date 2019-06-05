@@ -27,7 +27,7 @@ import java.util.zip.ZipOutputStream;
  * @author alukin@gmail.com
  */
 public class Zip {
-    private static final int BUF_SIZE=8192;
+    private static final int BUF_SIZE= 1042 * 2; // 2 Mb
     
     private static final Logger log = LoggerFactory.getLogger(Zip.class);
 
@@ -119,14 +119,20 @@ public class Zip {
         log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
         boolean result = true;
         File directory = new File(inputFolder);
-        List<String> fileList = getFileList(directory, filenameFilter);
-        log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}", fileList.size(), Arrays.toString(fileList.toArray()) ,
+//        List<String> fileList = getFileList(directory, filenameFilter);
+        File[] fileList = directory.listFiles(filenameFilter);
+//        log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}", fileList.size(), Arrays.toString(fileList.toArray()) ,
+        log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}",
+                fileList != null ? fileList.length : -1, Arrays.toString(fileList) ,
                 inputFolder, filenameFilter);
 
         try (FileOutputStream fos = new FileOutputStream(zipFile);
                 ZipOutputStream zos = new ZipOutputStream(fos)) {
 
-            for (String filePath : fileList) {
+//            for (String filePath : fileList) {
+            for (int i = 0; i < fileList.length; i++) {
+                File file = fileList[i];
+                String filePath = file.getAbsolutePath();
 
                 String name = filePath.substring(directory.getAbsolutePath().length() + 1);
                 log.trace("processing zip entry '{}' as file in '{}'...", name, filePath);
@@ -154,7 +160,9 @@ public class Zip {
             result = false;
             log.error("Error creating zip file: {}", zipFile, e);
         }
-        log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile, fileList.size(),
+//        log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile, fileList.size(),
+        log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile,
+                fileList != null ? fileList.length : -1,
                 (System.currentTimeMillis() - start) / 1000 );
         return result;
     }

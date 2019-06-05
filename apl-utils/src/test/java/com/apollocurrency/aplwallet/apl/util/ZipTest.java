@@ -45,7 +45,7 @@ class ZipTest {
         Instant backTo1970 = Instant.EPOCH; // in past
         long filesTimeFromEpoch = backTo1970.toEpochMilli();
         // create ZIP in temp folder for unit test
-        String fileInPath = temporaryFolderExtension.getRoot().toPath().toFile() + "archiveCsv-1.zip";
+        String fileInPath = temporaryFolderExtension.getRoot().toPath().toFile() + "test-archive-csv-1.zip";
         // start creating zip for all CSV
         boolean isCompressed = zipComponent.compress(fileInPath, targetPath.toAbsolutePath().toString(),
                 filesTimeFromEpoch, new SuffixFileFilter(".csv"));
