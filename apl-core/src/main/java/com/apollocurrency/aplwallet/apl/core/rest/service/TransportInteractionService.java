@@ -8,16 +8,9 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 
-import java.net.URI;
-import javax.websocket.ClientEndpoint;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import javax.inject.Singleton;
 
+@Singleton
 public interface TransportInteractionService {
 
     /**
@@ -27,6 +20,12 @@ public interface TransportInteractionService {
        
     public TransportStatusResponse getTransportStatusResponse();  
     
+
+    /** 
+     * Start transport interaction service
+     */
+     
+    public void start();
     
     
 }

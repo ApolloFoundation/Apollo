@@ -18,27 +18,26 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 
-@Path("/transportinto")
+@Path("/transportinfo")
 public class TransportInteractionController {
 
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionController.class);
 
-//    private TransportInteractionService  tiService;
-//
-//    
-//     @Inject
-//     public TransportInteractionController(TransportInteractionService tiService) {
-//        this.tiService = tiService;
-//     }
+    @Inject @Setter
+    private TransportInteractionService  tiService;
 
-    public TransportInteractionController() {
-      log.debug("Empty ServerInfoEndpoint created");
-    }
+    
+     
+     public TransportInteractionController( ) {
+        
+     }
+
 
     @Path("/")
     @GET
@@ -53,9 +52,10 @@ public class TransportInteractionController {
             }
     )
     public TransportStatusResponse getTransportStatusResponse(){        
-                
-        TransportStatusResponse transportStatusResponse = TransportInteractionServiceImpl.getInstance().getTransportStatusResponse();
+                        
+        TransportStatusResponse transportStatusResponse = tiService.getTransportStatusResponse();
         
+        transportStatusResponse.connected = true; 
         return transportStatusResponse;        
     }
 

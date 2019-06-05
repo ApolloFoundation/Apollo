@@ -2,8 +2,10 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
@@ -14,41 +16,38 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
     
     
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionServiceImpl.class);
-    private static TransportInteractionServiceImpl instance = null; 
+   
+    private String wsUrl; 
     
-    TransportInteractionServiceImpl() {
+    @Inject
+    TransportInteractionServiceImpl( PropertiesHolder prop ) {
         
-        Log.getLog().info("Initializing TransportInteractionServiceImpl");
-        System.out.println("Initializing TransportInteractionServiceImpl");
+        log.debug("Initializing TransportInteractionServiceImpl");   
+        wsUrl = prop.getStringProperty("apl.securetransporturl","ws://localhost:8888/");
+        
+        
         
     }
     
-    public static TransportInteractionServiceImpl getInstance() 
-    { 
-        if ( instance == null) 
-            instance = new TransportInteractionServiceImpl(); 
-  
-        return instance; 
-    }
 
     @Override
     public TransportStatusResponse getTransportStatusResponse() {
         TransportStatusResponse transportStatusResponse =  new TransportStatusResponse();
         
-        Log.getLog().info("getTransportStatusResponse");
-        System.out.println("getTransportStatusResponse");
+        log.debug("getTransportStatusResponse");
         
         return transportStatusResponse;
     }
     
-    public void ignite() {
+    @Override
+    public void start() {
         
-        System.out.println("Ingition point: "); 
+        log.debug("Ingition point: "); 
          
          try {
             // open websocket
             
-            TransportInteractionWebSocket transportInteractionWebSocket = new TransportInteractionWebSocket(new URI("ws://127.0.0.1:8888/"));
+            TransportInteractionWebSocket transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));
 
 //            // add listener
 //            clientEndPoint.addMessageHandler(new TransportInteractionWebSocket.MessageHandler() {

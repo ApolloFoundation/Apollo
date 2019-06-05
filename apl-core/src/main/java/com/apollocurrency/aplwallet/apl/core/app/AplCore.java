@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -168,6 +169,9 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.0, "API initialization done");
 
 //                CDI.current().select(NtpTime.class).get().start();
+               aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
+               TransportInteractionService tcs = CDI.current().select(TransportInteractionService.class).get();
+               tcs.start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
