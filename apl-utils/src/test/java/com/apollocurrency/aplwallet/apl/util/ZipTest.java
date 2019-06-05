@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
@@ -40,22 +41,22 @@ class ZipTest {
     }
 
     @Test
-//    @Disabled
     void compress() {
         Instant backTo1970 = Instant.EPOCH; // in past
         long filesTimeFromEpoch = backTo1970.toEpochMilli();
         // create ZIP in temp folder for unit test
-        String fileInPath = temporaryFolderExtension.getRoot().toPath().toFile() + "test-archive-csv-1.zip";
+        String folderWithZip = temporaryFolderExtension.getRoot().toPath().toFile().getAbsolutePath();
+        String zipFileName = "test-archive-csv-1.zip";
+        String zipFileInPath = folderWithZip + File.separator + zipFileName;
         // start creating zip for all CSV
-        boolean isCompressed = zipComponent.compress(fileInPath, targetPath.toAbsolutePath().toString(),
+        boolean isCompressed = zipComponent.compress(zipFileInPath, targetPath.toAbsolutePath().toString(),
                 filesTimeFromEpoch, new SuffixFileFilter(".csv"));
         assertTrue(isCompressed);
 
         String[] extensions = new String[]{"zip"};
-        Collection filesInFolder = FileUtils.listFiles(targetPath.toFile(), extensions, false);
+        Collection filesInFolder = FileUtils.listFiles(temporaryFolderExtension.getRoot().toPath().toFile(), extensions, false);
         assertNotNull(filesInFolder);
-//        assertEquals(1, filesInFolder.size());
-//        ((File) filesInFolder.iterator().next()).getName().equalsIgnoreCase(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
+        assertEquals(1, filesInFolder.size());
     }
 
     @Test
