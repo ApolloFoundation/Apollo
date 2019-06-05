@@ -227,17 +227,17 @@ public class DexController {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
             } else if(offer.getPairCurrency().isEth() && offer.getType().isBuy()){
-                Long amount = offer.getOfferAmount();
-                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
-                if(balanceInfo.getEth()==null || balanceInfo.getEth().compareTo(EthUtil.gweiToWei(amount)) < 1){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-                }
+//                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
+//                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
+//                if(balanceInfo.getEth()==null || balanceInfo.getEth().compareTo(EthUtil.gweiToWei(willPay)) < 1){
+//                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+//                }
             } else if(offer.getPairCurrency().isPax() && offer.getType().isBuy()){
-                Long amount = offer.getOfferAmount();
-                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
-                if(balanceInfo.getPax()==null || balanceInfo.getPax().compareTo(EthUtil.gweiToWei(amount)) < 1){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-                }
+//                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
+//                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
+//                if(balanceInfo.getPax()==null || balanceInfo.getPax().compareTo(EthUtil.gweiToWei(willPay)) < 1){
+//                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+//                }
             }
 
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
