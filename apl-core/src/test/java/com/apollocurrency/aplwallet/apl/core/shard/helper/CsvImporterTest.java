@@ -187,7 +187,7 @@ class CsvImporterTest {
 
     @Test
     void testImportAccountControlPhasingCsvWithArrayOfLongs() throws Exception {
-        FileLoader fileLoader = new FileLoader();
+        ResourceFileLoader fileLoader = new ResourceFileLoader();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         long result = csvImporter.importCsv("account_control_phasing", 1, true);
         assertEquals(4, result);
@@ -210,7 +210,7 @@ class CsvImporterTest {
 
     @Test
     void testImportShufflingDataCsvWithArrayOfByteArrays() throws Exception {
-        FileLoader fileLoader = new FileLoader();
+        ResourceFileLoader fileLoader = new ResourceFileLoader();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         long result = csvImporter.importCsv("shuffling_data", 1, true);
         assertEquals(2, result);
@@ -238,7 +238,7 @@ class CsvImporterTest {
 
     @Test
     void testImportGoodsCsvWithArrayOfStrings() throws Exception {
-        FileLoader fileLoader = new FileLoader();
+        ResourceFileLoader fileLoader = new ResourceFileLoader();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         long result = csvImporter.importCsv("goods", 1, true);
         assertEquals(14, result);
