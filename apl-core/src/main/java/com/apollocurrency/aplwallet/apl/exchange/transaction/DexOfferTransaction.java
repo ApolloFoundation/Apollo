@@ -72,7 +72,7 @@ public class DexOfferTransaction extends DEX {
             throw new AplException.NotValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
         }
 
-        if (OfferType.SELL.ordinal() == attachment.getOfferCurrency() && !offerCurrency.isApl()){
+        if (OfferType.SELL.ordinal() == attachment.getType() && !offerCurrency.isApl()){
             throw new AplException.NotValidException(JSON.toString(incorrect("offerCurrency", String.format("Not supported pair."))));
         }
 
@@ -102,7 +102,7 @@ public class DexOfferTransaction extends DEX {
             throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
-        if (OfferType.SELL.ordinal() == attachment.getOfferCurrency()) {
+        if (OfferType.SELL.ordinal() == attachment.getType()) {
             Long amountATM = attachment.getOfferAmount();
             Account sender = Account.getAccount(transaction.getSenderId());
 
@@ -127,7 +127,7 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
         // On the Apl side.
-        if(OfferType.SELL.ordinal() == attachment.getOfferCurrency()) {
+        if(OfferType.SELL.ordinal() == attachment.getType()) {
             lockOnAplSide(transaction, senderAccount);
         }
 
