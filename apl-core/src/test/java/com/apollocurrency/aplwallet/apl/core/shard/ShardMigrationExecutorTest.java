@@ -184,8 +184,6 @@ class ShardMigrationExecutorTest {
     @Test
     void executeAllOperations() throws IOException {
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
-        //TODO: YL, do we really need it all here?
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME, 1);
         try {
             int snapshotBlockHeight = 8000;
 

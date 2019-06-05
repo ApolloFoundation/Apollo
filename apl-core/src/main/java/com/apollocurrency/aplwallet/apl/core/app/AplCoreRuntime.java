@@ -15,8 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,14 +25,14 @@ import org.slf4j.LoggerFactory;
  * TODO: make it injectable singleton
  * @author alukin@gmail.com
  */
-@Singleton
+@Vetoed
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
 
-    private static Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
-    private List<AplCore> cores = new ArrayList<>();
+    private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
+    private final List<AplCore> cores = new ArrayList<>();
  
-    private  RuntimeMode runtimeMode;
+    private final  RuntimeMode runtimeMode;
 
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
@@ -43,22 +42,15 @@ public class AplCoreRuntime {
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-    private AplAppStatus aplAppStatus;
-    
-    @Inject
-    private AplCoreRuntime() {
-        aplAppStatus = CDI.current().select(AplAppStatus.class).get();
+
+    public AplCoreRuntime(RuntimeMode runtimeMode) {
         propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-               
-    }
-
-    public void setup(RuntimeMode runtimeMode){
-        this.runtimeMode =runtimeMode;
+        this.runtimeMode =runtimeMode;       
     }
     
     public void addCoreAndInit(){        
-        AplCore core = new AplCore(propertiesHolder,aplAppStatus);
+        AplCore core = CDI.current().select(AplCore.class).get();
         addCore(core);
         core.init();
     }
@@ -119,7 +111,4 @@ public class AplCoreRuntime {
         }
     }
 
-    public AplAppStatus getAplAppStatus() {
-       return aplAppStatus;
-    }
 }

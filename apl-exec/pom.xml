@@ -221,6 +221,7 @@
                             <goal>files</goal>
                             <goal>file</goal>
                         </goals>
+                        <phase>${zipExecutionPhase}</phase>
                     </execution>
                 </executions>
                 <configuration>
