@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -42,24 +43,28 @@ public class DownloadableFilesManager {
     
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {
+        Objects.requireNonNull(dirProvider, "dirProvider is NULL");
+        Objects.requireNonNull(dirProvider.getDataExportDir(), "dataExportDir in dirProvider is NULL");
 //        fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
         this.fileBaseDir = dirProvider.getDataExportDir().toString();
-        log.debug("dataExportDir = {}", this.fileBaseDir);
+        log.debug("Node's dataExportDir = {}", this.fileBaseDir);
     }
     
     public FileInfo getFileInfo(String fileId){
+        Objects.requireNonNull(fileId, "fileId is NULL");
         FileInfo fi;
         FileDownloadInfo fdi = fdiCache.get(fileId);
-        if(fdi==null){
+        if(fdi == null){
             fdi = createFileDownloadInfo(fileId);
         }        
         fi = fdi.fileInfo;
         return fi;
     }
     
-    public FileDownloadInfo getFileDownloadInfo(String fileId){
+    public FileDownloadInfo getFileDownloadInfo(String fileId) {
+        Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
-        if(fdi==null){
+        if(fdi == null){
             FileInfo fi = getFileInfo(fileId);
         }
         fdi = fdiCache.get(fileId);
@@ -67,17 +72,18 @@ public class DownloadableFilesManager {
     }
 
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
+        Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo res = new FileDownloadInfo();
-        Path fpath=mapFileIdToLocalPath(fileId);
-        if(fpath!=null){
-            res.fileInfo.isPresent=true;
-            res.fileInfo.fileId=fileId;
-            res.created=new Date();
+        Path fpath = mapFileIdToLocalPath(fileId);
+        if(fpath != null){
+            res.fileInfo.isPresent = true;
+            res.fileInfo.fileId = fileId;
+            res.created = new Date();
             ChunkedFileOps fops = new ChunkedFileOps(fpath);
             res.fileInfo.size=fops.getFileSize();
-            if(res.fileInfo.size<0){
+            if (res.fileInfo.size<0) {
                res.fileInfo.isPresent=false;                
-            }else{
+            } else {
                 res.fileInfo.fileDate=fops.getFileDate();
                 res.fileInfo.hash=Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
                 res.fileInfo.chunkSize=FILE_CHUNK_SIZE;
@@ -96,19 +102,20 @@ public class DownloadableFilesManager {
                 }
                 fdiCache.put(fileId, res);
             }
-        }else{
+        } else {
             res.fileInfo.fileId=fileId;
             res.fileInfo.isPresent=false;
         }
         return res;
     }
    //TODO:  real mapping 
-    public Path mapFileIdToLocalPath(String fileId){
-       String abspath = fileBaseDir+File.separator+fileId;
-       Path res = Paths.get(abspath);
-       if(!Files.exists(res)){
-          res=null;
-       }
-       return res;
+    public Path mapFileIdToLocalPath(String fileId) {
+        Objects.requireNonNull(fileId, "fileId is NULL");
+        String abspath = fileBaseDir + File.separator + fileId;
+        Path res = Paths.get(abspath);
+        if(!Files.exists(res)){
+            res = null;
+        }
+        return res;
     }
 }

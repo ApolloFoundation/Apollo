@@ -3,39 +3,42 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.Bean;
+import javax.inject.Inject;
 import java.nio.file.Path;
-import java.util.UUID;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
-import org.junit.jupiter.api.BeforeEach;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
+@EnableWeld
 class DownloadableFilesManagerTest {
     private static final Logger log = getLogger(DownloadableFilesManagerTest.class);
-
-    private DownloadableFilesManager filesManager;
-    private Path csvResourcesPath;
-
-    @BeforeEach
-    void setUp() {
-        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvResourcesPath = resourceFileLoader.getResourcePath(); // default test resource folder
-        assertNotNull(csvResourcesPath);
-        PredefinedDirLocations dirLocations = new PredefinedDirLocations(
-                csvResourcesPath.toAbsolutePath().toString(),
-                null, null, null, null,
-                csvResourcesPath.toAbsolutePath().toString());
-        DirProviderFactory.setup(true, UUID.randomUUID(), "Default", dirLocations);
-        DirProvider dirProvider = DirProviderFactory.getProvider();
-        filesManager = new DownloadableFilesManager(dirProvider);
+    private Path csvResourcesPath = new ResourceFileLoader().getResourcePath().toAbsolutePath();
+    private final Bean<Path> dataExportDir = MockBean.of(csvResourcesPath, Path.class);
+    private DirProvider dirProvider = mock(DirProvider.class);
+    {
+        doReturn(csvResourcesPath).when(dirProvider).getDataExportDir();
     }
+
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(DownloadableFilesManager.class)
+            .addBeans(MockBean.of(dirProvider, DirProvider.class))
+            .build();
+
+    @Inject
+    private DownloadableFilesManager filesManager;
 
     @Test
     void getFileDownloadInfo() {
@@ -48,6 +51,7 @@ class DownloadableFilesManagerTest {
         assertEquals(
                 "c8d3a0c3d323366c711e4d05d5706db27da385a0181ae7584013b641c2b97221",
                 fi.fileInfo.hash);
+        log.debug("Parsed bytes from string = {}", Convert.parseHexString(fi.fileInfo.hash) );
         assertEquals(zipFileName, fi.fileInfo.fileId);
     }
 
