@@ -36,12 +36,13 @@ public class Helper2FA {
    private static final KeyStoreService KEYSTORE = CDI.current().select(KeyStoreService.class).get();
    private static final AccountService accountService = CDI.current().select(AccountService.class).get();
    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
+    private static AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
 
      public static void init(DatabaseManager databaseManagerParam) {
         DatabaseManager databaseManager = databaseManagerParam;
         service2FA = new TwoFactorAuthServiceImpl(
                 propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem")
-                        ? new TwoFactorAuthFileSystemRepository(AplCoreRuntime.getInstance().get2FADir())
+                        ? new TwoFactorAuthFileSystemRepository(aplCoreRuntime.get2FADir())
                         : new TwoFactorAuthRepositoryImpl(databaseManager.getDataSource()),
                 propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
     }

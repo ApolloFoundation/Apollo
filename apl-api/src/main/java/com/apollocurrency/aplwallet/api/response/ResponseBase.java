@@ -11,8 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
- * Base class for all reponses
- * @author al
+ * Base class for all responses
+ * @author alukin@gmail.com
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -35,7 +35,7 @@ public class ResponseBase {
      */
     public Integer newErrorCode;
     /**
-     * Time in miliseconds that took from incoming request to response
+     * Time in milliseconds that took from incoming request to response
      */
     public Long requestProcessingTime;
     /**

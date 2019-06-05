@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
@@ -25,8 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
-import com.apollocurrency.aplwallet.apl.util.AppStatus;
-import com.apollocurrency.aplwallet.apl.util.AppStatusUpdater;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
@@ -34,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
@@ -89,10 +87,9 @@ public class Apollo {
 
     private static AplContainer container;
 
-    private static AplCore core;
-
     private PropertiesHolder propertiesHolder;
-
+    private static AplCoreRuntime aplCoreRuntime;
+    
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
@@ -111,7 +108,6 @@ public class Apollo {
 
     public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
         boolean res = true;
-        Long pid = ProcessHandle.current().pid();
         String cmdline = "";
         for (String s : argv) {
             cmdline = cmdline + s + " ";
@@ -124,7 +120,7 @@ public class Apollo {
         }
         String path = pidPath.isEmpty() ? home + PID_FILE : pidPath;
         try (PrintWriter out = new PrintWriter(path)) {
-            out.println(pid.toString());
+            out.println(RuntimeParams.getProcessId());
         } catch (FileNotFoundException ex) {
             System.err.println("Can not write PID to: "+path);
             res=false;
@@ -146,49 +142,16 @@ public class Apollo {
         return res;
     }
 
-    private void initCore() {
-
-        AplCoreRuntime.getInstance().setup(runtimeMode, dirProvider);
-        core = new AplCore();
-
-        AplCoreRuntime.getInstance().addCore(core);
-        core.init();
-    }
-
     private void initUpdater(String attachmentFilePath, boolean debug) {
         if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
         UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
-
         updaterCore.init(attachmentFilePath, debug);
     }
 
-    private void initAppStatusMsg() {
-        AppStatus.setUpdater(new AppStatusUpdater() {
-            @Override
-            public void updateStatus(String status) {
-                runtimeMode.updateAppStatus(status);
-            }
-
-            @Override
-            public void alert(String message) {
-                runtimeMode.alert(message);
-            }
-
-            @Override
-            public void error(String message) {
-                runtimeMode.displayError(message);
-            }
-        });
-    }
-
-    private void launchDesktopApplication() {
-        runtimeMode.launchDesktopApplication();
-    }
-
     public static void shutdown() {
-        AplCoreRuntime.getInstance().shutdown();
+        aplCoreRuntime.shutdown();
         try {
             container.shutdown();
         } catch (IllegalStateException e) {
@@ -304,10 +267,10 @@ public class Apollo {
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
                 .annotatedDiscoveryMode()
-                .interceptors(JdbiTransactionalInterceptor.class)
+//                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
-                //TODO:  turn it on periodically in development processto check CDI errors
+                //TODO:  turn it on periodically in development process to check CDI errors
 //                .devMode() // enable for dev only
                 .build();
 
@@ -318,18 +281,19 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        aplCoreRuntime.setup(runtimeMode, dirProvider, configDirProvider);
+        
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
-            app.initAppStatusMsg();
-            app.initCore();
-            app.launchDesktopApplication();
+            aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
              */
             if (args.startMint) {
-                AplCoreRuntime.getInstance().startMinter();
+                aplCoreRuntime.startMinter();
             }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());

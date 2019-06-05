@@ -31,7 +31,6 @@ public class DexOfferAttachment extends AbstractAttachment {
     }
 
     public DexOfferAttachment(ByteBuffer buffer) {
-        super(buffer);
         this.type = buffer.get();
         this.offerCurrency = buffer.get();
         this.offerAmount = buffer.getLong();

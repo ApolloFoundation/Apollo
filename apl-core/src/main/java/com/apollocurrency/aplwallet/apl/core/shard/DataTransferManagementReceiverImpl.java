@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOpera
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
 import java.nio.file.Files;
@@ -62,16 +63,18 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
     private Optional<Long> createdShardId;
     private TransactionalDataSource createdShardSource;
     private ShardRecoveryDaoJdbc shardRecoveryDao;
-
+    private DirProvider dirProvider;
+    
     public DataTransferManagementReceiverImpl() {
     }
 
     @Inject
-    public DataTransferManagementReceiverImpl(DatabaseManager databaseManager, TrimService trimService,
+    public DataTransferManagementReceiverImpl(AplCoreRuntime aplCoreRuntime, DatabaseManager databaseManager, TrimService trimService,
                                               ShardRecoveryDaoJdbc shardRecoveryDao) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
+        this.dirProvider = aplCoreRuntime.getDirProvider();
     }
 
     @Override
@@ -97,7 +100,7 @@ public class DataTransferManagementReceiverImpl implements DataTransferManagemen
                 new ShardDataSourceCreateHelper(databaseManager);
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = AplCoreRuntime.getInstance().getDirProvider().getDbDir();
+        Path dbDir = dirProvider.getDbDir();
         String backupName = String.format("BACKUP-BEFORE-%s.zip", nextShardName);
         Path backupPath = dbDir.resolve(backupName);
         String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());

@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.33.0</version>
+    <version>1.33.1</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -61,7 +61,7 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-        <web-wallet.version>2.5.10</web-wallet.version>
+        <web-wallet.version>2.5.11</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 
@@ -83,7 +83,7 @@
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -102,18 +102,18 @@
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
         <!-- TODO: cleanup -->
-        <jetty.version>9.4.12.v20180830</jetty.version>
+        <jetty.version>9.4.18.v20190429</jetty.version>
         <bitlet.version>0.1.4</bitlet.version>
-        <weld.version>3.1.0.Final</weld.version>
+        <weld.version>3.1.1.Final</weld.version>
         <weld-junit5.version>1.3.1.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>3.6.3.Final</resteasy.version>
-        <swagger.version>2.0.6</swagger.version>
+        <resteasy.version>3.7.0.Final</resteasy.version>
+        <swagger.version>2.0.8</swagger.version>
         <junit5-bom.version>5.4.1</junit5-bom.version>
         <hikari.version>3.3.1</hikari.version>
         <jcommander.version>1.72</jcommander.version>
-        <jdbi3-core.version>3.5.1</jdbi3-core.version>
-        <jdbi3-sqlobject.version>3.5.1</jdbi3-sqlobject.version>
+        <jdbi3-core.version>3.8.2</jdbi3-core.version>
+        <jdbi3-sqlobject.version>3.8.2</jdbi3-sqlobject.version>
         <lombok.version>1.18.4</lombok.version>
         <surefire-plugin.version>2.22.1</surefire-plugin.version>
         <compile-plugin.version>3.8.0</compile-plugin.version>

@@ -39,15 +39,13 @@ public class DexService {
     private EthereumWalletService ethereumWalletService;
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
-    private EpochTime epochTime;
     private TransactionProcessorImpl transactionProcessor;
 
 
     @Inject
-    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, EpochTime epochTime, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
+    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
-        this.epochTime = epochTime;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
     }
