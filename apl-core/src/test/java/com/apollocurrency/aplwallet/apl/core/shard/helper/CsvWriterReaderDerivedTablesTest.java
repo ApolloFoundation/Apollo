@@ -214,7 +214,7 @@ class CsvWriterReaderDerivedTablesTest {
             // prepare connection + statement + writer
             try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?");
-                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, "DB_ID");
+                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
@@ -232,7 +232,7 @@ class CsvWriterReaderDerivedTablesTest {
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
-                            minMaxDbId.setMinDbId((Long) csvExportData.getLastKey());
+                            minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
                         }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
@@ -394,10 +394,10 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet(), null);
+            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet());
         });
 
-        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet(), null);
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet());
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";

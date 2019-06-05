@@ -289,25 +289,36 @@ class CsvExporterTest {
     }
 
     @Test
-    void testExportIndexes() throws IOException {
-        IndexExportData exportData = csvExporter.exportIndexes(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
-        assertEquals(2, exportData.getBlocksExported());
-        assertEquals(3, exportData.getTxExported());
+    void testExportBlockIndex() throws IOException {
+        long exported = csvExporter.exportBlockIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
+        assertEquals(2, exported);
         List<String> blockIndexCsv = Files.readAllLines(dataExportPath.resolve("block_index.csv"));
         assertEquals(blockIndexExportContent.subList(0, 3), blockIndexCsv);
+    }
+
+    @Test
+    void testExportTransactionIndex() throws IOException {
+        long exported = csvExporter.exportTransactionIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
+        assertEquals(3, exported);
         List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
         assertEquals(transactionIndexExportContent.subList(0, 4), transactionIndexCsv);
     }
 
+
     @Test
-    void testExportAllIndexes() throws IOException {
-        IndexExportData exportData = csvExporter.exportIndexes(IndexTestData.BLOCK_INDEX_0.getBlockHeight() + 1, 2);
-        assertEquals(3, exportData.getBlocksExported());
-        assertEquals(4, exportData.getTxExported());
-        List<String> blockIndexCsv = Files.readAllLines(dataExportPath.resolve("block_index.csv"));
-        assertEquals(blockIndexExportContent, blockIndexCsv);
+    void testExportFullTransactionIndex() throws IOException {
+        long exported = csvExporter.exportTransactionIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight() + 1, 1);
+        assertEquals(4, exported);
         List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
         assertEquals(transactionIndexExportContent, transactionIndexCsv);
+    }
+
+    @Test
+    void testExportAllIndexes() throws IOException {
+        long exported = csvExporter.exportBlockIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight() + 1, 2);
+        assertEquals(3, exported);
+        List<String> blockIndexCsv = Files.readAllLines(dataExportPath.resolve("block_index.csv"));
+        assertEquals(blockIndexExportContent, blockIndexCsv);
     }
 
     @Test
