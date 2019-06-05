@@ -567,6 +567,8 @@ public final class PeerImpl implements Peer {
                 //
                 // Send the request using the WebSocket session
                 //
+                //TODO: check
+                maxResponseSize=Peers.MAX_MESSAGE_SIZE;
                 StringWriter wsWriter = new StringWriter(1000);
                 request.writeJSONString(wsWriter);
                 String wsRequest = wsWriter.toString();
