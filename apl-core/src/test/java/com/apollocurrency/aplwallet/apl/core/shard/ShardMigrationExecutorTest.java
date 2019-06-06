@@ -102,16 +102,18 @@ class ShardMigrationExecutorTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(getTempFilePath("shardMigrationTestDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     static PropertiesHolder propertiesHolder = initPropertyHolder();
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
 
-    private final Bean<Path> dataExportDir = MockBean.of(temporaryFolderExtension.newFolder().toPath().toAbsolutePath(), Path.class);
+    private final Path dataExportDirPath = createPath("targetDb");
+    private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
     {
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
-
+        // return the same dir for both CDI components
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
+        doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
 
     @WeldSetup
@@ -161,6 +163,14 @@ class ShardMigrationExecutorTest {
 
     public ShardMigrationExecutorTest() throws Exception {}
 
+    private Path createPath(String fileName) {
+        try {
+            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
     @BeforeAll
     static void setUpAll() {
@@ -182,8 +192,7 @@ class ShardMigrationExecutorTest {
     @Test
     void executeAllOperations() throws IOException {
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
-        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
-        try {
+
             int snapshotBlockHeight = 8000;
 
             // prepare an save Recovery + new Shard info
@@ -297,14 +306,11 @@ class ShardMigrationExecutorTest {
             FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine, shardHash);
             state = shardMigrationExecutor.executeOperation(finishShardingCommand);
             assertEquals(COMPLETED, state);
-        } finally {
-//            AplCoreRuntime.getInstance().setup(null, null); //remove when AplCoreRuntime become an injectable bean
-        }
     }
 
     @Test
     void executeAll() {
-        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
+//        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
 
         shardMigrationExecutor.createAllCommands(8000);
         MigrateState state = shardMigrationExecutor.executeAllOperations();
@@ -312,15 +318,6 @@ class ShardMigrationExecutorTest {
         assertEquals(COMPLETED, state);
     }
 
-
-    private Path getTempFilePath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Unable to create shard db file", e);
-        }
-    }
     private static PropertiesHolder initPropertyHolder() {
         PropertiesHolder propertiesHolder = new PropertiesHolder();
         Properties properties = new Properties();

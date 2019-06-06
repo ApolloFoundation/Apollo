@@ -112,10 +112,10 @@ class ShardEngineTest {
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
-
     {
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
-
+        // return the same dir for both CDI components
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
+        doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
 
     @WeldSetup
@@ -218,9 +218,8 @@ class ShardEngineTest {
 
     @Test           
     void createShardDbDoAllOperations() throws IOException {
-
+        // folder to backup step
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
-        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
 
         blockIndexDao.hardDeleteAllBlockIndex();
 

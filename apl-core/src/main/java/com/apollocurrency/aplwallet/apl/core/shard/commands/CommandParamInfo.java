@@ -34,4 +34,6 @@ public interface CommandParamInfo {
 
     void setDbIdExclusionSet(Set<Long> dbIdExclusionSet);
 
+    boolean isZipCrcStored();
+
 }
