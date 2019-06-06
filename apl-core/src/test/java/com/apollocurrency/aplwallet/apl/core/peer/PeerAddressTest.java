@@ -32,7 +32,7 @@ public class PeerAddressTest {
 
     @Test
     public void testFromString() throws MalformedURLException, UnknownHostException{
-        PeerAddress a = new PeerAddress(ph);
+        PeerAddress a = new PeerAddress();
         a.fromString("192.168.0.1");
         int port = a.getPort();
         String hp=a.getAddrWithPort();

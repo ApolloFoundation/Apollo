@@ -75,17 +75,4 @@ public interface CsvWriter extends AutoCloseable {
      */
     String setOptions(String options);
 
-    /**
-     * Different tables can have different pagination column name
-     * @return return current pagination column
-     */
-    String getDefaultPaginationColumnName();
-
-    /**
-     * Set new column name for paginating
-     *
-     * @param defaultPaginationColumnName new column name
-     */
-    void setDefaultPaginationColumnName(String defaultPaginationColumnName);
-
 }

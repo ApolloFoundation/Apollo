@@ -117,7 +117,7 @@ public final class GetInfo extends PeerRequestHandler {
             LOG.error("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
-        LOG.debug("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.application, version);
+        LOG.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.application, version);
         peerImpl.setVersion(version);
 
         if (pi.platform == null) {

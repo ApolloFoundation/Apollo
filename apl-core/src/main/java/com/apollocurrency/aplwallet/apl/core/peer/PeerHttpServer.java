@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.net.Inet4Address;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -25,9 +26,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Peer HTTP server that handles http requests and PeerWebSockets
@@ -47,7 +50,6 @@ public class PeerHttpServer {
      private final boolean useTLS;
      boolean enablePeerUPnP;    
      private final String myPlatform;
-     private String myAddress;
      private PeerAddress myExtAddress;
      private final Server peerServer;
      private final UPnP upnp;
@@ -69,10 +71,6 @@ public class PeerHttpServer {
 
     public String getMyPlatform() {
         return myPlatform;
-    }
-
-    public String getMyAddress() {
-        return myAddress;
     }
 
     public PeerAddress getMyExtAddress(){
@@ -98,9 +96,9 @@ public class PeerHttpServer {
 
         //get configured external adderes from config. UPnP should be disabled, in other case
         // UPnP re-writes this
-        myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());      
+        String myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());      
         if(myAddress!=null){
-            myExtAddress = new PeerAddress(propertiesHolder, myAddress);
+            myExtAddress = new PeerAddress(myPeerServerPort, myAddress);
         }
         if (shareMyAddress) {
             peerServer = new Server();
@@ -132,23 +130,29 @@ public class PeerHttpServer {
                 ctxHandler.setGzipHandler(gzipHandler);
             }
             peerServer.setHandler(ctxHandler);
-            
-            if (enablePeerUPnP && upnp.isAvailable()) {
+            List<Integer> internalPorts = new ArrayList<>();
                 Connector[] peerConnectors = peerServer.getConnectors();
                 for (Connector peerConnector : peerConnectors) {
                     if (peerConnector instanceof ServerConnector) {
-                        int port = upnp.addPort(((ServerConnector) peerConnector).getPort(), "Peer2Peer");
-                        if(port>0){
-                          externalPorts.add(port);
-                        }
+                       internalPorts.add(((ServerConnector) peerConnector).getPort());
                     }
                 }
-                //TODO: check
-                if (!externalPorts.isEmpty()) {
-                    myPeerServerPort = externalPorts.get(0);
-                    myAddress = upnp.getExternalAddress().getHostAddress();
-                    myExtAddress=new PeerAddress(propertiesHolder, myAddress);
+            //if address is set in config file, we ignore UPnP    
+            if (enablePeerUPnP && upnp.isAvailable() && myExtAddress!=null) {
+                for (Integer pn : internalPorts) {
+                    int port = upnp.addPort(pn, "Peer2Peer");
+                    if (port > 0) {
+                        externalPorts.add(port);
+                    }
                 }
+                myExtAddress = new PeerAddress(externalPorts.get(0),upnp.getExternalAddress().getHostAddress());                
+            }
+            // if we do not have addres set in config and do not have UPnP
+            if(myExtAddress==null){ 
+                 externalPorts.addAll(internalPorts);
+                 ServerConnector conn0 =(ServerConnector)peerConnectors[0];
+                 myAddress = conn0.getHost();                 
+                 myExtAddress = findMyExtPublicAddres(myAddress,externalPorts.get(0));
             }
 
             peerServer.setStopAtShutdown(true);
@@ -217,5 +221,15 @@ public class PeerHttpServer {
 
     public InetAddress getExternalAddress() {
         return upnp.getExternalAddress();
+    }
+    
+//TODO: implement for 0.0.0.0 binding and private/public IP of interfaces
+    private PeerAddress findMyExtPublicAddres(String myAddress, Integer port) {
+         try {
+             InetAddress addr = InetAddress.getByName(host);
+         } catch (UnknownHostException ex) {
+             
+         }
+         return null;
     }
 }

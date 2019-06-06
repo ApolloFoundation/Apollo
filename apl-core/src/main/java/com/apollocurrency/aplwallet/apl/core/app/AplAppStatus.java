@@ -71,9 +71,9 @@ public class AplAppStatus {
            info.getMessages().add(message);
        }
        if(info.isCrititcal){
-          LOG.info("{}: update,%: {}, message: {}",info.name, formatter.format(percentComplete), message);           
+          LOG.info("{}: {}%, message: {}",info.name, formatter.format(percentComplete), message);           
        }else{
-          LOG.debug("{}: update,%: {}, message: {}, duration: {}",info.name, formatter.format(percentComplete), message,info.durationMS);
+          LOG.debug("{}: {}%, message: {}, duration: {}",info.name, formatter.format(percentComplete), message,info.durationMS);
        }
        if(keepPrevMessages>0){
            int toDel = info.messages.size()-keepPrevMessages;

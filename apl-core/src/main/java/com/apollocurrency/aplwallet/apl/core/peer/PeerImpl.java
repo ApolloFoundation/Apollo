@@ -131,10 +131,10 @@ public final class PeerImpl implements Peer {
         pi.shareAddress = true;
         PeerAddress pa;
         if(announcedAddress==null || announcedAddress.isEmpty()){
-            LOG.debug("got empty announcedAddress from host {}",host);
-            pa= new PeerAddress(propertiesHolder,host);
+            LOG.trace("got empty announcedAddress from host {}",host);
+            pa= new PeerAddress(host);
         }else{
-            pa = new PeerAddress(propertiesHolder,announcedAddress);
+            pa = new PeerAddress(announcedAddress);
         }
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
@@ -156,7 +156,7 @@ public final class PeerImpl implements Peer {
     
     @Override
     public String getHostWithPort(){
-      PeerAddress pa = new PeerAddress(propertiesHolder,port,host);
+      PeerAddress pa = new PeerAddress(port,host);
       return pa.getAddrWithPort();
     }
     
@@ -354,7 +354,7 @@ public final class PeerImpl implements Peer {
         if (announcedAddress != null && announcedAddress.length() > Peers.MAX_ANNOUNCED_ADDRESS_LENGTH) {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
-        PeerAddress pa = new PeerAddress(propertiesHolder,announcedAddress);
+        PeerAddress pa = new PeerAddress(announcedAddress);
         pi.announcedAddress = pa.getAddrWithPort();
         this.port=pa.getPort();
     }
@@ -826,7 +826,7 @@ public final class PeerImpl implements Peer {
         }
         try {
 
-            PeerAddress pa = new PeerAddress(propertiesHolder,newAnnouncedAddress);
+            PeerAddress pa = new PeerAddress(newAnnouncedAddress);
             int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
@@ -892,7 +892,8 @@ public final class PeerImpl implements Peer {
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;
             long totalWeight = 0;
-            for (PeerImpl peer : Peers.allPeers) {
+            for (Peer p : Peers.getAllPeers()) {
+                PeerImpl peer = (PeerImpl)p;
                 if (peer.hallmark == null) {
                     continue;
                 }

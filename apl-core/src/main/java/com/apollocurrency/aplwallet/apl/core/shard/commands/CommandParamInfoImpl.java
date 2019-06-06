@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DEFAULT_COMMIT_BATCH_SIZE;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
 
 import java.util.Collections;
 import java.util.List;

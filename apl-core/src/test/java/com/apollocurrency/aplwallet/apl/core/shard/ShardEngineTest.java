@@ -7,14 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_BACKUPED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHARD_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -52,7 +53,9 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
@@ -106,8 +109,10 @@ class ShardEngineTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
-    private final Bean<Path> dataExportDir = MockBean.of(createPath("targetDb").toAbsolutePath(), Path.class);
+    private final Path dataExportDirPath = createPath("targetDb");
+    private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
+
     {
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir"));
 
@@ -120,6 +125,8 @@ class ShardEngineTest {
             DerivedDbTablesRegistryImpl.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
+            DGSGoodsTable.class,
+            PhasingPollTable.class,
             DerivedTablesRegistry.class,
             ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
@@ -152,6 +159,12 @@ class ShardEngineTest {
     private DerivedTablesRegistry registry;
     @Inject
     private CsvExporter cvsExporter;
+
+    @Inject
+    DGSGoodsTable goodsTable;
+    @Inject
+    PhasingPollTable phasingPollTable;
+
 
     public ShardEngineTest() throws Exception {}
 
@@ -210,61 +223,62 @@ class ShardEngineTest {
         doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
 
         blockIndexDao.hardDeleteAllBlockIndex();
-            long start = System.currentTimeMillis();
-            MigrateState state = shardEngine.getCurrentState();
-            assertNotNull(state);
-            assertEquals(MigrateState.INIT, state);
 
-            int snapshotBlockHeight = 8000;
+        long start = System.currentTimeMillis();
+        MigrateState state = shardEngine.getCurrentState();
+        assertNotNull(state);
+        assertEquals(MigrateState.INIT, state);
 
-            // prepare and save Recovery + new Shard info
-            ShardRecovery recovery = new ShardRecovery(state);
-            recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
-            byte[] shardHash = "000000000".getBytes();
-            Shard newShard = new Shard(shardHash, snapshotBlockHeight);
-            long shardId = shardDao.saveShard(newShard);
+        int snapshotBlockHeight = 8000;
+
+        // prepare and save Recovery + new Shard info
+        ShardRecovery recovery = new ShardRecovery(state);
+        recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
+        byte[] shardHash = "000000000".getBytes();
+        Shard newShard = new Shard(shardHash, snapshotBlockHeight);
+        long shardId = shardDao.saveShard(newShard);
 
 //1.        // create main db backup
-            state = shardEngine.createBackup();
-            assertEquals(MAIN_DB_BACKUPED, state);
-            assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4.zip")));
+        state = shardEngine.createBackup();
+        assertEquals(MAIN_DB_BACKUPED, state);
+        assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4.zip")));
 
 //2.        // create shard db with 'initial' schema
-            state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null);
-            assertEquals(SHARD_SCHEMA_CREATED, state);
+        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null);
+        assertEquals(SHARD_SCHEMA_CREATED, state);
 
-            // checks before COPYING blocks / transactions
-            long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
-            assertEquals(14, count); // total blocks in main db
-            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
-            assertEquals(14, count); // total transactions in main db
+        // checks before COPYING blocks / transactions
+        long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
+        assertEquals(14, count); // total blocks in main db
+        count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        assertEquals(14, count); // total transactions in main db
 
-            List<String> tableNameList = new ArrayList<>();
-            tableNameList.add(BLOCK_TABLE_NAME);
-            tableNameList.add(TRANSACTION_TABLE_NAME);
-            TransactionTestData td = new TransactionTestData();
-            Set<Long> dbIds = new HashSet<>();
-            dbIds.add(td.DB_ID_0);
-            dbIds.add(td.DB_ID_2);
-            dbIds.add(td.DB_ID_5);
-            CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
+        List<String> tableNameList = new ArrayList<>();
+        tableNameList.add(BLOCK_TABLE_NAME);
+        tableNameList.add(TRANSACTION_TABLE_NAME);
+        TransactionTestData td = new TransactionTestData();
+        Set<Long> dbIds = new HashSet<>();
+        dbIds.add(td.DB_ID_0);
+        dbIds.add(td.DB_ID_2);
+        dbIds.add(td.DB_ID_5);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
 
 //3-4.      // copy block + transaction data from main db into shard
-            state = shardEngine.copyDataToShard(paramInfo);
-            assertEquals(MigrateState.DATA_COPY_TO_SHARD_FINISHED, state);
+        state = shardEngine.copyDataToShard(paramInfo);
+        assertEquals(MigrateState.DATA_COPY_TO_SHARD_FINISHED, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-            // check after COPY
-            TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(8, count); // blocks in shard db
-            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(4, count);// transactions in shard db
+        // check after COPY
+        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        assertEquals(8, count); // blocks in shard db
+        shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        assertEquals(7, count);// transactions in shard db
 
 //5.        // create shard db FULL schema + add shard hash info
-            state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
-            assertEquals(SHARD_SCHEMA_FULL, state);
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
+        assertEquals(SHARD_SCHEMA_FULL, state);
             // check hash is stored in shard record
 /*          TODO: YL uncomment when ready
             Shard shard = shardDao.getShardById(shardId);
@@ -283,71 +297,84 @@ class ShardEngineTest {
 //            assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-            tableNameList.clear();
-            tableNameList.add(BLOCK_INDEX_TABLE_NAME);
-            tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
-            paramInfo.setTableNameList(tableNameList);
+        tableNameList.clear();
+        tableNameList.add(BLOCK_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_INDEX_TABLE_NAME);
+        paramInfo.setTableNameList(tableNameList);
 
 //6-7.      // update secondary block + transaction indexes
-            state = shardEngine.updateSecondaryIndex(paramInfo);
-            assertEquals(MigrateState.SECONDARY_INDEX_FINISHED, state);
+        state = shardEngine.updateSecondaryIndex(paramInfo);
+        assertEquals(MigrateState.SECONDARY_INDEX_FINISHED, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-            long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
-            // should be 8 but prev shard already exist and grabbed our genesis block
-            assertEquals(7, blockIndexCount);
-            long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-            assertEquals(4, trIndexCount);
+        long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
+        // should be 8 but prev shard already exist and grabbed our genesis block
+        assertEquals(7, blockIndexCount);
+        long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
+        assertEquals(7, trIndexCount);
 
 
-            tableNameList.clear();
-            tableNameList.add(SHARD_TABLE_NAME);
-            tableNameList.add(BLOCK_INDEX_TABLE_NAME);
-            tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
-            paramInfo.setTableNameList(tableNameList);
+        tableNameList.clear();
+        tableNameList.add(SHARD_TABLE_NAME);
+        tableNameList.add(BLOCK_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_TABLE_NAME);
+        tableNameList.add("goods");
+        tableNameList.add("phasing_poll");
+        paramInfo.setTableNameList(tableNameList);
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
-            state = shardEngine.exportCsv(paramInfo);
-            assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
+        paramInfo.setSnapshotBlockHeight(542100);
+        state = shardEngine.exportCsv(paramInfo);
 
-            tableNameList.clear();
+        assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
+        assertFalse(Files.exists(dataExportDirPath.resolve("phasing_poll.csv")));
+        assertEquals(5, Files.readAllLines(dataExportDirPath.resolve("shard.csv"))                  .size());
+        assertEquals(12, Files.readAllLines(dataExportDirPath.resolve("transaction_shard_index.csv")).size());
+        assertEquals(9, Files.readAllLines(dataExportDirPath.resolve("block_index.csv"))            .size());
+        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve("goods.csv"))                  .size());
+        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve("transaction.csv"))            .size());
+
+
+        tableNameList.clear();
+        paramInfo.setSnapshotBlockHeight(snapshotBlockHeight);
 //10-11.    // archive CSV into zip
-            state = shardEngine.archiveCsv(paramInfo);
-            assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
+        state = shardEngine.archiveCsv(paramInfo);
+        assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-            tableNameList.clear();
-            tableNameList.add(BLOCK_TABLE_NAME);
-            tableNameList.add(TRANSACTION_TABLE_NAME);
-            paramInfo.setTableNameList(tableNameList);
+        tableNameList.clear();
+        tableNameList.add(BLOCK_TABLE_NAME);
+        tableNameList.add(TRANSACTION_TABLE_NAME);
+        paramInfo.setTableNameList(tableNameList);
 //12-13.    // delete block + transaction from main db
-            state = shardEngine.deleteCopiedData(paramInfo);
-            assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
+        state = shardEngine.deleteCopiedData(paramInfo);
+        assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
 //        assertEquals(MigrateState.FAILED, state);
 
-            // checks after COPY + DELETE...
-            count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
-            assertEquals(6, count); // total blocks left in main db
-            count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
-            assertEquals(10, count); // total transactions left in main db
+        // checks after COPY + DELETE...
+        count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        assertEquals(6, count); // total blocks left in main db
+        count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        assertEquals(10, count); // total transactions left in main db
 
-            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(8, count); // blocks in shard
+        shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        assertEquals(8, count); // blocks in shard
 
-            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
-            count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(4, count); // transactions in shard
+        shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        assertEquals(7, count); // transactions in shard
 
 //14.       // complete shard process
-            paramInfo.setShardHash(shardHash);
-            state = shardEngine.addShardHashInfo(paramInfo);
-            assertEquals(MigrateState.COMPLETED, state);
+        paramInfo.setShardHash(shardHash);
+        state = shardEngine.addShardHashInfo(paramInfo);
+        assertEquals(MigrateState.COMPLETED, state);
 
 // compare full hashes
-            TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
-            assertNotNull(index);
-            byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());
-            assertArrayEquals(td.TRANSACTION_1.getFullHash(), fullHash);
-            log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start) / 1000);
+        TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
+        assertNotNull(index);
+        byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());
+        assertArrayEquals(td.TRANSACTION_1.getFullHash(), fullHash);
+        log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start) / 1000);
     }
 }

@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
-import java.time.Instant;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+
+import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Shard recovery state db entity
@@ -40,14 +41,11 @@ public class ShardRecovery {
      */
     private Instant updated = Instant.now();
 
-    public ShardRecovery() {
-    }
-
     public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
+        Objects.requireNonNull(state);
+
         this.shardRecoveryId = shardRecoveryId;
-        if (state != null) {
-            this.state = state.name();
-        }
+        this.state = state.name();
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
@@ -56,9 +54,8 @@ public class ShardRecovery {
     }
 
     public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject) {
-        if (state != null) {
-            this.state = state.name();
-        }
+        Objects.requireNonNull(state);
+        this.state = state.name();
         this.objectName = objectName;
         this.columnName = columnName;
         this.lastColumnValue = lastColumnValue;
@@ -81,15 +78,14 @@ public class ShardRecovery {
     }
 
     public ShardRecovery(MigrateState state) {
-        if (state != null) {
-            this.state = state.name();
-        }
+        Objects.requireNonNull(state);
+
+        this.state = state.name();
     }
 
     public ShardRecovery(MigrateState state, String objectName) {
-        if (state != null) {
-            this.state = state.name();
-        }
+        Objects.requireNonNull(state);
+        this.state = state.name();
         this.objectName = objectName;
     }
 
