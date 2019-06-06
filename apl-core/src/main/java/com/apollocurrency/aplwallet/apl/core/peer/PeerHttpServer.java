@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.Inet4Address;
 import org.eclipse.jetty.server.Connector;
@@ -30,6 +31,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -146,15 +148,15 @@ public class PeerHttpServer {
                     }
                 }
                 myExtAddress = new PeerAddress(externalPorts.get(0),upnp.getExternalAddress().getHostAddress());                
+            }else{
+                externalPorts.addAll(internalPorts);
             }
             // if we do not have addres set in config and do not have UPnP
-            if(myExtAddress==null){ 
-                 externalPorts.addAll(internalPorts);
-                 ServerConnector conn0 =(ServerConnector)peerConnectors[0];
-                 myAddress = conn0.getHost();                 
-                 myExtAddress = findMyExtPublicAddres(myAddress,externalPorts.get(0));
+            //  myExtAddress is still null, do we have public IP?
+            String addr = getMyPublicIPAdresses();
+            if(addr!=null){
+                myExtAddress=new PeerAddress(externalPorts.get(0),addr);
             }
-
             peerServer.setStopAtShutdown(true);
 
 
@@ -220,16 +222,29 @@ public class PeerHttpServer {
     }    
 
     public InetAddress getExternalAddress() {
-        return upnp.getExternalAddress();
+        if(myExtAddress!=null){
+            return myExtAddress.getInetAddress();
+        }else{
+            return null;
+        }   
     }
     
-//TODO: implement for 0.0.0.0 binding and private/public IP of interfaces
-    private PeerAddress findMyExtPublicAddres(String myAddress, Integer port) {
-         try {
-             InetAddress addr = InetAddress.getByName(host);
-         } catch (UnknownHostException ex) {
-             
-         }
-         return null;
+    private String getMyPublicIPAdresses(){
+        String res=null;
+        MyNetworkInterfaces interfaces = new MyNetworkInterfaces();
+        List<InetAddress> my_addr = interfaces.getAdressList();
+        for(InetAddress a: my_addr){
+            if(!(  a.isAnyLocalAddress()
+                 ||a.isLinkLocalAddress()
+                 ||a.isSiteLocalAddress()
+                 ||a.isLoopbackAddress()
+                 ||a.isMulticastAddress()
+              ))
+            {
+               res=a.getHostAddress();
+               break;
+            }
+        }
+        return res;
     }
 }

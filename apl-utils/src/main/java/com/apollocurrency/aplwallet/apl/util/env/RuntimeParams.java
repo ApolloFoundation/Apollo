@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 
 /**
