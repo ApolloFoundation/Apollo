@@ -233,7 +233,7 @@ class ShardEngineTest {
         // prepare and save Recovery + new Shard info
         ShardRecovery recovery = new ShardRecovery(state);
         recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
-        byte[] shardHash = "000000000".getBytes();
+        byte[] shardHash = "0123456780".getBytes();
         Shard newShard = new Shard(shardHash, snapshotBlockHeight);
         long shardId = shardDao.saveShard(newShard);
 
@@ -278,23 +278,11 @@ class ShardEngineTest {
 //5.        // create shard db FULL schema + add shard hash info
         state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
         assertEquals(SHARD_SCHEMA_FULL, state);
-            // check hash is stored in shard record
-/*          TODO: YL uncomment when ready
-            Shard shard = shardDao.getShardById(shardId);
-            assertNotNull(shard);
-            assertArrayEquals(fullHash, shard.getShardHash());
-*/
+        // check 'merkle tree hash' is stored in shard record
+        Shard shard = shardDao.getShardById(shardId);
+        assertNotNull(shard);
+        assertArrayEquals(shardHash, shard.getShardHash());
 
-//            tableNameList.clear();
-//            tableNameList.add(PUBLIC_KEY_TABLE_NAME);
-//            tableNameList.add(TAGGED_DATA_TABLE_NAME);
-//            tableNameList.add(SHUFFLING_DATA_TABLE_NAME);
-//            tableNameList.add(DATA_TAG_TABLE_NAME);
-//            tableNameList.add(PRUNABLE_MESSAGE_TABLE_NAME);
-//            paramInfo.setTableNameList(tableNameList);
-//            state = shardEngine.relinkDataToSnapshotBlock(paramInfo);
-//            assertEquals(MigrateState.DATA_RELINKED_IN_MAIN, state);
-//        assertEquals(MigrateState.FAILED, state);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_INDEX_TABLE_NAME);
@@ -304,7 +292,6 @@ class ShardEngineTest {
 //6-7.      // update secondary block + transaction indexes
         state = shardEngine.updateSecondaryIndex(paramInfo);
         assertEquals(MigrateState.SECONDARY_INDEX_FINISHED, state);
-//        assertEquals(MigrateState.FAILED, state);
 
         long blockIndexCount = blockIndexDao.countBlockIndexByShard(4L);
         // should be 8 but prev shard already exist and grabbed our genesis block
@@ -339,7 +326,6 @@ class ShardEngineTest {
 //10-11.    // archive CSV into zip
         state = shardEngine.archiveCsv(paramInfo);
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
-//        assertEquals(MigrateState.FAILED, state);
 
         tableNameList.clear();
         tableNameList.add(BLOCK_TABLE_NAME);
@@ -348,7 +334,6 @@ class ShardEngineTest {
 //12-13.    // delete block + transaction from main db
         state = shardEngine.deleteCopiedData(paramInfo);
         assertEquals(MigrateState.DATA_REMOVED_FROM_MAIN, state);
-//        assertEquals(MigrateState.FAILED, state);
 
         // checks after COPY + DELETE...
         count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
@@ -366,10 +351,10 @@ class ShardEngineTest {
 
 //14.       // complete shard process
         paramInfo.setShardHash(shardHash);
-        state = shardEngine.addShardHashInfo(paramInfo);
+        state = shardEngine.finishShardProcess(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
 
-// compare full hashes
+        // compare full hashes
         TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
         assertNotNull(index);
         byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());

@@ -21,18 +21,10 @@ public class FinishShardingCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(FinishShardingCommand.class);
 
     private ShardEngine shardEngine;
-    private byte[] shardHash;
 
     public FinishShardingCommand(ShardEngine shardEngine) {
         this.shardEngine = Objects.requireNonNull(
                 shardEngine, "shardEngine is NULL");
-    }
-
-    public FinishShardingCommand(ShardEngine shardEngine, byte[] shardHash) {
-        this.shardEngine = Objects.requireNonNull(
-                shardEngine, "shardEngine is NULL");
-        this.shardHash = Objects.requireNonNull(
-                shardHash, "shardHash is NULL");
     }
 
     /**
@@ -41,21 +33,14 @@ public class FinishShardingCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(this.shardHash);
-        return shardEngine.addShardHashInfo(paramInfo);
+        // hash was stored at one of previous steps
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(null); // left for code compatibility
+        return shardEngine.finishShardProcess(paramInfo);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FinishShardingCommand{");
-        sb.append("shardHash=");
-        if (shardHash == null) sb.append("null");
-        else {
-            sb.append('[');
-            sb.append(shardHash.length);
-            sb.append(']');
-        }
-        sb.append('}');
+        final StringBuffer sb = new StringBuffer("FinishShardingCommand");
         return sb.toString();
     }
 }

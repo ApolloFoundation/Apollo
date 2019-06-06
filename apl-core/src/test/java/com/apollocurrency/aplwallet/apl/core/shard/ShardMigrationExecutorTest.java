@@ -14,7 +14,9 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -211,7 +213,7 @@ class ShardMigrationExecutorTest {
 
 //2.        // create shard db with 'initial' schema
             CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                    new ShardInitTableSchemaVersion());
+                    new ShardInitTableSchemaVersion(), null);
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
@@ -223,8 +225,6 @@ class ShardMigrationExecutorTest {
 
             TransactionTestData td = new TransactionTestData();
             Set<Long> dbIds = new HashSet<>();
-//            dbIds.add(td.DB_ID_6);
-//            dbIds.add(td.DB_ID_10);
             dbIds.add(td.DB_ID_0);
             dbIds.add(td.DB_ID_2);
             dbIds.add(td.DB_ID_5);
@@ -232,7 +232,6 @@ class ShardMigrationExecutorTest {
 //3-4.      // copy block + transaction data from main db into shard
             CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(copyDataCommand);
-//        assertEquals(FAILED, state);
             assertEquals(DATA_COPY_TO_SHARD_FINISHED, state);
 
             // check after COPY
@@ -244,19 +243,19 @@ class ShardMigrationExecutorTest {
             assertEquals(7, count);// transactions in shard db
 
 //5.        // create shard db FULL schema
+            byte[] shardHash = "0123456780".getBytes(); // just an example
             createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                    new ShardAddConstraintsSchemaVersion());
+                    new ShardAddConstraintsSchemaVersion(), shardHash);
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
 
-//            ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(shardEngine, snapshotBlockHeight, dbIds);
-//            state = shardMigrationExecutor.executeOperation(reLinkDataCommand);
-//            assertEquals(DATA_RELINKED_IN_MAIN, state);
+            Shard shard = shardDao.getShardById(shardId);
+            assertNotNull(shard);
+            assertArrayEquals(shardHash, shard.getShardHash());
 
 //6-7.      // update secondary block + transaction indexes
             UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
-//        assertEquals(FAILED, state);
             assertEquals(SECONDARY_INDEX_FINISHED, state);
 
             // check by secondary indexes
@@ -272,19 +271,16 @@ class ShardMigrationExecutorTest {
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
             CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);
-//        assertEquals(FAILED, state);
             assertEquals(CSV_EXPORT_FINISHED, state);
 
 //10-11.    // archive CSV into zip
             ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardEngine);
             state = shardMigrationExecutor.executeOperation(zipArchiveCommand);
-//        assertEquals(FAILED, state);
             assertEquals(ZIP_ARCHIVE_FINISHED, state);
 
 //12-13.    // delete block + transaction from main db
             DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(shardEngine, snapshotBlockHeight, dbIds);
             state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
-//        assertEquals(FAILED, state);
             assertEquals(DATA_REMOVED_FROM_MAIN, state);
 
             // checks after COPY + DELETE...
@@ -302,19 +298,15 @@ class ShardMigrationExecutorTest {
             assertEquals(7, count); // transactions in shard
 
 //14.       // complete shard process
-            byte[] shardHash = "000000000".getBytes();
-            FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine, shardHash);
+            FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine);
             state = shardMigrationExecutor.executeOperation(finishShardingCommand);
             assertEquals(COMPLETED, state);
     }
 
     @Test
     void executeAll() {
-//        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
-
         shardMigrationExecutor.createAllCommands(8000);
         MigrateState state = shardMigrationExecutor.executeAllOperations();
-//        assertEquals(FAILED, state);
         assertEquals(COMPLETED, state);
     }
 

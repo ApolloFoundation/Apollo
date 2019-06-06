@@ -95,11 +95,6 @@ public class ShardEngineImpl implements ShardEngine {
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
     }
 
-    @Override
-    public DatabaseManager getDatabaseManager() {
-        return databaseManager;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -560,25 +555,27 @@ public class ShardEngineImpl implements ShardEngine {
                     shardZipFilePath.toAbsolutePath().toString(),
                     dirProvider.getDataExportDir().toAbsolutePath().toString(), null, null);
 
-            // prepare data for shard record update
+            // prepare real CRC data for shard record update
             paramInfo = new CommandParamInfoImpl(zipCrcHash, true);
             updateShardRecord(paramInfo, sourceDataSource, state, 1L); //update shard record by ZIP crc value
 
             // update recovery
             state = ZIP_ARCHIVE_FINISHED;
             updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
-
+            sourceConnect.commit();
         } catch (Exception e) {
             log.error("Error ZIP ARCHIVE creation = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
         } finally {
+/*
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
+*/
         }
-        log.debug("ZIP ARCHIVE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("ZIP ARCHIVE Processed {} secs", (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -638,9 +635,8 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addShardHashInfo(CommandParamInfo paramInfo) {
+    public MigrateState finishShardProcess(CommandParamInfo paramInfo) {
         Objects.requireNonNull(paramInfo, "paramInfo is NULL");
-        Objects.requireNonNull(paramInfo.getShardHash(), "shardHash is NULL");
         long startAllTables = System.currentTimeMillis();
         log.debug("Starting create SHARD record in main db...");
 
@@ -661,7 +657,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         state = COMPLETED;
         // complete sharding
-        if (updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL))
+        updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL);
         log.debug("Shard record is created with Hash in {} msec", System.currentTimeMillis() - startAllTables);
         return state;
     }
@@ -689,13 +685,16 @@ public class ShardEngineImpl implements ShardEngine {
 //        try (Connection sourceConnect = sourceDataSource.begin();
         try (Connection sourceConnect = sourceDataSource.getConnection();
              PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(sqlUpdate)) {
-            // assign either 'merkle tree hash' OR 'zip CRC'
-            preparedInsertStatement.setBytes(1, paramInfo.getShardHash()); // merkle or zip crc
-
-            preparedInsertStatement.setLong(2, stateValue); // 100% full shard is present on current node
-            preparedInsertStatement.setLong(3, createdShardId.get());
-            int result = preparedInsertStatement.executeUpdate();
-            log.debug("Shard record is updated result = '{}'", result);
+            int result = 0;
+            // skip updating SHARD record on latest step
+            if (paramInfo.getShardHash() != null) {
+                // assign either 'merkle tree hash' OR 'zip CRC'
+                preparedInsertStatement.setBytes(1, paramInfo.getShardHash()); // merkle or zip crc
+                preparedInsertStatement.setLong(2, stateValue); // 100% full shard is present on current node
+                preparedInsertStatement.setLong(3, createdShardId.get());
+                result = preparedInsertStatement.executeUpdate();
+                log.debug("Shard record is updated result = '{}'", result);
+            }
 
             if (recoveryStateUpdateInto == COMPLETED) {
                 // remove recovery data when process is completed

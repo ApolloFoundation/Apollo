@@ -21,7 +21,6 @@ public class ZipArchiveCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(ZipArchiveCommand.class);
 
     private ShardEngine shardEngine;
-    private byte[] zipCrcHash; // zipCrcHash is computed inside ShardEngine
 
     public ZipArchiveCommand(ShardEngine shardEngine) {
         this.shardEngine = Objects.requireNonNull(
@@ -35,21 +34,13 @@ public class ZipArchiveCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
         // in reality the zip CRC is computed inside ShardEngineImpl
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(this.zipCrcHash); // for compatibility only !
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(null); // for compatibility only !
         return shardEngine.archiveCsv(paramInfo);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FinishShardingCommand{");
-        sb.append("zipCrcHash=");
-        if (zipCrcHash == null) sb.append("null");
-        else {
-            sb.append('[');
-            sb.append(zipCrcHash.length);
-            sb.append(']');
-        }
-        sb.append('}');
+        final StringBuffer sb = new StringBuffer("FinishShardingCommand");
         return sb.toString();
     }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Interface command parameters information.
+ * Interface command parameters information. It keeps the info passed to steps.
  *
  * @author yuriy.larin
  */
@@ -34,6 +34,10 @@ public interface CommandParamInfo {
 
     void setDbIdExclusionSet(Set<Long> dbIdExclusionSet);
 
+    /**
+     * To check if getShardHash() returns 'merkle tree hash' or 'zip crc hash'
+     * @return true when 'zip crc'
+     */
     boolean isZipCrcStored();
 
 }

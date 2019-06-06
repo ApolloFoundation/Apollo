@@ -23,13 +23,16 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
 
     private ShardEngine shardEngine;
     private DbVersion dbVersion;
+    private byte[] shardHash; // shardHash can be NULL in one case
 
     public CreateShardSchemaCommand(
             ShardEngine shardEngine,
-            DbVersion dbVersion) {
+            DbVersion dbVersion,
+            byte[] shardHash) { // shardHash can be NULL
         this.shardEngine = Objects.requireNonNull(
                 shardEngine, "shardEngine is NULL");
         this.dbVersion = Objects.requireNonNull(dbVersion, "dbVersion is NULL");
+        this.shardHash = shardHash;
     }
 
     /**
@@ -38,7 +41,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Create Shard Schema Command execute...");
-        return shardEngine.addOrCreateShard(dbVersion, null);
+        return shardEngine.addOrCreateShard(dbVersion, shardHash); // shardHash can be NULL or value
     }
 
     @Override

@@ -83,14 +83,19 @@ public class ShardMigrationExecutor {
         }
 
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                new ShardInitTableSchemaVersion());
+                new ShardInitTableSchemaVersion(), /*hash should be null here*/ null);
         this.addOperation(createShardSchemaCommand);
         Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
         CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, height, dbIds);
         this.addOperation(copyDataCommand);
 
+        byte[] hash = calculateHash(height);
+        if (hash == null || hash.length <= 0) {
+            throw new IllegalStateException("Cannot calculate shard hash");
+        }
+        log.debug("SHARD HASH = {}", hash.length);
         CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardEngine,
-                new ShardAddConstraintsSchemaVersion());
+                new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash);
         this.addOperation(createShardConstraintsCommand);
 
 //        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
@@ -110,12 +115,7 @@ public class ShardMigrationExecutor {
                 new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, dbIds);
         this.addOperation(deleteCopiedDataCommand);
 
-        byte[] hash = calculateHash(height);
-        if (hash == null) {
-            throw new IllegalStateException("Cannot calculate shard hash");
-        }
-        log.debug("SHARD HASH = {}", hash.length);
-        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine, hash);
+        FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine);
         this.addOperation(finishShardingCommand);
     }
 
