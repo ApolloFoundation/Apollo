@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -66,6 +67,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -137,9 +139,20 @@ class CsvExporterTest {
     private List<String> transactionExportContent = List.of(
             "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
             "3444674909301056677,1440,null,0,0,2500000000000,YTUyNDk3NGY5NGYxY2QyZmNjNmYxNzE5MzQ3NzIwOWNhNTgyMWQzN2QzOTFlNzBhZTY2OGRkMWMxMWRkNzk4ZQ==,1000,-468651855371775066,Mzc1ZWYxYzA1YWU1OWEyN2VmMjYzMzZhNTlhZmU2OTAxNGM2OGI5YmY0MzY0ZDViMWIyZmE0ZWJlMzAyMDIwYTg2OGFkMzY1ZjM1ZjBjYThkM2ViYWRkYzQ2OWVjZDNhN2M0OWRlYzVlNGQyZmFkNDFmNjcyODk3N2I3MzMzY2M=,35073712,5,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,9200,NjQwMDAwMDAwMDAwMDAwMGNjNmYxNzE5MzQ3NzIwOWNhNTgyMWQzN2QzOTFlNzBhZTY2OGRkMWMxMWRkNzk4ZQ==,FALSE,MDEwNTY2NzM2NDY2NzMwMzUxNDU1MjA1MDA2NjczNjQ2NjczMDFhZTE1MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMGFlMTUwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAx,1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
-            "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,ZjI4YmU1YzU5ZDBiOTI0YWI5NmQ1ZTlmNjRlNTFjNTk3NTEzNzE3NjkxZWVlZWFmMThhMjZhODY0MDM0ZjYyYw==,1500,-7242168411665692630,OGFmZDNhOTFkMGUzMDExZTUwNWUwMzUzYjFmNzA4OWMwZDQwMTY3MmY4ZWQ1ZDBkZGMyMTA3ZTBiMTMwYWEwYmRkMTdmMDNiMmQ3NWVlZDhmY2M2NDVjZGE4OGI1YzgyYWMxYjYyMWMxNDJhYmFkOWIxYmI5NWRmNTE3YWE3MGM=,35078473,0,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,13800,YjdjNzQ1YWU0MzhkNTcyMTIyNzBhMmIwMGUzZjcwZmI1ZDVkOGUwZGEzYzc5MTllZGQ0ZDMzNjgxNzZlNmYyZA==,FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE");
-    private DirProvider dirProvider;
-    
+            "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,ZjI4YmU1YzU5ZDBiOTI0YWI5NmQ1ZTlmNjRlNTFjNTk3NTEzNzE3NjkxZWVlZWFmMThhMjZhODY0MDM0ZjYyYw==,1500,-7242168411665692630,OGFmZDNhOTFkMGUzMDExZTUwNWUwMzUzYjFmNzA4OWMwZDQwMTY3MmY4ZWQ1ZDBkZGMyMTA3ZTBiMTMwYWEwYmRkMTdmMDNiMmQ3NWVlZDhmY2M2NDVjZGE4OGI1YzgyYWMxYjYyMWMxNDJhYmFkOWIxYmI5NWRmNTE3YWE3MGM=,35078473,0,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,13800,YjdjNzQ1YWU0MzhkNTcyMTIyNzBhMmIwMGUzZjcwZmI1ZDVkOGUwZGEzYzc5MTllZGQ0ZDMzNjgxNzZlNmYyZA==,FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
+    );
+
+    private List<String> blockTransactionExportContent = List.of(
+            "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
+            "2083198303623116770,1440,-1017037002638468431,0,100000000000000000,100000000,ZTJmNzI2ZTRkMTAxZTkxYzZlZTczNWM5ZGEwZDU1YWY3MTAwYzQ1MjYzYTBhNmEwOTIwYzI1NWEwZjY1YjQ0Zg==,8000,6438949995368593549,ZDI0ODExYmM0YmUyYzcwMzExOTZmZDIyMDYzOWYxODg1YzhlMTVjOTZlNzY3MjE0NmM4OGMyZWVhMjVkOGEwY2Q0ZTkzYjhlMjMyNGUyNTIyZTNhZmYxNGZhYTFlZjgxMWZjNDNhOTcxZmRiZGI3MWY3YWMwYjU2MTRlNzA2Y2I=,35078473,0,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,73600,ZjU3ZmUwZDIyNzMwZjA0YjAxYzVhMTMxYjUyMDk5MzU2Yzg5OWIyOWFkZGIwNDc2ZDgzNWVhMmRlNWNjNTY5MQ==,FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE",
+            "808614188720864902,1440,-5803127966835594607,1,100000000000000000,100000000,ODYzZTBjMDc1MmM2MzgwYmU3NjM1NGJkODYxYmUwNzA1NzExZTBlZTJiYzBiODRkOWYwZDcxYjVhNDI3MWFmNg==,8000,6438949995368593549,Mzg0ODRjNjEyOGIyNzA3YTgxZWE2ZjBjOWYxOTY2M2RiY2Q1NDM1OGU2NDRkNTZjZmEyYjMzNjM1ZjJkNTcwZjdiOTFjNDE4MjBmOGQxOTIzZTBhZmNhNWNiMGU1Nzg1Yzc2YzJmZDg1OWUzNTRjODc2YTk2NDBhNzU4ODJhYTI=,35078473,0,0,9211698109297098287,YmYwY2VkMDQ3MmQ4YmEzZGY5ZTIxODA4ZTk4ZTYxYjM0NDA0YWFkNzM3ZTJiYWUxNzc4Y2ViYzY5OGI0MGYzNw==,73600,ZTJmNzI2ZTRkMTAxZTkxYzZlZTczNWM5ZGEwZDU1YWY3MTAwYzQ1MjYzYTBhNmEwOTIwYzI1NWEwZjY1YjQ0Zg==,FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
+    );
+
+    private List<String> blockExportContent = List.of(
+            "ID(-5|19|0),VERSION(4|10|0),TIMESTAMP(4|10|0),PREVIOUS_BLOCK_ID(-5|19|0),TOTAL_AMOUNT(-5|19|0),TOTAL_FEE(-5|19|0),PAYLOAD_LENGTH(4|10|0),PREVIOUS_BLOCK_HASH(-3|32|0),CUMULATIVE_DIFFICULTY(-3|2147483647|0),BASE_TARGET(-5|19|0),NEXT_BLOCK_ID(-5|19|0),HEIGHT(4|10|0),GENERATION_SIGNATURE(-3|64|0),BLOCK_SIGNATURE(-3|64|0),PAYLOAD_HASH(-3|32|0),GENERATOR_ID(-5|19|0),TIMEOUT(4|10|0)",
+            "6438949995368593549,4,73600,-5580266015477525080,0,200000000,207,YTgxNTQ3ZGI5ZmU5OGViMjI0ZDNjZGMxMjBmNzMwNWQzYjgyOWYxNjJiZWIzYmY3MTk3NTBlMGNmNDhkYmU5ZA==,MDJkZmI1MTk2Y2Y0MTViMA==,23058430050,7551185434952726924,8000,NWIxYmY0NjNmMjAyZWMwZDRhYjQyYTk2MzQ5NzZlZDQ3Yjc3YzQ2MmQxZGUyNWUzZmVhM2U4ZWFhOGFkZDhmNg==,OTkyZWFjYjhhYzNiY2JiN2RiZGJmY2I2MzczMThhZGFiMTkwZDQ4NDNiMDBkYTg5NjFmZDM2ZWY2MDcxOGYwZjVhY2NhNDY2MmNmZGNmODQ0N2NjNTExZDVlMzZhYjRjMzIxYzE4NTM4MmYzNTc3ZjAxMDZjMmJmYjlmODBlZTY=,OGJkZjk4ZmJjNGNmY2YwYjY2ZGZhYTY4OGNlN2VmOTA2M2Y4YjE3NDhlZTIzOGMyM2U4MjA5ZjA3MWNmY2VlNw==,6415509874415488619,0"
+    );
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
@@ -166,7 +179,7 @@ class CsvExporterTest {
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-             .addBeans(MockBean.of(dirProvider, DirProvider.class))
+             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
 //            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
@@ -337,6 +350,34 @@ class CsvExporterTest {
         List<String> goodsCsv = Files.readAllLines(dataExportPath.resolve("goods.csv"));
         List<String> expectedGoodsCsv = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("goods.csv").toURI()));
         assertEquals(expectedGoodsCsv.subList(0, 7), goodsCsv);
+    }
+
+    @Test
+    void testExportBlock() throws IOException {
+        BlockTestData td = new BlockTestData();
+        long exported = csvExporter.exportBlock(td.BLOCK_7.getHeight());
+        assertEquals(3, exported);
+        List<String> exportedBlockTransactions = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
+        assertEquals(blockTransactionExportContent, exportedBlockTransactions);
+
+        List<String> exportedBlock = Files.readAllLines(dataExportPath.resolve("block.csv"));
+        assertEquals(blockExportContent, exportedBlock);
+    }
+
+    @Test
+    void testExportBlockWhichNotExist() {
+        assertThrows(IllegalStateException.class, ()-> csvExporter.exportBlock(Integer.MAX_VALUE));
+    }
+
+    @Test
+    void testExportBlockWithoutTransactions() throws IOException {
+        BlockTestData td = new BlockTestData();
+        long exported = csvExporter.exportBlock(td.GENESIS_BLOCK.getHeight());
+        assertEquals(1, exported);
+        assertTrue(Files.exists(dataExportPath.resolve("block.csv")));
+        List<String> header = transactionExportContent.subList(0, 1);
+        assertEquals(header, Files.readAllLines(dataExportPath.resolve("transaction.csv")));
+
     }
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {

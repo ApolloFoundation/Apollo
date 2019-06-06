@@ -56,4 +56,11 @@ public interface CsvExporter {
      */
     long exportTransactions(Collection<Long> dbIds);
 
+    /**
+     * Export block with transactions at given height
+     * @param height height of block to export
+     * @return number of exported transactions + 1
+     * @throws IllegalStateException when block with given height was not found or db has several blocks at the same height
+     */
+    long exportBlock(int height) throws IllegalStateException;
 }
