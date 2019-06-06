@@ -73,21 +73,21 @@ public class DownloadableFilesManager {
 
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
-        FileDownloadInfo res = new FileDownloadInfo();
+        FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = mapFileIdToLocalPath(fileId);
         if(fpath != null){
-            res.fileInfo.isPresent = true;
-            res.fileInfo.fileId = fileId;
-            res.created = new Date();
+            downloadInfo.fileInfo.isPresent = true;
+            downloadInfo.fileInfo.fileId = fileId;
+            downloadInfo.created = new Date();
             ChunkedFileOps fops = new ChunkedFileOps(fpath);
-            res.fileInfo.size=fops.getFileSize();
-            if (res.fileInfo.size<0) {
-               res.fileInfo.isPresent=false;                
+            downloadInfo.fileInfo.size=fops.getFileSize();
+            if (downloadInfo.fileInfo.size<0) {
+               downloadInfo.fileInfo.isPresent=false;
             } else {
-                res.fileInfo.fileDate=fops.getFileDate();
-                res.fileInfo.hash=Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
-                res.fileInfo.chunkSize=FILE_CHUNK_SIZE;
-                res.fileInfo.originHostSignature="";
+                downloadInfo.fileInfo.fileDate=fops.getFileDate();
+                downloadInfo.fileInfo.hash=Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
+                downloadInfo.fileInfo.chunkSize=FILE_CHUNK_SIZE;
+                downloadInfo.fileInfo.originHostSignature="";
                 List<ChunkedFileOps.ChunkInfo> crcs = fops.getChunksCRC();
                 for(int i=0; i<crcs.size() ;i++){
                     FileChunkInfo fci = new FileChunkInfo();
@@ -98,15 +98,15 @@ public class DownloadableFilesManager {
                     fci.present=3;
                     fci.size=ci.size;
                     fci.chunkId=i;
-                    res.chunks.add(fci);
+                    downloadInfo.chunks.add(fci);
                 }
-                fdiCache.put(fileId, res);
+                fdiCache.put(fileId, downloadInfo);
             }
         } else {
-            res.fileInfo.fileId=fileId;
-            res.fileInfo.isPresent=false;
+            downloadInfo.fileInfo.fileId=fileId;
+            downloadInfo.fileInfo.isPresent=false;
         }
-        return res;
+        return downloadInfo;
     }
    //TODO:  real mapping 
     public Path mapFileIdToLocalPath(String fileId) {
