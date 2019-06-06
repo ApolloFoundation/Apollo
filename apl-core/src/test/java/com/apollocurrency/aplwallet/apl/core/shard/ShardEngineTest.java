@@ -7,11 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.MAIN_DB_BACKUPED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.SHARD_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -291,7 +291,7 @@ class ShardEngineTest {
 
         tableNameList.clear();
         tableNameList.add(BLOCK_INDEX_TABLE_NAME);
-        tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_INDEX_TABLE_NAME);
         paramInfo.setTableNameList(tableNameList);
 
 //6-7.      // update secondary block + transaction indexes
@@ -309,7 +309,7 @@ class ShardEngineTest {
         tableNameList.clear();
         tableNameList.add(SHARD_TABLE_NAME);
         tableNameList.add(BLOCK_INDEX_TABLE_NAME);
-        tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
+        tableNameList.add(TRANSACTION_INDEX_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
         tableNameList.add("goods");
         tableNameList.add("phasing_poll");

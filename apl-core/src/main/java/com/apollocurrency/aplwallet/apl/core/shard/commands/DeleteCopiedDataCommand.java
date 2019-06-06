@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
@@ -20,7 +21,7 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
 
     private ShardEngine shardEngine;
     private List<String> tableNameList = new ArrayList<>();
-    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
+    private int commitBatchSize = ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
     private Set<Long> excludedTxs;
     private int snapshotBlockHeight;
 
@@ -35,8 +36,8 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.excludedTxs = Objects.requireNonNull(excludedTxs, "excludedTxs set is NULL");
-        tableNameList.add(BLOCK_TABLE_NAME);
-        tableNameList.add(TRANSACTION_TABLE_NAME);
+        tableNameList.add(ShardConstants.BLOCK_TABLE_NAME);
+        tableNameList.add(ShardConstants.TRANSACTION_TABLE_NAME);
     }
 
     public DeleteCopiedDataCommand(

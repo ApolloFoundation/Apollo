@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
 import org.slf4j.Logger;
@@ -35,9 +36,6 @@ import javax.inject.Singleton;
 @Singleton
 public class CsvExporterImpl implements CsvExporter {
     private static final Logger log = getLogger(CsvExporterImpl.class);
-    private static final String TRANSACTION_TABLE_NAME = "transaction";
-    private static final String TRANSACTION_INDEX_TABLE_NAME = "transaction_shard_index";
-    private static final String BLOCK_INDEX_TABLE_NAME = "block_index";
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private ShardDaoJdbc shardDaoJdbc;
@@ -181,7 +179,7 @@ public class CsvExporterImpl implements CsvExporter {
                     blockPstm.setInt(1, fromHeight);
                     blockPstm.setInt(2, targetHeight);
                     blockPstm.setInt(3, batchLimit);
-                    CsvExportData csvExportData = blockCsvWriter.append(BLOCK_INDEX_TABLE_NAME,
+                    CsvExportData csvExportData = blockCsvWriter.append(ShardConstants.BLOCK_INDEX_TABLE_NAME,
                             blockPstm.executeQuery());
                     blockProcessedCount = csvExportData.getProcessCount();
                     if (blockProcessedCount > 0) {
@@ -190,13 +188,13 @@ public class CsvExporterImpl implements CsvExporter {
                     }
                     blockTotalCount += blockProcessedCount;
                 } while (blockProcessedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {}", BLOCK_INDEX_TABLE_NAME, blockTotalCount);
+                log.trace("Table = {}, exported rows = {}", ShardConstants.BLOCK_INDEX_TABLE_NAME, blockTotalCount);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", BLOCK_INDEX_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", ShardConstants.BLOCK_INDEX_TABLE_NAME);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Exporting exception " + BLOCK_INDEX_TABLE_NAME, e);
+            throw new RuntimeException("Exporting exception " + ShardConstants.BLOCK_INDEX_TABLE_NAME, e);
         }
         return blockTotalCount;
     }
@@ -228,7 +226,7 @@ public class CsvExporterImpl implements CsvExporter {
                     txPstm.setInt(3, fromHeight);
                     txPstm.setInt(4, targetHeight);
                     txPstm.setInt(5, batchLimit);
-                    CsvExportData transactionExportData = txCsvWriter.append(TRANSACTION_INDEX_TABLE_NAME, txPstm.executeQuery());
+                    CsvExportData transactionExportData = txCsvWriter.append(ShardConstants.TRANSACTION_INDEX_TABLE_NAME, txPstm.executeQuery());
                     txProcessCount = transactionExportData.getProcessCount();
 
                     txTotalCount += txProcessCount;
@@ -238,13 +236,13 @@ public class CsvExporterImpl implements CsvExporter {
                     }
 
                 } while (txProcessCount > 0);
-                log.trace("Exported rows = {} from {}", txTotalCount, TRANSACTION_INDEX_TABLE_NAME);
+                log.trace("Exported rows = {} from {}", txTotalCount, ShardConstants.TRANSACTION_INDEX_TABLE_NAME);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", TRANSACTION_INDEX_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", ShardConstants.TRANSACTION_INDEX_TABLE_NAME);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Exporting derived table exception " + TRANSACTION_INDEX_TABLE_NAME, e);
+            throw new RuntimeException("Exporting derived table exception " + ShardConstants.TRANSACTION_INDEX_TABLE_NAME, e);
         }
         return txTotalCount;
     }
@@ -267,18 +265,18 @@ public class CsvExporterImpl implements CsvExporter {
             if (sortedDbIds.size() > 0) {
                 for (Long dbId : sortedDbIds) {
                     txPstm.setLong(1, dbId);
-                    CsvExportData csvExportData = txWriter.append(TRANSACTION_TABLE_NAME,
+                    CsvExportData csvExportData = txWriter.append(ShardConstants.TRANSACTION_TABLE_NAME,
                             txPstm.executeQuery());
                     processCount = csvExportData.getProcessCount();
                     totalCount += processCount;
                 }
-                log.trace("Table = {}, exported rows = {}", TRANSACTION_TABLE_NAME, totalCount);
+                log.trace("Table = {}, exported rows = {}", ShardConstants.TRANSACTION_TABLE_NAME, totalCount);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", TRANSACTION_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", ShardConstants.TRANSACTION_TABLE_NAME);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Exporting derived table exception " + TRANSACTION_TABLE_NAME, e);
+            throw new RuntimeException("Exporting derived table exception " + ShardConstants.TRANSACTION_TABLE_NAME, e);
         }
         return totalCount;
     }

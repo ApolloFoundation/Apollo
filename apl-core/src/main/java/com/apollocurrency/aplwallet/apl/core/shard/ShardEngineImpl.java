@@ -424,13 +424,13 @@ public class ShardEngineImpl implements ShardEngine {
         for (String tableName : allTables) {
             exportTableWithRecovery(recovery, tableName, () -> {
                 switch (tableName.toLowerCase()) {
-                    case "shard":
+                    case ShardConstants.SHARD_TABLE_NAME:
                         return csvExporter.exportShardTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case "block_index":
+                    case ShardConstants.BLOCK_INDEX_TABLE_NAME:
                         return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case "transaction_shard_index":
+                    case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
                         return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case "transaction":
+                    case ShardConstants.TRANSACTION_TABLE_NAME:
                         return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
                     default:
                         return exportDerivedTable(tableName, paramInfo);
@@ -476,8 +476,7 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
-        boolean processedObjectIsBlank = StringUtils.isBlank(recovery.getProcessedObject());
-        if (!processedObjectIsBlank && recovery.getProcessedObject().contains(tableName.toLowerCase())) {
+        if (AbstractHelper.isContain(recovery.getProcessedObject(), tableName)) {
             log.debug("Skip already exported table: " + tableName);
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + ".csv");
@@ -490,7 +489,8 @@ public class ShardEngineImpl implements ShardEngine {
             long startTableExportTime = System.currentTimeMillis();
             Long exported = exportPerformer.get();
             log.debug("Exported - {}, from {} to {} in {} secs", exported, tableName, tableCsvPath, (System.currentTimeMillis() - startTableExportTime)/1000);
-            if (processedObjectIsBlank) {
+
+            if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 recovery.setProcessedObject(tableName);
             } else {
                 recovery.setProcessedObject(recovery.getProcessedObject() + "," + tableName);

@@ -5,10 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -215,7 +214,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     }
 
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {
-        if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound = "SELECT IFNULL(max(DB_ID), 0) as DB_ID from BLOCK where HEIGHT = ?";
@@ -224,7 +223,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             log.trace(sqlSelectBottomBound);
             sqlDeleteFromBottomBound = "DELETE from BLOCK WHERE DB_ID > ? AND DB_ID < ?";
             log.trace(sqlDeleteFromBottomBound);
-        } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =

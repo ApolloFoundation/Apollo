@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
@@ -49,10 +48,10 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
         log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         // turn OFF HEIGHT constraint for specified table
-        if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_idx");
-        } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        } else if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_height_transaction_index_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_transaction_id_height_idx");
         }
@@ -78,12 +77,12 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
         log.debug("Inserted '{}' = [{}] within {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
 
         // turn ON HEIGHT constraint for specified table
-        if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
             executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
-        } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        } else if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
                     "CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_height_transaction_index_idx ON transaction_shard_index (height, transaction_index)");
             executeUpdateQuery(sourceConnect,
@@ -99,7 +98,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
-        boolean isTransactionTable = operationParams.tableName.equalsIgnoreCase(TRANSACTION_SHARD_INDEX_TABLE_NAME);
+        boolean isTransactionTable = operationParams.tableName.equalsIgnoreCase(ShardConstants.TRANSACTION_INDEX_TABLE_NAME);
         try (ResultSet rs = ps.executeQuery()) {
             log.trace("SELECT...where DB_ID > {} AND DB_ID < {} LIMIT {}",
                     paginateResultWrapper.lowerBoundColumnValue, paginateResultWrapper.upperBoundColumnValue,
@@ -152,7 +151,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
     }
 
     private void assignMainBottomTopSelectSql(TableOperationParams operationParams) throws IllegalAccessException {
-        if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging =
                     "select ID, HEIGHT, DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
@@ -160,7 +159,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);
-        } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
+        } else if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(operationParams.tableName)) {
             sqlToExecuteWithPaging =
                     "select ID, FULL_HASH, HEIGHT, TRANSACTION_INDEX, DB_ID from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
@@ -184,10 +183,10 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             for (int i = 0; i < numColumns; i++) {
                 columnTypes[i] = rsmd.getColumnType(i + 1);
             }
-            if (BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+            if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
                 sqlInsertString.append("insert into BLOCK_INDEX (block_id, block_height)")
                         .append(" values (").append("?, ?").append(")");
-            } else if (TRANSACTION_SHARD_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+            } else if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
                 sqlInsertString.append("insert into TRANSACTION_SHARD_INDEX (transaction_id, partial_transaction_hash, height, transaction_index)")
                         .append(" values (").append("?, ?, ?, ?").append(")");
             }
