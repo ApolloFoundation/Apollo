@@ -8,6 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -39,7 +40,7 @@ public class DownloadableFilesManager {
     public final static int FILE_CHUNK_SIZE=32768;
     public final static String FILES_SUBDIR="downloadables";
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
-    private String fileBaseDir="/home/at/testfiles";
+    private String fileBaseDir /*="/home/at/testfiles"*/;
     
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {
@@ -108,11 +109,32 @@ public class DownloadableFilesManager {
         }
         return downloadInfo;
     }
-   //TODO:  real mapping 
+
+    /**
+     * Find the real ZIP file in folder by specified fileId.
+     *
+     * @param fileId example = shard::123
+     * @return real path
+     */
     public Path mapFileIdToLocalPath(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
-        String abspath = fileBaseDir + File.separator + fileId;
-        Path res = Paths.get(abspath);
+
+        String absPath;
+        if (fileId.contains("shard::")) {
+            String realShardId = fileId.substring(fileId.lastIndexOf("::") + 2, fileId.length());
+            long shardId = 0;
+            try {
+                shardId = Long.valueOf(realShardId);
+            } catch (NumberFormatException e) {
+                log.warn("Incorrect shard Id value found = {}", fileId);
+                return null;
+            }
+            String fileName = ShardNameHelper.getShardArchiveNameByShardId(shardId);
+            absPath = this.fileBaseDir + File.separator + fileName + ".zip";
+        } else {
+            absPath = this.fileBaseDir + File.separator + fileId;
+        }
+        Path res = Paths.get(absPath);
         if(!Files.exists(res)){
             res = null;
         }

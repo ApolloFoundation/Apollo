@@ -37,14 +37,14 @@ class DownloadableFilesManagerTest {
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .build();
 
+    String zipFileName = "apl-blockchain-arch-1.zip";
+
     @Inject
     private DownloadableFilesManager filesManager;
 
     @Test
     void getFileDownloadInfo() {
         // create ZIP in temp folder for unit test
-        String zipFileName = "test-csv-archive-1.zip";
-
         FileDownloadInfo fi = filesManager.getFileDownloadInfo(zipFileName);
         assertNotNull(fi);
         log.debug("File download Info = {}", fi);
@@ -61,5 +61,18 @@ class DownloadableFilesManagerTest {
 
         FileDownloadInfo fi = filesManager.getFileDownloadInfo(zipFileName);
         assertNull(fi);
+    }
+
+    @Test
+    void mapFileIdToLocalPath() {
+        // parse real/existing shard name + ID
+        Path pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1");
+        assertNotNull(pathToShardArchive);
+        assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
+
+        // parse simple file name
+        pathToShardArchive = filesManager.mapFileIdToLocalPath("phasing_poll.csv");
+        assertNotNull(pathToShardArchive);
+        assertEquals("phasing_poll.csv", pathToShardArchive.getFileName().toString());
     }
 }
