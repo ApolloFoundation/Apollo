@@ -330,9 +330,10 @@ public final class Peers {
                  throw new RuntimeException("Invalid announced address length: " + announcedAddress);
             }
             pi.announcedAddress = announcedAddress;
-        }else{
-            throw new RuntimeException("Peer external address is NOT SET");
         }
+//        }else{
+//            throw new RuntimeException("Peer external address is NOT SET");
+//        }
         
         if (myHallmark != null && myHallmark.length() > 0) {
             pi.hallmark = myHallmark;
