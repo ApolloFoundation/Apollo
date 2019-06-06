@@ -3,18 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Helper class is used for changing/updating linked table's records to point to snapshot Block record.
@@ -151,7 +148,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
     }
 
     private void assignMainBottomTopSelectSql() {
-        if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set block_id = ? where db_id = ? ";
         } else {
             sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID > ? AND DB_ID < ? limit ?";
