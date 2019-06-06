@@ -6,24 +6,25 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
+import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
+import org.slf4j.Logger;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
-import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.slf4j.Logger;
 
 /**
  * {@inheritDoc}
@@ -99,10 +100,8 @@ public class CsvReaderImpl extends CsvAbstractBase
     private void initRead() throws IOException {
         if (input == null) {
             try {
-                InputStream in = CsvFileUtils.newInputStream(
-                        this.dataExportPath,
-                        !this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName
-                );
+                Path filePath = this.dataExportPath.resolve(!this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName);
+                InputStream in = Files.newInputStream(filePath);
                 in = new BufferedInputStream(in, IO_BUFFER_SIZE);
                 input = new InputStreamReader(in, characterSet);
             } catch (IOException e) {

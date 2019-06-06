@@ -169,7 +169,9 @@ class ShardEngineTest {
 
     private Path createPath(String fileName) {
         try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+            Path path = temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+            Files.createDirectories(path);
+            return path;
         }
         catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
@@ -311,11 +313,12 @@ class ShardEngineTest {
         tableNameList.add(BLOCK_INDEX_TABLE_NAME);
         tableNameList.add(TRANSACTION_INDEX_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
+        tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add("goods");
         tableNameList.add("phasing_poll");
         paramInfo.setTableNameList(tableNameList);
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
-        paramInfo.setSnapshotBlockHeight(542100);
+        paramInfo.setSnapshotBlockHeight(553326);
         state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
@@ -323,8 +326,9 @@ class ShardEngineTest {
         assertEquals(5, Files.readAllLines(dataExportDirPath.resolve("shard.csv"))                  .size());
         assertEquals(12, Files.readAllLines(dataExportDirPath.resolve("transaction_shard_index.csv")).size());
         assertEquals(9, Files.readAllLines(dataExportDirPath.resolve("block_index.csv"))            .size());
-        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve("goods.csv"))                  .size());
-        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve("transaction.csv"))            .size());
+        assertEquals(9, Files.readAllLines(dataExportDirPath.resolve("goods.csv"))                  .size());
+        assertEquals(5, Files.readAllLines(dataExportDirPath.resolve("transaction.csv"))            .size());
+        assertEquals(2, Files.readAllLines(dataExportDirPath.resolve("block.csv"))            .size());
 
 
 

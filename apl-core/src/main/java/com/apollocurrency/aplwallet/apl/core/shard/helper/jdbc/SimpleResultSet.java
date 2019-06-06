@@ -9,6 +9,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc;
 
+import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
+import org.h2.value.DataType;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
@@ -35,11 +38,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.h2.api.JavaObjectSerializer;
-import org.h2.store.DataHandler;
-import org.h2.value.DataType;
-
 /**
  * This class is a simple result set and meta data implementation.
  * It can be used in Java functions that return a result set.
@@ -59,11 +57,6 @@ import org.h2.value.DataType;
  *
  */
 public class SimpleResultSet implements ResultSet, ResultSetMetaData {
-
-    /**
-     * The serializer to use.
-     */
-    public static JavaObjectSerializer serializer;
 
     private ArrayList<Object[]> rows;
     private Object[] currentRow;
@@ -539,7 +532,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
         if (o == null || o instanceof byte[]) {
             return (byte[]) o;
         }
-        return serialize(o, null);
+        return serialize(o);
     }
 
     /**
@@ -547,21 +540,10 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      * the connection info if set, or the default serializer.
      *
      * @param obj the object to serialize
-     * @param dataHandler provides the object serializer (may be null)
      * @return the byte array
      */
-    public static byte[] serialize(Object obj, DataHandler dataHandler) {
+    public static byte[] serialize(Object obj) {
         try {
-            JavaObjectSerializer handlerSerializer = null;
-            if (dataHandler != null) {
-                handlerSerializer = dataHandler.getJavaObjectSerializer();
-            }
-            if (handlerSerializer != null) {
-                return handlerSerializer.serialize(obj);
-            }
-            if (serializer != null) {
-                return serializer.serialize(obj);
-            }
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(out);
             os.writeObject(obj);

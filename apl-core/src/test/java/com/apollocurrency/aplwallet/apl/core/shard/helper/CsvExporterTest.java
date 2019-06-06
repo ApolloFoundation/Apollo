@@ -208,8 +208,10 @@ class CsvExporterTest {
 
     private Path createPath(String fileName) {
         try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-//            return Path.of("/Apollo/apl-core/unit-test-perm" + (fileName !=null ? ("/" + fileName) : "")); // prod data test
+            Path folder = temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+            Files.createDirectories(folder);
+            return folder;
+            //            return Path.of("/Apollo/apl-core/unit-test-perm" + (fileName !=null ? ("/" + fileName) : "")); // prod data test
         } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
