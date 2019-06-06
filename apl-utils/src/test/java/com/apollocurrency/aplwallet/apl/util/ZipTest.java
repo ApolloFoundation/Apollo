@@ -51,9 +51,9 @@ class ZipTest {
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderWithZip + File.separator + zipFileName;
         // start creating zip for all CSV
-        boolean isCompressed = zipComponent.compress(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
+        byte[] zipCrc = zipComponent.compress(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
                 null, null);
-        assertTrue(isCompressed, "CSV files were NOT compressed into ZIP!!");
+        assertTrue(zipCrc != null && zipCrc.length > 0, "CSV files were NOT compressed into ZIP!!");
 
         String[] extensions = new String[]{"zip"};
         // check ZIP is created

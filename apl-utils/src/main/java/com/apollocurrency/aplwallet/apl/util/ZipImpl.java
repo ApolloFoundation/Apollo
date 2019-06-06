@@ -34,7 +34,8 @@ import java.util.zip.ZipOutputStream;
 public class ZipImpl implements Zip {
     private static final Logger log = LoggerFactory.getLogger(ZipImpl.class);
 
-    private static final int BUF_SIZE= 1042 * 2; // 2 Mb
+    public final static int FILE_CHUNK_SIZE = 32768; // magic constant copied from DownloadableFilesManager class
+    private final static int BUF_SIZE= 1042 * 2; // 2 Mb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
     public static FilenameFilter DEFAULT_CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
 
@@ -108,7 +109,7 @@ public class ZipImpl implements Zip {
      * {@inheritDoc}
      */
     @Override
-    public boolean compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
+    public byte[] compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(inputFolder, "inputFolder is NULL");
@@ -120,7 +121,7 @@ public class ZipImpl implements Zip {
         }
         long start = System.currentTimeMillis();
         log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
-        boolean result = true;
+        byte[] zipCrcHash;
         File directory = new File(inputFolder);
         if (filenameFilter == null) {
             filenameFilter = DEFAULT_CSV_FILE_FILTER;
@@ -170,17 +171,23 @@ public class ZipImpl implements Zip {
                     zos.closeEntry();
                     log.trace("closed zip entry '{}'", name);
                 } catch (Exception e) {
-                    result = false;
                     log.error("Error creating zip file: {}", zipFile, e);
+                    throw new RuntimeException(e);
                 }
             }
         } catch (IOException e) {
-            result = false;
             log.error("Error creating zip file: {}", zipFile, e);
+            throw new RuntimeException(e);
         }
-        log.debug("Created archive '{}' with [{}] file(s) within {} sec", zipFile,
+
+        // compute CRC/hash sum on zip file
+        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
+        zipCrcHash = chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
+
+        log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
+                zipFile, zipCrcHash.length,
                 fileList.length, (System.currentTimeMillis() - start) / 1000 );
-        return result;
+        return zipCrcHash;
     }
 
     // Incorrect recursive listing, not used, can be removed later
