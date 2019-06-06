@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -19,27 +18,20 @@ public final class PeerAddress implements Comparable{
     private InetAddress host;
     private String hostName;    
     private Integer port;
-    private final PropertiesHolder propertiesHolder;
     
-    public PeerAddress(PropertiesHolder propertiesHolder, int port, String host){
-        this.propertiesHolder = propertiesHolder;
+    public PeerAddress(int port, String host){
         setHost(host);
         this.port = port;      
     }
     
-    public PeerAddress(PropertiesHolder propertiesHolder) {
-       this(propertiesHolder, 0, "0.0.0.0");
-       setPort(getDefaultPeerPort());
+    public PeerAddress() {
+       this(Constants.DEFAULT_PEER_PORT, "0.0.0.0");
     }
     
-    public PeerAddress(PropertiesHolder propertiesHolder, String hostWithPort){
-        this(propertiesHolder);
+    public PeerAddress(String hostWithPort){
         fromString(hostWithPort);
     }
     
-    public final Integer getDefaultPeerPort() {
-        return propertiesHolder.getIntProperty("apl.networkPeerServerPort", Constants.DEFAULT_PEER_PORT);
-    } 
     
     public final void fromString(String addr){
         if(addr==null || addr.isEmpty()){
@@ -55,7 +47,7 @@ public final class PeerAddress implements Comparable{
             host=InetAddress.getByName(hostName);
             port=u.getPort();
             if(port==-1){
-                port=getDefaultPeerPort();
+                port=Constants.DEFAULT_PEER_PORT;
             }
         } catch (MalformedURLException | UnknownHostException ex) {           
         }
