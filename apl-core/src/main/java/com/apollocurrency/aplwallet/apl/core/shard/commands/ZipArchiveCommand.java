@@ -21,7 +21,7 @@ public class ZipArchiveCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(ZipArchiveCommand.class);
 
     private ShardEngine shardEngine;
-    private byte[] zipCrcHash; // TODO: not correct now
+    private byte[] zipCrcHash; // zipCrcHash is computed inside ShardEngine
 
     public ZipArchiveCommand(ShardEngine shardEngine) {
         this.shardEngine = Objects.requireNonNull(
@@ -34,8 +34,8 @@ public class ZipArchiveCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
-        // TODO: constructor is not correct here, because zipCrc will be computed inside and passed along (stored in DB)
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(this.zipCrcHash, true);
+        // in reality the zip CRC is computed inside ShardEngineImpl
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(this.zipCrcHash); // for compatibility only !
         return shardEngine.archiveCsv(paramInfo);
     }
 

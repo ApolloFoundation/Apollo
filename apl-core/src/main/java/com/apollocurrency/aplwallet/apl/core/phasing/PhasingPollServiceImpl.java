@@ -162,8 +162,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPoll poll = PhasingCreator.createPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.getWhitelist();
-        if (voters.length > 0) { // TODO: YL check later
-//            voterTable.insert(poll, Convert.toList(voters));
+        if (voters.length > 0) {
             List<PhasingPollVoter> voterList = Convert.toList(voters)
                     .stream()
                     .map(v -> new PhasingPollVoter(null, poll.getHeight(), poll.getId(),  v))
