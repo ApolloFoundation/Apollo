@@ -419,30 +419,33 @@ public class ShardEngineImpl implements ShardEngine {
             // skip to next step
             return state = CSV_EXPORT_FINISHED;
         }
-
-        trimDerivedTables(paramInfo.getSnapshotBlockHeight());
-
-        for (String tableName : allTables) {
-            exportTableWithRecovery(recovery, tableName, () -> {
-                switch (tableName.toLowerCase()) {
-                    case ShardConstants.SHARD_TABLE_NAME:
-                        return csvExporter.exportShardTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case ShardConstants.BLOCK_INDEX_TABLE_NAME:
-                        return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
-                        return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case ShardConstants.TRANSACTION_TABLE_NAME:
-                        return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
-                    case "block":
-                        return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
-                    default:
-                        return exportDerivedTable(tableName, paramInfo);
-                }
-            });
+        try {
+            trimDerivedTables(paramInfo.getSnapshotBlockHeight());
+            for (String tableName : allTables) {
+                exportTableWithRecovery(recovery, tableName, () -> {
+                    switch (tableName.toLowerCase()) {
+                        case ShardConstants.SHARD_TABLE_NAME:
+                            return csvExporter.exportShardTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                        case ShardConstants.BLOCK_INDEX_TABLE_NAME:
+                            return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                        case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
+                            return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                        case ShardConstants.TRANSACTION_TABLE_NAME:
+                            return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
+                        case "block":
+                            return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        default:
+                            return exportDerivedTable(tableName, paramInfo);
+                    }
+                });
+            }
+            state = CSV_EXPORT_FINISHED;
+            updateToFinalStepState(recovery, state);
+            log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
+        } catch (Exception e) {
+            log.error("Exception during export", e);
+            state = FAILED;
         }
-        state = CSV_EXPORT_FINISHED;
-        updateToFinalStepState(recovery, state);
-        log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
         return state;
     }
 
