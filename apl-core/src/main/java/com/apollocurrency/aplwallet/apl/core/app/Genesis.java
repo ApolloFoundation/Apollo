@@ -169,6 +169,7 @@ public final class Genesis {
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
             
             String path = aplCoreRuntime.getConfDir()+File.separator+blockchainConfig.getChain().getGenesisLocation();
+            LOG.debug("Genesis accounts path = " + path);
             try (InputStreamReader is = new InputStreamReader(
                     Genesis.class.getClassLoader().getResourceAsStream(path))) {
                 ObjectMapper objectMapper = new ObjectMapper();
