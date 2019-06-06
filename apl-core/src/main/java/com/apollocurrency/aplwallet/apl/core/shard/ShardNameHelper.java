@@ -18,12 +18,22 @@ public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 
     private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d";
+    private final static String SHARD_ARCHIVE_NAME_PATTERN = APPLICATION_DIR_NAME + "-arch-%d";
 
     public static String getShardNameByShardId(Long shardId) {
         if (shardId == null || shardId < 0) {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
         }
         String result = String.format(SHARD_NAME_PATTERN, shardId);
+        log.debug(result);
+        return result;
+    }
+
+    public static String getShardArchiveNameByShardId(Long shardId) {
+        if (shardId == null || shardId < 0) {
+            throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
+        }
+        String result = String.format(SHARD_ARCHIVE_NAME_PATTERN, shardId);
         log.debug(result);
         return result;
     }
