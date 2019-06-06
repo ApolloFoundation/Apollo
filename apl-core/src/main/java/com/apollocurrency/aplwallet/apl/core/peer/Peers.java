@@ -56,8 +56,6 @@ import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -180,48 +178,10 @@ public final class Peers {
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS", true);
         String myHost = null;
         if (peerHttpServer.getMyExtAddress() != null) {
-            try {
                 PeerAddress pa = peerHttpServer.getMyExtAddress();
                 myHost = pa.getHost();
-                myPort = pa.getPort();
-                InetAddress[] myAddrs = InetAddress.getAllByName(myHost);
-                boolean addrValid = false;
-                Enumeration<NetworkInterface> intfs = NetworkInterface.getNetworkInterfaces();
-                chkAddr:
-                while (intfs.hasMoreElements()) {
-                    NetworkInterface intf = intfs.nextElement();
-                    List<InterfaceAddress> intfAddrs = intf.getInterfaceAddresses();
-                    for (InterfaceAddress intfAddr : intfAddrs) {
-                        InetAddress extAddr = intfAddr.getAddress();
-                        for (InetAddress myAddr : myAddrs) {
-                            if (extAddr.equals(myAddr)) {
-                                addrValid = true;
-                                break chkAddr;
-                            }
-                        }
-                    }
-                }
-                if (!addrValid) {
-                    InetAddress extAddr = peerHttpServer.getExternalAddress();
-                    if (extAddr != null) {
-                        for (InetAddress myAddr : myAddrs) {
-                            if (extAddr.equals(myAddr)) {
-                                addrValid = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!addrValid) {
-                    LOG.warn("Your announced address does not match your external address");
-                }
-            } catch (SocketException e) {
-                LOG.error("Unable to enumerate the network interfaces :" + e.toString());
-            } catch (UnknownHostException e) {
-                LOG.warn("Your announced address is not valid: " + e.toString());
-            }
+                myPort = pa.getPort();            
         }
-
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
         if (myHallmark != null && Peers.myHallmark.length() > 0) {
             try {
@@ -330,10 +290,9 @@ public final class Peers {
                  throw new RuntimeException("Invalid announced address length: " + announcedAddress);
             }
             pi.announcedAddress = announcedAddress;
+        }else{
+            LOG.debug("Peer external address is NOT SET");
         }
-//        }else{
-//            throw new RuntimeException("Peer external address is NOT SET");
-//        }
         
         if (myHallmark != null && myHallmark.length() > 0) {
             pi.hallmark = myHallmark;
@@ -512,7 +471,9 @@ public final class Peers {
     }
 
     public static boolean isMyAddress(PeerAddress pa) {
-
+        if(pa==null){
+            return true;
+        }
         //TODO: many ports: http, https, ssl
         if ((pa.isLocal() && myPort == pa.getPort())) {
             return true;
@@ -524,7 +485,6 @@ public final class Peers {
                 return true;
             }
         }
-
         PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
         if (pa.compareTo(myExtAddr) == 0) {
             return true;
