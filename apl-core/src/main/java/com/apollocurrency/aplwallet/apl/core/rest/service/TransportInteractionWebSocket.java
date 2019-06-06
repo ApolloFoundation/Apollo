@@ -14,27 +14,25 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- *
- * @author nemez
- */
 
 @ClientEndpoint
 public class TransportInteractionWebSocket {
-    
-    
+        
     Session userSession = null;
-    private MessageHandler messageHandler;
+    private static final Logger log = LoggerFactory.getLogger(TransportInteractionWebSocket.class);
 
     public TransportInteractionWebSocket(URI endpointURI) {
+        
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             container.connectToServer(this, endpointURI);
         } catch (Exception e) {
             // throw new RuntimeException(e);
-            System.out.println("Not connected at the moment");
-        }
+            log.debug("Not connected at the moment");            
+        }       
     }
 
     /**
@@ -43,8 +41,8 @@ public class TransportInteractionWebSocket {
      * @param userSession the userSession which is opened.
      */
     @OnOpen
-    public void onOpen(Session userSession) {
-        System.out.println("opening websocket");
+    public void onOpen(Session userSession) {        
+        log.debug("TransportInteractionWebSocket: onOpen");
         this.userSession = userSession;
     }
 
@@ -55,9 +53,9 @@ public class TransportInteractionWebSocket {
      * @param reason the reason for connection close
      */
     @OnClose
-    public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing websocket");
-        this.userSession = null;
+    public void onClose(Session userSession, CloseReason reason) {        
+        log.debug("TransportInteractionWebSocket: onClose, reason: " + reason.getReasonPhrase() );
+        this.userSession = null;                
     }
 
     /**
@@ -67,20 +65,9 @@ public class TransportInteractionWebSocket {
      */
     @OnMessage
     public void onMessage(String message) {
-        if (this.messageHandler != null) {
-            this.messageHandler.handleMessage(message);
-        }
+        log.debug("onMessage: "+ message);
     }
-
-    /**
-     * register message handler
-     *
-     * @param msgHandler
-     */
-    public void addMessageHandler(MessageHandler msgHandler) {
-        this.messageHandler = msgHandler;
-    }
-
+    
     /**
      * Send a message.
      *
@@ -89,14 +76,15 @@ public class TransportInteractionWebSocket {
     public void sendMessage(String message) {
         this.userSession.getAsyncRemote().sendText(message);
     }
-
+    
     /**
-     * Message handler.
+     * Checking out whether the connection is open
      *
-     * @author Serhiy Lymar
+     * 
      */
-    public static interface MessageHandler {
-        public void handleMessage(String message);
+
+    public boolean isOpen() {        
+        return this.userSession != null;
     }
     
 }

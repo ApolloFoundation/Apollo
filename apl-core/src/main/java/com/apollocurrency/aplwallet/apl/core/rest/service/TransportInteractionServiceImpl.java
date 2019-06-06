@@ -11,78 +11,47 @@ import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+@Singleton
 public class TransportInteractionServiceImpl implements TransportInteractionService {
     
     
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionServiceImpl.class);
-   
     private String wsUrl; 
+
+    TransportInteractionWebSocket transportInteractionWebSocket;
+    
     
     @Inject
     TransportInteractionServiceImpl( PropertiesHolder prop ) {
-        
         log.debug("Initializing TransportInteractionServiceImpl");   
         wsUrl = prop.getStringProperty("apl.securetransporturl","ws://localhost:8888/");
-        
-        
-        
+                
     }
     
 
     @Override
     public TransportStatusResponse getTransportStatusResponse() {
-        TransportStatusResponse transportStatusResponse =  new TransportStatusResponse();
-        
+        TransportStatusResponse transportStatusResponse =  new TransportStatusResponse();        
         log.debug("getTransportStatusResponse");
         
+        // log.debug("isOpen: " + transportInteractionWebSocket.isOpen());
+        boolean isOpen = transportInteractionWebSocket.isOpen();
+        log.debug("isOpen: " + isOpen );
+                
+        transportStatusResponse.connected = transportInteractionWebSocket.isOpen(); 
         return transportStatusResponse;
     }
     
     @Override
     public void start() {
-        
+       
+                
         log.debug("Ingition point: "); 
          
          try {
-            // open websocket
-            
-            TransportInteractionWebSocket transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));
+            // open websocket            
+            transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));
 
-//            // add listener
-//            clientEndPoint.addMessageHandler(new TransportInteractionWebSocket.MessageHandler() {
-//                public void handleMessage(String message) {
-//                    System.out.println(message);
-//                }
-//            });
-//
-//            // send message to websocket
-//            
-//            // clientEndPoint.sendMessage("{'event':'addChannel','channel':'ok_btccny_ticker'}");
-//            
-//            clientEndPoint.sendMessage("{\"type\":\"STOPREQUEST\",\"id\":241}");
-//            
-//            // stopping
-//
-//            // wait 5 seconds for messages from websocket
-//
-//                
-//            Thread.sleep(5000);
-//            clientEndPoint.sendMessage( "{  \"type\":\"STARTREQUEST\",\"serversjson\":\"./servers.json\",\"uniqueenable\":true,\"shuffle\":true,\"uniqueport\":-1,\"logpath\":\"/Volumes/usersd/Users/nemez/Desktop\",\"id\":46}");
-//
-//            
-//            for(;;) {
-//                Thread.sleep(5000);
-//                
-//            }
-            
-            // clientEndPoint.sendMessage( "{  \"type\":\"STARTREQUEST\",\"serversjson\":\"./servers.json\",\"uniqueenable\":true,\"shuffle\":true,\"uniqueport\":-1,\"logpath\":\"/Volumes/usersd/Users/nemez/Desktop\",\"id\":46}");
-            
-            
-            
-
-//        } catch (InterruptedException ex) {
-//            System.err.println("InterruptedException exception: " + ex.getMessage());
         } catch (URISyntaxException ex) {
             System.err.println("URISyntaxException exception: " + ex.getMessage());
         }

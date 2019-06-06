@@ -31,15 +31,12 @@ public class TransportInteractionController {
 
     @Inject @Setter
     private TransportInteractionService  tiService;
-
-    
      
-     public TransportInteractionController( ) {
-        
-     }
+    public TransportInteractionController( ) {        
+    }
 
 
-    @Path("/")
+    @Path("/connectionstatus")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns transport status",
@@ -51,14 +48,11 @@ public class TransportInteractionController {
                                     schema = @Schema(implementation = TransportStatusResponse.class)))
             }
     )
+    
     public TransportStatusResponse getTransportStatusResponse(){        
                         
-        TransportStatusResponse transportStatusResponse = tiService.getTransportStatusResponse();
-        
-        transportStatusResponse.connected = true; 
+        TransportStatusResponse transportStatusResponse = tiService.getTransportStatusResponse();                
         return transportStatusResponse;        
     }
-
-
 
 }
