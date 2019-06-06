@@ -118,6 +118,15 @@ public class TransportInteractionWebSocket {
                     if (transportStatusReply.status.equals("NOT_LAUNCHED")) {
                         log.debug("received status: not launched, configuring internals");
                         secureTransportStatus = SecureTransportStatus.NOT_LAUNCHED;
+                    } else if (transportStatusReply.status.equals("CONNECTED")) {
+                        log.debug("received status: CONNECTED, saving parameters");
+                        // {"type":"GETSTATUSREPLY","status":"CONNECTED","remoteip":"51.15.249.23","remoteport":"25000","tunaddr":"10.75.110.216","tunnetmask":"255.255.255.0","id":"230"}
+                        this.remoteip= transportStatusReply.remoteip;
+                        this.remoteport = transportStatusReply.remoteport;
+                        this.tunaddr = transportStatusReply.tunaddr;
+                        this.tunnetmask = transportStatusReply.tunnetmask;
+                        log.debug("connected to: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask);
+                        secureTransportStatus = SecureTransportStatus.CONNECTED;                        
                     }
                     
                 } else if (type.equals("STARTREPLY")) {
@@ -138,8 +147,15 @@ public class TransportInteractionWebSocket {
                     this.tunaddr = transportEventDescriptor.tunaddr;
                     this.tunnetmask = transportEventDescriptor.tunnetmask;
                     log.debug("connected to: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask);
-                    secureTransportStatus = SecureTransportStatus.CONNECTED;
-                    
+                    secureTransportStatus = SecureTransportStatus.CONNECTED;                    
+                } else if (eventSpec.equals("DISCONNECT")) {
+                    TransportEventDescriptor transportEventDescriptor = processData(TransportEventDescriptor.class, message, false);
+                    this.remoteip= "";
+                    this.remoteport = -1;
+                    this.tunaddr = "";
+                    this.tunnetmask = "";
+                    log.debug("disconnected from: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask + ", reconnecting");
+                    secureTransportStatus = SecureTransportStatus.DISCONNECTED;                    
                 }
                 
             }
