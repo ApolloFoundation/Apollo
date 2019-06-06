@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
@@ -479,7 +480,7 @@ public class ShardEngineImpl implements ShardEngine {
         if (AbstractHelper.isContain(recovery.getProcessedObject(), tableName)) {
             log.debug("Skip already exported table: " + tableName);
         } else {
-            Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + ".csv");
+            Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
             try {
                 Files.deleteIfExists(tableCsvPath);
             }
