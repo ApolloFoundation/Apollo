@@ -5,7 +5,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import com.apollocurrency.aplwallet.api.transport.TransportEventDescriptor;
 import com.apollocurrency.aplwallet.api.transport.TransportGenericPacket;
+import com.apollocurrency.aplwallet.api.transport.TransportStartRequest;
 import com.apollocurrency.aplwallet.api.transport.TransportStatusReply;
 import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
 import com.fasterxml.jackson.core.JsonParser;
@@ -31,6 +33,12 @@ import org.slf4j.LoggerFactory;
 
 @ClientEndpoint
 public class TransportInteractionWebSocket {
+    
+    
+    private String serversJSON = "./servers.json";
+    private boolean shuffle = true, uniqueEnable = false; 
+    private int uniquePort = -1; 
+    private String logPath = "/var/log";   
         
     Session userSession = null;
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionWebSocket.class);
@@ -42,7 +50,12 @@ public class TransportInteractionWebSocket {
         INITIAL, NOT_LAUNCHED, PENDING, CONNECTED, DISCONNECTED
     }
     
-
+    
+    public String remoteip;    
+    public int remoteport;    
+    public String tunaddr;        
+    public String tunnetmask;  
+    
     public TransportInteractionWebSocket(URI endpointURI) {
         
         try {
@@ -93,7 +106,7 @@ public class TransportInteractionWebSocket {
         try {
             // final ObjectNode node = new ObjectMapper().readValue(json, ObjectNode.class);
             org.codehaus.jackson.JsonNode parent= new ObjectMapper().readTree(message); 
-            if (parent.has("type")) {
+            if (parent.has("type")) {                
                 
                 String type =  parent.get("type").asText();
                 log.debug("type: " + type );
@@ -107,7 +120,28 @@ public class TransportInteractionWebSocket {
                         secureTransportStatus = SecureTransportStatus.NOT_LAUNCHED;
                     }
                     
+                } else if (type.equals("STARTREPLY")) {
+                    log.debug("StartReply, setting PENDING and waiting for connect event");
+                    secureTransportStatus = SecureTransportStatus.PENDING;
+                }                
+                
+            } else if (parent.has("event")) {
+                
+                // {"event":"CONNECT","remoteip":"51.15.249.23","remoteport":"25000","tunaddr":"10.75.110.216","tunnetmask":"255.255.255.0"}
+                
+                String eventSpec =  parent.get("event").asText();
+                if (eventSpec.equals("CONNECT") ) {
+                    // handling json here 
+                    TransportEventDescriptor transportEventDescriptor = processData(TransportEventDescriptor.class, message, false);
+                    this.remoteip= transportEventDescriptor.remoteip;
+                    this.remoteport = transportEventDescriptor.remoteport;
+                    this.tunaddr = transportEventDescriptor.tunaddr;
+                    this.tunnetmask = transportEventDescriptor.tunnetmask;
+                    log.debug("connected to: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask);
+                    secureTransportStatus = SecureTransportStatus.CONNECTED;
+                    
                 }
+                
             }
                     
         
@@ -159,10 +193,35 @@ public class TransportInteractionWebSocket {
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: Error while creating Getting Status request");                   
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(TransportInteractionWebSocket.class.getName()).log(Level.SEVERE, null, ex);
+            log.error("getting status error: " + ex.getMessage().toString());
         }
         
     }
+    
+    private void startSecureTransport() {
+        // creating start package
+        TransportStartRequest startRequest = new TransportStartRequest();
+        startRequest.type = "STARTREQUEST";
+        startRequest.serversjson = this.serversJSON;
+        startRequest.uniqueenable = true; 
+        startRequest.uniqueport = this.uniquePort;
+        startRequest.shuffle = this.shuffle;
+        startRequest.logpath = this.logPath;                        
+        Random rand = new Random();
+        startRequest.id = rand.nextInt(255);                
+        ObjectMapper mapper = new ObjectMapper();
+                
+        try {
+            String startRequestString = mapper.writeValueAsString(startRequest); 
+            sendMessage(startRequestString);
+        } catch (JsonProcessingException ex) {
+            log.error("TransportInteractionWebSocket: JSON Error while creating STARTREQUEST");                                       
+        } catch (IOException ex) {
+            log.error("TransportInteractionWebSocket: IO Error while creating STARTREQUEST");
+        }
+        
+    }
+    
 
     
     void tick() {
@@ -179,6 +238,8 @@ public class TransportInteractionWebSocket {
                 
                 case NOT_LAUNCHED: { 
                     log.debug("not launched, startup required");
+                    // launching here
+                    startSecureTransport();                    
                     break;
                 }
                 
