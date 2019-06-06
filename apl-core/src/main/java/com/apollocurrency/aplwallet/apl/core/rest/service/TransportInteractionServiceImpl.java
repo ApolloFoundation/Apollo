@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionC
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.jetty.util.log.Log;
@@ -51,6 +52,24 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
          try {
             // open websocket            
             transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));
+            
+            Runnable task = () -> {
+		// System.out.println("Hello, World!");
+                for(;;) {
+                    
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        java.util.logging.Logger.getLogger(TransportInteractionServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    
+                    transportInteractionWebSocket.tick();
+                    
+                }
+                
+            };
+            Thread thread = new Thread(task);
+            thread.start();
 
         } catch (URISyntaxException ex) {
             System.err.println("URISyntaxException exception: " + ex.getMessage());

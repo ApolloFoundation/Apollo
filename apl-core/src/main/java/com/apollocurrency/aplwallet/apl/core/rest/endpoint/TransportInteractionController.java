@@ -35,7 +35,6 @@ public class TransportInteractionController {
     public TransportInteractionController( ) {        
     }
 
-
     @Path("/connectionstatus")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
