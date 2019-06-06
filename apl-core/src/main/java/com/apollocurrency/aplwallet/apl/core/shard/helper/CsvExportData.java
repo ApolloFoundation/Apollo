@@ -4,13 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import java.util.Map;
+
 public class CsvExportData {
     private int processCount;
-    private Object lastKey;
+    private Map<String, Object> lastRow;
 
-    public CsvExportData(int processCount, Object lastKey) {
+    public CsvExportData(int processCount, Map<String, Object> lastRow) {
         this.processCount = processCount;
-        this.lastKey = lastKey;
+        this.lastRow = lastRow;
     }
 
     public int getProcessCount() {
@@ -21,11 +23,11 @@ public class CsvExportData {
         this.processCount = processCount;
     }
 
-    public Object getLastKey() {
-        return lastKey;
+    public Map<String, Object> getLastRow() {
+        return lastRow;
     }
 
-    public void setLastKey(Object lastKey) {
-        this.lastKey = lastKey;
+    public void setLastRow(Map<String, Object> lastRow) {
+        this.lastRow = lastRow;
     }
 }

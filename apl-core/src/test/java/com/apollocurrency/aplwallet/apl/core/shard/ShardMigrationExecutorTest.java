@@ -68,10 +68,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -233,7 +230,7 @@ class ShardMigrationExecutorTest {
             assertEquals(8, count); // blocks in shard db
             shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(4, count);// transactions in shard db
+            assertEquals(7, count);// transactions in shard db
 
 //5.        // create shard db FULL schema
             createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
@@ -256,7 +253,7 @@ class ShardMigrationExecutorTest {
             // should be 8 but prev shard already exist and grabbed our genesis block
             assertEquals(7, blockIndexCount);
             long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-            assertEquals(4, trIndexCount);
+            assertEquals(7, trIndexCount);
 
             Transaction tx = blockchain.getTransaction(td.TRANSACTION_2.getId());
             assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
@@ -291,7 +288,7 @@ class ShardMigrationExecutorTest {
 
             shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(4, count); // transactions in shard
+            assertEquals(7, count); // transactions in shard
 
 //14.       // complete shard process
             byte[] shardHash = "000000000".getBytes();

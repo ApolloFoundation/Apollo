@@ -4,10 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_SHARD_INDEX_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 
 import java.util.Optional;
 
@@ -22,9 +19,9 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
     @Override
     public Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName, boolean relink) {
         Optional<BatchedPaginationOperation> helper;
-        switch (helperTableName.toUpperCase()) {
-            case BLOCK_TABLE_NAME :
-            case TRANSACTION_TABLE_NAME : {
+        switch (helperTableName.toLowerCase()) {
+            case ShardConstants.BLOCK_TABLE_NAME :
+            case ShardConstants.TRANSACTION_TABLE_NAME : {
                 if (!relink) {
                     return Optional.of(new BlockTransactionInsertHelper());
                 } else {
@@ -40,8 +37,8 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
             case PRUNABLE_MESSAGE_TABLE_NAME :
                 return Optional.of(new RelinkingToSnapshotBlockHelper());
 */
-            case BLOCK_INDEX_TABLE_NAME :
-            case TRANSACTION_SHARD_INDEX_TABLE_NAME : {
+            case ShardConstants.BLOCK_INDEX_TABLE_NAME :
+            case ShardConstants.TRANSACTION_INDEX_TABLE_NAME : {
                 return Optional.of(new SecondaryIndexInsertHelper());
             }
             default: {
@@ -63,7 +60,7 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
      */
     @Override
     public Optional<BatchedPaginationOperation> createDeleteHelper(String helperTableName) {
-        if (BLOCK_TABLE_NAME.equals(helperTableName.toUpperCase()) || TRANSACTION_TABLE_NAME.equals(helperTableName.toUpperCase())) {
+        if (ShardConstants.BLOCK_TABLE_NAME.equals(helperTableName.toLowerCase()) || ShardConstants.TRANSACTION_TABLE_NAME.equals(helperTableName.toLowerCase())) {
             return Optional.of(new BlockDeleteHelper());
         } else {
             throw new IllegalArgumentException("Incorrect Table name was supplied: " + helperTableName);
