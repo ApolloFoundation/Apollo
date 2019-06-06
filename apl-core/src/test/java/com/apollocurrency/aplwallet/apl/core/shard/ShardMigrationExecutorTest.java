@@ -69,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -124,7 +125,7 @@ class ShardMigrationExecutorTest {
             ExcludedTransactionDbIdExtractor.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
-            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class,
+            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class,
             AplAppStatus.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -181,6 +182,7 @@ class ShardMigrationExecutorTest {
     @Test
     void executeAllOperations() throws IOException {
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
+        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
         try {
             int snapshotBlockHeight = 8000;
 
@@ -188,7 +190,7 @@ class ShardMigrationExecutorTest {
             ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
             recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
             Shard newShard = new Shard(snapshotBlockHeight);
-            shardDao.saveShard(newShard);
+            long shardId = shardDao.saveShard(newShard);
 
             MigrateState state;
 
@@ -302,6 +304,8 @@ class ShardMigrationExecutorTest {
 
     @Test
     void executeAll() {
+        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
+
         shardMigrationExecutor.createAllCommands(8000);
         MigrateState state = shardMigrationExecutor.executeAllOperations();
 //        assertEquals(FAILED, state);

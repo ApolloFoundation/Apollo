@@ -38,9 +38,10 @@ public interface ShardEngine {
      * Create either 'initial' shard db with tables only or full schema with all indexes/constrains/PK/FK
      *
      * @param dbVersion supplied schema name class
+     * @param shardHash optional for init schema, should be present for FULL schema. It's a shard data HASH
      * @return state enum - MigrateState.SHARD_SCHEMA_CREATED or MigrateState.SHARD_SCHEMA_FULL if success, MigrateState.FAILED otherwise
      */
-    MigrateState addOrCreateShard(DbVersion dbVersion);
+    MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash);
 
     /**
      * Copy block + transaction data excluding phased transaction into shard db
@@ -61,6 +62,6 @@ public interface ShardEngine {
 
     MigrateState deleteCopiedData(CommandParamInfo paramInfo);
 
-    MigrateState addShardInfo(CommandParamInfo paramInfo);
+    MigrateState addShardHashInfo(CommandParamInfo paramInfo);
 
 }

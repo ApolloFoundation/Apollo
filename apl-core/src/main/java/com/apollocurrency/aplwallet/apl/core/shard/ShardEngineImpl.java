@@ -37,9 +37,11 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
+import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -62,26 +64,30 @@ public class ShardEngineImpl implements ShardEngine {
     private DatabaseManager databaseManager;
     private TrimService trimService;
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
-    private Optional<Long> createdShardId;
+    private Optional<Long> createdShardId; // keep created shardId
     private TransactionalDataSource createdShardSource;
     private ShardRecoveryDaoJdbc shardRecoveryDao;
     private CsvExporter csvExporter;
     private DerivedTablesRegistry registry;
     private DirProvider dirProvider;
-    
+    private Zip zipComponent;
+    private byte[] zipCrcHah; // keep computed ZIP crc
+
     public ShardEngineImpl() {
     }
 
     @Inject
-    public ShardEngineImpl(DirProvider dirProvider,DatabaseManager databaseManager, TrimService trimService,
+    public ShardEngineImpl(DirProvider dirProvider, DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
-                           DerivedTablesRegistry registry) {
+                           DerivedTablesRegistry registry,
+                           Zip zipComponent) {
+        this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
-        this.dirProvider = dirProvider;
+        this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
     }
 
     @Override
@@ -133,7 +139,7 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addOrCreateShard(DbVersion dbVersion) {
+    public MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash) {
         long start = System.currentTimeMillis();
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
@@ -144,6 +150,9 @@ public class ShardEngineImpl implements ShardEngine {
             if (dbVersion instanceof ShardAddConstraintsSchemaVersion
                     || dbVersion instanceof AplDbVersion) {
                 state = SHARD_SCHEMA_FULL;
+                if (shardHash != null && shardHash.length > 0) {
+                    // TODO: update shard record by merkle hash value !
+                }
             } else {
                 state = MigrateState.SHARD_SCHEMA_CREATED;
             }
@@ -449,11 +458,43 @@ public class ShardEngineImpl implements ShardEngine {
             recovery = new ShardRecovery(ZIP_ARCHIVE_STARTED);
         }
 
-        // TODO: put into archive CSV for all : derived tables, shard, block_index, transaction_shard_index + compute CRC/hash and update column value in SHARD
-        // TODO: keep recovery data on export
+        if (createdShardId.isEmpty()) {
+            String error = "Error. Shard was not initialized previously, " +
+                    "missing addOrCreateShard(dbVersion) step during sharding process!";
+            log.error(error);
+            throw new IllegalStateException(error);
+        }
+        String shardFileName = ShardNameHelper.getShardArchiveNameByShardId(createdShardId.get());
+        Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName + ".zip");
+        log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);
+        try {
+            boolean isRemoved = Files.deleteIfExists(shardZipFilePath);
+            log.debug("Previous Zip in '{}' was '{}'", shardFileName, isRemoved ? "REMOVED" : "NOT FOUND");
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to remove previous ZIP file: " + shardZipFilePath.toAbsolutePath().toString());
+        }
+        try (Connection sourceConnect = sourceDataSource.begin()) {
+            state = ZIP_ARCHIVE_STARTED;
+            updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
+            // compute ZIP crc hash
+/*
+        zipCrcHah = zipComponent.compress(
+                shardZipFilePath.toAbsolutePath().toString(),
+                dirProvider.getDataExportDir().toAbsolutePath().toString(), null, null);
+*/
+            state = ZIP_ARCHIVE_FINISHED;
+            updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
 
-        state = ZIP_ARCHIVE_FINISHED;
-//        updateToFinalStepState(sourceDataSource.begin(), recovery, state);
+        } catch (Exception e) {
+            log.error("Error UPDATE S/Index processing table = '" + currentTable + "'", e);
+            sourceDataSource.rollback(false);
+            state = MigrateState.FAILED;
+            return state;
+        } finally {
+            if (sourceDataSource != null) {
+                sourceDataSource.commit();
+            }
+        }
         log.debug("ZIP ARCHIVE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
@@ -514,13 +555,13 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addShardInfo(CommandParamInfo paramInfo) {
+    public MigrateState addShardHashInfo(CommandParamInfo paramInfo) {
         Objects.requireNonNull(paramInfo, "paramInfo is NULL");
         Objects.requireNonNull(paramInfo.getShardHash(), "shardHash is NULL");
         long startAllTables = System.currentTimeMillis();
         log.debug("Starting create SHARD record in main db...");
 
-        if (!createdShardId.isPresent()) {
+        if (createdShardId.isEmpty()) {
             String error = "Error. Shard was not initialized previously, " +
                     "missing addOrCreateShard(dbVersion) step during sharding process!";
             log.error(error);

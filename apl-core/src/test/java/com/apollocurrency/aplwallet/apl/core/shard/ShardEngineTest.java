@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -120,7 +121,7 @@ class ShardEngineTest {
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
             DerivedTablesRegistry.class,
-            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class,
+            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
@@ -188,7 +189,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion());
+        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null);
         assertEquals(SHARD_SCHEMA_CREATED, state);
     }
 
@@ -198,7 +199,7 @@ class ShardEngineTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), null);
         assertEquals(SHARD_SCHEMA_FULL, state);
     }
 
@@ -206,10 +207,9 @@ class ShardEngineTest {
     void createShardDbDoAllOperations() throws IOException {
 
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
-//TODO: do we need entire Apl Core here ?        
-//        AplCoreRuntime.getInstance().setup(new UserMode(), dirProvider);
+        doReturn(temporaryFolderExtension.newFolder("archive").toPath()).when(dirProvider).getDataExportDir();
+
         blockIndexDao.hardDeleteAllBlockIndex();
-        try { //AplCoreRuntime will be loaded we should setUp to null values for another tests
             long start = System.currentTimeMillis();
             MigrateState state = shardEngine.getCurrentState();
             assertNotNull(state);
@@ -222,7 +222,7 @@ class ShardEngineTest {
             recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
             byte[] shardHash = "000000000".getBytes();
             Shard newShard = new Shard(shardHash, snapshotBlockHeight);
-            shardDao.saveShard(newShard);
+            long shardId = shardDao.saveShard(newShard);
 
 //1.        // create main db backup
             state = shardEngine.createBackup();
@@ -230,7 +230,7 @@ class ShardEngineTest {
             assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4.zip")));
 
 //2.        // create shard db with 'initial' schema
-            state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion());
+            state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null);
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
             // checks before COPYING blocks / transactions
@@ -262,9 +262,15 @@ class ShardEngineTest {
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
             assertEquals(4, count);// transactions in shard db
 
-//5.        // create shard db FULL schema
-            state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion());
+//5.        // create shard db FULL schema + add shard hash info
+            state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
             assertEquals(SHARD_SCHEMA_FULL, state);
+            // check hash is stored in shard record
+/*          TODO: YL uncomment when ready
+            Shard shard = shardDao.getShardById(shardId);
+            assertNotNull(shard);
+            assertArrayEquals(fullHash, shard.getShardHash());
+*/
 
 //            tableNameList.clear();
 //            tableNameList.add(PUBLIC_KEY_TABLE_NAME);
@@ -334,18 +340,14 @@ class ShardEngineTest {
 
 //14.       // complete shard process
             paramInfo.setShardHash(shardHash);
-            state = shardEngine.addShardInfo(paramInfo);
+            state = shardEngine.addShardHashInfo(paramInfo);
             assertEquals(MigrateState.COMPLETED, state);
 
-// compare fullhashes
+// compare full hashes
             TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
             assertNotNull(index);
             byte[] fullHash = Convert.toFullHash(index.getTransactionId(), index.getPartialTransactionHash());
             assertArrayEquals(td.TRANSACTION_1.getFullHash(), fullHash);
             log.debug("Migration finished in = {} sec", (System.currentTimeMillis() - start) / 1000);
-        }
-        finally {
-//            AplCoreRuntime.getInstance().setup(null, null);
-        }
     }
 }

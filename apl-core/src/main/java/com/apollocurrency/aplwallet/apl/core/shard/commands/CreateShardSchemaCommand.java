@@ -38,7 +38,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Create Shard Schema Command execute...");
-        return shardEngine.addOrCreateShard(dbVersion);
+        return shardEngine.addOrCreateShard(dbVersion, null);
     }
 
     @Override

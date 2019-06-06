@@ -42,7 +42,7 @@ public class FinishShardingCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(this.shardHash);
-        return shardEngine.addShardInfo(paramInfo);
+        return shardEngine.addShardHashInfo(paramInfo);
     }
 
     @Override
