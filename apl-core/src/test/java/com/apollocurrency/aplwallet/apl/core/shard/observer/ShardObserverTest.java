@@ -145,10 +145,28 @@ public class ShardObserverTest {
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+
         CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
 
         assertTrue(c.get());
         verify(shardMigrationExecutor, times(1)).executeAllOperations();
+        verify(firedEvent, never()).fire(true);
+        verify(firedEvent, never()).fire(false);
+    }
+
+    @Test
+    void testSkipShardingDuringBlockchainScan() {
+        prepare(false, false);
+        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
+        doReturn(true).when(heightConfig).isShardingEnabled();
+        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        doReturn(true).when(blockchainProcessor).isScanning();
+
+        CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
+
+        assertNull(c);
+
+        verify(shardMigrationExecutor, never()).executeAllOperations();
         verify(firedEvent, never()).fire(true);
         verify(firedEvent, never()).fire(false);
     }

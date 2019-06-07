@@ -77,7 +77,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         manipulator = new DbManipulator();
     }
 
-    public DatabaseManager getDatabaseManger() {
+    public DatabaseManager getDatabaseManager() {
         return manipulator.getDatabaseManager();
     }
 
@@ -120,7 +120,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     private void initFtl() {
         ftl.init();
-        tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManger(), (con) -> {
+        tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
                 ftl.createIndex(con, "PUBLIC", table, String.join(",", columns));
             }

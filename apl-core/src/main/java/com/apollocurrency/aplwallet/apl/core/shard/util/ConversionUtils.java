@@ -20,8 +20,6 @@ import java.util.Properties;
  */
 public class ConversionUtils {
 
-    private static final Properties MESSAGES = new Properties();
-
     // memory used by this cache:
     // 4 * 1024 * 2 (strings per pair) * 64 * 2 (bytes per char) = 0.5 MB
     private static final int TO_UPPER_CACHE_LENGTH = 2 * 1024;

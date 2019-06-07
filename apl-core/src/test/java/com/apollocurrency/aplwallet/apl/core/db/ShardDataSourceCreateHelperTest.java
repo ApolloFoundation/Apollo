@@ -24,7 +24,7 @@ class ShardDataSourceCreateHelperTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, ShardRecoveryDaoJdbcImpl.class, EpochTime.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
@@ -32,7 +32,7 @@ class ShardDataSourceCreateHelperTest {
 
     @Test
     void getShardId() {
-        createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManger(), null);
+        createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManager(), null);
         createHelper.createUninitializedDataSource();
         long shardId = createHelper.getShardId();
         assertEquals(3, shardId);
@@ -40,7 +40,7 @@ class ShardDataSourceCreateHelperTest {
 
     @Test
     void getShardName() {
-        createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManger(), 1L);
+        createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManager(), 1L);
         createHelper.createUninitializedDataSource();
         String shardName = createHelper.getShardName();
         assertEquals("apl-blockchain-shard-1", shardName);
@@ -48,7 +48,7 @@ class ShardDataSourceCreateHelperTest {
 
     @Test
     void getShardDb() {
-        createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManger(), 2L);
+        createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManager(), 2L);
         createHelper.createUninitializedDataSource();
         TransactionalDataSource transactionalDataSource = createHelper.getShardDb();
         assertNotNull(transactionalDataSource);

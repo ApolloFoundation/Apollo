@@ -55,8 +55,8 @@ class FullTextSearchServiceTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
@@ -74,6 +74,6 @@ class FullTextSearchServiceTest {
 
     @Test
     void reindexAll() throws Exception {
-        ftl.reindexAll(extension.getDatabaseManger().getDataSource().begin());
+        ftl.reindexAll(extension.getDatabaseManager().getDataSource().begin());
     }
 }

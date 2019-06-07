@@ -41,7 +41,7 @@ public class TwoFactorAuthServiceIntegrationTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from().addBeans(MockBean.of(Mockito.mock(NtpTime.class), NtpTime.class)).build();
 
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManger().getDataSource());
+    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource());
     private TwoFactorAuthService    service = new TwoFactorAuthServiceImpl(repository, "test");
 
     @Test

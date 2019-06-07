@@ -118,8 +118,8 @@ class CsvImporterTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
@@ -152,7 +152,7 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -161,7 +161,7 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager());
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
@@ -169,7 +169,7 @@ class CsvImporterTest {
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
 
-            try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+            try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
             ) {
                 long count = -1;
@@ -188,10 +188,10 @@ class CsvImporterTest {
     @Test
     void testImportAccountControlPhasingCsvWithArrayOfLongs() throws Exception {
         ResourceFileLoader fileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
         long result = csvImporter.importCsv("account_control_phasing", 1, true);
         assertEquals(4, result);
-        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+        try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = con.createStatement()) {
             ResultSet countRs = stmt.executeQuery("select count(*) from account_control_phasing");
             countRs.next();
@@ -211,10 +211,10 @@ class CsvImporterTest {
     @Test
     void testImportShufflingDataCsvWithArrayOfByteArrays() throws Exception {
         ResourceFileLoader fileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
         long result = csvImporter.importCsv("shuffling_data", 1, true);
         assertEquals(2, result);
-        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+        try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = con.createStatement()) {
             ResultSet countRs = stmt.executeQuery("select count(*) from shuffling_data");
             countRs.next();
@@ -239,10 +239,10 @@ class CsvImporterTest {
     @Test
     void testImportGoodsCsvWithArrayOfStrings() throws Exception {
         ResourceFileLoader fileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
         long result = csvImporter.importCsv("goods", 1, true);
         assertEquals(14, result);
-        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+        try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = con.createStatement()) {
             ResultSet countRs = stmt.executeQuery("select count(*) from goods");
             countRs.next();

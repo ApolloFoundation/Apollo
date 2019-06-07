@@ -141,7 +141,7 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     public  List<T> getCache(DbKey dbKey) {
-        if (!extension.getDatabaseManger().getDataSource().isInTransaction()) {
+        if (!extension.getDatabaseManager().getDataSource().isInTransaction()) {
             return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
         } else {
             return getCacheInTransaction(dbKey);
@@ -149,14 +149,14 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     public List<T> getCacheInTransaction(DbKey dbKey) {
-        Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
+        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
         return (List<T>) cache.get(dbKey);
     }
 
 
     public void removeFromCache(List<T> values) {
         DbKey dbKey = table.getDbKeyFactory().newKey(values.get(0));
-        Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
+        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
         cache.remove(dbKey);
     }
 

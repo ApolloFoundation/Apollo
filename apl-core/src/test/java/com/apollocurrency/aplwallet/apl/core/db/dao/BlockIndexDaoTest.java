@@ -55,8 +55,8 @@ public class BlockIndexDaoTest {
             DerivedDbTablesRegistryImpl.class,
             JdbiHandleFactory.class, BlockIndexDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .build();
 
     @Inject
