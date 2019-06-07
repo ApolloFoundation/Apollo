@@ -118,6 +118,10 @@ public class DownloadableFilesManager {
      */
     public Path mapFileIdToLocalPath(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
+        if (fileId.isEmpty()) {
+            log.error("fileId is '{}' empty", fileId);
+            return null;
+        }
 
         String absPath;
         if (fileId.contains("shard::")) {
@@ -126,7 +130,7 @@ public class DownloadableFilesManager {
             try {
                 shardId = Long.valueOf(realShardId);
             } catch (NumberFormatException e) {
-                log.warn("Incorrect shard Id value found = {}", fileId);
+                log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
                 return null;
             }
             String fileName = ShardNameHelper.getShardArchiveNameByShardId(shardId);

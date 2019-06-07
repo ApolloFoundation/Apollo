@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -74,5 +75,13 @@ class DownloadableFilesManagerTest {
         pathToShardArchive = filesManager.mapFileIdToLocalPath("phasing_poll.csv");
         assertNotNull(pathToShardArchive);
         assertEquals("phasing_poll.csv", pathToShardArchive.getFileName().toString());
+
+        pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::");
+        assertNull(pathToShardArchive);
+
+        assertThrows(NullPointerException.class, () -> filesManager.mapFileIdToLocalPath(null));
+
+        pathToShardArchive = filesManager.mapFileIdToLocalPath("");
+        assertNull(pathToShardArchive);
     }
 }
