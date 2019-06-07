@@ -11,6 +11,8 @@ import java.util.Collection;
 public interface DerivedTablesRegistry {
     void registerDerivedTable(DerivedTableInterface table);
 
+    Collection<String> getDerivedTableNames();
+
     Collection<DerivedTableInterface> getDerivedTables();
 
     DerivedTableInterface getDerivedTable(String derivedTableName);

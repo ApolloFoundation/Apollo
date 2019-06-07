@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -49,6 +50,7 @@ public class ShardMigrationExecutor {
     private ShardHashCalculator shardHashCalculator;
     private BlockIndexDao blockIndexDao;
     private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
+    private DerivedTablesRegistry derivedTablesRegistry;
     private volatile boolean backupDb;
 
     public boolean backupDb() {
@@ -65,12 +67,14 @@ public class ShardMigrationExecutor {
                                   ShardHashCalculator shardHashCalculator,
                                   BlockIndexDao blockIndexDao,
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
+                                  DerivedTablesRegistry registry,
                                   @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
         this.shardHashCalculator = Objects.requireNonNull(shardHashCalculator, "sharding hash calculator is NULL");
         this.blockIndexDao = Objects.requireNonNull(blockIndexDao, "blockIndexDao is NULL");
         this.excludedTransactionDbIdExtractor = Objects.requireNonNull(excludedTransactionDbIdExtractor, "exluded transaction db_id extractor is NULL");
+        this.derivedTablesRegistry = Objects.requireNonNull(registry, "derived table registry is null");
         this.backupDb = backupDb;
     }
 
@@ -100,7 +104,10 @@ public class ShardMigrationExecutor {
                 (shardEngine, height, dbIds);
         this.addOperation(updateSecondaryIndexCommand);
 
-        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, height, dbIds);
+        List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
+        tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
+        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, dbIds);
+
         this.addOperation(csvExportCommand);
 
         ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardEngine);

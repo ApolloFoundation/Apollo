@@ -23,6 +23,11 @@ public class DerivedDbTablesRegistryImpl implements DerivedTablesRegistry {
         derivedTables.putIfAbsent(table.toString(), table);
     }
 
+    @Override
+    public Collection<String> getDerivedTableNames() {
+        return derivedTables.keySet();
+    }
+
     public Collection<DerivedTableInterface> getDerivedTables() {
         return derivedTables.values();
     }
