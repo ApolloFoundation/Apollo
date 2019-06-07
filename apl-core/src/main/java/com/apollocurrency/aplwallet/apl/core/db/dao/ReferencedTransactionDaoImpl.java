@@ -1,20 +1,23 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ReferencedTransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import org.jdbi.v3.core.Jdbi;
 
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Singleton;
 
 @Singleton
 public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransaction> implements ReferencedTransactionDao {

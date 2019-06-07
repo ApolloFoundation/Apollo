@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -32,14 +33,9 @@ import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
@@ -65,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -77,7 +74,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 
 @EnableWeld
@@ -85,12 +81,12 @@ public class DGSServiceTest {
 
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("goods", List.of("name", "description", "tags")));
+    DbExtension extension = new DbExtension();
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
-            JdbiHandleFactory.class,
+            PropertiesHolder.class, BlockchainConfig.class,
+            EpochTime.class,
             GlobalSyncImpl.class,
             FullTextConfigImpl.class,
             DGSPublicFeedbackTable.class,
@@ -100,14 +96,14 @@ public class DGSServiceTest {
             AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            DerivedDbTablesRegistryImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+            .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
+            .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
+            .addBeans(MockBean.of(mock(FullTextSearchService.class), FullTextSearchService.class))
+            .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -1325,36 +1321,6 @@ public class DGSServiceTest {
         assertEquals(3, sellerGoodsCount);
         sellerGoodsCount = service.getSellerGoodsCount(SELLER_1_ID, true);
         assertEquals(0, sellerGoodsCount);
-    }
-
-    @Test
-    void testSearchGoods() {
-        List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_10, dtd.GOODS_8), goods);
-    }
-
-    @Test
-    void testSearchGoodsWithPagination() {
-        List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 1, 2));
-        assertEquals(List.of(dtd.GOODS_2, dtd.GOODS_10), goods);
-    }
-
-    @Test
-    void testSearchGoodsByTag() {
-        List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("prod*", false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2), goods);
-    }
-
-    @Test
-    void testSearchSellerGoods() {
-        List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("bat*", SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12), dgsGoods);
-    }
-
-    @Test
-    void testSearchSellerGoodsWithPagination() {
-        List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("ta*", SELLER_0_ID, false, 1, 2));
-        assertEquals(List.of(dtd.GOODS_4), dgsGoods);
     }
 
 

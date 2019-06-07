@@ -12,14 +12,13 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
@@ -38,16 +38,22 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -67,12 +73,13 @@ public class ShardEngineImpl implements ShardEngine {
     private ShardRecoveryDaoJdbc shardRecoveryDao;
     private CsvExporter csvExporter;
     private DerivedTablesRegistry registry;
-
+    private DirProvider dirProvider;
+    
     public ShardEngineImpl() {
     }
 
     @Inject
-    public ShardEngineImpl(DatabaseManager databaseManager, TrimService trimService,
+    public ShardEngineImpl(DirProvider dirProvider,DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
                            DerivedTablesRegistry registry) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
@@ -80,6 +87,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
+        this.dirProvider = dirProvider;
     }
 
     @Override
@@ -105,7 +113,7 @@ public class ShardEngineImpl implements ShardEngine {
                 new ShardDataSourceCreateHelper(databaseManager);
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = AplCoreRuntime.getInstance().getDirProvider().getDbDir();
+        Path dbDir = dirProvider.getDbDir();
         String backupName = String.format("BACKUP-BEFORE-%s.zip", nextShardName);
         Path backupPath = dbDir.resolve(backupName);
         String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
@@ -402,28 +410,94 @@ public class ShardEngineImpl implements ShardEngine {
     @Override
     public MigrateState exportCsv(CommandParamInfo paramInfo) {
         checkRequiredParameters(paramInfo);
-        long startAllTables = System.currentTimeMillis();
-        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", paramInfo.getTableNameList().size());
+        long startTime = System.currentTimeMillis();
+        List<String> allTables = paramInfo.getTableNameList();
+        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", allTables.size());
 
-        String currentTable = null;
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
-        if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > CSV_EXPORT_FINISHED.getValue()) {
+        ShardRecovery recovery = getOrCreateRecovery(CSV_EXPORT_STARTED);
+        if (recovery.getState().getValue() >= CSV_EXPORT_FINISHED.getValue()) {
             // skip to next step
             return state = CSV_EXPORT_FINISHED;
-        } else {
-            // that is needed in case separate step execution, when previous step was missed in code
-            recovery = new ShardRecovery(CSV_EXPORT_STARTED);
         }
 
-        // TODO: export as CSV data for all : derived tables, shard, block_index, transaction_shard_index
-        // TODO: keep recovery data on export
+        trimDerivedTables(paramInfo.getSnapshotBlockHeight());
 
+        for (String tableName : allTables) {
+            exportTableWithRecovery(recovery, tableName, () -> {
+                switch (tableName.toLowerCase()) {
+                    case ShardConstants.SHARD_TABLE_NAME:
+                        return csvExporter.exportShardTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                    case ShardConstants.BLOCK_INDEX_TABLE_NAME:
+                        return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                    case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
+                        return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                    case ShardConstants.TRANSACTION_TABLE_NAME:
+                        return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
+                    default:
+                        return exportDerivedTable(tableName, paramInfo);
+                }
+            });
+        }
         state = CSV_EXPORT_FINISHED;
-//        updateToFinalStepState(sourceDataSource.begin(), recovery, state);
-        log.debug("EXPORT Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        updateToFinalStepState(recovery, state);
+        log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
         return state;
+    }
+
+    private void trimDerivedTables(int height) {
+        databaseManager.getDataSource().begin();
+        try {
+            trimService.doTrimDerivedTablesOnHeight(height);
+        } catch (Exception e) {
+            databaseManager.getDataSource().rollback(false);
+        } finally {
+            databaseManager.getDataSource().commit();
+        }
+    }
+
+    private ShardRecovery getOrCreateRecovery(MigrateState commandStartState) {
+        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        if (recovery == null) {
+            // init new recovery
+            recovery = new ShardRecovery(commandStartState);
+            long key = shardRecoveryDao.saveShardRecovery(databaseManager.getDataSource(), recovery);
+            recovery.setShardRecoveryId(key);
+        }
+        return recovery;
+    }
+
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+        DerivedTableInterface derivedTable = registry.getDerivedTable(tableName);
+        if (derivedTable != null) {
+            return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+        } else {
+            throw new IllegalArgumentException("Unable to find derived table " + tableName + " in derived table registry");
+        }
+    }
+
+    private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
+        if (AbstractHelper.isContain(recovery.getProcessedObject(), tableName)) {
+            log.debug("Skip already exported table: " + tableName);
+        } else {
+            Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
+            try {
+                Files.deleteIfExists(tableCsvPath);
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
+            }
+            long startTableExportTime = System.currentTimeMillis();
+            Long exported = exportPerformer.get();
+            log.debug("Exported - {}, from {} to {} in {} secs", exported, tableName, tableCsvPath, (System.currentTimeMillis() - startTableExportTime)/1000);
+
+            if (StringUtils.isBlank(recovery.getProcessedObject())) {
+                recovery.setProcessedObject(tableName);
+            } else {
+                recovery.setProcessedObject(recovery.getProcessedObject() + "," + tableName);
+            }
+            shardRecoveryDao.updateShardRecovery(databaseManager.getDataSource(), recovery);
+        }
     }
 
     /**
@@ -595,12 +669,20 @@ public class ShardEngineImpl implements ShardEngine {
      * @param finalStepState final state
      */
     private void updateToFinalStepState(Connection connection, ShardRecovery recovery, MigrateState finalStepState) {
-        recovery.setState(finalStepState);
+       resetShardRecovery(recovery, finalStepState);
+        shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
+    }
+    private void updateToFinalStepState(ShardRecovery recovery, MigrateState finalStepState) {
+        resetShardRecovery(recovery, finalStepState);
+        shardRecoveryDao.updateShardRecovery(databaseManager.getDataSource(), recovery); // update info for next step
+    }
+
+    private void resetShardRecovery(ShardRecovery recovery, MigrateState migrateState) {
+        recovery.setState(migrateState);
         recovery.setObjectName(null); // remove currently processed table
         recovery.setColumnName(null); // main column used for pagination on data in table
         recovery.setLastColumnValue(null); // latest processed column value
         recovery.setProcessedObject(null); // list of previously processed table names within one step
-        shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
     }
 
     /**

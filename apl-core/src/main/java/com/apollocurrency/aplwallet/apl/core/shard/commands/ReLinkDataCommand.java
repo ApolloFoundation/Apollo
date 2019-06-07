@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
@@ -34,14 +35,14 @@ public class ReLinkDataCommand implements DataMigrateOperation {
                              int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, Set<Long> dbIdsExclusionList) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        this.commitBatchSize = commitBatchSize <= 0 ? DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
+        this.commitBatchSize = commitBatchSize <= 0 ? ShardConstants.DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
         this.dbIdsExclusionList = dbIdsExclusionList == null ? Collections.emptySet() : dbIdsExclusionList;
         this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
     }
 
     public ReLinkDataCommand(ShardEngine shardEngine,
                              int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(shardEngine,  null, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
+        this(shardEngine,  null, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
         //TODO move it to another class
 /*
         tableNameList.add(TRANSACTION_TABLE_NAME);

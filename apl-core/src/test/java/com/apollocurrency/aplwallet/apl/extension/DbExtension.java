@@ -119,7 +119,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     private void initFtl() {
-
         ftl.init();
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManger(), (con) -> {
             try {

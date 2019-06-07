@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import java.nio.file.Path;
-
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+
+import java.nio.file.Path;
+import java.util.Collection;
 
 /**
  * Component's interface for exporting table data from one Db into CSV
@@ -43,5 +44,16 @@ public interface CsvExporter {
      * @return exported quantity
      */
     long exportShardTable(int targetHeight, int batchLimit);
+
+    long exportTransactionIndex(int targetHeight, int batchLimit);
+
+    long exportBlockIndex(int targetHeight, int batchLimit);
+
+    /**
+     * Export transactions specified by db_id list and return number of exported transactions
+     * @param dbIds collection of transaction db_ids
+     * @return number of exported transactions
+     */
+    long exportTransactions(Collection<Long> dbIds);
 
 }

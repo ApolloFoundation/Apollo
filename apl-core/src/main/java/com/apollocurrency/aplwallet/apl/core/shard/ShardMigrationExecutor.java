@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.DEFAULT_COMMIT_BATCH_SIZE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
@@ -108,7 +107,7 @@ public class ShardMigrationExecutor {
         this.addOperation(zipArchiveCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
-                new DeleteCopiedDataCommand(shardEngine, DEFAULT_COMMIT_BATCH_SIZE, height, dbIds);
+                new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, dbIds);
         this.addOperation(deleteCopiedDataCommand);
 
         byte[] hash = calculateHash(height);

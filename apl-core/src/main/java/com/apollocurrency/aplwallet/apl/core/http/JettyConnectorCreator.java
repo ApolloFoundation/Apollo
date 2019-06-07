@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -32,8 +32,8 @@ public class JettyConnectorCreator {
     private final String keyStorePassword;
     
     @Inject
-    public JettyConnectorCreator(PropertiesHolder propertiesHolder) {
-        keyStorePath = Paths.get(AplCoreRuntime.getInstance().getUserHomeDir())
+    public JettyConnectorCreator(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
+        keyStorePath = Paths.get(dirProvider.getAppBaseDir().toString())
                             .resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath")))
                             .toString();
         keyStorePassword=propertiesHolder.getStringProperty("apl.keyStorePassword", null, true);

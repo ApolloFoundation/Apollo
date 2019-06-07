@@ -3,12 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Singleton;
-
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 
 /**
  * This is registry for tables that is used in TrimService for deleting old data from derived tables
@@ -25,6 +25,11 @@ public class DerivedDbTablesRegistryImpl implements DerivedTablesRegistry {
 
     public Collection<DerivedTableInterface> getDerivedTables() {
         return derivedTables.values();
+    }
+
+    @Override
+    public DerivedTableInterface getDerivedTable(String derivedTableName) {
+        return derivedTables.get(derivedTableName);
     }
 
     public DerivedDbTablesRegistryImpl() {

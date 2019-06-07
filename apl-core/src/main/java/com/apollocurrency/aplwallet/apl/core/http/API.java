@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -31,7 +30,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExcepti
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.io.File;
 
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -75,9 +76,9 @@ import org.jboss.weld.environment.servlet.Listener;
 @Singleton
 public final class API {
     private static final Logger LOG = getLogger(API.class);
-
-    // TODO: YL remove static instance later
-    private PropertiesHolder propertiesHolder;
+    public final static String WEB_UI_DIR="webui";
+    //TODO: remove statics after switch to RestEasy handlers
+    static PropertiesHolder propertiesHolder;
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
   
@@ -170,6 +171,17 @@ public final class API {
             isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
     
+    public static String findWebUiDir(){
+        String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
+        dir=dir+File.separator+"build";
+        File res = new File(dir);
+        if(!res.exists()){ //we are in develop IDE or tests
+            dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
+            res=new File(dir);
+        }
+        return res.getAbsolutePath();
+    }
+    
     public final void start() {
 
 
@@ -199,7 +211,7 @@ public final class API {
             HandlerList apiHandlers = new HandlerList();
 
             ServletContextHandler apiHandler = new ServletContextHandler();
-            String apiResourceBase = AplCoreRuntime.getInstance().findWebUiDir();
+            String apiResourceBase = findWebUiDir();
             if (apiResourceBase != null && !apiResourceBase.isEmpty()) {
                 ServletHolder defaultServletHolder = new ServletHolder(new DefaultServlet());
                 defaultServletHolder.setInitParameter("dirAllowed", "false");

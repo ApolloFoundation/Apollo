@@ -116,7 +116,8 @@ public class ApolloTools {
     private void readConfigs(int netIdx) {
         RuntimeEnvironment.getInstance().setMain(ApolloTools.class);
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(false, Constants.APPLICATION_DIR_NAME, netIdx);
+        ConfigDirProviderFactory.setup(false, Constants.APPLICATION_DIR_NAME, netIdx);
+        ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
@@ -132,7 +133,8 @@ public class ApolloTools {
         activeChain = ChainUtils.getActiveChain(chains);
         // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);
         dirLocations = merge(args, envVars);
-        dirProvider = DirProviderFactory.getProvider(false, activeChain.getChainId(), Constants.APPLICATION_DIR_NAME, dirLocations);
+        DirProviderFactory.setup(false, activeChain.getChainId(), Constants.APPLICATION_DIR_NAME, dirLocations);
+        dirProvider = DirProviderFactory.getProvider();
         toolsApp.propertiesHolder = new PropertiesHolder();
         toolsApp.propertiesHolder.init(propertiesLoader.load());
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
@@ -159,7 +161,8 @@ public class ApolloTools {
                     System.out.println("Chain not coonfigured: "+compactDb.chainID);
                     return PosixExitCodes.EX_CONFIG.exitCode();
                 }
-                dirProvider = DirProviderFactory.getProvider(false, blockchainId, Constants.APPLICATION_DIR_NAME, dirLocations);
+                DirProviderFactory.setup(false, blockchainId, Constants.APPLICATION_DIR_NAME, dirLocations);
+                dirProvider = DirProviderFactory.getProvider();
             } catch (IllegalArgumentException ex) {
                 System.err.println("Can not convert chain ID " + compactDb.chainID + " to UUID");
                 return PosixExitCodes.EX_CONFIG.exitCode();

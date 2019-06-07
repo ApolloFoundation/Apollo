@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,16 +17,17 @@ import javax.inject.Named;
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
-
+    private final DirProvider dirProvider;
     @Inject
-    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder) {
+    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
         this.propertiesHolder = propertiesHolder;
+        this.dirProvider=dirProvider;
     }
 
     @Produces
     @Named("keystoreDirPath")
     public Path getKeystoreDirFilePath() {
-        return AplCoreRuntime.getInstance().getVaultKeystoreDir().toAbsolutePath();
+        return dirProvider.getVaultKeystoreDir().toAbsolutePath();
     }
 
 

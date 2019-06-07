@@ -57,7 +57,6 @@ public class PhasingPollVoterTableTest extends ValuesDbTableTest<PhasingPollVote
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .build();
     @Inject
     PhasingPollVoterTable table;

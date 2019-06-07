@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
@@ -74,9 +75,11 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Set;
 import java.util.UUID;
 import javax.inject.Inject;
@@ -95,7 +98,6 @@ class CsvImporterTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
-    private DirProvider dirProvider = mock(DirProvider.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -118,6 +120,7 @@ class CsvImporterTest {
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -127,7 +130,7 @@ class CsvImporterTest {
     private ShardDaoJdbc daoJdbc;
     CsvImporter csvImporter;
 
-    private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard");
+    private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
 
     public CsvImporterTest() throws Exception {}
 
@@ -149,8 +152,7 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(fileLoader.getResourcePath());
-        csvImporter = new CsvImporterImpl(exportDirProducer, extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -159,8 +161,7 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         FileLoader fileLoader = new FileLoader();
-        ShardExportDirProducer exportDirProducer = new ShardExportDirProducer(fileLoader.getResourcePath());
-        csvImporter = new CsvImporterImpl(exportDirProducer, extension.getDatabaseManger());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
@@ -181,6 +182,85 @@ class CsvImporterTest {
             } catch (Exception e) {
                 log.error("Error", e);
             }
+        }
+    }
+
+    @Test
+    void testImportAccountControlPhasingCsvWithArrayOfLongs() throws Exception {
+        FileLoader fileLoader = new FileLoader();
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        long result = csvImporter.importCsv("account_control_phasing", 1, true);
+        assertEquals(4, result);
+        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+             Statement stmt = con.createStatement()) {
+            ResultSet countRs = stmt.executeQuery("select count(*) from account_control_phasing");
+            countRs.next();
+            assertEquals(4, countRs.getInt(1));
+            ResultSet allRs = stmt.executeQuery("select * from account_control_phasing");
+            while (allRs.next()) {
+                PhasingOnly phasingOnly = new PhasingOnly(allRs, null); // should not fail
+                long[] whitelist = phasingOnly.getPhasingParams().getWhitelist();
+                assertNotNull(whitelist);
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void testImportShufflingDataCsvWithArrayOfByteArrays() throws Exception {
+        FileLoader fileLoader = new FileLoader();
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        long result = csvImporter.importCsv("shuffling_data", 1, true);
+        assertEquals(2, result);
+        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+             Statement stmt = con.createStatement()) {
+            ResultSet countRs = stmt.executeQuery("select count(*) from shuffling_data");
+            countRs.next();
+            assertEquals(2, countRs.getInt(1));
+            ResultSet allRs = stmt.executeQuery("select * from shuffling_data");
+            while (allRs.next()) {
+                Array data = allRs.getArray("data");// should not fail
+                if (data != null) {
+                    Object[] array = (Object[]) data.getArray();
+                    for (int i = 0; i < array.length; i++) {
+                        byte[] bytes = (byte[]) array[i];
+                        assertNotNull(bytes);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void testImportGoodsCsvWithArrayOfStrings() throws Exception {
+        FileLoader fileLoader = new FileLoader();
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManger());
+        long result = csvImporter.importCsv("goods", 1, true);
+        assertEquals(14, result);
+        try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
+             Statement stmt = con.createStatement()) {
+            ResultSet countRs = stmt.executeQuery("select count(*) from goods");
+            countRs.next();
+            assertEquals(14, countRs.getInt(1));
+            ResultSet allRs = stmt.executeQuery("select * from goods");
+            while (allRs.next()) {
+                Array data = allRs.getArray("parsed_tags");// should not fail
+                assertNotNull(data);
+                Object[] array = (Object[]) data.getArray();
+                assertNotNull(array);
+                for (int i = 0; i < array.length; i++) {
+                    String tag = (String) array[i];
+                    assertNotNull(tag);
+                }
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

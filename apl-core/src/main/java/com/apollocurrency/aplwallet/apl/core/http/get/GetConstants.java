@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -160,7 +161,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("mintingHashAlgorithms", mintingHashFunctions);
 
                 JSONObject peerStates = new JSONObject();
-                for (Peer.State peerState : Peer.State.values()) {
+                for (PeerState peerState : PeerState.values()) {
                     peerStates.put(peerState.toString(), peerState.ordinal());
                 }
                 response.put("peerStates", peerStates);

@@ -47,11 +47,9 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -65,8 +63,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -80,9 +76,7 @@ import javax.inject.Inject;
 public class PhasingPollServiceTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
-    @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    DbExtension extension = new DbExtension();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -119,16 +113,6 @@ public class PhasingPollServiceTest {
     PhasingTestData ptd;
     TransactionTestData ttd;
     BlockTestData btd;
-
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
 
 
     @BeforeEach

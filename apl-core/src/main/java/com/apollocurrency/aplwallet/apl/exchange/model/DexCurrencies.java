@@ -26,4 +26,18 @@ public enum  DexCurrencies {
 
         return DexCurrencies.values()[ordinal];
     }
+
+    public boolean isEthOrPax(){
+        return this.equals(DexCurrencies.ETH)  || this.equals(DexCurrencies.PAX);
+    }
+
+    public boolean isApl(){
+        return this.equals(DexCurrencies.APL);
+    }
+    public boolean isEth(){
+        return this.equals(DexCurrencies.ETH);
+    }
+    public boolean isPax(){
+        return this.equals(DexCurrencies.PAX);
+    }
 }

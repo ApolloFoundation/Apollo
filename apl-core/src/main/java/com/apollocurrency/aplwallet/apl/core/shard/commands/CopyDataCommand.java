@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
@@ -38,9 +39,9 @@ public class CopyDataCommand implements DataMigrateOperation {
 
     public CopyDataCommand(ShardEngine shardEngine,
                            int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(shardEngine, DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
-        tableNameList.add(BLOCK_TABLE_NAME);
-        tableNameList.add(TRANSACTION_TABLE_NAME);
+        this(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
+        tableNameList.add(ShardConstants.BLOCK_TABLE_NAME);
+        tableNameList.add(ShardConstants.TRANSACTION_TABLE_NAME);
     }
 
     public CopyDataCommand(

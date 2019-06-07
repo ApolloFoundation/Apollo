@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -82,10 +81,10 @@ public class BlockDeleteHelper extends AbstractHelper {
                 if (rsmd == null) {
                     // it's called one time only
                     rsmd = rs.getMetaData();
-                    if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+                    if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
 //                        sqlInsertString.append("delete from BLOCK WHERE DB_ID >= ? AND DB_ID < ? LIMIT ?");
                         sqlInsertString.append("delete from BLOCK WHERE DB_ID = ?");
-                    } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+                    } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
                         sqlInsertString.append("delete from transaction WHERE db_id = ?");
                     }
                     // precompile sql
@@ -97,7 +96,7 @@ public class BlockDeleteHelper extends AbstractHelper {
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
                 rows++;
                 if (excludeRows // skip transaction db_id
-                        && TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) // only phased transactions
+                        && ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) // only phased transactions
                         && operationParams.dbIdsExclusionSet.get().contains(paginateResultWrapper.lowerBoundColumnValue)) {
                     log.trace("Skip excluded '{}' DB_ID = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
                     continue;
@@ -137,7 +136,7 @@ public class BlockDeleteHelper extends AbstractHelper {
     }
 
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {
-        if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging =
                     "select DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
@@ -145,7 +144,7 @@ public class BlockDeleteHelper extends AbstractHelper {
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);
-        } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             // TODO: YL review queries !!
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);

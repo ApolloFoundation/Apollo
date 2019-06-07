@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -36,8 +35,8 @@ public class DownloadableFilesManager {
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
     private String fileBaseDir="/home/at/testfiles";
     
-    public DownloadableFilesManager() {
-        DirProvider dirProvider = AplCoreRuntime.getInstance().getDirProvider();
+    @Inject
+    public DownloadableFilesManager(DirProvider dirProvider) {
         fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
     }
     

@@ -49,13 +49,13 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -122,6 +122,7 @@ class CsvWriterReaderDerivedTablesTest {
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
@@ -133,17 +134,20 @@ class CsvWriterReaderDerivedTablesTest {
             ReferencedTransactionDaoImpl.class,
             TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
             DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
+            DGSGoodsTable.class,
             DataTagDao.class,
             KeyFactoryProducer.class, FeeCalculator.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
+            DirProvider.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
+            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -197,7 +201,7 @@ class CsvWriterReaderDerivedTablesTest {
         assertNotNull(result);
         log.debug("Processing [{}] tables", result.size());
 //        assertEquals(12, result.size()); // the real number is higher then initial, it's OK !
-        int targetHeight = 8000;
+        int targetHeight = Integer.MAX_VALUE;
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
@@ -210,7 +214,7 @@ class CsvWriterReaderDerivedTablesTest {
             // prepare connection + statement + writer
             try (Connection con = extension.getDatabaseManger().getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?");
-                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, "DB_ID");
+                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
@@ -223,8 +227,13 @@ class CsvWriterReaderDerivedTablesTest {
                 // process non empty tables
                 if (minMaxDbId.getCount() > 0) {
                     do { // do exporting into csv with pagination
-                        processedCount = csvWriter.append(item.toString(),
-                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit), minMaxDbId );
+                        CsvExportData csvExportData = csvWriter.append(item.toString(),
+                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit));
+
+                        processedCount = csvExportData.getProcessCount();
+                        if (processedCount > 0) {
+                            minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
+                        }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
 
@@ -385,19 +394,13 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet(), null);
+            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet());
         });
 
-        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet(), null);
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet());
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
-        assertThrows(NullPointerException.class, () -> {
-            csvWriter.write(tableName + CSV_FILE_EXTENSION, null, null);
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            csvWriter.write(tableName, new SimpleResultSet(), null);
-        });
+        assertThrows(NullPointerException.class, () -> csvWriter.write(tableName + CSV_FILE_EXTENSION, null));
     }
 }

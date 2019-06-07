@@ -262,9 +262,9 @@ public final class PeerServlet extends WebSocketServlet {
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 
-            if (peer.getState() == Peer.State.DISCONNECTED) {
-                peer.setState(Peer.State.CONNECTED);
-            }
+//            if (peer.getState() == PeerState.DISCONNECTED) {
+//                peer.setState(PeerState.CONNECTED);
+//            }
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());

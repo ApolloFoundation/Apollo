@@ -7,6 +7,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public interface NetworkService {
      * @param services filter peers by services mask
      * @return The peers list or empty list if there aren't suitable by requirements peers.
      */
-    List<Peer> getPeersByStateAndService(boolean active, Peer.State state, long services);
+    List<Peer> getPeersByStateAndService(boolean active, PeerState state, long services);
 
     /**
      * Returns a list of inbound peers.

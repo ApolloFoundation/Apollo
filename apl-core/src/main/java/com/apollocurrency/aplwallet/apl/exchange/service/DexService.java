@@ -39,15 +39,13 @@ public class DexService {
     private EthereumWalletService ethereumWalletService;
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
-    private EpochTime epochTime;
     private TransactionProcessorImpl transactionProcessor;
 
 
     @Inject
-    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, EpochTime epochTime, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
+    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
-        this.epochTime = epochTime;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
     }
@@ -123,7 +121,7 @@ public class DexService {
 
     public void refundFrozenMoney(DexOffer offer){
         //Return APL.
-        if(shouldFreezeAPL(offer.getType().ordinal(), offer.getOfferCurrency().ordinal())) {
+        if(offer.getType().isSell()) {
             Account account = Account.getAccount(offer.getAccountId());
             account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
         }
@@ -132,13 +130,6 @@ public class DexService {
         //TODO
     }
 
-
-    public boolean shouldFreezeAPL(int offerType, int dexCurrencies){
-        if (OfferType.SELL.ordinal() == offerType && DexCurrencies.APL.ordinal() == dexCurrencies) {
-            return true;
-        }
-        return false;
-    }
 
     /**
      * @param cancelTrId  can be null if we just want to check are there any unconfirmed transactions for this order.

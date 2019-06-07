@@ -208,7 +208,7 @@
                     </execution>                    
                 </executions>
             </plugin>
-             
+  <!-- calculate SHA-256 sums -->         
             <plugin>
                 <groupId>net.nicoulaj.maven.plugins</groupId>
                 <artifactId>checksum-maven-plugin</artifactId>

@@ -180,7 +180,6 @@ public class UPnP {
      * Initialize the UPnP support
      */
     public void init() {
-        AppStatus.getInstance().update("UPnP initialization...");
         //
         // Discover the gateway devices on the local network
         //
@@ -210,6 +209,5 @@ public class UPnP {
         } catch (IOException | ParserConfigurationException | SAXException exc) {
             LOG.error("Unable to discover UPnP gateway devices: " + exc.toString());
         }
-        AppStatus.getInstance().update("UPnP initialization done.");
     }
 }

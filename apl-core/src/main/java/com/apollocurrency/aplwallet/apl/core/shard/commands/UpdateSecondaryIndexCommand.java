@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
@@ -33,16 +34,16 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
                                        int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, Set<Long> dbIdsExlusionList) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        this.commitBatchSize = commitBatchSize <= 0 ? DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
+        this.commitBatchSize = commitBatchSize <= 0 ? ShardConstants.DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
         this.dbIdsExclusionList = dbIdsExlusionList == null ? Collections.emptySet() : dbIdsExlusionList;
         this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
     }
 
     public UpdateSecondaryIndexCommand(ShardEngine shardEngine,
                                        int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(shardEngine,  DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
-        tableNameList.add(BLOCK_INDEX_TABLE_NAME);
-        tableNameList.add(TRANSACTION_SHARD_INDEX_TABLE_NAME);
+        this(shardEngine,  ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
+        tableNameList.add(ShardConstants.BLOCK_INDEX_TABLE_NAME);
+        tableNameList.add(ShardConstants.TRANSACTION_INDEX_TABLE_NAME);
     }
 
     public UpdateSecondaryIndexCommand(

@@ -49,27 +49,25 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.FileDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AppStatus;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.h2.jdbc.JdbcSQLException;
 import org.slf4j.Logger;
 
-import java.net.URI;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import lombok.Setter;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -79,8 +77,8 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(EpochTime.class).get();
-    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private Time time;
+   
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
@@ -88,33 +86,37 @@ public final class AplCore {
     private static BlockchainConfig blockchainConfig;
     private API apiServer;
     
+    @Inject @Setter    
+    private PropertiesHolder propertiesHolder;
+    @Inject @Setter
+    private DirProvider dirProvider;    
+    @Inject  @Setter
+    private AplAppStatus aplAppStatus;
+    private String initCoreTaskID;
+    
     public AplCore() {
+        time = CDI.current().select(EpochTime.class).get();
     }
 
     public static boolean isShutdown() {
         return shutdown;
     }
 
-
-    public static int getEpochTime() { // left for awhile
-        return time.getEpochTime();
-    }
-
     public void init() {
 
-        System.out.printf("Runtime mode %s\n", AplCoreRuntime.getInstance().getRuntimeMode().getClass().getName());
         LOG = getLogger(AplCore.class);
-        LOG.debug("User home folder '{}'", AplCoreRuntime.getInstance().getDirProvider().getAppBaseDir());
+        LOG.debug("Application home folder '{}'", dirProvider.getAppBaseDir());
 //TODO: Do we really need this check?        
 //        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
 //            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
 //        }
+        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init", "Apollo core initialization task",true);
         startUp();
     }
 
     public void shutdown() {
-        LOG.info("Shutting down...");
+        LOG.info("Shutting down...");        
         AddOns.shutdown();
         apiServer.shutdown();
         FundingMonitor.shutdown();
@@ -133,10 +135,6 @@ public final class AplCore {
         }
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         AplCore.shutdown = true;
-    }
-
-    private static void setServerStatus(ServerStatus status, URI wallet) {
-        AplCoreRuntime.getInstance().setServerStatus(status, wallet);
     }
 
     private static volatile boolean initialized = false;
@@ -159,35 +157,44 @@ public final class AplCore {
                 if(enableAPIUPnP || enablePeerUPnP){
                     UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout",3000);
                     UPnP upnp = CDI.current().select(UPnP.class).get();
+                    String upnpTid=aplAppStatus.durableTaskStart("UPnP init", "Tryin to get UPnP router",false);
+                    upnp.init();
+                    aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
                 }                
-
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  1.0, "API initialization");
+                        
                 //try to start API as early as possible
                 apiServer = CDI.current().select(API.class).get();
                 apiServer.start();
+
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.0, "API initialization done");
+
 
 //                CDI.current().select(NtpTime.class).get().start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
-                AppStatus.getInstance().update("Database initialization...");
-                setServerStatus(ServerStatus.BEFORE_DATABASE, null);
-
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  6.0, "Database initialization");
+                
 //                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 databaseManager.getDataSource();
                 CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
                 fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
                 fullTextSearchService.init(); // first time BEFORE migration
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  30.0, "Database initialization done");
+                aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.1, "Apollo Data migration started");
 
                 ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
                 migrationManager.executeDataMigration();
                 BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
                 blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
+                
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.0, "Apollo Data migration done");
 
                 databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
 
-                setServerStatus(ServerStatus.AFTER_DATABASE, null);
-
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.1, "Apollo core cleaases initialization");
 
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
@@ -201,7 +208,7 @@ public final class AplCore {
                 Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
-                AppStatus.getInstance().update("Account ledger initialization...");
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
                 AccountLedger.init(databaseManager);
                 Alias.init();
                 Asset.init();
@@ -225,19 +232,27 @@ public final class AplCore {
                 Shuffling.init();
                 ShufflingParticipant.init();
                 PrunableMessage.init();
-//                TaggedData.init();
-                AppStatus.getInstance().update("Peer server initialization...");
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");
                 Peers.init();
-                AppStatus.getInstance().update("API Proxy initialization...");
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();
-                AppStatus.getInstance().update("API initialization...");
                 Helper2FA.init(databaseManager);
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  70.1, "Apollo core classes initialization done");
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
-                ThreadPool.scheduleThread("Active connections logger", () -> LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections()), 15, TimeUnit.SECONDS);
+                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean", 
+                   new Runnable() {
+                      @Override
+                      public void run() {
+                        LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
+                        aplAppStatus.clearFinished(10*60L); //10 min
+                      }
+                   },
+                   20,
+                   TimeUnit.SECONDS);
                 ThreadPool.start();
 
                 try {
@@ -248,8 +263,7 @@ public final class AplCore {
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";
-                LOG.info(message);
-                AppStatus.getInstance().update(message);
+                aplAppStatus.durableTaskUpdate(initCoreTaskID, 100.0, message);
                 LOG.info("Copyright © 2013-2016 The NXT Core Developers.");
                 LOG.info("Copyright © 2016-2017 Jelurida IP B.V..");
                 LOG.info("Copyright © 2017-2019 Apollo Foundation.");
@@ -257,19 +271,15 @@ public final class AplCore {
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
-                setServerStatus(ServerStatus.STARTED, API.getWelcomePageUri());
-                //File download debug
-//                FileDownloader fdl = new FileDownloader("testFile");
-//                fdl.prepareForDownloading();
-//                fdl.download();
+                aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore inited successfully");
             }
             catch (final RuntimeException e) {
-                if (e.getMessage() == null || (!e.getMessage().contains(JdbcSQLException.class.getName()) && !e.getMessage().contains(SQLException.class.getName()))) {
+                if (e.getMessage() == null || !e.getMessage().contains(SQLException.class.getName())) {
                     Throwable exception = e;
                     while (exception.getCause() != null) { //get root cause of RuntimeException
                         exception = exception.getCause();
                     }
-                    if (exception.getClass() != JdbcSQLException.class && exception.getClass() != SQLException.class) {
+                    if (exception.getClass() != SQLException.class) {
                         throw e; //re-throw non-db exception
                     }
                 }
@@ -278,9 +288,8 @@ public final class AplCore {
                 // AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
             }
             catch (Exception e) {
+                aplAppStatus.durableTaskFinished(initCoreTaskID, true, "AplCore init failed");
                 LOG.error(e.getMessage(), e);
-                AppStatus.getInstance().alert(e.getMessage() + "\n" +
-                        "See additional information in log files");
                 System.exit(1);
             }
         }
@@ -289,7 +298,6 @@ public final class AplCore {
             for (Integer port : ports) {
                 if (!RuntimeParams.isTcpPortAvailable(port)) {
                     String portErrorMessage = "Port " + port + " is already in use. Please, shutdown all Apollo processes and restart application!";
-                    AppStatus.getInstance().error("ERROR!!! " + portErrorMessage);
                     throw new RuntimeException(portErrorMessage);
                 }
             }

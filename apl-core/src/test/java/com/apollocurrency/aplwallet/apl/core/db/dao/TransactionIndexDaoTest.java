@@ -69,13 +69,13 @@ public class TransactionIndexDaoTest {
     }
 
     @Test
-    void testGetCountByBlockId() {
-        long count = dao.countTransactionIndexByBlockId(IndexTestData.BLOCK_INDEX_0.getBlockId());
+    void testGetCountByBlockHeight() {
+        long count = dao.countTransactionIndexByBlockHeight(IndexTestData.BLOCK_INDEX_0.getBlockHeight());
         assertEquals(1L, count);
     }
     @Test
     void testGetCountByUnknownBlockId() {
-        long count = dao.countTransactionIndexByBlockId(IndexTestData.NOT_SAVED_BLOCK_INDEX.getBlockId());
+        long count = dao.countTransactionIndexByBlockHeight(IndexTestData.NOT_SAVED_BLOCK_INDEX.getBlockHeight());
         assertEquals(0L, count);
     }
 
@@ -90,7 +90,7 @@ public class TransactionIndexDaoTest {
     void testDelete() {
         int deleteCount = dao.hardDeleteTransactionIndex(IndexTestData.TRANSACTION_INDEX_0);
         Assertions.assertEquals(1, deleteCount);
-        long actualCount = dao.countTransactionIndexByBlockId(IndexTestData.TRANSACTION_INDEX_0.getTransactionId());
+        long actualCount = dao.countTransactionIndexByBlockHeight(IndexTestData.TRANSACTION_INDEX_0.getHeight());
         Assertions.assertEquals(0, actualCount);
     }
 
@@ -102,7 +102,7 @@ public class TransactionIndexDaoTest {
         Long shardId = dao.getShardIdByTransactionId(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1.getTransactionId());
         assertNull(shardId);
 
-        List<TransactionIndex> result = dao.getByBlockId(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1.getTransactionId(), 10);
+        List<TransactionIndex> result = dao.getByBlockHeight(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1.getHeight(), 10);
         assertNotNull(result);
         assertEquals(0, result.size());
     }
@@ -111,25 +111,26 @@ public class TransactionIndexDaoTest {
     void testGetShardIdByTransactionId() {
         Long shardId = dao.getShardIdByTransactionId(IndexTestData.TRANSACTION_INDEX_1.getTransactionId());
         assertNotNull(shardId);
-        assertEquals(IndexTestData.BLOCK_INDEX_1.getShardId(), shardId);
+        assertEquals(1, shardId);
     }
     @Test
     void testInsert() {
         dao.saveTransactionIndex(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0);
         dao.saveTransactionIndex(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1);
-        List<TransactionIndex> result = dao.getByBlockId(IndexTestData.BLOCK_INDEX_2.getBlockId(), 10);
+        List<TransactionIndex> result = dao.getByBlockHeight(IndexTestData.BLOCK_INDEX_2.getBlockHeight(), 10);
         assertNotNull(result);
         List<TransactionIndex> expectedByBlockid = Arrays.asList(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0, IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1);
         assertEquals(2, result.size());
         Assertions.assertEquals(expectedByBlockid, result);
         List<TransactionIndex> all = dao.getAllTransactionIndex();
         List<TransactionIndex> expectedAll = Arrays.asList(
-                IndexTestData.TRANSACTION_INDEX_0,
                 IndexTestData.TRANSACTION_INDEX_1,
                 IndexTestData.TRANSACTION_INDEX_2,
                 IndexTestData.TRANSACTION_INDEX_3,
                 IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0,
-                IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1);
+                IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1,
+                IndexTestData.TRANSACTION_INDEX_0
+                );
         Assertions.assertEquals(6, all.size());
         Assertions.assertEquals(expectedAll, all);
     }
@@ -137,13 +138,13 @@ public class TransactionIndexDaoTest {
     @Test
     void testUpdateBlockIndex() {
         TransactionIndex copy = IndexTestData.TRANSACTION_INDEX_3.copy();
-        copy.setBlockId(2L);
+        copy.setHeight(2);
         int updateCount = dao.updateBlockIndex(copy);
         Assertions.assertEquals(1, updateCount);
         TransactionIndex found = dao.getByTransactionId(IndexTestData.TRANSACTION_INDEX_3.getTransactionId());
         assertNotNull(found);
         Assertions.assertEquals(copy, found);
-        List<TransactionIndex> expected = Arrays.asList(IndexTestData.TRANSACTION_INDEX_0, IndexTestData.TRANSACTION_INDEX_1, IndexTestData.TRANSACTION_INDEX_2, copy);
+        List<TransactionIndex> expected = Arrays.asList(IndexTestData.TRANSACTION_INDEX_1, IndexTestData.TRANSACTION_INDEX_2, copy, IndexTestData.TRANSACTION_INDEX_0);
         List<TransactionIndex> all = dao.getAllTransactionIndex();
         Assertions.assertEquals(expected.size(), all.size());
         Assertions.assertEquals(expected, all);
@@ -168,4 +169,29 @@ public class TransactionIndexDaoTest {
         Integer height = dao.getTransactionHeightByTransactionId(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0.getTransactionId());
         Assertions.assertNull(height);
     }
+
+    @Test
+    void testCountTransactionIndexesByShardId() {
+
+
+        long count = dao.countTransactionIndexByShardId(1L);
+
+        assertEquals(3, count);
+
+        count = dao.countTransactionIndexByShardId(2L);
+
+        assertEquals(0, count);
+
+        count = dao.countTransactionIndexByShardId(3L);
+
+        assertEquals(1, count);
+    }
+
+    @Test
+    void testCountTransactionIndexesyShardIdWhichNotExist() {
+        long count = dao.countTransactionIndexByShardId(Long.MAX_VALUE);
+
+        assertEquals(0, count);
+    }
+
 }
