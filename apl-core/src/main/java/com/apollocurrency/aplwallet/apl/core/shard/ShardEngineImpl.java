@@ -233,24 +233,19 @@ public class ShardEngineImpl implements ShardEngine {
                 }
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                if (paginationOperationHelper.isPresent()) {
+                BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
                     Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
                             targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
 
-                    BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
-                    batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
+                paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao);// mandatory
 
-                    long totalCount = batchedPaginationOperation.processOperation(
+                    long totalCount = paginationOperationHelper.processOperation(
                             sourceConnect, targetConnect, operationParams);
                     targetDataSource.commit(false);
                     log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
-                    batchedPaginationOperation.reset();
-                } else {
-                    log.warn("NO processing HELPER class for table '{}'", tableName);
-                }
+                    paginationOperationHelper.reset();
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
             }
             state = DATA_COPY_TO_SHARD_FINISHED;
@@ -378,11 +373,11 @@ public class ShardEngineImpl implements ShardEngine {
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
+                BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
+                if (createdShardId.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
                 } else {
-                    log.warn("NO processing HELPER class for table '{}'", tableName);
+                    log.warn("NO created shardId");
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, SECONDARY_INDEX_STARTED);
             }
@@ -562,9 +557,9 @@ public class ShardEngineImpl implements ShardEngine {
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
-                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
+                BatchedPaginationOperation paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
+                if (createdShardId.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }

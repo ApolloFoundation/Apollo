@@ -68,8 +68,8 @@ public class ShardHashCalculatorImplTest {
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
-                    MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class),
-                    MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class),
+                    MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
+                    MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
                     MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
                     MockBean.of(mock(NtpTime.class), NtpTime.class)

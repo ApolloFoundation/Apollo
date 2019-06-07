@@ -50,8 +50,8 @@ public class DGSServiceSearchTest {
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))

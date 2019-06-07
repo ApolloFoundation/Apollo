@@ -46,7 +46,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     public abstract DerivedDbTable<T> getDerivedDbTable();
 
     public DatabaseManager getDatabaseManager() {
-        return extension.getDatabaseManger();
+        return extension.getDatabaseManager();
     }
 
     @Test

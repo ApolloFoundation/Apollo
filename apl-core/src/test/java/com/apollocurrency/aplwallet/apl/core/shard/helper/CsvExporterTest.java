@@ -122,7 +122,7 @@ class CsvExporterTest {
 
     private NtpTime time = mock(NtpTime.class);
 //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
-//    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManger(),
+//    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManager(),
 //        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
 //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
@@ -173,8 +173,8 @@ class CsvExporterTest {
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
@@ -225,7 +225,7 @@ class CsvExporterTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManger(), propertiesHolder, null, null, blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable);
         AccountInfoTable.getInstance().init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
@@ -236,7 +236,7 @@ class CsvExporterTest {
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         dataExportPath = createPath("csvExportDir");
-        csvExporter = new CsvExporterImpl(extension.getDatabaseManger(), dataExportPath, shardDaoJdbc);
+        csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath, shardDaoJdbc);
     }
 
     @Test

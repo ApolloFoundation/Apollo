@@ -128,8 +128,8 @@ class ShardMigrationExecutorTest {
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class,
             AplAppStatus.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(dataExportDir)
@@ -175,7 +175,7 @@ class ShardMigrationExecutorTest {
 
     @AfterEach
     void tearDown() {
-        extension.getDatabaseManger().shutdown();
+        extension.getDatabaseManager().shutdown();
     }
 
     @Test
@@ -186,7 +186,7 @@ class ShardMigrationExecutorTest {
 
             // prepare an save Recovery + new Shard info
             ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
-            recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
+            recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
             Shard newShard = new Shard(snapshotBlockHeight);
             shardDao.saveShard(newShard);
 
@@ -225,10 +225,10 @@ class ShardMigrationExecutorTest {
             assertEquals(DATA_COPY_TO_SHARD_FINISHED, state);
 
             // check after COPY
-            TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
             assertEquals(8, count); // blocks in shard db
-            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
             assertEquals(7, count);// transactions in shard db
 
@@ -282,11 +282,11 @@ class ShardMigrationExecutorTest {
             count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
             assertEquals(10, count); // total transactions left in main db
 
-            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
             assertEquals(8, count); // blocks in shard
 
-            shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+            shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
             assertEquals(7, count); // transactions in shard
 

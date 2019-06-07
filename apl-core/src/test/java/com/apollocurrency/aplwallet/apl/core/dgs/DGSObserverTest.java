@@ -77,8 +77,8 @@ public class DGSObserverTest {
             DGSObserver.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
 //            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
@@ -108,7 +108,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEvent() {
-        Account.init(extension.getDatabaseManger(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable);
         Block lastBlock = mock(Block.class);
         Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline()).when(prevBlock).getTimestamp();
@@ -134,7 +134,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEventOnBlockWithZeroHeight() {
-        Account.init(extension.getDatabaseManger(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable);
         DbUtils.inTransaction(extension, (con)-> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(mock(Block.class));
         });

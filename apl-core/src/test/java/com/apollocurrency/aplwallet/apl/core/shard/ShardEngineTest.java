@@ -20,12 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -122,7 +117,7 @@ class ShardEngineTest {
     private DirProvider dirProvider = mock(DirProvider.class);
     private ShardDaoJdbc shardDaoJdbc = new ShardDaoJdbcImpl();
 
-    private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManger(), dataExportDirPath, shardDaoJdbc));
+    private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, shardDaoJdbc));
         {
             dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir") {});
         }
@@ -140,8 +135,8 @@ class ShardEngineTest {
             DerivedTablesRegistry.class,
             ShardEngineImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
@@ -246,7 +241,7 @@ class ShardEngineTest {
 
         // prepare and save Recovery + new Shard info
         ShardRecovery recovery = new ShardRecovery(state);
-        recoveryDao.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
+        recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         byte[] shardHash = "000000000".getBytes();
         Shard newShard = new Shard(shardHash, snapshotBlockHeight);
         shardDao.saveShard(newShard);
@@ -282,10 +277,10 @@ class ShardEngineTest {
 //        assertEquals(MigrateState.FAILED, state);
 
         // check after COPY
-        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(8, count); // blocks in shard db
-        shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(7, count);// transactions in shard db
 
@@ -367,11 +362,11 @@ class ShardEngineTest {
         count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(10, count); // total transactions left in main db
 
-        shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(8, count); // blocks in shard
 
-        shardDataSource = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(4L);
+        shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(7, count); // transactions in shard
 
@@ -409,7 +404,7 @@ class ShardEngineTest {
         verify(csvExporter, never()).exportBlockIndex(snaphotBlockHeight, batchLimit);
         verify(csvExporter, never()).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
         verify(csvExporter, never()).exportDerivedTable(phasingPollTable, snaphotBlockHeight, batchLimit);
-        ShardRecovery latestShardRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManger().getDataSource());
+        ShardRecovery latestShardRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(String.join(",",SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME), latestShardRecovery.getProcessedObject());
     }
 
@@ -420,12 +415,13 @@ class ShardEngineTest {
         int snaphotBlockHeight = btd.BLOCK_10.getHeight();
         int batchLimit = 1;
         DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
-        shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManger().getDataSource(), new ShardRecovery(MigrateState.CSV_EXPORT_STARTED, null, null, null, "block,transaction_shard_index,shard"));
+        shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.CSV_EXPORT_STARTED, null, null, null, "block,transaction_shard_index,shard"));
         List<String> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, PHASING_POLL_TABLE_NAME);
         CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of(ttd.DB_ID_3, ttd.DB_ID_5));
         Path transactionPath = dataExportDirPath.resolve("transaction.csv");
         Files.createFile(transactionPath);
         Files.write(transactionPath, List.of("Str-0", "Str-1", "Str-2", "Str-3", "Str-4", "Str-5", "Str-6"));
+
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
@@ -433,14 +429,64 @@ class ShardEngineTest {
         assertFalse(Files.exists(dataExportDirPath.resolve("transaction_shard_index.csv")));
         assertFalse(Files.exists(dataExportDirPath.resolve("block.csv"))                  );
         assertFalse(Files.exists(dataExportDirPath.resolve("goods.csv")));
-
         assertEquals(3, Files.readAllLines(transactionPath)             .size());
         assertEquals(4, Files.readAllLines(dataExportDirPath.resolve("block_index.csv"))            .size());
         assertEquals(3, Files.readAllLines(dataExportDirPath.resolve("phasing_poll.csv"))            .size());
         verify(csvExporter, never()).exportBlock(snaphotBlockHeight);
         verify(csvExporter, never()).exportShardTable(snaphotBlockHeight, batchLimit);
         verify(csvExporter, never()).exportTransactionIndex(snaphotBlockHeight, batchLimit);
-        ShardRecovery latestShardRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManger().getDataSource());
+        ShardRecovery latestShardRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, latestShardRecovery.getState());
+    }
+
+    @Test
+    void testExportAlreadyExported() {
+        BlockTestData btd = new BlockTestData();
+        int snaphotBlockHeight = btd.BLOCK_10.getHeight();
+        int batchLimit = 1;
+        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.ZIP_ARCHIVE_STARTED, null, null, null, "block,transaction_shard_index,shard"));
+        List<String> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, PHASING_POLL_TABLE_NAME);
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of());
+
+        MigrateState state = shardEngine.exportCsv(paramInfo);
+
+        assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
+        verifyZeroInteractions(csvExporter);
+    }
+
+    @Test
+    void testExportTablesWhichAreNotPresentInDerivedTablesRegistry() {
+        BlockTestData btd = new BlockTestData();
+        int snaphotBlockHeight = btd.BLOCK_10.getHeight();
+        int batchLimit = 1;
+        List<String> tables = List.of("invalid_table");
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of());
+
+        MigrateState state = shardEngine.exportCsv(paramInfo);
+
+        assertEquals(MigrateState.FAILED, state);
+        verify(csvExporter, times(1)).getDataExportPath();
+        verifyNoMoreInteractions(csvExporter);
+    }
+
+    @Test
+    void testExportTablesWhenRecoveryInfoNotExist() {
+        BlockTestData btd = new BlockTestData();
+        int snaphotBlockHeight = btd.BLOCK_10.getHeight();
+        int batchLimit = 1;
+        List<String> tables = List.of("goods");
+        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of());
+
+        MigrateState state = shardEngine.exportCsv(paramInfo);
+
+        assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
+        verify(csvExporter, times(1)).getDataExportPath();
+        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
+        verifyNoMoreInteractions(csvExporter);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
+        assertEquals(2, recovery.getShardRecoveryId());
+        assertEquals(MigrateState.CSV_EXPORT_FINISHED, recovery.getState());
     }
 }

@@ -128,8 +128,8 @@ class DerivedDbTableListingTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
@@ -171,7 +171,7 @@ class DerivedDbTableListingTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManger(), propertiesHolder, null, null, blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable);
         AccountInfoTable.getInstance().init();
         Alias.init();
         AccountAssetTable.getInstance().init();
