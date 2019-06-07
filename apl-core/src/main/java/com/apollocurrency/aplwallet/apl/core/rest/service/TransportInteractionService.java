@@ -20,7 +20,18 @@ public interface TransportInteractionService {
        
     public TransportStatusResponse getTransportStatusResponse();  
     
+    /**
+     * Starting up with secure transport     
+     */
 
+    public void startSecureTransport();
+    
+    /**
+     * Stopping secure transport     
+     */
+
+    public void stopSecureTransport();
+        
     /** 
      * Start transport interaction service
      */

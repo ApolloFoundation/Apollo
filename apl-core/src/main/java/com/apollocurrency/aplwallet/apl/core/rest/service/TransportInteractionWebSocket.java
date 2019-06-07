@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
+import java.io.Serializable;
 
 import java.net.URI;
 import java.util.Random;
@@ -26,6 +27,7 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
+import lombok.Getter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,15 +48,31 @@ public class TransportInteractionWebSocket {
     private SecureTransportStatus secureTransportStatus;
     
     // status of the transport connection
-    enum SecureTransportStatus {
-        INITIAL, NOT_LAUNCHED, PENDING, CONNECTED, DISCONNECTED
+    public enum SecureTransportStatus implements Serializable {
+        INITIAL, NOT_LAUNCHED, PENDING, CONNECTED, DISCONNECTED;
+        
+        public String toString(){
+            switch(this) {
+                case INITIAL        : return "INITIAL";
+                case NOT_LAUNCHED   : return "NOT_LAUNCHED";
+                case PENDING        : return "PENDING";
+                case CONNECTED      : return "CONNECTED";
+                case DISCONNECTED   : return "DISCONNECTED";
+            };
+        return null;
+        }        
+        
     }
+        
     
-    
-    public String remoteip;    
-    public int remoteport;    
-    public String tunaddr;        
-    public String tunnetmask;  
+    @Getter
+    String remoteip;   
+    @Getter
+    int remoteport;    
+    @Getter
+    String tunaddr;
+    @Getter
+    String tunnetmask;  
     
     public TransportInteractionWebSocket(URI endpointURI) {
         
@@ -67,8 +85,6 @@ public class TransportInteractionWebSocket {
         } 
         
         secureTransportStatus = SecureTransportStatus.INITIAL;
-        
-        
     }
 
     /**
@@ -127,6 +143,11 @@ public class TransportInteractionWebSocket {
                         this.tunnetmask = transportStatusReply.tunnetmask;
                         log.debug("connected to: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask);
                         secureTransportStatus = SecureTransportStatus.CONNECTED;                        
+                    } else if (transportStatusReply.status.equals("INITIAL")) {
+                        // seems that we are dealing with service that have never been started.. Starting it up
+                        secureTransportStatus = SecureTransportStatus.NOT_LAUNCHED;
+                       
+                        
                     }
                     
                 } else if (type.equals("STARTREPLY")) {
@@ -150,17 +171,11 @@ public class TransportInteractionWebSocket {
                     secureTransportStatus = SecureTransportStatus.CONNECTED;                    
                 } else if (eventSpec.equals("DISCONNECT")) {
                     TransportEventDescriptor transportEventDescriptor = processData(TransportEventDescriptor.class, message, false);
-                    this.remoteip= "";
-                    this.remoteport = -1;
-                    this.tunaddr = "";
-                    this.tunnetmask = "";
+                    cleanupComParams();
                     log.debug("disconnected from: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask + ", reconnecting");
                     secureTransportStatus = SecureTransportStatus.DISCONNECTED;                    
                 }
-                
             }
-                    
-        
         } catch (IOException ex) {
             log.error("incoming message processing error: " + ex.toString());
         }
@@ -179,15 +194,27 @@ public class TransportInteractionWebSocket {
     
     /**
      * Checking out whether the connection is open
-     *
-     * 
      */
 
     public boolean isOpen() {  
-        return this.userSession != null;
-        
+        return this.userSession != null;        
+    }
+    
+    /**
+     * Resetting communication parameters
+     */
+    
+    private void cleanupComParams() {
+        this.remoteip= "";
+        this.remoteport = -1;
+        this.tunaddr = "";
+        this.tunnetmask = "";
     }
 
+
+    /**
+     * Inquiring status of connection from transport service
+     */
 
     private void getSecureTransportStatus( ) {
                 
@@ -200,12 +227,9 @@ public class TransportInteractionWebSocket {
         ObjectMapper mapper = new ObjectMapper();
                 
         try {
-            String stopRequestString = mapper.writeValueAsString(stopRequest);
-            // sendMessage(stopRequestString);            
-            log.debug("getting status: " + stopRequestString);
-            
-            sendMessage(stopRequestString);
-            
+            String stopRequestString = mapper.writeValueAsString(stopRequest);            
+            log.debug("getting status: " + stopRequestString);            
+            sendMessage(stopRequestString);            
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: Error while creating Getting Status request");                   
         } catch (IOException ex) {
@@ -214,7 +238,12 @@ public class TransportInteractionWebSocket {
         
     }
     
-    private void startSecureTransport() {
+    
+    /**
+     * Starting transport
+     */
+    
+    public void startSecureTransport() {
         // creating start package
         TransportStartRequest startRequest = new TransportStartRequest();
         startRequest.type = "STARTREQUEST";
@@ -238,12 +267,37 @@ public class TransportInteractionWebSocket {
         
     }
     
+    /**
+     * Stopping transport
+     */
+    public void stopSecureTransport() {
 
+        TransportStopRequest stopRequest = new TransportStopRequest();
+        stopRequest.type = "STOPREQUEST";
+        Random rand = new Random();
+        stopRequest.id = rand.nextInt(255);  
+        ObjectMapper mapper = new ObjectMapper();
+                
+        try {
+            String stopRequestString = mapper.writeValueAsString(stopRequest); 
+            sendMessage(stopRequestString);                
+        } catch (JsonProcessingException ex) {                    
+            log.error("TransportInteractionWebSocket: JSON Error while creating STOPREQUEST");                                                       
+        } catch (IOException ex) {                    
+            log.error("TransportInteractionWebSocket: IO Error while creating STOPREQUEST");                
+        }        
+        cleanupComParams();
+        secureTransportStatus = SecureTransportStatus.DISCONNECTED;
+    }
     
+    
+    /**
+     * State machine - tick engine
+     */
     void tick() {
-        log.debug("tick");
+        // log.debug("tick");
         if (isOpen()) {
-            log.debug("ws is connected, handling the situation according to the routine, status: " + secureTransportStatus );
+            // log.debug("ws is connected, handling the situation according to the routine, status: " + secureTransportStatus );
             
             switch (secureTransportStatus) {
                 case INITIAL: {
@@ -265,8 +319,25 @@ public class TransportInteractionWebSocket {
             log.debug("closed at the moment");
         }        
     }
+    
+    
+    
+    /**
+     * Starting transport
+     * @return status of connection as string 
+     */
+    String getRemoteConnectionStatus() {
+        return secureTransportStatus.toString();
+    }
 
-
+    
+    /**
+     * Template for JSON processing
+     * @param serviceClass - specification of the class to be handled
+     * @param inputData - JSON as string
+     * @param screening - whether JSON is screened or not
+     * @return T - instance of service class, provided as the 1-st argument of input 
+     */    
     private static <T> T processData(Class<T> serviceClass, String inputData, boolean screening) {
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         if (screening) mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);

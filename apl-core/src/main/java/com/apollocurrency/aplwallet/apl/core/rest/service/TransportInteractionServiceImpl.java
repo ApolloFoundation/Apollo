@@ -33,38 +33,36 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
     @Override
     public TransportStatusResponse getTransportStatusResponse() {
         TransportStatusResponse transportStatusResponse =  new TransportStatusResponse();        
-        log.debug("getTransportStatusResponse");
-        
-        // log.debug("isOpen: " + transportInteractionWebSocket.isOpen());
+        log.debug("getTransportStatusResponse");               
         boolean isOpen = transportInteractionWebSocket.isOpen();
-        log.debug("isOpen: " + isOpen );
-                
-        transportStatusResponse.connected = transportInteractionWebSocket.isOpen(); 
+        log.debug("isOpen: " + isOpen );                
+        transportStatusResponse.controlconnection = transportInteractionWebSocket.isOpen(); 
+        transportStatusResponse.remoteConnectionStatus = transportInteractionWebSocket.getRemoteConnectionStatus();
+        transportStatusResponse.remoteip = transportInteractionWebSocket.remoteip;
+        transportStatusResponse.remoteport = transportInteractionWebSocket.remoteport;
+        transportStatusResponse.tunaddr = transportInteractionWebSocket.tunaddr;
+        transportStatusResponse.tunnetmask = transportInteractionWebSocket.tunnetmask;        
         return transportStatusResponse;
     }
     
+    
+    
+    
     @Override
     public void start() {
-       
-                
         log.debug("Ingition point: "); 
          
          try {
             // open websocket            
-            transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));
-            
+            transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));            
             Runnable task = () -> {
-		// System.out.println("Hello, World!");
-                for(;;) {
-                    
+                for(;;) {                    
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
-                        java.util.logging.Logger.getLogger(TransportInteractionServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    
-                    transportInteractionWebSocket.tick();
-                    
+                        log.debug( ex.toString() );
+                    }                    
+                    transportInteractionWebSocket.tick();                    
                 }
                 
             };
@@ -76,5 +74,16 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
         }
         
     }
+
+    @Override
+    public void startSecureTransport() {
+        transportInteractionWebSocket.startSecureTransport();
+    }
+
+    @Override
+    public void stopSecureTransport() {
+        transportInteractionWebSocket.stopSecureTransport();
+    }
+
     
 }
