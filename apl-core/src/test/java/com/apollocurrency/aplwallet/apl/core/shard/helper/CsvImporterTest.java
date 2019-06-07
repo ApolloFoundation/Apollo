@@ -54,7 +54,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.testutil.FileLoader;
+import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -151,8 +151,8 @@ class CsvImporterTest {
 
     @Test
     void notFoundFile() throws Exception {
-        FileLoader fileLoader = new FileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager());
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -160,8 +160,8 @@ class CsvImporterTest {
 
     @Test
     void importCsv() throws Exception {
-        FileLoader fileLoader = new FileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager());
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
@@ -187,7 +187,7 @@ class CsvImporterTest {
 
     @Test
     void testImportAccountControlPhasingCsvWithArrayOfLongs() throws Exception {
-        FileLoader fileLoader = new FileLoader();
+        ResourceFileLoader fileLoader = new ResourceFileLoader();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
         long result = csvImporter.importCsv("account_control_phasing", 1, true);
         assertEquals(4, result);
@@ -210,7 +210,7 @@ class CsvImporterTest {
 
     @Test
     void testImportShufflingDataCsvWithArrayOfByteArrays() throws Exception {
-        FileLoader fileLoader = new FileLoader();
+        ResourceFileLoader fileLoader = new ResourceFileLoader();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
         long result = csvImporter.importCsv("shuffling_data", 1, true);
         assertEquals(2, result);
@@ -238,7 +238,7 @@ class CsvImporterTest {
 
     @Test
     void testImportGoodsCsvWithArrayOfStrings() throws Exception {
-        FileLoader fileLoader = new FileLoader();
+        ResourceFileLoader fileLoader = new ResourceFileLoader();
         csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
         long result = csvImporter.importCsv("goods", 1, true);
         assertEquals(14, result);

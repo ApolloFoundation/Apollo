@@ -8,22 +8,12 @@ import java.nio.file.Path;
 
 public class ShardExportDirProducer {
 
-    private Path unitTestPath; // TODO: replace by mock?
-
     public ShardExportDirProducer() {
-    }
-
-    public ShardExportDirProducer(Path unitTestPath) {
-        this.unitTestPath = unitTestPath;
     }
 
     @Produces
     @Named("dataExportDir")
     public Path getDataExportDir() {
-        if (unitTestPath == null) {
             return RuntimeEnvironment.getInstance().getDirProvider().getDataExportDir();
-        } else {
-            return unitTestPath;
-        }
     }
 }

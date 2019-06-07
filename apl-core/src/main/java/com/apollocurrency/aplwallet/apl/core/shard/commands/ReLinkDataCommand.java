@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * Update records in specified tables so they point to snapshot block in main db
  */
-@Deprecated
+@Deprecated //TODO class wil be deleted
 public class ReLinkDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(ReLinkDataCommand.class);
 
@@ -43,7 +43,6 @@ public class ReLinkDataCommand implements DataMigrateOperation {
     public ReLinkDataCommand(ShardEngine shardEngine,
                              int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
         this(shardEngine,  null, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
-        //TODO move it to another class
 /*
         tableNameList.add(TRANSACTION_TABLE_NAME);
         tableNameList.add(PUBLIC_KEY_TABLE_NAME);

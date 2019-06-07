@@ -49,7 +49,15 @@ public class CsvExporterImpl implements CsvExporter {
     public CsvExporterImpl(DatabaseManager databaseManager, @Named("dataExportDir") Path dataExportPath, ShardDaoJdbc shardDaoJdbc) {
         Objects.requireNonNull(dataExportPath, "exportDirProducer 'data Path' is NULL");
         this.dataExportPath = dataExportPath;
-//        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
+        try {
+            boolean folderExist = Files.exists(this.dataExportPath);
+            if (!folderExist) { // check and create dataExport folder
+                Files.createDirectory(this.dataExportPath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create data export directory", e);
+        }
+        //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.shardDaoJdbc = Objects.requireNonNull(shardDaoJdbc, "shardDaoJdbc is NULL");
         this.excludeTables = Set.of("genesis_public_key");
@@ -196,6 +204,7 @@ public class CsvExporterImpl implements CsvExporter {
                 log.debug("Skipped exporting Table = {}", ShardConstants.BLOCK_INDEX_TABLE_NAME);
             }
         } catch (Exception e) {
+            log.error("Error", e);
             throw new RuntimeException("Exporting exception " + ShardConstants.BLOCK_INDEX_TABLE_NAME, e);
         }
         return blockTotalCount;

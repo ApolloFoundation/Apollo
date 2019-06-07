@@ -98,19 +98,6 @@ class TaggedDataServiceTest {
     TransactionTestData ttd;
     BlockTestData btd;
 
-
-    TaggedDataServiceTest() throws IOException {}
-
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-
     @BeforeEach
     void setUp() throws Exception {
         ttd = new TransactionTestData();

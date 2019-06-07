@@ -18,11 +18,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 public interface ShardEngine {
 
     /**
-     * Downloading shard process in percent
+     * Downloading shard process in percent (field is not used now)
      */
     Long SHARD_PERCENTAGE_FULL = 100L;
-
-    DatabaseManager getDatabaseManager();
 
     MigrateState getCurrentState();
 
@@ -38,9 +36,10 @@ public interface ShardEngine {
      * Create either 'initial' shard db with tables only or full schema with all indexes/constrains/PK/FK
      *
      * @param dbVersion supplied schema name class
+     * @param shardHash optional for init schema, should be present for FULL schema. It's a shard data HASH
      * @return state enum - MigrateState.SHARD_SCHEMA_CREATED or MigrateState.SHARD_SCHEMA_FULL if success, MigrateState.FAILED otherwise
      */
-    MigrateState addOrCreateShard(DbVersion dbVersion);
+    MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash);
 
     /**
      * Copy block + transaction data excluding phased transaction into shard db
@@ -53,14 +52,44 @@ public interface ShardEngine {
 //    @Deprecated
 //    MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo);
 
+    /**
+     * BLOCK_INDEX and TRANSACTION_SHARD_INDEX tables are filled with necessary information in main db
+     * on that step
+     *
+     * @param paramInfo table name list, block height
+     * @return SECONDARY_INDEX_FINISHED or FAILED state
+     */
     MigrateState updateSecondaryIndex(CommandParamInfo paramInfo);
 
+    /**
+     * Trim and export all derived table list (+ more) into CSV
+     *
+     * @param paramInfo block height
+     * @return CSV_EXPORT_FINISHED or FAILED
+     */
     MigrateState exportCsv(CommandParamInfo paramInfo);
 
+    /**
+     * Archive all csv files into zip and compute CRC internally
+     *
+     * @param paramInfo empty, left for compatibility mostly
+     * @return ZIP_ARCHIVE_FINISHED or FAILED
+     */
     MigrateState archiveCsv(CommandParamInfo paramInfo);
 
+    /**
+     * Delete block + transaction data in main db after it was copied into shard db
+     *
+     * @param paramInfo table list
+     * @return DATA_REMOVED_FROM_MAIN or FAILED
+     */
     MigrateState deleteCopiedData(CommandParamInfo paramInfo);
 
-    MigrateState addShardInfo(CommandParamInfo paramInfo);
+    /**
+     * Remove recovery data, so the process is finished and ready for next time
+     * @param paramInfo empty, left for compatibility
+     * @return COMPLETED usually
+     */
+    MigrateState finishShardProcess(CommandParamInfo paramInfo);
 
 }

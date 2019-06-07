@@ -229,8 +229,8 @@ class CsvExporterTest {
         AccountInfoTable.getInstance().init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
-        PhasingOnly.get(2728325718715804811L); // error, doesn't load from db !!
-        PhasingOnly.get(-8446384352342482748L); // error, doesn't load from db !!
+        PhasingOnly.get(2728325718715804811L); // check 1
+        PhasingOnly.get(-8446384352342482748L); // check 2
         PhasingOnly.get(-4013722529644937202L); // works OK!
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
@@ -393,7 +393,7 @@ class CsvExporterTest {
             // get CSV meta data info
             ResultSetMetaData meta = rs.getMetaData();
             int columnsCount = meta.getColumnCount(); // columns count is main
-            StringBuffer columnNames = new StringBuffer(200);
+            StringBuilder columnNames = new StringBuilder(200);
 
             for (int i = 0; i < columnsCount; i++) {
                 columnNames.append(meta.getColumnLabel(i + 1)).append(",");

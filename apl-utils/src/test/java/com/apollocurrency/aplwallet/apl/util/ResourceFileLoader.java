@@ -1,16 +1,14 @@
-package com.apollocurrency.aplwallet.apl.testutil;
+package com.apollocurrency.aplwallet.apl.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
 
-public class FileLoader {
-    private static final Logger log = getLogger(FileLoader.class);
+public class ResourceFileLoader {
+    private static final Logger log = getLogger(ResourceFileLoader.class);
 
     public File getFile(String fileName){
         ClassLoader classLoader = getClass().getClassLoader();
@@ -26,7 +24,7 @@ public class FileLoader {
         ClassLoader classLoader = getClass().getClassLoader();
         // "logback-test.xml" should be present in resource folder, otherwise it fails
         File file = new File(classLoader.getResource("logback-test.xml").getFile()); // usually we have it there
-//        File file = new File("/media/ylarin/PHOTO/java_projects/Apollo/tmp/public_key.csv"); // usually we have it there
+//        File file = new File("/media/userXX/Apollo/apl-core/target/classes/public_key.csv"); // kind of direct path
         log.trace(file.getAbsolutePath());
         return new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator))).toPath();
     }

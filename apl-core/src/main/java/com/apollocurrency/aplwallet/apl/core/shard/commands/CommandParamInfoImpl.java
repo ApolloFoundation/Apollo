@@ -17,9 +17,9 @@ public class CommandParamInfoImpl implements CommandParamInfo {
     private List<String> tableNameList = Collections.emptyList(); // processed tables list
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private Integer snapshotBlockHeight = -1;
-    private byte[] shardHash;
+    private byte[] shardHash; // either 'merkle tree hash' or 'zip CRC'
     private Set<Long> dbIdExclusionSet; // 'phased transaction' db_id to be excluded from all processing (no copy, delete, export)
-    private byte[] zipCrcHash;
+    private boolean isZipCrcStored = false; // either ZIP or merkle tree hash
 
     public CommandParamInfoImpl() {
     }
@@ -52,9 +52,14 @@ public class CommandParamInfoImpl implements CommandParamInfo {
     }
 
     public CommandParamInfoImpl(byte[] shardHash, boolean isZipCrcHash) {
-        if (isZipCrcHash) {
-            this.zipCrcHash = shardHash;
+        this.isZipCrcStored = isZipCrcHash;
+        if (this.isZipCrcStored) {
+            this.shardHash = shardHash;
         }
+    }
+
+    public boolean isZipCrcStored() {
+        return isZipCrcStored;
     }
 
     public List<String> getTableNameList() {

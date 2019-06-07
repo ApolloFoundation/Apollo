@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -42,7 +43,8 @@ public interface ShardDao {
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc) " +
                         "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :zipHashCrc)")
     @RegisterRowMapper(ShardRowMapper.class)
-    int saveShard(@BindBean Shard shard);
+    @GetGeneratedKeys
+    long saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, zip_hash_crc =:zipHashCrc where shard_id =:shardId")

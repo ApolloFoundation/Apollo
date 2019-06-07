@@ -27,16 +27,35 @@ class ShardNameHelperTest {
 
         result = ShardNameHelper.getShardNameByShardId(0L);
         assertEquals("apl-blockchain-shard-0", result);
+    }
 
+    @Test
+    void getShardArchiveName() {
+        String result = ShardNameHelper.getShardArchiveNameByShardId(001L);
+        assertEquals("apl-blockchain-arch-1", result);
+
+        result = ShardNameHelper.getShardArchiveNameByShardId(2001L);
+        assertEquals("apl-blockchain-arch-2001", result);
+
+        result = ShardNameHelper.getShardArchiveNameByShardId(0L);
+        assertEquals("apl-blockchain-arch-0", result);
     }
 
     @Test
     void getShardNameIncorrectValue() {
+        // shard name
         assertThrows(RuntimeException.class, () ->
                 ShardNameHelper.getShardNameByShardId(null)
         );
         assertThrows(RuntimeException.class, () ->
                 ShardNameHelper.getShardNameByShardId(-100L)
+        );
+        // archive name
+        assertThrows(RuntimeException.class, () ->
+                ShardNameHelper.getShardArchiveNameByShardId(null)
+        );
+        assertThrows(RuntimeException.class, () ->
+                ShardNameHelper.getShardArchiveNameByShardId(-100L)
         );
     }
 }

@@ -85,8 +85,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
         Objects.requireNonNull(operationParams.tableName, "tableName is NULL");
         Objects.requireNonNull(operationParams.snapshotBlockHeight, "snapshotBlockHeight is NULL");
-        if (!operationParams.shardId.isPresent()) {
-            String error = "Error, Optional shardId is not present";
+        if (operationParams.shardId == null) {
+            String error = "Error, shardId is not present";
             log.error(error);
             throw new IllegalArgumentException(error);
         }
