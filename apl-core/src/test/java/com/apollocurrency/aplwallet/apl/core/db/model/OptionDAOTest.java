@@ -23,7 +23,7 @@ class OptionDAOTest {
 
     @BeforeAll
     static void init() {
-        optionDAO = new OptionDAO(dbExtension.getDatabaseManger());
+        optionDAO = new OptionDAO(dbExtension.getDatabaseManager());
     }
 
     @Test

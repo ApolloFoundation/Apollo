@@ -233,24 +233,19 @@ public class ShardEngineImpl implements ShardEngine {
                 }
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                if (paginationOperationHelper.isPresent()) {
+                BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
                     Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
                             targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
 
-                    BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
-                    batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
+                paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao);// mandatory
 
-                    long totalCount = batchedPaginationOperation.processOperation(
+                    long totalCount = paginationOperationHelper.processOperation(
                             sourceConnect, targetConnect, operationParams);
                     targetDataSource.commit(false);
                     log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
-                    batchedPaginationOperation.reset();
-                } else {
-                    log.warn("NO processing HELPER class for table '{}'", tableName);
-                }
+                    paginationOperationHelper.reset();
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
             }
             state = DATA_COPY_TO_SHARD_FINISHED;
@@ -378,11 +373,11 @@ public class ShardEngineImpl implements ShardEngine {
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
+                BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
+                if (createdShardId.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
                 } else {
-                    log.warn("NO processing HELPER class for table '{}'", tableName);
+                    log.warn("NO created shardId");
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, SECONDARY_INDEX_STARTED);
             }
@@ -419,28 +414,33 @@ public class ShardEngineImpl implements ShardEngine {
             // skip to next step
             return state = CSV_EXPORT_FINISHED;
         }
-
-        trimDerivedTables(paramInfo.getSnapshotBlockHeight());
-
-        for (String tableName : allTables) {
-            exportTableWithRecovery(recovery, tableName, () -> {
-                switch (tableName.toLowerCase()) {
-                    case ShardConstants.SHARD_TABLE_NAME:
-                        return csvExporter.exportShardTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case ShardConstants.BLOCK_INDEX_TABLE_NAME:
-                        return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
-                        return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                    case ShardConstants.TRANSACTION_TABLE_NAME:
-                        return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
-                    default:
-                        return exportDerivedTable(tableName, paramInfo);
-                }
-            });
+        try {
+            trimDerivedTables(paramInfo.getSnapshotBlockHeight());
+            for (String tableName : allTables) {
+                exportTableWithRecovery(recovery, tableName, () -> {
+                    switch (tableName.toLowerCase()) {
+                        case ShardConstants.SHARD_TABLE_NAME:
+                            return csvExporter.exportShardTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                        case ShardConstants.BLOCK_INDEX_TABLE_NAME:
+                            return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                        case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
+                            return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                        case ShardConstants.TRANSACTION_TABLE_NAME:
+                            return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
+                        case "block":
+                            return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        default:
+                            return exportDerivedTable(tableName, paramInfo);
+                    }
+                });
+            }
+            state = CSV_EXPORT_FINISHED;
+            updateToFinalStepState(recovery, state);
+            log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
+        } catch (Exception e) {
+            log.error("Exception during export", e);
+            state = FAILED;
         }
-        state = CSV_EXPORT_FINISHED;
-        updateToFinalStepState(recovery, state);
-        log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
         return state;
     }
 
@@ -557,9 +557,9 @@ public class ShardEngineImpl implements ShardEngine {
                 long start = System.currentTimeMillis();
                 currentTable = tableName;
 
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
-                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
+                BatchedPaginationOperation paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
+                if (createdShardId.isPresent()) {
+                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }

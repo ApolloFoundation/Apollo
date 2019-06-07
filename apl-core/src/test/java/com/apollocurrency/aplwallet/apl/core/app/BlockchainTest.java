@@ -89,9 +89,9 @@ class BlockchainTest {
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(epochTime, EpochTime.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
@@ -114,8 +114,8 @@ class BlockchainTest {
 
     @BeforeAll
     static void init() {
-        TransactionalDataSource shardDatasource1 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(1L);
-        TransactionalDataSource shardDatasource2 = ((ShardManagement) extension.getDatabaseManger()).getOrCreateShardDataSourceById(2L);
+        TransactionalDataSource shardDatasource1 = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(1L);
+        TransactionalDataSource shardDatasource2 = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(2L);
         shard1Populator = initDb(shardDatasource1, "db/shard1-data.sql");
         shard2Populator = initDb(shardDatasource2, "db/shard2-data.sql");
     }

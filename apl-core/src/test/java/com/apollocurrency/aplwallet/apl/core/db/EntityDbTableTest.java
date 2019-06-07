@@ -807,7 +807,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     public T getCache(DbKey dbKey) {
-        if (!extension.getDatabaseManger().getDataSource().isInTransaction()) {
+        if (!extension.getDatabaseManager().getDataSource().isInTransaction()) {
             return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
         } else {
             return getCacheInTransaction(dbKey);
@@ -815,14 +815,14 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     public T getCacheInTransaction(DbKey dbKey) {
-        Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
+        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
         return (T) cache.get(dbKey);
     }
 
 
     public void removeFromCache(T value) {
         DbKey dbKey = table.getDbKeyFactory().newKey(value);
-        Map<DbKey, Object> cache = extension.getDatabaseManger().getDataSource().getCache(derivedDbTable.getTableName());
+        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
         cache.remove(dbKey);
     }
 

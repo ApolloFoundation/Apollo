@@ -68,7 +68,7 @@ class BlockDaoTest {
             .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
             .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
             .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .build();
 
@@ -90,15 +90,15 @@ class BlockDaoTest {
     void setUp() {
         td = new BlockTestData();
         txd = new TransactionTestData();
-        blockDao = new BlockDaoImpl(extension.getDatabaseManger());
-        transactionDao = new TransactionDaoImpl(extension.getDatabaseManger());
+        blockDao = new BlockDaoImpl(extension.getDatabaseManager());
+        transactionDao = new TransactionDaoImpl(extension.getDatabaseManager());
     }
 
 
 
     @Test
     void findByBlockId() {
-        Block block = blockDao.findBlock(BLOCK_0_ID, extension.getDatabaseManger().getDataSource());
+        Block block = blockDao.findBlock(BLOCK_0_ID, extension.getDatabaseManager().getDataSource());
         assertEquals(block.getId(), BLOCK_0_ID);
     }
 
@@ -110,7 +110,7 @@ class BlockDaoTest {
 
     @Test
     void hasLastBlockFromTo() {
-        boolean isBlock = blockDao.hasBlock(td.BLOCK_3.getId(), BLOCK_3_HEIGHT, extension.getDatabaseManger().getDataSource());
+        boolean isBlock = blockDao.hasBlock(td.BLOCK_3.getId(), BLOCK_3_HEIGHT, extension.getDatabaseManager().getDataSource());
         assertTrue(isBlock);
     }
 
@@ -128,7 +128,7 @@ class BlockDaoTest {
 
     @Test
     void findBlockAtHeight() {
-        Block block = blockDao.findBlockAtHeight(BLOCK_7_HEIGHT, extension.getDatabaseManger().getDataSource());
+        Block block = blockDao.findBlockAtHeight(BLOCK_7_HEIGHT, extension.getDatabaseManager().getDataSource());
         assertEquals(block.getTimestamp(), BLOCK_7_TIMESTAMP);
     }
 
@@ -169,7 +169,7 @@ class BlockDaoTest {
         long count = blockDao.getBlockCount(GENESIS_BLOCK_HEIGHT, BlockTestData.BLOCK_7_HEIGHT);
         assertEquals(8, count);
 
-        count = blockDao.getBlockCount(extension.getDatabaseManger().getDataSource(), BlockTestData.BLOCK_7_HEIGHT, BlockTestData.BLOCK_11_HEIGHT);
+        count = blockDao.getBlockCount(extension.getDatabaseManager().getDataSource(), BlockTestData.BLOCK_7_HEIGHT, BlockTestData.BLOCK_11_HEIGHT);
         assertEquals(4, count);
     }
 
@@ -229,7 +229,7 @@ class BlockDaoTest {
         List<Long> targetBlockIds = List.of(BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID, BLOCK_8_ID, BLOCK_9_ID);
         ArrayList<Block> result = new ArrayList<>();
 
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_3.getHeight(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_3.getHeight(), targetBlockIds, result, extension.getDatabaseManager().getDataSource(), 0);
 
         assertEquals(List.of(td.BLOCK_4, td.BLOCK_5, td.BLOCK_6, td.BLOCK_7, td.BLOCK_8, td.BLOCK_9), blocksAfter);
     }
@@ -239,7 +239,7 @@ class BlockDaoTest {
         List<Long> targetBlockIds = List.of(BLOCK_2_ID, BLOCK_3_ID, BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID);
         ArrayList<Block> result = new ArrayList<>();
 
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_5.getHeight(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 4);
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_5.getHeight(), targetBlockIds, result, extension.getDatabaseManager().getDataSource(), 4);
 
         assertEquals(List.of(td.BLOCK_6, td.BLOCK_7), blocksAfter);
     }
@@ -249,7 +249,7 @@ class BlockDaoTest {
         List<Long> targetBlockIds = List.of(BLOCK_8_ID, BLOCK_9_ID, BLOCK_11_ID);
         ArrayList<Block> result = new ArrayList<>();
 
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_7.getHeight(), targetBlockIds, result, extension.getDatabaseManger().getDataSource(), 0);
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_7.getHeight(), targetBlockIds, result, extension.getDatabaseManager().getDataSource(), 0);
 
         assertEquals(List.of(td.BLOCK_8, td.BLOCK_9), blocksAfter);
     }
@@ -294,14 +294,14 @@ class BlockDaoTest {
 
     @Test
     void testFindBlockIdAtHeight() {
-        long blockId = blockDao.findBlockIdAtHeight(td.BLOCK_8.getHeight(), extension.getDatabaseManger().getDataSource());
+        long blockId = blockDao.findBlockIdAtHeight(td.BLOCK_8.getHeight(), extension.getDatabaseManager().getDataSource());
 
         assertEquals(td.BLOCK_8.getId(), blockId);
     }
 
     @Test
     void testFindBlockIdAtHeightNotFound() {
-        assertThrows(RuntimeException.class, () -> blockDao.findBlockIdAtHeight(Integer.MIN_VALUE, extension.getDatabaseManger().getDataSource()));
+        assertThrows(RuntimeException.class, () -> blockDao.findBlockIdAtHeight(Integer.MIN_VALUE, extension.getDatabaseManager().getDataSource()));
     }
 
     @Test
@@ -326,14 +326,14 @@ class BlockDaoTest {
         });
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.NEW_BLOCK, lastBlock);
-        Block block = blockDao.findBlock(td.LAST_BLOCK.getId(), extension.getDatabaseManger().getDataSource());
+        Block block = blockDao.findBlock(td.LAST_BLOCK.getId(), extension.getDatabaseManager().getDataSource());
         assertEquals(td.NEW_BLOCK.getId(), block.getNextBlockId());
     }
 
     @Test
     void testCommitBlock() {
         DbUtils.inTransaction(extension, (con)-> blockDao.commit(td.BLOCK_5));
-        Block block = blockDao.findBlock(td.BLOCK_5.getId(), extension.getDatabaseManger().getDataSource());
+        Block block = blockDao.findBlock(td.BLOCK_5.getId(), extension.getDatabaseManager().getDataSource());
         assertEquals(0, block.getNextBlockId());
     }
 

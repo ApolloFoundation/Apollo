@@ -34,7 +34,7 @@ class ShardDaoJdbcTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, ShardDaoJdbcImpl.class, EpochTime.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
     @Inject
@@ -43,7 +43,7 @@ class ShardDaoJdbcTest {
     @Test
     void getMinMaxShardId() throws SQLException {
         assertNotNull(daoJdbc);
-        MinMaxDbId minMaxDbId= daoJdbc.getMinMaxId(extension.getDatabaseManger().getDataSource(), SHARD_2.getShardHeight());
+        MinMaxDbId minMaxDbId= daoJdbc.getMinMaxId(extension.getDatabaseManager().getDataSource(), SHARD_2.getShardHeight());
         assertNotNull(minMaxDbId );
         assertEquals(SHARD_0.getShardId() - 1, minMaxDbId.getMinDbId());
         assertEquals(SHARD_2.getShardId() + 1, minMaxDbId.getMaxDbId());

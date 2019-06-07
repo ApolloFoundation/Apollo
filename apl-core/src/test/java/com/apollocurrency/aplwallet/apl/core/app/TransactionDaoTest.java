@@ -45,7 +45,7 @@ class TransactionDaoTest {
             .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
             .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
             .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .build();
 
@@ -64,67 +64,67 @@ class TransactionDaoTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
-        dao = new TransactionDaoImpl(extension.getDatabaseManger());
+        dao = new TransactionDaoImpl(extension.getDatabaseManager());
     }
 
 
     @Test
     void findByBlockId() {
-        List<Transaction> transactions = dao.findBlockTransactions(BLOCK_0_ID, extension.getDatabaseManger().getDataSource());
+        List<Transaction> transactions = dao.findBlockTransactions(BLOCK_0_ID, extension.getDatabaseManager().getDataSource());
         assertNotNull(transactions);
         assertEquals(2, transactions.size());
     }
 
     @Test
     void findTransactionId() {
-        Transaction transaction = dao.findTransaction(td.TRANSACTION_0.getId(), extension.getDatabaseManger().getDataSource());
+        Transaction transaction = dao.findTransaction(td.TRANSACTION_0.getId(), extension.getDatabaseManager().getDataSource());
         assertNotNull(transaction);
         assertEquals(td.TRANSACTION_0.getId(), transaction.getId());
     }
 
     @Test
     void findTransactionIdHeight() {
-        Transaction transaction = dao.findTransaction(td.TRANSACTION_1.getId(), td.TRANSACTION_1.getHeight(), extension.getDatabaseManger().getDataSource());
+        Transaction transaction = dao.findTransaction(td.TRANSACTION_1.getId(), td.TRANSACTION_1.getHeight(), extension.getDatabaseManager().getDataSource());
         assertNotNull(transaction);
         assertEquals(td.TRANSACTION_1.getId(), transaction.getId());
     }
 
     @Test
     void findTransactionByFullHash() {
-        Transaction transaction = dao.findTransactionByFullHash(td.TRANSACTION_5.getFullHash(), td.TRANSACTION_5.getHeight(), extension.getDatabaseManger().getDataSource());
+        Transaction transaction = dao.findTransactionByFullHash(td.TRANSACTION_5.getFullHash(), td.TRANSACTION_5.getHeight(), extension.getDatabaseManager().getDataSource());
         assertNotNull(transaction);
         assertEquals(td.TRANSACTION_5.getId(), transaction.getId());
     }
 
     @Test
     void testFindTransactionByFullHashNotExist() {
-        Transaction tx = dao.findTransactionByFullHash(new byte[32], Integer.MAX_VALUE, extension.getDatabaseManger().getDataSource());
+        Transaction tx = dao.findTransactionByFullHash(new byte[32], Integer.MAX_VALUE, extension.getDatabaseManager().getDataSource());
 
         assertNull(tx, "Transaction with zero hash should not exist");
     }
 
     @Test
     void testFindTransactionByIdNotExist() {
-        Transaction tx = dao.findTransaction(Integer.MIN_VALUE, Integer.MAX_VALUE, extension.getDatabaseManger().getDataSource());
+        Transaction tx = dao.findTransaction(Integer.MIN_VALUE, Integer.MAX_VALUE, extension.getDatabaseManager().getDataSource());
 
         assertNull(tx, "Transaction with Integer.MIN_VALUE id should not exist");
     }
 
     @Test
     void hasTransactionBy() {
-        boolean isFound = dao.hasTransaction(td.TRANSACTION_5.getId(), td.TRANSACTION_5.getHeight(), extension.getDatabaseManger().getDataSource());
+        boolean isFound = dao.hasTransaction(td.TRANSACTION_5.getId(), td.TRANSACTION_5.getHeight(), extension.getDatabaseManager().getDataSource());
         assertTrue(isFound);
     }
 
     @Test
     void hasTransactionByFullHash() {
-        boolean isFound = dao.hasTransactionByFullHash(td.TRANSACTION_5.getFullHash(), td.TRANSACTION_5.getHeight(), extension.getDatabaseManger().getDataSource());
+        boolean isFound = dao.hasTransactionByFullHash(td.TRANSACTION_5.getFullHash(), td.TRANSACTION_5.getHeight(), extension.getDatabaseManager().getDataSource());
         assertTrue(isFound);
     }
 
     @Test
     void getFullHash() {
-        byte[] fullHash = dao.getFullHash(td.TRANSACTION_5.getId(), extension.getDatabaseManger().getDataSource());
+        byte[] fullHash = dao.getFullHash(td.TRANSACTION_5.getId(), extension.getDatabaseManager().getDataSource());
         assertNotNull(fullHash);
         assertArrayEquals(td.TRANSACTION_5.getFullHash(), fullHash);
     }
@@ -153,21 +153,21 @@ class TransactionDaoTest {
 
     @Test
     void testFindTransactionByFullHashWithDataSource() {
-        Transaction tx = dao.findTransactionByFullHash(td.TRANSACTION_6.getFullHash(), extension.getDatabaseManger().getDataSource());
+        Transaction tx = dao.findTransactionByFullHash(td.TRANSACTION_6.getFullHash(), extension.getDatabaseManager().getDataSource());
 
         assertArrayEquals(td.TRANSACTION_6.getFullHash(), tx.getFullHash());
     }
 
     @Test
     void testHasTransactionByIdWithDataSource() {
-        boolean hasTransaction = dao.hasTransaction(td.TRANSACTION_3.getId(), extension.getDatabaseManger().getDataSource());
+        boolean hasTransaction = dao.hasTransaction(td.TRANSACTION_3.getId(), extension.getDatabaseManager().getDataSource());
 
         assertTrue(hasTransaction, "Transaction should exist");
     }
 
     @Test
     void testHasTransactionByFullHashWithDataSource() {
-        boolean hasTransaction = dao.hasTransactionByFullHash(td.TRANSACTION_5.getFullHash(), extension.getDatabaseManger().getDataSource());
+        boolean hasTransaction = dao.hasTransactionByFullHash(td.TRANSACTION_5.getFullHash(), extension.getDatabaseManager().getDataSource());
 
         assertTrue(hasTransaction, "Transaction should exist");
     }
@@ -212,7 +212,7 @@ class TransactionDaoTest {
         DbUtils.inTransaction(extension, (con)-> {
             dao.saveTransactions(con, List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0));
         });
-        List<Transaction> blockTransactions = dao.findBlockTransactions(td.NEW_TRANSACTION_0.getBlockId(), extension.getDatabaseManger().getDataSource());
+        List<Transaction> blockTransactions = dao.findBlockTransactions(td.NEW_TRANSACTION_0.getBlockId(), extension.getDatabaseManager().getDataSource());
         assertEquals(List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0), blockTransactions);
     }
 

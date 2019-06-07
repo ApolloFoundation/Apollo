@@ -18,7 +18,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -40,7 +42,6 @@ import java.util.Set;
  */
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
-
     private Writer output;
     private StringBuffer outputBuffer = new StringBuffer(400);
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -114,9 +115,19 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private void initWrite(boolean appendMode) throws IOException {
         if (output == null) {
             try {
-                OutputStream out = CsvFileUtils.newOutputStream(this.dataExportPath,
-                        !this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName,
-                        appendMode);
+
+                Path filePath = this.dataExportPath.resolve(!this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName);
+                boolean fileExist = Files.exists(filePath);
+                if (!fileExist && appendMode) {
+                    Files.createFile(filePath);
+                }
+                if (fileExist && appendMode) {
+                    int lines = Files.readAllLines(filePath).size();
+                    if (lines > 0) {
+                        writeColumnHeader = false;
+                    }
+                }
+                OutputStream out = Files.newOutputStream(filePath, appendMode ? StandardOpenOption.APPEND : StandardOpenOption.CREATE_NEW);
                 out = new BufferedOutputStream(out, IO_BUFFER_SIZE);
                 output = new BufferedWriter(new OutputStreamWriter(out, characterSet));
             } catch (Exception e) {

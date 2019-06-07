@@ -63,8 +63,8 @@ public class ReferencedTransactionServiceTest {
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))

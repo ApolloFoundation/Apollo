@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 public class DbUtils {
     public static void inTransaction(DbExtension extension, Consumer<Connection> consumer) {
-        inTransaction(extension.getDatabaseManger(), consumer);
+        inTransaction(extension.getDatabaseManager(), consumer);
     }
     public static void inTransaction(DatabaseManager manager, Consumer<Connection> consumer) {
         TransactionalDataSource dataSource = manager.getDataSource();
@@ -29,7 +29,7 @@ public class DbUtils {
         }
     }
     public static<T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
-        TransactionalDataSource dataSource = extension.getDatabaseManger().getDataSource();
+        TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         try (Connection con = dataSource.begin()) { // start new transaction
             T res = function.apply(con);
             dataSource.commit();

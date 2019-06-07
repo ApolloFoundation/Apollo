@@ -95,8 +95,8 @@ public class PhasingPollServiceTest {
             AccountGuaranteedBalanceTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
@@ -332,7 +332,7 @@ public class PhasingPollServiceTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        Account.init(extension.getDatabaseManger(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable);
+        Account.init(extension.getDatabaseManager(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = service.countVotes(ptd.POLL_3);
 
@@ -447,12 +447,12 @@ public class PhasingPollServiceTest {
     }
 
     void inTransaction(Consumer<Connection> consumer) throws SQLException {
-        try (Connection con = extension.getDatabaseManger().getDataSource().begin()) { // start new transaction
+        try (Connection con = extension.getDatabaseManager().getDataSource().begin()) { // start new transaction
             consumer.accept(con);
-            extension.getDatabaseManger().getDataSource().commit();
+            extension.getDatabaseManager().getDataSource().commit();
         }
         catch (SQLException e) {
-            extension.getDatabaseManger().getDataSource().rollback();
+            extension.getDatabaseManager().getDataSource().rollback();
             throw e;
         }
     }

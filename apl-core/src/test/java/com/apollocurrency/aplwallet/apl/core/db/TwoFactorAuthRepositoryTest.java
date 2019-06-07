@@ -14,6 +14,6 @@ public class TwoFactorAuthRepositoryTest extends AbstractTwoFactorAuthRepository
     static DbExtension dbExtension = new DbExtension();
     public TwoFactorAuthRepositoryTest() {
 
-        super(new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManger().getDataSource()));
+        super(new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource()));
     }
 }

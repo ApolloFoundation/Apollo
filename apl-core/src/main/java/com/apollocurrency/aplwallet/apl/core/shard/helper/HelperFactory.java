@@ -18,18 +18,18 @@ public interface HelperFactory<T> {
      * Create specified helper class. There are helpers used for select-insert, update.
      *
      * @param helperTableName table name
-     * @return table specific helper class OR Empty
+     * @return table specific helper class OR throw exception
+     * @throws IllegalArgumentException when unable to find helper for specific helperTableName
      */
-     Optional<T> createSelectInsertHelper(String helperTableName);
-
-     Optional<BatchedPaginationOperation> createSelectInsertHelper(String helperTableName, boolean relink);
+     T createSelectInsertHelper(String helperTableName) throws IllegalArgumentException;
 
     /**
      * Create specified helper class. There are helpers used for deleting
      * @param helperTableName
      * @param helperTableName table name
-     * @return table specific helper class OR Empty
+     * @return table specific helper class OR throw exception
+     * @throws IllegalArgumentException when unable to find helper for specific table
      */
-    Optional<T> createDeleteHelper(String helperTableName);
+    T createDeleteHelper(String helperTableName);
 
 }

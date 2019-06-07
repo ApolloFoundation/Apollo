@@ -75,4 +75,9 @@ public interface CsvWriter extends AutoCloseable {
      */
     String setOptions(String options);
 
+    /**
+     * Close all files and reset metadata
+     */
+    void close();
+
 }
