@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
@@ -34,6 +33,9 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -63,6 +65,8 @@ import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -75,23 +79,37 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
 
+    private static String ETH_GAS_INFO_KEY = "eth_gas_info";
+
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
     private DexEthService dexEthService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private ObjectMapper mapper = new ObjectMapper();
-    private EthereumWalletService ethereumWalletService;
+
+    private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(30, TimeUnit.SECONDS)
+            .build(
+                    new CacheLoader<>() {
+                        public EthGasInfo load(String id) throws InvalidCacheLoadException {
+                            EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
+                            if(ethGasInfo==null){
+                                throw new InvalidCacheLoadException("Value can't be null");
+                            }
+                            return ethGasInfo;
+                        }
+                    }
+            );
 
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService) {
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
-        this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService,"EthereumWalletService is null.");
     }
 
     //For DI
@@ -425,12 +443,11 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
-    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
-        EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
-
-        if(ethGasInfo != null){
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
+        try {
+            EthGasInfo ethGasInfo = (EthGasInfo) cache.get(ETH_GAS_INFO_KEY);
             return Response.ok(ethGasInfo.toDto()).build();
-        } else {
+        } catch (Exception ex){
             return Response.ok().build();
         }
     }
