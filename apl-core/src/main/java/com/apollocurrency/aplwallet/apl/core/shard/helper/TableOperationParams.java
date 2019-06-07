@@ -16,10 +16,12 @@ public class TableOperationParams {
     String tableName;
     long batchCommitSize;
     Integer snapshotBlockHeight;
-    Optional<Long> shardId;
+    Long shardId;
     Optional<Set<Long>> dbIdsExclusionSet;
 
-    public TableOperationParams(String tableName, long batchCommitSize, Integer snapshotBlockHeight, Optional<Long> shardId, Optional<Set<Long>> dbIdsExclusionSet) {
+    public TableOperationParams(String tableName, long batchCommitSize,
+                                Integer snapshotBlockHeight, Long shardId,
+                                Optional<Set<Long>> dbIdsExclusionSet) {
         this.tableName = tableName;
         this.batchCommitSize = batchCommitSize;
         this.snapshotBlockHeight = snapshotBlockHeight;

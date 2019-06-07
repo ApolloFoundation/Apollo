@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 class DownloadableFilesManagerTest {
     private static final Logger log = getLogger(DownloadableFilesManagerTest.class);
     private Path csvResourcesPath = new ResourceFileLoader().getResourcePath().toAbsolutePath();
-    private final Bean<Path> dataExportDir = MockBean.of(csvResourcesPath, Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
     {
         doReturn(csvResourcesPath).when(dirProvider).getDataExportDir();

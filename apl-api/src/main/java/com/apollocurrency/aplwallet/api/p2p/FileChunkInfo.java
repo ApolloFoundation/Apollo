@@ -20,7 +20,7 @@ public class FileChunkInfo {
      * 2 - present;
      * 3 - saved;
      */
-    public int present;
+    public FileChunkInfoPresent present;
     public long crc;
 
     @Override

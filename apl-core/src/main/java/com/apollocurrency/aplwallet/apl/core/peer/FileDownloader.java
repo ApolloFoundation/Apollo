@@ -3,6 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import static com.apollocurrency.aplwallet.api.p2p.FileChunkInfoPresent.DOWNLOAD_IN_PROCGRESS;
+import static com.apollocurrency.aplwallet.api.p2p.FileChunkInfoPresent.PRESENT;
+import static com.apollocurrency.aplwallet.api.p2p.FileChunkInfoPresent.SAVED;
+
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
@@ -72,7 +76,7 @@ public class FileDownloader {
     private synchronized FileChunkInfo getNextEmptyChunk(){
        FileChunkInfo res = null;
        for(FileChunkInfo fci: downloadInfo.chunks){
-           if(fci.present<1){
+           if(fci.present.ordinal() < DOWNLOAD_IN_PROCGRESS.ordinal()){
                res=fci;
                break;
            }
@@ -81,9 +85,9 @@ public class FileDownloader {
     }
     
     private FileChunk downloadChunk(FileChunkInfo fci, Peer peer){
-        fci.present=1;
+        fci.present = DOWNLOAD_IN_PROCGRESS;
         //download
-        fci.present=2;
+        fci.present = PRESENT; // Alexey should know better why this code
         return  null;
     }
     
@@ -95,7 +99,7 @@ public class FileDownloader {
             byte[] data = new byte[fc.info.size];
             fops.writeChunk(fc.info.offset, data, fc.info.crc);
             status.chunksReady++;
-            fci.present=3;
+            fci.present = SAVED;
             fci = getNextEmptyChunk();
         }
     }

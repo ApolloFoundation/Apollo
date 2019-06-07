@@ -35,7 +35,7 @@ public class ZipImpl implements Zip {
     private static final Logger log = LoggerFactory.getLogger(ZipImpl.class);
 
     public final static int FILE_CHUNK_SIZE = 32768; // magic constant copied from DownloadableFilesManager class
-    private final static int BUF_SIZE= 1042 * 2; // 2 Mb
+    private final static int BUF_SIZE= 1024 * 16; // 16 Kb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
     public static FilenameFilter DEFAULT_CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
 
@@ -49,12 +49,9 @@ public class ZipImpl implements Zip {
     public boolean extract(String zipFile, String outputFolder) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(outputFolder, "outputFolder is NULL");
-        if (zipFile.isEmpty()) {
-            throw new IllegalArgumentException("'zipFile' value is empty");
-        }
-        if (outputFolder.isEmpty()) {
-            throw new IllegalArgumentException("'outputFolder' value is empty");
-        }
+        StringValidator.requireNonBlank(zipFile);
+        StringValidator.requireNonBlank(outputFolder);
+
         log.trace("Extracting file '{}' from outputFolder '{}'", zipFile, outputFolder);
         boolean res = true;
         byte[] buffer = new byte[BUF_SIZE];
@@ -113,12 +110,9 @@ public class ZipImpl implements Zip {
                             FilenameFilter filenameFilter) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(inputFolder, "inputFolder is NULL");
-        if (zipFile.isEmpty()) {
-            throw new IllegalArgumentException("'zipFile' value is empty");
-        }
-        if (inputFolder.isEmpty()) {
-            throw new IllegalArgumentException("'inputFolder' value is empty");
-        }
+        StringValidator.requireNonBlank(zipFile);
+        StringValidator.requireNonBlank(inputFolder);
+
         long start = System.currentTimeMillis();
         log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
         byte[] zipCrcHash;

@@ -70,7 +70,7 @@ public class ShardEngineImpl implements ShardEngine {
     private DatabaseManager databaseManager;
     private TrimService trimService;
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
-    private Optional<Long> createdShardId; // keep created shardId
+    private Long createdShardId; // keep created shardId
     private TransactionalDataSource createdShardSource;
     private ShardRecoveryDaoJdbc shardRecoveryDao;
     private CsvExporter csvExporter;
@@ -146,7 +146,8 @@ public class ShardEngineImpl implements ShardEngine {
         try {
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
             createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(null, dbVersion);
-            createdShardId = createdShardSource.getDbIdentity(); // MANDATORY ACTION FOR SUCCESS completion !!
+            createdShardId = createdShardSource.getDbIdentity().isPresent() ?
+                    createdShardSource.getDbIdentity().get() : null; // MANDATORY ACTION FOR SUCCESS completion !!
             if (dbVersion instanceof ShardAddConstraintsSchemaVersion
                     || dbVersion instanceof AplDbVersion) {
                 // that code is called wneh 'shard index/constraints' sql class is applied to shard db
@@ -245,7 +246,8 @@ public class ShardEngineImpl implements ShardEngine {
                     Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
-                            targetDataSource.getDbIdentity(), Optional.ofNullable(dbIdExclusionSet));
+                            createdShardSource.getDbIdentity().isPresent() ?
+                                    createdShardSource.getDbIdentity().get() : null, Optional.ofNullable(dbIdExclusionSet));
 
                     BatchedPaginationOperation batchedPaginationOperation = paginationOperationHelper.get();
                     batchedPaginationOperation.setShardRecoveryDao(shardRecoveryDao);// mandatory
@@ -277,72 +279,12 @@ public class ShardEngineImpl implements ShardEngine {
         return state;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-/*
-    @Override
-    @Deprecated
-    public MigrateState relinkDataToSnapshotBlock(CommandParamInfo paramInfo) {
-        checkRequiredParameters(paramInfo);
-        long startAllTables = System.currentTimeMillis();
-        log.debug("Starting LINKED data update from [{}] tables...", paramInfo.getTableNameList().size());
-
-        String currentTable = null;
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
-        if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > DATA_RELINKED_IN_MAIN.getValue()) {
-            // skip to next step
-            return state = DATA_RELINKED_IN_MAIN;
-        } else { // that is needed in case separate step execution, when previous step was missed in code
-            recovery = new ShardRecovery(DATA_RELINK_STARTED);
-        }
-
-        try ( Connection sourceConnect = sourceDataSource.begin() ) {
-
-            long startTrim = System.currentTimeMillis();
-            currentTable = PUBLIC_KEY_TABLE_NAME; // assign name for trim
-            log.debug("Start trimming '{}' to HEIGHT '{}'", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight());
-//            trimService.doTrimDerivedTables(paramInfo.getSnapshotBlockHeight().intValue(), sourceDataSource); // TRIM 'PUBLIC_KEY' table before processing
-            log.debug("Trimmed '{}' to HEIGHT '{}' within {} sec", "PUBLIC_KEY", paramInfo.getSnapshotBlockHeight(), (System.currentTimeMillis() - startTrim)/1000);
-
-            for (String tableName : paramInfo.getTableNameList()) {
-                long start = System.currentTimeMillis();
-                currentTable = tableName;
-
-                Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName, true);
-                if (paginationOperationHelper.isPresent()) {
-                    processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper);
-                    paginationOperationHelper.get().reset();
-                } else {
-                    log.warn("NO processing HELPER class for table '{}'", tableName);
-                }
-                recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_RELINK_STARTED);
-            }
-            state = DATA_RELINKED_IN_MAIN;
-            updateToFinalStepState(sourceConnect, recovery, state);
-            sourceConnect.commit();
-        } catch (Exception e) {
-            log.error("Error RELINK processing table = '" + currentTable + "'", e);
-            sourceDataSource.rollback(false);
-            state = MigrateState.FAILED;
-            return state;
-        } finally {
-            if (sourceDataSource != null) {
-                sourceDataSource.commit();
-            }
-        }
-        log.debug("RELINK Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
-        return state;
-    }
-*/
-
     private void processOneTableByHelper(CommandParamInfo paramInfo, Connection sourceConnect,
                                          String tableName, long start,
                                          BatchedPaginationOperation paginationOperationHelper) throws Exception {
         TableOperationParams operationParams = new TableOperationParams(
-                tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(), createdShardId, Optional.ofNullable(paramInfo.getDbIdExclusionSet()));
+                tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
+                createdShardId, Optional.ofNullable(paramInfo.getDbIdExclusionSet()));
 
         if (paginationOperationHelper == null) { // should never happen from outside code, but better to play safe
             String error = "OperationHelper is NOT PRESENT... Fatal error in sharding code...";
@@ -386,7 +328,7 @@ public class ShardEngineImpl implements ShardEngine {
                 currentTable = tableName;
 
                 Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
+                if (paginationOperationHelper.isPresent() && createdShardId != null) {
                     processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
@@ -529,13 +471,13 @@ public class ShardEngineImpl implements ShardEngine {
             recovery = new ShardRecovery(ZIP_ARCHIVE_STARTED);
         }
 
-        if (createdShardId.isEmpty()) {
+        if (createdShardId == null) {
             String error = "Error. Shard was not initialized previously, " +
                     "missing addOrCreateShard(dbVersion) step during sharding process!";
             log.error(error);
             throw new IllegalStateException(error);
         }
-        String shardFileName = ShardNameHelper.getShardArchiveNameByShardId(createdShardId.get());
+        String shardFileName = ShardNameHelper.getShardArchiveNameByShardId(createdShardId);
         String currentTable = shardFileName;
         Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName + ".zip");
         log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);
@@ -607,7 +549,7 @@ public class ShardEngineImpl implements ShardEngine {
                 currentTable = tableName;
 
                 Optional<BatchedPaginationOperation> paginationOperationHelper = helperFactory.createDeleteHelper(tableName);
-                if (paginationOperationHelper.isPresent() && createdShardId.isPresent()) {
+                if (paginationOperationHelper.isPresent() && createdShardId != null) {
                     processOneTableByHelper(paramInfo, sourceConnect, tableName, start, paginationOperationHelper.get());
                 } else {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
@@ -640,7 +582,7 @@ public class ShardEngineImpl implements ShardEngine {
         long startAllTables = System.currentTimeMillis();
         log.debug("Starting create SHARD record in main db...");
 
-        if (createdShardId.isEmpty()) {
+        if (createdShardId == null) {
             String error = "Error. Shard was not initialized previously, " +
                     "missing addOrCreateShard(dbVersion) step during sharding process!";
             log.error(error);
@@ -676,7 +618,7 @@ public class ShardEngineImpl implements ShardEngine {
             // zip crc hash
             sqlUpdate = "UPDATE SHARD SET ZIP_HASH_CRC = ?, SHARD_STATE = ? WHERE SHARD_ID = ?";
         }
-        if (createdShardId.isEmpty()) {
+        if (createdShardId == null) {
             String error = "Error. Shard was not initialized previously, " +
                     "missing addOrCreateShard(dbVersion) step during sharding process!";
             log.error(error);
@@ -691,7 +633,7 @@ public class ShardEngineImpl implements ShardEngine {
                 // assign either 'merkle tree hash' OR 'zip CRC'
                 preparedInsertStatement.setBytes(1, paramInfo.getShardHash()); // merkle or zip crc
                 preparedInsertStatement.setLong(2, stateValue); // 100% full shard is present on current node
-                preparedInsertStatement.setLong(3, createdShardId.get());
+                preparedInsertStatement.setLong(3, createdShardId);
                 result = preparedInsertStatement.executeUpdate();
                 log.debug("Shard record is updated result = '{}'", result);
             }
@@ -772,7 +714,8 @@ public class ShardEngineImpl implements ShardEngine {
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         if (createdShardSource == null) {
             createdShardSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(null, dbVersion);
-            createdShardId = createdShardSource.getDbIdentity();
+            createdShardId = createdShardSource.getDbIdentity().isPresent() ?
+                    createdShardSource.getDbIdentity().get() : null;
             return createdShardSource;
         }
         return createdShardSource;

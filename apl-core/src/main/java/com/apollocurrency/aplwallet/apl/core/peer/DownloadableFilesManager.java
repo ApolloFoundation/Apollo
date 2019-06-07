@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import static com.apollocurrency.aplwallet.api.p2p.FileChunkInfoPresent.SAVED;
+
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
@@ -18,7 +20,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,7 @@ import javax.inject.Singleton;
 @Singleton
 public class DownloadableFilesManager {
     private static final Logger log = getLogger(DownloadableFilesManager.class);
-    
+
     public final static long FDI_TTL=7*24*3600*1000; //7 days in ms
     public final static int FILE_CHUNK_SIZE=32768;
     public final static String FILES_SUBDIR="downloadables";
@@ -79,7 +81,7 @@ public class DownloadableFilesManager {
         if(fpath != null){
             downloadInfo.fileInfo.isPresent = true;
             downloadInfo.fileInfo.fileId = fileId;
-            downloadInfo.created = new Date();
+            downloadInfo.created = Instant.now(); // in UTC
             ChunkedFileOps fops = new ChunkedFileOps(fpath);
             downloadInfo.fileInfo.size=fops.getFileSize();
             if (downloadInfo.fileInfo.size<0) {
@@ -96,7 +98,7 @@ public class DownloadableFilesManager {
                     fci.crc=ci.crc;
                     fci.fileId=fileId;
                     fci.offset=ci.offset;
-                    fci.present=3;
+                    fci.present = SAVED;
                     fci.size=ci.size;
                     fci.chunkId=i;
                     downloadInfo.chunks.add(fci);
@@ -133,9 +135,11 @@ public class DownloadableFilesManager {
                 log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
                 return null;
             }
+            // that will be only shard archive file present in folder
             String fileName = ShardNameHelper.getShardArchiveNameByShardId(shardId);
             absPath = this.fileBaseDir + File.separator + fileName + ".zip";
         } else {
+            // that will be any file present in folder
             absPath = this.fileBaseDir + File.separator + fileId;
         }
         Path res = Paths.get(absPath);

@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.api.p2p;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -18,7 +20,7 @@ public class FileDownloadInfo {
     public List<FileChunkInfo> chunks = new ArrayList<>();
     @JsonIgnore
     /** record creation date, needed by cache */
-    public Date created;
+    public Instant created;
 
     @Override
     public boolean equals(Object o) {
