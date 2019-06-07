@@ -168,7 +168,13 @@ public final class Genesis {
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
             
-            String path = aplCoreRuntime.getConfDir()+File.separator+blockchainConfig.getChain().getGenesisLocation();
+            // Original line below:
+            // String path = aplCoreRuntime.getConfDir()+File.separator+blockchainConfig.getChain().getGenesisLocation();
+            // Hotfixed because UNIX way working everywhere
+            // TODO: Fix that for crossplatform compatibility
+            
+            String path = aplCoreRuntime.getConfDir()+"/"+blockchainConfig.getChain().getGenesisLocation();
+            
             LOG.debug("Genesis accounts path = " + path);
             try (InputStreamReader is = new InputStreamReader(
                     Genesis.class.getClassLoader().getResourceAsStream(path))) {
