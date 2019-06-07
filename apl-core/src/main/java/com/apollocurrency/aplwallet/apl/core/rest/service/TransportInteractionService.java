@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public interface TransportInteractionService {
-
+    
     /**
      * Get transport status     
      * @return TransportStatusResponse <i>null</i>

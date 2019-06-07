@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.util.logging.Level;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.Setter;
 import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +20,21 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionServiceImpl.class);
     private String wsUrl; 
 
-    TransportInteractionWebSocket transportInteractionWebSocket;
+    private TransportInteractionWebSocket transportInteractionWebSocket;
+    
+    @Setter
+    private boolean done;
+    
     
     
     @Inject
     TransportInteractionServiceImpl( PropertiesHolder prop ) {
         log.debug("Initializing TransportInteractionServiceImpl");   
         wsUrl = prop.getStringProperty("apl.securetransporturl","ws://localhost:8888/");
-                
+        done = false;
     }
     
-
+        
     @Override
     public TransportStatusResponse getTransportStatusResponse() {
         TransportStatusResponse transportStatusResponse =  new TransportStatusResponse();        
@@ -57,12 +62,13 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
             transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));            
             Runnable task = () -> {
                 for(;;) {                    
-                    try {
+                    try {                        
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
                         log.debug( ex.toString() );
                     }                    
-                    transportInteractionWebSocket.tick();                    
+                    transportInteractionWebSocket.tick();                   
+                    if (done) break;
                 }
                 
             };

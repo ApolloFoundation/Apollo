@@ -63,8 +63,7 @@ public class TransportInteractionController {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     ) 
-    public ResponseDone startSecureTransport(  ) {
-        System.out.println("startSecureTransport");
+    public ResponseDone startSecureTransport(  ) {       
         ResponseDone response = new ResponseDone();
         tiService.startSecureTransport();
         response.setDone(Boolean.TRUE);        
@@ -84,8 +83,7 @@ public class TransportInteractionController {
             }
     ) 
     
-    public ResponseDone stopSecureTransport(  ) {
-        System.out.println("stopSecureTransport");
+    public ResponseDone stopSecureTransport(  ) {        
         ResponseDone response = new ResponseDone();
         tiService.stopSecureTransport();
         response.setDone(Boolean.TRUE);        
