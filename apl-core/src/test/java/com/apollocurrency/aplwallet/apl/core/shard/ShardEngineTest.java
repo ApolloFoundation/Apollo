@@ -276,7 +276,6 @@ class ShardEngineTest {
 //3-4.      // copy block + transaction data from main db into shard
         state = shardEngine.copyDataToShard(paramInfo);
         assertEquals(MigrateState.DATA_COPY_TO_SHARD_FINISHED, state);
-//        assertEquals(MigrateState.FAILED, state);
 
         // check after COPY
         TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);

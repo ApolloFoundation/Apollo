@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.api.p2p;
 
 /**
- * Enum for file state while downloding
+ * Enum for file state while downloading
  */
 public enum FileChunkInfoPresent {
 
