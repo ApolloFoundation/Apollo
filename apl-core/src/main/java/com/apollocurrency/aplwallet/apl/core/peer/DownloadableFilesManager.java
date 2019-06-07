@@ -125,7 +125,7 @@ public class DownloadableFilesManager {
 
         String absPath;
         if (fileId.contains("shard::")) {
-            String realShardId = fileId.substring(fileId.lastIndexOf("::") + 2, fileId.length());
+            String realShardId = fileId.substring(fileId.lastIndexOf("::") + 2);
             long shardId = 0;
             try {
                 shardId = Long.valueOf(realShardId);
