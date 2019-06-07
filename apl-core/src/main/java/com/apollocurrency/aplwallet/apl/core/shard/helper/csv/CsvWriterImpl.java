@@ -118,7 +118,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
 
                 Path filePath = this.dataExportPath.resolve(!this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName);
                 boolean fileExist = Files.exists(filePath);
-                if (!fileExist && appendMode) {
+                if (!fileExist && appendMode) { // check CSV file in dataExport folder
                     Files.createFile(filePath);
                 }
                 if (fileExist && appendMode) {

@@ -50,7 +50,10 @@ public class CsvExporterImpl implements CsvExporter {
         Objects.requireNonNull(dataExportPath, "exportDirProducer 'data Path' is NULL");
         this.dataExportPath = dataExportPath;
         try {
-            Files.createDirectories(dataExportPath);
+            boolean folderExist = Files.exists(this.dataExportPath);
+            if (!folderExist) { // check and create dataExport folder
+                Files.createDirectory(this.dataExportPath);
+            }
         } catch (IOException e) {
             throw new RuntimeException("Unable to create data export directory", e);
         }
