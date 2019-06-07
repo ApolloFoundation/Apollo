@@ -504,18 +504,11 @@ public class ShardEngineImpl implements ShardEngine {
             // update recovery
             state = ZIP_ARCHIVE_FINISHED;
             updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
-            sourceConnect.commit();
         } catch (Exception e) {
             log.error("Error ZIP ARCHIVE creation = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
             return state;
-        } finally {
-/*
-            if (sourceDataSource != null) {
-                sourceDataSource.commit();
-            }
-*/
         }
         log.debug("ZIP ARCHIVE Processed {} secs", (System.currentTimeMillis() - startAllTables)/1000);
         return state;
