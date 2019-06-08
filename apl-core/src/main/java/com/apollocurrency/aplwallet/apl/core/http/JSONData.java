@@ -109,9 +109,12 @@ import java.util.Map;
 import java.util.Random;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Vetoed
 public final class JSONData {
+    private static Logger LOG = LoggerFactory.getLogger(JSONData.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
@@ -1325,8 +1328,12 @@ public final class JSONData {
 
     private static void putAssetInfo(JSONObject json, long assetId) {
         Asset asset = Asset.getAsset(assetId);
-        json.put("name", asset.getName());
-        json.put("decimals", asset.getDecimals());
+        if(asset!=null){
+          json.put("name", asset.getName());
+          json.put("decimals", asset.getDecimals());
+        }else{
+            LOG.error("Can not get Asset with id: {}",assetId);
+        }
     }
 
     private static void putExpectedTransaction(JSONObject json, Transaction transaction) {
