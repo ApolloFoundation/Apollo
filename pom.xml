@@ -654,21 +654,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
             </dependency>
-                    
-            <dependency>
-                <groupId>javax</groupId>
-                <artifactId>javaee-api</artifactId>
-                <version>7.0</version>
-                <type>jar</type>
-            </dependency>
-
-            <!-- https://mvnrepository.com/artifact/org.glassfish.tyrus.bundles/tyrus-standalone-client -->
-            <dependency>
-                <groupId>org.glassfish.tyrus.bundles</groupId>
-                <artifactId>tyrus-standalone-client</artifactId>
-                <version>1.15</version>
-            </dependency>  
-            
+                                
         </dependencies>
     </dependencyManagement>
 
