@@ -42,7 +42,7 @@ public class DownloadableFilesManager {
     public final static int FILE_CHUNK_SIZE=32768;
     public final static String FILES_SUBDIR="downloadables";
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
-    private String fileBaseDir /*="/home/at/testfiles"*/;
+    private String fileBaseDir;
     
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {

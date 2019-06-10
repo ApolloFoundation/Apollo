@@ -69,10 +69,20 @@ class DownloadableFilesManagerTest {
         Path pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1");
         assertNotNull(pathToShardArchive);
         assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
-
+        
+        pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1::chainid::3ef0");
+        assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
+        
+        String fpath = filesManager.mapFileIdToLocalPath("attachment::123::chainid::3ef0").toString();
+        assertEquals("123", fpath);
+        
+        fpath = filesManager.mapFileIdToLocalPath("debug::123").toString();
+        assertEquals("123", fpath);
+        
         // parse simple file name
-        pathToShardArchive = filesManager.mapFileIdToLocalPath("phasing_poll.csv");
-        assertNotNull(pathToShardArchive);
+        fpath = filesManager.mapFileIdToLocalPath("phasing_poll.csv").toString();
+        assertEquals("123", fpath);;
+        
         assertEquals("phasing_poll.csv", pathToShardArchive.getFileName().toString());
 
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::");
