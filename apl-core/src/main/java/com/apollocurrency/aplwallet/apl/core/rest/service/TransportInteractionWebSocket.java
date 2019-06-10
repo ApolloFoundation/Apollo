@@ -172,8 +172,8 @@ public class TransportInteractionWebSocket {
                         this.remoteip= transportStatusReply.remoteip;
                         this.remoteport = transportStatusReply.remoteport;
                         this.tunaddr = transportStatusReply.tunaddr;
-                        this.tunnetmask = transportStatusReply.tunnetmask;
-                        log.debug("connected to: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask);
+                        this.tunnetmask = transportStatusReply.tunnetmask;                        
+                        log.debug("connected to: {} : {} via : {} / {}", remoteip, remoteport, tunaddr, tunnetmask);
                         secureTransportStatus = SecureTransportStatus.CONNECTED;                        
                     } else if (transportStatusReply.status.equals("INITIAL")) {
                         // seems that we are dealing with service that have never been started.. Starting it up
@@ -194,13 +194,13 @@ public class TransportInteractionWebSocket {
                     this.remoteip= transportEventDescriptor.remoteip;
                     this.remoteport = transportEventDescriptor.remoteport;
                     this.tunaddr = transportEventDescriptor.tunaddr;
-                    this.tunnetmask = transportEventDescriptor.tunnetmask;
-                    log.debug("connected to: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask);
+                    this.tunnetmask = transportEventDescriptor.tunnetmask;                   
+                    log.debug("connected to: {} : {} via : {} / {}", remoteip, remoteport, tunaddr, tunnetmask);
                     secureTransportStatus = SecureTransportStatus.CONNECTED;                    
                 } else if (eventSpec.equals("DISCONNECT")) {
                     TransportEventDescriptor transportEventDescriptor = processData(TransportEventDescriptor.class, message, false);
-                    cleanupComParams();
-                    log.debug("disconnected from: " + remoteip + ":" + remoteport + " via : " + tunaddr + "/" + tunnetmask + ", reconnecting");
+                    cleanupComParams();                    
+                    log.debug("disconnected from: {} : {} via : {} / {}", remoteip, remoteport, tunaddr, tunnetmask);
                     secureTransportStatus = SecureTransportStatus.DISCONNECTED;                    
                 }
             }
