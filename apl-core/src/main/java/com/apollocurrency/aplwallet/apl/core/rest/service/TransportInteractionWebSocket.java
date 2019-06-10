@@ -1,24 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright © 2018-2019 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.transport.TransportEventDescriptor;
-import com.apollocurrency.aplwallet.api.transport.TransportGenericPacket;
 import com.apollocurrency.aplwallet.api.transport.TransportStartRequest;
 import com.apollocurrency.aplwallet.api.transport.TransportStatusReply;
 import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.io.Serializable;
 
 import java.net.URI;
 import java.util.Random;
-import java.util.logging.Level;
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
@@ -119,8 +115,7 @@ public class TransportInteractionWebSocket {
     public void onMessage(String message) {
         log.debug("onMessage: "+ message);
         
-        try {
-            // final ObjectNode node = new ObjectMapper().readValue(json, ObjectNode.class);
+        try {            
             org.codehaus.jackson.JsonNode parent= new ObjectMapper().readTree(message); 
             if (parent.has("type")) {                
                 

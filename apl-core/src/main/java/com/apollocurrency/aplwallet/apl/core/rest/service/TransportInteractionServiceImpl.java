@@ -1,15 +1,16 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Setter;
-import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
