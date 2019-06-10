@@ -81,6 +81,7 @@ public class TransportInteractionWebSocket {
         } 
         
         secureTransportStatus = SecureTransportStatus.INITIAL;
+        cleanupComParams();
     }
 
     /**
