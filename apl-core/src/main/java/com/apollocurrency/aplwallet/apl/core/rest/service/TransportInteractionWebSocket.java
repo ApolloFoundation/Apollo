@@ -56,10 +56,8 @@ public class TransportInteractionWebSocket {
                 case DISCONNECTED   : return "DISCONNECTED";
             };
         return null;
-        }        
-        
+        }                
     }
-        
     
     @Getter
     String remoteip;   
@@ -142,8 +140,6 @@ public class TransportInteractionWebSocket {
                     } else if (transportStatusReply.status.equals("INITIAL")) {
                         // seems that we are dealing with service that have never been started.. Starting it up
                         secureTransportStatus = SecureTransportStatus.NOT_LAUNCHED;
-                       
-                        
                     }
                     
                 } else if (type.equals("STARTREPLY")) {
@@ -152,9 +148,7 @@ public class TransportInteractionWebSocket {
                 }                
                 
             } else if (parent.has("event")) {
-                
-                // {"event":"CONNECT","remoteip":"51.15.249.23","remoteport":"25000","tunaddr":"10.75.110.216","tunnetmask":"255.255.255.0"}
-                
+                                
                 String eventSpec =  parent.get("event").asText();
                 if (eventSpec.equals("CONNECT") ) {
                     // handling json here 
@@ -291,9 +285,8 @@ public class TransportInteractionWebSocket {
      * State machine - tick engine
      */
     void tick() {
-        // log.debug("tick");
+        
         if (isOpen()) {
-            // log.debug("ws is connected, handling the situation according to the routine, status: " + secureTransportStatus );
             
             switch (secureTransportStatus) {
                 case INITIAL: {
@@ -311,9 +304,9 @@ public class TransportInteractionWebSocket {
                 
             }
             
-        } else {
-            log.debug("closed at the moment");
-        }        
+        }
+            
+
     }
     
     
