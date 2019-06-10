@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
@@ -63,6 +64,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -85,12 +87,13 @@ public class DexController {
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
     private DexEthService dexEthService;
+    private EthereumWalletService ethereumWalletService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private ObjectMapper mapper = new ObjectMapper();
 
     private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
             .maximumSize(100)
-            .expireAfterWrite(30, TimeUnit.SECONDS)
+            .expireAfterWrite(2, TimeUnit.MINUTES)
             .build(
                     new CacheLoader<>() {
                         public EthGasInfo load(String id) throws InvalidCacheLoadException {
@@ -105,11 +108,13 @@ public class DexController {
 
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService) {
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
+                         EthereumWalletService ethereumWalletService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
+        this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
     }
 
     //For DI
@@ -243,14 +248,20 @@ public class DexController {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
             } else if(offer.getPairCurrency().isEth() && offer.getType().isBuy()){
+                BigInteger eth = ethereumWalletService.getEthBalanceWei(offer.getFromAddress());
+                if(eth==null || eth.compareTo(BigInteger.ZERO) < 0){
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                }
 //                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
-//                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
 //                if(balanceInfo.getEth()==null || balanceInfo.getEth().compareTo(EthUtil.gweiToWei(willPay)) < 1){
 //                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
 //                }
             } else if(offer.getPairCurrency().isPax() && offer.getType().isBuy()){
+                BigInteger pax = ethereumWalletService.getPaxBalanceWei(offer.getFromAddress());
+                if(pax==null || pax.compareTo(BigInteger.ZERO) < 1){
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                }
 //                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
-//                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
 //                if(balanceInfo.getPax()==null || balanceInfo.getPax().compareTo(EthUtil.gweiToWei(willPay)) < 1){
 //                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
 //                }
@@ -421,6 +432,19 @@ public class DexController {
         }
         if(transferFee < 1 || transferFee > Integer.MAX_VALUE){
             return Response.status(Response.Status.OK).entity(incorrect("transferFee", String.format("value %d not in range [%d-%d]", transferFee, 1, Integer.MAX_VALUE))).build();
+        }
+
+        if(currencies.isEth()){
+            BigDecimal eth = EthUtil.weiToEther(ethereumWalletService.getEthBalanceWei(fromAddress));
+            //we cant send every thing because we should pay fee.
+            if(eth==null || eth.compareTo(amount) < 1){
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
+        } else if(currencies.isPax()){
+            BigDecimal pax = EthUtil.weiToEther(ethereumWalletService.getPaxBalanceWei(fromAddress));
+            if(pax==null || pax.compareTo(amount) < 0){
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
         }
 
         String transaction;
