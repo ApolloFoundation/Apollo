@@ -12,24 +12,31 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.io.Serializable;
-
 import java.net.URI;
 import java.util.Random;
-import javax.websocket.ClientEndpoint;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+
 import lombok.Getter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.StatusCode;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
 
-@ClientEndpoint
+
+@WebSocket(maxTextMessageSize = 64 * 1024)
 public class TransportInteractionWebSocket {
     
     
@@ -38,7 +45,9 @@ public class TransportInteractionWebSocket {
     private int uniquePort = -1; 
     private String logPath = "/var/log";   
         
-    Session userSession = null;
+    @SuppressWarnings("unused")
+    private Session session;    
+    
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionWebSocket.class);
     
     private SecureTransportStatus secureTransportStatus;
@@ -68,18 +77,46 @@ public class TransportInteractionWebSocket {
     @Getter
     String tunnetmask;  
     
+    
+    private WebSocketClient client;    
+    private CountDownLatch closeLatch ;
+    
+    
+    /**
+     * asynchronous routine to cope with websockets
+     *
+     * @param duration - time of expectation in units
+     * @param unit - TimeUnit description for async events
+     */
+    public boolean awaitClose(int duration, TimeUnit unit) throws InterruptedException {
+        return this.closeLatch.await(duration, unit);
+    }
+      
+    
+    /**
+     * entry point for our interaction routine
+     *
+     * @param endpointURI - link to connect to transport daemon
+     */
     public TransportInteractionWebSocket(URI endpointURI) {
         
         try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, endpointURI);
-        } catch (Exception e) {
-            // throw new RuntimeException(e);
-            log.debug("Not connected at the moment");            
-        } 
-        
+
         secureTransportStatus = SecureTransportStatus.INITIAL;
         cleanupComParams();
+
+        this.closeLatch = new CountDownLatch(1);
+        client = new WebSocketClient();
+        client.start();
+        ClientUpgradeRequest request = new ClientUpgradeRequest();
+        client.connect(this, endpointURI, request);
+        log.debug("Connecting to : %s%n", endpointURI);
+        awaitClose(5, TimeUnit.SECONDS);
+        
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(TransportInteractionWebSocket.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }
 
     /**
@@ -87,22 +124,23 @@ public class TransportInteractionWebSocket {
      *
      * @param userSession the userSession which is opened.
      */
-    @OnOpen
+    @OnWebSocketConnect
     public void onOpen(Session userSession) throws IOException {        
         log.debug("TransportInteractionWebSocket: onOpen");      
-        this.userSession = userSession;                   
+        this.session = userSession;                   
     }
 
     /**
      * Callback hook for Connection close events.
      *
      * @param userSession the userSession which is getting closed.
+     * @param statusCode code of error in case of problems
      * @param reason the reason for connection close
      */
-    @OnClose
-    public void onClose(Session userSession, CloseReason reason) {        
-        log.debug("TransportInteractionWebSocket: onClose, reason: " + reason.getReasonPhrase() );
-        this.userSession = null;                
+    @OnWebSocketClose
+    public void onClose(int statusCode, String reason) {
+        log.debug("TransportInteractionWebSocket: onClose, code: " + statusCode + ", reason: " + reason );
+        this.session = null;                
     }
 
     /**
@@ -110,7 +148,7 @@ public class TransportInteractionWebSocket {
      *
      * @param message The text message
      */
-    @OnMessage
+    @OnWebSocketMessage
     public void onMessage(String message) {
         log.debug("onMessage: "+ message);
         
@@ -178,8 +216,18 @@ public class TransportInteractionWebSocket {
      *
      * @param message
      */
-    public void sendMessage(String message) {
-        this.userSession.getAsyncRemote().sendText(message);
+    public void sendMessage(String message) {        
+        try {
+            Future<Void> fut;            
+            fut = session.getRemote().sendStringByFuture(message);
+            fut.get(2, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            log.error ("sendMessage InterruptedException: " + ex.getMessage().toString() );
+        } catch (ExecutionException ex) {
+            log.error ("sendMessage ExecutionException: " + ex.getMessage().toString() );
+        } catch (TimeoutException ex) {
+            log.error ("sendMessage TimeoutException: " + ex.getMessage().toString() );
+        }
     }
     
     /**
@@ -187,7 +235,7 @@ public class TransportInteractionWebSocket {
      */
 
     public boolean isOpen() {  
-        return this.userSession != null;        
+        return this.session != null;        
     }
     
     /**
@@ -206,16 +254,13 @@ public class TransportInteractionWebSocket {
      * Inquiring status of connection from transport service
      */
 
-    private void getSecureTransportStatus( ) {
-                
+    private void getSecureTransportStatus( ) {                
         log.debug("TransportInteractionWebSocket: getSecureTransportStatus");
         TransportStopRequest stopRequest = new TransportStopRequest();
         stopRequest.type = "GETSTATUSREQUEST";
         Random rand = new Random();
-        stopRequest.id = rand.nextInt(255);  
-        
-        ObjectMapper mapper = new ObjectMapper();
-                
+        stopRequest.id = rand.nextInt(255);          
+        ObjectMapper mapper = new ObjectMapper();                
         try {
             String stopRequestString = mapper.writeValueAsString(stopRequest);            
             log.debug("getting status: " + stopRequestString);            
@@ -261,7 +306,6 @@ public class TransportInteractionWebSocket {
      * Stopping transport
      */
     public void stopSecureTransport() {
-
         TransportStopRequest stopRequest = new TransportStopRequest();
         stopRequest.type = "STOPREQUEST";
         Random rand = new Random();
@@ -300,13 +344,9 @@ public class TransportInteractionWebSocket {
                     // launching here
                     startSecureTransport();                    
                     break;
-                }
-                
-            }
-            
+                }                
+            }            
         }
-            
-
     }
     
     
@@ -337,6 +377,5 @@ public class TransportInteractionWebSocket {
             e.printStackTrace();
         }
         return res;
-    }
-    
+    }    
 }
