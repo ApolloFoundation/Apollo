@@ -6,11 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import org.slf4j.Logger;
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -36,6 +31,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import org.slf4j.Logger;
 
 /**
  * {@inheritDoc}
@@ -287,7 +287,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             } else {
                 output.flush(); // flush unfinished file on 'append mode'
             }
-            log.debug("CSV file '{}' written rows=[{}]", fileName, rows);
+            log.trace("CSV file '{}' written rows=[{}]", fileName, rows);
             return new CsvExportData(rows, lastRow);
         } catch (IOException e) {
             log.error("IO exception", e);
