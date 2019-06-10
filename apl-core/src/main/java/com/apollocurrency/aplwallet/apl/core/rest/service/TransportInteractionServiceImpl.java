@@ -41,7 +41,7 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
         TransportStatusResponse transportStatusResponse =  new TransportStatusResponse();        
         log.debug("getTransportStatusResponse");               
         boolean isOpen = transportInteractionWebSocket.isOpen();
-        log.debug("isOpen: " + isOpen );                
+        log.debug("isOpen: {}" , isOpen );                
         transportStatusResponse.controlconnection = transportInteractionWebSocket.isOpen(); 
         transportStatusResponse.remoteConnectionStatus = transportInteractionWebSocket.getRemoteConnectionStatus();
         transportStatusResponse.remoteip = transportInteractionWebSocket.remoteip;
@@ -66,7 +66,7 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
                     try {                        
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
-                        log.debug( ex.toString() );
+                        log.error( "Runnable exception: {} ", ex.toString() );
                     }                    
                     transportInteractionWebSocket.tick();                   
                     if (done) break;
@@ -77,7 +77,7 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
             thread.start();
 
         } catch (URISyntaxException ex) {
-            log.debug("URISyntaxException exception: " + ex.getMessage());
+            log.error("URISyntaxException exception: {}", ex.getMessage());
         }
         
     }

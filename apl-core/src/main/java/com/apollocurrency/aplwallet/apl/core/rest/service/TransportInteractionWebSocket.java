@@ -110,11 +110,11 @@ public class TransportInteractionWebSocket {
         client.start();
         ClientUpgradeRequest request = new ClientUpgradeRequest();
         client.connect(this, endpointURI, request);
-        log.debug("Connecting to : %s%n", endpointURI);
+        log.debug("Connecting to : {} ", endpointURI);
         awaitClose(5, TimeUnit.SECONDS);
         
         } catch (Exception ex) {
-            log.debug("WS connection exception: " +  ex.getMessage().toString());
+            log.error("WS connection exception: {}",  ex.getMessage().toString());
         }
         
     }
@@ -139,7 +139,7 @@ public class TransportInteractionWebSocket {
      */
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
-        log.debug("TransportInteractionWebSocket: onClose, code: " + statusCode + ", reason: " + reason );
+        log.debug("TransportInteractionWebSocket: onClose, code: {}, reason: {} " , statusCode, reason );
         this.session = null;                
     }
 
@@ -150,14 +150,14 @@ public class TransportInteractionWebSocket {
      */
     @OnWebSocketMessage
     public void onMessage(String message) {
-        log.debug("onMessage: "+ message);
+        log.debug("onMessage: {}", message);
         
         try {            
             org.codehaus.jackson.JsonNode parent= new ObjectMapper().readTree(message); 
             if (parent.has("type")) {                
                 
                 String type =  parent.get("type").asText();
-                log.debug("type: " + type );
+                log.debug("type: {}", type );
                 
                 if  (type.equals("GETSTATUSREPLY")) {
                     log.debug("GetStatusReply");                        
@@ -205,7 +205,7 @@ public class TransportInteractionWebSocket {
                 }
             }
         } catch (IOException ex) {
-            log.error("incoming message processing error: " + ex.toString());
+            log.error("incoming message processing exception: {}", ex.toString());
         }
 
    
@@ -222,11 +222,11 @@ public class TransportInteractionWebSocket {
             fut = session.getRemote().sendStringByFuture(message);
             fut.get(2, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
-            log.error ("sendMessage InterruptedException: " + ex.getMessage().toString() );
+            log.error ("sendMessage InterruptedException: {}", ex.getMessage().toString() );
         } catch (ExecutionException ex) {
-            log.error ("sendMessage ExecutionException: " + ex.getMessage().toString() );
+            log.error ("sendMessage ExecutionException: {}", ex.getMessage().toString() );
         } catch (TimeoutException ex) {
-            log.error ("sendMessage TimeoutException: " + ex.getMessage().toString() );
+            log.error ("sendMessage TimeoutException: {}", ex.getMessage().toString() );
         }
     }
     
@@ -263,12 +263,12 @@ public class TransportInteractionWebSocket {
         ObjectMapper mapper = new ObjectMapper();                
         try {
             String stopRequestString = mapper.writeValueAsString(stopRequest);            
-            log.debug("getting status: " + stopRequestString);            
+            log.debug("getting status: {}", stopRequestString);            
             sendMessage(stopRequestString);            
         } catch (JsonProcessingException ex) {
-            log.error("TransportInteractionWebSocket: Error while creating Getting Status request");                   
+            log.error("TransportInteractionWebSocket: Error while creating Getting Status request: {}", ex.getMessage().toString() );                   
         } catch (IOException ex) {
-            log.error("getting status error: " + ex.getMessage().toString());
+            log.error("getting status error: {} ", ex.getMessage().toString());
         }
         
     }
@@ -295,9 +295,9 @@ public class TransportInteractionWebSocket {
             String startRequestString = mapper.writeValueAsString(startRequest); 
             sendMessage(startRequestString);
         } catch (JsonProcessingException ex) {
-            log.error("TransportInteractionWebSocket: JSON Error while creating STARTREQUEST");                                       
+            log.error("TransportInteractionWebSocket: JSON Error while creating STARTREQUEST : {}", ex.getMessage().toString());                                       
         } catch (IOException ex) {
-            log.error("TransportInteractionWebSocket: IO Error while creating STARTREQUEST");
+            log.error("TransportInteractionWebSocket: IO Error while creating STARTREQUEST : {}", ex.getMessage().toString()); 
         }
         
     }
@@ -316,9 +316,9 @@ public class TransportInteractionWebSocket {
             String stopRequestString = mapper.writeValueAsString(stopRequest); 
             sendMessage(stopRequestString);                
         } catch (JsonProcessingException ex) {                    
-            log.error("TransportInteractionWebSocket: JSON Error while creating STOPREQUEST");                                                       
+            log.error("TransportInteractionWebSocket: JSON Error while creating STOPREQUEST: {}", ex.getMessage().toString());                                         
         } catch (IOException ex) {                    
-            log.error("TransportInteractionWebSocket: IO Error while creating STOPREQUEST");                
+            log.error("TransportInteractionWebSocket: IO Error while creating STOPREQUEST: {}", ex.getMessage().toString());   
         }        
         cleanupComParams();
         secureTransportStatus = SecureTransportStatus.DISCONNECTED;
