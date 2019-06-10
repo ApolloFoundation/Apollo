@@ -43,6 +43,13 @@ public class DownloadableFilesManager {
     public final static String FILES_SUBDIR="downloadables";
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
     private String fileBaseDir;
+    public static final Map<String,Integer> LOCATION_KEYS=Map.of("shard",0,"attachment",1,"file",2,"debug",3);
+    public static final Map<String,Integer> LOCATION_MODIFIERS=Map.of("chainid",0);
+    
+    private class ParsedFileId{
+        Integer key=-1;
+        Map<String,String> modifiers = new HashMap<>();
+    }
     
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {
@@ -111,7 +118,16 @@ public class DownloadableFilesManager {
         }
         return downloadInfo;
     }
-
+    
+    private ParsedFileId parseFileId(String fileId){
+        ParsedFileId res = new ParsedFileId();
+        String[] all = fileId.split(";");
+        for(String kv: all){
+            String[] kva=kv.split("::");
+            
+        }
+        return res;
+    }
     /**
      * Find the real ZIP file in folder by specified fileId.
      *
@@ -124,7 +140,9 @@ public class DownloadableFilesManager {
             log.error("fileId is '{}' empty", fileId);
             return null;
         }
-
+        
+        ParsedFileId parsed = parseFileId(fileId);
+        
         String absPath;
         if (fileId.contains("shard::")) {
             String realShardId = fileId.substring(fileId.lastIndexOf("::") + 2);

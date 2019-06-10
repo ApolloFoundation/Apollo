@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 import java.nio.file.Path;
 
@@ -70,17 +69,17 @@ class DownloadableFilesManagerTest {
         assertNotNull(pathToShardArchive);
         assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
         
-        pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1::chainid::3ef0");
+        pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1;chainid::3ef0");
         assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
         
-        String fpath = filesManager.mapFileIdToLocalPath("attachment::123::chainid::3ef0").toString();
+        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
         assertEquals("123", fpath);
         
         fpath = filesManager.mapFileIdToLocalPath("debug::123").toString();
         assertEquals("123", fpath);
         
         // parse simple file name
-        fpath = filesManager.mapFileIdToLocalPath("phasing_poll.csv").toString();
+        fpath = filesManager.mapFileIdToLocalPath("file::phasing_poll.csv").toString();
         assertEquals("123", fpath);;
         
         assertEquals("phasing_poll.csv", pathToShardArchive.getFileName().toString());
