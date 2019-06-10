@@ -114,7 +114,7 @@ public class TransportInteractionWebSocket {
         awaitClose(5, TimeUnit.SECONDS);
         
         } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(TransportInteractionWebSocket.class.getName()).log(Level.SEVERE, null, ex);
+            log.debug("WS connection exception: " +  ex.getMessage().toString());
         }
         
     }
