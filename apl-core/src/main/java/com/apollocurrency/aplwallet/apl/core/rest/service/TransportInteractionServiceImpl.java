@@ -77,7 +77,7 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
             thread.start();
 
         } catch (URISyntaxException ex) {
-            System.err.println("URISyntaxException exception: " + ex.getMessage());
+            log.debug("URISyntaxException exception: " + ex.getMessage());
         }
         
     }
