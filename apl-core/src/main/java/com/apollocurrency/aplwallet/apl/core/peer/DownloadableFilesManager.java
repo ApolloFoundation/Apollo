@@ -30,51 +30,53 @@ import javax.inject.Singleton;
 
 /**
  * Downloadable files info
+ *
  * @author alukin@gmail.com
  */
-
 //TODO: cache purging
 @Singleton
 public class DownloadableFilesManager {
+
     private static final Logger log = getLogger(DownloadableFilesManager.class);
 
-    public final static long FDI_TTL=7*24*3600*1000; //7 days in ms
-    public final static int FILE_CHUNK_SIZE=32768;
-    public final static String FILES_SUBDIR="downloadables";
-    private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
+    public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
+    public final static int FILE_CHUNK_SIZE = 32768;
+    public final static String FILES_SUBDIR = "downloadables";
+    private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
     private String fileBaseDir;
-    public static final Map<String,Integer> LOCATION_KEYS=Map.of("shard",0,"attachment",1,"file",2,"debug",3);
-    public static final Map<String,Integer> LOCATION_MODIFIERS=Map.of("chainid",0);
-    
-    private class ParsedFileId{
-        Integer key=-1;
-        Map<String,String> modifiers = new HashMap<>();
+    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "attachment", 1, "file", 2, "debug", 3);
+    public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of("chainid", 0);
+
+    private class ParsedFileId {
+
+        Integer key = -1;
+        String fileId;
+        Map<String, String> modifiers = new HashMap<>();
     }
-    
+
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {
         Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         Objects.requireNonNull(dirProvider.getDataExportDir(), "dataExportDir in dirProvider is NULL");
-//        fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
         this.fileBaseDir = dirProvider.getDataExportDir().toString();
         log.debug("Node's dataExportDir = {}", this.fileBaseDir);
     }
-    
-    public FileInfo getFileInfo(String fileId){
+
+    public FileInfo getFileInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileInfo fi;
         FileDownloadInfo fdi = fdiCache.get(fileId);
-        if(fdi == null){
+        if (fdi == null) {
             fdi = createFileDownloadInfo(fileId);
-        }        
+        }
         fi = fdi.fileInfo;
         return fi;
     }
-    
+
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
-        if(fdi == null){
+        if (fdi == null) {
             FileInfo fi = getFileInfo(fileId);
         }
         fdi = fdiCache.get(fileId);
@@ -85,49 +87,67 @@ public class DownloadableFilesManager {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = mapFileIdToLocalPath(fileId);
-        if(fpath != null){
+        if (fpath != null) {
             downloadInfo.fileInfo.isPresent = true;
             downloadInfo.fileInfo.fileId = fileId;
             downloadInfo.created = Instant.now(); // in UTC
             ChunkedFileOps fops = new ChunkedFileOps(fpath);
-            downloadInfo.fileInfo.size=fops.getFileSize();
-            if (downloadInfo.fileInfo.size<0) {
-               downloadInfo.fileInfo.isPresent=false;
+            downloadInfo.fileInfo.size = fops.getFileSize();
+            if (downloadInfo.fileInfo.size < 0) {
+                downloadInfo.fileInfo.isPresent = false;
             } else {
-                downloadInfo.fileInfo.fileDate=fops.getFileDate();
-                downloadInfo.fileInfo.hash=Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
-                downloadInfo.fileInfo.chunkSize=FILE_CHUNK_SIZE;
-                downloadInfo.fileInfo.originHostSignature="";
+                downloadInfo.fileInfo.fileDate = fops.getFileDate();
+                downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
+                downloadInfo.fileInfo.chunkSize = FILE_CHUNK_SIZE;
+                downloadInfo.fileInfo.originHostSignature = "";
                 List<ChunkedFileOps.ChunkInfo> crcs = fops.getChunksCRC();
-                for(int i=0; i<crcs.size() ;i++){
+                for (int i = 0; i < crcs.size(); i++) {
                     FileChunkInfo fci = new FileChunkInfo();
-                    ChunkedFileOps.ChunkInfo ci=crcs.get(i);
-                    fci.crc=ci.crc;
-                    fci.fileId=fileId;
-                    fci.offset=ci.offset;
+                    ChunkedFileOps.ChunkInfo ci = crcs.get(i);
+                    fci.crc = ci.crc;
+                    fci.fileId = fileId;
+                    fci.offset = ci.offset;
                     fci.present = SAVED;
-                    fci.size=ci.size;
-                    fci.chunkId=i;
+                    fci.size = ci.size;
+                    fci.chunkId = i;
                     downloadInfo.chunks.add(fci);
                 }
                 fdiCache.put(fileId, downloadInfo);
             }
         } else {
-            downloadInfo.fileInfo.fileId=fileId;
-            downloadInfo.fileInfo.isPresent=false;
+            downloadInfo.fileInfo.fileId = fileId;
+            downloadInfo.fileInfo.isPresent = false;
         }
         return downloadInfo;
     }
-    
-    private ParsedFileId parseFileId(String fileId){
+
+    private ParsedFileId parseFileId(String fileId) {
         ParsedFileId res = new ParsedFileId();
         String[] all = fileId.split(";");
-        for(String kv: all){
-            String[] kva=kv.split("::");
-            
+        for (String kv : all) {
+            String[] kva = kv.split("::");
+            Integer key = LOCATION_KEYS.get(kva[0]);
+            if (key != null) {
+                res.key = key;
+                if (kva.length != 2) {
+                    log.warn("Error parsing download file string. Location key: {} must have value.", kva[0]);
+                } else {
+                    res.fileId = kva[1];
+                }
+            } else {
+                Integer mod = LOCATION_MODIFIERS.get(kva[0]);
+                if (mod != null) {
+                    if (kva.length != 2) {
+                        res.modifiers.put(kva[0], "");
+                    } else {
+                        res.modifiers.put(kva[0], kva[1]);
+                    }
+                }
+            }
         }
         return res;
     }
+
     /**
      * Find the real ZIP file in folder by specified fileId.
      *
@@ -140,28 +160,45 @@ public class DownloadableFilesManager {
             log.error("fileId is '{}' empty", fileId);
             return null;
         }
-        
+
         ParsedFileId parsed = parseFileId(fileId);
-        
-        String absPath;
-        if (fileId.contains("shard::")) {
-            String realShardId = fileId.substring(fileId.lastIndexOf("::") + 2);
-            long shardId = 0;
-            try {
-                shardId = Long.valueOf(realShardId);
-            } catch (NumberFormatException e) {
-                log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
-                return null;
-            }
-            // that will be only shard archive file present in folder
-            String fileName = ShardNameHelper.getShardArchiveNameByShardId(shardId);
-            absPath = this.fileBaseDir + File.separator + fileName + ".zip";
-        } else {
-            // that will be any file present in folder
-            absPath = this.fileBaseDir + File.separator + fileId;
+
+        String absPath = "";
+        switch (parsed.key) {
+            case 0: //shard
+            {
+                long shardId = 0;
+                try {
+                    shardId = Long.valueOf(parsed.fileId);
+                    String fileName = ShardNameHelper.getShardArchiveNameByShardId(shardId);
+                    absPath = this.fileBaseDir + File.separator + fileName + ".zip";
+                } catch (NumberFormatException e) {
+                    log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
+                }
+            };
+            break;
+            case 1: //attachment
+            {
+                 log.warn("Attachmednt  downloading is not implemented yet");
+            };
+            break;
+            case 2: //file
+            {
+                 log.warn("File  downloading is not implemented yet");
+            };
+            break;
+            case 3: //debug
+            {
+                log.warn("Debug downloading is not implemented yet");           
+            };
+            break;
+            default:{
+                
+            };
         }
+
         Path res = Paths.get(absPath);
-        if(!Files.exists(res)){
+        if (!Files.exists(res)) {
             res = null;
         }
         return res;
