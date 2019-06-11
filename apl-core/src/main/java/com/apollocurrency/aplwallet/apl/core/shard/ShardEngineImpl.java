@@ -19,6 +19,21 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHI
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -45,20 +60,6 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * {@inheritDoc}
  */
@@ -77,6 +78,7 @@ public class ShardEngineImpl implements ShardEngine {
     private DerivedTablesRegistry registry;
     private DirProvider dirProvider;
     private Zip zipComponent;
+    private AplAppStatus aplAppStatus;
 
     public ShardEngineImpl() {
     }
@@ -85,7 +87,7 @@ public class ShardEngineImpl implements ShardEngine {
     public ShardEngineImpl(DirProvider dirProvider, DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
-                           Zip zipComponent) {
+                           Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
