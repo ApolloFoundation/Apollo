@@ -3,8 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -13,11 +15,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
@@ -26,6 +31,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class AplAppStatus {
     private static final Logger LOG = getLogger(AplAppStatus.class);
+
     private static final long ONE_DAY=3600*24;
     private final Map<String,DurableTaskInfo> tasks = new HashMap<>();
     private NumberFormat formatter = new DecimalFormat("#000.000");
@@ -34,31 +40,42 @@ public class AplAppStatus {
     public AplAppStatus() {
     }
     
-    public String durableTaskStart(String name, String descritption, boolean isCrititcal){
+    public String durableTaskStart(String name, String description, boolean isCritical) {
+        return this.durableTaskStart(name, description, isCritical, 0.0);
+    }
+
+    public String durableTaskStart(String name, String description, boolean isCritical, Double percentComplete) {
+        Objects.requireNonNull(name, "task Name is NULL");
+        StringValidator.requireNonBlank(name, "task Name is empty");
+        Objects.requireNonNull(description, "task description is NULL");
+        StringValidator.requireNonBlank(description, "task description is empty");
+        Objects.requireNonNull(percentComplete, "percent Complete is NULL");
+
         String key = UUID.randomUUID().toString();
         DurableTaskInfo info = new DurableTaskInfo();
         info.setId(key);
         info.setName(name);
-        info.setPercentComplete(0.0);
-        info.setDecription(descritption);
+        info.setPercentComplete(percentComplete);
+        info.setDecription(description);
         info.setStarted(new Date());
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[0]);
-        info.setIsCrititcal(isCrititcal);
+        info.setIsCrititcal(isCritical);
         tasks.put(key, info);
-        if(isCrititcal){
-          LOG.info("Task: {} started",name);            
+        if(isCritical){
+            LOG.info("Task: '{}' started",name);
         }else{
-            LOG.debug("Task: {} started",name);
+            LOG.debug("Task: '{}' started",name);
         }
         return key;
     }
-    
+
     public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message){
         return durableTaskUpdate(taskId,percentComplete,message,-1);
     }
     
     public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message, int keepPrevMessages){
-    
+        Objects.requireNonNull(percentComplete, "percentComplete is NULL");
+
        DurableTaskInfo info =  tasks.get(taskId);
        if(info==null){
            taskId=durableTaskStart("Unnamed", "No Description", false);
@@ -92,7 +109,7 @@ public class AplAppStatus {
             return;
         }
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[4]);
-        LOG.debug("{}: paused, %: {}, message: {}",info.name,  message);
+        LOG.debug("'{}': paused, %: {}, message: {}",info.name,  message);
         if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
         }        
@@ -104,7 +121,7 @@ public class AplAppStatus {
             return;
         }     
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
-        LOG.debug("{}: resumed, %: {}, message: {}",info.name,  message);
+        LOG.debug("'{}': resumed, %: {}, message: {}",info.name,  message);
         if(!StringUtils.isBlank(message)){
            info.getMessages().add(message);
         }        
@@ -121,9 +138,9 @@ public class AplAppStatus {
            info.getMessages().add(message);
         }
         if(info.isCrititcal){
-           LOG.debug("{}: finished with: {} duration, MS: {}",info.name,message,info.durationMS);
+           LOG.debug("'{}': finished with: {} duration, MS: {}",info.name,message,info.durationMS);
         }else{        
-           LOG.info("{}: finished with: {} duration, MS: {}",info.name,message,info.durationMS);
+           LOG.info("'{}': finished with: {} duration, MS: {}",info.name,message,info.durationMS);
         }
         if(isCancelled){
             info.setStateOfTask(DurableTaskInfo.TASK_STATES[3]);
@@ -151,4 +168,15 @@ public class AplAppStatus {
     public Collection<DurableTaskInfo> getTasksList() {
        return tasks.values();
     }
+
+    public synchronized Optional<DurableTaskInfo> findTaskByName(String taskName) {
+        Objects.requireNonNull(taskName, "taskName is NULL");
+        for(DurableTaskInfo taskInfo: tasks.values()){
+            if (taskInfo.getName() != null && !taskInfo.getName().isEmpty() && taskInfo.getName().contains(taskName)) {
+                return Optional.of(taskInfo);
+            }
+        }
+        return Optional.empty();
+    }
+
 }
