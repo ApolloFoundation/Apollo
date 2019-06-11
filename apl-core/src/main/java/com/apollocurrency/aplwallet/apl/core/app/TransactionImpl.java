@@ -616,6 +616,11 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public String toString() {
+        return String.valueOf(getId());
+    }
+
+    @Override
     public MessageAppendix getMessage() {
         return message;
     }

@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
 import javax.enterprise.inject.Vetoed;
+import java.util.List;
 
 @Vetoed
 public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
@@ -81,17 +82,13 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
+        List<Transaction> transactionList = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
                 type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly, false)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                    transactions.add(JSONData.transaction(transaction, includePhasingResult, false));
-            }
-        }
+                includeExpiredPrunable, executedOnly, false);
+            transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
 
         JSONObject response = new JSONObject();
-        response.put("transactions", transactions);
+        response.put("transactions", transactionList);
         return response;
 
     }

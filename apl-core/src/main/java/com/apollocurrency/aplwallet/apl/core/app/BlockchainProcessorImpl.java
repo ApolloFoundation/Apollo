@@ -143,7 +143,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
     private volatile boolean alreadyInitialized = false;
-    private volatile long genesisBlockId;
+    private volatile long initialBlock;
 
 
     private TransactionProcessor lookupTransactionProcessor() {
@@ -353,8 +353,18 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public long getGenesisBlockId() {
-        return genesisBlockId;
+    public long getInitialBlock() {
+        return initialBlock;
+    }
+
+    @Override
+    public void updateInitialBlockId() {
+        globalSync.updateLock();
+        try {
+            initialBlock = blockchain.getShardInitialBlock().getId();
+        } finally {
+            globalSync.updateUnlock();
+        }
     }
 
     @Override
@@ -599,7 +609,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            genesisBlockId = blockchain.getShardInitialBlock().getId();
+            initialBlock = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
             return;
         }
@@ -611,7 +621,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // Maybe better to rename this method
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(genesisBlock);
-            genesisBlockId = genesisBlock.getId();
+            initialBlock = genesisBlock.getId();
             Genesis.apply();
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.createSearchIndex(con);
@@ -1408,7 +1418,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 
-                long commonMilestoneBlockId = genesisBlockId;
+                long commonMilestoneBlockId = initialBlock;
                 
                 if (lookupBlockhain().getHeight() > 0) {
                     commonMilestoneBlockId = getCommonMilestoneBlockId(peer);
@@ -1419,7 +1429,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 
                 chainBlockIds = getBlockIdsAfterCommon(peer, commonMilestoneBlockId, false);
                 if (chainBlockIds.size() < 2 || !peerHasMore) {
-                    if (commonMilestoneBlockId == genesisBlockId) {
+                    if (commonMilestoneBlockId == initialBlock) {
                         log.info("Cannot load blocks after genesis block {} from peer {}, perhaps using different Genesis block",
                                 commonMilestoneBlockId, peer.getAnnouncedAddress());
                     }
@@ -1539,7 +1549,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return 0;
                 }
                 if (milestoneBlockIds.isEmpty()) {
-                    return genesisBlockId;
+                    return initialBlock;
                 }
                 // prevent overloading with blockIds
                 if (milestoneBlockIds.size() > 20) {

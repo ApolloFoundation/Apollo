@@ -38,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -71,7 +70,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
 
-                response.put("genesisBlockId", Long.toUnsignedString(blockchainProcessor.getGenesisBlockId()));
+                response.put("genesisBlockId", Long.toUnsignedString(blockchainProcessor.getInitialBlock()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);

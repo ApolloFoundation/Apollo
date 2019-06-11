@@ -62,7 +62,7 @@ public class ShardObserver {
 
     public CompletableFuture<Boolean> tryCreateShardAsync() {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
-        CompletableFuture<Boolean> res = null;
+        CompletableFuture<Boolean> completableFuture = null;
         if (currentConfig.isShardingEnabled()) {
             int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
@@ -71,16 +71,21 @@ public class ShardObserver {
                     // quick create records for new Shard and Recovery process for later use
                     shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
                     shardDao.saveShard(new Shard(minRollbackHeight)); // store shard with HEIGHT ONLY
-                    res = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight)).handle((success, ex)-> {
-                    updateTrimConfig(true);
-                    return success;
-                });
+                    completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
+                            .thenApply((result) -> {
+                                blockchainProcessor.updateInitialBlockId();
+                                return result;
+                            })
+                            .handle((result, ex) -> {
+                                updateTrimConfig(true);
+                                return result;
+                            });
                 } else {
                     log.warn("Will skip sharding at height {} due to blokchain scan ", minRollbackHeight);
                 }
             }
         }
-        return res;
+        return completableFuture;
     }
 
     private void updateTrimConfig(boolean enableTrim) {
@@ -113,6 +118,4 @@ public class ShardObserver {
         }
         return result;
     }
-
-
 }
