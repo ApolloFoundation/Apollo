@@ -70,7 +70,9 @@ public class ShardObserver {
                     updateTrimConfig(false);
                     // quick create records for new Shard and Recovery process for later use
                     shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
-                    shardDao.saveShard(new Shard(minRollbackHeight)); // store shard with HEIGHT ONLY
+                    long nextShardId = shardDao.getNextShardId();
+                    Shard newShard = new Shard(nextShardId, minRollbackHeight);
+                    shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
                     completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
                             .thenApply((result) -> {
                                 blockchainProcessor.updateInitialBlockId();

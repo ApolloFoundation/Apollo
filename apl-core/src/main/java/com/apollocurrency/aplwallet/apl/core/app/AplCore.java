@@ -33,6 +33,9 @@ import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -51,6 +54,8 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -243,16 +248,15 @@ public final class AplCore {
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
-                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean", 
-                   new Runnable() {
-                      @Override
-                      public void run() {
-                        LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
-                        aplAppStatus.clearFinished(10*60L); //10 min
-                      }
-                   },
+                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
+                        () -> {
+                          LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
+                          aplAppStatus.clearFinished(10*60L); //10 min
+                        },
                    20,
                    TimeUnit.SECONDS);
+                // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
+                recoverSharding();
                 ThreadPool.start();
 
                 try {
@@ -293,7 +297,21 @@ public final class AplCore {
                 System.exit(1);
             }
         }
-        void checkPorts() {
+
+    private void recoverSharding() {
+        ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+        if (recovery != null && recovery.getState() != MigrateState.COMPLETED) {
+            aplAppStatus.durableTaskUpdate(initCoreTaskID, 72.0, "Shard process recovery started from " + recovery.getState());
+            ShardDao shardDao = CDI.current().select(ShardDao.class).get();
+            ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
+            executor.createAllCommands(shardDao.getLastShard().getShardHeight());
+            executor.executeAllOperations();
+            aplAppStatus.durableTaskUpdate(initCoreTaskID, 93.0, "Shard process recovery started");
+        }
+    }
+
+    void checkPorts() {
             Set<Integer> ports = collectWorkingPorts();
             for (Integer port : ports) {
                 if (!RuntimeParams.isTcpPortAvailable(port)) {

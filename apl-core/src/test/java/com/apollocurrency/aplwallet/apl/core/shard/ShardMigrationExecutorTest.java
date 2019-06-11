@@ -13,6 +13,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.*;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +54,9 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
@@ -91,6 +94,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import javax.enterprise.inject.spi.Bean;
@@ -127,6 +131,8 @@ class ShardMigrationExecutorTest {
             DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
+            DGSGoodsTable.class,
+            PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
             ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class,
@@ -162,6 +168,10 @@ class ShardMigrationExecutorTest {
     private DerivedTablesRegistry registry;
     @Inject
     private CsvExporter cvsExporter;
+    @Inject
+    private DGSGoodsTable goodsTable;
+    @Inject
+    private PhasingPollTable phasingPollTable;
 
     public ShardMigrationExecutorTest() throws Exception {}
 
@@ -195,13 +205,14 @@ class ShardMigrationExecutorTest {
     void executeAllOperations() throws IOException {
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
 
-            int snapshotBlockHeight = 8000;
+        int snapshotBlockHeight = 8000;
 
-            // prepare an save Recovery + new Shard info
-            ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
-            recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
-            Shard newShard = new Shard(snapshotBlockHeight);
-            long shardId = shardDao.saveShard(newShard);
+        // prepare an save Recovery + new Shard info
+        ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
+        recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
+        long shardId = shardDao.getNextShardId();
+        Shard newShard = new Shard(shardId, snapshotBlockHeight);
+        shardDao.saveShard(newShard);
 
             MigrateState state;
 
@@ -269,7 +280,9 @@ class ShardMigrationExecutorTest {
             assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
 
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
-            CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, snapshotBlockHeight, dbIds);
+        List<String> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME);
+
+        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, dbIds);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);
             assertEquals(CSV_EXPORT_FINISHED, state);
 

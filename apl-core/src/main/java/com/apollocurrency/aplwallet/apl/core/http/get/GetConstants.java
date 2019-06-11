@@ -70,7 +70,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
 
-                response.put("genesisBlockId", Long.toUnsignedString(blockchainProcessor.getInitialBlock()));
+                response.put("initialShardBlockId", Long.toUnsignedString(blockchainProcessor.getInitialBlock()));
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);

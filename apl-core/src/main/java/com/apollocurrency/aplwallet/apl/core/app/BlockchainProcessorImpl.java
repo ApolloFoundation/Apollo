@@ -569,8 +569,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
                         result.add(phasedTransaction);
                     }
-                } catch (AplException.ValidationException ignore) {
-                }
+                } catch (AplException.ValidationException ignore) {}
             }
 
             selectUnconfirmedTransactions(duplicates, blockchain.getLastBlock(), -1, Integer.MAX_VALUE).forEach(

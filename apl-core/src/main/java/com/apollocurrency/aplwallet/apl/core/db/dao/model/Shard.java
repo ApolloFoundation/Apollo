@@ -25,8 +25,9 @@ public class Shard {
         return new Shard(shardId, shardHashCopy, shardState, shardHeight, shardZipHashCrcCopy);
     }
 
-    public Shard(Integer shardHeight) {
+    public Shard(long id, Integer shardHeight) {
         this.shardHeight = shardHeight;
+        this.shardId = id;
     }
 
     public Shard(byte[] shardHash, Integer shardHeight) {
