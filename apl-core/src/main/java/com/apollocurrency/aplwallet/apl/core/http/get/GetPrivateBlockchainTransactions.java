@@ -25,6 +25,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
+
 @Vetoed
 public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHandler {
 
@@ -78,21 +80,19 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
                 }
             });
         } else {
-            try (DbIterator<? extends Transaction> iterator = blockchain.getTransactions(
+            List<Transaction> transactionList = blockchain.getTransactions(
                     data.getAccountId(), 0, type, subtype, 0, false, false,
-                    false, firstIndex, lastIndex, false, false, true)) {
-                while (iterator.hasNext()) {
-                    Transaction transaction = iterator.next();
+                    false, firstIndex, lastIndex, false, false, true);
+                transactionList.forEach(tx-> {
 
-                    if (Payment.PRIVATE == transaction.getType() && data.isEncrypt()) {
-                        transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
+                    if (Payment.PRIVATE == tx.getType() && data.isEncrypt()) {
+                        transactions.add(JSONData.encryptedTransaction(tx, data.getSharedKey()));
 
                     } else {
-                        transactions.add(JSONData.transaction(false, transaction));
+                        transactions.add(JSONData.transaction(false, tx));
                     }
-                }
+                });
             }
-        }
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
         response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));

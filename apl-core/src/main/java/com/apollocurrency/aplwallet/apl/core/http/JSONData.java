@@ -45,8 +45,6 @@ import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -82,6 +80,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -99,6 +99,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -109,8 +111,6 @@ import java.util.Map;
 import java.util.Random;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Vetoed
 public final class JSONData {
@@ -170,7 +170,7 @@ public final class JSONData {
             json.put("unconfirmedBalanceATM", String.valueOf(account.getUnconfirmedBalanceATM()));
             json.put("forgedBalanceATM", String.valueOf(account.getForgedBalanceATM()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height));
+                json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height, false));
                 json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), height)));
             }
         }

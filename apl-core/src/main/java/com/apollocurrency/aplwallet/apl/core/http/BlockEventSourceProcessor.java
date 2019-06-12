@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 
@@ -66,15 +67,14 @@ public class BlockEventSourceProcessor implements Runnable {
 
     protected JSONObject getBlockchainData(Blockchain blockchain) {
         JSONArray transactionsArray = new JSONArray();
-        try (DbIterator<? extends Transaction> iter = blockchain.getTransactions(accountId,
+        List<Transaction> list = blockchain.getTransactions(accountId,
                 0, (byte) -1, (byte) -1, 0, false,
                 false, false, 0, 9, false,
-                false, false)) {
-            while (iter.hasNext()) {
-                Transaction transaction = iter.next();
+                false, false);
+            for (Transaction transaction : list) {
                 transactionsArray.add(JSONData.transaction(false, transaction));
             }
-        }
+
         JSONArray purchasesJSON = new JSONArray();
 
 //        try (DbIterator<DigitalGoodsStore.Purchase> purchases = DigitalGoodsStore.Purchase.getPendingSellerPurchases(accountId, 0, 9)) {

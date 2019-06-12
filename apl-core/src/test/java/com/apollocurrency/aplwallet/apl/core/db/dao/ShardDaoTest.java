@@ -90,24 +90,13 @@ class ShardDaoTest {
     }
 
     @Test
-    void testSave() {
-        Shard shard = new Shard(100);
-        long insertedId = dao.saveShard(shard);
-        assertEquals(4, insertedId);
-    }
-
-    @Test
     void testInsert() {
-        long insertedId = dao.saveShard(NOT_SAVED_SHARD);
+        dao.saveShard(NOT_SAVED_SHARD);
 
-        assertEquals(5, insertedId);
-
-        Shard found = dao.getShardById(insertedId);
+        Shard found = dao.getShardById(NOT_SAVED_SHARD.getShardId());
 
         assertNotNull(found);
-        NOT_SAVED_SHARD.setShardId(insertedId); // NOT_SAVED_SHARD will have correct hash ONLY after setting Id
         assertEquals(NOT_SAVED_SHARD, found);
-        assertEquals(insertedId, found.getShardId());
         assertEquals(NOT_SAVED_SHARD.getShardState(), found.getShardState());
         assertArrayEquals(NOT_SAVED_SHARD.getShardHash(), found.getShardHash());
         assertEquals(NOT_SAVED_SHARD.getShardHeight(), found.getShardHeight());

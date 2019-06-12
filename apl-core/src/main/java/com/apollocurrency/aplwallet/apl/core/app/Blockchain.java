@@ -49,7 +49,9 @@ public interface Blockchain {
 
     boolean hasBlock(long blockId);
 
-//    DbIterator<? extends Block> getAllBlocks();
+    boolean hasBlockInShards(long blockId);
+
+    //    DbIterator<? extends Block> getAllBlocks();
 
     DbIterator<Block> getBlocks(int from, int to);
 
@@ -136,7 +138,7 @@ public interface Blockchain {
 //    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
 //                                                      boolean includeExpiredPrunable);
 
-    DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 

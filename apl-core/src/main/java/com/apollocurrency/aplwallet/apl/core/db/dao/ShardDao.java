@@ -32,7 +32,7 @@ public interface ShardDao {
     long countShard();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")
+    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) + 1 as shard_id FROM shard")
     long getNextShardId();
 
     @Transactional(readOnly = true)
@@ -43,8 +43,7 @@ public interface ShardDao {
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc) " +
                         "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :zipHashCrc)")
     @RegisterRowMapper(ShardRowMapper.class)
-    @GetGeneratedKeys
-    long saveShard(@BindBean Shard shard);
+    void saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, zip_hash_crc =:zipHashCrc where shard_id =:shardId")

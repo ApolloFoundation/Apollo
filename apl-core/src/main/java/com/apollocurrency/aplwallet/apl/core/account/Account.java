@@ -528,10 +528,10 @@ public final class Account {
     }
 
     public long getEffectiveBalanceAPL() {
-        return getEffectiveBalanceAPL(blockchain.getHeight());
+        return getEffectiveBalanceAPL(blockchain.getHeight(), true);
     }
 
-    public long getEffectiveBalanceAPL(int height) {
+    public long getEffectiveBalanceAPL(int height, boolean lock) {
         if (height <= 1440) {
             Account genesisAccount = getAccount(id, 0);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
@@ -542,7 +542,9 @@ public final class Account {
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        sync.readLock();
+        if (lock) {
+            sync.readLock();
+        }
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
@@ -551,7 +553,9 @@ public final class Account {
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
         finally {
-            sync.readUnlock();
+            if (lock) {
+                sync.readUnlock();
+            }
         }
     }
 

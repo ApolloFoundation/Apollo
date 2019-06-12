@@ -40,13 +40,13 @@ import javax.inject.Singleton;
 public class DownloadableFilesManager {
 
     private static final Logger log = getLogger(DownloadableFilesManager.class);
-
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
-    public final static int FILE_CHUNK_SIZE = 32768;
+    public final static int FILE_CHUNK_SIZE = 32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
     public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "attachment", 1, "file", 2, "debug", 3);
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of("chainid", 0);
+
     
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;

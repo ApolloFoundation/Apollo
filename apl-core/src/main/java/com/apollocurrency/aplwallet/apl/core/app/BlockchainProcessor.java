@@ -75,7 +75,9 @@ public interface BlockchainProcessor {
 
     Transaction restorePrunedTransaction(long transactionId);
 
-    long getGenesisBlockId();
+    long getInitialBlock();
+
+    void updateInitialBlockId();
 
     class BlockNotAcceptedException extends AplException {
 

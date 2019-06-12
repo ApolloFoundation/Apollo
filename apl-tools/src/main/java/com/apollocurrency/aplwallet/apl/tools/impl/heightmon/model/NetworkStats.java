@@ -4,25 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class NetworkStats {
+    private Map<String, Integer> peerHeight;
     private List<PeerDiffStat> peerDiffStats;
     private int currentMaxDiff;
     private Map<Integer, Integer> diffForTime;
 
-    public NetworkStats(List<PeerDiffStat> peerDiffStats, int currentMaxDiff, Map<Integer, Integer> diffForTime) {
+    public NetworkStats(List<PeerDiffStat> peerDiffStats, int currentMaxDiff, Map<Integer, Integer> diffForTime, Map<String, Integer> peerHeight) {
         this.peerDiffStats = peerDiffStats;
         this.currentMaxDiff = currentMaxDiff;
         this.diffForTime = diffForTime;
+        this.peerHeight = peerHeight;
     }
 
     public NetworkStats() {
-        this(new ArrayList<>(), -1, new LinkedHashMap<>());
+        this(new ArrayList<>(), -1, new LinkedHashMap<>(), new HashMap<>());
     }
 
     @Override
@@ -32,12 +30,17 @@ public class NetworkStats {
         NetworkStats that = (NetworkStats) o;
         return currentMaxDiff == that.currentMaxDiff &&
                 Objects.equals(peerDiffStats, that.peerDiffStats) &&
-                Objects.equals(diffForTime, that.diffForTime);
+                Objects.equals(diffForTime, that.diffForTime) &&
+                Objects.equals(peerHeight, that.peerHeight);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(peerDiffStats, currentMaxDiff, diffForTime);
+        return Objects.hash(peerDiffStats, currentMaxDiff, diffForTime, peerHeight);
+    }
+
+    public Map<String, Integer> getPeerHeight() {
+        return peerHeight;
     }
 
     public List<PeerDiffStat> getPeerDiffStats() {
