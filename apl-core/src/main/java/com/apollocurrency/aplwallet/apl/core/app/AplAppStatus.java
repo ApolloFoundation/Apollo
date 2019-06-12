@@ -45,9 +45,7 @@ public class AplAppStatus {
     }
 
     public String durableTaskStart(String name, String description, boolean isCritical, Double percentComplete) {
-        Objects.requireNonNull(name, "task Name is NULL");
         StringValidator.requireNonBlank(name, "task Name is empty");
-        Objects.requireNonNull(description, "task description is NULL");
         StringValidator.requireNonBlank(description, "task description is empty");
         Objects.requireNonNull(percentComplete, "percent Complete is NULL");
 
