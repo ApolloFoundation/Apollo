@@ -60,6 +60,7 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import java.io.FilenameFilter;
+import java.util.UUID;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 
@@ -82,10 +83,7 @@ public class ShardEngineImpl implements ShardEngine {
     private DirProvider dirProvider;
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
-    private ShardNameHelper shardNameHelper;
 
-    public ShardEngineImpl() {
-    }
 
     @Inject
     public ShardEngineImpl(DirProvider dirProvider,
@@ -94,7 +92,7 @@ public class ShardEngineImpl implements ShardEngine {
                            ShardRecoveryDaoJdbc shardRecoveryDao,
                            CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
-                           Zip zipComponent, AplAppStatus aplAppStatus, ShardNameHelper shardNameHelper) {
+                           Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
@@ -102,7 +100,6 @@ public class ShardEngineImpl implements ShardEngine {
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
-        this.shardNameHelper = Objects.requireNonNull(shardNameHelper, "zipComponent is NULL");
     }
 
     /**
@@ -487,7 +484,8 @@ public class ShardEngineImpl implements ShardEngine {
             log.error(error);
             throw new IllegalStateException(error);
         }
-        String shardFileName = shardNameHelper.getShardArchiveNameByShardId(createdShardId,null);
+        UUID chainId = databaseManager.getChainId();
+        String shardFileName = new ShardNameHelper().getShardArchiveNameByShardId(createdShardId,chainId);
         String currentTable = shardFileName;
 
         Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName);

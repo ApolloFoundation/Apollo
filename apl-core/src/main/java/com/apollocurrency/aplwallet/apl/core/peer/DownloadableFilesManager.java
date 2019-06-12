@@ -10,6 +10,7 @@ import static com.apollocurrency.aplwallet.api.p2p.FileChunkInfoPresent.SAVED;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
@@ -45,12 +46,13 @@ public class DownloadableFilesManager {
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
     public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "attachment", 1, "file", 2, "debug", 3);
-    public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of("chainid", 0);
+    public static final String MOD_CHAINID="chainid";
+    public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
     
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;
-    
+    private final ChainsConfigHolder chainsConfig;
     private class ParsedFileId {
 
         Integer key = -1;
@@ -59,11 +61,12 @@ public class DownloadableFilesManager {
     }
 
     @Inject
-    public DownloadableFilesManager(DirProvider dirProvider, ShardNameHelper shardNameHelper) {
+    public DownloadableFilesManager(DirProvider dirProvider, ShardNameHelper shardNameHelper, ChainsConfigHolder chainsConfig) {
         Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         Objects.requireNonNull(dirProvider.getDataExportDir(), "dataExportDir in dirProvider is NULL");
         this.dirProvider=dirProvider;
         this.shardNameHelper = shardNameHelper;
+        this.chainsConfig = chainsConfig;
     }
 
     public FileInfo getFileInfo(String fileId) {
@@ -174,7 +177,13 @@ public class DownloadableFilesManager {
                 long shardId = 0;
                 try {
                     shardId = Long.valueOf(parsed.fileId);
-                    UUID chainId=null;
+                    UUID chainId;
+                    if(parsed.modifiers.isEmpty()){
+                      chainId=chainsConfig.getActiveChain().getChainId();
+                    }else{
+                       String chainIdStr = parsed.modifiers.get(MOD_CHAINID);
+                       chainId=UUID.fromString(chainIdStr);
+                    }
                     
                     String fileName = shardNameHelper.getShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();

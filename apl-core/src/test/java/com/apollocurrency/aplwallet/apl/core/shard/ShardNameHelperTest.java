@@ -22,47 +22,39 @@ import static org.mockito.Mockito.when;
  * @author yuriy.larin
  */
 class ShardNameHelperTest {
-    private static ChainsConfigHolder chainCoinfig;
-    private static Chain chain;
+
     private static final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
 
-    @BeforeAll
-    public static void init(){
-        chain = mock(Chain.class);
-        when(chain.getChainId()).thenReturn(chainId);
-        chainCoinfig = mock(ChainsConfigHolder.class);
-        when(chainCoinfig.getActiveChain()).thenReturn(chain);
-    }
     @Test
     void getShardName() {
-        ShardNameHelper shardNameHelper = new ShardNameHelper(chainCoinfig);
+        ShardNameHelper shardNameHelper = new ShardNameHelper();
         String result = shardNameHelper.getShardNameByShardId(001L,chainId);
         assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
 
-        result = shardNameHelper.getShardNameByShardId(2001L,null);
+        result = shardNameHelper.getShardNameByShardId(2001L,chainId);
         assertEquals("apl-blockchain-shard-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
 
     }
 
     @Test
     void getShardArchiveName() {
-        ShardNameHelper shardNameHelper = new ShardNameHelper(chainCoinfig);
+        ShardNameHelper shardNameHelper = new ShardNameHelper();
         String result = shardNameHelper.getShardArchiveNameByShardId(001L,chainId);
         assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
 
-        result = shardNameHelper.getShardArchiveNameByShardId(2001L,null);
+        result = shardNameHelper.getShardArchiveNameByShardId(2001L,chainId);
         assertEquals("apl-blockchain-shard-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
     }
 
     @Test
     void getShardNameIncorrectValue() {
         // shard name
-        ShardNameHelper shardNameHelper = new ShardNameHelper(chainCoinfig);
+        ShardNameHelper shardNameHelper = new ShardNameHelper();
         assertThrows(RuntimeException.class, () ->
-                shardNameHelper.getShardNameByShardId(null,null)
+                shardNameHelper.getShardNameByShardId(null,chainId)
         );
         assertThrows(RuntimeException.class, () ->
-                shardNameHelper.getShardNameByShardId(-100L,null)
+                shardNameHelper.getShardNameByShardId(-100L,chainId)
         );
         // archive name
         assertThrows(RuntimeException.class, () ->

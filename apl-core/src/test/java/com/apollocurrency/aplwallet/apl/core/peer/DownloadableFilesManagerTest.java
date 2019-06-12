@@ -60,10 +60,7 @@ class DownloadableFilesManagerTest {
             .build();
     String fileBaseDir =System.getProperty("java.io.tmpdir");
     String zipFileName = "apl-blockchain-arch-1.zip";
-    
-    @Inject
-    private ShardNameHelper shardNAmeHelper;
-    
+
     @Inject
     private DownloadableFilesManager filesManager;
     

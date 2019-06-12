@@ -4,22 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,12 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.Setter;
 
 /**
  * Class is used for high level database and shard management.
@@ -48,9 +42,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
-    
-    @Inject @Setter
-    private ShardNameHelper shardNameHelper;
+    private ChainsConfigHolder chainsConfig;
+//    @Inject @Setter
+//    private ShardNameHelper shardNameHelper;
     /**
      * Create, initialize and return main database source.
      * @return main data source
@@ -70,40 +64,42 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * @param propertiesHolderParam the rest global properties in holder from CDI
      */
     @Inject
-    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
+    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, ChainsConfigHolder chainsConfig) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
         // init internal data source stuff only one time till next shutdown() will be called
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+        this.chainsConfig=chainsConfig;
 //        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
     }
-
-    /**
-     * Try to open all shard database sources specified in main db. If
-     */
-    private void openAllShards() {
-        List<Long> shardList = findAllShards(currentTransactionalDataSource);
-        log.debug("Found [{}] shards...", shardList.size());
-        for (Long shardId : shardList) {
-            String shardName = shardNameHelper.getShardNameByShardId(shardId,null); // shard's file name formatted from Id
-            DbProperties shardDbProperties = null;
-            try {
-                // create copy instance, change file name, nullify dbUrl intentionally!
-                shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName).dbUrl(null);
-            } catch (CloneNotSupportedException e) {
-                log.error("Db props clone error", e);
-            }
-            try {
-                TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-                shardDb.init(new ShardInitTableSchemaVersion());
-                connectedShardDataSourceMap.put(shardId, shardDb);
-            } catch (Exception e) {
-                log.error("Error opening shard db by name = " + shardName, e);
-            }
-            log.debug("Prepared '{}' shard...", shardName);
-        }
-    }
+//not used yet
+    
+//    /**
+//     * Try to open all shard database sources specified in main db. If
+//     */
+//    private void openAllShards() {
+//        List<Long> shardList = findAllShards(currentTransactionalDataSource);
+//        log.debug("Found [{}] shards...", shardList.size());
+//        for (Long shardId : shardList) {
+//            String shardName = shardNameHelper.getShardNameByShardId(shardId,null); // shard's file name formatted from Id
+//            DbProperties shardDbProperties = null;
+//            try {
+//                // create copy instance, change file name, nullify dbUrl intentionally!
+//                shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName).dbUrl(null);
+//            } catch (CloneNotSupportedException e) {
+//                log.error("Db props clone error", e);
+//            }
+//            try {
+//                TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
+//                shardDb.init(new ShardInitTableSchemaVersion());
+//                connectedShardDataSourceMap.put(shardId, shardDb);
+//            } catch (Exception e) {
+//                log.error("Error opening shard db by name = " + shardName, e);
+//            }
+//            log.debug("Prepared '{}' shard...", shardName);
+//        }
+//    }
 
     @Override
     @Produces
@@ -318,6 +314,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         sb.append(", connectedShardDataSourceMap=[{}]").append(connectedShardDataSourceMap != null ? connectedShardDataSourceMap.size() : -1);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public UUID getChainId() {
+        return chainsConfig.getActiveChain().getChainId();
     }
 
 }
