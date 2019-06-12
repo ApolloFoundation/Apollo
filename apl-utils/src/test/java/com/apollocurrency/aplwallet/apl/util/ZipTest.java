@@ -51,8 +51,8 @@ class ZipTest {
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderWithZip + File.separator + zipFileName;
         // start creating zip for all CSV
-        byte[] zipCrc = zipComponent.compress(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
-                null, null);
+        byte[] zipCrc = zipComponent.compressAndHash(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
+                null, null, false);
         assertTrue(zipCrc != null && zipCrc.length > 0, "CSV files were NOT compressed into ZIP!!");
 
         String[] extensions = new String[]{"zip"};
@@ -85,23 +85,23 @@ class ZipTest {
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderNoCsvInside + File.separator + zipFileName;
         assertThrows(RuntimeException.class, () ->
-                zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null)
+                zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null,false)
         );
     }
 
     @Test
     void incorrectParamsCall() {
         assertThrows(NullPointerException.class, () -> zipComponent.compress(
-                null, "", -1L, null));
+                null, "", -1L, null,false));
 
         assertThrows(NullPointerException.class, () -> zipComponent.compress(
-                "", null, -1L, null));
+                "", null, -1L, null,false));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
-                "", csvResourcesPath.toAbsolutePath().toString(), null, null));
+                "", csvResourcesPath.toAbsolutePath().toString(), null, null, false));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
-                csvResourcesPath.toAbsolutePath().toString(), "", null, null));
+                csvResourcesPath.toAbsolutePath().toString(), "", null, null,false));
 
         assertThrows(NullPointerException.class, () -> zipComponent.extract(null, ""));
 

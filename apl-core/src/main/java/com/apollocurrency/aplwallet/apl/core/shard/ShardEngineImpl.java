@@ -485,7 +485,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         String shardFileName = shardNameHelper.getShardArchiveNameByShardId(createdShardId,null);
         String currentTable = shardFileName;
-        //TODO: fix this SHIT!
+
         Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName);
         log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);
         try {

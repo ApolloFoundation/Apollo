@@ -208,9 +208,6 @@ public class DownloadableFilesManager {
             return null;
         }
         Path res = Paths.get(absPath);
-        if (!Files.exists(res)) {
-            res = null;
-        }
         return res;
     }
 }

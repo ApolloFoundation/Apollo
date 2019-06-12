@@ -20,12 +20,17 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.UUID;
+import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
@@ -53,39 +58,58 @@ class DownloadableFilesManagerTest {
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(chainCoinfig, ChainsConfigHolder.class))
             .build();
-
+    String fileBaseDir =System.getProperty("java.io.tmpdir");
     String zipFileName = "apl-blockchain-arch-1.zip";
+    
     @Inject
     private ShardNameHelper shardNAmeHelper;
     
     @Inject
     private DownloadableFilesManager filesManager;
     
-    private void createTestZip(){
-        String fileBaseDir =System.getProperty("java.io.tmpdir");
+    private String createTestZip() throws IOException{
+        int n_lines=1000;
+        
         File tmpDir = new File(fileBaseDir);
         File wDir = new File(tmpDir.getAbsolutePath()+"/"+"apl-test-zip");
         if(wDir.exists()){
-            wDir.delete();
+           FileUtils.deleteDirectory(wDir);
         }
         wDir.mkdir();
+        for(int i=0; i<10; i++){
+          String fn="test_file_"+i;  
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(wDir.getAbsolutePath()+"/"+fn))) {
+                for(int j=0; j<n_lines; j++){
+                    writer.write("line "+j);
+                } }
+        }
         Zip zip = new ZipImpl();
-        zip.compress(zipFileName, fileBaseDir, Long.MIN_VALUE, null,false);
+        zip.compress(fileBaseDir+"/"+zipFileName, wDir.getAbsolutePath(), Long.MIN_VALUE, null,false);
+        return wDir.getAbsolutePath();
     }
     
     @Test
     void getFileDownloadInfo() {
-        // create ZIP in temp folder for unit test
-
-
-        FileDownloadInfo fi = filesManager.getFileDownloadInfo("debug::"+zipFileName);
+        String tdir=null;
+        FileDownloadInfo fi=null;
+        String fileId = "debug::"+zipFileName;
+        try {
+            // create ZIP in temp folder for unit test
+            tdir = createTestZip();
+            fi = filesManager.getFileDownloadInfo(fileId);
+            FileUtils.deleteDirectory(new File(tdir));
+        } catch (IOException ex) {
+            fail("Can not create test files");
+        }
         assertNotNull(fi);
         log.debug("File download Info = {}", fi);
         assertEquals(
-                "c8d3a0c3d323366c711e4d05d5706db27da385a0181ae7584013b641c2b97221",
+                "f3b51cb318c7de39c345ba6344f2bb0068a2627e92a8d6466a7a98bf3fd3e1a2",
                 fi.fileInfo.hash);
         log.debug("Parsed bytes from string = {}", Convert.parseHexString(fi.fileInfo.hash) );
-        assertEquals(zipFileName, fi.fileInfo.fileId);
+        assertEquals(fileId, fi.fileInfo.fileId);
+        File f = new File(fileBaseDir+"/"+zipFileName);
+        f.delete();        
     }
 
     @Test
@@ -101,10 +125,10 @@ class DownloadableFilesManagerTest {
         // parse real/existing shard name + ID
         Path pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1");
         assertNotNull(pathToShardArchive);
-        assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
+        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
         
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
-        assertEquals(zipFileName, pathToShardArchive.getFileName().toString());
+        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
         
 //        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
 //        assertEquals("123", fpath);

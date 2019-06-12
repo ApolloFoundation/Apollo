@@ -37,7 +37,6 @@ public class ZipImpl implements Zip {
     public final static int FILE_CHUNK_SIZE = 32768; // magic constant copied from DownloadableFilesManager class
     private final static int BUF_SIZE= 1024 * 16; // 16 Kb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
-    public static 
     private List<File> fileList = new ArrayList<>();
     public ZipImpl() {
     }
