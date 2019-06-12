@@ -20,11 +20,11 @@ import org.slf4j.Logger;
 public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 
-    private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d-%h";
-    private final static String SHARD_ARCHIVE_NAME_PATTERN = APPLICATION_DIR_NAME + "-arch-%d";
+    private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d-chain-%s";
+    private final static String SHARD_ARCHIVE_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d-chain-%s.zip";
     
 
-    private ChainsConfigHolder chainCoinfig;
+    private final ChainsConfigHolder chainCoinfig;
 
     @Inject
     public ShardNameHelper(ChainsConfigHolder chainCoinfig) {
@@ -35,7 +35,10 @@ public class ShardNameHelper {
         if (shardId == null || shardId < 0) {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
         }
-        String result = String.format(SHARD_NAME_PATTERN, shardId);
+        if(chainId==null){
+            chainId=chainCoinfig.getActiveChain().getChainId();
+        }        
+        String result = String.format(SHARD_NAME_PATTERN, shardId, chainId.toString());
         log.debug(result);
         return result;
     }
@@ -47,7 +50,7 @@ public class ShardNameHelper {
         if(chainId==null){
             chainId=chainCoinfig.getActiveChain().getChainId();
         }
-        String result = String.format(SHARD_ARCHIVE_NAME_PATTERN, shardId);
+        String result = String.format(SHARD_ARCHIVE_NAME_PATTERN, shardId, chainId.toString());
         log.debug(result);
         return result;
     }

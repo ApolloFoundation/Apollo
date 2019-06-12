@@ -58,6 +58,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import java.io.FilenameFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 
 /**
@@ -483,7 +485,8 @@ public class ShardEngineImpl implements ShardEngine {
         }
         String shardFileName = shardNameHelper.getShardArchiveNameByShardId(createdShardId,null);
         String currentTable = shardFileName;
-        Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName + ".zip");
+        //TODO: fix this SHIT!
+        Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName);
         log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);
         try {
             // delete if something left in previous run
@@ -497,9 +500,11 @@ public class ShardEngineImpl implements ShardEngine {
             state = ZIP_ARCHIVE_STARTED;
             updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
             // compute ZIP crc hash
-            byte[] zipCrcHash = zipComponent.compress(
+            FilenameFilter CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
+            byte[] zipCrcHash = zipComponent.compressAndHash(
                     shardZipFilePath.toAbsolutePath().toString(),
-                    dirProvider.getDataExportDir().toAbsolutePath().toString(), null, null);
+                    
+                    dirProvider.getDataExportDir().toAbsolutePath().toString(), null, CSV_FILE_FILTER, false);
 
             // prepare real CRC data for shard record update
             paramInfo = new CommandParamInfoImpl(zipCrcHash, true);

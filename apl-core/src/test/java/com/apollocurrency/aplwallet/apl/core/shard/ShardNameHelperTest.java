@@ -27,7 +27,7 @@ class ShardNameHelperTest {
     private static final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
 
     @BeforeAll
-    public void init(){
+    public static void init(){
         chain = mock(Chain.class);
         when(chain.getChainId()).thenReturn(chainId);
         chainCoinfig = mock(ChainsConfigHolder.class);
@@ -37,26 +37,21 @@ class ShardNameHelperTest {
     void getShardName() {
         ShardNameHelper shardNameHelper = new ShardNameHelper(chainCoinfig);
         String result = shardNameHelper.getShardNameByShardId(001L,chainId);
-        assertEquals("apl-blockchain-shard-1", result);
+        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
 
         result = shardNameHelper.getShardNameByShardId(2001L,null);
-        assertEquals("apl-blockchain-shard-2001", result);
+        assertEquals("apl-blockchain-shard-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
 
-        result = shardNameHelper.getShardNameByShardId(0L,null);
-        assertEquals("apl-blockchain-shard-0", result);
     }
 
     @Test
     void getShardArchiveName() {
         ShardNameHelper shardNameHelper = new ShardNameHelper(chainCoinfig);
         String result = shardNameHelper.getShardArchiveNameByShardId(001L,chainId);
-        assertEquals("apl-blockchain-arch-1", result);
+        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
 
         result = shardNameHelper.getShardArchiveNameByShardId(2001L,null);
-        assertEquals("apl-blockchain-arch-2001", result);
-
-        result = shardNameHelper.getShardArchiveNameByShardId(0L,null);
-        assertEquals("apl-blockchain-arch-0", result);
+        assertEquals("apl-blockchain-shard-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
     }
 
     @Test

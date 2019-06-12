@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
@@ -177,7 +178,7 @@ public class DownloadableFilesManager {
                     
                     String fileName = shardNameHelper.getShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
-                    absPath = fileBaseDir + File.separator + fileName + ".zip";
+                    absPath = fileBaseDir + File.separator + fileName;
                 } catch (NumberFormatException e) {
                     log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
                 }
@@ -193,16 +194,19 @@ public class DownloadableFilesManager {
                  log.warn("File  downloading is not implemented yet");
             };
             break;
-            case 3: //debug
+            case 3: //debug and tests
             {
-                log.warn("Debug downloading is not implemented yet");           
+                String fileBaseDir =System.getProperty("java.io.tmpdir");
+                absPath = fileBaseDir + File.separator + parsed.fileId;
             };
             break;
             default:{
                 
             };
         }
-
+        if(StringUtils.isBlank(absPath)){
+            return null;
+        }
         Path res = Paths.get(absPath);
         if (!Files.exists(res)) {
             res = null;

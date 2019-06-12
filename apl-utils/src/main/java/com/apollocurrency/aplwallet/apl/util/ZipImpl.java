@@ -37,8 +37,8 @@ public class ZipImpl implements Zip {
     public final static int FILE_CHUNK_SIZE = 32768; // magic constant copied from DownloadableFilesManager class
     private final static int BUF_SIZE= 1024 * 16; // 16 Kb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
-    public static FilenameFilter DEFAULT_CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
-
+    public static 
+    private List<File> fileList = new ArrayList<>();
     public ZipImpl() {
     }
 
@@ -106,27 +106,40 @@ public class ZipImpl implements Zip {
      * {@inheritDoc}
      */
     @Override
-    public byte[] compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
-                            FilenameFilter filenameFilter) {
+    public byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
+                            FilenameFilter filenameFilter, boolean recursive) {
+        byte[] zipCrcHash;
+        long start = System.currentTimeMillis();
+        compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
+        // compute CRC/hash sum on zip file
+        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
+        zipCrcHash = chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
+
+        log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
+                zipFile, zipCrcHash.length,
+                fileList.size(), (System.currentTimeMillis() - start) / 1000 );
+        return zipCrcHash;
+    }
+
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
+                            FilenameFilter filenameFilter, boolean recursive) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(inputFolder, "inputFolder is NULL");
         StringValidator.requireNonBlank(zipFile);
         StringValidator.requireNonBlank(inputFolder);
 
-        long start = System.currentTimeMillis();
         log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
-        byte[] zipCrcHash;
         File directory = new File(inputFolder);
-        if (filenameFilter == null) {
-            filenameFilter = DEFAULT_CSV_FILE_FILTER;
-        }
         // get file(s) listing from folder by filter (no recursion for subfolders(s) !)
-        File[] fileList = directory.listFiles(filenameFilter);
-        log.trace("Prepared [{}]={} files in in folder '{}', filenameFilter = {}",
-                fileList != null ? fileList.length : -1, Arrays.toString(fileList) ,
-                inputFolder, filenameFilter);
+        List<File> fl = getFileList(directory, filenameFilter, recursive);
+
         // throw exception because it's a error/failure in case sharding process
-        if (fileList == null || fileList.length <= 0) {
+        if (fl == null || fl.size() == 0) {
             String error = String.format(
                     "Error on creating CSV zip archive, no csv file(s) were found in folder '%s' !", inputFolder);
             log.error(error);
@@ -144,8 +157,7 @@ public class ZipImpl implements Zip {
         try (FileOutputStream fos = new FileOutputStream(zipFile);
                 ZipOutputStream zos = new ZipOutputStream(fos)) {
 
-            for (int i = 0; i < fileList.length; i++) {
-                File file = fileList[i];
+            for (File file: fl) {
                 String filePath = file.getAbsolutePath();
 
                 String name = filePath.substring(directory.getAbsolutePath().length() + 1);
@@ -174,20 +186,11 @@ public class ZipImpl implements Zip {
             throw new RuntimeException(e);
         }
 
-        // compute CRC/hash sum on zip file
-        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
-        zipCrcHash = chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
-
-        log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
-                zipFile, zipCrcHash.length,
-                fileList.length, (System.currentTimeMillis() - start) / 1000 );
-        return zipCrcHash;
     }
+    
+    private List<File> getFileList(File directory, FilenameFilter filenameFilter, boolean recursive) {
 
-    // Incorrect recursive listing, not used, can be removed later
-    private List<String> getFileList(File directory, FilenameFilter filenameFilter) {
-        List<String> fileList = new ArrayList<>();
-
+        fileList.clear();
         File[] files;
         if (filenameFilter != null) {
             files = directory.listFiles();
@@ -197,9 +200,9 @@ public class ZipImpl implements Zip {
         if (files != null && files.length > 0) {
             for (File file : files) {
                 if (file.isFile()) {
-                    fileList.add(file.getAbsolutePath());
-                } else {
-                    getFileList(file, filenameFilter);
+                    fileList.add(file);
+                } else if(recursive){
+                    getFileList(file, filenameFilter, recursive);
                 }
             }
         }
