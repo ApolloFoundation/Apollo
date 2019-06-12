@@ -13,6 +13,8 @@ import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import javax.inject.Inject;
+import lombok.Setter;
 import org.slf4j.Logger;
 
 /**
@@ -23,11 +25,14 @@ import org.slf4j.Logger;
 public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
 
-    private DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
     private Long shardId;
     private String shardName;
     private TransactionalDataSource shardDb;
-
+    
+    @Inject @Setter
+    private ShardNameHelper shardNameHelper;
+    
     public ShardDataSourceCreateHelper(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
     }
@@ -90,7 +95,7 @@ public class ShardDataSourceCreateHelper {
             }
             log.debug("Selected SHARD_ID = {} from DB", shardId);
         }
-        shardName = ShardNameHelper.getShardNameByShardId(shardId);
+        shardName = shardNameHelper.getShardNameByShardId(shardId,null);
         return shardName;
     }
 }

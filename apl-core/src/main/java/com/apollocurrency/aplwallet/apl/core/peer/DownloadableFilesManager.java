@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -43,10 +44,12 @@ public class DownloadableFilesManager {
     public final static int FILE_CHUNK_SIZE = 32768;
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
-    private String fileBaseDir;
     public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "attachment", 1, "file", 2, "debug", 3);
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of("chainid", 0);
-
+    
+    private final ShardNameHelper shardNameHelper;
+    private final DirProvider dirProvider;
+    
     private class ParsedFileId {
 
         Integer key = -1;
@@ -55,11 +58,11 @@ public class DownloadableFilesManager {
     }
 
     @Inject
-    public DownloadableFilesManager(DirProvider dirProvider) {
+    public DownloadableFilesManager(DirProvider dirProvider, ShardNameHelper shardNameHelper) {
         Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         Objects.requireNonNull(dirProvider.getDataExportDir(), "dataExportDir in dirProvider is NULL");
-        this.fileBaseDir = dirProvider.getDataExportDir().toString();
-        log.debug("Node's dataExportDir = {}", this.fileBaseDir);
+        this.dirProvider=dirProvider;
+        this.shardNameHelper = shardNameHelper;
     }
 
     public FileInfo getFileInfo(String fileId) {
@@ -170,8 +173,11 @@ public class DownloadableFilesManager {
                 long shardId = 0;
                 try {
                     shardId = Long.valueOf(parsed.fileId);
-                    String fileName = ShardNameHelper.getShardArchiveNameByShardId(shardId);
-                    absPath = this.fileBaseDir + File.separator + fileName + ".zip";
+                    UUID chainId=null;
+                    
+                    String fileName = shardNameHelper.getShardArchiveNameByShardId(shardId,chainId);
+                    String fileBaseDir = dirProvider.getDataExportDir().toString();
+                    absPath = fileBaseDir + File.separator + fileName + ".zip";
                 } catch (NumberFormatException e) {
                     log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
                 }

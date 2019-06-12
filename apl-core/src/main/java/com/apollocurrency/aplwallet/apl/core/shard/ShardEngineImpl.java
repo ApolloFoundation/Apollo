@@ -79,6 +79,7 @@ public class ShardEngineImpl implements ShardEngine {
     private DirProvider dirProvider;
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
+    private ShardNameHelper shardNameHelper;
 
     public ShardEngineImpl() {
     }
@@ -87,7 +88,7 @@ public class ShardEngineImpl implements ShardEngine {
     public ShardEngineImpl(DirProvider dirProvider, DatabaseManager databaseManager, TrimService trimService,
                            ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
-                           Zip zipComponent, AplAppStatus aplAppStatus) {
+                           Zip zipComponent, AplAppStatus aplAppStatus, ShardNameHelper shardNameHelper) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
@@ -95,6 +96,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
+        this.shardNameHelper = Objects.requireNonNull(shardNameHelper, "zipComponent is NULL");
     }
 
     /**
@@ -479,7 +481,7 @@ public class ShardEngineImpl implements ShardEngine {
             log.error(error);
             throw new IllegalStateException(error);
         }
-        String shardFileName = ShardNameHelper.getShardArchiveNameByShardId(createdShardId);
+        String shardFileName = shardNameHelper.getShardArchiveNameByShardId(createdShardId,null);
         String currentTable = shardFileName;
         Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName + ".zip");
         log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);

@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.Setter;
 
 /**
  * Class is used for high level database and shard management.
@@ -45,7 +46,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
-
+    
+    @Inject @Setter
+    private ShardNameHelper shardNameHelper;
     /**
      * Create, initialize and return main database source.
      * @return main data source
@@ -81,7 +84,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         List<Long> shardList = findAllShards(currentTransactionalDataSource);
         log.debug("Found [{}] shards...", shardList.size());
         for (Long shardId : shardList) {
-            String shardName = ShardNameHelper.getShardNameByShardId(shardId); // shard's file name formatted from Id
+            String shardName = shardNameHelper.getShardNameByShardId(shardId,null); // shard's file name formatted from Id
             DbProperties shardDbProperties = null;
             try {
                 // create copy instance, change file name, nullify dbUrl intentionally!
