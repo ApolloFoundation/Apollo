@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.FileChunk;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
@@ -69,6 +71,10 @@ public class PeerClient {
             return null;
         }
         return res.downloadInfo;
+    }
+
+    FileChunk downloadChunk(FileChunkInfo fci) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }

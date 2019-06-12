@@ -48,4 +48,8 @@ public class PeerFileInfo implements HasHashSum {
        return hash;
     }
 
+    public PeerClient getPeerClient() {
+        return peerClient;
+    }
+    
 }

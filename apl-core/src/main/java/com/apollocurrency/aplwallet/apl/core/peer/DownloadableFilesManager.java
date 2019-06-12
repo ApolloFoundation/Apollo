@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import static com.apollocurrency.aplwallet.api.p2p.FileChunkInfoPresent.SAVED;
+import static com.apollocurrency.aplwallet.api.p2p.FileChunkState.SAVED;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;

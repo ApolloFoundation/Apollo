@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.api.p2p;
 /**
  * Enum for file state while downloading
  */
-public enum FileChunkInfoPresent {
+public enum FileChunkState {
 
     /**
      * 0 - not present
@@ -22,7 +22,7 @@ public enum FileChunkInfoPresent {
 
     private int value;
 
-    FileChunkInfoPresent(int value) {
+    FileChunkState(int value) {
         this.value = value;
     }
 }
