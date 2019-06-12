@@ -11,11 +11,21 @@ import java.util.List;
 
 public class PeerMonitoringResult {
     private List<Block> blocks;
+    private int height;
     private Version version;
 
-    public PeerMonitoringResult(List<Block> blocks, Version version) {
+    public PeerMonitoringResult(List<Block> blocks, Version version, int height) {
         this.blocks = blocks;
+        this.height = height;
         this.version = version;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     public List<Block> getBlocks() {

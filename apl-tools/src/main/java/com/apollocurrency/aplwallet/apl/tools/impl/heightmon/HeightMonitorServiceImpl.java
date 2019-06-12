@@ -158,9 +158,13 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     public NetworkStats updateStats() {
         log.info("===========================================");
         Map<String, PeerMonitoringResult> peerBlocks = getPeersMonitoringResults();
+        NetworkStats networkStats = new NetworkStats();
+        peerBlocks.forEach((peer, result)-> {
+            log.info(String.format("%-16.16s - %8d", peer, result.getHeight()));
+            networkStats.getPeerHeight().put(peer, result.getHeight());
+        });
         log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2"));
         int currentMaxBlocksDiff = -1;
-        NetworkStats networkStats = new NetworkStats();
         for (int i = 0; i < peers.size(); i++) {
             String host1 = peers.get(i).getHost();
             PeerMonitoringResult targetMonitoringResult = peerBlocks.get(host1);
@@ -218,7 +222,8 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
             getBlocksRequests.add(CompletableFuture.supplyAsync(() -> {
                 List<Block> blocksList = getBlocksList(peerUrl);
                 Version version = getPeerVersion(peerUrl);
-                return new PeerMonitoringResult(blocksList, version);
+                int height = getPeerHeight(peerUrl);
+                return new PeerMonitoringResult(blocksList, version, height);
             }, executor));
         }
         for (int i = 0; i < getBlocksRequests.size(); i++) {
@@ -244,6 +249,23 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
             return "";
         }
         return response.getContentAsString();
+    }
+
+    private int getPeerHeight(String peerUrl) {
+        int height = -1;
+        Request request = client.newRequest(peerUrl)
+                .method(HttpMethod.GET)
+                .param("requestType", "getBlock");
+        ContentResponse response;
+        try {
+            response = request.send();
+            JsonNode jsonNode  = objectMapper.readTree(response.getContentAsString());
+            height = jsonNode.get("height").asInt();
+        }
+        catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+            log.error("Unable to get or parse response from {} - {}", peerUrl, e.toString());
+        }
+        return height;
     }
     private Version getPeerVersion(String peerUrl) {
         Version res = DEFAULT_VERSION;

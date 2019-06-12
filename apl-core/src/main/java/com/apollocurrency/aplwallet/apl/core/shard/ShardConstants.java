@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import javax.enterprise.inject.Vetoed;
+
+@Vetoed
 public class ShardConstants {
 
     public static final int DEFAULT_COMMIT_BATCH_SIZE = 100;
