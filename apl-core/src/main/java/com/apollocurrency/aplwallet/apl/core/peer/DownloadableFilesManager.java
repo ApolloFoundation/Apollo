@@ -39,16 +39,15 @@ public class DownloadableFilesManager {
     private static final Logger log = getLogger(DownloadableFilesManager.class);
 
     public final static long FDI_TTL=7*24*3600*1000; //7 days in ms
-    public final static int FILE_CHUNK_SIZE=32768;
+    public final static int FILE_CHUNK_SIZE=32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR="downloadables";
     private final Map<String,FileDownloadInfo> fdiCache = new HashMap<>();
-    private String fileBaseDir /*="/home/at/testfiles"*/;
+    private String fileBaseDir;
     
     @Inject
     public DownloadableFilesManager(DirProvider dirProvider) {
         Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         Objects.requireNonNull(dirProvider.getDataExportDir(), "dataExportDir in dirProvider is NULL");
-//        fileBaseDir=dirProvider.getDbDir()+File.separator+FILES_SUBDIR;
         this.fileBaseDir = dirProvider.getDataExportDir().toString();
         log.debug("Node's dataExportDir = {}", this.fileBaseDir);
     }
