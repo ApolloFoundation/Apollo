@@ -5,14 +5,14 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import org.slf4j.Logger;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import org.slf4j.Logger;
 
 /**
  * Helper class is used for deleting block/transaction data from main database previously copied to shard db.
@@ -116,7 +116,7 @@ public class BlockDeleteHelper extends AbstractHelper {
 
         totalSelectedRows += rows;
         totalProcessedCount += processedRows;
-        log.debug("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={} in {}", currentTableName,
+        log.debug("Total Records '{}': selected = {}, deleted = {}, rows = {}, {}={} in {} ms", currentTableName,
                 totalSelectedRows, totalProcessedCount, rows, BASE_COLUMN_NAME,
                 paginateResultWrapper.lowerBoundColumnValue, System.currentTimeMillis() - start);
 

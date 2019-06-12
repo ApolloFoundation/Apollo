@@ -98,6 +98,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
+        this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
     }
 
     /**
@@ -114,7 +115,7 @@ public class ShardEngineImpl implements ShardEngine {
     @Override
     public MigrateState createBackup() {
         long start = System.currentTimeMillis();
-        durableTaskUpdate(state, 0.0, "Backup main database has starting..");
+        durableTaskUpdateByState(state, 0.0, "Backup main database...");
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
                 new ShardDataSourceCreateHelper(databaseManager);
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
@@ -128,17 +129,18 @@ public class ShardEngineImpl implements ShardEngine {
             ps.executeUpdate();
             if (!Files.exists(backupPath)) {
                 state = FAILED;
-                durableTaskUpdate(state, null, null);
+                durableTaskUpdateByState(state, null, null);
             }
             log.debug("BACKUP by SQL={} was successful", sql);
             state = MigrateState.MAIN_DB_BACKUPED;
+            durableTaskUpdateByState(state, 3.0, "Backed up");
             loadAndRefreshRecovery(sourceDataSource);
         } catch (SQLException e) {
             log.error("ERROR on backup db before sharding, sql = " + sql, e);
             state = FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
         }
-        log.debug("BACKUP db before shard ({}) in {} secs", state.name(),
+        log.debug("BACKUP db before shard ({}) in {} sec", state.name(),
                 (System.currentTimeMillis() - start)/1000);
         return state;
     }
@@ -166,17 +168,19 @@ public class ShardEngineImpl implements ShardEngine {
                     // main goal is store merkle tree hash
                     updateShardRecord(paramInfo, databaseManager.getDataSource(), state, 1L);
                 }
+                durableTaskUpdateByState(state, 13.0, "Shard is completed");
             } else {
                 state = MigrateState.SHARD_SCHEMA_CREATED;
+                durableTaskUpdateByState(state, 3.0, "Shard is created");
             }
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
         }
-        log.debug("INIT shard db={} by schema={} ({}) in {} secs",
+        log.debug("INIT shard db={} by schema={} ({}) in {} sec",
                 createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
                 (System.currentTimeMillis() - start)/1000);
         return state;
@@ -242,6 +246,7 @@ public class ShardEngineImpl implements ShardEngine {
         Connection targetConnect = null;
 
         String currentTable = null;
+        durableTaskUpdateByState(state, 4.0, "Data copying...");
         try (Connection sourceConnect = sourceDataSource.getConnection() ) {
             for (String tableName : paramInfo.getTableNameList()) {
                 long start = System.currentTimeMillis();
@@ -265,22 +270,24 @@ public class ShardEngineImpl implements ShardEngine {
                     log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
                     paginationOperationHelper.reset();
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
+                incrementDurableTaskUpdateByPercent(1.5);
             }
             state = DATA_COPY_TO_SHARD_FINISHED;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
+            durableTaskUpdateByState(state, 7.0, "Data is copied");
         } catch (Exception e) {
             log.error("Error COPY processing table = '" + currentTable + "'", e);
             targetDataSource.rollback(false);
             state = MigrateState.FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
             return state;
         } finally {
             if (targetConnect != null) {
                 targetDataSource.commit();
             }
         }
-        log.debug("COPY Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("COPY Processed table(s)=[{}] in {} sec", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -326,7 +333,7 @@ public class ShardEngineImpl implements ShardEngine {
             // that is needed in case separate step execution, when previous step was missed in code
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
         }
-
+        durableTaskUpdateByState(state, 13.0, "Secondary indexes creation...");
         try (Connection sourceConnect = sourceDataSource.begin()) {
             for (String tableName : paramInfo.getTableNameList()) {
                 long start = System.currentTimeMillis();
@@ -339,22 +346,24 @@ public class ShardEngineImpl implements ShardEngine {
                     log.warn("NO created shardId");
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, SECONDARY_INDEX_STARTED);
+                incrementDurableTaskUpdateByPercent(1.8);
             }
             state = SECONDARY_INDEX_FINISHED;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
+            durableTaskUpdateByState(state, 17.0, "Secondary indexes created...");
         } catch (Exception e) {
             log.error("Error UPDATE S/Index processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
             return state;
         } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
         }
-        log.debug("UPDATE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("UPDATE Processed table(s)=[{}] in {} sec", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
 
         return state;
     }
@@ -374,6 +383,7 @@ public class ShardEngineImpl implements ShardEngine {
             // skip to next step
             return state = CSV_EXPORT_FINISHED;
         }
+        durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
             trimDerivedTables(paramInfo.getSnapshotBlockHeight());
             for (String tableName : allTables) {
@@ -393,14 +403,16 @@ public class ShardEngineImpl implements ShardEngine {
                             return exportDerivedTable(tableName, paramInfo);
                     }
                 });
+                incrementDurableTaskUpdateByPercent(0.7);
             }
             state = CSV_EXPORT_FINISHED;
             updateToFinalStepState(recovery, state);
             log.debug("Export finished in {} secs", (System.currentTimeMillis() - startTime)/1000);
+            durableTaskUpdateByState(state, 58.0, "CSV exported");
         } catch (Exception e) {
             log.error("Exception during export", e);
             state = FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
         }
         return state;
     }
@@ -433,7 +445,7 @@ public class ShardEngineImpl implements ShardEngine {
         if (derivedTable != null) {
             return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
         } else {
-            durableTaskUpdate(FAILED, null, null);
+            durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + tableName + " in derived table registry");
         }
     }
@@ -448,7 +460,7 @@ public class ShardEngineImpl implements ShardEngine {
                 Files.deleteIfExists(tableCsvPath);
             }
             catch (IOException e) {
-                durableTaskUpdate(state, null, null);
+                durableTaskUpdateByState(state, null, null);
                 throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
             }
             long startTableExportTime = System.currentTimeMillis();
@@ -477,19 +489,16 @@ public class ShardEngineImpl implements ShardEngine {
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
-                && recovery.getState().getValue() > ZIP_ARCHIVE_FINISHED.getValue()) {
+                && recovery.getState().getValue() >= ZIP_ARCHIVE_FINISHED.getValue()) {
             // skip to next step
             return state = ZIP_ARCHIVE_FINISHED;
-        } else {
-            // that is needed in case separate step execution, when previous step was missed in code
-            recovery = new ShardRecovery(ZIP_ARCHIVE_STARTED);
         }
 
         if (createdShardId == null) {
             String error = "Error. Shard was not initialized previously, " +
                     "missing addOrCreateShard(dbVersion) step during sharding process!";
             log.error(error);
-            durableTaskUpdate(FAILED, null, null);
+            durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalStateException(error);
         }
         String shardFileName = ShardNameHelper.getShardArchiveNameByShardId(createdShardId);
@@ -501,13 +510,14 @@ public class ShardEngineImpl implements ShardEngine {
             boolean isRemoved = Files.deleteIfExists(shardZipFilePath);
             log.debug("Previous Zip in '{}' was '{}'", shardFileName, isRemoved ? "REMOVED" : "NOT FOUND");
         } catch (IOException e) {
-            durableTaskUpdate(FAILED, null, null);
+            durableTaskUpdateByState(FAILED, null, null);
             throw new RuntimeException("Unable to remove previous ZIP file: " + shardZipFilePath.toAbsolutePath().toString());
         }
 //        try (Connection sourceConnect = sourceDataSource.begin()) {
         try (Connection sourceConnect = sourceDataSource.getConnection()) {
             state = ZIP_ARCHIVE_STARTED;
             updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
+            durableTaskUpdateByState(state, 58.0, "CSV archiving...");
             // compute ZIP crc hash
             byte[] zipCrcHash = zipComponent.compress(
                     shardZipFilePath.toAbsolutePath().toString(),
@@ -519,15 +529,16 @@ public class ShardEngineImpl implements ShardEngine {
 
             // update recovery
             state = ZIP_ARCHIVE_FINISHED;
-            updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
+            updateToFinalStepState(recovery, state);
+            durableTaskUpdateByState(state, 58.5, "CSV archived");
         } catch (Exception e) {
             log.error("Error ZIP ARCHIVE creation = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
             return state;
         }
-        log.debug("ZIP ARCHIVE Processed {} secs", (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("ZIP ARCHIVE Processed in {} sec", (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -552,7 +563,7 @@ public class ShardEngineImpl implements ShardEngine {
             // that is needed in case separate step execution, when previous step was missed in code
             recovery = new ShardRecovery(DATA_REMOVE_STARTED);
         }
-
+        durableTaskUpdateByState(state, 59.0, "Data deleting...");
         try (Connection sourceConnect = sourceDataSource.begin()) {
             for (String tableName : paramInfo.getTableNameList()) {
                 long start = System.currentTimeMillis();
@@ -565,22 +576,24 @@ public class ShardEngineImpl implements ShardEngine {
                     log.warn("NO processing HELPER class for table '{}'", tableName);
                 }
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_REMOVE_STARTED);
+                incrementDurableTaskUpdateByPercent(18.0);
             }
             state = DATA_REMOVED_FROM_MAIN;
             updateToFinalStepState(sourceConnect, recovery, state);
             sourceConnect.commit();
+            durableTaskUpdateByState(state, 95.0, "Data deleted");
         } catch (Exception e) {
             log.error("Error DELETE processing table = '" + currentTable + "'", e);
             sourceDataSource.rollback(false);
             state = MigrateState.FAILED;
-            durableTaskUpdate(state, null, null);
+            durableTaskUpdateByState(state, null, null);
             return state;
         } finally {
             if (sourceDataSource != null) {
                 sourceDataSource.commit();
             }
         }
-        log.debug("DELETE Processed table(s)=[{}] in {} secs", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
+        log.debug("DELETE Processed table(s)=[{}] in {} sec", paramInfo.getTableNameList().size(), (System.currentTimeMillis() - startAllTables)/1000);
         return state;
     }
 
@@ -611,8 +624,8 @@ public class ShardEngineImpl implements ShardEngine {
         state = COMPLETED;
         // complete sharding
         updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL);
-        log.debug("Shard record is created with Hash in {} msec", System.currentTimeMillis() - startAllTables);
-        durableTaskUpdate(state, null, null);
+        log.debug("Shard record is created with Hash in {} ms", System.currentTimeMillis() - startAllTables);
+        durableTaskUpdateByState(state, null, null);
         return state;
     }
 
@@ -734,7 +747,26 @@ public class ShardEngineImpl implements ShardEngine {
         return createdShardSource;
     }
 
-    private void durableTaskUpdate(MigrateState state, Double percentComplete, String message) {
+    private void durableTaskUpdateByState(MigrateState state, Double percentComplete, String message) {
+        checkOrInitAppStatus();
+        switch (state) {
+            case FAILED:
+                aplAppStatus.durableTaskFinished(durableStatusTaskId, true, "Sharding process has " + state.name());
+                break;
+            case COMPLETED:
+                aplAppStatus.durableTaskUpdate(durableStatusTaskId, 99.9, "Sharding process completing successfully !");
+                break;
+            default:
+                aplAppStatus.durableTaskUpdate(durableStatusTaskId, percentComplete, message);
+        }
+    }
+
+    private void incrementDurableTaskUpdateByPercent(Double percentIncreaseValue) {
+        checkOrInitAppStatus();
+        aplAppStatus.increaseTaskCompletenessByPercent(durableStatusTaskId, percentIncreaseValue);
+    }
+
+    private void checkOrInitAppStatus() {
         if (durableStatusTaskId == null) {
             Optional<DurableTaskInfo> taskInfo = aplAppStatus.findTaskByName("sharding");
             if (taskInfo.isEmpty()) {
@@ -745,16 +777,8 @@ public class ShardEngineImpl implements ShardEngine {
             } else {
                 durableStatusTaskId = taskInfo.get().getId();
             }
-        }
-        switch (state) {
-            case FAILED:
-                aplAppStatus.durableTaskFinished(durableStatusTaskId, true, "Sharding process has " + state.name());
-                break;
-            case COMPLETED:
-                aplAppStatus.durableTaskFinished(durableStatusTaskId, false, "Sharding process has " + state.name() + " successfully !");
-                break;
-            default:
-                aplAppStatus.durableTaskUpdate(durableStatusTaskId, percentComplete, message);
+        } else {
+            aplAppStatus.findTaskByName("sharding");
         }
     }
 

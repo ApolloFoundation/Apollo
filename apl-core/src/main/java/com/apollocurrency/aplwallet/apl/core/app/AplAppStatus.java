@@ -69,10 +69,14 @@ public class AplAppStatus {
         return key;
     }
 
-    public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message){
-        return durableTaskUpdate(taskId,percentComplete,message,-1);
+    public String durableTaskUpdate(String taskId, Double percentComplete) {
+        return durableTaskUpdate(taskId, percentComplete, null,-1);
     }
     
+    public String durableTaskUpdate(String taskId, Double percentComplete, String message){
+        return durableTaskUpdate(taskId,percentComplete,message,-1);
+    }
+
     public synchronized String durableTaskUpdate(String taskId, Double percentComplete, String message, int keepPrevMessages){
         Objects.requireNonNull(percentComplete, "percentComplete is NULL");
 
@@ -102,7 +106,18 @@ public class AplAppStatus {
        }
        return taskId;
     }
-    
+
+    public synchronized Double increaseTaskCompletenessByPercent(String taskId, Double percentComplete) {
+        Objects.requireNonNull(percentComplete, "percentComplete is NULL");
+        DurableTaskInfo info =  tasks.get(taskId);
+        if(info != null) {
+            info.percentComplete += percentComplete;
+            LOG.trace("Task '{}' new percent value = '{}'", taskId, formatter.format(info.percentComplete));
+            return info.percentComplete;
+        }
+        return Double.NaN;
+    }
+
     public synchronized void durableTaskPaused(String taskId, String message){
         DurableTaskInfo info =  tasks.get(taskId);
         if(info==null){
