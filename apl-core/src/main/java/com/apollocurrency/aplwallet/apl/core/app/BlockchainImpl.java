@@ -21,10 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
@@ -488,19 +485,48 @@ public class BlockchainImpl implements Blockchain {
 */
 
     @Override
-    public DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                    int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
-
         int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
                 timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
                 timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
-
-        return transactionDao.getTransactions(
+        int limit = to == Integer.MAX_VALUE ? Integer.MAX_VALUE : to - from + 1;
+        List<Transaction> transactions = transactionDao.getTransactions(
+                databaseManager.getDataSource(),
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+
+        if (transactions.size() < limit) {
+            boolean noTransactions = transactions.size() == 0;
+            limit -= transactions.size();
+            List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDatasources();
+            for (TransactionalDataSource dataSource : fullDatasources) {
+                if (noTransactions && from != 0) {
+                    from -= transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(),
+                            accountId, numberOfConfirmations, type, subtype,
+                            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                            includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                } else {
+                    from = 0;
+                }
+                List<Transaction> foundTxs = transactionDao.getTransactions(
+                        dataSource,
+                        accountId, numberOfConfirmations, type, subtype,
+                        blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                        from, limit - 1, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                transactions.addAll(foundTxs);
+                noTransactions = foundTxs.size() == 0;
+                if (foundTxs.size() == limit) {
+                    break;
+                }
+                limit -= foundTxs.size();
+            }
+        }
+
+        return transactions;
     }
 
     @Override
@@ -512,6 +538,11 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public boolean hasBlock(long blockId, int height) {
         return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId, height, databaseManager.getDataSource());
+    }
+
+    @Override
+    public boolean hasBlockInShards(long blockId) {
+        return hasBlock(blockId) || blockIndexDao.getByBlockId(blockId) != null;
     }
 
     @Override
@@ -567,6 +598,5 @@ public class BlockchainImpl implements Blockchain {
         Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
         return getShardDataSourceOrDefault(shardId);
     }
-
 
 }

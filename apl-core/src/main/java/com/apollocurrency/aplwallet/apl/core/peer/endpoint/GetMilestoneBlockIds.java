@@ -52,7 +52,7 @@ public final class GetMilestoneBlockIds extends PeerRequestHandler {
             if (lastBlockIdString != null) {
                 long lastBlockId = Convert.parseUnsignedLong(lastBlockIdString);
                 long myLastBlockId = blockchain.getLastBlock().getId();
-                if (myLastBlockId == lastBlockId || blockchain.hasBlock(lastBlockId)) {
+                if (myLastBlockId == lastBlockId || blockchain.hasBlockInShards(lastBlockId)) {
                     milestoneBlockIds.add(lastBlockIdString);
                     response.put("milestoneBlockIds", milestoneBlockIds);
                     if (myLastBlockId == lastBlockId) {

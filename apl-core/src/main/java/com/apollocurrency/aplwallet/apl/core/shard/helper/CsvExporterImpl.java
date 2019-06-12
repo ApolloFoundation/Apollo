@@ -134,7 +134,7 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "select * from SHARD where shard_id > ? and shard_id < ? order by shard_id limit ?");
+                     "SELECT shard_id, shard_hash, shard_height, zip_hash_crc FROM shard WHERE shard_id > ? AND shard_id < ? ORDER BY shard_id LIMIT ?");
              CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, null)
         ) {
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count            // select Min, Max DbId + rows count

@@ -17,6 +17,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -84,8 +85,11 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     @Inject
-    public ShardEngineImpl(DirProvider dirProvider, DatabaseManager databaseManager, TrimService trimService,
-                           ShardRecoveryDaoJdbc shardRecoveryDao, CsvExporter csvExporter,
+    public ShardEngineImpl(DirProvider dirProvider,
+                           DatabaseManager databaseManager,
+                           TrimService trimService,
+                           ShardRecoveryDaoJdbc shardRecoveryDao,
+                           CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
                            Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");

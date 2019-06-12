@@ -20,7 +20,7 @@ public interface ShardEngine {
     /**
      * Downloading shard process in percent (field is not used now)
      */
-    Long SHARD_PERCENTAGE_FULL = 100L;
+
 
     MigrateState getCurrentState();
 

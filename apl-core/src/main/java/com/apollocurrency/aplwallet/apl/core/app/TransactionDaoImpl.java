@@ -363,17 +363,32 @@ public class TransactionDaoImpl implements TransactionDao {
 */
 
     @Override
-    public DbIterator<Transaction> getTransactions(
+    public List<Transaction> getTransactions(TransactionalDataSource dataSource,
             long accountId, int numberOfConfirmations, byte type, byte subtype,
             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
             int height, int prunableExpiration) {
-        if (phasedOnly && nonPhasedOnly) {
-            throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
-        }
+        validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
 
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT transaction.* FROM transaction ");
+        createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        buf.append(DbUtils.limitsClause(from, to));
+        Connection con = null;
+        try {
+            con = dataSource.getConnection();
+            PreparedStatement pstmt = con.prepareStatement(buf.toString());
+            int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return CollectionUtil.toList(getTransactions(con, pstmt));
+        }
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private StringBuilder createTransactionSelectSql(StringBuilder buf, String selectString, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
         if (executedOnly && !nonPhasedOnly) {
             buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
         }
@@ -409,7 +424,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (executedOnly && !nonPhasedOnly) {
             buf.append("AND (phased = FALSE OR approved = TRUE) ");
         }
-        buf.append("UNION ALL SELECT transaction.* FROM transaction ");
+        buf.append("UNION ALL SELECT ").append(selectString).append(" FROM transaction ");
         if (executedOnly && !nonPhasedOnly) {
             buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
         }
@@ -442,63 +457,80 @@ public class TransactionDaoImpl implements TransactionDao {
         if (executedOnly && !nonPhasedOnly) {
             buf.append("AND (phased = FALSE OR approved = TRUE) ");
         }
-
         buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
-        buf.append(DbUtils.limitsClause(from, to));
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement(buf.toString());
-            int i = 0;
-            pstmt.setLong(++i, accountId);
-            pstmt.setLong(++i, accountId);
-            if (blockTimestamp > 0) {
-                pstmt.setInt(++i, blockTimestamp);
+        return buf;
+    }
+
+    private void validatePhaseAndNonPhasedTransactions(boolean phasedOnly, boolean nonPhasedOnly) {
+        if (phasedOnly && nonPhasedOnly) {
+            throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
+        }
+    }
+
+    @Override
+    public int getTransactionCountByFilter(TransactionalDataSource dataSource, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
+        validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
+        StringBuilder buf = new StringBuilder();
+        buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
+        createTransactionSelectSql(buf, "transaction.id", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        buf.append(")");
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(buf.toString())) {
+            setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
             }
-            if (type >= 0) {
-                pstmt.setByte(++i, type);
-                if (subtype >= 0) {
-                    pstmt.setByte(++i, subtype);
-                }
-            }
-            if (!includePrivate) {
-                pstmt.setByte(++i, Payment.PRIVATE.getType());
-                pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
-            }
-            if (height < Integer.MAX_VALUE) {
-                pstmt.setInt(++i, height);
-            }
-            if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
-            }
-            pstmt.setLong(++i, accountId);
-            if (blockTimestamp > 0) {
-                pstmt.setInt(++i, blockTimestamp);
-            }
-            if (type >= 0) {
-                pstmt.setByte(++i, type);
-                if (subtype >= 0) {
-                    pstmt.setByte(++i, subtype);
-                }
-            }
-            if (!includePrivate) {
-                pstmt.setByte(++i, Payment.PRIVATE.getType());
-                pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
-            }
-            if (height < Integer.MAX_VALUE) {
-                pstmt.setInt(++i, height);
-            }
-            if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
-            }
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
         }
         catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    private int setStatement(PreparedStatement pstmt, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) throws SQLException {
+        int i = 0;
+        pstmt.setLong(++i, accountId);
+        pstmt.setLong(++i, accountId);
+        if (blockTimestamp > 0) {
+            pstmt.setInt(++i, blockTimestamp);
+        }
+        if (type >= 0) {
+            pstmt.setByte(++i, type);
+            if (subtype >= 0) {
+                pstmt.setByte(++i, subtype);
+            }
+        }
+        if (!includePrivate) {
+            pstmt.setByte(++i, Payment.PRIVATE.getType());
+            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+        }
+        if (height < Integer.MAX_VALUE) {
+            pstmt.setInt(++i, height);
+        }
+        if (withMessage) {
+            pstmt.setInt(++i, prunableExpiration);
+        }
+        pstmt.setLong(++i, accountId);
+        if (blockTimestamp > 0) {
+            pstmt.setInt(++i, blockTimestamp);
+        }
+        if (type >= 0) {
+            pstmt.setByte(++i, type);
+            if (subtype >= 0) {
+                pstmt.setByte(++i, subtype);
+            }
+        }
+        if (!includePrivate) {
+            pstmt.setByte(++i, Payment.PRIVATE.getType());
+            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+        }
+        if (height < Integer.MAX_VALUE) {
+            pstmt.setInt(++i, height);
+        }
+        if (withMessage) {
+            pstmt.setInt(++i, prunableExpiration);
+        }
+        return i;
     }
 
     @Override

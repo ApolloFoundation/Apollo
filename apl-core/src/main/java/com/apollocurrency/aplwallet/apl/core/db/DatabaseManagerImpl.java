@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -121,7 +123,23 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         try (Connection con = transactionalDataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(shardSelect)) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
+                while (rs.next()) {
+                    result.add(rs.getLong("shard_id"));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Error retrieve shards...", e);
+        }
+        return result;
+    }
+
+    private List<Long> findAllFullShards() {
+        List<Long> result = new ArrayList<>();
+        try (Connection con = getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
+            pstmt.setLong(1, ShardConstants.SHARD_PERCENTAGE_FULL);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
                     result.add(rs.getLong("shard_id"));
                 }
             }
@@ -168,6 +186,13 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         }
         log.debug("new SHARD '{}' is CREATED", shardDataSourceCreateHelper.getShardName());
         return shardDb;
+    }
+
+    @Override
+    public List<TransactionalDataSource> getFullDatasources() {
+        List<Long> allFullShards = findAllFullShards();
+        List<TransactionalDataSource> dataSources = allFullShards.stream().map(connectedShardDataSourceMap::get).collect(Collectors.toList());
+        return dataSources;
     }
 
     /**
@@ -280,27 +305,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 //            removeDb(dbPath);
 //            log.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
 //    }
-
-    /**
-     * Optional method, needs revising for shards
-     * @param dbPath path to db folder
-     * @throws IOException
-     */
-    public static void removeDb(Path dbPath) throws IOException {
-        Files.walkFileTree(dbPath, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
 
     @Override
     public String toString() {
