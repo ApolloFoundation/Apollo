@@ -4,19 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class AccountService {
@@ -47,7 +46,7 @@ public class AccountService {
         balances.setForgedBalanceATM(account.getForgedBalanceATM());
 
         if (includeEffectiveBalance) {
-            balances.setEffectiveBalanceAPL(account.getEffectiveBalanceAPL(blockchain.getHeight()));
+            balances.setEffectiveBalanceAPL(account.getEffectiveBalanceAPL(blockchain.getHeight(), false));
             balances.setGuaranteedBalanceATM(account.getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), height));
         }
 

@@ -1,15 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
 public interface TransactionDao {
 
@@ -49,11 +49,17 @@ public interface TransactionDao {
 
 //    DbIterator<Transaction> getAllTransactions();
 
-    DbIterator<Transaction> getTransactions(
+    List<Transaction> getTransactions(TransactionalDataSource dataSource,
             long accountId, int numberOfConfirmations, byte type, byte subtype,
             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
             int height, int prunableExpiration);
+
+    int getTransactionCountByFilter(TransactionalDataSource dataSource,
+                                    long accountId, int numberOfConfirmations, byte type, byte subtype,
+                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                    boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
+                                    int height, int prunableExpiration);
 
     DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 

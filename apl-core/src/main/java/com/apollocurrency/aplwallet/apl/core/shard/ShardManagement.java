@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-
-import java.util.List;
 
 /**
  * Interface for database shard management.
@@ -81,4 +81,10 @@ public interface ShardManagement {
      */
     TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion);
 
+
+    /**
+     * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     * @return list of full shard datasources
+     */
+    List<TransactionalDataSource> getFullDatasources();
 }

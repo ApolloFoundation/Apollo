@@ -1,16 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.util.List;
 
 /**
  * Shard management + retrieving interface
@@ -32,7 +31,7 @@ public interface ShardDao {
     long countShard();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")
+    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) + 1 as shard_id FROM shard")
     long getNextShardId();
 
     @Transactional(readOnly = true)
@@ -43,8 +42,7 @@ public interface ShardDao {
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc) " +
                         "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :zipHashCrc)")
     @RegisterRowMapper(ShardRowMapper.class)
-    @GetGeneratedKeys
-    long saveShard(@BindBean Shard shard);
+    void saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, zip_hash_crc =:zipHashCrc where shard_id =:shardId")

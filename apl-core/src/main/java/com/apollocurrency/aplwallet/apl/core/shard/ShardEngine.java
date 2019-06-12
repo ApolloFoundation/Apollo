@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 
@@ -20,7 +19,7 @@ public interface ShardEngine {
     /**
      * Downloading shard process in percent (field is not used now)
      */
-    Long SHARD_PERCENTAGE_FULL = 100L;
+
 
     MigrateState getCurrentState();
 

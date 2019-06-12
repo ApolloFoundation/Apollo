@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
+
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
 public interface Blockchain {
 
@@ -49,7 +49,9 @@ public interface Blockchain {
 
     boolean hasBlock(long blockId);
 
-//    DbIterator<? extends Block> getAllBlocks();
+    boolean hasBlockInShards(long blockId);
+
+    //    DbIterator<? extends Block> getAllBlocks();
 
     DbIterator<Block> getBlocks(int from, int to);
 
@@ -136,7 +138,7 @@ public interface Blockchain {
 //    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
 //                                                      boolean includeExpiredPrunable);
 
-    DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 

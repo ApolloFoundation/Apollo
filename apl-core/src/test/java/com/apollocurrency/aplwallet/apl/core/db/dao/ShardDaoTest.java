@@ -15,6 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
@@ -38,11 +43,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.inject.Inject;
 
 @EnableWeld
 class ShardDaoTest {
@@ -90,24 +90,13 @@ class ShardDaoTest {
     }
 
     @Test
-    void testSave() {
-        Shard shard = new Shard(100);
-        long insertedId = dao.saveShard(shard);
-        assertEquals(4, insertedId);
-    }
-
-    @Test
     void testInsert() {
-        long insertedId = dao.saveShard(NOT_SAVED_SHARD);
+        dao.saveShard(NOT_SAVED_SHARD);
 
-        assertEquals(5, insertedId);
-
-        Shard found = dao.getShardById(insertedId);
+        Shard found = dao.getShardById(NOT_SAVED_SHARD.getShardId());
 
         assertNotNull(found);
-        NOT_SAVED_SHARD.setShardId(insertedId); // NOT_SAVED_SHARD will have correct hash ONLY after setting Id
         assertEquals(NOT_SAVED_SHARD, found);
-        assertEquals(insertedId, found.getShardId());
         assertEquals(NOT_SAVED_SHARD.getShardState(), found.getShardState());
         assertArrayEquals(NOT_SAVED_SHARD.getShardHash(), found.getShardHash());
         assertEquals(NOT_SAVED_SHARD.getShardHeight(), found.getShardHeight());

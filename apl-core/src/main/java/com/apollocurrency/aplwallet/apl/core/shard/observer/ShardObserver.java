@@ -4,6 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -20,14 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ShardObserver {
@@ -62,7 +62,7 @@ public class ShardObserver {
 
     public CompletableFuture<Boolean> tryCreateShardAsync() {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
-        CompletableFuture<Boolean> res = null;
+        CompletableFuture<Boolean> completableFuture = null;
         if (currentConfig.isShardingEnabled()) {
             int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
@@ -70,17 +70,24 @@ public class ShardObserver {
                     updateTrimConfig(false);
                     // quick create records for new Shard and Recovery process for later use
                     shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
-                    shardDao.saveShard(new Shard(minRollbackHeight)); // store shard with HEIGHT ONLY
-                    res = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight)).handle((success, ex)-> {
-                    updateTrimConfig(true);
-                    return success;
-                });
+                    long nextShardId = shardDao.getNextShardId();
+                    Shard newShard = new Shard(nextShardId, minRollbackHeight);
+                    shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+                    completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
+                            .thenApply((result) -> {
+                                blockchainProcessor.updateInitialBlockId();
+                                return result;
+                            })
+                            .handle((result, ex) -> {
+                                updateTrimConfig(true);
+                                return result;
+                            });
                 } else {
                     log.warn("Will skip sharding at height {} due to blokchain scan ", minRollbackHeight);
                 }
             }
         }
-        return res;
+        return completableFuture;
     }
 
     private void updateTrimConfig(boolean enableTrim) {
@@ -113,6 +120,4 @@ public class ShardObserver {
         }
         return result;
     }
-
-
 }
