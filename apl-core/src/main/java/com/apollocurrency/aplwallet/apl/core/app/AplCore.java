@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -64,6 +65,7 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.Setter;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
@@ -72,7 +74,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
-import lombok.Setter;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -302,12 +303,12 @@ public final class AplCore {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
         if (recovery != null && recovery.getState() != MigrateState.COMPLETED) {
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 72.0, "Shard process recovery started from " + recovery.getState());
+            aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
             ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
             executor.createAllCommands(shardDao.getLastShard().getShardHeight());
             executor.executeAllOperations();
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 93.0, "Shard process recovery started");
+            aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
         }
     }
 
