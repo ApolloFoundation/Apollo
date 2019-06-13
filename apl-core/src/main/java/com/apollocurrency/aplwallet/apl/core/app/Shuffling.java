@@ -233,7 +233,7 @@ public final class Shuffling {
     }
 
     public static Shuffling getShuffling(long shufflingId) {
-        Shuffling shuffling = activeShufflings.get(shufflingId);
+        Shuffling shuffling = activeShufflingsCache.get(shufflingId);
         if (shuffling == null) {
             shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
         }
