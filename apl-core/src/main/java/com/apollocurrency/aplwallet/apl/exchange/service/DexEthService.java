@@ -1,10 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import javax.inject.Singleton;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,6 +8,12 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Singleton
 public class DexEthService {
     private static final Logger LOG = LoggerFactory.getLogger(DexEthService.class);
 
