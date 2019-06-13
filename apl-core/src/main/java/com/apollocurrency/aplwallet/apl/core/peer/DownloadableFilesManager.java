@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
@@ -204,7 +205,7 @@ public class DownloadableFilesManager {
             case 3: //debug and tests
             {
                 String fileBaseDir =System.getProperty("java.io.tmpdir");
-                absPath = fileBaseDir + File.separator + parsed.fileId;
+                absPath = fileBaseDir + "/"+Constants.APPLICATION+"/" + parsed.fileId;
             };
             break;
             default:{

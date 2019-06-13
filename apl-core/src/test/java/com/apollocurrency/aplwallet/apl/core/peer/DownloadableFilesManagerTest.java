@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -58,7 +59,7 @@ class DownloadableFilesManagerTest {
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(chainCoinfig, ChainsConfigHolder.class))
             .build();
-    String fileBaseDir =System.getProperty("java.io.tmpdir");
+    String fileBaseDir =System.getProperty("java.io.tmpdir")+"/"+Constants.APPLICATION;
     String zipFileName = "apl-blockchain-arch-1.zip";
 
     @Inject
@@ -72,7 +73,7 @@ class DownloadableFilesManagerTest {
         if(wDir.exists()){
            FileUtils.deleteDirectory(wDir);
         }
-        wDir.mkdir();
+        wDir.mkdirs();
         for(int i=0; i<10; i++){
           String fn="test_file_"+i;  
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(wDir.getAbsolutePath()+"/"+fn))) {
