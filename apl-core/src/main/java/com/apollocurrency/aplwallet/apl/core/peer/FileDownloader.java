@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import org.slf4j.Logger;
@@ -171,5 +172,13 @@ public class FileDownloader {
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
         res.addAll(knownPeers);
         return res;
+    }
+    
+    @PreDestroy
+    public void preDestroy(){
+        if(executor!=null){
+            //TODO: do we need to cancel tasks and threads?
+            executor.shutdown();
+        }
     }
 }
