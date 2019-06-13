@@ -115,7 +115,7 @@ class DownloadableFilesManagerTest {
         String zipFileName = "MISSING-archive.zip";
 
         FileDownloadInfo fi = filesManager.getFileDownloadInfo(zipFileName);
-        assertNull(fi);
+        assertEquals(fi.fileInfo.isPresent,false);
     }
 
     @Test
