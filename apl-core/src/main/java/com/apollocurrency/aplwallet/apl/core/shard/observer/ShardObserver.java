@@ -4,6 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -20,14 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ShardObserver {

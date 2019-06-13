@@ -20,17 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.Vetoed;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class GetMilestoneBlockIds extends PeerRequestHandler {

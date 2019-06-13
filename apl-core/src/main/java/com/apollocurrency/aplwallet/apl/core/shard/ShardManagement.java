@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-
-import java.util.List;
 
 /**
  * Interface for database shard management.
