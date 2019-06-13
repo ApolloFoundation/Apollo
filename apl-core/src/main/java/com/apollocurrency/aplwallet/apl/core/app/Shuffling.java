@@ -234,12 +234,16 @@ public final class Shuffling {
     }
 
     public static Shuffling getShuffling(long shufflingId) {
-        return shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
+        Shuffling shuffling = activeShufflingsCache.get(shufflingId);
+        if (shuffling == null) {
+            shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
+        }
+        return shuffling;
     }
 
     public static Shuffling getShuffling(byte[] fullHash) {
         long shufflingId = Convert.fullHashToId(fullHash);
-        Shuffling shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
+        Shuffling shuffling = getShuffling(shufflingId);
         if (shuffling != null && !Arrays.equals(shuffling.getFullHash(), fullHash)) {
             LOG.debug("Shuffling with different hash {} but same id found for hash {}",
                     Convert.toHexString(shuffling.getFullHash()), Convert.toHexString(fullHash));
@@ -479,6 +483,7 @@ public final class Shuffling {
 
     private static void insert(Shuffling shuffling) {
         long id = shuffling.getId();
+        shuffling.height = blockchain.getHeight();
         if (shuffling.getBlocksRemaining() == 0) {
             if (activeShufflingsCache.get(id) != null) {
                 activeShufflingsCache.remove(id);
