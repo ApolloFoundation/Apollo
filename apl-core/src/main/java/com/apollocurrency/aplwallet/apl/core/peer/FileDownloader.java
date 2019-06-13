@@ -40,7 +40,7 @@ public class FileDownloader {
     @Vetoed
     public class Status {
         double completed = 0.0;
-        int chunksTotal = 0;
+        int chunksTotal = 1; //init to 1 to avoid zero division
         int chunksReady = 0;
         List<String> peers = new ArrayList<>();
         FileDownloadDecision decision = FileDownloadDecision.NotReady;
