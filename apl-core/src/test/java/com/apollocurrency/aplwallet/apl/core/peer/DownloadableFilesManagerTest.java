@@ -102,7 +102,7 @@ class DownloadableFilesManagerTest {
         assertNotNull(fi);
         log.debug("File download Info = {}", fi);
         assertEquals(
-                "f3b51cb318c7de39c345ba6344f2bb0068a2627e92a8d6466a7a98bf3fd3e1a2",
+                "b7f643b7602effbe34c671da5321cfa586ec53e30095af68841f515c574bae06",
                 fi.fileInfo.hash);
         log.debug("Parsed bytes from string = {}", Convert.parseHexString(fi.fileInfo.hash) );
         assertEquals(fileId, fi.fileInfo.fileId);
