@@ -130,7 +130,7 @@ public class FileDownloader {
         ChunkedFileOps fops = new ChunkedFileOps(manager.mapFileIdToLocalPath(fileID));
         while (fci != null) {
             FileChunk fc = p.downloadChunk(fci);
-            byte[] data = new byte[fc.info.size];
+            byte[] data = new byte[fc.info.size.intValue()];
             fops.writeChunk(fc.info.offset, data, fc.info.crc);
             status.chunksReady++;
             fci.present = FileChunkState.SAVED;

@@ -114,7 +114,7 @@ public class DownloadableFilesManager {
                     fci.fileId = fileId;
                     fci.offset = ci.offset;
                     fci.present = FileChunkState.PRESENT;
-                    fci.size = ci.size;
+                    fci.size = ci.size.longValue();
                     fci.chunkId = i;
                     downloadInfo.chunks.add(fci);
                 }

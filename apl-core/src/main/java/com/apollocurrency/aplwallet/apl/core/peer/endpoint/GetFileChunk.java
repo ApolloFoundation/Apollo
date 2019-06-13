@@ -31,15 +31,15 @@ public class GetFileChunk extends PeerRequestHandler {
         try {
             ChunkedFileOps ops = new ChunkedFileOps(fcr.fileId);
             byte[] dataBuf = new byte[fcr.size];
-            int rres = ops.readChunk(fcr.offset, fcr.size, dataBuf);
+            Integer rres = ops.readChunk(fcr.offset, fcr.size, dataBuf);
             if (rres != fcr.size) {
                 res.errorCode = -1;
             }
             FileChunk fc = new FileChunk();
             fc.info.crc=ops.getLastRDChunkCrc();
             fc.info.fileId=fcr.fileId;
-            fc.info.size=rres;
-            fc.mime64data=Base64.getMimeEncoder().encodeToString(dataBuf);
+            fc.info.size=rres.longValue();
+            fc.mime64data=Base64.getEncoder().encodeToString(dataBuf);
             res.chunk = fc;
         } catch (IOException ex) {
             LOG.error("Error reading file with id: " + fcr.fileId, ex);

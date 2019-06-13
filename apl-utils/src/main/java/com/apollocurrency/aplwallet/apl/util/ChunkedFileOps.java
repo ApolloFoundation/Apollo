@@ -31,10 +31,11 @@ public class ChunkedFileOps {
     public ChunkedFileOps(Path path) {
         this.absPath = path;        
     }
+    
     public class ChunkInfo{
-        public long offset;
-        public int size;
-        public long crc;
+        public Long offset;
+        public Long size;
+        public Long crc;
     }
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
     
@@ -49,10 +50,10 @@ public class ChunkedFileOps {
         if(!absPath.toFile().exists()){
             Files.createFile(absPath);
         }
-        RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"rw");
-        rf.skipBytes(offset.intValue());
-        rf.write(data);
-        rf.close();
+        try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"rw")) {
+            rf.skipBytes(offset.intValue());
+            rf.write(data);
+        }
         return res;
     }
     
@@ -102,7 +103,7 @@ public class ChunkedFileOps {
         try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r")) {
             //TODO: use FBCryptoDigest after FBCrypto update for stream operations
             MessageDigest dgst = MessageDigest.getInstance(DIGESTER);
-            int rd;
+            Integer rd;
             long offset=0;
             while((rd=rf.read(buf))>0){
                 dgst.update(buf,0,rd);
@@ -110,7 +111,7 @@ public class ChunkedFileOps {
                 cs.update(buf,rd);
                 ChunkInfo ci = new ChunkInfo();
                 ci.offset=offset;
-                ci.size=rd;
+                ci.size=rd.longValue();
                 ci.crc=cs.finish();
                 fileCRCs.add(ci);
                 offset=offset+rd;
