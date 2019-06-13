@@ -77,7 +77,7 @@ public final class Shuffling {
      * Cache, which contains all active shufflings required for processing on each block push
      * Purpose: getActiveShufflings db call require at least 50-100ms, with cache we can shorten time to 10-20ms
      */
-    private static final Map<Long, Shuffling> activeShufflings = new HashMap<>();
+    private static final Map<Long, Shuffling> activeShufflingsCache = new HashMap<>();
     private static final Logger LOG = getLogger(Shuffling.class);
 
 
@@ -300,9 +300,9 @@ public final class Shuffling {
     }
 
     static void init() {
-        activeShufflings.clear();
+        activeShufflingsCache.clear();
         List<Shuffling> allActiveShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-        activeShufflings.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
+        activeShufflingsCache.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
     }
 
     @Singleton
@@ -314,7 +314,7 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-            List<Shuffling> sortedShufflings = activeShufflings.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
+            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
 
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
@@ -480,11 +480,11 @@ public final class Shuffling {
     private static void insert(Shuffling shuffling) {
         long id = shuffling.getId();
         if (shuffling.getBlocksRemaining() == 0) {
-            if (activeShufflings.get(id) != null) {
-                activeShufflings.remove(id);
+            if (activeShufflingsCache.get(id) != null) {
+                activeShufflingsCache.remove(id);
             }
         } else { // add new or replace
-            activeShufflings.put(id, shuffling);
+            activeShufflingsCache.put(id, shuffling);
         }
 
         shufflingTable.insert(shuffling);
