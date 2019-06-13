@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -38,12 +39,14 @@ public class FileDownloader {
 
     @Vetoed
     public class Status {
-
         double completed = 0.0;
         int chunksTotal = 0;
         int chunksReady = 0;
         List<String> peers = new ArrayList<>();
         FileDownloadDecision decision = FileDownloadDecision.NotReady;
+        boolean isComplete(){
+            return chunksReady==chunksTotal;
+        }
     }
 
     public static final int DOWNLOAD_THREADS = 6;
@@ -129,11 +132,16 @@ public class FileDownloader {
         FileChunkInfo fci = getNextEmptyChunk();
         ChunkedFileOps fops = new ChunkedFileOps(manager.mapFileIdToLocalPath(fileID));
         while (fci != null) {
+            fci.present=FileChunkState.DOWNLOAD_IN_PROCGRESS;
             FileChunk fc = p.downloadChunk(fci);
-            byte[] data = new byte[fc.info.size.intValue()];
-            fops.writeChunk(fc.info.offset, data, fc.info.crc);
-            status.chunksReady++;
-            fci.present = FileChunkState.SAVED;
+            if(fc!=null){
+                byte[] data = Base64.getDecoder().decode(fc.mime64data);
+                fops.writeChunk(fc.info.offset, data, fc.info.crc);
+                status.chunksReady++;
+                fci.present = FileChunkState.SAVED;
+            }else{
+              fci.present=FileChunkState.PRESENT;
+            }
             fci = getNextEmptyChunk();
         }
         return res;
