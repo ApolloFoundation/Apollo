@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
+import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -68,7 +68,7 @@ public class DexService {
         return dexOfferDao.getOffers(dexOfferDBRequest);
     }
 
-    public WalletsBalance getBalances(GetBalancesRequest getBalancesRequest){
+    public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest){
         List<String> eth = getBalancesRequest.ethAddresses;
         List<EthWalletBalanceInfo> ethWalletsBalance = new ArrayList<>();
 

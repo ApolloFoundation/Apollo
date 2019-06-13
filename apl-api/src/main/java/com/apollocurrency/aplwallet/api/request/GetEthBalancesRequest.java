@@ -1,15 +1,15 @@
-package com.apollocurrency.aplwallet.apl.core.rest.request;
+package com.apollocurrency.aplwallet.api.request;
 
 import java.util.List;
 
 /**
  * Addresses for getting balance.
  */
-public class GetBalancesRequest {
+public class GetEthBalancesRequest {
 
     public List<String> ethAddresses;
 
-    public GetBalancesRequest(List<String> ethAddresses) {
+    public GetEthBalancesRequest(List<String> ethAddresses) {
         this.ethAddresses = ethAddresses;
     }
 }

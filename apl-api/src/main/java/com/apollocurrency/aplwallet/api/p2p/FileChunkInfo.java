@@ -11,16 +11,16 @@ import java.util.Objects;
  */
 public class FileChunkInfo {
     public String fileId;
-    public int chunkId;
-    public long offset;
-    public int size;
+    public Integer chunkId;
+    public Long offset;
+    public Long size;
     /**
      * 0 - not present
      * 1 - download in progress;
      * 2 - present;
      * 3 - saved;
      */
-    public FileChunkInfoPresent present;
+    public FileChunkState present;
     public long crc;
 
     @Override

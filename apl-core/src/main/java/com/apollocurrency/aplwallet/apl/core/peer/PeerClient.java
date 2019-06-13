@@ -3,6 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.FileChunk;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkResonse;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
@@ -61,14 +65,39 @@ public class PeerClient {
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
         if(resp==null){
             LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
-            return null;
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        if (res.errorCode != null && res.errorCode != 0) {
-            LOG.debug("Error: {} FileInfo response from peer: {}",res.errorCode, peer.getAnnouncedAddress());
-            return null;
+        if(res==null){
+            res=new FileDownloadInfoResponse();
+            res.errorCode=-3;
+            res.error="Null returned from peer";
+        }
+        if (res.errorCode != 0 || res.error!=null) {
+            LOG.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
         return res.downloadInfo;
+    }
+
+    FileChunk downloadChunk(FileChunkInfo fci) {
+       FileChunk fc;
+       FileChunkRequest rq = new FileChunkRequest();
+       rq.fileId=fci.fileId;
+       rq.id = fci.chunkId;
+       rq.offset=fci.offset.intValue();
+       rq.size=fci.size.intValue();
+       JSONObject req = mapper.convertValue(rq, JSONObject.class);
+       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+        if(resp==null){
+            LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+            return null;
+        }
+       FileChunkResonse res = mapper.convertValue(resp, FileChunkResonse.class);
+       if(res.errorCode==0){
+            fc=res.chunk;
+       }else{
+           fc=null;
+       }
+       return fc;
     }
     
 }

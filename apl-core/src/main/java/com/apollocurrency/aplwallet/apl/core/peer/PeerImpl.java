@@ -243,8 +243,9 @@ public final class PeerImpl implements Peer {
            ) {
             LOG.debug("Invalid application: {} from host:{}",application,host);
             res=false;
-        }        
-        this.pi.application = application;
+        }else{        
+            this.pi.application = application.trim();
+        }
         return res;
     }
 
@@ -749,8 +750,7 @@ public final class PeerImpl implements Peer {
                     LOG.debug("NULL or error response from {}",host);
                     return;
                 }
-                String app = (String)response.get("application");
-                if(!setApplication(app)){
+                if(!setApplication(newPi.application)){
                     remove();
                     return;
                 }

@@ -4,12 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +24,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.UUID;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 class DatabaseManagerTest {
@@ -33,12 +38,20 @@ class DatabaseManagerTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     private DbProperties baseDbProperties;
     private DatabaseManager databaseManager;
-
+    private ChainsConfigHolder chainCoinfig;
+    private Chain chain;
+    private final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");    
+    {
+        chain = mock(Chain.class);
+        when(chain.getChainId()).thenReturn(chainId);
+        chainCoinfig = mock(ChainsConfigHolder.class);
+        when(chainCoinfig.getActiveChain()).thenReturn(chain);        
+    }
     @BeforeEach
     public void setUp() throws IOException {
         Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
         baseDbProperties = DbTestData.getDbFileProperties(dbFilePath.toAbsolutePath().toString());
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder,chainCoinfig);
     }
 
     @AfterEach

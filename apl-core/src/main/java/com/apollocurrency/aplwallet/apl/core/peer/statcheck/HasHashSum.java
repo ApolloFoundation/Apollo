@@ -17,11 +17,12 @@ public interface HasHashSum {
     public BigInteger getHash();
     public String getId();
     default public boolean hasSameHash(HasHashSum other){
+        if(other==null) return false;
         return getHash().compareTo(other.getHash())==0;
     }
     /**
      * get hash rom remote or other subsystem
-     * @return hash byets
+     * @return hash bytes
      */
     public BigInteger retreiveHash();
 }

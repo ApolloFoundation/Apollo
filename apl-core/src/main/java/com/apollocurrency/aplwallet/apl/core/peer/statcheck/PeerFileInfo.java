@@ -41,11 +41,16 @@ public class PeerFileInfo implements HasHashSum {
     @Override
     public BigInteger retreiveHash() {
        fdi = peerClient.getFileInfo(fileId);
-       if(fdi==null){
-           return null;
+       if(fdi==null || fdi.fileInfo==null || fdi.fileInfo.hash==null){
+          hash=null;
+       }else{
+            hash=new BigInteger(fdi.fileInfo.hash); 
        }
-       hash=new BigInteger(fdi.fileInfo.hash); 
        return hash;
     }
 
+    public PeerClient getPeerClient() {
+        return peerClient;
+    }
+    
 }

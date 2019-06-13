@@ -33,14 +33,14 @@ class AplAppStatusTest {
         assertNotNull(taskId);
         String result = status.durableTaskUpdate(taskId, 50.0, "new msg");
         assertEquals(taskId, result);
-        result = status.durableTaskUpdate(taskId, 60.0);
+        result = status.durableTaskUpdate(taskId, 60.0, null);
         assertEquals(taskId, result);
 
-        Double completeResult = status.increaseTaskCompletenessByPercent(taskId, 1.0);
+        Double completeResult = status.durableTaskUpdateAddPercents(taskId, 1.0);
         assertEquals(61.0, completeResult);
-        completeResult = status.increaseTaskCompletenessByPercent(taskId, 1.2);
+        completeResult = status.durableTaskUpdateAddPercents(taskId, 1.2);
         assertEquals(62.2, completeResult);
-        completeResult = status.increaseTaskCompletenessByPercent(taskId, 1.05);
+        completeResult = status.durableTaskUpdateAddPercents(taskId, 1.05);
         assertEquals(63.25, completeResult);
     }
 

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Connection;
@@ -11,8 +12,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import java.util.UUID;
 import org.slf4j.Logger;
 
 /**
@@ -23,11 +24,12 @@ import org.slf4j.Logger;
 public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
 
-    private DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
     private Long shardId;
     private String shardName;
     private TransactionalDataSource shardDb;
 
+    
     public ShardDataSourceCreateHelper(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
     }
@@ -90,7 +92,8 @@ public class ShardDataSourceCreateHelper {
             }
             log.debug("Selected SHARD_ID = {} from DB", shardId);
         }
-        shardName = ShardNameHelper.getShardNameByShardId(shardId);
+        UUID chainId = databaseManager.getChainId();
+        shardName = new ShardNameHelper().getShardNameByShardId(shardId, chainId);
         return shardName;
     }
 }

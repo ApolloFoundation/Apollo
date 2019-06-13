@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.api.p2p;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Info about peer that is requested on connection
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  */
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Getter @Setter
 public class PeerInfo extends BaseP2PResonse{
     /**
      * Application name. Used to check if
@@ -164,23 +167,4 @@ public class PeerInfo extends BaseP2PResonse{
      */
     public String X509_cert;
 
-    @Override
-    public String toString() {
-        return "PeerInfo{" +
-                "application='" + application + '\'' +
-                ", services='" + services + '\'' +
-                ", version='" + version + '\'' +
-                ", platform='" + platform + '\'' +
-                ", address='" + address + '\'' +
-                ", weight=" + weight +
-                ", apiPort=" + apiPort +
-                ", apiSSLPort=" + apiSSLPort +
-                ", lastUpdated=" + lastUpdated +
-                ", blacklisted=" + blacklisted +
-                ", state=" + state +
-                ", blockchainState=" + blockchainState +
-                ", blockTime=" + blockTime +
-                ", chainId=" + chainId +
-                '}';
-    }
 }

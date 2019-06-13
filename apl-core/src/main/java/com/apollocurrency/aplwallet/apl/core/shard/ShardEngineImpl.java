@@ -61,6 +61,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import java.io.FilenameFilter;
+import java.util.UUID;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 
 /**
@@ -84,8 +87,6 @@ public class ShardEngineImpl implements ShardEngine {
     private AplAppStatus aplAppStatus;
     private String durableStatusTaskId;
 
-    public ShardEngineImpl() {
-    }
 
     @Inject
     public ShardEngineImpl(DirProvider dirProvider,
@@ -505,9 +506,11 @@ public class ShardEngineImpl implements ShardEngine {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalStateException(error);
         }
-        String shardFileName = ShardNameHelper.getShardArchiveNameByShardId(createdShardId);
+        UUID chainId = databaseManager.getChainId();
+        String shardFileName = new ShardNameHelper().getShardArchiveNameByShardId(createdShardId,chainId);
         String currentTable = shardFileName;
-        Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName + ".zip");
+
+        Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName);
         log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);
         try {
             // delete if something left in previous run
@@ -523,9 +526,11 @@ public class ShardEngineImpl implements ShardEngine {
             updateShardRecoveryProcessedTableList(sourceConnect, shardFileName, state);
             durableTaskUpdateByState(state, 58.0, "CSV archiving...");
             // compute ZIP crc hash
-            byte[] zipCrcHash = zipComponent.compress(
+            FilenameFilter CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
+            byte[] zipCrcHash = zipComponent.compressAndHash(
                     shardZipFilePath.toAbsolutePath().toString(),
-                    dirProvider.getDataExportDir().toAbsolutePath().toString(), null, null);
+                    
+                    dirProvider.getDataExportDir().toAbsolutePath().toString(), null, CSV_FILE_FILTER, false);
 
             // prepare real CRC data for shard record update
             paramInfo = new CommandParamInfoImpl(zipCrcHash, true);
@@ -767,7 +772,7 @@ public class ShardEngineImpl implements ShardEngine {
 
     private void incrementDurableTaskUpdateByPercent(Double percentIncreaseValue) {
         checkOrInitAppStatus();
-        aplAppStatus.increaseTaskCompletenessByPercent(durableStatusTaskId, percentIncreaseValue);
+        aplAppStatus.durableTaskUpdateAddPercents(durableStatusTaskId, percentIncreaseValue);
     }
 
     private void checkOrInitAppStatus() {
