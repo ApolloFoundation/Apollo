@@ -34,9 +34,6 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,7 +65,6 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -244,10 +240,17 @@ public class DexController {
             DexOfferAttachmentV2 dexOfferAttachment = new DexOfferAttachmentV2(offer);
 
             try {
-                JSONStreamAware response = service.createOffer(requestWrapper, account, dexOfferAttachment);
+                if(offer.getPairCurrency().isEthOrPax()) {
+                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+                    service.freezeEthPax(passphrase, offer);
+                }
+
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, 0L, 0L, dexOfferAttachment);
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            } catch (AplException.ExecutiveProcessException e) {
+                return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
             } catch (AplException.ThirdServiceIsNotAvailable e){
                 Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
             } catch (ExecutionException e){
@@ -356,12 +359,19 @@ public class DexController {
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
+            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
 
             try {
+                if(offer.getPairCurrency().isEthOrPax()) {
+                    service.refundEthPaxFrozenMoney(passphrase, offer);
+                }
+
                 JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferCancelAttachment);
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            } catch (AplException.ExecutiveProcessException e) {
+                return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
             }
         } catch (ParameterException ex){
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();

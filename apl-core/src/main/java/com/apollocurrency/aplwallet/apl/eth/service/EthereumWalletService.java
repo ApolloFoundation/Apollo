@@ -149,7 +149,7 @@ public class EthereumWalletService {
         }
     }
 
-    public String sendApproveTransaction(String passphrase, long accountId, String fromAddress, String spenderAddress, BigDecimal value) throws AplException.ExecutiveProcessException {
+    public String sendApproveTransaction(String passphrase, long accountId, String fromAddress, String spenderAddress, BigInteger value) throws AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
 
@@ -164,7 +164,7 @@ public class EthereumWalletService {
             throw new AplException.ExecutiveProcessException("Third service is not available.");
         }
 
-        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, EthUtil.etherToWei(value),  ethGasInfo.getAverageSpeedPrice());
+        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, value,  ethGasInfo.getAverageSpeedPrice());
     }
 
     /**

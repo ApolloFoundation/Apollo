@@ -6,13 +6,9 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -25,13 +21,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +92,7 @@ public class DexService {
 
 
     public String withdraw(long accountId, String secretPhrase, String fromAddress,  String toAddress, BigDecimal amount, DexCurrencies currencies, Long transferFee) throws AplException.ExecutiveProcessException{
-        if (DexCurrencies.ETH.equals(currencies) || DexCurrencies.PAX.equals(currencies)) {
+        if (currencies != null && currencies.isEthOrPax()) {
             return ethereumWalletService.transfer(secretPhrase, accountId, fromAddress, toAddress, amount, transferFee, currencies);
         } else {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());
@@ -114,7 +108,7 @@ public class DexService {
                 offer.setStatus(OfferStatus.EXPIRED);
                 dexOfferTable.insert(offer);
 
-                refundFrozenMoney(offer);
+                refundFrozenMoneyForOffer(offer);
             } catch (Exception ex){
                 LOG.error(ex.getMessage(), ex);
                 throw new RuntimeException(ex);
@@ -123,38 +117,59 @@ public class DexService {
 
     }
 
-    public void cancelOffer(DexOffer offer){
+    public void refundFrozenMoneyForOffer(DexOffer offer) throws AplException.ExecutiveProcessException {
+        if(offer.getPairCurrency().isApl()){
+            refundAPLFrozenMoney(offer);
+        } else if(offer.getPairCurrency().isEthOrPax()) {
+            //TODO get private key from storage. (Not implemented yet.)
+            if(true) throw new UnsupportedOperationException();
+//            String passphrase = "todo";
+//            refundEthPaxFrozenMoney(passphrase, offer);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public void refundAPLFrozenMoney(DexOffer offer) throws AplException.ExecutiveProcessException {
+        if(!offer.getPairCurrency().isApl()){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getPairCurrency());
+        }
+        //Return APL.
+        Account account = Account.getAccount(offer.getAccountId());
+        account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
+    }
+
+    public String refundEthPaxFrozenMoney(String passphrase, DexOffer offer) throws AplException.ExecutiveProcessException {
+        if(!offer.getPairCurrency().isEthOrPax()){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getPairCurrency());
+        }
+
+        BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+        String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+
+        if(txHash==null){
+            throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
+        }
+        return txHash;
+    }
+
+    public void freezeEthPax(String passphrase, DexOffer offer) throws ExecutionException, AplException.ExecutiveProcessException {
+        String txHash = null;
+
+        if(offer.getPairCurrency().isEthOrPax()){
+            BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+            txHash = dexSmartContractService.deposit(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+        }
+
+        if(txHash==null){
+            throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
+        }
+    }
+
+    public void cancelOffer(DexOffer offer) {
         offer.setStatus(OfferStatus.CANCEL);
         saveOffer(offer);
-
-        refundFrozenMoney(offer);
     }
-
-    public void refundFrozenMoney(DexOffer offer){
-        //Return APL.
-        if(offer.getType().isSell()) {
-            Account account = Account.getAccount(offer.getAccountId());
-            account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
-        }
-
-        //Return Eth
-        //TODO
-    }
-
-    //TODO remove/refactoring HttpServletRequest req and JSONStreamAware.
-    public JSONStreamAware createOffer(HttpServletRequest req, Account senderAccount, DexOfferAttachmentV2 attachment) throws ParameterException, AplException.ValidationException, ExecutionException {
-        DexCurrencies pairCurrency = DexCurrencies.getType(attachment.getPairCurrency());
-        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-
-        if(pairCurrency.isEthOrPax()){
-            BigDecimal haveToPay = EthUtil.gweiToEth(attachment.getOfferAmount()).multiply(EthUtil.gweiToEth(attachment.getPairRate()));
-            dexSmartContractService.deposit(passphrase, senderAccount.getId(), attachment.getFromAddress(), EthUtil.etherToWei(haveToPay), null, pairCurrency);
-        }
-
-        JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, senderAccount, 0L, 0L, attachment);
-        return response;
-    }
-
 
     /**
      * @param cancelTrId  can be null if we just want to check are there any unconfirmed transactions for this order.

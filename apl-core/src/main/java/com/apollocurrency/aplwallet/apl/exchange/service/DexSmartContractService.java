@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -38,14 +39,17 @@ public class DexSmartContractService {
     private String paxContractAddress;
     private KeyStoreService keyStoreService;
     private DexEthService dexEthService;
+    private EthereumWalletService ethereumWalletService;
 
     @Inject
-    public DexSmartContractService(Web3j web3j,PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService) {
+    public DexSmartContractService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
+                                   EthereumWalletService ethereumWalletService) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
         smartContractAddress = propertiesHolder.getStringProperty("apl.eth.smart.contract.address");
         paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
+        this.ethereumWalletService = ethereumWalletService;
     }
 
     /**
@@ -53,7 +57,7 @@ public class DexSmartContractService {
      * @param currency Eth or Pax
      * @return String transaction hash.
      */
-    public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException {
+    public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
         Long gasPrice = gas;
@@ -69,6 +73,10 @@ public class DexSmartContractService {
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
         }
 
+        if(currency.isPax()){
+            ethereumWalletService.sendApproveTransaction(passphrase, accountId, fromAddress, smartContractAddress, weiValue);
+        }
+
         return deposit(ethWalletKey.getCredentials(), weiValue, gasPrice, currency.isEth() ? null : paxContractAddress);
     }
 
@@ -78,12 +86,21 @@ public class DexSmartContractService {
      * @param currency Eth or Pax
      * @return String transaction hash.
      */
-    public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger weiValue, Long gasPrice, DexCurrencies currency){
+    public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger weiValue, Long gas, DexCurrencies currency) throws AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
 
         if(!currency.isEthOrPax()){
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
+        }
+        Long gasPrice = gas;
+
+        if(gasPrice == null){
+            try {
+                gasPrice = dexEthService.getEthPriceInfo().getAverageSpeedPrice();
+            } catch (ExecutionException e) {
+                throw new AplException.ExecutiveProcessException("Third service is not available, try later.");
+            }
         }
 
         return withdraw(ethWalletKey.getCredentials(), weiValue, gasPrice, currency.isEth() ? null : paxContractAddress);
