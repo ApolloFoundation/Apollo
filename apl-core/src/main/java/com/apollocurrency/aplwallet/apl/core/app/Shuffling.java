@@ -318,9 +318,6 @@ public final class Shuffling {
             }
             List<Shuffling> shufflings = new ArrayList<>();
             List<Shuffling> sortedShufflings = activeShufflings.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
-            if (block.getHeight() == 77600) {
-                System.out.println("");
-            }
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
