@@ -91,22 +91,6 @@ public class DexController {
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private ObjectMapper mapper = new ObjectMapper();
 
-    private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
-            .maximumSize(100)
-            .expireAfterWrite(2, TimeUnit.MINUTES)
-            .build(
-                    new CacheLoader<>() {
-                        public EthGasInfo load(String id) throws InvalidCacheLoadException {
-                            EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
-                            if(ethGasInfo==null){
-                                throw new InvalidCacheLoadException("Value can't be null");
-                            }
-                            return ethGasInfo;
-                        }
-                    }
-            );
-
-
     @Inject
     public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
                          EthereumWalletService ethereumWalletService) {
@@ -272,16 +256,21 @@ public class DexController {
             DexOfferAttachmentV2 dexOfferAttachment = new DexOfferAttachmentV2(offer);
 
             try {
-                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
-
-                //TODO add Eth/pax freeze. Waite several approves and freeze eth or pax.
+                JSONStreamAware response = service.createOffer(requestWrapper, account, dexOfferAttachment);
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            } catch (AplException.ThirdServiceIsNotAvailable e){
+                Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
+            } catch (ExecutionException e){
+                Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
             }
+
         } catch (ParameterException ex){
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         }
+
+        return Response.ok().build();
     }
 
     @GET
@@ -469,7 +458,7 @@ public class DexController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
         try {
-            EthGasInfo ethGasInfo = (EthGasInfo) cache.get(ETH_GAS_INFO_KEY);
+            EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();
         } catch (Exception ex){
             return Response.ok().build();

@@ -6,11 +6,16 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
@@ -18,35 +23,42 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 @Singleton
 public class DexService {
     private static final Logger LOG = LoggerFactory.getLogger(DexService.class);
 
     private EthereumWalletService ethereumWalletService;
+    private DexSmartContractService dexSmartContractService;
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
     private TransactionProcessorImpl transactionProcessor;
+    private DexOfferTransactionCreator dexOfferTransactionCreator;
 
 
     @Inject
-    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
+    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
+                      DexOfferTransactionCreator dexOfferTransactionCreator, DexSmartContractService dexSmartContractService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
+        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.dexSmartContractService = dexSmartContractService;
     }
 
 
@@ -127,6 +139,21 @@ public class DexService {
 
         //Return Eth
         //TODO
+    }
+
+    //TODO remove/refactoring HttpServletRequest req and JSONStreamAware.
+    public JSONStreamAware createOffer(HttpServletRequest req, Account senderAccount, DexOfferAttachmentV2 attachment) throws ParameterException, AplException.ValidationException, ExecutionException {
+        JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, senderAccount, 0L, 0L, attachment);
+
+        DexCurrencies pairCurrency = DexCurrencies.getType(attachment.getPairCurrency());
+        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+
+        if(pairCurrency.isEthOrPax()){
+            BigDecimal haveToPay = EthUtil.gweiToEth(attachment.getOfferAmount()).multiply(EthUtil.gweiToEth(attachment.getPairRate()));
+            dexSmartContractService.deposit(passphrase, senderAccount.getId(), attachment.getFromAddress(), EthUtil.etherToWei(haveToPay), null, pairCurrency);
+        }
+
+        return response;
     }
 
 

@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.ethereum.util.blockchain.EtherUtil;
@@ -24,6 +25,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.concurrent.ExecutionException;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_DEFAULT_ADDRESS;
 
@@ -35,14 +37,15 @@ public class DexSmartContractService {
     private String smartContractAddress;
     private String paxContractAddress;
     private KeyStoreService keyStoreService;
-
+    private DexEthService dexEthService;
 
     @Inject
-    public DexSmartContractService(Web3j web3j,PropertiesHolder propertiesHolder, KeyStoreService keyStoreService) {
+    public DexSmartContractService(Web3j web3j,PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
         smartContractAddress = propertiesHolder.getStringProperty("apl.eth.smart.contract.address");
         paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+        this.dexEthService = dexEthService;
     }
 
     /**
@@ -50,10 +53,18 @@ public class DexSmartContractService {
      * @param currency Eth or Pax
      * @return String transaction hash.
      */
-    public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gasPrice, DexCurrencies currency){
+    public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
+        Long gasPrice = gas;
 
+        if(gasPrice == null){
+            gasPrice = dexEthService.getEthPriceInfo().getFastSpeedPrice();
+        }
+
+       if(gasPrice == null){
+           throw new AplException.ThirdServiceIsNotAvailable("Eth Price Info is not available.");
+       }
         if(!currency.isEthOrPax()){
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
         }

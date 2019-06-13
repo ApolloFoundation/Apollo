@@ -40,6 +40,9 @@ public class EthUtil {
         return EtherUtil.convert(gwei, EtherUtil.Unit.GWEI);
     }
 
+    public static BigDecimal gweiToEth(Long gwei) {
+        return weiToEther(gweiToWei(gwei));
+    }
 
 
     public static boolean isAddressValid(String address){

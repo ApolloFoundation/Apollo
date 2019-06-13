@@ -138,7 +138,12 @@ public class EthereumWalletService {
             throw new AplException.ExecutiveProcessException("Not found eth address at the user storage: " + fromAddress);
         }
 
-        EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
+        EthGasInfo ethGasInfo;
+        try {
+            ethGasInfo = dexEthService.getEthPriceInfo();
+        } catch (ExecutionException e) {
+            throw new AplException.ExecutiveProcessException("Third service is not available.");
+        }
 
         return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, EthUtil.etherToWei(value),  ethGasInfo.getAverageSpeedPrice());
     }
