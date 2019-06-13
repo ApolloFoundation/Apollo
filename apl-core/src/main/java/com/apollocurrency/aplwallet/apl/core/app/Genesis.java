@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -64,6 +63,7 @@ public final class Genesis {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static  ConfigDirProvider configDirProvider = CDI.current().select(ConfigDirProvider.class).get();
+//    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
     private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
 
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
@@ -167,7 +167,14 @@ public final class Genesis {
 
         public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
             
-            String path = configDirProvider.getConfigDirectoryName()+File.separator+blockchainConfig.getChain().getGenesisLocation();
+            // Original line below:
+             String path = configDirProvider.getConfigDirectoryName()+"/"+blockchainConfig.getChain().getGenesisLocation();
+            // Hotfixed because UNIX way working everywhere
+            // TODO: Fix that for crossplatform compatibility
+
+//            String path = aplCoreRuntime.getConfDir()+"/"+blockchainConfig.getChain().getGenesisLocation();
+
+            LOG.debug("Genesis accounts path = " + path);
             try (InputStreamReader is = new InputStreamReader(
                     Genesis.class.getClassLoader().getResourceAsStream(path))) {
                 ObjectMapper objectMapper = new ObjectMapper();
