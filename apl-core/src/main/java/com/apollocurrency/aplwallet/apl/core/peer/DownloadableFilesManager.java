@@ -3,11 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import static com.apollocurrency.aplwallet.api.p2p.FileChunkState.SAVED;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
@@ -17,9 +15,9 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -40,7 +38,7 @@ import javax.inject.Singleton;
 @Singleton
 public class DownloadableFilesManager {
 
-    private static final Logger log = getLogger(DownloadableFilesManager.class);
+    private static final Logger log =LoggerFactory.getLogger(DownloadableFilesManager.class);
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
     public final static int FILE_CHUNK_SIZE = 32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR = "downloadables";
@@ -53,8 +51,8 @@ public class DownloadableFilesManager {
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;
     private final ChainsConfigHolder chainsConfig;
+    
     private class ParsedFileId {
-
         Integer key = -1;
         String fileId;
         Map<String, String> modifiers = new HashMap<>();
@@ -114,7 +112,7 @@ public class DownloadableFilesManager {
                     fci.crc = ci.crc;
                     fci.fileId = fileId;
                     fci.offset = ci.offset;
-                    fci.present = SAVED;
+                    fci.present = FileChunkState.PRESENT;
                     fci.size = ci.size;
                     fci.chunkId = i;
                     downloadInfo.chunks.add(fci);

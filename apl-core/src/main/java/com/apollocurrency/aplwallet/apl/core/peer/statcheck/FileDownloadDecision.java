@@ -13,5 +13,6 @@ public enum FileDownloadDecision {
     Risky, // network contains significant number of bad hosts but still usable
     NeedsInvestigation, //network contains critical number of bad host and may be unusable
     Bad, // network is unusable
-    NoPeers // Just no peers with requested file
+    NoPeers, // Just no peers with requested file
+    NotReady // Desision is not ready, not started or in progress 
 }

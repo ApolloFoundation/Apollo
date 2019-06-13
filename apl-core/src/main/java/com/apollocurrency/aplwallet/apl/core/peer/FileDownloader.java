@@ -20,11 +20,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class performs complete file downloading from peers
@@ -36,34 +39,59 @@ public class FileDownloader {
     @Vetoed
     public class Status {
 
-        double completed;
-        int chunksTotal;
-        int chunksReady;
-        List<String> peers;
+        double completed = 0.0;
+        int chunksTotal = 0;
+        int chunksReady = 0;
+        List<String> peers = new ArrayList<>();
+        FileDownloadDecision decision = FileDownloadDecision.NotReady;
     }
-    public static final int DOWNLOAD_THREADS = 4;
+
+    public static final int DOWNLOAD_THREADS = 6;
     private String fileID;
     private FileDownloadInfo downloadInfo;
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
-    private Status status;
+    private final Status status = new Status();
+    private static final Logger log = LoggerFactory.getLogger(FileDownloader.class);
 
-    @Inject
     DownloadableFilesManager manager;
+
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
-    
-    public FileDownloader() {
+
+    @Inject
+    public FileDownloader(DownloadableFilesManager manager) {
+        this.manager = manager;
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
     }
 
     public void startDownload(String fileID) {
         this.fileID = fileID;
+        CompletableFuture<Boolean> prepare;
+        prepare = CompletableFuture.supplyAsync(() -> {
+            status.decision = prepareForDownloading();
+            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
+            return res;
+        });
+        
+        prepare.thenAccept( r->{
+            if(r){
+                status.chunksTotal = downloadInfo.chunks.size();
+                log.debug("Decision is OK: {}, statring chunks downloading",status.decision.name());
+                download();
+            }else{
+                log.warn("Decision is not OK: {}, Chunks downloading is nopt started",status.decision.name());
+            }                
+        });
     }
 
     public Status getDownloadStatus() {
-        status.completed = 1.0D * status.chunksTotal / status.chunksReady;
+        status.completed = ((1.0D * status.chunksReady) / (1.0 * status.chunksTotal)) * 100.0;
         return status;
+    }
+
+    public FileDownloadInfo getDownloadInfo() {
+        return downloadInfo;
     }
 
     public FileDownloadDecision prepareForDownloading() {
@@ -78,6 +106,10 @@ public class FileDownloader {
         res = pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();
         badPeers = pvdm.getInvalidPeers();
+        if(pvdm.isNetworkUsable()){
+            PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
+            downloadInfo = pfi.getFdi();
+        }
         return res;
     }
 
@@ -91,7 +123,6 @@ public class FileDownloader {
         }
         return res;
     }
-
 
     private boolean doPeerDownload(PeerClient p) throws IOException {
         boolean res = true;

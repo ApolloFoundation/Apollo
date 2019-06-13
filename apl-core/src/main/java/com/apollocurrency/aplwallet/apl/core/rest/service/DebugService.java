@@ -27,7 +27,7 @@ public class DebugService {
         downloader.startDownload(id);
         Set<Peer> peers = downloader.getAllAvailablePeers();
         FileDownloadDecision decision = downloader.prepareForDownloading();
-        FileDownloadInfo fdi = new FileDownloadInfo();
+        FileDownloadInfo fdi = downloader.getDownloadInfo();
         FileInfo fi = new FileInfo();
         fdi.fileInfo=fi;
         return fdi;
