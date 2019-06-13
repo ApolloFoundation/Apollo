@@ -233,12 +233,16 @@ public final class Shuffling {
     }
 
     public static Shuffling getShuffling(long shufflingId) {
-        return shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
+        Shuffling shuffling = activeShufflings.get(shufflingId);
+        if (shuffling == null) {
+            shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
+        }
+        return shuffling;
     }
 
     public static Shuffling getShuffling(byte[] fullHash) {
         long shufflingId = Convert.fullHashToId(fullHash);
-        Shuffling shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
+        Shuffling shuffling = getShuffling(shufflingId);
         if (shuffling != null && !Arrays.equals(shuffling.getFullHash(), fullHash)) {
             LOG.debug("Shuffling with different hash {} but same id found for hash {}",
                     Convert.toHexString(shuffling.getFullHash()), Convert.toHexString(fullHash));
@@ -314,7 +318,9 @@ public final class Shuffling {
             }
             List<Shuffling> shufflings = new ArrayList<>();
             List<Shuffling> sortedShufflings = activeShufflings.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
-
+            if (block.getHeight() == 77600) {
+                System.out.println("");
+            }
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
@@ -468,6 +474,7 @@ public final class Shuffling {
 
     private static void insert(Shuffling shuffling) {
         long id = shuffling.getId();
+        shuffling.height = blockchain.getHeight();
         if (shuffling.getBlocksRemaining() == 0) {
             if (activeShufflings.get(id) != null) {
                 activeShufflings.remove(id);
