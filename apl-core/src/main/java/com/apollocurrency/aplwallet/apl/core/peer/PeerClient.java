@@ -65,10 +65,14 @@ public class PeerClient {
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
         if(resp==null){
             LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
-            return null;
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        if (res.errorCode != null || res.errorCode != 0 || res.error!=null) {
+        if(res==null){
+            res=new FileDownloadInfoResponse();
+            res.errorCode=-3;
+            res.error="Null returned from peer";
+        }
+        if (res.errorCode != 0 || res.error!=null) {
             LOG.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
         return res.downloadInfo;
