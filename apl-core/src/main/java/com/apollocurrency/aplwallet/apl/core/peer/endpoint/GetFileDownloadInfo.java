@@ -24,6 +24,9 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
         FileDownloadInfoResponse res = new FileDownloadInfoResponse();
         FileDownloadInfoRequest rq = mapper.convertValue(request, FileDownloadInfoRequest.class);
         res.downloadInfo = fm.getFileDownloadInfo(rq.fileId);
+        if(res.downloadInfo==null || !res.downloadInfo.fileInfo.isPresent){
+            res.errorCode=-2;
+        }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
         return response;        
     }

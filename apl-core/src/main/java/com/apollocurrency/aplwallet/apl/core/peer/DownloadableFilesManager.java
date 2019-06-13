@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -83,9 +84,8 @@ public class DownloadableFilesManager {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
         if (fdi == null) {
-            FileInfo fi = getFileInfo(fileId);
+            fdi=createFileDownloadInfo(fileId);
         }
-        fdi = fdiCache.get(fileId);
         return fdi;
     }
 
@@ -93,35 +93,30 @@ public class DownloadableFilesManager {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = mapFileIdToLocalPath(fileId);
-        if (fpath != null) {
-            downloadInfo.fileInfo.isPresent = true;
+        if (fpath != null && Files.isReadable(fpath)) {
             downloadInfo.fileInfo.fileId = fileId;
+            downloadInfo.fileInfo.isPresent = true;
             downloadInfo.created = Instant.now(); // in UTC
             ChunkedFileOps fops = new ChunkedFileOps(fpath);
             downloadInfo.fileInfo.size = fops.getFileSize();
-            if (downloadInfo.fileInfo.size < 0) {
-                downloadInfo.fileInfo.isPresent = false;
-            } else {
-                downloadInfo.fileInfo.fileDate = fops.getFileDate();
-                downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
-                downloadInfo.fileInfo.chunkSize = FILE_CHUNK_SIZE;
-                downloadInfo.fileInfo.originHostSignature = "";
-                List<ChunkedFileOps.ChunkInfo> crcs = fops.getChunksCRC();
-                for (int i = 0; i < crcs.size(); i++) {
-                    FileChunkInfo fci = new FileChunkInfo();
-                    ChunkedFileOps.ChunkInfo ci = crcs.get(i);
-                    fci.crc = ci.crc;
-                    fci.fileId = fileId;
-                    fci.offset = ci.offset;
-                    fci.present = FileChunkState.PRESENT;
-                    fci.size = ci.size.longValue();
-                    fci.chunkId = i;
-                    downloadInfo.chunks.add(fci);
-                }
-                fdiCache.put(fileId, downloadInfo);
+            downloadInfo.fileInfo.fileDate = fops.getFileDate();
+            downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
+            downloadInfo.fileInfo.chunkSize = FILE_CHUNK_SIZE;
+            downloadInfo.fileInfo.originHostSignature = "";
+            List<ChunkedFileOps.ChunkInfo> crcs = fops.getChunksCRC();
+            for (int i = 0; i < crcs.size(); i++) {
+                FileChunkInfo fci = new FileChunkInfo();
+                ChunkedFileOps.ChunkInfo ci = crcs.get(i);
+                fci.crc = ci.crc;
+                fci.fileId = fileId;
+                fci.offset = ci.offset;
+                fci.present = FileChunkState.PRESENT;
+                fci.size = ci.size.longValue();
+                fci.chunkId = i;
+                downloadInfo.chunks.add(fci);
             }
+            fdiCache.put(fileId, downloadInfo);
         } else {
-            downloadInfo.fileInfo.fileId = fileId;
             downloadInfo.fileInfo.isPresent = false;
         }
         return downloadInfo;
