@@ -232,7 +232,6 @@ public final class GetConstants extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         return Holder.CONSTANTS;
-
     }
 
     @Override
