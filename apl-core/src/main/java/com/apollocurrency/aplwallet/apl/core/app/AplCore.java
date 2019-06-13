@@ -84,6 +84,8 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
+    private static TransportInteractionService transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
+    
     //this should saty static
     private final AplCoreRuntime aplCoreRuntime;
     
@@ -134,7 +136,13 @@ public final class AplCore {
             databaseManager.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
         }
+                
+        LOG.info("transport interaction service shutdown...");
+        transportInteractionService.stop();
+        
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
+        
+        
         AplCore.shutdown = true;
     }
 
@@ -170,8 +178,7 @@ public final class AplCore {
 
 //                CDI.current().select(NtpTime.class).get().start();
                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
-               TransportInteractionService tcs = CDI.current().select(TransportInteractionService.class).get();
-               tcs.start();
+               transportInteractionService.start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();

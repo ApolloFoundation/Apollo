@@ -36,6 +36,12 @@ public interface TransportInteractionService {
      */
      
     public void start();
+   
+    /** 
+     * Start transport interaction service
+     */
+     
+    public void stop();
     
     
 }

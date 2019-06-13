@@ -48,6 +48,9 @@ public class TransportInteractionWebSocket {
     @SuppressWarnings("unused")
     private Session session;    
     
+    private static Random rand = new Random();
+    private static ObjectMapper mapper = new ObjectMapper();   
+    
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionWebSocket.class);
     
     private SecureTransportStatus secureTransportStatus;
@@ -69,13 +72,13 @@ public class TransportInteractionWebSocket {
     }
     
     @Getter
-    String remoteip;   
+    String remoteIp;   
     @Getter
-    int remoteport;    
+    int remotePort;    
     @Getter
-    String tunaddr;
+    String tunAddr;
     @Getter
-    String tunnetmask;  
+    String tunNetMask;  
     
     
     private WebSocketClient client;    
@@ -99,7 +102,7 @@ public class TransportInteractionWebSocket {
      * @param endpointURI - link to connect to transport daemon
      */
     public TransportInteractionWebSocket(URI endpointURI) {
-        
+                
         try {
 
         secureTransportStatus = SecureTransportStatus.INITIAL;
@@ -114,7 +117,7 @@ public class TransportInteractionWebSocket {
         awaitClose(5, TimeUnit.SECONDS);
         
         } catch (Exception ex) {
-            log.error("WS connection exception: {}",  ex.getMessage().toString());
+            log.error("WS connection exception: {}",  ex.getMessage().toString());            
         }
         
     }
@@ -140,7 +143,7 @@ public class TransportInteractionWebSocket {
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
         log.debug("TransportInteractionWebSocket: onClose, code: {}, reason: {} " , statusCode, reason );
-        this.session = null;                
+        this.session = null;           
     }
 
     /**
@@ -169,11 +172,11 @@ public class TransportInteractionWebSocket {
                     } else if (transportStatusReply.status.equals("CONNECTED")) {
                         log.debug("received status: CONNECTED, saving parameters");
                         // {"type":"GETSTATUSREPLY","status":"CONNECTED","remoteip":"51.15.249.23","remoteport":"25000","tunaddr":"10.75.110.216","tunnetmask":"255.255.255.0","id":"230"}
-                        this.remoteip= transportStatusReply.remoteip;
-                        this.remoteport = transportStatusReply.remoteport;
-                        this.tunaddr = transportStatusReply.tunaddr;
-                        this.tunnetmask = transportStatusReply.tunnetmask;                        
-                        log.debug("connected to: {} : {} via : {} / {}", remoteip, remoteport, tunaddr, tunnetmask);
+                        this.remoteIp= transportStatusReply.remoteip;
+                        this.remotePort = transportStatusReply.remoteport;
+                        this.tunAddr = transportStatusReply.tunaddr;
+                        this.tunNetMask = transportStatusReply.tunnetmask;                        
+                        log.debug("connected to: {} : {} via : {} / {}", remoteIp, remotePort, tunAddr, tunNetMask);
                         secureTransportStatus = SecureTransportStatus.CONNECTED;                        
                     } else if (transportStatusReply.status.equals("INITIAL")) {
                         // seems that we are dealing with service that have never been started.. Starting it up
@@ -191,16 +194,16 @@ public class TransportInteractionWebSocket {
                 if (eventSpec.equals("CONNECT") ) {
                     // handling json here 
                     TransportEventDescriptor transportEventDescriptor = processData(TransportEventDescriptor.class, message, false);
-                    this.remoteip= transportEventDescriptor.remoteip;
-                    this.remoteport = transportEventDescriptor.remoteport;
-                    this.tunaddr = transportEventDescriptor.tunaddr;
-                    this.tunnetmask = transportEventDescriptor.tunnetmask;                   
-                    log.debug("connected to: {} : {} via : {} / {}", remoteip, remoteport, tunaddr, tunnetmask);
+                    this.remoteIp= transportEventDescriptor.remoteip;
+                    this.remotePort = transportEventDescriptor.remoteport;
+                    this.tunAddr = transportEventDescriptor.tunaddr;
+                    this.tunNetMask = transportEventDescriptor.tunnetmask;                   
+                    log.debug("connected to: {} : {} via : {} / {}", remoteIp, remotePort, tunAddr, tunNetMask);
                     secureTransportStatus = SecureTransportStatus.CONNECTED;                    
                 } else if (eventSpec.equals("DISCONNECT")) {
                     TransportEventDescriptor transportEventDescriptor = processData(TransportEventDescriptor.class, message, false);
                     cleanupComParams();                    
-                    log.debug("disconnected from: {} : {} via : {} / {}", remoteip, remoteport, tunaddr, tunnetmask);
+                    log.debug("disconnected from: {} : {} via : {} / {}", remoteIp, remotePort, tunAddr, tunNetMask);
                     secureTransportStatus = SecureTransportStatus.DISCONNECTED;                    
                 }
             }
@@ -221,13 +224,11 @@ public class TransportInteractionWebSocket {
             Future<Void> fut;            
             fut = session.getRemote().sendStringByFuture(message);
             fut.get(2, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {
-            log.error ("sendMessage InterruptedException: {}", ex.getMessage().toString() );
-        } catch (ExecutionException ex) {
-            log.error ("sendMessage ExecutionException: {}", ex.getMessage().toString() );
-        } catch (TimeoutException ex) {
-            log.error ("sendMessage TimeoutException: {}", ex.getMessage().toString() );
+
+        } catch (InterruptedException | ExecutionException | TimeoutException ex) {
+            log.error ("sendMessage Exception: {}", ex.getMessage().toString() );
         }
+
     }
     
     /**
@@ -243,10 +244,10 @@ public class TransportInteractionWebSocket {
      */
     
     private void cleanupComParams() {
-        this.remoteip= "";
-        this.remoteport = -1;
-        this.tunaddr = "";
-        this.tunnetmask = "";
+        this.remoteIp= "";
+        this.remotePort = -1;
+        this.tunAddr = "";
+        this.tunNetMask = "";
     }
 
 
@@ -257,10 +258,9 @@ public class TransportInteractionWebSocket {
     private void getSecureTransportStatus( ) {                
         log.debug("TransportInteractionWebSocket: getSecureTransportStatus");
         TransportStopRequest stopRequest = new TransportStopRequest();
-        stopRequest.type = "GETSTATUSREQUEST";
-        Random rand = new Random();
+        stopRequest.type = "GETSTATUSREQUEST";        
         stopRequest.id = rand.nextInt(255);          
-        ObjectMapper mapper = new ObjectMapper();                
+                     
         try {
             String stopRequestString = mapper.writeValueAsString(stopRequest);            
             log.debug("getting status: {}", stopRequestString);            
@@ -287,9 +287,7 @@ public class TransportInteractionWebSocket {
         startRequest.uniqueport = this.uniquePort;
         startRequest.shuffle = this.shuffle;
         startRequest.logpath = this.logPath;                        
-        Random rand = new Random();
-        startRequest.id = rand.nextInt(255);                
-        ObjectMapper mapper = new ObjectMapper();
+        startRequest.id = rand.nextInt(255);                        
                 
         try {
             String startRequestString = mapper.writeValueAsString(startRequest); 
@@ -308,9 +306,7 @@ public class TransportInteractionWebSocket {
     public void stopSecureTransport() {
         TransportStopRequest stopRequest = new TransportStopRequest();
         stopRequest.type = "STOPREQUEST";
-        Random rand = new Random();
         stopRequest.id = rand.nextInt(255);  
-        ObjectMapper mapper = new ObjectMapper();
                 
         try {
             String stopRequestString = mapper.writeValueAsString(stopRequest); 
@@ -368,11 +364,11 @@ public class TransportInteractionWebSocket {
      * @return T - instance of service class, provided as the 1-st argument of input 
      */    
     private static <T> T processData(Class<T> serviceClass, String inputData, boolean screening) {
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        if (screening) mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        if (screening) objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
         T res = null;
         try {
-            res = mapper.readValue(inputData, serviceClass);
+            res = objectMapper.readValue(inputData, serviceClass);
         } catch (IOException e) {
             e.printStackTrace();
         }

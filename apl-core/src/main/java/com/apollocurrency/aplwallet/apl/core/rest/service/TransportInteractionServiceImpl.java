@@ -24,7 +24,7 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
     private TransportInteractionWebSocket transportInteractionWebSocket;
     
     @Setter
-    private boolean done;
+    private volatile boolean done;
     
     
     
@@ -44,10 +44,10 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
         log.debug("isOpen: {}" , isOpen );                
         transportStatusResponse.controlconnection = transportInteractionWebSocket.isOpen(); 
         transportStatusResponse.remoteConnectionStatus = transportInteractionWebSocket.getRemoteConnectionStatus();
-        transportStatusResponse.remoteip = transportInteractionWebSocket.remoteip;
-        transportStatusResponse.remoteport = transportInteractionWebSocket.remoteport;
-        transportStatusResponse.tunaddr = transportInteractionWebSocket.tunaddr;
-        transportStatusResponse.tunnetmask = transportInteractionWebSocket.tunnetmask;        
+        transportStatusResponse.remoteip = transportInteractionWebSocket.remoteIp;
+        transportStatusResponse.remoteport = transportInteractionWebSocket.remotePort;
+        transportStatusResponse.tunaddr = transportInteractionWebSocket.tunAddr;
+        transportStatusResponse.tunnetmask = transportInteractionWebSocket.tunNetMask;        
         return transportStatusResponse;
     }
     
@@ -90,6 +90,11 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
     @Override
     public void stopSecureTransport() {
         transportInteractionWebSocket.stopSecureTransport();
+    }
+
+    @Override
+    public void stop() {
+        this.done = true;
     }
 
     
