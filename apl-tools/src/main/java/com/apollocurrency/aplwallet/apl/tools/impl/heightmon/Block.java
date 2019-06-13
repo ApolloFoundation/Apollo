@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonSetter;
-
-import java.util.Objects;
 
 public class Block {
     private long id;

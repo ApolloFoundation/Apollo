@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
@@ -23,11 +28,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
 
 public class BlockEventSourceProcessor implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(BlockEventSourceProcessor.class);

@@ -1,16 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.util.List;
 
 /**
  * Shard management + retrieving interface

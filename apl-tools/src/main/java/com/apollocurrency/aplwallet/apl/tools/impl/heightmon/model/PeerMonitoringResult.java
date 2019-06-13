@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.Block;
 import com.apollocurrency.aplwallet.apl.util.Version;
-
-import java.util.List;
 
 public class PeerMonitoringResult {
     private List<Block> blocks;

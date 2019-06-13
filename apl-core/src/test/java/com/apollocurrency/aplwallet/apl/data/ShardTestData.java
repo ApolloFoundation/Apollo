@@ -1,10 +1,10 @@
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
 import java.util.Arrays;
 import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 public class ShardTestData {
     public static final Shard SHARD_0 = new Shard(1L, Convert.parseHexString("8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176"), 0L,2, null);
