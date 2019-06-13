@@ -45,7 +45,7 @@ public class TrimObserver {
             log.info("processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
-            trimService.doTrimDerivedTablesOnHeight(block.getHeight());
+            trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight());
         }
     }
 
