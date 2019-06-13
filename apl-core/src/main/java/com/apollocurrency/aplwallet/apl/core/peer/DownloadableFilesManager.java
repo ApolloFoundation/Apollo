@@ -72,10 +72,7 @@ public class DownloadableFilesManager {
     public FileInfo getFileInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileInfo fi;
-        FileDownloadInfo fdi = fdiCache.get(fileId);
-        if (fdi == null) {
-            fdi = createFileDownloadInfo(fileId);
-        }
+        FileDownloadInfo fdi = getFileDownloadInfo(fileId);
         fi = fdi.fileInfo;
         return fi;
     }
@@ -93,8 +90,8 @@ public class DownloadableFilesManager {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = mapFileIdToLocalPath(fileId);
+        downloadInfo.fileInfo.fileId = fileId;
         if (fpath != null && Files.isReadable(fpath)) {
-            downloadInfo.fileInfo.fileId = fileId;
             downloadInfo.fileInfo.isPresent = true;
             downloadInfo.created = Instant.now(); // in UTC
             ChunkedFileOps fops = new ChunkedFileOps(fpath);

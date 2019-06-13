@@ -68,9 +68,8 @@ public class PeerClient {
             return null;
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        if (res.errorCode != null && res.errorCode != 0) {
-            LOG.debug("Error: {} FileInfo response from peer: {}",res.errorCode, peer.getAnnouncedAddress());
-            return null;
+        if (res.errorCode != null || res.errorCode != 0 || res.error!=null) {
+            LOG.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
         return res.downloadInfo;
     }
