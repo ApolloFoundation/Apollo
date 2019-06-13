@@ -201,7 +201,6 @@ public class DexController {
                 return Response.ok(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
 
-
             if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()){
                 if(!EthUtil.isAddressValid(offer.getFromAddress())) {
                     return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
@@ -231,24 +230,13 @@ public class DexController {
                 if (account.getUnconfirmedBalanceATM() < amountATM) {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
-            } else if(offer.getPairCurrency().isEth() && offer.getType().isBuy()){
-                BigInteger eth = ethereumWalletService.getEthBalanceWei(offer.getFromAddress());
-                if(eth==null || eth.compareTo(BigInteger.ZERO) < 0){
+            } else if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()){
+                BigInteger amount = ethereumWalletService.getBalanceWei(offer.getFromAddress(), offer.getPairCurrency());
+                BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+
+                if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
-//                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
-//                if(balanceInfo.getEth()==null || balanceInfo.getEth().compareTo(EthUtil.gweiToWei(willPay)) < 1){
-//                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-//                }
-            } else if(offer.getPairCurrency().isPax() && offer.getType().isBuy()){
-                BigInteger pax = ethereumWalletService.getPaxBalanceWei(offer.getFromAddress());
-                if(pax==null || pax.compareTo(BigInteger.ZERO) < 1){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-                }
-//                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
-//                if(balanceInfo.getPax()==null || balanceInfo.getPax().compareTo(EthUtil.gweiToWei(willPay)) < 1){
-//                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-//                }
             }
 
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);

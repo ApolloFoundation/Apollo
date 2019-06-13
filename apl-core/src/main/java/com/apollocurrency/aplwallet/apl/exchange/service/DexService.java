@@ -143,8 +143,6 @@ public class DexService {
 
     //TODO remove/refactoring HttpServletRequest req and JSONStreamAware.
     public JSONStreamAware createOffer(HttpServletRequest req, Account senderAccount, DexOfferAttachmentV2 attachment) throws ParameterException, AplException.ValidationException, ExecutionException {
-        JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, senderAccount, 0L, 0L, attachment);
-
         DexCurrencies pairCurrency = DexCurrencies.getType(attachment.getPairCurrency());
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
 
@@ -153,6 +151,7 @@ public class DexService {
             dexSmartContractService.deposit(passphrase, senderAccount.getId(), attachment.getFromAddress(), EthUtil.etherToWei(haveToPay), null, pairCurrency);
         }
 
+        JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, senderAccount, 0L, 0L, attachment);
         return response;
     }
 
