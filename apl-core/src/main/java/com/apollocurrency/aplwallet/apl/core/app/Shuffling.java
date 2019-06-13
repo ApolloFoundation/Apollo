@@ -22,6 +22,27 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -51,33 +72,12 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-
 public final class Shuffling {
     /**
      * Cache, which contains all active shufflings required for processing on each block push
      * Purpose: getActiveShufflings db call require at least 50-100ms, with cache we can shorten time to 10-20ms
      */
-    private static final Map<Long, Shuffling> activeShufflings = new HashMap<>();
+    private static final Map<Long, Shuffling> activeShufflingsCache = new HashMap<>();
     private static final Logger LOG = getLogger(Shuffling.class);
 
 
@@ -303,9 +303,9 @@ public final class Shuffling {
     }
 
     static void init() {
-        activeShufflings.clear();
+        activeShufflingsCache.clear();
         List<Shuffling> allActiveShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-        activeShufflings.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
+        activeShufflingsCache.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
     }
 
     @Singleton
@@ -317,7 +317,8 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-            List<Shuffling> sortedShufflings = activeShufflings.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
+            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
+
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
@@ -383,6 +384,16 @@ public final class Shuffling {
         this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
         this.height = rs.getInt("height");
+    }
+
+    private Shuffling(long id, DbKey dbKey, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount) {
+        this.id = id;
+        this.dbKey = dbKey;
+        this.holdingId = holdingId;
+        this.holdingType = holdingType;
+        this.issuerId = issuerId;
+        this.amount = amount;
+        this.participantCount = participantCount;
     }
 
     private void save(Connection con) throws SQLException {
@@ -473,11 +484,11 @@ public final class Shuffling {
         long id = shuffling.getId();
         shuffling.height = blockchain.getHeight();
         if (shuffling.getBlocksRemaining() == 0) {
-            if (activeShufflings.get(id) != null) {
-                activeShufflings.remove(id);
+            if (activeShufflingsCache.get(id) != null) {
+                activeShufflingsCache.remove(id);
             }
         } else { // add new or replace
-            activeShufflings.put(id, shuffling);
+            activeShufflingsCache.put(id, shuffling);
         }
 
         shufflingTable.insert(shuffling);

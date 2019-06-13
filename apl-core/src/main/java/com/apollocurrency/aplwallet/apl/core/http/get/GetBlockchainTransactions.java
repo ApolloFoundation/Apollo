@@ -87,7 +87,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
             transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
 
         JSONObject response = new JSONObject();
-        response.put("transactions", transactionList);
+        response.put("transactions", transactions);
         return response;
 
     }

@@ -4,50 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
-import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
-import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
-import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.ethereum.util.blockchain.EtherUtil;
-import org.jboss.resteasy.annotations.jaxrs.FormParam;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -65,25 +24,87 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
+import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
 @Path("/dex")
 @OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
 @Singleton
 public class DexController {
+    private static final Logger log = getLogger(DexController.class);
+
+    private static String ETH_GAS_INFO_KEY = "eth_gas_info";
 
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
     private DexEthService dexEthService;
+    private EthereumWalletService ethereumWalletService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private ObjectMapper mapper = new ObjectMapper();
-    private EthereumWalletService ethereumWalletService;
+
+    private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(2, TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<>() {
+                        public EthGasInfo load(String id) throws InvalidCacheLoadException {
+                            EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
+                            if(ethGasInfo==null){
+                                throw new InvalidCacheLoadException("Value can't be null");
+                            }
+                            return ethGasInfo;
+                        }
+                    }
+            );
 
 
     @Inject
@@ -93,7 +114,7 @@ public class DexController {
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
-        this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService,"EthereumWalletService is null.");
+        this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
     }
 
     //For DI
@@ -227,14 +248,20 @@ public class DexController {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
             } else if(offer.getPairCurrency().isEth() && offer.getType().isBuy()){
+                BigInteger eth = ethereumWalletService.getEthBalanceWei(offer.getFromAddress());
+                if(eth==null || eth.compareTo(BigInteger.ZERO) < 0){
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                }
 //                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
-//                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
 //                if(balanceInfo.getEth()==null || balanceInfo.getEth().compareTo(EthUtil.gweiToWei(willPay)) < 1){
 //                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
 //                }
             } else if(offer.getPairCurrency().isPax() && offer.getType().isBuy()){
+                BigInteger pax = ethereumWalletService.getPaxBalanceWei(offer.getFromAddress());
+                if(pax==null || pax.compareTo(BigInteger.ZERO) < 1){
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                }
 //                Long willPay = Math.multiplyExact(offer.getPairRate(), offer.getOfferAmount());
-//                EthWalletBalanceInfo balanceInfo = ethereumWalletService.balanceInfo(offer.getFromAddress());
 //                if(balanceInfo.getPax()==null || balanceInfo.getPax().compareTo(EthUtil.gweiToWei(willPay)) < 1){
 //                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
 //                }
@@ -389,6 +416,7 @@ public class DexController {
                 currencies = DexCurrencies.getType(cryptocurrency);
             }
         } catch (Exception ex){
+            log.error(ex.getMessage(), ex);
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
@@ -404,6 +432,19 @@ public class DexController {
         }
         if(transferFee < 1 || transferFee > Integer.MAX_VALUE){
             return Response.status(Response.Status.OK).entity(incorrect("transferFee", String.format("value %d not in range [%d-%d]", transferFee, 1, Integer.MAX_VALUE))).build();
+        }
+
+        if(currencies.isEth()){
+            BigDecimal eth = EthUtil.weiToEther(ethereumWalletService.getEthBalanceWei(fromAddress));
+            //we cant send every thing because we should pay fee.
+            if(eth==null || eth.compareTo(amount) < 1){
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
+        } else if(currencies.isPax()){
+            BigDecimal pax = EthUtil.weiToEther(ethereumWalletService.getPaxBalanceWei(fromAddress));
+            if(pax==null || pax.compareTo(amount) < 0){
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+            }
         }
 
         String transaction;
@@ -426,12 +467,11 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
-    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
-        EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
-
-        if(ethGasInfo != null){
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
+        try {
+            EthGasInfo ethGasInfo = (EthGasInfo) cache.get(ETH_GAS_INFO_KEY);
             return Response.ok(ethGasInfo.toDto()).build();
-        } else {
+        } catch (Exception ex){
             return Response.ok().build();
         }
     }
