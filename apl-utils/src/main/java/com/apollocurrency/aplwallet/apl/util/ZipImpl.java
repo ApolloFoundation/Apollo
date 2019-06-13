@@ -169,7 +169,7 @@ public class ZipImpl implements Zip {
                 zipEntry.setCreationTime(ft);
                 zipEntry.setLastAccessTime(ft);
                 zipEntry.setLastModifiedTime(ft);
-                zipEntry.setTime(filesTimeFromEpoch);
+                zipEntry.setTime(ft.toMillis());
                 zipEntry.setComment("");
                 zipEntry.setMethod(ZipOutputStream.DEFLATED);
                 zos.putNextEntry(zipEntry);
