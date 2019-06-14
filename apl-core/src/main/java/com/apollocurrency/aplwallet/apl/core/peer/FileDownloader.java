@@ -3,16 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
-import com.apollocurrency.aplwallet.api.p2p.FileChunk;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerFileInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
-import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import javax.annotation.PreDestroy;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -25,9 +19,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
+
+import com.apollocurrency.aplwallet.api.p2p.FileChunk;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerFileInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,11 +68,14 @@ public class FileDownloader {
 
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
+    private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
 
     @Inject
-    public FileDownloader(DownloadableFilesManager manager) {
+    public FileDownloader(DownloadableFilesManager manager,
+                          javax.enterprise.event.Event<ShardPresentData> presentDataEvent) {
         this.manager = manager;
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
+        this.presentDataEvent = presentDataEvent;
     }
 
     public void startDownload(String fileID) {
@@ -87,6 +96,15 @@ public class FileDownloader {
                 log.warn("Decision is not OK: {}, Chunks downloading is nopt started",status.decision.name());
             }                
         });
+
+/*      // FIRE EVENT EXAMPLES
+        //FIRE event when shard is PRESENT + ZIP is downloaded
+        ShardPresentData shardPresentData = new ShardPresentData(fileID);
+        presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);
+        //FIRE event when shard is NOT PRESENT
+        ShardPresentData shardPresentData = new ShardPresentData();
+        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
+*/
     }
 
     public Status getDownloadStatus() {
@@ -181,4 +199,14 @@ public class FileDownloader {
             executor.shutdown();
         }
     }
+
+    private AnnotationLiteral<ShardPresentEvent> literal(ShardPresentEventType shardPresentEventType) {
+        return new ShardPresentEventBinding() {
+            @Override
+            public ShardPresentEventType value() {
+                return shardPresentEventType;
+            }
+        };
+    }
+
 }

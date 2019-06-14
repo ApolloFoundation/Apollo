@@ -4,26 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import javax.inject.Singleton;
+ import javax.inject.Singleton;
+ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileOutputStream;
+ import java.io.FilenameFilter;
+ import java.io.IOException;
+ import java.nio.file.attribute.FileTime;
+ import java.time.Instant;
+ import java.util.ArrayList;
+ import java.util.Comparator;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipInputStream;
+ import java.util.zip.ZipOutputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
 
 /**
  * Class is used for zip-unzip filtered files in specified directory
@@ -214,14 +212,9 @@ public class ZipImpl implements Zip {
             }
         }
         //sort by simple name to avoid different order in zip
-        Collections.sort(fileList, new Comparator<File>(){
-            @Override
-            public int compare(File t, File t1) {
-                return t.getName().compareTo(t1.getName());
-            }
-        });
-        
-        log.debug("Gathered [{}] files with filter = {}", files.length, filenameFilter);
+        fileList.sort(Comparator.comparing(File::getName));
+
+        log.debug("Gathered [{}] files with filter = {}", files != null?  files.length : -1, filenameFilter);
         return fileList;
     }
 

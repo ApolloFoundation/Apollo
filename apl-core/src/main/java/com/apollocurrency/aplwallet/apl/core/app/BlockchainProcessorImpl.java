@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
@@ -91,20 +89,20 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
-import org.slf4j.Logger;
 
+@Slf4j
 @Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
-    private static final Logger log = getLogger(BlockchainProcessorImpl.class);
 
    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
    private DexService dexService;
-   private  BlockchainConfigUpdater blockchainConfigUpdater;
+   private BlockchainConfigUpdater blockchainConfigUpdater;
 
 
     private FullTextSearchService fullTextSearchProvider;
@@ -282,7 +280,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
-            addGenesisBlock();
+            continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
+
             if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
                 scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
             } else {
@@ -448,7 +447,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 finally {
                     dataSource.commit();
                 }
-                addGenesisBlock();
+                continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
             } finally {
                 setGetMoreBlocks(true);
             }
@@ -459,6 +458,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void setGetMoreBlocks(boolean getMoreBlocks) {
+        log.debug("Setting thread for block downloading into '{}'", getMoreBlocks);
         this.getMoreBlocks = getMoreBlocks;
     }
 
@@ -601,17 +601,29 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void addGenesisBlock() {
+    private void continuedDownloadOrTryImportGenesisShard() {
         Block lastBlock = lookupBlockhain().findLastBlock();
         if (lastBlock != null) {
+            // continue blockchain automatically
             log.info("Genesis block already in database");
             lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
             initialBlock = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
+            setGetMoreBlocks(true); // turn ON blockchain downloading
             return;
         }
+        // try import genesis / shard data
+        setGetMoreBlocks(false); // turn off automatic blockchain downloading
+        log.warn("NODE IS WAITING FOR no/shard decision and proceeding with necessary data by ShardPresentEventType....");
+
+//        FileDownloader downloader; ???
+//        downloader.startDownload(id); ???
+//        FileDownloadDecision decision = downloader.prepareForDownloading(); ???
+//        FileDownloadInfo fdi = downloader.getDownloadInfo(); ??
+
+/*
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = lookupDataSource();
         Connection con = dataSource.begin();
@@ -632,6 +644,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.info(e.getMessage());
             throw new RuntimeException(e.toString(), e);
         }
+*/
     }
 
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
