@@ -42,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -708,8 +707,8 @@ public abstract class ShufflingTransaction extends TransactionType {
                     blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }
-            byte[][] shufflingData = ShufflingParticipant.getData(participant.getDataTransactionFullHash());
-            if (shufflingData == null || !Arrays.equals(getDataHash(shufflingData), attachment.getHash())) {
+            byte[] dataHash = participant.getDataHash();
+            if (dataHash == null || !Arrays.equals(dataHash, attachment.getHash())) {
                 throw new AplException.NotValidException("Blame data hash doesn't match processing data hash");
             }
             byte[][] keySeeds = attachment.getKeySeeds();
@@ -721,14 +720,6 @@ public abstract class ShufflingTransaction extends TransactionType {
                     throw new AplException.NotValidException("Invalid keySeed: " + Convert.toHexString(keySeed));
                 }
             }
-        }
-
-        private byte[] getDataHash(byte[][] data) {
-            MessageDigest digest = Crypto.sha256();
-            for (byte[] bytes : data) {
-                digest.update(bytes);
-            }
-            return digest.digest();
         }
 
         @Override
