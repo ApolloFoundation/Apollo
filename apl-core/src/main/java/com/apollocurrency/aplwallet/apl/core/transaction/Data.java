@@ -175,14 +175,11 @@ public abstract class Data extends TransactionType {
             if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
-            if (blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
+            if (!blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
             }
             TaggedData taggedData = lookupTaggedDataService().getData(attachment.getTaggedDataId());
-            if (taggedData == null) {
-                throw new AplException.NotCurrentlyValidException("Tagged data " + attachment.getTaggedDataId() + " not exist. Nothing to extend.");
-            }
-            if (taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
+            if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
             }
         }
