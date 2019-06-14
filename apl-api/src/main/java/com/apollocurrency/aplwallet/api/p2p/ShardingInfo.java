@@ -1,10 +1,13 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.ArrayList;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,12 +19,10 @@ import lombok.ToString;
  */
 @Getter @Setter
 @ToString
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileChunkRequest extends BaseP2PRequest{
-    public String fileId;
-    public int id;
-    public int offset;
-    public int size;    
+public class ShardingInfo {
+    public List<Shard> shards = new ArrayList<>();    
+    public List<String> knownPeers = new ArrayList<>();
 }
