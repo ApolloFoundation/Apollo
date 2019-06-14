@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Date;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -13,9 +15,11 @@ import lombok.ToString;
  * Info about file in P2P downloading process
  * @author alukin@gmail.com
  */
+@Getter @Setter
 @ToString
 @EqualsAndHashCode
-@Getter @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FileInfo {
     public String fileId;
     public boolean isPresent=false;

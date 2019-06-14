@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
@@ -19,9 +19,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileChunkRequest extends BaseP2PRequest{
-    public String fileId;
-    public int id;
-    public int offset;
-    public int size;    
+public class ShardingInfoResponse extends BaseP2PResonse{
+    public ShardingInfo shardingInfo=new ShardingInfo(); 
 }

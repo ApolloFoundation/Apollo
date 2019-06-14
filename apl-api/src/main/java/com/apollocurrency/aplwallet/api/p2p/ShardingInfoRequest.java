@@ -19,9 +19,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileChunkRequest extends BaseP2PRequest{
-    public String fileId;
-    public int id;
-    public int offset;
-    public int size;    
+public class ShardingInfoRequest  extends BaseP2PRequest{
+    public boolean full;
 }
