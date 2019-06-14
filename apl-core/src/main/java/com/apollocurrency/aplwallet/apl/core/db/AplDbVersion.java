@@ -564,7 +564,7 @@ public class AplDbVersion extends DbVersion {
             case 207:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_participant (db_id IDENTITY, shuffling_id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, next_account_id BIGINT NULL, participant_index TINYINT NOT NULL, "
-                        + "state TINYINT NOT NULL, blame_data ARRAY, key_seeds ARRAY, data_transaction_full_hash BINARY(32), "
+                        + "state TINYINT NOT NULL, blame_data ARRAY, key_seeds ARRAY, data_transaction_full_hash BINARY(32), data_hash BINARY(32), "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 208:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shuffling_participant_shuffling_id_account_id_idx ON shuffling_participant "
@@ -778,7 +778,9 @@ public class AplDbVersion extends DbVersion {
             case 294:
                 apply("ALTER TABLE shard ALTER COLUMN shard_id BIGINT NOT NULL");
             case 295:
-                return 295;
+                apply("ALTER TABLE shuffling_participant ADD COLUMN IF NOT EXISTS data_hash BINARY(32)");
+            case 296:
+                return 296;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

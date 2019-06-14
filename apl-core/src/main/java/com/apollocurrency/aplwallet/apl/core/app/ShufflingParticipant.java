@@ -102,6 +102,7 @@ public final class ShufflingParticipant {
             this.dbKey = shufflingDataDbKeyFactory.newKey(shufflingId, accountId);
             this.data = data;
             this.transactionTimestamp = transactionTimestamp;
+
             this.height = height;
         }
 
@@ -221,6 +222,7 @@ public final class ShufflingParticipant {
     private byte[][] blameData; // encrypted data saved as intermediate result in the shuffling process
     private byte[][] keySeeds; // to be revealed only if shuffle is being cancelled
     private byte[] dataTransactionFullHash;
+    private byte[] dataHash; // hash of the processing data from ShufflingProcessingAttachment
 
     private ShufflingParticipant(long shufflingId, long accountId, int index) {
         this.shufflingId = shufflingId;
@@ -242,20 +244,14 @@ public final class ShufflingParticipant {
         this.blameData = DbUtils.getArray(rs, "blame_data", byte[][].class, Convert.EMPTY_BYTES);
         this.keySeeds = DbUtils.getArray(rs, "key_seeds", byte[][].class, Convert.EMPTY_BYTES);
         this.dataTransactionFullHash = rs.getBytes("data_transaction_full_hash");
-    }
-
-    private ShufflingParticipant(long shufflingId, long accountId, DbKey dbKey, int index) {
-        this.shufflingId = shufflingId;
-        this.accountId = accountId;
-        this.dbKey = dbKey;
-        this.index = index;
+        this.dataHash = rs.getBytes("data_hash");
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
-                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, height, latest) "
+                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest) "
                 + "KEY (shuffling_id, account_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, this.shufflingId);
             pstmt.setLong(++i, this.accountId);
@@ -265,6 +261,7 @@ public final class ShufflingParticipant {
             DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData);
             DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds);
             DbUtils.setBytes(pstmt, ++i, this.dataTransactionFullHash);
+            DbUtils.setBytes(pstmt, ++i, this.dataHash);
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
@@ -304,7 +301,7 @@ public final class ShufflingParticipant {
             throw new IllegalStateException(String.format("Shuffling participant in state %s cannot go to state %s", this.state, state));
         }
         this.state = state;
-        LOG.debug("Shuffling participant %s changed state to %s", Long.toUnsignedString(accountId), this.state);
+        LOG.debug("Shuffling participant {} changed state to {}", Long.toUnsignedString(accountId), this.state);
     }
 
     public byte[][] getData() {
@@ -313,11 +310,6 @@ public final class ShufflingParticipant {
 
     public static byte[][] getData(long shufflingId, long accountId) {
         ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
-        return shufflingData != null ? shufflingData.data : null;
-    }
-
-    public static byte[][] getData(byte[] fullHash) {
-        ShufflingData shufflingData = shufflingDataTable.getBy(new DbClause.BytesClause("data_transaction_full_hash", fullHash));
         return shufflingData != null ? shufflingData.data : null;
     }
 
@@ -356,14 +348,28 @@ public final class ShufflingParticipant {
         return dataTransactionFullHash;
     }
 
-    void setProcessed(byte[] dataTransactionFullHash) {
+    public byte[] getDataHash() {
+        return dataHash;
+    }
+
+    void setProcessed(byte[] dataTransactionFullHash, byte[] dataHash) {
         if (this.dataTransactionFullHash != null) {
             throw new IllegalStateException("dataTransactionFullHash already set");
         }
         setState(State.PROCESSED);
         this.dataTransactionFullHash = dataTransactionFullHash;
+        if (dataHash != null) {
+            setDataHash(dataHash);
+        }
         shufflingParticipantTable.insert(this);
         listeners.notify(this, Event.PARTICIPANT_PROCESSED);
+    }
+
+    private void setDataHash(byte[] dataHash) {
+        if (this.dataHash != null) {
+            throw new IllegalStateException("dataHash already set");
+        }
+        this.dataHash = dataHash;
     }
 
     public ShufflingParticipant getPreviousParticipant() {
