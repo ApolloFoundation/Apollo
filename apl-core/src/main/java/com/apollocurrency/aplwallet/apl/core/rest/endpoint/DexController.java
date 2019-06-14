@@ -42,6 +42,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
@@ -238,14 +239,18 @@ public class DexController {
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", "1440");
             DexOfferAttachmentV2 dexOfferAttachment = new DexOfferAttachmentV2(offer);
+            String freezeTx=null;
 
             try {
-                if(offer.getPairCurrency().isEthOrPax()) {
+                if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
                     String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-                    service.freezeEthPax(passphrase, offer);
+                    freezeTx = service.freezeEthPax(passphrase, offer);
                 }
 
-                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(req, account, 0L, 0L, dexOfferAttachment);
+                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
+                if(freezeTx != null){
+                    ((JSONObject)response).put("frozenTx", freezeTx);
+                }
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
@@ -360,13 +365,17 @@ public class DexController {
             requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            String freezeTx=null;
 
             try {
-                if(offer.getPairCurrency().isEthOrPax()) {
-                    service.refundEthPaxFrozenMoney(passphrase, offer);
+                if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
+                    freezeTx = service.refundEthPaxFrozenMoney(passphrase, offer);
                 }
 
                 JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferCancelAttachment);
+                if(freezeTx != null){
+                    ((JSONObject)response).put("frozenTx", freezeTx);
+                }
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();

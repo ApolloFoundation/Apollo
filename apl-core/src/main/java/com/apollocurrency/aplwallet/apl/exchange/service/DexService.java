@@ -122,7 +122,6 @@ public class DexService {
             refundAPLFrozenMoney(offer);
         } else if(offer.getPairCurrency().isEthOrPax()) {
             //TODO get private key from storage. (Not implemented yet.)
-            if(true) throw new UnsupportedOperationException();
 //            String passphrase = "todo";
 //            refundEthPaxFrozenMoney(passphrase, offer);
         } else {
@@ -131,8 +130,8 @@ public class DexService {
     }
 
     public void refundAPLFrozenMoney(DexOffer offer) throws AplException.ExecutiveProcessException {
-        if(!offer.getPairCurrency().isApl()){
-            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getPairCurrency());
+        if(offer.getType().isBuy()){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for Buy " + offer.getPairCurrency());
         }
         //Return APL.
         Account account = Account.getAccount(offer.getAccountId());
@@ -144,6 +143,10 @@ public class DexService {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getPairCurrency());
         }
 
+        if(offer.getType().isSell()){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for Sell" + offer.getPairCurrency());
+        }
+
         BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
         String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
@@ -153,17 +156,21 @@ public class DexService {
         return txHash;
     }
 
-    public void freezeEthPax(String passphrase, DexOffer offer) throws ExecutionException, AplException.ExecutiveProcessException {
-        String txHash = null;
+    public String freezeEthPax(String passphrase, DexOffer offer) throws ExecutionException, AplException.ExecutiveProcessException {
+        String txHash;
 
-        if(offer.getPairCurrency().isEthOrPax()){
-            BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
-            txHash = dexSmartContractService.deposit(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+        if(!offer.getPairCurrency().isEthOrPax()){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getPairCurrency());
         }
+        BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+        txHash = dexSmartContractService.deposit(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+
 
         if(txHash==null){
             throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
         }
+
+        return txHash;
     }
 
     public void cancelOffer(DexOffer offer) {
