@@ -690,7 +690,7 @@ public final class Shuffling {
         byte[][] data = attachment.getData();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
         participant.setData(data, transaction.getTimestamp());
-        participant.setProcessed(transaction.getFullHash());
+        participant.setProcessed(transaction.getFullHash(), attachment.getHash());
         if (data != null && data.length == 0) {
             // couldn't decrypt all data from previous participants
             cancelBy(participant);
@@ -706,7 +706,7 @@ public final class Shuffling {
         long participantId = transaction.getSenderId();
         this.recipientPublicKeys = attachment.getRecipientPublicKeys();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
-        participant.setProcessed(transaction.getFullHash());
+        participant.setProcessed(transaction.getFullHash(), null);
         if (recipientPublicKeys.length == 0) {
             // couldn't decrypt all data from previous participants
             cancelBy(participant);
@@ -842,7 +842,7 @@ public final class Shuffling {
         }
         // if no one submitted cancellation, blame the first one that did not submit processing data
         if (stage == Stage.PROCESSING) {
-            LOG.debug("Participant %s did not submit processing", Long.toUnsignedString(assigneeAccountId));
+            LOG.debug("Participant {} did not submit processing", Long.toUnsignedString(assigneeAccountId));
             return assigneeAccountId;
         }
         List<ShufflingParticipant> participants = new ArrayList<>();
@@ -855,7 +855,7 @@ public final class Shuffling {
             // if verification started, blame the first one who did not submit verification
             for (ShufflingParticipant participant : participants) {
                 if (participant.getState() != ShufflingParticipant.State.VERIFIED) {
-                    LOG.debug("Participant %s did not submit verification", Long.toUnsignedString(participant.getAccountId()));
+                    LOG.debug("Participant {} did not submit verification", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
             }
@@ -868,7 +868,7 @@ public final class Shuffling {
             byte[][] keySeeds = participant.getKeySeeds();
             // if participant couldn't submit key seeds because he also couldn't decrypt some of the previous data, this should have been caught before
             if (keySeeds.length == 0) {
-                LOG.debug("Participant %s did not reveal keys", Long.toUnsignedString(participant.getAccountId()));
+                LOG.debug("Participant {} did not reveal keys", Long.toUnsignedString(participant.getAccountId()));
                 return participant.getAccountId();
             }
             byte[] publicKey = Crypto.getPublicKey(keySeeds[0]);
@@ -882,7 +882,7 @@ public final class Shuffling {
             }
             if (encryptedData == null || !Arrays.equals(publicKey, encryptedData.getPublicKey())) {
                 // participant lied about key seeds or data
-                LOG.debug("Participant %s did not submit blame data, or revealed invalid keys", Long.toUnsignedString(participant.getAccountId()));
+                LOG.debug("Participant {} did not submit blame data, or revealed invalid keys", Long.toUnsignedString(participant.getAccountId()));
                 return participant.getAccountId();
             }
             for (int k = i + 1; k < participantCount; k++) {
@@ -894,7 +894,7 @@ public final class Shuffling {
                     participantBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
                 } catch (Exception e) {
                     // the next participant couldn't decrypt the data either, blame this one
-                    LOG.debug("Could not decrypt data from participant %s", Long.toUnsignedString(participant.getAccountId()));
+                    LOG.debug("Could not decrypt data from participant {}", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
                 boolean isLast = k == participantCount - 1;
@@ -902,17 +902,17 @@ public final class Shuffling {
                     // not encrypted data but plaintext recipient public key
                     if (!Crypto.isCanonicalPublicKey(publicKey)) {
                         // not a valid public key
-                        LOG.debug("Participant %s submitted invalid recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant {} submitted invalid recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                     // check for collisions and assume they are intentional
                     byte[] currentPublicKey = Account.getPublicKey(Account.getId(participantBytes));
                     if (currentPublicKey != null && !Arrays.equals(currentPublicKey, participantBytes)) {
-                        LOG.debug("Participant %s submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant {} submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                     if (!recipientAccounts.add(Account.getId(participantBytes))) {
-                        LOG.debug("Participant %s submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant {} submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                 }
@@ -928,7 +928,7 @@ public final class Shuffling {
                 }
                 if (!found) {
                     // the next participant did not include this participant's data
-                    LOG.debug("Participant %s did not include previous data", Long.toUnsignedString(nextParticipant.getAccountId()));
+                    LOG.debug("Participant {} did not include previous data", Long.toUnsignedString(nextParticipant.getAccountId()));
                     return nextParticipant.getAccountId();
                 }
                 if (!isLast) {
