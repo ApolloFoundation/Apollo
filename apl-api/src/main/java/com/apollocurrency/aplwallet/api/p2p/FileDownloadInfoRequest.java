@@ -22,4 +22,9 @@ import lombok.ToString;
 public class FileDownloadInfoRequest  extends BaseP2PRequest{
     public String fileId;
     public boolean full;
+
+    public FileDownloadInfoRequest() {
+        requestType="getFileDownloadInfo";
+    }
+    
 }

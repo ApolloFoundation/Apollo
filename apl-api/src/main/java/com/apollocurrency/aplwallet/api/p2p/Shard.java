@@ -23,6 +23,7 @@ import lombok.ToString;
 public class Shard {
     public String shardId;
     public String chainId;
+    public String hash=null;
     public Date created;
     public Long height;
 }

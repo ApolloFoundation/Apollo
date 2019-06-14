@@ -23,5 +23,10 @@ public class FileChunkRequest extends BaseP2PRequest{
     public String fileId;
     public int id;
     public int offset;
-    public int size;    
+    public int size;   
+
+    public FileChunkRequest() {
+        requestType="getFileChunk";
+    }
+    
 }

@@ -10,6 +10,9 @@ import com.apollocurrency.aplwallet.api.p2p.FileChunkResonse;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.util.Objects;
@@ -78,7 +81,7 @@ public class PeerClient {
         return res.downloadInfo;
     }
 
-    FileChunk downloadChunk(FileChunkInfo fci) {
+    public FileChunk downloadChunk(FileChunkInfo fci) {
        FileChunk fc;
        FileChunkRequest rq = new FileChunkRequest();
        rq.fileId=fci.fileId;
@@ -100,4 +103,16 @@ public class PeerClient {
        return fc;
     }
     
+    public ShardingInfo getShardingInfo(){
+        ShardingInfoRequest rq = new ShardingInfoRequest();
+        rq.full=true;
+        JSONObject req = mapper.convertValue(rq, JSONObject.class);
+        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+        if(resp==null){
+            LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+            return null;
+        }
+       ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
+       return res.shardingInfo;
+    }     
 }
