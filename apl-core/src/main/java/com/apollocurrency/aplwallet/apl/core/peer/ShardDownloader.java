@@ -84,8 +84,10 @@ public class ShardDownloader {
 
     public FileDownloadDecision prepareForDownloading() {
         FileDownloadDecision res = FileDownloadDecision.NotReady;
-        Map<Long, Set<ShardInfo>> peerShards = getShardInfoFromPeers();
-        if (peerShards.isEmpty()) {
+        if(sortedShards.isEmpty()){
+            getShardInfoFromPeers();
+        }
+        if (sortedShards.isEmpty()) {
             res = FileDownloadDecision.NoPeers;
         } else {
             //we have some shards available on the networks, let's decide what to do
