@@ -20,8 +20,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Shard {
-    public String shardId;
+public class ShardInfo {
+    public Long shardId;
     public String chainId;
     public String hash=null;
     public Date created;
