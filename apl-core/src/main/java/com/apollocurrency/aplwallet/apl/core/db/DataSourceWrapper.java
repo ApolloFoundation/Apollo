@@ -194,7 +194,7 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new OfferTypeFactory());
         jdbi.registerArgument(new OfferStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
-        jdbi.registerArrayType(long[].class, "generatorIds");
+        jdbi.registerArrayType(long.class, "generatorIds");
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
