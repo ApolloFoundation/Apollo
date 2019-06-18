@@ -95,7 +95,7 @@ public class ShardDownloader {
         return sortedShards;
     }
 
-    public FileDownloadDecision prepareForDownloading() {
+    public FileDownloadDecision prepareAndStartDownload() {
         FileDownloadDecision res = FileDownloadDecision.NotReady;
         if(sortedShards.isEmpty()){
             getShardInfoFromPeers();
