@@ -19,6 +19,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ShardingInfoResponse extends BaseP2PResonse{
+public class ShardingInfoResponse extends BaseP2PResponse {
     public ShardingInfo shardingInfo=new ShardingInfo(); 
 }

@@ -3,10 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import javax.enterprise.inject.Vetoed;
+import java.util.Objects;
+import java.util.UUID;
+
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkResonse;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
@@ -15,9 +19,6 @@ import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import java.util.Objects;
-import java.util.UUID;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,7 @@ public class PeerClient {
             LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
-       FileChunkResonse res = mapper.convertValue(resp, FileChunkResonse.class);
+       FileChunkResponse res = mapper.convertValue(resp, FileChunkResponse.class);
        if(res.errorCode==0){
             fc=res.chunk;
        }else{

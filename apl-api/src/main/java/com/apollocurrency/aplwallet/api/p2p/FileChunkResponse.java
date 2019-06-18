@@ -19,6 +19,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileChunkResonse extends BaseP2PResonse{
+public class FileChunkResponse extends BaseP2PResponse {
     public FileChunk chunk;
 }

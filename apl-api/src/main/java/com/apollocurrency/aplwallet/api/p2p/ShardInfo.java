@@ -3,11 +3,14 @@
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.Date;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -15,6 +18,8 @@ import lombok.ToString;
  * Info about shard
  * @author alukin@gmail.com
  */
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter @Setter
 @ToString
 @EqualsAndHashCode
@@ -24,6 +29,7 @@ public class ShardInfo {
     public Long shardId;
     public String chainId;
     public String hash=null;
+    public String zipCrcHash=null;
     public Date created;
     public Long height;
 }

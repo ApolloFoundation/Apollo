@@ -16,7 +16,7 @@ import lombok.Setter;
 @Getter @Setter
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BaseP2PResonse {
+public class BaseP2PResponse {
     public Integer errorCode=0;
     public Integer protocol = 1;
     public String error=null;
