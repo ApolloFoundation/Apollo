@@ -151,6 +151,9 @@ public class FileDownloader {
                 break;
             }
         }
+        if(res==null){ //NO more empty chunks. File is ready
+            //TODO: fire event
+        }
         return res;
     }
 
