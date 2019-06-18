@@ -113,6 +113,11 @@ class BlockchainTest {
         assertTrue(hasTransaction);
     }
 
+
+    @Test
+    void testU() {
+            System.out.println(Long.parseUnsignedLong("9211698109297098287"));
+    }
 /*
     // COMMENTED OUT tests because they still creates Weld container and do not shutdown it!!!
 
