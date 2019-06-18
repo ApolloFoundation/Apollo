@@ -780,7 +780,7 @@ public class AplDbVersion extends DbVersion {
             case 295:
                 apply("ALTER TABLE shuffling_participant ADD COLUMN IF NOT EXISTS data_hash BINARY(32)");
             case 296:
-                apply("ALTER TABLE shard ALTER COLUMN generator_ids ARRAY DEFAULT NULL");
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS generator_ids ARRAY DEFAULT NULL");
             case 297:
                 return 298;
             default:
