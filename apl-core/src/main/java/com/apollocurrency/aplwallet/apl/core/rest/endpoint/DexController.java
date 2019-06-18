@@ -131,9 +131,13 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
         ) throws NotFoundException {
+        
+        log.debug("getBalances: ");
 
         for (String ethAddress : ethAddresses) {
+            log.debug("address: {}",ethAddress);
             if(!EthUtil.isAddressValid(ethAddress)){
+                log.debug("Valid!");
                 return Response.status(Response.Status.OK).entity(incorrect("ethAddress", "Address length is not correct.")).build();
             }
         }
@@ -156,6 +160,9 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getHistory( @NotNull  @QueryParam("account") String account,  @QueryParam("pair") String pair,  @QueryParam("type") String type,@Context SecurityContext securityContext)
             throws NotFoundException {
+
+        log.debug("getHistory: account: {}, pair: {}, type: {}", account, pair, type );
+        
         return Response.ok(service.getHistory(account,pair,type)).build();
     }
 
@@ -173,6 +180,9 @@ public class DexController {
                                 @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
+        
+        log.debug("createOffer: offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
+        
         if (pairRate <= 0 ) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
@@ -299,6 +309,9 @@ public class DexController {
                                 @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                                 @Context HttpServletRequest req) throws NotFoundException {
+        
+        log.debug("getOffers:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice",orderType, pairCurrency,status, accountIdStr,isAvailableForNow, minAskPrice, maxBidPrice);
+        
         OfferType type = null;
         OfferStatus offerStatus = null;
         DexCurrencies pairCur = null;
@@ -349,6 +362,9 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
                                          @Context HttpServletRequest req) throws NotFoundException {
+        
+        log.debug("cancelOrderByOrderID: {}", transactionIdStr);
+         
         try{
             Long transactionId;
             Account account = ParameterParser.getSenderAccount(req);
@@ -405,6 +421,9 @@ public class DexController {
                                     @NotNull @Parameter(description = "Transfer fee in GWei") @FormParam("transferFee") Long transferFee,
                                     @NotNull @Parameter(description = "crypto currency for withdraw:ETH=1/PAX=2") @FormParam("cryptocurrency") Byte cryptocurrency,
                                     @Context HttpServletRequest req) {
+        
+        log.debug("dexWithdrawPost, amount: {}, fromAddress: {}, toAddr: {}, transferFee: {}, currency: ", amount, fromAddress, toAddress, transferFee, cryptocurrency);
+                
         DexCurrencies currencies = null;
         String passphrase;
         Account sender;
@@ -468,6 +487,9 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
+        
+        log.debug("dexEthInfo: ");
+        
         try {
             EthGasInfo ethGasInfo = (EthGasInfo) cache.get(ETH_GAS_INFO_KEY);
             return Response.ok(ethGasInfo.toDto()).build();
