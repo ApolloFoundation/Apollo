@@ -100,6 +100,8 @@ public final class Account {
     private static AccountCurrencyTable accountCurrencyTable;
     private static AccountLeaseTable accountLeaseTable;
     private static AccountPropertyTable accountPropertyTable;
+    private static GenesisPublicKeyTable genesisPublicKeyTable;
+    private static AccountTable accountTable;
 
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
            
@@ -139,6 +141,8 @@ public final class Account {
         accountCurrencyTable = AccountCurrencyTable.getInstance();
         accountLeaseTable = AccountLeaseTable.getInstance();
         accountPropertyTable = AccountPropertyTable.getInstance();
+        accountTable = AccountTable.getInstance();
+        genesisPublicKeyTable = GenesisPublicKeyTable.getInstance();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
@@ -264,20 +268,20 @@ public final class Account {
     }
 
     public static int getCount() {
-        return publicKeyTable.getCount() + GenesisPublicKeyTable.getInstance().getCount();
+        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
     }
 
     public static int getActiveLeaseCount() {
-        return AccountTable.getInstance().getCount(new DbClause.NotNullClause("active_lessee_id"));
+        return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
     }
 
     public static Account getAccount(long id) {
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey != null) {
-                account = AccountTable.getInstance().newEntity(dbKey);
+                account = accountTable.newEntity(dbKey);
                 account.publicKey = publicKey;
             }
         }
@@ -381,14 +385,14 @@ public final class Account {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
-            account = AccountTable.getInstance().newEntity(dbKey);
+            account = accountTable.newEntity(dbKey);
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null) {
                 if (isGenesis) {
-                    publicKey = GenesisPublicKeyTable.getInstance().newEntity(dbKey);
-                    GenesisPublicKeyTable.getInstance().insert(publicKey);
+                    publicKey = genesisPublicKeyTable.newEntity(dbKey);
+                    genesisPublicKeyTable.insert(publicKey);
                 } else {
                     publicKey = publicKeyTable.newEntity(dbKey);
                     publicKeyTable.insert(publicKey);
@@ -402,7 +406,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey) {
         PublicKey publicKey = publicKeyTable.get(dbKey);
         if (publicKey == null) {
-            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey);
+            publicKey = genesisPublicKeyTable.get(dbKey);
         }
         return publicKey;
     }
@@ -410,7 +414,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
         PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
-            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, cache);
+            publicKey = genesisPublicKeyTable.get(dbKey, cache);
         }
         return publicKey;
     }
@@ -418,7 +422,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey, int height) {
         PublicKey publicKey = publicKeyTable.get(dbKey, height);
         if (publicKey == null) {
-            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, height);
+            publicKey = genesisPublicKeyTable.get(dbKey, height);
         }
         return publicKey;
     }
@@ -469,9 +473,9 @@ public final class Account {
 
     private void save() {
         if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
-            AccountTable.getInstance().delete(this, true);
+            accountTable.delete(this, true);
         } else {
-            AccountTable.getInstance().insert(this);
+            accountTable.insert(this);
         }
     }
 
@@ -605,11 +609,11 @@ public final class Account {
     }
 
     public DbIterator<Account> getLessors() {
-        return AccountTable.getInstance().getManyBy(new DbClause.LongClause("active_lessee_id", id), 0, -1, " ORDER BY id ASC ");
+        return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), 0, -1, " ORDER BY id ASC ");
     }
 
     public DbIterator<Account> getLessors(int height) {
-        return AccountTable.getInstance().getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
+        return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
     }
 
     public long getGuaranteedBalanceATM() {
@@ -648,11 +652,11 @@ public final class Account {
     }
 
     public DbIterator<AccountAsset> getAssets(int from, int to) {
-        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
     }
 
     public DbIterator<AccountAsset> getAssets(int height, int from, int to) {
-        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
     public DbIterator<Trade> getTrades(int from, int to) {
@@ -806,7 +810,7 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
-                GenesisPublicKeyTable.getInstance().insert(publicKey);
+                genesisPublicKeyTable.insert(publicKey);
             } else {
                publicKeyTable.insert(publicKey);
             }
