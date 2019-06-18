@@ -6,14 +6,17 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author nemez
+ * @author Serhiy Lymar
  */
+
+
 
 
 @Singleton
@@ -21,6 +24,11 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
 
+    @Inject
+    DexMatcherServiceImpl() {
+        
+    }
+    
     /**
      * Start matcher service
      */

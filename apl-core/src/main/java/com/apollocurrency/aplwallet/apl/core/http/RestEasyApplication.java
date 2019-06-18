@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.*;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
 import javax.ws.rs.ApplicationPath;
@@ -29,6 +30,7 @@ public class RestEasyApplication extends Application  {
         // Transfer Eth, doesn't use yet.
 //        set.add(WalletEthController.class);
         set.add(DexController.class);
+        set.add(DexMatcherServiceImpl.class);
         set.add(BackendControlController.class);
 
 
