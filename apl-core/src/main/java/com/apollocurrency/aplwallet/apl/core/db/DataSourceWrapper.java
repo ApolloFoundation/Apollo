@@ -22,10 +22,19 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.sql.DataSource;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
+
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -38,14 +47,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
-
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
-import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
@@ -192,6 +193,8 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OfferTypeFactory());
         jdbi.registerArgument(new OfferStatusFactory());
+        jdbi.registerArgument(new LongArrayArgumentFactory());
+        jdbi.registerArrayType(long[].class, "generatorIds");
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
