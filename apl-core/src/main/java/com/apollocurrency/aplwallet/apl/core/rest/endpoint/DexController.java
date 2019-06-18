@@ -361,10 +361,14 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "There is another cancel transaction for this order in the unconfirmed tx pool already."))).build();
             }
 
+            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            if(passphrase == null) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
+            }
+
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOfferCancelAttachment dexOfferCancelAttachment = new DexOfferCancelAttachment(transactionId);
-            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
             String freezeTx=null;
 
             try {

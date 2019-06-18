@@ -46,7 +46,7 @@ public class DexSmartContractService {
                                    EthereumWalletService ethereumWalletService) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
-        smartContractAddress = propertiesHolder.getStringProperty("apl.eth.smart.contract.address");
+        smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
         paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
         this.ethereumWalletService = ethereumWalletService;
@@ -59,6 +59,9 @@ public class DexSmartContractService {
      */
     public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+        if(keyStore==null){
+            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
+        }
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
         Long gasPrice = gas;
 
@@ -74,7 +77,7 @@ public class DexSmartContractService {
         }
 
         if(currency.isPax()){
-            ethereumWalletService.sendApproveTransaction(passphrase, accountId, fromAddress, smartContractAddress, weiValue);
+            ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, weiValue);
         }
 
         return deposit(ethWalletKey.getCredentials(), weiValue, gasPrice, currency.isEth() ? null : paxContractAddress);
@@ -88,6 +91,11 @@ public class DexSmartContractService {
      */
     public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger weiValue, Long gas, DexCurrencies currency) throws AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+
+        if(keyStore==null){
+            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
+        }
+
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
 
         if(!currency.isEthOrPax()){

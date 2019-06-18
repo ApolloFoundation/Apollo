@@ -60,7 +60,7 @@ public class EthereumWalletService {
     private final DexEthService dexEthService = CDI.current().select(DexEthService.class).get();
 
     private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
-    private String smartContract = propertiesHolder.getStringProperty("apl.eth.smart.contract.address");
+    private String smartContract = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
 
     /**
      * Get balances for Eth/tokens.
@@ -149,14 +149,7 @@ public class EthereumWalletService {
         }
     }
 
-    public String sendApproveTransaction(String passphrase, long accountId, String fromAddress, String spenderAddress, BigInteger value) throws AplException.ExecutiveProcessException {
-        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-        EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
-
-        if(ethWalletKey == null){
-            throw new AplException.ExecutiveProcessException("Not found eth address at the user storage: " + fromAddress);
-        }
-
+    public String sendApproveTransaction(EthWalletKey ethWalletKey, String spenderAddress, BigInteger value) throws AplException.ExecutiveProcessException {
         EthGasInfo ethGasInfo;
         try {
             ethGasInfo = dexEthService.getEthPriceInfo();
