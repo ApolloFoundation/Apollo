@@ -6,6 +6,8 @@ import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -55,8 +57,10 @@ public class EthereumWalletService {
     private Web3j web3j = CDI.current().select(Web3j.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
+    private final DexEthService dexEthService = CDI.current().select(DexEthService.class).get();
 
     private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+    private String smartContract = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
 
     /**
      * Get balances for Eth/tokens.
@@ -74,7 +78,26 @@ public class EthereumWalletService {
     }
 
     /**
-     * Get Eth PAX token balance.
+     * Get Eth / PAX token balance.
+     * @param address Eth address
+     * @return account balance in Wei
+     */
+    public BigInteger getBalanceWei(String address, DexCurrencies dexCurrencies){
+        if(!dexCurrencies.isEthOrPax()){
+            throw new UnsupportedOperationException("This currency is not supported");
+        }
+
+        if(dexCurrencies.isEth()){
+            return getEthBalanceWei(address);
+        } else if(dexCurrencies.isPax()){
+            return getPaxBalanceWei(address);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Get PAX token balance.
      * @param address Eth address
      * @return account balance in Wei
      */
@@ -125,6 +148,36 @@ public class EthereumWalletService {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());
         }
     }
+
+    public String sendApproveTransaction(EthWalletKey ethWalletKey, String spenderAddress, BigInteger value) throws AplException.ExecutiveProcessException {
+        EthGasInfo ethGasInfo;
+        try {
+            ethGasInfo = dexEthService.getEthPriceInfo();
+        } catch (ExecutionException e) {
+            throw new AplException.ExecutiveProcessException("Third service is not available.");
+        }
+
+        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, value,  ethGasInfo.getAverageSpeedPrice());
+    }
+
+    /**
+     * Send Approve Transaction
+     * @param spenderAddress sender address
+     * @param value amount
+     * @return tx transaction id
+     */
+    private String sendApproveTransaction(Credentials credentials, String spenderAddress, BigInteger value, Long gasPrice){
+        String tx = null;
+        try {
+            Function function = approve(spenderAddress, value);
+            tx = execute(credentials, function, paxContractAddress, gasPrice);
+        } catch (Exception e){
+            log.error(e.getMessage());
+        }
+
+        return tx;
+    }
+
 
     /**
      * Get Eth ERC-20 balance.

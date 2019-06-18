@@ -1,44 +1,58 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class DexEthService {
-    private static final Logger LOG = LoggerFactory.getLogger(DexEthService.class);
+    private static Integer attempts = 5;
+    private static String ETH_GAS_INFO_KEY = "eth_gas_info";
 
-    private static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
+    private EthGasStationInfoDao ethGasStationInfoDao;
 
-    public EthGasInfo getEthPriceInfo(){
+    private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(2, TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<>() {
+                        public EthGasInfo load(String id) throws InvalidCacheLoadException {
+                            EthGasInfo ethGasInfo = initEthPriceInfo();
+                            if(ethGasInfo==null){
+                                throw new InvalidCacheLoadException("Value can't be null");
+                            }
+                            return ethGasInfo;
+                        }
+                    }
+            );
+
+    @Inject
+    public DexEthService(EthGasStationInfoDao ethGasStationInfoDao) {
+        this.ethGasStationInfoDao = ethGasStationInfoDao;
+    }
+
+    public EthGasInfo getEthPriceInfo() throws ExecutionException {
+        return (EthGasInfo) cache.get(ETH_GAS_INFO_KEY);
+    }
+
+    private EthGasInfo initEthPriceInfo(){
         EthGasInfo ethGasInfo = null;
-        HttpURLConnection con = null;
-        try{
-            URL url = new URL(ETH_GAS_INFO_URL);
-            con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-
-            if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                try (Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
-                    ethGasInfo = new ObjectMapper()
-                            .readerFor(EthGasInfo.class)
-                            .readValue(reader);
-                }
+        Integer counter = 0;
+        while (counter < attempts) {
+            ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+            if (ethGasInfo != null) {
+                return ethGasInfo;
             }
-        } catch (IOException e){
-            LOG.error(e.getMessage(), e);
-        } finally {
-            con.disconnect();
+            counter++;
         }
+
         return ethGasInfo;
     }
 
