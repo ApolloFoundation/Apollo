@@ -151,8 +151,10 @@ public class FileDownloader {
                 break;
             }
         }
-        if(res==null){ //NO more empty chunks. File is ready
-            //TODO: fire event
+        if (res == null) { //NO more empty chunks. File is ready
+            //FIRE event when shard is PRESENT + ZIP is downloaded
+            ShardPresentData shardPresentData = new ShardPresentData(fileID);
+            presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);
         }
         return res;
     }
