@@ -53,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -85,6 +86,7 @@ public final class AplCore {
     private static BlockchainConfig blockchainConfig;
     //this should saty static
     private final AplCoreRuntime aplCoreRuntime;
+    private DexMatcherServiceImpl tcs;
     
     @Inject
     @Setter
@@ -135,6 +137,8 @@ public final class AplCore {
         }
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
         AplCore.shutdown = true;
+        
+        tcs.deinitialize();
     }
 
     private static volatile boolean initialized = false;
@@ -193,6 +197,13 @@ public final class AplCore {
 //                setServerStatus(ServerStatus.AFTER_DATABASE, null);
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.1, "Apollo core cleaases initialization");
+                
+                
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  52.5, "Exchange matcher initialization");
+                
+                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();                
+                tcs.initialize();
+
 
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
