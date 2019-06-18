@@ -22,7 +22,7 @@ public interface IDexMatcherInterface {
     public void initialize();
    
     /** 
-     * Start transport interaction service
+     * Stop transport interaction service
      */
      
     public void deinitialize();
