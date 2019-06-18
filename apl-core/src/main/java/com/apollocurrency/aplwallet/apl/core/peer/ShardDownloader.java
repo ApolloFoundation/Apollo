@@ -5,14 +5,25 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -25,7 +36,9 @@ public class ShardDownloader {
     private Set<String> additionalPeers;
     private UUID myChainId;
     private Map<Long, Set<ShardInfo>> sortedShards;
-
+    private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private static final Logger log = LoggerFactory.getLogger(ShardDownloader.class);
+    
     @Inject
     public ShardDownloader(FileDownloader fileDownloader, ChainsConfigHolder chainsConfig) {
         this.myChainId = chainsConfig.getActiveChain().getChainId();
@@ -89,10 +102,39 @@ public class ShardDownloader {
         }
         if (sortedShards.isEmpty()) {
             res = FileDownloadDecision.NoPeers;
+            //FIRE event when shard is NOT PRESENT
+            ShardPresentData shardPresentData = new ShardPresentData();
+            presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored            
+            
         } else {
             //we have some shards available on the networks, let's decide what to do
-
+            List<Long> shardIds = new ArrayList(sortedShards.entrySet());
+            Collections.sort(shardIds);
+            Long lastShard=shardIds.get(shardIds.size()-1);
+            ShardNameHelper snh = new ShardNameHelper();
+            String fileID=snh.getShardNameByShardId(lastShard, myChainId);
+            fileDownloader.setFileId(fileID);
+            res = fileDownloader.prepareForDownloading();
+            if(res==FileDownloadDecision.AbsOK ||res==FileDownloadDecision.OK || res==FileDownloadDecision.Risky){
+                log.debug("Starting shard downlading: {}",fileID);
+                fileDownloader.startDownload();
+                //TODO: how to file event when file is downloaded and OK?
+            }else{
+                log.debug("Can not find enough peers with good shard: {}", fileID);
+                //FIRE event when shard is NOT PRESENT
+                ShardPresentData shardPresentData = new ShardPresentData();
+                presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored                 
+            }
         }
         return res;
     }
+    
+    private AnnotationLiteral<ShardPresentEvent> literal(ShardPresentEventType shardPresentEventType) {
+        return new ShardPresentEventBinding() {
+            @Override
+            public ShardPresentEventType value() {
+                return shardPresentEventType;
+            }
+        };
+    }    
 }

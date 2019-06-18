@@ -77,8 +77,16 @@ public class FileDownloader {
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = presentDataEvent;
     }
-
-    public void startDownload(String fileID) {
+    
+    public void setFileId(String fileID){
+      if(this.fileID==null){
+        this.fileID=fileID;
+      }else{
+          throw new RuntimeException("Can not set new filed ID in FileDownloader, it is already set");
+      }
+    }
+    
+    public void startDownload() {
         this.fileID = fileID;
         CompletableFuture<Boolean> prepare;
         prepare = CompletableFuture.supplyAsync(() -> {

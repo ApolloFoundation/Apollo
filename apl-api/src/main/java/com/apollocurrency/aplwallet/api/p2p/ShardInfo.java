@@ -30,6 +30,5 @@ public class ShardInfo {
     public String chainId;
     public String hash=null;
     public String zipCrcHash=null;
-    public Date created;
     public Long height;
 }
