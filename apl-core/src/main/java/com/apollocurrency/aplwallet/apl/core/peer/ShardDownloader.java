@@ -119,8 +119,9 @@ public class ShardDownloader {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
             ShardPresentData shardPresentData = new ShardPresentData();
-            presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored            
-            
+//            presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
+            presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
+
         } else {
             //we have some shards available on the networks, let's decide what to do
             List<Long> shardIds = new ArrayList(sortedShards.entrySet());
@@ -147,11 +148,11 @@ public class ShardDownloader {
                 log.debug("Starting shard downloading: '{}'", fileID);
                 fileDownloader.startDownload();
                 //TODO: how to file event when file is downloaded and OK?
-            }else{
-                log.debug("Can not find enough peers with good shard: {}", fileID);
-                //FIRE event when shard is NOT PRESENT
-                ShardPresentData shardPresentData = new ShardPresentData();
-                presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored                 
+            } else {
+                log.error("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
+                // We CAN'T FIRE event here
+//                ShardPresentData shardPresentData = new ShardPresentData();
+//                presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
             }
         }
         return result;

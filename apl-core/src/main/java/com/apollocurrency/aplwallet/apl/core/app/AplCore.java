@@ -24,6 +24,13 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -69,13 +76,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
 import org.slf4j.Logger;
-
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -272,9 +272,6 @@ public final class AplCore {
                    TimeUnit.SECONDS);
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
-                // run shard file downloading component
-                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
-                shardDownloader.prepareAndStartDownload(); // ignore result
                 ThreadPool.start();
 
                 try {
@@ -282,6 +279,12 @@ public final class AplCore {
                 }
                 catch (InterruptedException ignore) {}
                 testSecureRandom();
+
+                // run shard file downloading component
+                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
+                CDI.current().select(ShardDownloadPresenceObserver.class).get();
+                shardDownloader.prepareAndStartDownload(); // ignore result
+
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";

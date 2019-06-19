@@ -148,7 +148,7 @@ public class FileDownloader {
                 break;
             }
             this.aplAppStatus.durableTaskUpdate(this.taskId,
-                    (double) (downloadInfo.chunks.size() / fci.chunkId), "File downloading...");
+                    (double) (downloadInfo.chunks.size() / Math.max (fci.chunkId, 1) ), "File downloading...");
         }
         if (res == null) { //NO more empty chunks. File is ready
             this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");

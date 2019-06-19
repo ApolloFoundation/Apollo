@@ -92,6 +92,7 @@ public final class Genesis {
     private static JSONObject genesisAccountsJSON = null;
 
     private static byte[] loadGenesisAccountsJSON() {
+        genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances",true);
         MessageDigest digest = Crypto.sha256();
         String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
@@ -119,10 +120,9 @@ public final class Genesis {
         TransactionalDataSource dataSource = lookupDataSource();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-        
+
         LOG.debug("Loading public keys [{}]...", publicKeys.size());
-        genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading or creating Genesis accounts",true);
-        aplAppStatus.durableTaskUpdate(genesisTaskId, 0.0, "Loading public keys");
+        aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
@@ -138,7 +138,7 @@ public final class Genesis {
         LOG.debug("Loaded " + publicKeys.size() + " public keys");
         count = 0;
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
-        aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis amounts");
+        aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
             Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
