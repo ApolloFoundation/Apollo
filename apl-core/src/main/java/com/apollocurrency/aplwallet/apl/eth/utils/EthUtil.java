@@ -1,5 +1,8 @@
 package com.apollocurrency.aplwallet.apl.eth.utils;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -7,9 +10,6 @@ import org.ethereum.util.blockchain.EtherUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Convert;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 public class EthUtil {
 
@@ -40,6 +40,9 @@ public class EthUtil {
         return EtherUtil.convert(gwei, EtherUtil.Unit.GWEI);
     }
 
+    public static BigDecimal gweiToEth(Long gwei) {
+        return weiToEther(gweiToWei(gwei));
+    }
 
 
     public static boolean isAddressValid(String address){

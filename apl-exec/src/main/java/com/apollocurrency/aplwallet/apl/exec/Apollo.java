@@ -3,6 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
@@ -47,18 +59,6 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
-
 /**
  * Main Apollo startup class
  *
@@ -76,7 +76,7 @@ public class Apollo {
             "apl.enablePeerUPnP",
             "apl.enableAPIUPnP"
     );
-
+        
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
@@ -176,6 +176,7 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
+        
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
