@@ -56,6 +56,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -171,6 +172,7 @@ public final class Shuffling {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static ShardDao shardDao = CDI.current().select(ShardDao.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
 
@@ -811,8 +813,21 @@ public final class Shuffling {
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
             long fee = blockchainConfig.getShufflingDepositAtm() / 4;
+            int shardHeight = blockchain.getShardInitialBlock().getHeight();
+            long[] generators = null;
             for (int i = 0; i < 3; i++) {
-                Account previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
+                int blockHeight = block.getHeight() - i - 1;
+                if (generators == null && shardHeight > blockHeight) {
+                    generators = shardDao.getLastShard().getGeneratorIds();
+
+                }
+                Account previousGeneratorAccount;
+                if (shardHeight > blockHeight) {
+                    int diff = shardHeight - blockHeight - 1;
+                    previousGeneratorAccount = Account.getAccount(generators[diff]);
+                } else {
+                    previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                }
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
                 LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),

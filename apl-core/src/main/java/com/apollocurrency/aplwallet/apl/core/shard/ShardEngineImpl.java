@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -153,7 +154,7 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash) {
+    public MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash, Long[] generatorIds) {
         long start = System.currentTimeMillis();
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
@@ -164,11 +165,14 @@ public class ShardEngineImpl implements ShardEngine {
                     createdShardSource.getDbIdentity().get() : null; // MANDATORY ACTION FOR SUCCESS completion !!
             if (dbVersion instanceof ShardAddConstraintsSchemaVersion
                     || dbVersion instanceof AplDbVersion) {
-                // that code is called wneh 'shard index/constraints' sql class is applied to shard db
+                // that code is called when 'shard index/constraints' sql class is applied to shard db
                 state = SHARD_SCHEMA_FULL;
                 if (shardHash != null && shardHash.length > 0) {
                     // update shard record by merkle tree hash value
                     CommandParamInfo paramInfo = new CommandParamInfoImpl(shardHash);
+                    // save prev generator ids to shard
+                    // TODO: find better place
+                    savePrevGeneratorIds(generatorIds);
                     // main goal is store merkle tree hash
                     updateShardRecord(paramInfo, databaseManager.getDataSource(), state, 1L);
                 }
@@ -635,6 +639,18 @@ public class ShardEngineImpl implements ShardEngine {
         log.debug("Shard record is created with Hash in {} ms", System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
         return state;
+    }
+
+    private void savePrevGeneratorIds(Long[] ids) {
+        try(Connection con = databaseManager.getDataSource().getConnection();
+        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ? WHERE shard_id = ?")) {
+            DbUtils.setArray(pstmt, 1, ids);
+            pstmt.setLong(2, createdShardId);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private boolean updateShardRecord(CommandParamInfo paramInfo,
