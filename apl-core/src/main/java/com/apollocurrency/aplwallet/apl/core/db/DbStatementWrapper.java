@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import org.slf4j.Logger;
 
 public class DbStatementWrapper extends FilteredStatement {
@@ -24,7 +23,7 @@ public class DbStatementWrapper extends FilteredStatement {
 
     private Blockchain lookupBlockchain() {
         if (blockchain == null) {
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
     }

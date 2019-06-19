@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -71,7 +72,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
@@ -86,7 +94,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -143,6 +155,12 @@ class CsvWriterReaderDerivedTablesTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             DirProvider.class,
+            AplAppStatus.class,
+            PhasingPollResultTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
+            PhasingVoteTable.class, PhasingPollTable.class,
+            DexOfferTransactionCreator.class, DexSmartContractService.class, DexEthService.class,
+            EthGasStationInfoDao.class, AdminPasswordVerifier.class, ElGamalEncryptor.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))

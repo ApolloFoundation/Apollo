@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -57,6 +58,8 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -73,7 +76,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -121,9 +128,11 @@ class DerivedDbTableListingTest {
             ReferencedTransactionDaoImpl.class,
             TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
             DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
+            DexOfferTransactionCreator.class, DexSmartContractService.class,
+            DexEthService.class, EthGasStationInfoDao.class, AdminPasswordVerifier.class, ElGamalEncryptor.class,
             DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class,
-            KeyFactoryProducer.class, FeeCalculator.class,
+            KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,

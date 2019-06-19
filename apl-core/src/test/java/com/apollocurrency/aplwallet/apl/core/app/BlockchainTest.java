@@ -365,6 +365,13 @@ class BlockchainTest {
         assertEquals(List.of(BLOCK_7_ID,BLOCK_8_ID,BLOCK_9_ID,BLOCK_10_ID, BLOCK_11_ID, BLOCK_12_ID), blockIds);
     }
 
+
+    @Test
+    void testGetAllBlockIdsFromIndex() {
+        List<Long> blockIds = blockchain.getBlockIdsAfter(btd.BLOCK_1.getId(), 6);
+        assertEquals(List.of(BLOCK_2_ID,BLOCK_3_ID,BLOCK_4_ID,BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID), blockIds);
+    }
+
     @Test
     void testGetBlockIdsAfterForLastShardBlockId() {
         List<Long> blockIds = blockchain.getBlockIdsAfter(btd.BLOCK_9.getId(), 1);
@@ -706,6 +713,9 @@ class BlockchainTest {
         assertTrue(hasTransaction);
     }
 
+
+    // COMMENTED OUT tests because they still creates Weld container and do not shutdown it!!!
+//    @Disabled // doesn't work, but creates additional Weld container which it not shutdown later
     @Test
     void testHasTransactionByFullHashBytesWhenHeightOfTransactionIsGreaterThanRequestedHeight() {
         boolean hasTransaction = blockchain.hasTransactionByFullHash(txd.TRANSACTION_7.getFullHash(), 0);

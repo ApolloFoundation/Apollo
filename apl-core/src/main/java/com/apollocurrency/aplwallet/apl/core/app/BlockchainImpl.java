@@ -222,16 +222,18 @@ public class BlockchainImpl implements Blockchain {
         if (height != null) {
             result.addAll(blockIndexDao.getBlockIdsAfter(height, limit));
         }
-        long lastBlockId = blockId;
-        int idsRemaining = limit;
-        if (result.size() > 0 && result.size() < limit) {
-            lastBlockId = result.get(result.size() - 1);
-            idsRemaining -= result.size();
-        }
-        Integer lastBlockHeight = getBlockHeight(lastBlockId);
-        if (idsRemaining > 0 && lastBlockHeight != null) {
-            List<Long> remainingIds = blockDao.getBlockIdsAfter(lastBlockHeight, idsRemaining);
-            result.addAll(remainingIds);
+        if (result.size() < limit) {
+            long lastBlockId = blockId;
+            int idsRemaining = limit;
+            if (result.size() > 0) {
+                lastBlockId = result.get(result.size() - 1);
+                idsRemaining -= result.size();
+            }
+            Integer lastBlockHeight = getBlockHeight(lastBlockId);
+            if (lastBlockHeight != null) {
+                List<Long> remainingIds = blockDao.getBlockIdsAfter(lastBlockHeight, idsRemaining);
+                result.addAll(remainingIds);
+            }
         }
         return result;
     }

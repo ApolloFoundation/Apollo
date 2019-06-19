@@ -136,6 +136,8 @@ public final class Constants {
     public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(100_000);
     public static final Integer MAX_ADDRESS_LENGTH = 110;
 
+    public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
+
     private Constants() {} // never
 
 }

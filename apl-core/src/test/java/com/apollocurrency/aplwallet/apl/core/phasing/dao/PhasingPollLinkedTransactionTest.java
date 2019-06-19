@@ -8,6 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import javax.inject.Inject;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -40,11 +45,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-import javax.inject.Inject;
-
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingPollLinkedTransaction> {
@@ -62,7 +62,6 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .build();
     @Inject
     PhasingPollLinkedTransactionTable table;

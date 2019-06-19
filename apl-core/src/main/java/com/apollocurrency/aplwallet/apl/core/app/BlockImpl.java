@@ -48,7 +48,7 @@ public final class BlockImpl implements Block {
 
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     private final int version;
     private final int timestamp;

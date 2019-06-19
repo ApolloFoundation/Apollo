@@ -4,21 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingVoteMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 
 @Singleton
 public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
@@ -46,7 +45,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
 
     @Override
     public void save(Connection con, PhasingVote vote) throws SQLException {
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        Blockchain blockchain = CDI.current().select(Blockchain.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_vote (vote_id, transaction_id, "
                 + "voter_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
