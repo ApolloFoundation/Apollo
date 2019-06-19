@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -49,6 +50,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class BlockchainImpl implements Blockchain {
     /**
      * Specify offset from current height to retrieve block generators [currentHeight - offset; currentHeight] for further tracking generator hitTime
@@ -263,15 +265,19 @@ public class BlockchainImpl implements Blockchain {
         if (blockIdList.isEmpty()) {
             return Collections.emptyList();
         }
+        log.debug("Block ids {}", blockIdList);
+        log.debug("Has block {} - {}", blockId, hasBlockInShards(blockId));
         List<Block> result = new ArrayList<>();
         TransactionalDataSource dataSource;
         Integer fromBlockHeight = getBlockHeight(blockId);
+        log.debug("Found block height {}", fromBlockHeight);
         if (fromBlockHeight != null) {
             int prevSize;
             do {
                 dataSource = getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
                 prevSize = result.size();
                 blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, dataSource, prevSize);
+                log.debug("Got {} blocks from data_source {}" + result.size(), dataSource.getDbIdentity().orElse(-1L));
                 for (int i = prevSize; i < result.size(); i++) {
                     Block block = result.get(i);
                     List<Transaction> blockTransactions = transactionDao.findBlockTransactions(block.getId(), dataSource);
