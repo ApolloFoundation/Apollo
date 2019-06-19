@@ -349,7 +349,7 @@ public class BlockDaoImpl implements BlockDao {
                 while (rs.next()) {
                     Block block = this.loadBlock(con, rs);
                     if (block.getId() != blockIdList.get(index++)) {
-                        LOG.debug("Block id {} not equal to {}", block.getId(), blockIdList.get(index));
+                        LOG.debug("Block id {} not equal to {}", block.getId(), blockIdList.get(index - 1));
                         break;
                     }
                     result.add(block);
