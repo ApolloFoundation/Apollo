@@ -6,6 +6,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -23,10 +24,12 @@ import org.slf4j.LoggerFactory;
 public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
+    DexService dexService;
+    
 
     @Inject
-    DexMatcherServiceImpl() {
-        
+    DexMatcherServiceImpl( DexService dexService ) {
+        this.dexService =  Objects.requireNonNull( dexService,"dexService is null");;
     }
     
     /**
@@ -64,6 +67,9 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
                                 Byte pairCurrency,
                                 Long pairRate,
                                 Integer amountOfTime ) {
+        
+        log.debug("DexMatcherServiceImpl:onCreateOffer, offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
+        
         
     }
     
