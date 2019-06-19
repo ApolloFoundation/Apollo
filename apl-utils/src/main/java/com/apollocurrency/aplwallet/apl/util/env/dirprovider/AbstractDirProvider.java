@@ -96,6 +96,13 @@ public abstract class AbstractDirProvider implements DirProvider {
     }
 
     @Override
+    public Path getSecureStorageDir() {
+        return vaultKeystoreDir == null
+                ? Paths.get(baseDir, applicationName + "-secure-storage", (chainId))
+                : vaultKeystoreDir;
+    }
+
+    @Override
     public Path get2FADir() {
         return twoFactorAuthDir == null
                 ? getVaultKeystoreDir().resolve(applicationName + "-2fa")
