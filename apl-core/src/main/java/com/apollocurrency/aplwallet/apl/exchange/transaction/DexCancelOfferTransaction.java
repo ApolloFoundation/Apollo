@@ -71,7 +71,15 @@ public class DexCancelOfferTransaction extends DEX {
         DexOfferCancelAttachment attachment = (DexOfferCancelAttachment) transaction.getAttachment();
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getTransactionId());
 
-        dexService.cancelOffer(offer);
+        try {
+            if(offer.getType().isSell()) {
+                dexService.refundAPLFrozenMoney(offer);
+            }
+
+            dexService.cancelOffer(offer);
+        } catch (AplException.ExecutiveProcessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

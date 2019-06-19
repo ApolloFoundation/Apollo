@@ -95,7 +95,15 @@ public final class Account {
     private static DatabaseManager databaseManager;
     private static GlobalSync sync;
     private static PublicKeyTable publicKeyTable;
-    private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null; 
+    private static AccountInfoTable accountInfoTable;
+    private static AccountAssetTable accountAssetTable;
+    private static AccountCurrencyTable accountCurrencyTable;
+    private static AccountLeaseTable accountLeaseTable;
+    private static AccountPropertyTable accountPropertyTable;
+    private static GenesisPublicKeyTable genesisPublicKeyTable;
+    private static AccountTable accountTable;
+
+    private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
            
     
     private static final Listeners<Account, Event> listeners = new Listeners<>();
@@ -128,6 +136,13 @@ public final class Account {
         publicKeyTable = pkTable;
         sync = globalSync;
         CDI.current().select(AccountGuaranteedBalanceTable.class).get();
+        accountAssetTable = AccountAssetTable.getInstance();
+        accountInfoTable = AccountInfoTable.getInstance();
+        accountCurrencyTable = AccountCurrencyTable.getInstance();
+        accountLeaseTable = AccountLeaseTable.getInstance();
+        accountPropertyTable = AccountPropertyTable.getInstance();
+        accountTable = AccountTable.getInstance();
+        genesisPublicKeyTable = GenesisPublicKeyTable.getInstance();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
@@ -253,20 +268,20 @@ public final class Account {
     }
 
     public static int getCount() {
-        return publicKeyTable.getCount() + GenesisPublicKeyTable.getInstance().getCount();
+        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
     }
 
     public static int getActiveLeaseCount() {
-        return AccountTable.getInstance().getCount(new DbClause.NotNullClause("active_lessee_id"));
+        return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
     }
 
     public static Account getAccount(long id) {
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey != null) {
-                account = AccountTable.getInstance().newEntity(dbKey);
+                account = accountTable.newEntity(dbKey);
                 account.publicKey = publicKey;
             }
         }
@@ -370,14 +385,14 @@ public final class Account {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
-            account = AccountTable.getInstance().newEntity(dbKey);
+            account = accountTable.newEntity(dbKey);
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null) {
                 if (isGenesis) {
-                    publicKey = GenesisPublicKeyTable.getInstance().newEntity(dbKey);
-                    GenesisPublicKeyTable.getInstance().insert(publicKey);
+                    publicKey = genesisPublicKeyTable.newEntity(dbKey);
+                    genesisPublicKeyTable.insert(publicKey);
                 } else {
                     publicKey = publicKeyTable.newEntity(dbKey);
                     publicKeyTable.insert(publicKey);
@@ -391,7 +406,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey) {
         PublicKey publicKey = publicKeyTable.get(dbKey);
         if (publicKey == null) {
-            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey);
+            publicKey = genesisPublicKeyTable.get(dbKey);
         }
         return publicKey;
     }
@@ -399,7 +414,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
         PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
-            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, cache);
+            publicKey = genesisPublicKeyTable.get(dbKey, cache);
         }
         return publicKey;
     }
@@ -407,7 +422,7 @@ public final class Account {
     private static PublicKey getPublicKey(DbKey dbKey, int height) {
         PublicKey publicKey = publicKeyTable.get(dbKey, height);
         if (publicKey == null) {
-            publicKey = GenesisPublicKeyTable.getInstance().get(dbKey, height);
+            publicKey = genesisPublicKeyTable.get(dbKey, height);
         }
         return publicKey;
     }
@@ -458,9 +473,9 @@ public final class Account {
 
     private void save() {
         if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
-            AccountTable.getInstance().delete(this, true);
+            accountTable.delete(this, true);
         } else {
-            AccountTable.getInstance().insert(this);
+            accountTable.insert(this);
         }
     }
 
@@ -469,7 +484,7 @@ public final class Account {
     }
 
     public AccountInfo getAccountInfo() {
-        return AccountInfoTable.getInstance().get(AccountTable.newKey(this));
+        return accountInfoTable.get(AccountTable.newKey(this));
     }
 
     public void setAccountInfo(String name, String description) {
@@ -486,7 +501,7 @@ public final class Account {
     }
 
     public AccountLease getAccountLease() {
-        return AccountLeaseTable.getInstance().get(AccountTable.newKey(this));
+        return accountLeaseTable.get(AccountTable.newKey(this));
     }
 
     public EncryptedData encryptTo(byte[] data, byte[] keySeed, boolean compress) {
@@ -594,11 +609,11 @@ public final class Account {
     }
 
     public DbIterator<Account> getLessors() {
-        return AccountTable.getInstance().getManyBy(new DbClause.LongClause("active_lessee_id", id), 0, -1, " ORDER BY id ASC ");
+        return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), 0, -1, " ORDER BY id ASC ");
     }
 
     public DbIterator<Account> getLessors(int height) {
-        return AccountTable.getInstance().getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
+        return accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", id), height, 0, -1, " ORDER BY id ASC ");
     }
 
     public long getGuaranteedBalanceATM() {
@@ -637,11 +652,11 @@ public final class Account {
     }
 
     public DbIterator<AccountAsset> getAssets(int from, int to) {
-        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
     }
 
     public DbIterator<AccountAsset> getAssets(int height, int from, int to) {
-        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
     public DbIterator<Trade> getTrades(int from, int to) {
@@ -661,11 +676,11 @@ public final class Account {
     }
 
     public AccountAsset getAsset(long assetId) {
-        return AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        return accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
     }
 
     public AccountAsset getAsset(long assetId, int height) {
-        return AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId), height);
+        return accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId), height);
     }
 
     public long getAssetBalanceATU(long assetId) {
@@ -681,19 +696,19 @@ public final class Account {
     }
 
     public AccountCurrency getCurrency(long currencyId) {
-        return AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
+        return accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
     }
 
     public AccountCurrency getCurrency(long currencyId, int height) {
-        return AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId), height);
+        return accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId), height);
     }
 
     public DbIterator<AccountCurrency> getCurrencies(int from, int to) {
-        return AccountCurrencyTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
+        return accountCurrencyTable.getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
     }
 
     public DbIterator<AccountCurrency> getCurrencies(int height, int from, int to) {
-        return AccountCurrencyTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
+        return accountCurrencyTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
     public long getCurrencyUnits(long currencyId) {
@@ -714,7 +729,7 @@ public final class Account {
 
     public void leaseEffectiveBalance(long lesseeId, int period) {
         int height = blockchain.getHeight();
-        AccountLease accountLease = AccountLeaseTable.getInstance().get(AccountTable.newKey(this));
+        AccountLease accountLease = accountLeaseTable.get(AccountTable.newKey(this));
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
@@ -733,7 +748,7 @@ public final class Account {
             accountLease.nextLeasingHeightTo = accountLease.nextLeasingHeightFrom + period;
             accountLease.nextLesseeId = lesseeId;
         }
-        AccountLeaseTable.getInstance().insert(accountLease);
+        accountLeaseTable.insert(accountLease);
         leaseListeners.notify(accountLease, Event.LEASE_SCHEDULED);
     }
 
@@ -765,20 +780,20 @@ public final class Account {
         } else {
             accountProperty.value = value;
         }
-        AccountPropertyTable.getInstance().insert(accountProperty);
+        accountPropertyTable.insert(accountProperty);
         listeners.notify(this, Event.SET_PROPERTY);
         propertyListeners.notify(accountProperty, Event.SET_PROPERTY);
     }
 
    public  void deleteProperty(long propertyId) {
-        AccountProperty accountProperty = AccountPropertyTable.getInstance().get(AccountPropertyTable.newKey(propertyId));
+        AccountProperty accountProperty = accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
         if (accountProperty == null) {
             return;
         }
         if (accountProperty.getSetterId() != this.id && accountProperty.getRecipientId() != this.id) {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(this.id));
         }
-        AccountPropertyTable.getInstance().delete(accountProperty);
+        accountPropertyTable.delete(accountProperty);
         listeners.notify(this, Event.DELETE_PROPERTY);
         propertyListeners.notify(accountProperty, Event.DELETE_PROPERTY);
     }
@@ -795,7 +810,7 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
-                GenesisPublicKeyTable.getInstance().insert(publicKey);
+                genesisPublicKeyTable.insert(publicKey);
             } else {
                publicKeyTable.insert(publicKey);
             }
@@ -818,7 +833,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
@@ -826,7 +841,7 @@ public final class Account {
         } else {
             accountAsset.quantityATU = assetBalance;
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
@@ -840,7 +855,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
@@ -848,7 +863,7 @@ public final class Account {
         } else {
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (event == null) {
@@ -866,7 +881,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
@@ -877,7 +892,7 @@ public final class Account {
             accountAsset.quantityATU = assetBalance;
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
@@ -899,7 +914,7 @@ public final class Account {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
         currencyUnits = Math.addExact(currencyUnits, units);
         if (accountCurrency == null) {
@@ -920,7 +935,7 @@ public final class Account {
         if (units == 0) {
             return;
         }
-        AccountCurrency accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {

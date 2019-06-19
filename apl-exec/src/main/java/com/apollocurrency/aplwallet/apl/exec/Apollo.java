@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 /**
  * Main Apollo startup class
@@ -73,7 +74,7 @@ public class Apollo {
             "apl.enablePeerUPnP",
             "apl.enableAPIUPnP"
     );
-
+        
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
@@ -172,6 +173,7 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
+        
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)

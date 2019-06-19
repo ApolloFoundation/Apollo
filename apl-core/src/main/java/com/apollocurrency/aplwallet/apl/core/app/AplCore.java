@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
@@ -84,6 +85,8 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
+    private static TransportInteractionService transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
+    
     //this should saty static
     private final AplCoreRuntime aplCoreRuntime;
     private DexMatcherServiceImpl tcs;
@@ -135,7 +138,13 @@ public final class AplCore {
             databaseManager.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
         }
+                
+        LOG.info("transport interaction service shutdown...");
+        transportInteractionService.stop();
+        
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
+        
+        
         AplCore.shutdown = true;
         
         tcs.deinitialize();
@@ -172,6 +181,8 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.0, "API initialization done");
 
 //                CDI.current().select(NtpTime.class).get().start();
+               aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
+               transportInteractionService.start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();

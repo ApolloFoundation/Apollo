@@ -32,6 +32,7 @@ public class RestEasyApplication extends Application  {
         set.add(DexController.class);
         set.add(DexMatcherServiceImpl.class);
         set.add(BackendControlController.class);
+        set.add(TransportInteractionController.class);
 
 
         //TODO: add all endpoints below

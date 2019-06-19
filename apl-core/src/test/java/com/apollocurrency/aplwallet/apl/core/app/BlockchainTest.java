@@ -113,6 +113,7 @@ class BlockchainTest {
         assertTrue(hasTransaction);
     }
 
+
 /*
     // COMMENTED OUT tests because they still creates Weld container and do not shutdown it!!!
 
