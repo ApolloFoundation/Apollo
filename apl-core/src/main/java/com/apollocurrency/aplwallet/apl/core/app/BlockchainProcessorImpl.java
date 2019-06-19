@@ -1217,15 +1217,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 double percentsPerTable = getPercentsPerEvent(16.0, derivedTables.size());
                 aplAppStatus.durableTaskUpdate(scanTaskId, 4.0, "Rollback " + derivedTables.size() + " tables");
                 for (DerivedTableInterface table : derivedTables) {
-                    aplAppStatus.durableTaskUpdate(scanTaskId, 0.0,
-                            "Rollback table \'" + table.toString() + "\' to height " + height);
+                    aplAppStatus.durableTaskUpdate(scanTaskId,
+                            "Rollback table \'" + table.toString() + "\' to height " + height, 0.0);
                     if (height == 0) {
                         table.truncate();
                     } else {
                         table.rollback(height - 1);
                     }
-                    aplAppStatus.durableTaskUpdate(scanTaskId, percentsPerTable,
-                            "Rollback finished for table \'" + table.toString() + "\' to height " + height);
+                    aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
                 dataSource.clearCache();
                 dataSource.commit(false);
@@ -1307,8 +1306,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
                                 if (++blockCounter % 1000 == 0) {
-                                    aplAppStatus.durableTaskUpdate(scanTaskId, null,
-                                            "Scanned " + blockCounter + "/" + totalBlocksToScan + " blocks", -1, percentsPerThousandBlocks);
+                                    aplAppStatus.durableTaskUpdate(scanTaskId,
+                                            "Scanned " + blockCounter + "/" + totalBlocksToScan + " blocks", percentsPerThousandBlocks);
                                 }
                                 currentBlockId = currentBlock.getNextBlockId();
                             } catch (AplException | RuntimeException e) {
@@ -1335,8 +1334,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 double percentsPerTableIndex = getPercentsPerEvent(4.0, derivedTables.size());
                 if (height == 0) {
                     for (DerivedTableInterface table : derivedTables) {
-                        aplAppStatus.durableTaskUpdate(scanTaskId, percentsPerTableIndex,
-                                "Create full text search index for table " + table.toString());
+                        aplAppStatus.durableTaskUpdate(scanTaskId,
+                                "Create full text search index for table " + table.toString(), percentsPerTableIndex);
                         table.createSearchIndex(con);
                     }
                 }
