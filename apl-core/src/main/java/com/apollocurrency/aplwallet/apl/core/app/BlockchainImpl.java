@@ -277,7 +277,7 @@ public class BlockchainImpl implements Blockchain {
                 dataSource = getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
                 prevSize = result.size();
                 blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, dataSource, prevSize);
-                log.debug("Got {} blocks from data_source {}" + result.size(), dataSource.getUrl());
+                log.debug("Got {} blocks from data_source {}", result.size(), dataSource.getUrl());
                 for (int i = prevSize; i < result.size(); i++) {
                     Block block = result.get(i);
                     List<Transaction> blockTransactions = transactionDao.findBlockTransactions(block.getId(), dataSource);
