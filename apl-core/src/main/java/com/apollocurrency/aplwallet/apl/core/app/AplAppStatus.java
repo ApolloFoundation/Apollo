@@ -5,8 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import org.slf4j.Logger;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -18,11 +21,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import org.slf4j.Logger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Long-running task info and other node status information
@@ -164,6 +164,11 @@ public class AplAppStatus {
                 }
             }
         }
+    }
+
+    public synchronized double durableTaskUpdate(String taskId, String message, double addPercents) {
+        durableTaskUpdate(taskId, null, message, -1, addPercents);
+        return tasks.get(taskId).getPercentComplete();
     }
 
     /**
