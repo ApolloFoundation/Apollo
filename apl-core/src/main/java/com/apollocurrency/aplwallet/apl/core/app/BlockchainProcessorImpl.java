@@ -1307,8 +1307,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
                                 if (++blockCounter % 1000 == 0) {
-                                    aplAppStatus.durableTaskUpdate(scanTaskId, percentsPerThousandBlocks,
-                                            "Scanned " + blockCounter + "/" + totalBlocksToScan + " blocks");
+                                    aplAppStatus.durableTaskUpdate(scanTaskId, null,
+                                            "Scanned " + blockCounter + "/" + totalBlocksToScan + " blocks", -1, percentsPerThousandBlocks);
                                 }
                                 currentBlockId = currentBlock.getNextBlockId();
                             } catch (AplException | RuntimeException e) {

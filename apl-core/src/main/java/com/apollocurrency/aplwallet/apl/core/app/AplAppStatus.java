@@ -131,6 +131,41 @@ public class AplAppStatus {
         return taskId;
     }
 
+    public synchronized void durableTaskUpdate(String taskId, Double percentComplete, String message, int keepPrevMessages, Double offset) {
+        if (offset != null && percentComplete != null) {
+            throw new IllegalArgumentException("Only one parameter among [offset,percentComplete] should be supplied");
+        }
+        DurableTaskInfo info = tasks.get(taskId);
+        if (info == null) {
+            taskId = durableTaskStart("Unnamed", "No Description", false);
+            info = tasks.get(taskId);
+        }
+        info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
+        if (offset != null) {
+            info.setPercentComplete(info.getPercentComplete() + offset);
+
+        } else {
+            info.setPercentComplete(percentComplete);
+        }
+        info.setDurationMS(System.currentTimeMillis() - info.getStarted().getTime());
+        if (!StringUtils.isBlank(message)) {
+            info.getMessages().add(message);
+        }
+        if (info.isCrititcal) {
+            LOG.info("{}: update,%: {}, message: {}", info.name, formatter.format(info.percentComplete), message);
+        } else {
+            LOG.debug("{}: update,%: {}, message: {}, duration: {}", info.name, formatter.format(info.percentComplete), message, info.durationMS);
+        }
+        if (keepPrevMessages > 0) {
+            int toDel = info.messages.size() - keepPrevMessages;
+            if (toDel > 0) {
+                for (int i = 0; i < toDel; i++) {
+                    info.messages.remove(0);
+                }
+            }
+        }
+    }
+
     /**
      * Indicate that long running task is paused
      *
