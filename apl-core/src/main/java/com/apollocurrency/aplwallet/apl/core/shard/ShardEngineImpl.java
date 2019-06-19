@@ -17,12 +17,12 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
@@ -61,8 +62,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import java.io.FilenameFilter;
-import java.util.UUID;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 
@@ -402,7 +401,7 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                         case ShardConstants.TRANSACTION_TABLE_NAME:
                             return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
-                        case BLOCK_TABLE_NAME:
+                        case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         default:
                             return exportDerivedTable(tableName, paramInfo);
@@ -763,7 +762,8 @@ public class ShardEngineImpl implements ShardEngine {
                 aplAppStatus.durableTaskFinished(durableStatusTaskId, true, "Sharding process has " + state.name());
                 break;
             case COMPLETED:
-                aplAppStatus.durableTaskUpdate(durableStatusTaskId, 99.9, "Sharding process completing successfully !");
+                aplAppStatus.durableTaskFinished(durableStatusTaskId, false, "Sharding process completed successfully !");
+                log.info("Sharding process COMPLETED successfully !");
                 break;
             default:
                 aplAppStatus.durableTaskUpdate(durableStatusTaskId, percentComplete, message);

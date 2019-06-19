@@ -61,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
@@ -258,6 +259,9 @@ public final class AplCore {
                    TimeUnit.SECONDS);
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
+                // run shard file downloading component
+                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
+                shardDownloader.prepareAndStartDownload(); // ignore result
                 ThreadPool.start();
 
                 try {

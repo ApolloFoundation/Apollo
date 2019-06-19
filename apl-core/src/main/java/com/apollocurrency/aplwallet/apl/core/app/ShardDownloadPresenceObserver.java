@@ -7,9 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -62,11 +65,27 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.PRESENT) ShardPresentData shardPresentData) {
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
-        String zipFileName = shardPresentData.getZipFileName();
-        log.debug("Try unpack file name  '{}'", zipFileName);
-        boolean unpackResult = zipComponent.extract(zipFileName, csvImporter.getDataExportPath().toString());
+        String zipFileName = shardPresentData.getFileIdValue();
+        Path zipInFolder = csvImporter.getDataExportPath().resolve(zipFileName + ".zip").toAbsolutePath();
+        log.debug("Try unpack file name '{}'", zipInFolder);
+        boolean unpackResult = zipComponent.extract(zipFileName + ".zip", csvImporter.getDataExportPath().toString());
         log.debug("Zip is unpacked = {}", unpackResult);
         Genesis.apply(); // import public data - genesis public Keys + balances
+
+        // import additional tables
+        List<String> tables = List.of(ShardConstants.SHARD_TABLE_NAME,
+                ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME,
+                ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME);
+        for (String table : tables) {
+            try {
+                long rowsImported = csvImporter.importCsv(table, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, true);
+                log.debug("Imported '{}' rows = {}", ShardConstants.SHARD_TABLE_NAME, rowsImported);
+            } catch (Exception e) {
+                log.error("CSV import error, RETURN.......", e);
+                return;
+            }
+        }
+        // import derived tables
         Collection<String> tableNames = derivedTablesRegistry.getDerivedTables().stream().map(Object::toString).collect(Collectors.toList());
         for (String table : tableNames) {
             try {

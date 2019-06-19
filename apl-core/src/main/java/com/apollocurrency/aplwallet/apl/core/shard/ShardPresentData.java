@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 @Data
 public class ShardPresentData {
 
-    private String zipFileName;
+    private String fileIdValue; // contains shardId + chainId in special format
 
 }

@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
@@ -64,7 +66,9 @@ public class FileDownloader {
     private final Status status = new Status();
     private static final Logger log = LoggerFactory.getLogger(FileDownloader.class);
 
-    DownloadableFilesManager manager;
+    private DownloadableFilesManager manager;
+    private AplAppStatus aplAppStatus;
+    private String taskId;
 
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
@@ -72,10 +76,13 @@ public class FileDownloader {
 
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
-                          javax.enterprise.event.Event<ShardPresentData> presentDataEvent) {
-        this.manager = manager;
+                          javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
+                          AplAppStatus aplAppStatus) {
+        this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
-        this.presentDataEvent = presentDataEvent;
+        this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
+        this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
+        this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
     }
     
     public void setFileId(String fileID){
@@ -87,7 +94,6 @@ public class FileDownloader {
     }
     
     public void startDownload() {
-        this.fileID = fileID;
         CompletableFuture<Boolean> prepare;
         prepare = CompletableFuture.supplyAsync(() -> {
             status.decision = prepareForDownloading();
@@ -96,23 +102,14 @@ public class FileDownloader {
         });
         
         prepare.thenAccept( r->{
-            if(r){
+            if (r) {
                 status.chunksTotal = downloadInfo.chunks.size();
-                log.debug("Decision is OK: {}, statring chunks downloading",status.decision.name());
+                log.debug("Decision is OK: {}, starting chunks downloading", status.decision.name());
                 download();
-            }else{
-                log.warn("Decision is not OK: {}, Chunks downloading is nopt started",status.decision.name());
+            } else {
+                log.warn("Decision is not OK: {}, Chunks downloading is not started",status.decision.name());
             }                
         });
-
-/*      // FIRE EVENT EXAMPLES
-        //FIRE event when shard is PRESENT + ZIP is downloaded
-        ShardPresentData shardPresentData = new ShardPresentData(fileID);
-        presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);
-        //FIRE event when shard is NOT PRESENT
-        ShardPresentData shardPresentData = new ShardPresentData();
-        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
-*/
     }
 
     public Status getDownloadStatus() {
@@ -150,8 +147,11 @@ public class FileDownloader {
                 res = fci;
                 break;
             }
+            this.aplAppStatus.durableTaskUpdate(this.taskId,
+                    (double) (downloadInfo.chunks.size() / fci.chunkId), "File downloading...");
         }
         if (res == null) { //NO more empty chunks. File is ready
+            this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
             //FIRE event when shard is PRESENT + ZIP is downloaded
             ShardPresentData shardPresentData = new ShardPresentData(fileID);
             presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);

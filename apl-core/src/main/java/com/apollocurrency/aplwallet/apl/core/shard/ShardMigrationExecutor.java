@@ -6,6 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -25,15 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
 import org.slf4j.Logger;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Component for starting sharding process which contains several steps/states.
@@ -158,7 +158,7 @@ public class ShardMigrationExecutor {
             log.debug("After execute step {} = '{}' before Fire Event...", dataMigrateOperation, state.name());
             migrateStateEvent.select(literal(state)).fire(state);
             if (state == MigrateState.FAILED) {
-                log.warn("FAILED sharding...", dataMigrateOperation);
+                log.warn("{} FAILED sharding...", dataMigrateOperation);
                 break;
             }
         }
