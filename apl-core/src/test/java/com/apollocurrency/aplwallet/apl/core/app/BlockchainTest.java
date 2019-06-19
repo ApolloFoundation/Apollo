@@ -27,18 +27,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -74,6 +62,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
@@ -398,6 +398,7 @@ class BlockchainTest {
 
     @Test
     void testGetBlocksAfter() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         List<Long> blockIds = List.of(BLOCK_3_ID, BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID, BLOCK_8_ID, BLOCK_9_ID, BLOCK_10_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_2_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_7, btd.BLOCK_8, btd.BLOCK_9, btd.BLOCK_10);
@@ -420,6 +421,7 @@ class BlockchainTest {
 
     @Test
     void testGetBlocksAfterBlockInAnotherDataSource() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         List<Long> blockIds = List.of(BLOCK_10_ID, BLOCK_11_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_9_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_10, btd.BLOCK_11);
@@ -436,6 +438,7 @@ class BlockchainTest {
 
     @Test
     void testGetBlocksAfterBlockInMainDataSource() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         List<Long> blockIds = List.of(BLOCK_11_ID, BLOCK_12_ID, BLOCK_13_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_10_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_11, btd.BLOCK_12, btd.BLOCK_13);
@@ -444,6 +447,7 @@ class BlockchainTest {
 
     @Test
     void testGetBlocksAfterBlockWhichNotExist() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         List<Long> blockIds = List.of(BLOCK_11_ID, BLOCK_12_ID, BLOCK_13_ID);
         List<Block> blocks = blockchain.getBlocksAfter(Long.MIN_VALUE, blockIds);
         compareBlocks(List.of(), blocks);
@@ -451,6 +455,7 @@ class BlockchainTest {
 
     @Test
     void testGetBlocksAfterWithEmptyIdList() {
+
         List<Long> blockIds = List.of();
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_2_ID, blockIds);
         compareBlocks(List.of(), blocks);

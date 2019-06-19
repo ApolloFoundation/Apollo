@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
+import org.jboss.resteasy.cdi.i18n.LogMessages_$logger;
 import org.slf4j.Logger;
 
 import java.math.BigInteger;
@@ -348,6 +349,7 @@ public class BlockDaoImpl implements BlockDao {
                 while (rs.next()) {
                     Block block = this.loadBlock(con, rs);
                     if (block.getId() != blockIdList.get(index++)) {
+                        LOG.debug("Block id {} not equal to {}", block.getId(), blockIdList.get(index - 1));
                         break;
                     }
                     result.add(block);
