@@ -3,6 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.*;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
@@ -39,6 +42,7 @@ public class RestEasyApplication extends Application  {
         set.add(DexController.class);
         set.add(BackendControlController.class);
         set.add(TransportInteractionController.class);
+        set.add(ShardController.class);
 
 
         //TODO: add all endpoints below
