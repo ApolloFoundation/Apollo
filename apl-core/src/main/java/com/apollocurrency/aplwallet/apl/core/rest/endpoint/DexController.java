@@ -184,7 +184,9 @@ public class DexController {
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
         
+        
         log.debug("createOffer: offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
+        
         
         
         if (pairRate <= 0 ) {
@@ -285,6 +287,11 @@ public class DexController {
             requestWrapper.addParameter("deadline", "1440");
             DexOfferAttachmentV2 dexOfferAttachment = new DexOfferAttachmentV2(offer);
 
+            // Looks like this is the correct position for event handling
+            // for matcher. 
+            
+            dexMatcherService.onCreateOffer(offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime);
+                        
             try {
                 JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
 
