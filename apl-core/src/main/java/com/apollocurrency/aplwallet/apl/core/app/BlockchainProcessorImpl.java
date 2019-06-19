@@ -35,6 +35,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -135,6 +137,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
     private final TrimService trimService;
+    private final AplAppStatus aplAppStatus;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -152,7 +155,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private Blockchain lookupBlockhain() {
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        if (blockchain == null) blockchain = CDI.current().select(Blockchain.class).get();
         return blockchain;
     }
 
@@ -263,11 +266,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Inject
     public BlockchainProcessorImpl(BlockValidator validator, javax.enterprise.event.Event<Block> blockEvent,
-                                    GlobalSync globalSync, DerivedTablesRegistry dbTables,
-                                    ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
-                                    TransactionValidator transactionValidator,
-                                    TransactionApplier transactionApplier,
-                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService) {
+                                   GlobalSync globalSync, DerivedTablesRegistry dbTables,
+                                   ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
+                                   TransactionValidator transactionValidator,
+                                   TransactionApplier transactionApplier,
+                                   TrimService trimService, DatabaseManager databaseManager, DexService dexService,
+                                   AplAppStatus aplAppStatus) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -279,6 +283,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.referencedTransactionService = referencedTransactionService;
         this.databaseManager = databaseManager;
         this.dexService = dexService;
+        this.aplAppStatus = aplAppStatus;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -303,6 +308,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(height, validate);
                 }
             }
+            scheduleOneScan();
         }, false);
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
@@ -631,6 +637,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.rollback();
             log.info(e.getMessage());
             throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private void scheduleOneScan() {
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        String scanProperty = optionDAO.get("require-scan");
+        if (scanProperty == null) {
+            optionDAO.set("require-scan", "false");
+            scheduleScan(0, false);
         }
     }
 
@@ -1179,6 +1194,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (validate) {
                 log.debug("Also verifying signatures and validating transactions...");
             }
+            String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > 0 ? "height >= ? AND " : "")
                          + " db_id >= ? ORDER BY db_id ASC LIMIT 50000");
@@ -1186,31 +1202,42 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 isScanning = true;
                 initialScanHeight = blockchain.getHeight();
                 if (height > blockchain.getHeight() + 1) {
-                    log.info("Rollback height " + (height - 1) + " exceeds current blockchain height of " + blockchain.getHeight() + ", no scan needed");
                     pstmtDone.executeUpdate();
                     dataSource.commit(false);
+                    String message = "Rollback height " + (height - 1) + " exceeds current blockchain height of " + blockchain.getHeight() + ", no scan needed";
+                    log.info(message);
                     return;
                 }
                 if (height == 0) {
-                    log.debug("Dropping all full text search indexes");
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
                 }
-                for (DerivedTableInterface table : dbTables.getDerivedTables()) {
+                Collection<DerivedTableInterface> derivedTables = dbTables.getDerivedTables();
+                double percentsPerTable = getPercentsPerEvent(16.0, derivedTables.size());
+                aplAppStatus.durableTaskUpdate(scanTaskId, 4.0, "Rollback " + derivedTables.size() + " tables");
+                for (DerivedTableInterface table : derivedTables) {
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 0.0,
+                            "Rollback table \'" + table.toString() + "\' to height " + height);
                     if (height == 0) {
                         table.truncate();
                     } else {
                         table.rollback(height - 1);
                     }
+                    aplAppStatus.durableTaskUpdate(scanTaskId, percentsPerTable,
+                            "Rollback finished for table \'" + table.toString() + "\' to height " + height);
                 }
                 dataSource.clearCache();
                 dataSource.commit(false);
-                log.debug("Rolled back derived tables");
+                aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
                 blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(currentBlock);
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 20.5, "Apply genesis");
                     Genesis.apply();
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 24.5, "Genesis applied");
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
@@ -1224,6 +1251,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height > 0) {
                     pstmtSelect.setInt(pstmtSelectIndex++, height);
                 }
+                aplAppStatus.durableTaskUpdate(scanTaskId, 25.0, "Scanning blocks");
+
+                int totalBlocksToScan = (blockchain.findLastBlock().getHeight() - height);
+                double percentsPerThousandBlocks = getPercentsPerEvent(70.0, totalBlocksToScan / 1000);
+                int blockCounter = 0;
                 long dbId = Long.MIN_VALUE;
                 boolean hasMore = true;
                 outer:
@@ -1274,6 +1306,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     dataSource.commit(false);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
+                                if (++blockCounter % 1000 == 0) {
+                                    aplAppStatus.durableTaskUpdate(scanTaskId, percentsPerThousandBlocks,
+                                            "Scanned " + blockCounter + "/" + totalBlocksToScan + " blocks");
+                                }
                                 currentBlockId = currentBlock.getNextBlockId();
                             } catch (AplException | RuntimeException e) {
                                 dataSource.rollback(false);
@@ -1295,11 +1331,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         dbId = dbId + 1;
                     }
                 }
+                aplAppStatus.durableTaskUpdate(scanTaskId, 95.0, "All blocks scanned");
+                double percentsPerTableIndex = getPercentsPerEvent(4.0, derivedTables.size());
                 if (height == 0) {
-                    for (DerivedTableInterface table : dbTables.getDerivedTables()) {
+                    for (DerivedTableInterface table : derivedTables) {
+                        aplAppStatus.durableTaskUpdate(scanTaskId, percentsPerTableIndex,
+                                "Create full text search index for table " + table.toString());
                         table.createSearchIndex(con);
                     }
                 }
+
                 pstmtDone.executeUpdate();
                 dataSource.commit(false);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
@@ -1313,10 +1354,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 throw new RuntimeException(e.toString(), e);
             } finally {
                 isScanning = false;
+                aplAppStatus.durableTaskFinished(scanTaskId, false, "");
             }
         } finally {
             globalSync.writeUnlock();
         }
+    }
+
+    private double getPercentsPerEvent(double totalPercents, int events) {
+        return totalPercents / Math.max(events, 1);
     }
 
 
@@ -1451,7 +1497,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.info("Blockchain download in progress");
                     isDownloading = true;
                 }
-                
+
                 globalSync.updateLock();
                 try {
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {

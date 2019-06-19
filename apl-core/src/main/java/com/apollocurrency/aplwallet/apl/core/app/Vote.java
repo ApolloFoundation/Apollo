@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 public final class Vote {
 
@@ -127,7 +127,7 @@ public final class Vote {
     }
 
     private void save(Connection con) throws SQLException {
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        Blockchain blockchain = CDI.current().select(Blockchain.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO vote (id, poll_id, voter_id, "
                 + "vote_bytes, height) VALUES (?, ?, ?, ?, ?)")) {
             int i = 0;

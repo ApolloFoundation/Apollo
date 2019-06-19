@@ -47,8 +47,8 @@ public class AplAppStatus {
      * Create new long running task indicator and get handle to it
      *
      * @param name Short name of the task
-     * @param descritption Longer description of the task
-     * @param isCrititcal If task is critical it will be displayed on top of
+     * @param description Longer description of the task
+     * @param isCritical If task is critical it will be displayed on top of
      * GUI, if not it will be just in list of backend tasks accessible by menu
      * @return handle to newly created task indicator
      */
@@ -73,10 +73,10 @@ public class AplAppStatus {
         info.setIsCrititcal(isCritical);
         tasks.put(key, info);
 
-        if(isCritical){
-            LOG.info("Task: '{}' started",name);
-        }else{
-            LOG.debug("Task: '{}' started",name);
+        if (isCritical) {
+            LOG.info("Task: '{}' started", name);
+        } else {
+            LOG.debug("Task: '{}' started", name);
         }
         return key;
     }
@@ -143,7 +143,7 @@ public class AplAppStatus {
             return;
         }
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[4]);
-        LOG.debug("{}: paused, %: {}, message: {}", info.name, message);
+        LOG.debug("{}: paused, %: {}, message: {}", info.name, info.percentComplete, message);
         if (!StringUtils.isBlank(message)) {
             info.getMessages().add(message);
         }
@@ -161,7 +161,7 @@ public class AplAppStatus {
             return;
         }
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[1]);
-        LOG.debug("{}: resumed, %: {}, message: {}", info.name, message);
+        LOG.debug("{}: resumed, %: {}, message: {}", info.name, info.percentComplete, message);
         if (!StringUtils.isBlank(message)) {
             info.getMessages().add(message);
         }

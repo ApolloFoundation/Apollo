@@ -62,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -84,18 +85,19 @@ public final class AplCore {
     private static volatile boolean shutdown = false;
 
     private Time time;
-   
+
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
     private API apiServer;
-    
-    @Inject @Setter    
+    private static TransportInteractionService transportInteractionService;
+
+    @Inject @Setter
     private PropertiesHolder propertiesHolder;
     @Inject @Setter
-    private DirProvider dirProvider;    
+    private DirProvider dirProvider;
     @Inject  @Setter
     private AplAppStatus aplAppStatus;
     private String initCoreTaskID;
@@ -139,7 +141,15 @@ public final class AplCore {
             databaseManager.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
         }
+
+        if (transportInteractionService != null) {
+            LOG.info("transport interaction service shutdown...");
+            transportInteractionService.stop();
+        }
+
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
+
+
         AplCore.shutdown = true;
     }
 
@@ -177,6 +187,9 @@ public final class AplCore {
 
 
 //                CDI.current().select(NtpTime.class).get().start();
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
+                transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
+                transportInteractionService.start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();

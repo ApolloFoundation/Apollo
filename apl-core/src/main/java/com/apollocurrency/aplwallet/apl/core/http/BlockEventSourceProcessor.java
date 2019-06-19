@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
@@ -33,7 +32,7 @@ public class BlockEventSourceProcessor implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(BlockEventSourceProcessor.class);
     private final BlockEventSource eventSource;
     private final long accountId;
-    private final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {

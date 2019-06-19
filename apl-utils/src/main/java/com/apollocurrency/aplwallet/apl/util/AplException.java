@@ -197,4 +197,18 @@ public abstract class AplException extends Exception {
         }
     }
 
+    public static final class ThirdServiceIsNotAvailable extends RuntimeException {
+        public ThirdServiceIsNotAvailable() {
+            super();
+        }
+
+        public ThirdServiceIsNotAvailable(String message) {
+            super(message);
+        }
+
+        public ThirdServiceIsNotAvailable(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }

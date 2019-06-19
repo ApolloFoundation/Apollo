@@ -12,6 +12,20 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
@@ -22,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -55,7 +70,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
@@ -73,7 +95,11 @@ import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -94,20 +120,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
-import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -170,6 +182,12 @@ class CsvExporterTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DirProvider.class,
+            AplAppStatus.class,
+            PhasingPollResultTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
+            PhasingVoteTable.class, PhasingPollTable.class,
+            DexOfferTransactionCreator.class, DexSmartContractService.class,
+            DexEthService.class, EthGasStationInfoDao.class, AdminPasswordVerifier.class, ElGamalEncryptor.class,
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)

@@ -22,6 +22,18 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
@@ -29,9 +41,9 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
@@ -49,18 +61,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 
 /**
  * Monitor account balances based on account properties
@@ -272,7 +272,7 @@ public class FundingMonitor {
                                     long amount, long threshold, int interval, byte[] keySeed) {
         propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        blockchain = CDI.current().select(BlockchainImpl.class).get();
+        blockchain = CDI.current().select(Blockchain.class).get();
         transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");

@@ -170,7 +170,7 @@ public final class Shuffling {
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
 
