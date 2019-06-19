@@ -133,6 +133,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
     private final TrimService trimService;
+    private final BlockApplier blockApplier;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -265,7 +266,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                     TransactionValidator transactionValidator,
                                     TransactionApplier transactionApplier,
-                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService) {
+                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService, BlockApplier blockApplier) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -277,6 +278,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.referencedTransactionService = referencedTransactionService;
         this.databaseManager = databaseManager;
         this.dexService = dexService;
+        this.blockApplier = blockApplier;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -828,7 +830,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
-            ((BlockImpl)block).apply();
+            blockApplier.apply(block);
 
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));

@@ -28,16 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -106,6 +96,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import javax.enterprise.inject.spi.Bean;
+import javax.inject.Inject;
+
 @EnableWeld
 class ShardMigrationExecutorTest {
 
@@ -138,6 +138,7 @@ class ShardMigrationExecutorTest {
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
             DGSGoodsTable.class,
+            GeneratorIdsExtractor.class,
             PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
@@ -230,7 +231,7 @@ class ShardMigrationExecutorTest {
 
 //2.        // create shard db with 'initial' schema
             CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                    new ShardInitTableSchemaVersion(), null);
+                    new ShardInitTableSchemaVersion(), null, null);
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
@@ -262,13 +263,16 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
             byte[] shardHash = "0123456780".getBytes(); // just an example
             createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                    new ShardAddConstraintsSchemaVersion(), shardHash);
+                    new ShardAddConstraintsSchemaVersion(), shardHash, new Long[]{1L, 2L});
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
+
 
             Shard shard = shardDao.getShardById(shardId);
             assertNotNull(shard);
             assertArrayEquals(shardHash, shard.getShardHash());
+            assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
+
 
 //6-7.      // update secondary block + transaction indexes
             UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(shardEngine, snapshotBlockHeight, dbIds);
@@ -319,7 +323,7 @@ class ShardMigrationExecutorTest {
 //14.       // complete shard process
             FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine);
             state = shardMigrationExecutor.executeOperation(finishShardingCommand);
-            assertEquals(COMPLETED, state);
+        assertEquals(COMPLETED, state);
     }
 
     @Test

@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -440,37 +439,6 @@ public final class BlockImpl implements Block {
 
         }
 
-    }
-
-    void apply() {
-        Account generatorAccount = Account.addOrGetAccount(getGeneratorId());
-        generatorAccount.apply(getGeneratorPublicKey());
-        long totalBackFees = 0;
-        if (this.height > 3) {
-            long[] backFees = new long[3];
-            for (Transaction transaction : getTransactions()) {
-                long[] fees = ((TransactionImpl)transaction).getBackFees();
-                for (int i = 0; i < fees.length; i++) {
-                    backFees[i] += fees[i];
-                }
-            }
-            for (int i = 0; i < backFees.length; i++) {
-                if (backFees[i] == 0) {
-                    break;
-                }
-                totalBackFees += backFees[i];
-                Account previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(this.height - i - 1).getGeneratorId());
-                LOG.trace("Back fees {} {} to forger at height {}", ((double)backFees[i])/Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
-                        this.height - i - 1);
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), backFees[i]);
-                previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
-            }
-        }
-        if (totalBackFees != 0) {
-            LOG.trace("Fee reduced by {} {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, blockchainConfig.getCoinSymbol(), this.height);
-        }
-        generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, getId(), totalFeeATM - totalBackFees);
-        generatorAccount.addToForgedBalanceATM(totalFeeATM - totalBackFees);
     }
 
     @Override

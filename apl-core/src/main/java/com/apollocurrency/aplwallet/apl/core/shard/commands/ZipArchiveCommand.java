@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
+
+import java.util.Objects;
 
 /**
  * Command archive all CSV data into zip and calculate CRC/Hash.
@@ -34,7 +34,7 @@ public class ZipArchiveCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
         // in reality the zip CRC is computed inside ShardEngineImpl
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(null); // for compatibility only !
+        CommandParamInfo paramInfo = new CommandParamInfoImpl();
         return shardEngine.archiveCsv(paramInfo);
     }
 
