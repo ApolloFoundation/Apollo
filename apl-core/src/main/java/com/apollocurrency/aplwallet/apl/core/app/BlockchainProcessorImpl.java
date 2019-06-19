@@ -308,7 +308,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(height, validate);
                 }
             }
-            scheduleOneScan();
+//            scheduleOneScan();
         }, false);
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
