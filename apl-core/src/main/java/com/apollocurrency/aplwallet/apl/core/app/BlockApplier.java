@@ -37,21 +37,23 @@ public class BlockApplier {
                     backFees[i] += fees[i];
                 }
             }
+            int shardHeight = blockchain.getShardInitialBlock().getHeight();
             long[] generators = null;
-            boolean isShardBlock = blockchain.getShardInitialBlock().getHeight() != 0;
             for (int i = 0; i < backFees.length; i++) {
                 if (backFees[i] == 0) {
                     break;
                 }
                 totalBackFees += backFees[i];
-                if (generators == null && isShardBlock) {
+                int blockHeight = block.getHeight() - i - 1;
+                if (generators == null && shardHeight > blockHeight) {
                     generators = shardDao.getLastShard().getGeneratorIds();
                 }
                 Account previousGeneratorAccount;
-                if (!isShardBlock) {
-                    previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(height - i - 1).getGeneratorId());
+                if (shardHeight > blockHeight) {
+                    int index = shardHeight - blockHeight - 1;
+                    previousGeneratorAccount = Account.getAccount(generators[index]);
                 } else {
-                    previousGeneratorAccount = Account.getAccount(generators[i]);
+                    previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
                 log.trace("Back fees {} to forger at height {}", ((double)backFees[i])/ Constants.ONE_APL,
                         height - i - 1);

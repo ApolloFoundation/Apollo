@@ -234,6 +234,7 @@ class BlockDaoTest {
         assertEquals(List.of(td.BLOCK_4, td.BLOCK_5, td.BLOCK_6, td.BLOCK_7, td.BLOCK_8, td.BLOCK_9), blocksAfter);
     }
 
+
     @Test
     void testGetBlocksAfterWithOffset() {
         List<Long> targetBlockIds = List.of(BLOCK_2_ID, BLOCK_3_ID, BLOCK_4_ID, BLOCK_5_ID, BLOCK_6_ID, BLOCK_7_ID);

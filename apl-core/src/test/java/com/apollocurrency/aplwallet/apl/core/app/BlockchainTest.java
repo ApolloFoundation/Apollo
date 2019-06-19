@@ -1,10 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_13_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_2_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_4_ID;
@@ -13,6 +15,7 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_9_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_ID;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,18 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -71,6 +62,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
@@ -413,6 +416,14 @@ class BlockchainTest {
         List<Long> blockIds = List.of(BLOCK_10_ID, BLOCK_11_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_9_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_10, btd.BLOCK_11);
+        compareBlocks(expectedBlocks, blocks);
+    }
+
+    @Test
+    void testGetBlocksAfterFromShardDataSource() {
+        List<Long> blockIds = List.of(BLOCK_0_ID, BLOCK_1_ID);
+        List<Block> blocks = blockchain.getBlocksAfter(GENESIS_BLOCK_ID, blockIds);
+        List<Block> expectedBlocks = List.of(btd.BLOCK_0, btd.BLOCK_1);
         compareBlocks(expectedBlocks, blocks);
     }
 
