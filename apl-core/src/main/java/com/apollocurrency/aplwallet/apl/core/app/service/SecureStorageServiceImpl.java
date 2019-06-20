@@ -34,7 +34,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     private Map<Long, String> store = new ConcurrentHashMap<>();
 
     @Inject
-    public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath) {
+    public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath) throws AplException.ExecutiveProcessException {
         Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
 
         this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
@@ -103,13 +103,14 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     }
 
     @Override
-    public String createPrivateKeyForStorage(){
+    public String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException {
         String key;
         Enumeration<NetworkInterface> macs;
         try {
             macs = NetworkInterface.getNetworkInterfaces();
         } catch (SocketException e) {
-            return null;
+            LOG.error(e.getMessage(), e);
+            throw new AplException.ExecutiveProcessException("SocketException");
         }
         key = Collections.list(macs).stream()
                 .filter(m -> {
@@ -123,12 +124,18 @@ public class SecureStorageServiceImpl implements SecureStorageService {
                     try {
                         return Convert.toHexString(m.getHardwareAddress());
                     } catch (SocketException e) {
+                        LOG.error(e.getMessage(), e);
                        return null;
                     }
                 })
                 .filter(StringUtils::isNotBlank)
                 .sorted()
-                .collect(Collectors.joining(  ));
+                .collect(Collectors.joining());
+
+        if(key==null){
+            throw new AplException.ExecutiveProcessException("SecureStorageServiceImpl private key is null.");
+        }
+
         return key;
     }
 

@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
+import com.apollocurrency.aplwallet.apl.util.AplException;
+
 public interface SecureStorageService {
 
     /**
@@ -31,5 +33,5 @@ public interface SecureStorageService {
     /**
      * Create private key for application.
      */
-    String createPrivateKeyForStorage();
+    String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException;
 }
