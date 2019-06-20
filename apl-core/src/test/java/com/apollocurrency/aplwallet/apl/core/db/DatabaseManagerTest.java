@@ -4,12 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -24,9 +30,8 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 class DatabaseManagerTest {
@@ -52,6 +57,9 @@ class DatabaseManagerTest {
         Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
         baseDbProperties = DbTestData.getDbFileProperties(dbFilePath.toAbsolutePath().toString());
         databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder,chainCoinfig);
+        DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/db-manager-data.sql");
+        dbPopulator.initDb();
+        dbPopulator.populateDb();
     }
 
     @AfterEach
@@ -144,5 +152,37 @@ class DatabaseManagerTest {
         assertNotNull(temporaryDb);
         assertNotNull(temporaryDb.getConnection());
     }
+
+    @Test
+    void testFindFullDatasources() {
+        List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDatasources();
+        assertEquals(2, fullDatasources.size());
+        assertTrue(fullDatasources.get(0).getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
+        assertTrue(fullDatasources.get(1).getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
+
+    }
+
+    @Test
+    void testGetOrInitFullShardDataSourceForShardWhichNotExist() {
+        TransactionalDataSource dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(0L);
+
+        assertNull(dataSource, "Shard datasource with shardId=0 should not exist");
+    }
+
+    @Test
+    void testGetOrInitFullShardDataSourceForNotFullShard() {
+        TransactionalDataSource dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(1L);
+
+        assertNull(dataSource, "Shard datasource with shardId=1 should not be full, (shard state != 100)");
+    }
+
+    @Test
+    void testGetOrInitFullShardDataSourceForFullShardId() {
+        TransactionalDataSource dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(2L);
+
+        assertNotNull(dataSource, "Shard datasource with shardId=2 should be full, (shard state = 100)");
+        assertTrue(dataSource.getUrl().contains("shard-2"), "Datasource should represent full shard with id 2");
+    }
+
 
 }

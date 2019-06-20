@@ -30,13 +30,13 @@ import static org.mockito.Mockito.spy;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
+import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -118,11 +118,11 @@ class BlockchainTest {
 
     @BeforeAll
     static void init() {
-        TransactionalDataSource shardDatasource1 = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(1L);
-        TransactionalDataSource shardDatasource2 = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(2L);
-        shard1Populator = initDb(shardDatasource1, "db/shard1-data.sql");
-        shard2Populator = initDb(shardDatasource2, "db/shard2-data.sql");
+        shard1Populator = initDb("db/shard1-data.sql",1);
+        shard2Populator = initDb("db/shard2-data.sql",2);
     }
+
+
 
     @AfterAll
     static void shutdown() throws IOException {
@@ -133,17 +133,27 @@ class BlockchainTest {
     void setUp() {
         txd = new TransactionTestData();
         btd = new BlockTestData();
-        shard1Populator.populateDb();
-        shard2Populator.populateDb();
     }
 
-    private static DbPopulator initDb(DataSourceWrapper dataSourceWrapper, String dataScriptPath) {
-        DbPopulator dbPopulator = new DbPopulator(dataSourceWrapper, "db/schema.sql", dataScriptPath);
+    private static DbPopulator initDb(String dataScriptPath, long shardId) {
+        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
+                new ShardDataSourceCreateHelper(extension.getDatabaseManager(), shardId).createUninitializedDataSource();
+        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
+        shardDb.init(new ShardInitTableSchemaVersion());
+
+        DbPopulator dbPopulator = new DbPopulator(shardDb, "db/schema.sql", dataScriptPath);
         dbPopulator.initDb();
+        dbPopulator.populateDb();
+        shardDb.shutdown();
         return dbPopulator;
     }
 
+    @Test
+    void testGetTxFromNotFinishedDataSource() {
+        Transaction transaction = blockchain.getTransaction(100);
 
+        assertNull(transaction);
+    }
 
     @Test
     void findLastBlock() {

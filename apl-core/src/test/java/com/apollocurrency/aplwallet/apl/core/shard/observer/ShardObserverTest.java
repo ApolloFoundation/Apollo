@@ -5,8 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -20,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 
@@ -169,5 +173,35 @@ public class ShardObserverTest {
         verify(shardMigrationExecutor, never()).executeAllOperations();
         verify(firedEvent, never()).fire(true);
         verify(firedEvent, never()).fire(false);
+    }
+
+    @Test
+    void testSkipSharding() throws InterruptedException, ExecutionException {
+        prepare(false, false);
+        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
+        doReturn(true).when(heightConfig).isShardingEnabled();
+        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        AtomicBoolean shutdown = new AtomicBoolean(false);
+        doAnswer((in) -> {
+            while (!shutdown.get()) {
+                Thread.sleep(1L);
+            }
+            return MigrateState.COMPLETED;
+        }).when(shardMigrationExecutor).executeAllOperations();
+
+        CompletableFuture<Boolean> shardFuture1 = shardObserver.tryCreateShardAsync();
+
+        assertNotNull(shardFuture1);
+
+        CompletableFuture<Boolean> shardFuture2 = shardObserver.tryCreateShardAsync();
+
+        assertNull(shardFuture2);
+
+        shutdown.set(true);
+
+        Boolean result = shardFuture1.get();
+        assertTrue(result);
+
+        verify(shardMigrationExecutor, times(1)).executeAllOperations();
     }
 }

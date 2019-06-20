@@ -4,14 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -29,6 +21,14 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 @Singleton
 public class ShardObserver {
     private static final Logger log = LoggerFactory.getLogger(ShardObserver.class);
@@ -40,6 +40,7 @@ public class ShardObserver {
     private ShardDao shardDao;
     private Event<Boolean> trimEvent;
     private boolean trimDerivedTables;
+    private volatile boolean isSharding;
 
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
@@ -67,21 +68,25 @@ public class ShardObserver {
             int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
             if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
                 if (!blockchainProcessor.isScanning()) {
-                    updateTrimConfig(false);
-                    // quick create records for new Shard and Recovery process for later use
-                    shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
-                    long nextShardId = shardDao.getNextShardId();
-                    Shard newShard = new Shard(nextShardId, minRollbackHeight);
-                    shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
-                    completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
-                            .thenApply((result) -> {
-                                blockchainProcessor.updateInitialBlockId();
-                                return result;
-                            })
-                            .handle((result, ex) -> {
-                                updateTrimConfig(true);
-                                return result;
-                            });
+                    if (!isSharding) {
+                        updateTrimConfig(false);
+                        // quick create records for new Shard and Recovery process for later use
+                        shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
+                        long nextShardId = shardDao.getNextShardId();
+                        Shard newShard = new Shard(nextShardId, minRollbackHeight);
+                        shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+                        completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
+                                .thenApply((result) -> {
+                                    blockchainProcessor.updateInitialBlockId();
+                                    return result;
+                                })
+                                .handle((result, ex) -> {
+                                    updateTrimConfig(true);
+                                    return result;
+                                });
+                    } else {
+                        log.warn("Unable to start sharding at height {}, previous sharding process was not finished", minRollbackHeight);
+                    }
                 } else {
                     log.warn("Will skip sharding at height {} due to blokchain scan ", minRollbackHeight);
                 }
@@ -97,21 +102,25 @@ public class ShardObserver {
     }
 
     public boolean performSharding(int minRollbackHeight) {
+        isSharding = true;
         boolean result = false;
-                    MigrateState state = MigrateState.INIT;
-                    long start = System.currentTimeMillis();
-                    log.info("Start sharding....");
+        MigrateState state = MigrateState.INIT;
+        long start = System.currentTimeMillis();
+        log.info("Start sharding....");
 
-                    try {
-                        log.debug("Clean commands....");
-                        shardMigrationExecutor.cleanCommands();
-                        log.debug("Create all commands....");
-                        shardMigrationExecutor.createAllCommands(minRollbackHeight);
-                        log.debug("Start all commands....");
-                        state = shardMigrationExecutor.executeAllOperations();
-                    result = true;
-        } catch (Throwable t) {
+        try {
+            log.debug("Clean commands....");
+            shardMigrationExecutor.cleanCommands();
+            log.debug("Create all commands....");
+            shardMigrationExecutor.createAllCommands(minRollbackHeight);
+            log.debug("Start all commands....");
+            state = shardMigrationExecutor.executeAllOperations();
+            result = true;
+        }
+        catch (Throwable t) {
             log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
+        } finally {
+            isSharding = false;
         }
         if (state != MigrateState.FAILED && state != MigrateState.INIT) {
             log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);

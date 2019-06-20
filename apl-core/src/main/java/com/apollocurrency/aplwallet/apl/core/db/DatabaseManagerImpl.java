@@ -4,31 +4,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.jdbi.v3.core.Jdbi;
-import org.slf4j.Logger;
 
 /**
  * Class is used for high level database and shard management.
@@ -133,8 +135,8 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return result;
     }
 
-    private List<Long> findAllFullShards() {
-        List<Long> result = new ArrayList<>();
+    private Set<Long> findAllFullShards() {
+        Set<Long> result = new HashSet<>();
         try (Connection con = getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
             pstmt.setLong(1, ShardConstants.SHARD_PERCENTAGE_FULL);
@@ -190,11 +192,10 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     public List<TransactionalDataSource> getFullDatasources() {
-        List<Long> allFullShards = findAllFullShards();
-        List<TransactionalDataSource> dataSources = allFullShards.stream().map(connectedShardDataSourceMap::get).collect(Collectors.toList());
+        Set<Long> allFullShards = findAllFullShards();
+        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::createAndAddShard).collect(Collectors.toList());
         return dataSources;
     }
-
     /**
      * {@inheritDoc}
      */
@@ -252,8 +253,13 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public TransactionalDataSource getShardDataSourceById(long shardId) {
-        return connectedShardDataSourceMap.get(shardId);
+    public TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
+        Set<Long> fullShards = findAllFullShards();
+        if (fullShards.contains(shardId)) {
+            return getOrCreateShardDataSourceById(shardId);
+        } else {
+            return null;
+        }
     }
 
     @Override
