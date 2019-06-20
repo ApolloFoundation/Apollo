@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -578,6 +579,24 @@ public class TransactionDaoImpl implements TransactionDao {
         catch (AplException.NotValidException | SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    @Override
+    public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
+        List<TransactionDbInfo> result = new ArrayList<>();
+        try(Connection con = databaseManager.getDataSource().getConnection();
+        PreparedStatement pstmt = con.prepareStatement("SELECT db_id, id FROM transaction WHERE height < ? ORDER BY db_id")) {
+            pstmt.setInt(1, height);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new TransactionDbInfo(rs.getLong("db_id"), rs.getLong("id")));
+                }
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return result;
     }
 
 

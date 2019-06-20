@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Helper class is used for inserting block/transaction data into secondary index tables.
@@ -55,6 +56,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_height_transaction_index_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_transaction_id_height_idx");
         }
+        Set<Long> exludeDbIds = operationParams.excludeInfo != null ? operationParams.excludeInfo.getNotCopyDbIds() : Set.of();
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
@@ -65,7 +67,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                     ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                     ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                     ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams, exludeDbIds));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -94,7 +96,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                    Connection sourceConnect, TableOperationParams operationParams)
+                                    Connection sourceConnect, TableOperationParams operationParams, Set<Long> exludeDbIds)
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
@@ -108,6 +110,10 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                 extractMetaDataCreateInsert(sourceConnect, rs);
                 rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                if (ShardConstants.TRANSACTION_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName) && exludeDbIds.contains(paginateResultWrapper.lowerBoundColumnValue)) {
+                    log.debug("Will skip row with db_id = {}", paginateResultWrapper.lowerBoundColumnValue);
+                    continue;
+                }
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         // here we are skipping DB_ID latest column in ResultSet

@@ -54,24 +54,21 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply("alter table TRANSACTION add constraint IF NOT EXISTS TRANSACTION_ID_IDX unique (ID)");
             case startNumber + 11:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("ALTER TABLE TRANSACTION ADD CONSTRAINT IF NOT EXISTS TRANSACTION_TO_BLOCK_FK FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE");
+                apply("alter table TRANSACTION add constraint IF NOT EXISTS PRIMARY_KEY_TRANSACTION_DB_ID primary key (DB_ID)"); // PK + unique index
             case startNumber + 12:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("alter table TRANSACTION add constraint IF NOT EXISTS PRIMARY_KEY_TRANSACTION_DB_ID primary key (DB_ID)"); // PK + unique index
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
             case startNumber + 13:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_sender_id_idx ON transaction (sender_id)");
             case startNumber + 14:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("CREATE INDEX IF NOT EXISTS transaction_sender_id_idx ON transaction (sender_id)");
+                apply("CREATE INDEX IF NOT EXISTS transaction_recipient_id_idx ON transaction (recipient_id)");
             case startNumber + 15:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("CREATE INDEX IF NOT EXISTS transaction_recipient_id_idx ON transaction (recipient_id)");
-            case startNumber + 16:
-                log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON transaction (block_timestamp DESC)");
-            case startNumber + 17:
-                return startNumber + 17;
+            case startNumber + 16:
+                return startNumber + 16;
             default:
                 throw new RuntimeException("Shard ADD CONSTRAINTS/INDEXES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

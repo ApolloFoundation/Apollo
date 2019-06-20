@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import java.util.Optional;
-import java.util.Set;
+import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
 
 /**
  * Composes several parameters used by different operations.
@@ -17,16 +16,16 @@ public class TableOperationParams {
     long batchCommitSize;
     Integer snapshotBlockHeight;
     Long shardId;
-    Optional<Set<Long>> dbIdsExclusionSet;
+    ExcludeInfo excludeInfo;
 
     public TableOperationParams(String tableName, long batchCommitSize,
                                 Integer snapshotBlockHeight, Long shardId,
-                                Optional<Set<Long>> dbIdsExclusionSet) {
+                                ExcludeInfo excludeInfo) {
         this.tableName = tableName;
         this.batchCommitSize = batchCommitSize;
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.shardId = shardId;
-        this.dbIdsExclusionSet = dbIdsExclusionSet;
+        this.excludeInfo = excludeInfo;
     }
 
     @Override

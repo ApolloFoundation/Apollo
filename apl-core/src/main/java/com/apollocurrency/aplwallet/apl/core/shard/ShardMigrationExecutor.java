@@ -27,10 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeSt
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -89,8 +87,8 @@ public class ShardMigrationExecutor {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
                 new ShardInitTableSchemaVersion(), /*hash should be null here*/ null);
         this.addOperation(createShardSchemaCommand);
-        Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
-        CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, height, dbIds);
+        ExcludeInfo excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(height);
+        CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, height, excludeInfo);
         this.addOperation(copyDataCommand);
 
         byte[] hash = calculateHash(height);
@@ -106,12 +104,12 @@ public class ShardMigrationExecutor {
 //        this.addOperation(reLinkDataCommand);
 
         UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
-                (shardEngine, height, dbIds);
+                (shardEngine, height, excludeInfo);
         this.addOperation(updateSecondaryIndexCommand);
 
         List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
         tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
-        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, dbIds);
+        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo);
 
         this.addOperation(csvExportCommand);
 
@@ -119,7 +117,7 @@ public class ShardMigrationExecutor {
         this.addOperation(zipArchiveCommand);
 
         DeleteCopiedDataCommand deleteCopiedDataCommand =
-                new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, dbIds);
+                new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
         this.addOperation(deleteCopiedDataCommand);
 
         FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine);

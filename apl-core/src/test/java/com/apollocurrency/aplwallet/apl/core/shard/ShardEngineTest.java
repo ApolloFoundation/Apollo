@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -31,21 +32,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
@@ -76,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfoImpl;
@@ -102,6 +96,14 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import javax.enterprise.inject.spi.Bean;
+import javax.inject.Inject;
 
 @EnableWeld
 class ShardEngineTest {
@@ -180,6 +182,8 @@ class ShardEngineTest {
 
     @Inject
     DGSGoodsTable goodsTable;
+    @Inject
+    TransactionDao transactionDao;
     @Inject
     PhasingPollTable phasingPollTable;
 
@@ -278,11 +282,13 @@ class ShardEngineTest {
         tableNameList.add(BLOCK_TABLE_NAME);
         tableNameList.add(TRANSACTION_TABLE_NAME);
         TransactionTestData td = new TransactionTestData();
-        Set<Long> dbIds = new HashSet<>();
-        dbIds.add(td.DB_ID_0);
-        dbIds.add(td.DB_ID_2);
-        dbIds.add(td.DB_ID_5);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, dbIds);
+        ExcludeInfo excludeInfo = new ExcludeInfo(
+                List.of(new TransactionDbInfo(td.DB_ID_0, td.TRANSACTION_0.getId())),
+                List.of(new TransactionDbInfo(td.DB_ID_2, td.TRANSACTION_2.getId())),
+                List.of(new TransactionDbInfo(td.DB_ID_5, td.TRANSACTION_5.getId()))
+        );
+
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tableNameList, 2, snapshotBlockHeight, excludeInfo);
 
 //3-4.      // copy block + transaction data from main db into shard
         state = shardEngine.copyDataToShard(paramInfo);
@@ -291,12 +297,18 @@ class ShardEngineTest {
         // check after COPY
         TransactionalDataSource shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+
         assertEquals(8, count); // blocks in shard db
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-        assertEquals(7, count);// transactions in shard db
+        assertEquals(5, count);// transactions in shard db
+        Transaction excludedTransaction = transactionDao.findTransaction(td.TRANSACTION_0.getId(), shardDataSource); // excluded transaction #1
+        assertNull(excludedTransaction);
+        excludedTransaction = transactionDao.findTransaction(td.TRANSACTION_2.getId(), shardDataSource); // excluded transaction #2
+        assertNull(excludedTransaction);
+        assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
-//5.        // create shard db FULL schema + add shard hash info
+        //5.        // create shard db FULL schema + add shard hash info
         state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
@@ -318,7 +330,11 @@ class ShardEngineTest {
         // should be 8 but prev shard already exist and grabbed our genesis block
         assertEquals(7, blockIndexCount);
         long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-        assertEquals(7, trIndexCount);
+        assertEquals(5, trIndexCount);
+
+        assertNull(transactionIndexDao.getByTransactionId(td.TRANSACTION_0.getId())); // excluded txs should not be indexed
+        assertNull(transactionIndexDao.getByTransactionId(td.TRANSACTION_2.getId())); // excluded txs should not be indexed
+        assertNotNull(transactionIndexDao.getByTransactionId(td.TRANSACTION_5.getId()));
 
 
         tableNameList.clear();
@@ -337,10 +353,10 @@ class ShardEngineTest {
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
         assertFalse(Files.exists(dataExportDirPath.resolve("phasing_poll.csv")));
         assertEquals(5, Files.readAllLines(dataExportDirPath.resolve("shard.csv"))                  .size());
-        assertEquals(12, Files.readAllLines(dataExportDirPath.resolve("transaction_shard_index.csv")).size());
+        assertEquals(10, Files.readAllLines(dataExportDirPath.resolve("transaction_shard_index.csv")).size());
         assertEquals(9, Files.readAllLines(dataExportDirPath.resolve("block_index.csv"))            .size());
         assertEquals(9, Files.readAllLines(dataExportDirPath.resolve("goods.csv"))                  .size());
-        assertEquals(5, Files.readAllLines(dataExportDirPath.resolve("transaction.csv"))            .size());
+        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve("transaction.csv"))            .size());
         assertEquals(2, Files.readAllLines(dataExportDirPath.resolve("block.csv"))            .size());
 
 
@@ -362,7 +378,8 @@ class ShardEngineTest {
         count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(6, count); // total blocks left in main db
         count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
-        assertEquals(10, count); // total transactions left in main db
+        assertEquals(9, count); // total transactions left in main db
+        assertNull(blockchain.getTransaction(td.TRANSACTION_0.getId())); //deleted finished phased transaction
 
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
@@ -370,7 +387,7 @@ class ShardEngineTest {
 
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
         count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-        assertEquals(7, count); // transactions in shard
+        assertEquals(5, count); // transactions in shard
 
 //14.       // complete shard process
         paramInfo.setShardHash(shardHash);
@@ -392,7 +409,12 @@ class ShardEngineTest {
         int snaphotBlockHeight = btd.BLOCK_10.getHeight();
         int batchLimit = 1;
         List<String> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, PHASING_POLL_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of(ttd.DB_ID_3, ttd.DB_ID_5));
+        ExcludeInfo excludeInfo = new ExcludeInfo(
+                List.of(),
+                List.of(new TransactionDbInfo(ttd.DB_ID_3, ttd.TRANSACTION_3.getId())),
+                List.of(new TransactionDbInfo(ttd.DB_ID_5, ttd.TRANSACTION_5.getId()))
+        );
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, excludeInfo);
         doThrow(IllegalStateException.class).when(csvExporter).exportBlock(snaphotBlockHeight);
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
@@ -419,7 +441,13 @@ class ShardEngineTest {
         DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.CSV_EXPORT_STARTED, null, null, null, "block,transaction_shard_index,shard"));
         List<String> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, PHASING_POLL_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of(ttd.DB_ID_3, ttd.DB_ID_5));
+
+        ExcludeInfo excludeInfo = new ExcludeInfo(
+                List.of(),
+                List.of(new TransactionDbInfo(ttd.DB_ID_3, ttd.TRANSACTION_3.getId())),
+                List.of(new TransactionDbInfo(ttd.DB_ID_5, ttd.TRANSACTION_5.getId()))
+        );
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, excludeInfo);
         Path transactionPath = dataExportDirPath.resolve("transaction.csv");
         Files.createFile(transactionPath);
         Files.write(transactionPath, List.of("Str-0", "Str-1", "Str-2", "Str-3", "Str-4", "Str-5", "Str-6"));
@@ -449,7 +477,7 @@ class ShardEngineTest {
         DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.ZIP_ARCHIVE_STARTED, null, null, null, "block,transaction_shard_index,shard"));
         List<String> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, PHASING_POLL_TABLE_NAME);
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of());
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, null);
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -463,7 +491,7 @@ class ShardEngineTest {
         int snaphotBlockHeight = btd.BLOCK_10.getHeight();
         int batchLimit = 1;
         List<String> tables = List.of("invalid_table");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of());
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, null);
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -479,7 +507,7 @@ class ShardEngineTest {
         int batchLimit = 1;
         List<String> tables = List.of("goods");
         DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, Set.of());
+        CommandParamInfo paramInfo = new CommandParamInfoImpl(tables, batchLimit, snaphotBlockHeight, null);
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 

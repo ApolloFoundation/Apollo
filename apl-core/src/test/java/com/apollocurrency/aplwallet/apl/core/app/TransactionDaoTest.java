@@ -9,13 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -30,6 +27,10 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 
 @EnableWeld
 class TransactionDaoTest {
@@ -270,7 +271,7 @@ class TransactionDaoTest {
     }
 
     @Test
-    void testGetTransactinsByTypeAndSubtypeWithPagination() {
+    void testGetTransactionsByTypeAndSubtypeWithPagination() {
         List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) 0, (byte) 0, 3, 5));
 
         assertEquals(List.of(td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6), transactions);
@@ -281,6 +282,19 @@ class TransactionDaoTest {
         int count = dao.getTransactionCountByFilter(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, false, true, false, Integer.MAX_VALUE, 0);
 
         assertEquals(6, count);
+    }
+
+    @Test
+    void testGetTransactionsBeforeHeight() {
+        List<TransactionDbInfo> result = dao.getTransactionsBeforeHeight(td.TRANSACTION_6.getHeight());
+        List<TransactionDbInfo> expected = List.of(new TransactionDbInfo(td.DB_ID_0, td.TRANSACTION_0.getId()), new TransactionDbInfo(td.DB_ID_1, td.TRANSACTION_1.getId()), new TransactionDbInfo(td.DB_ID_2, td.TRANSACTION_2.getId()), new TransactionDbInfo(td.DB_ID_3, td.TRANSACTION_3.getId()));
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testGetTransactionsBeforeZeroHeight() {
+        List<TransactionDbInfo> result = dao.getTransactionsBeforeHeight(0);
+        assertEquals(List.of(), result);
     }
 
 }

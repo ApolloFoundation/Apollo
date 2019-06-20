@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -79,7 +80,7 @@ class BlockchainTest {
 
     private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
-    static DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(blockchainTestDbPath.toAbsolutePath().toString()), "db/shard-main-data.sql", null);
+    static DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(blockchainTestDbPath.resolve("mainDb").toAbsolutePath().toString()), "db/shard-main-data.sql", null);
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     EpochTime epochTime = mock(EpochTime.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -1033,6 +1034,24 @@ class BlockchainTest {
 
         assertEquals(Set.of( 3883484057046974168L,9211698109297098287L), blockGenerators);
 
+    }
+
+    @Test
+    void testGetTransactionsBeforeHeight() {
+        List<TransactionDbInfo> result = blockchain.getTransactionsBeforeHeight(txd.TRANSACTION_13.getHeight());
+        List<TransactionDbInfo> expected = List.of(
+                new TransactionDbInfo(txd.DB_ID_9, txd.TRANSACTION_9.getId()),
+                new TransactionDbInfo(txd.DB_ID_10, txd.TRANSACTION_10.getId()),
+                new TransactionDbInfo(txd.DB_ID_11, txd.TRANSACTION_11.getId()),
+                new TransactionDbInfo(txd.DB_ID_12, txd.TRANSACTION_12.getId())
+        );
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testGetTransactionsBeforeHeightOfLastBlockHeight() {
+        List<TransactionDbInfo> result = blockchain.getTransactionsBeforeHeight(txd.TRANSACTION_12.getHeight());
+        assertEquals(List.of(), result);
     }
 
     private byte[] fullHashWithCollision(byte[] fullHash) {

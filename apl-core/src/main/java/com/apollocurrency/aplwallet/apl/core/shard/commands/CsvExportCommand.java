@@ -6,16 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Export specified tables + 'derived tables' into CSV.
@@ -27,20 +26,20 @@ public class CsvExportCommand implements DataMigrateOperation {
     private List<String> tableNameList;
     private int commitBatchSize;
     private int snapshotBlockHeight;
-    private Set<Long> dbIdsExclusionList;
+    private ExcludeInfo excludeInfo;
 
     public CsvExportCommand(ShardEngine shardEngine,
-                            int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, Set<Long> dbIdsExclusionList) {
+                            int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, ExcludeInfo excludeInfo) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.commitBatchSize = commitBatchSize <= 0 ? ShardConstants.DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
-        this.dbIdsExclusionList = dbIdsExclusionList == null ? Collections.emptySet() : dbIdsExclusionList;
+        this.excludeInfo = excludeInfo;
         this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
     }
 
     public CsvExportCommand(ShardEngine shardEngine,
-                            int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(shardEngine,  null, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, dbIdsExclusionList);
+                            int snapshotBlockHeight, ExcludeInfo excludeInfo) {
+        this(shardEngine,  null, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, excludeInfo);
         // tables to be exported together with 'derived tables'
         tableNameList = List.of(ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME);
     }
@@ -49,8 +48,8 @@ public class CsvExportCommand implements DataMigrateOperation {
             ShardEngine shardEngine,
             List<String> tableNameList,
             int commitBatchSize,
-            int snapshotBlockHeight, Set<Long> dbIdsExclusionList) {
-        this(shardEngine, commitBatchSize, snapshotBlockHeight, tableNameList, dbIdsExclusionList);
+            int snapshotBlockHeight, ExcludeInfo excludeInfo) {
+        this(shardEngine, commitBatchSize, snapshotBlockHeight, tableNameList, excludeInfo);
     }
 
     /**
@@ -60,7 +59,7 @@ public class CsvExportCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("CSV Export Command execute...");
         CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, dbIdsExclusionList);
+                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, excludeInfo);
         return shardEngine.exportCsv(paramInfo);
     }
 

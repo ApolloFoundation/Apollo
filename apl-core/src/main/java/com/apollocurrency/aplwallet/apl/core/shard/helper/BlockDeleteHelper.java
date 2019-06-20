@@ -5,14 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import org.slf4j.Logger;
+import java.util.Set;
 
 /**
  * Helper class is used for deleting block/transaction data from main database previously copied to shard db.
@@ -48,13 +49,13 @@ public class BlockDeleteHelper extends AbstractHelper {
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
         paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
-
+        Set<Long> excludeDbIds = operationParams.excludeInfo != null ? operationParams.excludeInfo.getNotDeleteDbIds(): Set.of();
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             do {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, operationParams, excludeDbIds));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -70,12 +71,12 @@ public class BlockDeleteHelper extends AbstractHelper {
     }
 
     private boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
-                                    Connection sourceConnect, TableOperationParams operationParams)
+                                    Connection sourceConnect, TableOperationParams operationParams, Set<Long> excludeDbIds)
             throws SQLException {
         long start = System.currentTimeMillis();
         int rows = 0;
         int processedRows = 0;
-        boolean excludeRows = operationParams.dbIdsExclusionSet.isPresent();
+        boolean excludeRows = operationParams.excludeInfo != null;
         try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { // handle rows here
                 if (rsmd == null) {
@@ -97,9 +98,9 @@ public class BlockDeleteHelper extends AbstractHelper {
                 rows++;
                 if (excludeRows // skip transaction db_id
                         && ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) // only phased transactions
-                        && operationParams.dbIdsExclusionSet.get().contains(paginateResultWrapper.lowerBoundColumnValue)) {
-                    log.trace("Skip excluded '{}' DB_ID = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
-                    continue;
+                        && excludeDbIds.contains(paginateResultWrapper.lowerBoundColumnValue)){
+                        log.trace("Skip excluded '{}' DB_ID = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
+                        continue;
                 }
                 try {
                     preparedInsertStatement.setObject(1, paginateResultWrapper.lowerBoundColumnValue);

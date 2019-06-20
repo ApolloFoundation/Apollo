@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(DeleteCopiedDataCommand.class);
@@ -22,17 +22,17 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private ShardEngine shardEngine;
     private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
-    private Set<Long> excludedTxs;
+    private ExcludeInfo excludedTxs;
     private int snapshotBlockHeight;
 
     public DeleteCopiedDataCommand(ShardEngine shardEngine,
-                                   int commitBatchSize, int snapshotBlockHeight, Set<Long> excludedTxs) {
+                                   int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludedTxs) {
         this(shardEngine, snapshotBlockHeight, excludedTxs);
         this.commitBatchSize = commitBatchSize;
     }
 
     public DeleteCopiedDataCommand(ShardEngine shardEngine,
-                                   int snapshotBlockHeight, Set<Long> excludedTxs) {
+                                   int snapshotBlockHeight, ExcludeInfo excludedTxs) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.excludedTxs = Objects.requireNonNull(excludedTxs, "excludedTxs set is NULL");
