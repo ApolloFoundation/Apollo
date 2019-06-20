@@ -6,9 +6,23 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +39,12 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
-    
+    private EpochTime epochTime;
 
     @Inject
-    DexMatcherServiceImpl( DexService dexService ) {
-        this.dexService =  Objects.requireNonNull( dexService,"dexService is null");;
+    DexMatcherServiceImpl( DexService dexService, EpochTime epochTime ) {
+        this.dexService =  Objects.requireNonNull( dexService,"dexService is null");
+        this.epochTime =  Objects.requireNonNull( epochTime,"epochTime is null");        
     }
     
     /**
@@ -69,6 +84,56 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
                                 Integer amountOfTime ) {
         
         log.debug("DexMatcherServiceImpl:onCreateOffer, offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
+        
+        
+        OfferType type = null;
+        OfferStatus offerStatus = null;
+        DexCurrencies pairCur = null;
+        Integer currentTime = null;
+        Long accountId = null;
+        
+        boolean isAvailableForNow = true;
+        String accountIdStr = "6141493552915739570";
+
+        //Validate
+        try {
+            if (offerType != null) {
+                type = OfferType.getType(offerType);
+            }
+            if (pairCurrency != null) {
+                pairCur = DexCurrencies.getType(pairCurrency);
+            }
+            if (isAvailableForNow) {
+                currentTime = epochTime.getEpochTime();
+            }
+            if(!StringUtils.isBlank(accountIdStr)){
+                accountId = Long.parseUnsignedLong(accountIdStr);
+            }
+            // if(status != null){
+                offerStatus = OfferStatus.OPEN; //getType(status);
+            // }
+        } catch (Exception ex){
+            // return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+            log.error("incorrect request data");
+        }
+
+        int firstIndex = 0;//ParameterParser.getFirstIndex(req);
+        int lastIndex = Integer.MAX_VALUE;//0xFFFFFFFF;//ParameterParser.getLastIndex(req);
+        int offset = firstIndex > 0 ? firstIndex : 0;
+        int limit = Integer.MAX_VALUE - 1;//DbUtils.calculateLimit(firstIndex, lastIndex);
+
+        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, offerStatus, offset, limit );        
+
+        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, DexCurrencies.APL, pairCur, accountId, offerStatus, null, null, offset, limit);
+        List<DexOffer> offers = dexService.getOffers(dexOfferDBRequest);
+        
+        log.debug("got offers: " + offers.size() );
+        
+        
+        
+        
+
+
         
         
     }

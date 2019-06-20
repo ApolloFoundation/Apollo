@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -42,7 +43,22 @@ public interface DexOfferDao {
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffers(@BindBean DexOfferDBRequest dexOfferDBRequest);
 
-
+    
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND (:currentTime is NULL OR offer.finish_time > :currentTime) " +
+            "AND (:type is NULL OR offer.type = :type) " +
+            "AND (:status = 0) " +
+            "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
+            "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
+            "ORDER BY offer.pair_rate DESC " +
+            "OFFSET :offset LIMIT :limit"
+    )
+    @RegisterRowMapper(DexOfferMapper.class)
+    List<DexOffer> getOffersForMatching(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest );
+    
+    
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer where latest = true AND transaction_id = :transactionId")
