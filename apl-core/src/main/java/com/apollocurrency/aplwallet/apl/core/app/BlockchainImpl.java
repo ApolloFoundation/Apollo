@@ -591,7 +591,7 @@ public class BlockchainImpl implements Blockchain {
     private TransactionalDataSource getShardDataSourceOrDefault(Long shardId) {
         TransactionalDataSource dataSource = null;
         if (shardId != null) {
-            dataSource = ((ShardManagement) databaseManager).getShardDataSourceById(shardId);
+            dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shardId);
         }
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
