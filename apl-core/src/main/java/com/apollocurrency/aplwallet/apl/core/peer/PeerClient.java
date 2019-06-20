@@ -109,11 +109,13 @@ public class PeerClient {
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+        LOG.trace("{}", resp);
         if(resp==null){
             LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
-       ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
-       return res.shardingInfo;
+        ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
+        LOG.trace("{}", res);
+        return res.shardingInfo;
     }     
 }

@@ -64,17 +64,20 @@ public class ShardDownloader {
         boolean haveShard = false;
         PeerClient pc = new PeerClient(p);
         ShardingInfo si = pc.getShardingInfo();
-        additionalPeers.addAll(si.knownPeers);
-        for (ShardInfo s : si.shards) {
-            if (myChainId.equals(UUID.fromString(s.chainId))) {
-                haveShard = true;
-                si.source = p.getAnnouncedAddress();
-                Set<ShardInfo> rs = sortedShards.get(s.shardId);
-                if (rs == null) {
-                    rs = new HashSet<>();
-                    sortedShards.put(s.shardId, rs);
+        log.trace("{}", si);
+        if (si != null) {
+            additionalPeers.addAll(si.knownPeers);
+            for (ShardInfo s : si.shards) {
+                if (myChainId.equals(UUID.fromString(s.chainId))) {
+                    haveShard = true;
+                    si.source = p.getAnnouncedAddress();
+                    Set<ShardInfo> rs = sortedShards.get(s.shardId);
+                    if (rs == null) {
+                        rs = new HashSet<>();
+                        sortedShards.put(s.shardId, rs);
+                    }
+                    rs.add(s);
                 }
-                rs.add(s);
             }
         }
         return haveShard;
