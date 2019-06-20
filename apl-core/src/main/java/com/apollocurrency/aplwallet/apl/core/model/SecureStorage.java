@@ -1,7 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.model;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.firstbridge.cryptolib.CryptoNotValidException;
@@ -9,7 +11,6 @@ import io.firstbridge.cryptolib.container.DataRecord;
 import io.firstbridge.cryptolib.container.FbWallet;
 import io.firstbridge.cryptolib.container.KeyRecord;
 import io.firstbridge.cryptolib.container.KeyTypes;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +41,14 @@ public class SecureStorage extends FbWallet {
         return store;
     }
 
-    public void addDexKeys(Map<Long, String> userKeys){
+    public void addDexKeys(Map<Long, String> userKeys) throws AplException.ExecutiveProcessException {
         DataRecord dr = new DataRecord();
         dr.alias = DEX_PRIVATE_KEYS;
-        dr.data = JSONObject.toJSONString(userKeys);
+        try {
+            dr.data = JSON_MAPPER.writeValueAsString(userKeys);
+        } catch (JsonProcessingException e) {
+            throw new AplException.ExecutiveProcessException("adding dex secret keys is failed, JsonProcessingException");
+        }
         dr.encoding = "HEX";
 
         KeyRecord kr = new KeyRecord();

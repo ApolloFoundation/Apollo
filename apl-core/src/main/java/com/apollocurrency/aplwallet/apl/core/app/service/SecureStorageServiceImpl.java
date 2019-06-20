@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.app.service;
 
 import com.apollocurrency.aplwallet.apl.core.model.SecureStorage;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 
@@ -16,9 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,7 +31,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     private Path secureStoragePath;
     private static final String SECURE_STORE_FILE_NAME = "secure_store";
     private String privateKey;
-    private Map<Long, String> store = new HashMap<>();
+    private Map<Long, String> store = new ConcurrentHashMap<>();
 
     @Inject
     public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath) {
@@ -67,7 +68,13 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public boolean storeSecretStorage() {
-        SecureStorage secureStore = collectAllDataToTempStore();
+        SecureStorage secureStore;
+        try {
+            secureStore = collectAllDataToTempStore();
+        } catch (AplException.ExecutiveProcessException e) {
+            LOG.error(e.getMessage());
+            return false;
+        }
         return secureStore.store(privateKey, secureStoragePath.toString());
     }
 
@@ -128,7 +135,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         return false;
     }
 
-    private SecureStorage collectAllDataToTempStore(){
+    private SecureStorage collectAllDataToTempStore() throws AplException.ExecutiveProcessException {
         SecureStorage secureStorage = new SecureStorage();
         secureStorage.addDexKeys(store);
 
