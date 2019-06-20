@@ -13,6 +13,7 @@ Java 11 is required to run the desktop clients.
 - [facebook](https://www.facebook.com/Apolloprivacycoin)
 - [youtube](https://www.youtube.com/channel/UCZbB3PAUlkSKuBYEMG-l_CQ)
 
+- [releases and installers] (https://github.com/ApolloFoundation/Apollo/releases)
 
 # Specifications #
 
@@ -74,14 +75,33 @@ your software versions using instructions from __"Preparation steps" section__
    * run ___mvn install___ 
    * go to bin directory and run ___apl-run-desktop.sh___ 
    * application should start in desktop mode
-
+   * if you require command line mode -> use ___apl-run.sh___ instead of ___apl-run-desktop.sh___
 
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
    * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.bst___
+   * go to bin directory and run ___apl-run-desktop.bat___
    * application should start in desktop mode
-   * if you require command line mode -> use ___run.bat___ instead of ___run-desktop.bat___
+   * if you require command line mode -> use ___apl-run.bat___ instead of ___apl-run-desktop.bat___
 
+## Command-line options
 
+apl-exec.jar and all scripts accept command line options. To get list of available options, run with --help switch.
+Most important options:
+
+        --net, -n index of network to run with. 0 is main net, 1 is 1st public test net with stable release,
+        2 is 2nd testnet with development/staging code and 3 is 3rd test net with experimental features
+        --testnet means run with 1st test net. Higher priority then --net switch
+
+        --debug, -d  from 0 to 4. 0 is ERROR level of logs, 4 is TRACE
+
+Example:
+
+    bin/apl-run.sh -d 4 -n 2
+
+This command runs blockchain application with 2nd test net and debug level TRACE
+
+## IDE
+
+Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven.

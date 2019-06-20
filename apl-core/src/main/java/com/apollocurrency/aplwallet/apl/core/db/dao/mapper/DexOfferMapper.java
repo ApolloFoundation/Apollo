@@ -29,6 +29,8 @@ public class DexOfferMapper implements RowMapper<DexOffer> {
         dexOffer.setPairRate(rs.getLong("pair_rate"));
         dexOffer.setFinishTime(rs.getInt("finish_time"));
         dexOffer.setStatus(OfferStatus.getType(rs.getInt("status")));
+        dexOffer.setFromAddress(rs.getString("from_address"));
+        dexOffer.setToAddress(rs.getString("to_address"));
 
         return dexOffer;
     }

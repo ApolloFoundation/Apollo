@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import com.apollocurrency.aplwallet.apl.util.env.ServerStatus;
 import org.slf4j.Logger;
 import javax.swing.*;
 import java.io.File;
@@ -139,8 +138,8 @@ public class DesktopMode {
         return false;
     }
     
-    public void setServerStatus(ServerStatus status, URI wallet, File logFileDir) {
-        desktopSystemTray.setToolTip(new SystemTrayDataProvider(status.getMessage(), wallet, logFileDir));
+    public void setServerStatus(String message, URI wallet, File logFileDir) {
+        desktopSystemTray.setToolTip(new SystemTrayDataProvider(message, wallet, logFileDir));
     }
 
     public void launchDesktopApplication() {

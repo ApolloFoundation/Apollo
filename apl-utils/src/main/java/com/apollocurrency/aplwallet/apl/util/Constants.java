@@ -20,8 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import java.math.BigInteger;
+
 public final class Constants {
-    public static final Version VERSION = new Version("1.32.14");
+    public static final Version VERSION = new Version("1.33.4");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -127,7 +129,12 @@ public final class Constants {
 
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    
+
+    //Eth/Pax
+    public static final BigInteger GAS_LIMIT_ETHER_TX = BigInteger.valueOf(21_000);
+    public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(100_000);
+    public static final Integer MAX_ADDRESS_LENGTH = 110;
+
     private Constants() {} // never
 
 }

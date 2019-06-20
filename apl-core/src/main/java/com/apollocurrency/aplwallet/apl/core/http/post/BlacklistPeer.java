@@ -35,6 +35,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_P
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
+@Deprecated
 public class BlacklistPeer extends AbstractAPIRequestHandler {
 
     public BlacklistPeer() {

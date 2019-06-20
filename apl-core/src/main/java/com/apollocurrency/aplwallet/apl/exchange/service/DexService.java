@@ -7,19 +7,21 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeBalances;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +39,13 @@ public class DexService {
     private EthereumWalletService ethereumWalletService;
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
-    private EpochTime epochTime;
     private TransactionProcessorImpl transactionProcessor;
 
 
     @Inject
-    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, EpochTime epochTime, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
+    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
-        this.epochTime = epochTime;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
     }
@@ -68,25 +68,17 @@ public class DexService {
         return dexOfferDao.getOffers(dexOfferDBRequest);
     }
 
-    public ExchangeBalances getBalances(String ethAddress, String paxAddress){
-        ExchangeBalances balances = new ExchangeBalances();
-        try{
-            if (!StringUtils.isBlank(ethAddress)) {
-                balances.setBalanceETH(ethereumWalletService.getBalanceWei(ethAddress));
-            }
-        } catch (Exception ex){
-            LOG.error(ex.getMessage());
+    public WalletsBalance getBalances(GetBalancesRequest getBalancesRequest){
+        List<String> eth = getBalancesRequest.ethAddresses;
+        List<EthWalletBalanceInfo> ethWalletsBalance = new ArrayList<>();
+
+        for (String ethAddress : eth) {
+            ethWalletsBalance.add(ethereumWalletService.balanceInfo(ethAddress));
         }
 
-        try{
-            if (!StringUtils.isBlank(paxAddress)) {
-                balances.setBalancePAX(ethereumWalletService.getPaxBalanceWei(paxAddress));
-            }
-        } catch (Exception ex){
-            LOG.error(ex.getMessage());
-        }
+        // New Crypto currencies.
 
-        return balances;
+        return new WalletsBalance(ethWalletsBalance);
     }
 
     public List<ExchangeOrder> getHistory(String account, String pair, String type){
@@ -94,12 +86,12 @@ public class DexService {
     }
 
 
-    public ExchangeOrder getOrderByID(Long orderID){
-        return null;
-    }
-
-    public boolean widthraw(String account,String secretPhrase,BigDecimal amount,String address,String cryptocurrency){
-        return false;
+    public String withdraw(long accountId, String secretPhrase, String fromAddress,  String toAddress, BigDecimal amount, DexCurrencies currencies, Long transferFee) throws AplException.ExecutiveProcessException{
+        if (DexCurrencies.ETH.equals(currencies) || DexCurrencies.PAX.equals(currencies)) {
+            return ethereumWalletService.transfer(secretPhrase, accountId, fromAddress, toAddress, amount, transferFee, currencies);
+        } else {
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());
+        }
     }
 
 
@@ -129,7 +121,7 @@ public class DexService {
 
     public void refundFrozenMoney(DexOffer offer){
         //Return APL.
-        if(shouldFreezeAPL(offer.getType().ordinal(), offer.getOfferCurrency().ordinal())) {
+        if(offer.getType().isSell()) {
             Account account = Account.getAccount(offer.getAccountId());
             account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
         }
@@ -138,13 +130,6 @@ public class DexService {
         //TODO
     }
 
-
-    public boolean shouldFreezeAPL(int offerType, int dexCurrencies){
-        if (OfferType.SELL.ordinal() == offerType && DexCurrencies.APL.ordinal() == dexCurrencies) {
-            return true;
-        }
-        return false;
-    }
 
     /**
      * @param cancelTrId  can be null if we just want to check are there any unconfirmed transactions for this order.

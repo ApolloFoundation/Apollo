@@ -16,4 +16,12 @@ public enum OfferType {
         return OfferType.values()[ordinal];
     }
 
+    public boolean isBuy(){
+        return this.ordinal() == OfferType.BUY.ordinal();
+    }
+
+    public boolean isSell(){
+        return this.ordinal() == OfferType.SELL.ordinal();
+    }
+
 }

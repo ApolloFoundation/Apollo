@@ -3,16 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.DispatcherType;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -23,7 +19,13 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.DoSFilter;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.DispatcherType;
 
 /**
  * Peer HTTP server that handles http requests and PeerWebSockets
@@ -85,7 +87,7 @@ public class PeerHttpServer {
                 dosFilterHolder.setInitParameter("trackSessions", "false");
                 dosFilterHolder.setAsyncSupported(true);
             }
-            if (Peers.isGzipEnabled) {
+            if (propertiesHolder.getBooleanProperty("apl.enablePeerServerGZIPFilter")) {
                 GzipHandler gzipHandler = new GzipHandler();
                 gzipHandler.setIncludedMethods("GET", "POST");
                 gzipHandler.setIncludedPaths("/*");

@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.env;
 
 import java.lang.management.ManagementFactory;
@@ -11,15 +14,8 @@ import java.net.ServerSocket;
 public class RuntimeParams {
 
     public static String getProcessId() {
-        String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
-        if (runtimeName == null) {
-            return "";
-        }
-        String[] tokens = runtimeName.split("@");
-        if (tokens.length == 2) {
-            return tokens[0];
-        }
-        return "";
+        Long pid = ProcessHandle.current().pid();
+        return pid.toString();
     }
     
     public String getUserName(){

@@ -55,8 +55,8 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
     @Override
     protected void save(Connection con, DexOffer offer) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (transaction_id, account_id, type, " +
-                "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest)" +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")){
+                "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")){
             int i = 0;
             pstmt.setLong(++i, offer.getTransactionId());
             pstmt.setLong(++i, offer.getAccountId());
@@ -68,6 +68,8 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
             pstmt.setInt(++i, offer.getFinishTime());
             pstmt.setByte(++i, (byte) offer.getStatus().ordinal());
             pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setString(++i, offer.getFromAddress());
+            pstmt.setString(++i, offer.getToAddress());
             pstmt.executeUpdate();
         }
     }

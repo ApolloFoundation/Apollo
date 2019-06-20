@@ -6,6 +6,8 @@
 
 APOLLO_JAR="apl-exec"
 
+APLCMDLINE=$(cat ~/.apl-blockchain/apl.cmdline 2>/dev/null)
+
 unamestr=`uname`
 
 
@@ -133,11 +135,11 @@ then
     then
         notify "Starting desktop application..."
         cd bin
-        nohup ./apl-run-desktop.sh 2>&1 >/dev/null
+        nohup ./apl-run-desktop.sh ${APLCMDLINE} 2>&1 >/dev/null
     else
         notify "Starting command line application..."
         cd bin
-        ./apl-start.sh -s
+        ./apl-start.sh ${APLCMDLINE}
     fi
 
 else

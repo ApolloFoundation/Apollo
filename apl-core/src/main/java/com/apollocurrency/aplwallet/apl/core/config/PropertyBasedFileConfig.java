@@ -11,22 +11,24 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
-
+    private final AplCoreRuntime aplCoreRuntime;
     @Inject
-    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder) {
+    public PropertyBasedFileConfig(PropertiesHolder propertiesHolder, AplCoreRuntime aplCoreRuntime) {
         this.propertiesHolder = propertiesHolder;
+        this.aplCoreRuntime=aplCoreRuntime;
     }
 
     @Produces
     @Named("keystoreDirPath")
     public Path getKeystoreDirFilePath() {
-        return AplCoreRuntime.getInstance().getVaultKeystoreDir().toAbsolutePath();
+        return aplCoreRuntime.getVaultKeystoreDir().toAbsolutePath();
     }
 
 
