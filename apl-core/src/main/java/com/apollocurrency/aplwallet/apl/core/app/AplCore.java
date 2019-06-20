@@ -77,7 +77,6 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(EpochTime.class).get();
     private final PropertiesHolder propertiesHolder;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
@@ -119,11 +118,12 @@ public final class AplCore {
     }
 
     public void shutdown() {
-        LOG.info("Shutting down...");        
+        LOG.info("Shutting down...");
         AddOns.shutdown();
         API.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
+
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
@@ -134,7 +134,7 @@ public final class AplCore {
 
         if (databaseManager != null) {
             databaseManager.shutdown();
-            LOG.info("blockchainProcessor Shutdown...");
+            LOG.info("databaseManager Shutdown...");
         }
                 
         LOG.info("transport interaction service shutdown...");
