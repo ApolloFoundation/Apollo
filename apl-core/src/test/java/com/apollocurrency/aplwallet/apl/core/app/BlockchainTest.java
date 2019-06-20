@@ -1,10 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_13_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_2_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_4_ID;
@@ -13,6 +15,7 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_9_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_ID;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -433,6 +436,15 @@ class BlockchainTest {
         List<Long> blockIds = List.of(BLOCK_10_ID, BLOCK_11_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_9_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_10, btd.BLOCK_11);
+        compareBlocks(expectedBlocks, blocks);
+    }
+
+    @Test
+    void testGetBlocksAfterFromShardDataSource() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
+        List<Long> blockIds = List.of(BLOCK_0_ID, BLOCK_1_ID);
+        List<Block> blocks = blockchain.getBlocksAfter(GENESIS_BLOCK_ID, blockIds);
+        List<Block> expectedBlocks = List.of(btd.BLOCK_0, btd.BLOCK_1);
         compareBlocks(expectedBlocks, blocks);
     }
 

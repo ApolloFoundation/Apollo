@@ -41,4 +41,7 @@ public interface CommandParamInfo {
      */
     boolean isZipCrcStored();
 
+    default Long[] getGeneratorIds() {
+        return null;
+    }
 }

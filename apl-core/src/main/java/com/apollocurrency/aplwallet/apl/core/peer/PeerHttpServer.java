@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.net.Inet4Address;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -27,12 +26,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * Peer HTTP server that handles http requests and PeerWebSockets

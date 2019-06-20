@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetPeers;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetShardingInfo;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -116,6 +117,9 @@ public final class PeerServlet extends WebSocketServlet {
                 break;
             case "getFileChunk":
                 res = new GetFileChunk();
+                break; 
+            case "getShardingInfo":
+                res = new GetShardingInfo();
                 break;                
         }
         return res;

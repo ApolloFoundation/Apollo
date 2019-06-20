@@ -34,7 +34,7 @@ public class ZipArchiveCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
         // in reality the zip CRC is computed inside ShardEngineImpl
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(null); // for compatibility only !
+        CommandParamInfo paramInfo = new CommandParamInfoImpl();
         return shardEngine.archiveCsv(paramInfo);
     }
 

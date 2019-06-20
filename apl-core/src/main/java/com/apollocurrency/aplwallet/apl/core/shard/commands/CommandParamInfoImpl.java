@@ -21,6 +21,7 @@ public class CommandParamInfoImpl implements CommandParamInfo {
     private byte[] shardHash; // either 'merkle tree hash' or 'zip CRC'
     private ExcludeInfo excludeInfo; // 'phased transaction' db_id to be excluded from all processing (no copy, delete, export)
     private boolean isZipCrcStored = false; // either ZIP or merkle tree hash
+    private Long[] generatorIds; // 3 generator ids before snapshot block with height offset (-1, -2, -3)
 
     public CommandParamInfoImpl() {
     }
@@ -36,6 +37,10 @@ public class CommandParamInfoImpl implements CommandParamInfo {
     public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, byte[] shardHash, ExcludeInfo excludeInfos) {
         this(tableNameList, commitBatchSize, snapshotBlockHeight, excludeInfos);
         this.shardHash = shardHash;
+    }
+
+    public CommandParamInfoImpl(Long[] generatorIds) {
+        this.generatorIds = generatorIds;
     }
 
     @Override
@@ -89,6 +94,11 @@ public class CommandParamInfoImpl implements CommandParamInfo {
 
     public byte[] getShardHash() {
         return shardHash;
+    }
+
+    @Override
+    public Long[] getGeneratorIds() {
+        return generatorIds;
     }
 
     public void setShardHash(byte[] shardHash) {

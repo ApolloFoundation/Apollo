@@ -14,6 +14,7 @@ public class Shard {
     private Long shardState;
     private Integer shardHeight;
     private byte[] zipHashCrc;
+    private long[] generatorIds;
 
     public Shard() {
     }
@@ -22,7 +23,9 @@ public class Shard {
         byte[] shardHashCopy = Arrays.copyOf(shardHash, shardHash.length);
         byte[] shardZipHashCrcCopy = zipHashCrc != null && zipHashCrc.length > 0 ?
                 Arrays.copyOf(zipHashCrc, zipHashCrc.length) : null;
-        return new Shard(shardId, shardHashCopy, shardState, shardHeight, shardZipHashCrcCopy);
+        long[] generatorIds = this.generatorIds != null && this.generatorIds.length > 0 ?
+                Arrays.copyOf(this.generatorIds, this.generatorIds.length) : Convert.EMPTY_LONG;
+        return new Shard(shardId, shardHashCopy, shardState, shardHeight, shardZipHashCrcCopy, generatorIds);
     }
 
     public Shard(long id, Integer shardHeight) {
@@ -48,12 +51,14 @@ public class Shard {
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight, byte[] zipHashCrc) {
+    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight,
+                 byte[] zipHashCrc, long[] generatorIds) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
         this.shardHeight = shardHeight;
         this.zipHashCrc = zipHashCrc;
+        this.generatorIds = generatorIds;
     }
 
     @Override
@@ -65,7 +70,8 @@ public class Shard {
                 Arrays.equals(shardHash, shard.shardHash) &&
                 Objects.equals(shardState, shard.shardState) &&
                 Objects.equals(shardHeight, shard.shardHeight) &&
-                Arrays.equals(zipHashCrc, shard.zipHashCrc);
+                Arrays.equals(zipHashCrc, shard.zipHashCrc) &&
+                Arrays.equals(generatorIds, shard.generatorIds);
     }
 
     @Override
@@ -73,6 +79,7 @@ public class Shard {
         int result = Objects.hash(shardId, shardState, shardHeight);
         result = 31 * result + Arrays.hashCode(shardHash);
         result = 31 * result + Arrays.hashCode(zipHashCrc);
+        result = 31 * result + Arrays.hashCode(generatorIds);
         return result;
     }
 
@@ -116,6 +123,14 @@ public class Shard {
         this.zipHashCrc = zipHashCrc;
     }
 
+    public long[] getGeneratorIds() {
+        return generatorIds;
+    }
+
+    public void setGeneratorIds(long[] generatorIds) {
+        this.generatorIds = generatorIds;
+    }
+
     public static ShardBuilder builder() {
         return new ShardBuilder();
     }
@@ -126,6 +141,7 @@ public class Shard {
         private Long shardState;
         private Integer shardHeight;
         private byte[] zipHashCrc;
+        private long[] generatorIds;
 
         private ShardBuilder() {
         }
@@ -155,8 +171,13 @@ public class Shard {
             return this;
         }
 
+        public ShardBuilder generatorIds(long[] generatorIds) {
+            this.generatorIds= generatorIds;
+            return this;
+        }
+
         public Shard build() {
-            return new Shard(shardId, shardHash, shardState, shardHeight, zipHashCrc);
+            return new Shard(shardId, shardHash, shardState, shardHeight, zipHashCrc, generatorIds);
         }
     }
 
@@ -175,6 +196,11 @@ public class Shard {
         if (zipHashCrc == null) sb.append("null");
         else {
             sb.append('[').append(Convert.toHexString(zipHashCrc)).append(']');
+        }
+        sb.append(", generatorIds=");
+        if (generatorIds == null) sb.append("null");
+        else {
+            sb.append('[').append(generatorIds).append(']');
         }
         sb.append('}');
         return sb.toString();

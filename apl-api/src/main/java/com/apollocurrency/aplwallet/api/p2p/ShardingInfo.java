@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -23,6 +24,9 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ShardingInfo {
-    public List<Shard> shards = new ArrayList<>();    
+    public List<ShardInfo> shards = new ArrayList<>();    
     public List<String> knownPeers = new ArrayList<>();
+    @JsonIgnore
+    //needed for processing only
+    public String source;
 }

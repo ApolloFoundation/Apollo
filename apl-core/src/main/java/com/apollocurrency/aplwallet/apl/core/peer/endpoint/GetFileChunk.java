@@ -3,13 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.api.p2p.FileChunk;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkResonse;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.io.IOException;
 import java.util.Base64;
+
+import com.apollocurrency.aplwallet.api.p2p.FileChunk;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class GetFileChunk extends PeerRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        FileChunkResonse res = new FileChunkResonse();
+        FileChunkResponse res = new FileChunkResponse();
 
         FileChunkRequest fcr = mapper.convertValue(request, FileChunkRequest.class);
         try {

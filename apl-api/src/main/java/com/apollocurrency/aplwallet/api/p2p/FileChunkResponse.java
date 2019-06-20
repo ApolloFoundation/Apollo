@@ -1,28 +1,24 @@
 /*
- * Copyright © 2019 Apollo Foundation
+ * Copyright © 2018 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.Date;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Info about shard
+ *
  * @author alukin@gmail.com
  */
 @Getter @Setter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Shard {
-    public String shardId;
-    public String chainId;
-    public Date created;
-    public Long height;
+public class FileChunkResponse extends BaseP2PResponse {
+    public FileChunk chunk;
 }

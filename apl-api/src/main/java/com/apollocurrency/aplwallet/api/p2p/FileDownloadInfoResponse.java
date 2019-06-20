@@ -19,6 +19,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileDownloadInfoResponse extends BaseP2PResonse{
+public class FileDownloadInfoResponse extends BaseP2PResponse {
     public FileDownloadInfo downloadInfo=new FileDownloadInfo(); 
 }

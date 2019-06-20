@@ -4,13 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.Objects;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import org.slf4j.Logger;
 

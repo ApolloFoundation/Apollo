@@ -17,7 +17,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -26,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -153,7 +153,7 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash) {
+    public MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash, Long[] generatorIds) {
         long start = System.currentTimeMillis();
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
@@ -164,11 +164,14 @@ public class ShardEngineImpl implements ShardEngine {
                     createdShardSource.getDbIdentity().get() : null; // MANDATORY ACTION FOR SUCCESS completion !!
             if (dbVersion instanceof ShardAddConstraintsSchemaVersion
                     || dbVersion instanceof AplDbVersion) {
-                // that code is called wneh 'shard index/constraints' sql class is applied to shard db
+                // that code is called when 'shard index/constraints' sql class is applied to shard db
                 state = SHARD_SCHEMA_FULL;
                 if (shardHash != null && shardHash.length > 0) {
                     // update shard record by merkle tree hash value
                     CommandParamInfo paramInfo = new CommandParamInfoImpl(shardHash);
+                    // save prev generator ids to shard
+                    // TODO: find better place
+                    savePrevGeneratorIds(generatorIds);
                     // main goal is store merkle tree hash
                     updateShardRecord(paramInfo, databaseManager.getDataSource(), state, 1L);
                 }
@@ -637,6 +640,18 @@ public class ShardEngineImpl implements ShardEngine {
         return state;
     }
 
+    private void savePrevGeneratorIds(Long[] ids) {
+        try(Connection con = databaseManager.getDataSource().getConnection();
+        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ? WHERE shard_id = ?")) {
+            DbUtils.setArray(pstmt, 1, ids);
+            pstmt.setLong(2, createdShardId);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private boolean updateShardRecord(CommandParamInfo paramInfo,
                                       TransactionalDataSource sourceDataSource,
                                       MigrateState recoveryStateUpdateInto,
@@ -762,7 +777,8 @@ public class ShardEngineImpl implements ShardEngine {
                 aplAppStatus.durableTaskFinished(durableStatusTaskId, true, "Sharding process has " + state.name());
                 break;
             case COMPLETED:
-                aplAppStatus.durableTaskUpdate(durableStatusTaskId, 99.9, "Sharding process completing successfully !");
+                aplAppStatus.durableTaskFinished(durableStatusTaskId, false, "Sharding process completed successfully !");
+                log.info("Sharding process COMPLETED successfully !");
                 break;
             default:
                 aplAppStatus.durableTaskUpdate(durableStatusTaskId, percentComplete, message);

@@ -137,6 +137,7 @@ class ShardMigrationExecutorTest {
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
             DGSGoodsTable.class,
+            GeneratorIdsExtractor.class,
             PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
@@ -216,7 +217,9 @@ class ShardMigrationExecutorTest {
         ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
         recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         long shardId = shardDao.getNextShardId();
+        long[] dbIdsExclude = new long[]{BlockTestData.BLOCK_9_GENERATOR, BlockTestData.BLOCK_8_GENERATOR, BlockTestData.BLOCK_7_GENERATOR};
         Shard newShard = new Shard(shardId, snapshotBlockHeight);
+        newShard.setGeneratorIds(dbIdsExclude);
         shardDao.saveShard(newShard);
 
             MigrateState state;
@@ -229,7 +232,7 @@ class ShardMigrationExecutorTest {
 
 //2.        // create shard db with 'initial' schema
             CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                    new ShardInitTableSchemaVersion(), null);
+                    new ShardInitTableSchemaVersion(), null, null);
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_CREATED, state);
 
@@ -262,13 +265,16 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
             byte[] shardHash = "0123456780".getBytes(); // just an example
             createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                    new ShardAddConstraintsSchemaVersion(), shardHash);
+                    new ShardAddConstraintsSchemaVersion(), shardHash, new Long[]{1L, 2L});
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
+
 
             Shard shard = shardDao.getShardById(shardId);
             assertNotNull(shard);
             assertArrayEquals(shardHash, shard.getShardHash());
+            assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
+
 
 //6-7.      // update secondary block + transaction indexes
             UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(shardEngine, snapshotBlockHeight, excludeInfo);
@@ -319,7 +325,7 @@ class ShardMigrationExecutorTest {
 //14.       // complete shard process
             FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine);
             state = shardMigrationExecutor.executeOperation(finishShardingCommand);
-            assertEquals(COMPLETED, state);
+        assertEquals(COMPLETED, state);
     }
 
     @Test
