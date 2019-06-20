@@ -81,7 +81,7 @@ public class ShardDownloadPresenceObserver {
                 long rowsImported = csvImporter.importCsv(table, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, true);
                 log.debug("Imported '{}' rows = {}", ShardConstants.SHARD_TABLE_NAME, rowsImported);
             } catch (Exception e) {
-                log.error("CSV import error, RETURN.......", e);
+                log.error("CSV import error for '{}', RETURN.......", table, e);
                 return;
             }
         }
@@ -92,7 +92,7 @@ public class ShardDownloadPresenceObserver {
                 long rowsImported = csvImporter.importCsv(table, 100, true);
                 log.debug("Imported '{}' rows = {}", table, rowsImported);
             } catch (Exception e) {
-                log.error("CSV import error, RETURN.......", e);
+                log.error("CSV import error for '{}', RETURN.......", table, e);
                 return;
             }
         }
