@@ -48,10 +48,12 @@ INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_h
 (5471926494854938613        ,X'01c5a131b52099356c899b29addb0476d835ea2de5cc5691'     ,   3500    ,2  ),
 (2083198303623116770        ,X'6ee735c9da0d55af7100c45263a0a6a0920c255a0f65b44f'     ,   8000    ,0  ),
 (808614188720864902	        ,X'e76354bd861be0705711e0ee2bc0b84d9f0d71b5a4271af6'     ,   8000    ,1  ),
+(100                        ,X'e76354bd861be0705711e0ee2bc0b84d9f0d71b5a4271af1'     ,   400000  ,0  ),
 ;
 INSERT into PUBLIC.SHARD (shard_id, shard_state, shard_hash, shard_height) VALUES
 (1, 100, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 2998 ),
 (2, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 15456),
+(3, 99, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 500000),
 ;
 
 INSERT into version values (279);
