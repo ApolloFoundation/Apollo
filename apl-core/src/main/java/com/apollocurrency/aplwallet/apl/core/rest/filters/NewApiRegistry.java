@@ -37,6 +37,8 @@ public class NewApiRegistry {
         apis.put("blacklistAPIProxyPeer", "/rest/networking/peer/proxyblacklist"); //POST
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
+        apis.put("getAccount", "/rest/accounts/account"); //GET
+
 
         //TODO: add new implemented endpoints
     }

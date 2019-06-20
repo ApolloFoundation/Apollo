@@ -31,7 +31,7 @@ public class RestEasyApplication extends Application  {
         set.add(DexController.class);
         set.add(BackendControlController.class);
         set.add(TransportInteractionController.class);
-
+        set.add(AccountController.class);
 
         //TODO: add all endpoints below
         //swagger openapi endpoint

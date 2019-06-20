@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import com.apollocurrency.aplwallet.api.dto.Account;
+import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
@@ -55,7 +55,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 /**
  * Main Apollo startup class
@@ -254,7 +253,7 @@ public class Apollo {
                 .recursiveScanPackages(Updater.class)
                 .recursiveScanPackages(ServerInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
-                .recursiveScanPackages(Account.class)
+                .recursiveScanPackages(BaseDTO.class)
                 .recursiveScanPackages(TransactionType.class)
                 .recursiveScanPackages(FullTextTrigger.class)
                 .recursiveScanPackages(BlockchainConfig.class)

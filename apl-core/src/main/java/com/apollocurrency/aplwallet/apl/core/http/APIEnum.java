@@ -342,7 +342,7 @@ public enum APIEnum {
     EVENT_WAIT("eventWait", new EventWait()),
     GENERATE_TOKEN("generateToken", new GenerateToken()),
     GENERATE_FILE_TOKEN("generateFileToken", new GenerateFileToken()),
-    GET_ACCOUNT("getAccount", new GetAccount()),
+    @Obsolete GET_ACCOUNT("getAccount", new GetAccount()),
     GET_ACCOUNT_BLOCK_COUNT("getAccountBlockCount", new GetAccountBlockCount()),
     GET_ACCOUNT_BLOCK_IDS("getAccountBlockIds", new GetAccountBlockIds()),
     GET_ACCOUNT_BLOCKS("getAccountBlocks", new GetAccountBlocks()),
