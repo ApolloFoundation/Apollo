@@ -311,7 +311,7 @@ class ShardEngineTest {
         assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
         //5.        // create shard db FULL schema + add shard hash info
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash, new Long[]{2L,3L,4L});
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
         Shard shard = shardDao.getShardById(shardId);
