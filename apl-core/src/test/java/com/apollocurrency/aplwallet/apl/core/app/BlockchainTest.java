@@ -430,6 +430,7 @@ class BlockchainTest {
 
     @Test
     void testGetBlocksAfterFromShardDataSource() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         List<Long> blockIds = List.of(BLOCK_0_ID, BLOCK_1_ID);
         List<Block> blocks = blockchain.getBlocksAfter(GENESIS_BLOCK_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_0, btd.BLOCK_1);
