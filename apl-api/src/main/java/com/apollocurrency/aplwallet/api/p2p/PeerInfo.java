@@ -19,7 +19,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PeerInfo extends BaseP2PResonse{
+public class PeerInfo extends BaseP2PResponse {
     /**
      * Application name. Used to check if
      * this application is compatible to other similar applications.

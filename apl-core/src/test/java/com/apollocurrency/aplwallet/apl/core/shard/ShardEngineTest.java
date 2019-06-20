@@ -222,7 +222,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null);
+        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null, null);
         assertEquals(SHARD_SCHEMA_CREATED, state);
     }
 
@@ -232,7 +232,7 @@ class ShardEngineTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), null);
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), null, null);
         assertEquals(SHARD_SCHEMA_FULL, state);
     }
 
@@ -255,8 +255,10 @@ class ShardEngineTest {
         recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         byte[] shardHash = "0123456780".getBytes();
         long shardId = shardDao.getNextShardId();
+        long[] dbIdsExclude = new long[]{BlockTestData.BLOCK_9_GENERATOR, BlockTestData.BLOCK_8_GENERATOR, BlockTestData.BLOCK_7_GENERATOR};
         Shard newShard = new Shard(shardHash, snapshotBlockHeight);
         newShard.setShardId(shardId);
+        newShard.setGeneratorIds(dbIdsExclude);
         shardDao.saveShard(newShard);
 
 //1.        // create main db backup
@@ -265,7 +267,7 @@ class ShardEngineTest {
         assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
 
 //2.        // create shard db with 'initial' schema
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null);
+        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null, null);
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         // checks before COPYING blocks / transactions
@@ -297,13 +299,13 @@ class ShardEngineTest {
         assertEquals(7, count);// transactions in shard db
 
 //5.        // create shard db FULL schema + add shard hash info
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash);
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash, new Long[] {2L,3L,4L});
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
         Shard shard = shardDao.getShardById(shardId);
         assertNotNull(shard);
         assertArrayEquals(shardHash, shard.getShardHash());
-
+        assertArrayEquals(new long[] {2,3,4}, shard.getGeneratorIds());
 
         tableNameList.clear();
         tableNameList.add(BLOCK_INDEX_TABLE_NAME);

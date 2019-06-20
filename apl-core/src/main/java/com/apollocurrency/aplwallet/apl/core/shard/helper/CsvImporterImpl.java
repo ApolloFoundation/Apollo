@@ -6,15 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import org.slf4j.Logger;
-
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -28,9 +22,15 @@ import java.sql.Types;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import org.slf4j.Logger;
 
 /**
  * {@inheritDoc}
@@ -44,11 +44,9 @@ public class CsvImporterImpl implements CsvImporter {
     private Set<String> excludeTables; // skipped tables
 
     @Inject
-//    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
     public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
         Objects.requireNonNull(dataExportPath, "dataExport path is NULL");
         this.dataExportPath = dataExportPath;
-//        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of("genesis_public_key");
     }

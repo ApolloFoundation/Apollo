@@ -38,7 +38,7 @@ public interface ShardEngine {
      * @param shardHash optional for init schema, should be present for FULL schema. It's a shard data HASH
      * @return state enum - MigrateState.SHARD_SCHEMA_CREATED or MigrateState.SHARD_SCHEMA_FULL if success, MigrateState.FAILED otherwise
      */
-    MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash);
+    MigrateState addOrCreateShard(DbVersion dbVersion, byte[] shardHash, Long[] generatorIds);
 
     /**
      * Copy block + transaction data excluding phased transaction into shard db

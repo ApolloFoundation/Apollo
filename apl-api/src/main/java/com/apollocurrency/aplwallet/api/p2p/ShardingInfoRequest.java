@@ -21,4 +21,9 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ShardingInfoRequest  extends BaseP2PRequest{
     public boolean full;
+
+    public ShardingInfoRequest() {
+        requestType="getShardingInfo";
+    }
+    
 }

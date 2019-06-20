@@ -29,7 +29,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "BLOCK_SIGNATURE binary(64) not null, " +
                         "PAYLOAD_HASH binary(32) not null, " +
                         "GENERATOR_ID BIGINT not null, " +
-                        "TIMEOUT INTEGER default 0 not null " +
+                        "TIMEOUT INTEGER default 0 not null" +
                         ")");
             case 2:
                 apply("CREATE TABLE IF NOT EXISTS TRANSACTION (" +

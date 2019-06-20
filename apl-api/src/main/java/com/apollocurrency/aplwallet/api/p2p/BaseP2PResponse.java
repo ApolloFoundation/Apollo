@@ -5,20 +5,19 @@ package com.apollocurrency.aplwallet.api.p2p;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
  *
  * @author alukin@gmail.com
  */
 @Getter @Setter
-@ToString
-@EqualsAndHashCode(callSuper = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileChunkResonse extends BaseP2PResonse{
-    public FileChunk chunk;
+public class BaseP2PResponse {
+    public Integer errorCode=0;
+    public Integer protocol = 1;
+    public String error=null;
 }

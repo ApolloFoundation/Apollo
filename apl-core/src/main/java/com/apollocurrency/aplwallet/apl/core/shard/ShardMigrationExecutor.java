@@ -6,6 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -24,16 +33,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Component for starting sharding process which contains several steps/states.
@@ -51,6 +52,7 @@ public class ShardMigrationExecutor {
     private BlockIndexDao blockIndexDao;
     private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
     private DerivedTablesRegistry derivedTablesRegistry;
+    private GeneratorIdsExtractor generatorIdsExtractor;
     private volatile boolean backupDb;
 
     public boolean backupDb() {
@@ -67,6 +69,7 @@ public class ShardMigrationExecutor {
                                   ShardHashCalculator shardHashCalculator,
                                   BlockIndexDao blockIndexDao,
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
+                                  GeneratorIdsExtractor generatorIdsExtractor,
                                   DerivedTablesRegistry registry,
                                   @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
@@ -76,6 +79,7 @@ public class ShardMigrationExecutor {
         this.excludedTransactionDbIdExtractor = Objects.requireNonNull(excludedTransactionDbIdExtractor, "exluded transaction db_id extractor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(registry, "derived table registry is null");
         this.backupDb = backupDb;
+        this.generatorIdsExtractor = Objects.requireNonNull(generatorIdsExtractor);
     }
 
     @Transactional
@@ -87,7 +91,7 @@ public class ShardMigrationExecutor {
         }
 
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardEngine,
-                new ShardInitTableSchemaVersion(), /*hash should be null here*/ null);
+                new ShardInitTableSchemaVersion(), /*hash should be null here*/ null, null);
         this.addOperation(createShardSchemaCommand);
         Set<Long> dbIds = new HashSet<>(excludedTransactionDbIdExtractor.getDbIds(height));
         CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, height, dbIds);
@@ -98,8 +102,9 @@ public class ShardMigrationExecutor {
             throw new IllegalStateException("Cannot calculate shard hash");
         }
         log.debug("SHARD HASH = {}", hash.length);
+        Long[] generatorIds = Convert.toObjectArray(generatorIdsExtractor.extractGeneratorIdsBefore(height, 3));
         CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardEngine,
-                new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash);
+                new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, generatorIds);
         this.addOperation(createShardConstraintsCommand);
 
 //        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
@@ -158,7 +163,7 @@ public class ShardMigrationExecutor {
             log.debug("After execute step {} = '{}' before Fire Event...", dataMigrateOperation, state.name());
             migrateStateEvent.select(literal(state)).fire(state);
             if (state == MigrateState.FAILED) {
-                log.warn("FAILED sharding...", dataMigrateOperation);
+                log.warn("{} FAILED sharding...", dataMigrateOperation);
                 break;
             }
         }
