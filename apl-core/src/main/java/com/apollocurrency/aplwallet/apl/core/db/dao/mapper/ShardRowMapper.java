@@ -24,7 +24,7 @@ public class ShardRowMapper implements RowMapper<Shard> {
                 .shardState(rs.getLong("shard_state"))
                 .shardHeight(rs.getInt("shard_height"))
                 .zipHashCrc(rs.getBytes("zip_hash_crc"))
-                .generatorIds(generatorIds == null ? Convert.EMPTY_LONG : Convert.toArray(generatorIds))
+                .generatorIds(Convert.toArray(generatorIds)) // should not be empty
                 .build();
     }
 }

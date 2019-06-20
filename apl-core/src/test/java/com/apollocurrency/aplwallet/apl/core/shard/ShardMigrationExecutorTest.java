@@ -218,7 +218,9 @@ class ShardMigrationExecutorTest {
         ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
         recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         long shardId = shardDao.getNextShardId();
+        long[] dbIdsExclude = new long[]{BlockTestData.BLOCK_9_GENERATOR, BlockTestData.BLOCK_8_GENERATOR, BlockTestData.BLOCK_7_GENERATOR};
         Shard newShard = new Shard(shardId, snapshotBlockHeight);
+        newShard.setGeneratorIds(dbIdsExclude);
         shardDao.saveShard(newShard);
 
             MigrateState state;

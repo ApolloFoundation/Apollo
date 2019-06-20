@@ -111,30 +111,36 @@ public final class Genesis {
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadGenesisAccountsJSON());
     }
 
-    static void apply() {
+    static void apply(boolean loadOnlyPublicKeys) {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
         blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.reset();
         TransactionalDataSource dataSource = lookupDataSource();
-        int count = 0;
-        JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-
-        LOG.debug("Loading public keys [{}]...", publicKeys.size());
-        aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
-        for (Object jsonPublicKey : publicKeys) {
-            byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
-            Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
-            account.apply(publicKey, true);
-            if (count++ % 100 == 0) {
-                dataSource.commit(false);
-            }
-            if (publicKeys.size() > 20000 && count % 10000 == 0) {
-                String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
-                aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/publicKeys.size()*1.0)*50, message);
-            }
+        // load 'public Keys' from JSON only
+        JSONArray publicKeys = loadPublicKeys(dataSource);
+        if (loadOnlyPublicKeys) {
+            aplAppStatus.durableTaskFinished(genesisTaskId, false, "Loading public keys");
+            return;
         }
+        // load 'balances' from JSON only
+        long total = loadBalances(dataSource, publicKeys);
+
+        long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        if (total > maxBalanceATM) {
+            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
+        }
+        String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
+        Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
+        creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
+        creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
+        genesisAccountsJSON = null;
+        aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
+    }
+
+    private static long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {
+        int count;
         LOG.debug("Loaded " + publicKeys.size() + " public keys");
         count = 0;
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
@@ -153,19 +159,31 @@ public final class Genesis {
                 aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/balances.size()*1.0)*50, message);
             }
         }
-        long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
-        if (total > maxBalanceATM) {
-            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
-        }
-        String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
-        creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
-        creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
-        genesisAccountsJSON = null;
-        aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
+        return total;
     }
 
-        public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
+    private static JSONArray loadPublicKeys(TransactionalDataSource dataSource) {
+        int count = 0;
+        JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
+
+        LOG.debug("Loading public keys [{}]...", publicKeys.size());
+        aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
+        for (Object jsonPublicKey : publicKeys) {
+            byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
+            Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
+            account.apply(publicKey, true);
+            if (count++ % 100 == 0) {
+                dataSource.commit(false);
+            }
+            if (publicKeys.size() > 20000 && count % 10000 == 0) {
+                String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
+                aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/publicKeys.size()*1.0)*50, message);
+            }
+        }
+        return publicKeys;
+    }
+
+    public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
             
             // Original line below:
              String path = configDirProvider.getConfigDirectoryName()+"/"+blockchainConfig.getChain().getGenesisLocation();

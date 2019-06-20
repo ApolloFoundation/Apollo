@@ -255,8 +255,10 @@ class ShardEngineTest {
         recoveryDao.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         byte[] shardHash = "0123456780".getBytes();
         long shardId = shardDao.getNextShardId();
+        long[] dbIdsExclude = new long[]{BlockTestData.BLOCK_9_GENERATOR, BlockTestData.BLOCK_8_GENERATOR, BlockTestData.BLOCK_7_GENERATOR};
         Shard newShard = new Shard(shardHash, snapshotBlockHeight);
         newShard.setShardId(shardId);
+        newShard.setGeneratorIds(dbIdsExclude);
         shardDao.saveShard(newShard);
 
 //1.        // create main db backup

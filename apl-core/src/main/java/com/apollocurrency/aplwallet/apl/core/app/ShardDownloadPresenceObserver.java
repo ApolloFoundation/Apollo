@@ -70,7 +70,7 @@ public class ShardDownloadPresenceObserver {
         log.debug("Try unpack file name '{}'", zipInFolder);
         boolean unpackResult = zipComponent.extract(zipFileName + ".zip", csvImporter.getDataExportPath().toString());
         log.debug("Zip is unpacked = {}", unpackResult);
-        Genesis.apply(); // import public data - genesis public Keys + balances
+        Genesis.apply(true); // import genesis public Keys ONLY (NO balances)
 
         // import additional tables
         List<String> tables = List.of(ShardConstants.SHARD_TABLE_NAME,
@@ -115,7 +115,7 @@ public class ShardDownloadPresenceObserver {
             addBlock(dataSource, genesisBlock);
             long initialBlockId = genesisBlock.getId();
             log.debug("Generated Genesis block with Id = {}", initialBlockId);
-            Genesis.apply();
+            Genesis.apply(false);
             for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
                 table.createSearchIndex(con);
             }
