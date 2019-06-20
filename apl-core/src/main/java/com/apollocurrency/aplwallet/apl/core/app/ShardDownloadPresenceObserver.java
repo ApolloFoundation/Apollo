@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Path;
@@ -63,7 +63,7 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
-    public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.PRESENT) ShardPresentData shardPresentData) {
+    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.PRESENT) ShardPresentData shardPresentData) {
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
         String zipFileName = shardPresentData.getFileIdValue();
         Path zipInFolder = csvImporter.getDataExportPath().resolve(zipFileName + ".zip").toAbsolutePath();
@@ -105,7 +105,7 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData not used actually
      */
-    public void onNoShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.NO_SHARD) ShardPresentData shardPresentData) {
+    public void onNoShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.NO_SHARD) ShardPresentData shardPresentData) {
         // start adding old Genesis Data
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
