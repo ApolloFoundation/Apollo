@@ -68,6 +68,10 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public boolean storeSecretStorage() {
+        if(StringUtils.isBlank(privateKey)){
+            return false;
+        }
+
         SecureStorage secureStore;
         try {
             secureStore = collectAllDataToTempStore();
@@ -80,7 +84,9 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public boolean restoreSecretStorage() {
-        Objects.requireNonNull(privateKey);
+        if(StringUtils.isBlank(privateKey)){
+            return false;
+        }
 
         SecureStorage fbWallet = SecureStorage.get(privateKey, secureStoragePath.toString());
         fbWallet.get(privateKey, secureStoragePath.toString());
