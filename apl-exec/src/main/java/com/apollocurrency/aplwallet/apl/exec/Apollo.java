@@ -75,7 +75,7 @@ import javax.inject.Singleton;
  *
  * @author alukin@gmail.com
  */
-@Singleton
+// @Singleton
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE="apl.pid";
