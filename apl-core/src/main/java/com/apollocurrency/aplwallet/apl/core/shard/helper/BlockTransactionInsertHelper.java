@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Set;
 
 /**
  * Helper class for selecting Table data from one Db and inserting those data into another DB.
@@ -67,19 +68,19 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             }
         }
 
+
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
         paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
-
         long startSelect = System.currentTimeMillis();
-
+        Set<Long> exludeDbIds = operationParams.excludeInfo != null ? operationParams.excludeInfo.getNotCopyDbIds() : Set.of();
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             // select loop
             do {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, targetConnect, operationParams));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, targetConnect, operationParams, exludeDbIds));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
@@ -93,7 +94,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
 
     protected boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
                                       Connection sourceConnect, Connection targetConnect,
-                                      TableOperationParams operationParams)
+                                      TableOperationParams operationParams, Set<Long> exludeDbIds)
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
@@ -107,6 +108,10 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 extractMetaDataCreateInsert(targetConnect, rs);
                 rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
+                if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) && exludeDbIds.contains(paginateResultWrapper.lowerBoundColumnValue)) {
+                    log.debug("Will skip row with db_id = {}", paginateResultWrapper.lowerBoundColumnValue);
+                    continue;
+                }
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         Object object = rs.getObject(i + 1);

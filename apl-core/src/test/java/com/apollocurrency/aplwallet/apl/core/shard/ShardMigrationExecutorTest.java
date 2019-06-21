@@ -28,16 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -72,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
@@ -105,6 +96,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+import javax.enterprise.inject.spi.Bean;
+import javax.inject.Inject;
 
 @EnableWeld
 class ShardMigrationExecutorTest {
@@ -244,13 +243,14 @@ class ShardMigrationExecutorTest {
             assertEquals(14, count); // total transactions in main db
 
             TransactionTestData td = new TransactionTestData();
-            Set<Long> dbIds = new HashSet<>();
-            dbIds.add(td.DB_ID_0);
-            dbIds.add(td.DB_ID_2);
-            dbIds.add(td.DB_ID_5);
+        ExcludeInfo excludeInfo = new ExcludeInfo(
+                List.of(new TransactionDbInfo(td.DB_ID_0, td.TRANSACTION_0.getId())),
+                List.of(new TransactionDbInfo(td.DB_ID_2, td.TRANSACTION_2.getId())),
+                List.of(new TransactionDbInfo(td.DB_ID_5, td.TRANSACTION_5.getId()))
+        );
 
 //3-4.      // copy block + transaction data from main db into shard
-            CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, snapshotBlockHeight, dbIds);
+            CopyDataCommand copyDataCommand = new CopyDataCommand(shardEngine, snapshotBlockHeight, excludeInfo);
             state = shardMigrationExecutor.executeOperation(copyDataCommand);
             assertEquals(DATA_COPY_TO_SHARD_FINISHED, state);
 
@@ -260,7 +260,7 @@ class ShardMigrationExecutorTest {
             assertEquals(8, count); // blocks in shard db
             shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(7, count);// transactions in shard db
+            assertEquals(5, count);// transactions in shard db
 
 //5.        // create shard db FULL schema
             byte[] shardHash = "0123456780".getBytes(); // just an example
@@ -277,7 +277,7 @@ class ShardMigrationExecutorTest {
 
 
 //6-7.      // update secondary block + transaction indexes
-            UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(shardEngine, snapshotBlockHeight, dbIds);
+            UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand(shardEngine, snapshotBlockHeight, excludeInfo);
             state = shardMigrationExecutor.executeOperation(updateSecondaryIndexCommand);
             assertEquals(SECONDARY_INDEX_FINISHED, state);
 
@@ -286,7 +286,7 @@ class ShardMigrationExecutorTest {
             // should be 8 but prev shard already exist and grabbed our genesis block
             assertEquals(7, blockIndexCount);
             long trIndexCount = transactionIndexDao.countTransactionIndexByShardId(4L);
-            assertEquals(7, trIndexCount);
+            assertEquals(5, trIndexCount);
 
             Transaction tx = blockchain.getTransaction(td.TRANSACTION_2.getId());
             assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
@@ -294,7 +294,7 @@ class ShardMigrationExecutorTest {
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
         List<String> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME);
 
-        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, dbIds);
+        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, excludeInfo);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);
             assertEquals(CSV_EXPORT_FINISHED, state);
 
@@ -304,7 +304,7 @@ class ShardMigrationExecutorTest {
             assertEquals(ZIP_ARCHIVE_FINISHED, state);
 
 //12-13.    // delete block + transaction from main db
-            DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(shardEngine, snapshotBlockHeight, dbIds);
+            DeleteCopiedDataCommand deleteCopiedDataCommand = new DeleteCopiedDataCommand(shardEngine, snapshotBlockHeight, excludeInfo);
             state = shardMigrationExecutor.executeOperation(deleteCopiedDataCommand);
             assertEquals(DATA_REMOVED_FROM_MAIN, state);
 
@@ -312,7 +312,7 @@ class ShardMigrationExecutorTest {
             count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
             assertEquals(6, count); // total blocks left in main db
             count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
-            assertEquals(10, count); // total transactions left in main db
+            assertEquals(9, count); // total transactions left in main db
 
             shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
@@ -320,7 +320,7 @@ class ShardMigrationExecutorTest {
 
             shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
             count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
-            assertEquals(7, count); // transactions in shard
+            assertEquals(5, count); // transactions in shard
 
 //14.       // complete shard process
             FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine);

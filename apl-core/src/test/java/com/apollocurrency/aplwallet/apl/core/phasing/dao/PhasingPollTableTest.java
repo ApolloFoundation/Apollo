@@ -10,15 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -40,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
@@ -57,6 +49,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -171,26 +172,26 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     }
     @Test
     void testGetActivePhasingDbIds() throws SQLException {
-        List<Long> dbIds = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
-        assertEquals(Arrays.asList(ttd.DB_ID_8, ttd.DB_ID_7), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() throws SQLException {
-        List<Long> dbIds = table.getActivePhasedTransactionDbIds(Integer.MAX_VALUE);
-        assertEquals(Arrays.asList(ttd.DB_ID_12, ttd.DB_ID_11, ttd.DB_ID_13), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(Integer.MAX_VALUE);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId()), new TransactionDbInfo(ttd.DB_ID_13, ttd.TRANSACTION_13.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdAllPollsFinished() throws SQLException {
-        List<Long> dbIds = table.getActivePhasedTransactionDbIds(ptd.POLL_0.getHeight() - 1);
-        assertEquals(Collections.emptyList(), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ptd.POLL_0.getHeight() - 1);
+        assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdsWhenNoPollsAtHeight() throws SQLException {
-        List<Long> dbIds = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_0.getHeight());
-        assertEquals(Collections.emptyList(), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_0.getHeight());
+        assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test

@@ -69,7 +69,7 @@ public interface PhasingPollService {
 
     PhasingVote getVote(long phasedTransactionId, long voterId);
 
-    List<Long> getActivePhasedTransactionDbIdsAtHeight(int height);
+    List<TransactionDbInfo> getActivePhasedTransactionDbInfoAtHeight(int height);
 
     long getVoteCount(long phasedTransactionId);
 

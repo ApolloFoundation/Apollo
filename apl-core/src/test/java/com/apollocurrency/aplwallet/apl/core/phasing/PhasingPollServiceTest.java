@@ -124,26 +124,26 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetActivePhasingDbIds() {
-        List<Long> dbIds = service.getActivePhasedTransactionDbIdsAtHeight(ttd.TRANSACTION_8.getHeight() + 1);
-        assertEquals(Arrays.asList(ttd.DB_ID_8, ttd.DB_ID_7), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_8.getHeight() + 1);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() {
-        List<Long> dbIds = service.getActivePhasedTransactionDbIdsAtHeight(ttd.TRANSACTION_12.getHeight() + 1);
-        assertEquals(Arrays.asList(ttd.DB_ID_12, ttd.DB_ID_11), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_12.getHeight() + 1);
+        assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdAllPollsFinished() {
-        List<Long> dbIds = service.getActivePhasedTransactionDbIdsAtHeight(ptd.POLL_0.getHeight() - 1);
-        assertEquals(Collections.emptyList(), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ptd.POLL_0.getHeight() - 1);
+        assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdsWhenNoPollsAtHeight() {
-        List<Long> dbIds = service.getActivePhasedTransactionDbIdsAtHeight(ttd.TRANSACTION_0.getHeight());
-        assertEquals(Collections.emptyList(), dbIds);
+        List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_0.getHeight());
+        assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test

@@ -41,6 +41,7 @@ public class ShardObserver {
     private Event<Boolean> trimEvent;
     private boolean trimDerivedTables;
     private volatile boolean isSharding;
+    private volatile int shardHeight;
 
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
@@ -66,15 +67,18 @@ public class ShardObserver {
         CompletableFuture<Boolean> completableFuture = null;
         if (currentConfig.isShardingEnabled()) {
             int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
-            if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0) {
+            if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0 && shardHeight != minRollbackHeight) {
                 if (!blockchainProcessor.isScanning()) {
                     if (!isSharding) {
+                        isSharding = true;
+                        shardHeight = minRollbackHeight;
                         updateTrimConfig(false);
                         // quick create records for new Shard and Recovery process for later use
                         shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
                         long nextShardId = shardDao.getNextShardId();
                         Shard newShard = new Shard(nextShardId, minRollbackHeight);
                         shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+
                         completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
                                 .thenApply((result) -> {
                                     blockchainProcessor.updateInitialBlockId();
@@ -82,6 +86,7 @@ public class ShardObserver {
                                 })
                                 .handle((result, ex) -> {
                                     updateTrimConfig(true);
+                                    isSharding = false;
                                     return result;
                                 });
                     } else {
@@ -102,7 +107,6 @@ public class ShardObserver {
     }
 
     public boolean performSharding(int minRollbackHeight) {
-        isSharding = true;
         boolean result = false;
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();

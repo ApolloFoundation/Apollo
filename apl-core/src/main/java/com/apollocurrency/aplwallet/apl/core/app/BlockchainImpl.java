@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -321,6 +322,7 @@ public class BlockchainImpl implements Blockchain {
         return blockDao.findBlockAtHeight(height, dataSource);
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public Block getShardInitialBlock() {
@@ -583,6 +585,11 @@ public class BlockchainImpl implements Blockchain {
         return blockDao.getBlockGenerators(startHeight, limit);
     }
 
+    @Override
+    public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
+        return transactionDao.getTransactionsBeforeHeight(height);
+    }
+
     private TransactionalDataSource getDataSourceWithSharding(long blockId) {
         Long shardId = blockIndexDao.getShardIdByBlockId(blockId);
         return getShardDataSourceOrDefault(shardId);
@@ -602,7 +609,7 @@ public class BlockchainImpl implements Blockchain {
 
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
         Long shardId = blockIndexDao.getShardIdByBlockHeight(blockHeight);
-        log.debug("Found shardId {} for block height {}", shardId, blockHeight);
+        log.trace("Found shardId {} for block height {}", shardId, blockHeight);
         return getShardDataSourceOrDefault(shardId);
     }
 

@@ -20,22 +20,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHI
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Supplier;
-
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
@@ -65,6 +49,21 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
+
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * {@inheritDoc}
@@ -264,11 +263,11 @@ public class ShardEngineImpl implements ShardEngine {
                 currentTable = tableName;
 
                 BatchedPaginationOperation paginationOperationHelper = helperFactory.createSelectInsertHelper(tableName);
-                    Set<Long> dbIdExclusionSet = paramInfo.getDbIdExclusionSet();
+                ExcludeInfo excludeInfo = paramInfo.getExcludeInfo();
                     TableOperationParams operationParams = new TableOperationParams(
                             tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
                             createdShardSource.getDbIdentity().isPresent() ?
-                                    createdShardSource.getDbIdentity().get() : null, Optional.ofNullable(dbIdExclusionSet));
+                                    createdShardSource.getDbIdentity().get() : null, excludeInfo);
 
                 paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao);// mandatory
 
@@ -304,7 +303,7 @@ public class ShardEngineImpl implements ShardEngine {
                                          BatchedPaginationOperation paginationOperationHelper) throws Exception {
         TableOperationParams operationParams = new TableOperationParams(
                 tableName, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
-                createdShardId, Optional.ofNullable(paramInfo.getDbIdExclusionSet()));
+                createdShardId, paramInfo.getExcludeInfo());
 
         if (paginationOperationHelper == null) { // should never happen from outside code, but better to play safe
             String error = "OperationHelper is NOT PRESENT... Fatal error in sharding code...";
@@ -404,7 +403,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
                             return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                         case ShardConstants.TRANSACTION_TABLE_NAME:
-                            return csvExporter.exportTransactions(paramInfo.getDbIdExclusionSet());
+                            return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         default:

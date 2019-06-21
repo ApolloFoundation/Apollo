@@ -5,9 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
+
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * {@inheritDoc}
@@ -18,23 +19,23 @@ public class CommandParamInfoImpl implements CommandParamInfo {
     private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
     private Integer snapshotBlockHeight = -1;
     private byte[] shardHash; // either 'merkle tree hash' or 'zip CRC'
-    private Set<Long> dbIdExclusionSet; // 'phased transaction' db_id to be excluded from all processing (no copy, delete, export)
+    private ExcludeInfo excludeInfo; // 'phased transaction' db_id to be excluded from all processing (no copy, delete, export)
     private boolean isZipCrcStored = false; // either ZIP or merkle tree hash
     private Long[] generatorIds; // 3 generator ids before snapshot block with height offset (-1, -2, -3)
 
     public CommandParamInfoImpl() {
     }
 
-    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, Set<Long> dbIdExclusionSet) {
+    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, ExcludeInfo excludeInfos) {
         this.shardHash = new byte[0];
         this.tableNameList = tableNameList;
         this.commitBatchSize = commitBatchSize;
         this.snapshotBlockHeight = snapshotBlockHeight;
-        this.dbIdExclusionSet = dbIdExclusionSet == null ? Collections.emptySet() : dbIdExclusionSet;
+        this.excludeInfo = excludeInfos;
     }
 
-    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, byte[] shardHash, Set<Long> dbIdExclusionSet) {
-        this(tableNameList, commitBatchSize, snapshotBlockHeight, dbIdExclusionSet);
+    public CommandParamInfoImpl(List<String> tableNameList, int commitBatchSize, Integer snapshotBlockHeight, byte[] shardHash, ExcludeInfo excludeInfos) {
+        this(tableNameList, commitBatchSize, snapshotBlockHeight, excludeInfos);
         this.shardHash = shardHash;
     }
 
@@ -43,13 +44,13 @@ public class CommandParamInfoImpl implements CommandParamInfo {
     }
 
     @Override
-    public Set<Long> getDbIdExclusionSet() {
-        return dbIdExclusionSet;
+    public ExcludeInfo getExcludeInfo() {
+        return excludeInfo;
     }
 
     @Override
-    public void setDbIdExclusionSet(Set<Long> dbIdExclusionSet) {
-        this.dbIdExclusionSet = dbIdExclusionSet;
+    public void setExcludeInfo(ExcludeInfo excludeInfo) {
+        this.excludeInfo = excludeInfo;
     }
 
     public CommandParamInfoImpl(byte[] shardHash) {

@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import org.slf4j.Logger;
@@ -227,23 +228,23 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<Long> getActivePhasedTransactionDbIds(int height) throws SQLException {
-        List<Long> ids = new ArrayList<>();
+    public List<TransactionDbInfo> getActivePhasedTransactionDbIds(int height) throws SQLException {
+        List<TransactionDbInfo> excludeInfos = new ArrayList<>();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT db_id FROM transaction WHERE id IN " +
+                     "SELECT db_id, id FROM transaction WHERE id IN " +
                          "(SELECT id FROM phasing_poll WHERE height < ? AND id not in " +
                          "(SELECT id FROM phasing_poll_result WHERE height < ?))")) {
             pstmt.setInt(1, height);
             pstmt.setInt(2, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    ids.add(rs.getLong("db_id"));
+                    excludeInfos.add(new TransactionDbInfo(rs.getLong("db_id"), rs.getLong("id")));
                 }
             }
         }
-        return ids;
+        return excludeInfos;
     }
 
     public boolean isTransactionPhased(long id) throws SQLException {
