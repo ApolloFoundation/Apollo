@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -34,7 +35,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,6 @@ public class ShardHashCalculatorImplTest {
     private static final Logger log = getLogger(ShardHashCalculatorImplTest.class);
 
     static final String SHA_256 = "SHA-256";
-    static final byte[] FULL_MEKLE_ROOT = Convert.parseHexString("b87941d4db242065ac84b4b14dd2b35e22d89d7f41272c0a6448a2c1734c444d");
     static final byte[] PARTIAL_MERKLE_ROOT_2_6 =  Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
     static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("da5ad74821dc77fa9fb0f0ddd2e48284fe630fee9bf70f98d7aa38032ddc8f57");
     static final byte[] PARTIAL_MERKLE_ROOT_1_8 =  Convert.parseHexString("3987b0f2fb15fdbe3e815cbdd1ff8f9527d4dc18989ae69bc446ca0b40759a6b");
@@ -69,14 +68,13 @@ public class ShardHashCalculatorImplTest {
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
-                    MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class),
-                    MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class),
+                    MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
+                    MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
+                    MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
                     MockBean.of(mock(NtpTime.class), NtpTime.class)
             ).build();
 
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
     @Inject
     ShardHashCalculator shardHashCalculator;
     BlockTestData td;
@@ -88,40 +86,36 @@ public class ShardHashCalculatorImplTest {
         Mockito.doReturn(SHA_256).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         td = new BlockTestData();
-        blockchain.setLastBlock(td.BLOCK_11);
+        blockchain.setLastBlock(td.LAST_BLOCK);
     }
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
     @Test
     void testCalculateHashForAllBlocks() throws IOException {
+        byte[] expectedFullMerkleRoot = hash(td.BLOCKS);
 
-        byte[] merkleRoot1 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot2 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 1);
-        byte[] merkleRoot3 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.BLOCK_11.getHeight() + 20000);
-        assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot1);
-        assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot2);
-        assertArrayEquals(FULL_MEKLE_ROOT, merkleRoot3);
+        byte[] merkleRoot1 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.LAST_BLOCK.getHeight() + 1);
+        byte[] merkleRoot2 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight() - 100, td.LAST_BLOCK.getHeight() + 200);
+        byte[] merkleRoot3 = shardHashCalculator.calculateHash(td.GENESIS_BLOCK.getHeight(), td.LAST_BLOCK.getHeight() + 20000);
+        assertArrayEquals(expectedFullMerkleRoot, merkleRoot1);
+        assertArrayEquals(expectedFullMerkleRoot, merkleRoot2);
+        assertArrayEquals(expectedFullMerkleRoot, merkleRoot3);
     }
 
-    private void hash(List<Block> blocks) {
+    private byte[] hash(List<Block> blocks) {
         try {
             MerkleTree merkleTree = new MerkleTree(MessageDigest.getInstance(SHA_256));
             blocks.stream().map(Block::getBlockSignature).forEach(merkleTree::appendLeaf);
             merkleTree.appendLeaf(td.GENESIS_BLOCK.getGenerationSignature());
-            byte[] value = merkleTree.getRoot().getValue();
-            log.debug(Convert.toHexString(value));
+            return merkleTree.getRoot().getValue();
         }
         catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
     @Test
     void testCalculateHashWhenNoBlocks() throws IOException {
 
-        byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_11.getHeight() + 1, td.BLOCK_11.getHeight() + 100_000);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(td.LAST_BLOCK.getHeight() + 1, td.LAST_BLOCK.getHeight() + 100_000);
 
         Assertions.assertNull(merkleRoot);
     }
@@ -139,8 +133,7 @@ public class ShardHashCalculatorImplTest {
     }
     @Test
     void testCalculateHashForLastBlocks() throws IOException {
-
-        byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_6.getHeight(), td.BLOCK_11.getHeight() + 1000);
+        byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_6.getHeight(), td.BLOCK_11.getHeight() + 1);
         assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }
     @Test

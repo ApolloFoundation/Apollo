@@ -1,5 +1,14 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+
+import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
@@ -8,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -25,14 +33,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 @Singleton
 public class DexService {
@@ -75,7 +75,7 @@ public class DexService {
         return dexOfferDao.getOffers(dexOfferDBRequest);
     }
 
-    public WalletsBalance getBalances(GetBalancesRequest getBalancesRequest){
+    public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest){
         List<String> eth = getBalancesRequest.ethAddresses;
         List<EthWalletBalanceInfo> ethWalletsBalance = new ArrayList<>();
 

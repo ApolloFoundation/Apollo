@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -29,10 +29,13 @@ import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetDGSGoodsPurchaseCount extends AbstractAPIRequestHandler {
+
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public GetDGSGoodsPurchaseCount() {
         super(new APITag[] {APITag.DGS}, "goods", "withPublicFeedbacksOnly", "completed");
@@ -46,7 +49,7 @@ public final class GetDGSGoodsPurchaseCount extends AbstractAPIRequestHandler {
         final boolean completed = "true".equalsIgnoreCase(req.getParameter("completed"));
 
         JSONObject response = new JSONObject();
-        response.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goodsId, withPublicFeedbacksOnly, completed));
+        response.put("numberOfPurchases", service.getGoodsPurchaseCount(goodsId, withPublicFeedbacksOnly, completed));
         return response;
 
     }

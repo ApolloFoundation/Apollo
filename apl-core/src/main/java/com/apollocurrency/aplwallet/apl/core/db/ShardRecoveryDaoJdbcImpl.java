@@ -27,31 +27,26 @@ import org.slf4j.Logger;
 public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     private static final Logger log = getLogger(ShardRecoveryDaoJdbcImpl.class);
 
-//    private DatabaseManager databaseManager;
     private ShardRecoveryJdbcMapper rowMapper = new ShardRecoveryJdbcMapper();
 
     class ShardRecoveryJdbcMapper {
 
         public ShardRecovery map(ResultSet rs) throws SQLException {
             ShardRecovery recovery = null;
-//            if (rs.next()) {
-                recovery = ShardRecovery.builder()
-                        .shardRecoveryId(rs.getLong("shard_recovery_id"))
-                        .state(rs.getString("state"))
-                        .objectName(rs.getString("object_name"))
-                        .columnName(rs.getString("column_name"))
-                        .lastColumnValue(rs.getLong("last_column_value"))
-                        .processedObject(rs.getString("processed_object"))
-                        .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
-                        .build();
-//            }
+            recovery = ShardRecovery.builder()
+                    .shardRecoveryId(rs.getLong("shard_recovery_id"))
+                    .state(rs.getString("state"))
+                    .objectName(rs.getString("object_name"))
+                    .columnName(rs.getString("column_name"))
+                    .lastColumnValue(rs.getLong("last_column_value"))
+                    .processedObject(rs.getString("processed_object"))
+                    .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
+                    .build();
             return recovery;
         }
     }
 
-//    @Inject
-    public ShardRecoveryDaoJdbcImpl(/*DatabaseManager databaseManager*/) {
-//        this.databaseManager = databaseManager;
+    public ShardRecoveryDaoJdbcImpl() {
     }
 
     public ShardRecovery getShardRecoveryById(Connection con, long shardRecoveryId) {

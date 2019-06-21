@@ -9,8 +9,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
 
 /**
@@ -21,15 +21,20 @@ import org.slf4j.Logger;
 public class CreateShardSchemaCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(CreateShardSchemaCommand.class);
 
-    private DataTransferManagementReceiver dataTransferManagement;
+    private ShardEngine shardEngine;
     private DbVersion dbVersion;
+    private byte[] shardHash; // shardHash can be NULL in one case
+    private Long[] generatorIds;
 
     public CreateShardSchemaCommand(
-            DataTransferManagementReceiver dataTransferManagement,
-            DbVersion dbVersion) {
-        this.dataTransferManagement = Objects.requireNonNull(
-                dataTransferManagement, "dataTransferManagement is NULL");
+            ShardEngine shardEngine,
+            DbVersion dbVersion,
+            byte[] shardHash, Long[] generatorIds) { // shardHash can be NULL
+        this.shardEngine = Objects.requireNonNull(
+                shardEngine, "shardEngine is NULL");
         this.dbVersion = Objects.requireNonNull(dbVersion, "dbVersion is NULL");
+        this.shardHash = shardHash;
+        this.generatorIds = generatorIds;
     }
 
     /**
@@ -38,7 +43,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Create Shard Schema Command execute...");
-        return dataTransferManagement.addOrCreateShard(dbVersion);
+        return shardEngine.addOrCreateShard(dbVersion, shardHash, generatorIds); // shardHash can be NULL or value
     }
 
     @Override

@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
+
 import java.util.List;
-import java.util.Set;
 
 /**
- * Interface command parameters information.
+ * Interface command parameters information. It keeps the info passed to steps.
  *
  * @author yuriy.larin
  */
@@ -30,8 +31,17 @@ public interface CommandParamInfo {
 
     void setShardHash(byte[] shardHash);
 
-    Set<Long> getDbIdExclusionSet();
+    ExcludeInfo getExcludeInfo();
 
-    void setDbIdExclusionSet(Set<Long> dbIdExclusionSet);
+    void setExcludeInfo(ExcludeInfo excludeInfo);
 
+    /**
+     * To check if getShardHash() returns 'merkle tree hash' or 'zip crc hash'
+     * @return true when 'zip crc'
+     */
+    boolean isZipCrcStored();
+
+    default Long[] getGeneratorIds() {
+        return null;
+    }
 }

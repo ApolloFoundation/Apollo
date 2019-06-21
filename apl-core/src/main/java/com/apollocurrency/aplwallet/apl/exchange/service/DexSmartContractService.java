@@ -1,5 +1,13 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_DEFAULT_ADDRESS;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.concurrent.ExecutionException;
+
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
@@ -21,14 +29,6 @@ import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.ExecutionException;
-
-import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_DEFAULT_ADDRESS;
 
 @Singleton
 public class DexSmartContractService {

@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
@@ -33,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -45,6 +48,8 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 public abstract class Messaging extends TransactionType {
+    private static final Logger log = getLogger(Messaging.class);
+
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
@@ -690,7 +695,7 @@ public abstract class Messaging extends TransactionType {
                     if (algorithm != 0 && algorithm != poll.getAlgorithm()) {
                         throw new AplException.NotValidException("Phased transaction " + Long.toUnsignedString(phasedTransactionId) + " is using a different hashedSecretAlgorithm");
                     }
-                    if (hashedSecret == null && !poll.verifySecret(revealedSecret)) {
+                    if (hashedSecret == null && !phasingPollService.verifySecret(poll, revealedSecret)) {
                         throw new AplException.NotValidException("Revealed secret does not match phased transaction hashed secret");
                     }
                     hashedSecret = poll.getHashedSecret();

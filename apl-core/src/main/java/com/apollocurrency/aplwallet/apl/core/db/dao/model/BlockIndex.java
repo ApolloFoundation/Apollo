@@ -6,7 +6,6 @@ import java.util.Objects;
  * Block global secondary index entity.
  */
 public class BlockIndex {
-    private Long shardId;
     private Long blockId;
     private Integer blockHeight;
 
@@ -15,35 +14,25 @@ public class BlockIndex {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BlockIndex that = (BlockIndex) o;
-        return Objects.equals(shardId, that.shardId) &&
-                Objects.equals(blockId, that.blockId) &&
+        return Objects.equals(blockId, that.blockId) &&
                 Objects.equals(blockHeight, that.blockHeight);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(shardId, blockId, blockHeight);
+        return Objects.hash(blockId, blockHeight);
     }
 
     public BlockIndex copy() {
-        return new BlockIndex(shardId, blockId, blockHeight);
+        return new BlockIndex(blockId, blockHeight);
     }
 
     public BlockIndex() {
     }
 
-    public BlockIndex(Long shardId, Long blockId, Integer blockHeight) {
-        this.shardId = shardId;
+    public BlockIndex(Long blockId, Integer blockHeight) {
         this.blockId = blockId;
         this.blockHeight = blockHeight;
-    }
-
-    public Long getShardId() {
-        return shardId;
-    }
-
-    public void setShardId(Long shardId) {
-        this.shardId = shardId;
     }
 
     public Long getBlockId() {
@@ -67,16 +56,10 @@ public class BlockIndex {
     }
 
     public static final class ShardBuilder {
-        private Long shardId;
         private Long blockId;
         private Integer blockHeight;
 
         private ShardBuilder() {
-        }
-
-        public ShardBuilder shardId(Long shardId) {
-            this.shardId = shardId;
-            return this;
         }
 
         public ShardBuilder blockId(Long blockId) {
@@ -90,7 +73,7 @@ public class BlockIndex {
         }
 
         public BlockIndex build() {
-            return new BlockIndex(shardId, blockId, blockHeight);
+            return new BlockIndex(blockId, blockHeight);
         }
     }
 }

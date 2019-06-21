@@ -48,7 +48,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         int size = super.getMySize();
         size += 1;
         size += 32 * recipientPublicKeys.length;
@@ -56,7 +56,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
         buffer.put((byte) recipientPublicKeys.length);
         for (byte[] bytes : recipientPublicKeys) {
@@ -65,7 +65,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
         JSONArray jsonArray = new JSONArray();
         attachment.put("recipientPublicKeys", jsonArray);

@@ -20,6 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
@@ -49,50 +52,16 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_C
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.Search;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,15 +70,53 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
+
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.Search;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();;
+
     private static final int DEFAULT_LAST_INDEX = 250;
 
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
@@ -387,8 +394,8 @@ public final class ParameterParser {
         return getLong(req, "amountATMPerATU", 1L, blockchainConfig.getCurrentConfig().getMaxBalanceATM(), true);
     }
 
-    public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(getUnsignedLong(req, "goods", true));
+    public static DGSGoods getGoods(DGSService dgsService, HttpServletRequest req) throws ParameterException {
+        DGSGoods goods = dgsService.getGoods(getUnsignedLong(req, "goods", true));
         if (goods == null) {
             throw new ParameterException(UNKNOWN_GOODS);
         }
@@ -486,8 +493,8 @@ public final class ParameterParser {
         return null;
     }
 
-    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
+    public static DGSPurchase getPurchase(DGSService service, HttpServletRequest req) throws ParameterException {
+        DGSPurchase purchase = service.getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }
@@ -495,11 +502,17 @@ public final class ParameterParser {
     }
 
     public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
-        String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
+        return getSecretPhrase(req, null, isMandatory);
+    }
+    public static String getSecretPhrase(HttpServletRequest req, String secretPhraseParamName, boolean isMandatory) throws ParameterException {
+        if (StringUtils.isBlank(secretPhraseParamName)) {
+            secretPhraseParamName = "secretPhrase";
+        }
+        String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParamName));
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
        
     }
 
@@ -524,7 +537,7 @@ public final class ParameterParser {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
-        String secretPhrase = getSecretPhrase(req, false);
+        String secretPhrase = getSecretPhrase(req, secretPhraseParam, false);
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
@@ -607,18 +620,18 @@ public final class ParameterParser {
 
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
     }
     public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
         if (StringUtils.isBlank(passphrase) && isMandatory) {
             throw new ParameterException(JSONResponses.missing(passphrase));
         }
-        return API.elGamalDecrypt(passphrase);
+        return elGamal.elGamalDecrypt(passphrase);
     }
 
     public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, parameterName, isMandatory);
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
@@ -680,7 +693,7 @@ public final class ParameterParser {
                 lastIndex = DEFAULT_LAST_INDEX;
             }
         } catch (NumberFormatException ignored) {}
-        if (!API.checkPassword(req)) {
+        if (!apw.checkPassword(req)) {
             int firstIndex = Math.min(getFirstIndex(req), Integer.MAX_VALUE - API.maxRecords + 1);
             lastIndex = Math.min(lastIndex, firstIndex + API.maxRecords - 1);
         }
@@ -886,7 +899,7 @@ public final class ParameterParser {
         }
     }
 
-    public static TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
+    public static TaggedDataUploadAttachment getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -965,7 +978,7 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+        return new TaggedDataUploadAttachment(name, description, tags, type, channel, isText, filename, data);
     }
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
@@ -982,7 +995,7 @@ public final class ParameterParser {
             publicKey = Crypto.getPublicKey(keySeed);
         }
         long accountId = Account.getId(publicKey);
-        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
+        byte[] sharedKey = Crypto.getSharedKey(elGamal.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
 

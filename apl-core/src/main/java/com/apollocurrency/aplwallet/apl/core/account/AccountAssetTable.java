@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +23,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
+public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
     
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
@@ -52,12 +52,12 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     }
 
     @Override
-    protected AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountAsset(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountAsset accountAsset) throws SQLException {
+    public void save(Connection con, AccountAsset accountAsset) throws SQLException {
          try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.accountId);
@@ -79,8 +79,8 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     }
     
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK), dataSource);
+    public void trim(int height) {
+        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
     }
 
     @Override

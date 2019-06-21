@@ -37,18 +37,18 @@ public final class ColoredCoinsAssetDelete extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(assetId);
         buffer.putLong(quantityATU);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("asset", Long.toUnsignedString(assetId));
         attachment.put("quantityATU", quantityATU);
     }

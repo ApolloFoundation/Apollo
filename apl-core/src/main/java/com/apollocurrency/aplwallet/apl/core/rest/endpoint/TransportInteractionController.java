@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.response.ResponseDone;
-import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
-import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.apollocurrency.aplwallet.api.response.ResponseDone;
+import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

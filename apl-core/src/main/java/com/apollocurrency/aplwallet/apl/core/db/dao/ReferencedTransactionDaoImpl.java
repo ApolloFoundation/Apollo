@@ -1,19 +1,23 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ReferencedTransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import org.jdbi.v3.core.Jdbi;
 
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Singleton;
 
 @Singleton
 public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransaction> implements ReferencedTransactionDao {
@@ -33,12 +37,12 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     private static final TransactionRowMapper TRANSACTION_ROW_MAPPER = new TransactionRowMapper();
 
     @Override
-    protected ReferencedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public ReferencedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return REFERENCED_ROW_MAPPER.map(rs, null);
     }
 
     @Override
-    protected void save(Connection con, ReferencedTransaction referencedTransaction) throws SQLException {
+    public void save(Connection con, ReferencedTransaction referencedTransaction) throws SQLException {
         try (PreparedStatement pstm = con.prepareStatement("INSERT INTO referenced_transaction (transaction_id, referenced_transaction_id, height) VALUES (?, ?, ?)")) {
             pstm.setLong(1, referencedTransaction.getTransactionId());
             pstm.setLong(2, referencedTransaction.getReferencedTransactionId());

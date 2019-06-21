@@ -4,36 +4,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URI;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.apollocurrency.aplwallet.api.transport.TransportEventDescriptor;
 import com.apollocurrency.aplwallet.api.transport.TransportStartRequest;
 import com.apollocurrency.aplwallet.api.transport.TransportStatusReply;
 import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.URI;
-import java.util.Random;
-
 import lombok.Getter;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @WebSocket(maxTextMessageSize = 64 * 1024)

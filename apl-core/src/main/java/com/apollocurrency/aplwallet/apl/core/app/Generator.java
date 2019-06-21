@@ -347,7 +347,7 @@ public final class Generator implements Comparable<Generator> {
         if (account == null) {
             effectiveBalance = BigInteger.ZERO;
         } else {
-            effectiveBalance = BigInteger.valueOf(Math.max(account.getEffectiveBalanceAPL(height), 0));
+            effectiveBalance = BigInteger.valueOf(Math.max(account.getEffectiveBalanceAPL(height, true), 0));
         }
         if (effectiveBalance.signum() == 0) {
             hitTime = 0;

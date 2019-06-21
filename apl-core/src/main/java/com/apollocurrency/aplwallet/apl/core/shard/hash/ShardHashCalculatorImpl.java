@@ -92,7 +92,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
             return null;
         }
         long merkleTreeStartTime = System.currentTimeMillis();
-        byte[] prevHash = getPrevShardHash(shardStartHeight - 1);
+        byte[] prevHash = getPrevShardHash(shardStartHeight);
         blockSignatures.add(prevHash);
         byte[] hash = calculateMerkleRoot(blockSignatures);
         log.debug("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);

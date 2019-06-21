@@ -1,5 +1,19 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -35,20 +49,6 @@ import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class EthereumWalletService {

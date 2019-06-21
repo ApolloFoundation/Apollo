@@ -95,7 +95,7 @@ public final class PhasingOnly {
         this.maxDuration = maxDuration;
     }
 
-    PhasingOnly(ResultSet rs, DbKey dbKey) throws SQLException {
+    public PhasingOnly(ResultSet rs, DbKey dbKey) throws SQLException {
         this.accountId = rs.getLong("account_id");
         this.dbKey = dbKey;
         Long[] whitelist = DbUtils.getArray(rs, "whitelist", Long[].class);

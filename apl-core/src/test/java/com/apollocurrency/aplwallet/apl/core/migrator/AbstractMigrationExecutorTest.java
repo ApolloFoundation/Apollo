@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -26,8 +28,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public abstract class AbstractMigrationExecutorTest {
     private final String deleteProp;
@@ -35,7 +40,15 @@ public abstract class AbstractMigrationExecutorTest {
     private final String path;
     private final String pathProp;
     private TemporaryFolderExtension folder;
-
+    private final ChainsConfigHolder chainCoinfig;
+    private Chain chain;
+    private final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");    
+    {
+        chain = mock(Chain.class);
+        when(chain.getChainId()).thenReturn(chainId);
+        chainCoinfig = mock(ChainsConfigHolder.class);
+        when(chainCoinfig.getActiveChain()).thenReturn(chain);        
+    }
     public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp ) {
         this.deleteProp = deleteProp;
         this.migrationProp = migrationProp;
@@ -50,7 +63,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder,chainCoinfig);
         folder = getTempFolder();
     }
 

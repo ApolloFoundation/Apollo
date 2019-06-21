@@ -33,6 +33,8 @@ public class CmdLineArgs {
     //    TODO cleanup apl-default.properties
     @Parameter(names = {"--2fa-dir"}, description = "Load/Save 2FA keys to/form specified directory. Note that this parameter will not work when you do not set apl.store2FAInFileSystem=true in apl-default.properties")
     public String twoFactorAuthDir = "";
+    @Parameter(names = {"--dexp-dir"}, description = "Export/Import CSV data to/form specified directory.")
+    public String dataExportDir = "";
     @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile = "";
     @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
@@ -41,7 +43,7 @@ public class CmdLineArgs {
     public int netIdx=0;
     @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
-    
+
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
     }

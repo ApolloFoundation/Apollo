@@ -30,17 +30,17 @@ public abstract class ColoredCoinsOrderCancellationAttachment extends AbstractAt
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(orderId);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("order", Long.toUnsignedString(orderId));
     }
 

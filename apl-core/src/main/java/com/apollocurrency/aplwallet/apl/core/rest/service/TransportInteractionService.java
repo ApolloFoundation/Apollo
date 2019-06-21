@@ -6,8 +6,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
-import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 
 @Singleton
 public interface TransportInteractionService {

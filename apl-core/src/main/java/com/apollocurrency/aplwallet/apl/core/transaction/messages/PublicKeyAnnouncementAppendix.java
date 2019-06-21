@@ -48,17 +48,17 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 32;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.put(publicKey);
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         json.put("recipientPublicKey", Convert.toHexString(publicKey));
     }
 

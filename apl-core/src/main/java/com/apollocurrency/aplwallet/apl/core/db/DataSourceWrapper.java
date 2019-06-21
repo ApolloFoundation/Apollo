@@ -22,10 +22,19 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.sql.DataSource;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
+
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -38,14 +47,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
-
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
-import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
@@ -165,6 +166,7 @@ public class DataSourceWrapper implements DataSource {
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         config.setLeakDetectionThreshold(120_000); // 2 minutes
         log.debug("Creating DataSource pool, path = {}", dbUrl);
+        updateTransactionTable(config, dbVersion);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
 /*
@@ -191,6 +193,8 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OfferTypeFactory());
         jdbi.registerArgument(new OfferStatusFactory());
+        jdbi.registerArgument(new LongArrayArgumentFactory());
+        jdbi.registerArrayType(long.class, "generatorIds");
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
@@ -204,6 +208,25 @@ public class DataSourceWrapper implements DataSource {
         initialized = true;
         shutdown = false;
         return jdbi;
+    }
+
+    private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
+        if (dbVersion instanceof AplDbVersion) {
+            HikariDataSource dataSource = new HikariDataSource(config);
+            // We should keep this bad code here, to make update for transaction table
+            // Also we will shutdown datasource after update, otherwise - database will be corrupted
+            // TODO find more elegant solution
+            try {
+                Connection connection = dataSource.getConnection();
+                Statement st = connection.createStatement();
+                st.executeUpdate("ALTER TABLE IF EXISTS transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32) DEFAULT NULL");
+                st.execute("SHUTDOWN COMPACT");
+            }
+            catch (SQLException e) {
+                throw new RuntimeException("Unable to add sender_public_key column to transaction table", e);
+            }
+            dataSource.close();
+        }
     }
 
     public void shutdown() {

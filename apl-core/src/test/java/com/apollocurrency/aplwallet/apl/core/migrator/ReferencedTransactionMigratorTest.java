@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -43,8 +44,11 @@ public class ReferencedTransactionMigratorTest {
     DbExtension dbExtension = new DbExtension();
 
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class, BlockchainConfig.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class)
-            .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
+    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class, 
+             BlockchainConfig.class, FullTextConfigImpl.class,
+             DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+             ChainsConfigHolder.class)
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(Mockito.mock(EpochTime.class), EpochTime.class))
             .build();
@@ -56,14 +60,14 @@ public class ReferencedTransactionMigratorTest {
 
     @BeforeEach
     void setUp() {
-        migrator = new ReferencedTransactionMigrator(dbExtension.getDatabaseManger());
+        migrator = new ReferencedTransactionMigrator(dbExtension.getDatabaseManager());
         td = new TransactionTestData();
     }
 
     @Test
     public void testMigrate() throws SQLException {
 
-        try (Connection connection = dbExtension.getDatabaseManger().getDataSource().getConnection();
+        try (Connection connection = dbExtension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("update referenced_transaction set height = -1 where db_id >= 40");
         }

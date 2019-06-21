@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.api.response;
 
 
-import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;

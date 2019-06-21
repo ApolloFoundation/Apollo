@@ -8,8 +8,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.shard.DataTransferManagementReceiver;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
 
 /**
@@ -20,19 +20,12 @@ import org.slf4j.Logger;
 public class FinishShardingCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(FinishShardingCommand.class);
 
-    private DataTransferManagementReceiver dataTransferManagement;
-    private byte[] shardHash;
+    private ShardEngine shardEngine;
 
-    public FinishShardingCommand(DataTransferManagementReceiver dataTransferManagement) {
-        this.dataTransferManagement = Objects.requireNonNull(
-                dataTransferManagement, "dataTransferManagement is NULL");
-    }
 
-    public FinishShardingCommand(DataTransferManagementReceiver dataTransferManagement, byte[] shardHash) {
-        this.dataTransferManagement = Objects.requireNonNull(
-                dataTransferManagement, "dataTransferManagement is NULL");
-        this.shardHash = Objects.requireNonNull(
-                shardHash, "shardHash is NULL");
+    public FinishShardingCommand(ShardEngine shardEngine) {
+        this.shardEngine = Objects.requireNonNull(
+                shardEngine, "shardEngine is NULL");
     }
 
     /**
@@ -41,21 +34,15 @@ public class FinishShardingCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(this.shardHash);
-        return dataTransferManagement.addShardInfo(paramInfo);
+
+        CommandParamInfo paramInfo = new CommandParamInfoImpl();
+
+        return shardEngine.finishShardProcess(paramInfo);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FinishShardingCommand{");
-        sb.append("shardHash=");
-        if (shardHash == null) sb.append("null");
-        else {
-            sb.append('[');
-            sb.append(shardHash.length);
-            sb.append(']');
-        }
-        sb.append('}');
+        final StringBuffer sb = new StringBuffer("FinishShardingCommand");
         return sb.toString();
     }
 }

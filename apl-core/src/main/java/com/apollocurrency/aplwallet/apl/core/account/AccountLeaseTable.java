@@ -8,7 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +19,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
+public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLease> {
     private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
         @Override
@@ -40,12 +41,12 @@ public class AccountLeaseTable extends VersionedEntityDbTable<AccountLease> {
     }
 
     @Override
-    protected AccountLease load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountLease load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountLease(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountLease accountLease) throws SQLException {
+    public void save(Connection con, AccountLease accountLease) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_lease " + "(lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, " + "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest) " + "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountLease.lessorId);

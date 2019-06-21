@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 
 import java.sql.Connection;
@@ -54,12 +54,12 @@ public final class ExchangeRequest {
     private static final EntityDbTable<ExchangeRequest> exchangeRequestTable = new EntityDbTable<ExchangeRequest>("exchange_request", exchangeRequestDbKeyFactory) {
 
         @Override
-        protected ExchangeRequest load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public ExchangeRequest load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new ExchangeRequest(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, ExchangeRequest exchangeRequest) throws SQLException {
+        public void save(Connection con, ExchangeRequest exchangeRequest) throws SQLException {
             exchangeRequest.save(con);
         }
 

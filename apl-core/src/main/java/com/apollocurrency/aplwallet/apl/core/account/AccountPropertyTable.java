@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +18,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty> {
+public class AccountPropertyTable extends VersionedDeletableEntityDbTable<AccountProperty> {
     
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
 
@@ -43,12 +43,12 @@ public class AccountPropertyTable extends VersionedEntityDbTable<AccountProperty
     }
 
     @Override
-    protected AccountProperty load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountProperty load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountProperty(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountProperty accountProperty) throws SQLException {
+    public void save(Connection con, AccountProperty accountProperty) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, value, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountProperty.id);

@@ -48,7 +48,7 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
             hitTime = Long.MAX_VALUE;
             return;
         }
-        effectiveBalanceAPL = Math.max(account.getEffectiveBalanceAPL(height), 0);
+        effectiveBalanceAPL = Math.max(account.getEffectiveBalanceAPL(height, true), 0);
         if (effectiveBalanceAPL == 0) {
             hitTime = Long.MAX_VALUE;
             return;

@@ -8,9 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 public class ConvertTest {
     private static final byte[] EMPTY = new byte[0];
@@ -119,5 +120,12 @@ public class ConvertTest {
         long id = Convert.fullHashToId(HASH);
 
         assertEquals(ID, id);
+    }
+
+    @Test
+    void testListOfLongsToLongArray() {
+        Long[] longs = Convert.toObjectArray(List.of(1L, 2L));
+
+        assertArrayEquals(new Long[] {1L, 2L}, longs);
     }
 }

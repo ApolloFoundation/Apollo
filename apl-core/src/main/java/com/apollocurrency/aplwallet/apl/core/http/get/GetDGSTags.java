@@ -20,18 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -40,7 +42,7 @@ public final class GetDGSTags extends AbstractAPIRequestHandler {
     public GetDGSTags() {
         super(new APITag[] {APITag.DGS}, "inStockOnly", "firstIndex", "lastIndex");
     }
-
+    private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         int firstIndex = ParameterParser.getFirstIndex(req);
@@ -51,8 +53,8 @@ public final class GetDGSTags extends AbstractAPIRequestHandler {
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
 
-        try (DbIterator<DigitalGoodsStore.Tag> tags = inStockOnly
-                ? DigitalGoodsStore.Tag.getInStockTags(firstIndex, lastIndex) : DigitalGoodsStore.Tag.getAllTags(firstIndex, lastIndex)) {
+        try (DbIterator<DGSTag> tags = inStockOnly
+                ? service.getInStockTags(firstIndex, lastIndex) : service.getAllTags(firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.tag(tags.next()));
             }

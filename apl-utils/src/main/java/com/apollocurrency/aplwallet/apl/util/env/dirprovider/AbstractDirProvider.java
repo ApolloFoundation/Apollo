@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
+
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
 import java.nio.file.Path;
@@ -23,7 +26,7 @@ public abstract class AbstractDirProvider implements DirProvider {
     private Path vaultKeystoreDir;
     private Path pidFilePath;
     private Path twoFactorAuthDir;
-
+    private Path dataExportDir; // path to keep exported CSV files
 
     public AbstractDirProvider(String baseDir, String applicationName, UUID chainId) {
         this(baseDir, applicationName, chainId, null);
@@ -45,6 +48,7 @@ public abstract class AbstractDirProvider implements DirProvider {
             this.vaultKeystoreDir = dirLocations.getVaultKeystoreDir();
             this.pidFilePath = dirLocations.getPidFilePath();
             this.twoFactorAuthDir = dirLocations.getTwoFactorAuthDir();
+            this.dataExportDir = dirLocations.getDataExportDir();
         }
     }
 
@@ -79,6 +83,10 @@ public abstract class AbstractDirProvider implements DirProvider {
 
     public void setTwoFactorAuthDir(Path twoFactorAuthDir) {
         this.twoFactorAuthDir = twoFactorAuthDir;
+    }
+
+    public void setDataExportDir(Path dataExportDir) {
+        this.dataExportDir = dataExportDir;
     }
 
     @Override
@@ -126,5 +134,15 @@ public abstract class AbstractDirProvider implements DirProvider {
     @Override
     public Path getFullTextSearchIndexDir() {
         return getDbDir().resolve(applicationName);
+    }
+
+    @Produces
+    @Named("dataExportDir")
+    @Override
+    public Path getDataExportDir() {
+        return dataExportDir == null
+                // by default assign data export folder inside dbDir folder, but can be reassigned
+                ? getDbDir().resolve("apl-blockchain-export-data") // default value
+                : dataExportDir;
     }
 }

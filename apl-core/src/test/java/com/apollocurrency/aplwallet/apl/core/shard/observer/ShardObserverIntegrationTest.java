@@ -13,11 +13,11 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBindi
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -25,7 +25,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.concurrent.CompletionStage;
+import java.util.Properties;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
@@ -38,14 +38,21 @@ public class ShardObserverIntegrationTest {
     ShardRecoveryDao recoveryDao = mock(ShardRecoveryDao.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     ShardDao shardDao = mock(ShardDao.class);
+    PropertiesHolder holder = new PropertiesHolder();
+    {
+        Properties properties = new Properties();
+        properties.put("apl.trimDerivedTables", "true");
+        holder.init(properties);
+    }
 
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class, ShardDao.class, ShardRecoveryDao.class)
+    WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class, ShardDao.class, ShardRecoveryDao.class, PropertyProducer.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(shardMigrationExecutor, ShardMigrationExecutor.class))
             .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class))
             .addBeans(MockBean.of(recoveryDao, ShardRecoveryDao.class))
             .addBeans(MockBean.of(shardDao, ShardDao.class))
+            .addBeans(MockBean.of(holder, PropertiesHolder.class))
             .build();
     @Inject
     Event<Block> blockEvent;

@@ -1,4 +1,19 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exec;
+
+import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -9,14 +24,14 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
+import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -41,9 +56,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +75,7 @@ import javax.inject.Singleton;
  *
  * @author alukin@gmail.com
  */
-@Singleton
+// @Singleton
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE="apl.pid";
@@ -156,7 +168,8 @@ public class Apollo {
                 StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
                 StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir
         );
     }
 
@@ -192,11 +205,12 @@ public class Apollo {
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
-//cheat classloader to get access to package resources        
+//cheat classloader to get access to package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
@@ -216,7 +230,8 @@ public class Apollo {
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
@@ -255,7 +270,9 @@ public class Apollo {
                 .recursiveScanPackages(DerivedTablesRegistry.class)
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
+                .recursiveScanPackages(DirProvider.class)
                 .annotatedDiscoveryMode()
+// we already have it in beans.xml in core
 //                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
@@ -270,8 +287,7 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
-        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.setup(runtimeMode, dirProvider, configDirProvider);
+        aplCoreRuntime = new AplCoreRuntime(runtimeMode);
         
         try {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());

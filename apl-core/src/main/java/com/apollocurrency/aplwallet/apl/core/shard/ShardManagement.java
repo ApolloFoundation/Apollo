@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+
+import java.util.List;
 
 /**
  * Interface for database shard management.
@@ -46,6 +46,14 @@ public interface ShardManagement {
     TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion);
 
     /**
+     * Return already initialized or init and then return transactional datasource for full shard specified by shardId
+     *
+     * @param shardId id of the full shard
+     * @return datasource for full shard if exist, otherwise - null
+     */
+    TransactionalDataSource getOrInitFullShardDataSourceById(long shardId);
+
+    /**
      * Method gives ability to create 'temporary database' file with fully initialized internal schema.
      * The datasource is cached by -1L long value.
      *
@@ -74,4 +82,10 @@ public interface ShardManagement {
      */
     TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion);
 
+
+    /**
+     * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     * @return list of full shard datasources
+     */
+    List<TransactionalDataSource> getFullDatasources();
 }
