@@ -3,24 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
@@ -59,6 +48,9 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -67,8 +59,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Main Apollo startup class
@@ -291,9 +281,9 @@ public class Apollo {
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         
         try {
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
-            app.initUpdater(args.updateAttachmentFile, args.debug > 2);
+            app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
@@ -326,4 +316,21 @@ public class Apollo {
         return null;
     }
 
+
+    public static void shutdown() {
+        try {
+            CDI.current().select(SecureStorageService.class).get().storeSecretStorage();
+        }catch (Exception ex){
+            log.error(ex.getMessage(), ex);
+        }
+
+        try {
+            aplCoreRuntime.shutdown();
+        } catch (Exception ex){
+            log.error(ex.getMessage(), ex);
+        }
+
+
+        Apollo.shutdownWeldContainer();
+    }
 }

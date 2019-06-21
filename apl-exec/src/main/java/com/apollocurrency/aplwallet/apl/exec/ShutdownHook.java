@@ -23,19 +23,6 @@ public class ShutdownHook extends Thread  {
 
     @Override
     public void run() {
-        try {
-            secureStorageService.storeSecretStorage();
-        }catch (Exception ex){
-            LOG.error(ex.getMessage(), ex);
-        }
 
-        try {
-            aplCoreRuntime.shutdown();
-        } catch (Exception ex){
-            LOG.error(ex.getMessage(), ex);
-        }
-
-
-        Apollo.shutdownWeldContainer();
     }
 }

@@ -10,6 +10,8 @@ import com.beust.jcommander.Parameter;
 public class CmdLineArgs {
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
     public int debug = 2;
+    @Parameter(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
+    public boolean debugUpdater;
     @Parameter(names = {"--help", "-h"}, help = true, description = "Print help message")
     public boolean help;
     @Parameter(names = {"--service-mode", "-s"}, help = true, description = "Run in service mode with current system user")
