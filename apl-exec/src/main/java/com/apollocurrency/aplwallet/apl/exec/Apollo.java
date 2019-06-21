@@ -3,6 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
@@ -47,18 +59,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -239,7 +239,8 @@ public class Apollo {
          */
 
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
-        runtimeMode.init();
+        runtimeMode.init(); // instance is NOT PROXIED by CDI !!
+
         //save command line params and PID
         if(!saveStartParams(argv, args.pidFile,configDirProvider)){
             System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
@@ -263,7 +264,6 @@ public class Apollo {
                 .recursiveScanPackages(DirProvider.class)
                 .annotatedDiscoveryMode()
 // we already have it in beans.xml in core
-//                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
@@ -278,10 +278,14 @@ public class Apollo {
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
         dirProvider = CDI.current().select(DirProvider.class).get();
-        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        
+        // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
+        SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
+        // 'runtimeMode' was created explicitly above, so we have to create 'aplCoreRuntime' explicitly again
+        aplCoreRuntime = new AplCoreRuntime(runtimeMode); // explicit instance creation (NOT PROXIED by CDI !!)
+
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
+            // updated shutdown hook explicitly created with instances
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
             /*            if(unzipRes.get()!=true){
@@ -316,21 +320,4 @@ public class Apollo {
         return null;
     }
 
-
-    public static void shutdown() {
-        try {
-            CDI.current().select(SecureStorageService.class).get().storeSecretStorage();
-        }catch (Exception ex){
-            log.error(ex.getMessage(), ex);
-        }
-
-        try {
-            aplCoreRuntime.shutdown();
-        } catch (Exception ex){
-            log.error(ex.getMessage(), ex);
-        }
-
-
-        Apollo.shutdownWeldContainer();
-    }
 }

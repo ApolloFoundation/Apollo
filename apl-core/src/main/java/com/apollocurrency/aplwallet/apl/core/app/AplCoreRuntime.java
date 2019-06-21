@@ -5,18 +5,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +41,14 @@ public class AplCoreRuntime {
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-    
-    @Inject
-    public AplCoreRuntime(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig,PropertiesHolder propertiesHolder ) {
-        this.blockchainConfig = blockchainConfig;
-        this.propertiesHolder = propertiesHolder;
-        this.runtimeMode =runtimeMode;
+
+    // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
+    public AplCoreRuntime(RuntimeMode runtimeMode/*, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder */) {
+//        this.blockchainConfig = blockchainConfig;
+//        this.propertiesHolder = propertiesHolder;
+        propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); // fetch proxied from CDI
+        blockchainConfig = CDI.current().select(BlockchainConfig.class).get(); // fetch proxied from CDI
+        this.runtimeMode = runtimeMode; // NOT proxied by CDI
     }
     
     public void addCoreAndInit(){        
