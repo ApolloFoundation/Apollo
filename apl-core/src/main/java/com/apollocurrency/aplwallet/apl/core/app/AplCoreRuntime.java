@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * TODO: make it injectable singleton
  * @author alukin@gmail.com
  */
-@Vetoed
+
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
 
@@ -42,10 +43,11 @@ public class AplCoreRuntime {
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-
-    public AplCoreRuntime(RuntimeMode runtimeMode) {
-        propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    
+    @Inject
+    public AplCoreRuntime(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig,PropertiesHolder propertiesHolder ) {
+        this.blockchainConfig = blockchainConfig;
+        this.propertiesHolder = propertiesHolder;
         this.runtimeMode =runtimeMode;
     }
     
