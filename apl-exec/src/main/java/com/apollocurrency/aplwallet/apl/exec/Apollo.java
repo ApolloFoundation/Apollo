@@ -279,7 +279,7 @@ public class Apollo {
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
         dirProvider = CDI.current().select(DirProvider.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        
+        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();

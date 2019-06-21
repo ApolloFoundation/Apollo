@@ -6,19 +6,18 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
-import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 
 /**
@@ -27,25 +26,30 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 
+@Singleton
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
 
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
  
-    private final  RuntimeMode runtimeMode;
+    private  RuntimeMode runtimeMode;
 
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
-    private final BlockchainConfig blockchainConfig;
-    private final PropertiesHolder propertiesHolder;
+    private BlockchainConfig blockchainConfig;
+    private PropertiesHolder propertiesHolder;
     
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
     
-    @Inject
-    public AplCoreRuntime(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig,PropertiesHolder propertiesHolder ) {
+
+
+    public AplCoreRuntime( ) {
+    }
+
+    public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder) {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
         this.runtimeMode =runtimeMode;
