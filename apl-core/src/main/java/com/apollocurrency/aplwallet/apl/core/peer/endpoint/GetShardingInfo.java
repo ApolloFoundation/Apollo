@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,11 +12,9 @@ import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
@@ -29,12 +26,14 @@ import org.json.simple.JSONStreamAware;
  */
 @Slf4j
 public class GetShardingInfo extends PeerRequestHandler{
-    @Inject
-    DownloadableFilesManager fm;
-    @Inject @Setter
+
     private ShardDao shardDao;
-    @Inject @Setter
     private ChainsConfigHolder chainsConfig;
+
+    public GetShardingInfo(ShardDao shardDao, ChainsConfigHolder chainsConfig) {
+        this.shardDao = shardDao;
+        this.chainsConfig = chainsConfig;
+    }
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {

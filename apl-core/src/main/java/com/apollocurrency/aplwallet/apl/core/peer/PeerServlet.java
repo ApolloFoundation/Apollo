@@ -20,26 +20,37 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessBlock;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerResponses;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetTransactions;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetMilestoneBlockIds;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetUnconfirmedTransactions;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlockIds;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlocks;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetPeers;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.net.InetSocketAddress;
+
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetMilestoneBlockIds;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlockIds;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetNextBlocks;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetPeers;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetShardingInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetTransactions;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetUnconfirmedTransactions;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerResponses;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessBlock;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -56,27 +67,25 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.net.InetSocketAddress;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static BlockchainProcessor blockchainProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    
-    protected BlockchainProcessor lookupBlockchainProcessor() {
+    private ShardDao shardDao;
+    private ChainsConfigHolder chainsConfig;
+    private DownloadableFilesManager downloadableFilesManager;
+
+    protected BlockchainProcessor lookupComponents() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
+        if (chainsConfig == null) chainsConfig = CDI.current().select(ChainsConfigHolder.class).get();
+        if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
         return blockchainProcessor;
     }  
     
-    static PeerRequestHandler getHandler(String rtype){
+    public PeerRequestHandler getHandler(String rtype) {
+        lookupComponents();
         PeerRequestHandler res = null;
         switch (rtype) {
             case "addPeers":
@@ -113,13 +122,13 @@ public final class PeerServlet extends WebSocketServlet {
                 res = new ProcessTransactions();
                 break;
             case "getFileDownloadInfo":
-                res = new GetFileDownloadInfo();
+                res = new GetFileDownloadInfo(downloadableFilesManager);
                 break;
             case "getFileChunk":
                 res = new GetFileChunk();
                 break; 
             case "getShardingInfo":
-                res = new GetShardingInfo();
+                res = new GetShardingInfo(shardDao, chainsConfig);
                 break;                
         }
         return res;
@@ -285,7 +294,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
-                if (lookupBlockchainProcessor().isDownloading()) {
+                if (lookupComponents().isDownloading()) {
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
