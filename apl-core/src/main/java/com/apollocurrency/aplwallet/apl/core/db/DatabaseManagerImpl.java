@@ -278,13 +278,17 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Override
     public void shutdown() {
-        if (connectedShardDataSourceMap.size() > 0) {
-            connectedShardDataSourceMap.values().stream().forEach(DataSourceWrapper::shutdown);
-        }
-        if (currentTransactionalDataSource != null) {
-            currentTransactionalDataSource.shutdown();
-            currentTransactionalDataSource = null;
-            jdbi = null;
+        try {
+            if (connectedShardDataSourceMap.size() > 0) {
+                connectedShardDataSourceMap.values().stream().forEach(DataSourceWrapper::shutdown);
+            }
+            if (currentTransactionalDataSource != null) {
+                currentTransactionalDataSource.shutdown();
+                currentTransactionalDataSource = null;
+                jdbi = null;
+            }
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
         }
     }
 

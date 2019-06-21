@@ -72,6 +72,7 @@ public class AplCoreRuntime {
         }
         runtimeMode.shutdown();
     }
+
     public static void logSystemProperties() {
         String[] loggedProperties = new String[] {
                 "java.version",

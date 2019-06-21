@@ -86,7 +86,6 @@ public final class AplCore {
     private static volatile boolean shutdown = false;
 
     private Time time;
-
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
@@ -125,11 +124,12 @@ public final class AplCore {
     }
 
     public void shutdown() {
-        LOG.info("Shutting down...");        
+        LOG.info("Shutting down...");
         AddOns.shutdown();
         apiServer.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
+
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
@@ -140,7 +140,7 @@ public final class AplCore {
 
         if (databaseManager != null) {
             databaseManager.shutdown();
-            LOG.info("blockchainProcessor Shutdown...");
+            LOG.info("databaseManager Shutdown...");
         }
 
         if (transportInteractionService != null) {

@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author alukin@gmail.com
  */
+// @Singleton
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE="apl.pid";
@@ -76,7 +77,7 @@ public class Apollo {
             "apl.enablePeerUPnP",
             "apl.enableAPIUPnP"
     );
-        
+
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
@@ -150,15 +151,6 @@ public class Apollo {
         updaterCore.init(attachmentFilePath, debug);
     }
 
-    public static void shutdown() {
-        aplCoreRuntime.shutdown();
-        try {
-            container.shutdown();
-        } catch (IllegalStateException e) {
-            log.error("Weld is stopped");
-        }
-    }
-
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
                 customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
@@ -176,7 +168,7 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
-        
+
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
@@ -287,7 +279,7 @@ public class Apollo {
         aplCoreRuntime = new AplCoreRuntime(runtimeMode);
         
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
@@ -300,6 +292,14 @@ public class Apollo {
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
+        }
+    }
+
+    public static void shutdownWeldContainer(){
+        try {
+            container.shutdown();
+        } catch (Exception ex){
+            log.error(ex.getMessage(), ex);
         }
     }
 

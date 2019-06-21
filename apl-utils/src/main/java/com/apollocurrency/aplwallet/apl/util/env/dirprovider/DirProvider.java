@@ -30,6 +30,11 @@ public interface DirProvider {
     Path getVaultKeystoreDir();
 
     /**
+     * @return path to the directory where current secure storage stored.
+     */
+    Path getSecureStorageDir();
+
+    /**
      * @return path to the directory where current 2fa data stored
      */
     Path get2FADir();

@@ -355,10 +355,12 @@ public final class Peers {
     }
 
     public static void shutdown() {
+
         shutdown = true;
         peerHttpServer.shutdown();
         ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
         ThreadPool.shutdownExecutor("peersService", peersExecutorService, 5);
+
     }
 
     public static void suspend() {

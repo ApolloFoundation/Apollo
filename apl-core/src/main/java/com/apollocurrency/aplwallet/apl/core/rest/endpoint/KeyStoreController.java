@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -19,7 +20,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 
@@ -46,6 +46,7 @@ public class KeyStoreController {
     private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
     private final Helper2FA helper2FA = CDI.current().select(Helper2FA.class).get();
     private PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
     private Integer maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");
 
 
@@ -76,6 +77,9 @@ public class KeyStoreController {
         }
 
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
+        keyStore.setPassphrase(null);
+
+        secureStorageService.addUserPassPhrase(accountId, passphraseStr);
 
         Response.ResponseBuilder response = Response.ok(keyStore.toJSON_v2());
         return response.build();

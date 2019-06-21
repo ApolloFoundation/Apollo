@@ -2,7 +2,7 @@
 # (C) 2019 Apollo Foundation
 # Starts Apollo blockchain in foreground with TOR proxy
 # Required for Linux/MacOs installers.
-TOR_DIST_DIR=tor-browser_en-US
+TOR_DIST_DIR=tor
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
@@ -12,10 +12,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # this can reveal the fact that you are running Apl, however blocks and
 # transactions will be sent over tor only. Requires a tor proxy running
 # at localhost:9050. Set apl.shareMyAddress=false when using tor.
-TOR_DIR=${APL_TOP_DIR}/${TOR_DIST_DIR}
 
+TOR_DIR=${APL_TOP_DIR}/${TOR_DIST_DIR}
+echo Tor dir  = ${TOR_DIR}
 if [ -x ${TOR_DIR} ];  then
-    TOR_CMD="${TOR_DIR}/tor/tor"
+    TOR_CMD="${TOR_DIR}/tor"
 else
   if [[ -n $(type -p tor) ]]
   then
@@ -31,7 +32,7 @@ if [ -z "${TOR_CMD}" ]; then
     echo " it in ${APL_TOP_DIR}"
 else
     echo "Starting tor"
-    $TOR_CMD
+    $TOR_CMD &
     if [ "$?" == 0 ] ; then
       echo "Starting Apollo"
       ${JAVA_CMD} -DsocksProxyHost=localhost -DsocksProxyPort=9050  -jar ${MAIN_JAR}
