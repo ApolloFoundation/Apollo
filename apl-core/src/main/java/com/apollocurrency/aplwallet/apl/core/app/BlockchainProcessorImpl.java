@@ -595,8 +595,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public void shutdown() {
-        ThreadPool.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
-        getMoreBlocks = false;
+        try {
+            ThreadPool.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
+            getMoreBlocks = false;
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+        }
     }
 
     private void addBlock(Block block) {

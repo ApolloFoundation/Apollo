@@ -241,7 +241,11 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     @Override
     public void shutdown() {
-        ftl.shutdown();
+        try {
+            ftl.shutdown();
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
     }
 
     public void reindex(Connection conn, String tableName, String schemaName) throws SQLException {

@@ -46,7 +46,7 @@ public class AplCoreRuntime {
     public AplCoreRuntime(RuntimeMode runtimeMode) {
         propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        this.runtimeMode =runtimeMode;       
+        this.runtimeMode =runtimeMode;
     }
     
     public void addCoreAndInit(){        
@@ -97,7 +97,7 @@ public class AplCoreRuntime {
         LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
         LOG.debug("processId = {}", RuntimeParams.getProcessId());
     } 
-    
+
     public void startMinter() {
         mintworker = new MintWorker(propertiesHolder, blockchainConfig);
         mintworkerThread = new Thread(mintworker);

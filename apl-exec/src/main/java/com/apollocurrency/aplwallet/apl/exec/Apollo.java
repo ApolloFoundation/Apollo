@@ -59,11 +59,23 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * Main Apollo startup class
  *
  * @author alukin@gmail.com
  */
+@Singleton
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE="apl.pid";
@@ -76,7 +88,7 @@ public class Apollo {
             "apl.enablePeerUPnP",
             "apl.enableAPIUPnP"
     );
-        
+
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
@@ -150,15 +162,6 @@ public class Apollo {
         updaterCore.init(attachmentFilePath, debug);
     }
 
-    public static void shutdown() {
-        aplCoreRuntime.shutdown();
-        try {
-            container.shutdown();
-        } catch (IllegalStateException e) {
-            log.error("Weld is stopped");
-        }
-    }
-
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
                 customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
@@ -176,7 +179,7 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
-        
+
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
@@ -208,7 +211,7 @@ public class Apollo {
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
         ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
-        
+
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
@@ -269,7 +272,7 @@ public class Apollo {
                 .recursiveScanPackages(PeerConverter.class)
                 .recursiveScanPackages(DirProvider.class)
                 .annotatedDiscoveryMode()
-// we already have it in beans.xml in core                
+// we already have it in beans.xml in core
 //                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
@@ -287,7 +290,7 @@ public class Apollo {
         aplCoreRuntime = new AplCoreRuntime(runtimeMode);
         
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
@@ -300,6 +303,14 @@ public class Apollo {
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
+        }
+    }
+
+    public static void shutdownWeldContainer(){
+        try {
+            container.shutdown();
+        } catch (Exception ex){
+            log.error(ex.getMessage(), ex);
         }
     }
 

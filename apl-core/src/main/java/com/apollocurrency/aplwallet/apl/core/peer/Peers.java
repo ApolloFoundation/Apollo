@@ -147,7 +147,7 @@ public final class Peers {
 
     // used by threads so shoudl be ConcurrentMap
     static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
-//    
+//
 //    private static final ConcurrentMap<String, String> selfAnnouncedAddresses = new ConcurrentHashMap<>();
 //
 //    static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
@@ -180,7 +180,7 @@ public final class Peers {
         if (peerHttpServer.getMyExtAddress() != null) {
                 PeerAddress pa = peerHttpServer.getMyExtAddress();
                 myHost = pa.getHost();
-                myPort = pa.getPort();            
+                myPort = pa.getPort();
         }
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
         if (myHallmark != null && Peers.myHallmark.length() > 0) {
@@ -281,7 +281,7 @@ public final class Peers {
         PeerInfo pi = new PeerInfo();
         List<Peer.Service> servicesList = new ArrayList<>();
         PeerAddress myExtAddress = peerHttpServer.getMyExtAddress();
-        
+
         if ( myExtAddress!= null) {
             String host = myExtAddress.getHost();
             int port = myExtAddress.getPort();
@@ -293,7 +293,7 @@ public final class Peers {
         }else{
             LOG.debug("Peer external address is NOT SET");
         }
-        
+
         if (myHallmark != null && myHallmark.length() > 0) {
             pi.hallmark = myHallmark;
             servicesList.add(Peer.Service.HALLMARK);
@@ -355,10 +355,18 @@ public final class Peers {
     }
 
     public static void shutdown() {
-        shutdown = true;
-        peerHttpServer.shutdown();
-        ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
-        ThreadPool.shutdownExecutor("peersService", peersExecutorService, 5);
+        try {
+            shutdown = true;
+            peerHttpServer.shutdown();
+            ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
+        try {
+            ThreadPool.shutdownExecutor("peersService", peersService, 5);
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
     }
 
     public static void suspend() {
@@ -541,7 +549,7 @@ public final class Peers {
                     oldPeer = peers.remove(oldPeer);
                     if (oldPeer != null) {
                        notifyListeners(oldPeer, Event.REMOVE);
-                    }                    
+                    }
                 } catch (MalformedURLException | UnknownHostException ex) {
                     LOG.warn("Wrong announces address: " + newAnnouncedAddress, ex);
                 }

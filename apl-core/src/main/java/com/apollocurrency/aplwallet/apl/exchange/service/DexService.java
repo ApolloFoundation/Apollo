@@ -13,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -41,18 +43,18 @@ public class DexService {
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
     private TransactionProcessorImpl transactionProcessor;
-    private DexOfferTransactionCreator dexOfferTransactionCreator;
+    private SecureStorageService secureStorageService;
 
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
-                      DexOfferTransactionCreator dexOfferTransactionCreator, DexSmartContractService dexSmartContractService) {
+                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
-        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
         this.dexSmartContractService = dexSmartContractService;
+        this.secureStorageService = secureStorageService;
     }
 
 
@@ -121,9 +123,8 @@ public class DexService {
         if(offer.getPairCurrency().isApl()){
             refundAPLFrozenMoney(offer);
         } else if(offer.getPairCurrency().isEthOrPax()) {
-            //TODO get private key from storage. (Not implemented yet.)
-//            String passphrase = "todo";
-//            refundEthPaxFrozenMoney(passphrase, offer);
+            String passphrase = secureStorageService.getUserPassPhrase(offer.getAccountId());;
+            refundEthPaxFrozenMoney(passphrase, offer);
         } else {
             throw new UnsupportedOperationException();
         }
