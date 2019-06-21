@@ -16,8 +16,8 @@ public class ShutdownHook extends Thread  {
     /**
      * Explicit constructor with paramaters.
      *
-     * @param aplCoreRuntime instance is NOT proxied by CDI
-     * @param secureStorageService instance will be proxied by CDI
+     * @param aplCoreRuntime instance is proxied by CDI
+     * @param secureStorageService instance is be proxied by CDI
      */
     public ShutdownHook(AplCoreRuntime aplCoreRuntime, SecureStorageService secureStorageService) {
         super("ShutdownHookThread");

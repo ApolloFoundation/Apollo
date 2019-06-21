@@ -6,6 +6,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,30 +26,32 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 
+@Singleton
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
 
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
  
-    private final  RuntimeMode runtimeMode;
+    private  RuntimeMode runtimeMode;
 
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
-    private final BlockchainConfig blockchainConfig;
-    private final PropertiesHolder propertiesHolder;
+    private BlockchainConfig blockchainConfig;
+    private PropertiesHolder propertiesHolder;
     
      //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
 
     // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
-    public AplCoreRuntime(RuntimeMode runtimeMode/*, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder */) {
-//        this.blockchainConfig = blockchainConfig;
-//        this.propertiesHolder = propertiesHolder;
-        propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); // fetch proxied from CDI
-        blockchainConfig = CDI.current().select(BlockchainConfig.class).get(); // fetch proxied from CDI
-        this.runtimeMode = runtimeMode; // NOT proxied by CDI
+    public AplCoreRuntime( ) {
+    }
+
+    public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder) {
+        this.blockchainConfig = blockchainConfig;
+        this.propertiesHolder = propertiesHolder;
+        this.runtimeMode =runtimeMode;
     }
     
     public void addCoreAndInit(){        

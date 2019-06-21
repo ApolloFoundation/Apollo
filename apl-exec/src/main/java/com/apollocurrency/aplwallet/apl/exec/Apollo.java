@@ -115,7 +115,7 @@ public class Apollo {
             cmdline = cmdline + s + " ";
         }
         Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
-        String home = hp.toString()+File.separator;
+        String home = hp.toString()+ File.separator;
         File dir = new File(home);
         if(!dir.exists()){
             dir.mkdirs();
@@ -280,12 +280,13 @@ public class Apollo {
         dirProvider = CDI.current().select(DirProvider.class).get();
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
-        // 'runtimeMode' was created explicitly above, so we have to create 'aplCoreRuntime' explicitly again
-        aplCoreRuntime = new AplCoreRuntime(runtimeMode); // explicit instance creation (NOT PROXIED by CDI !!)
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
 
         try {
             // updated shutdown hook explicitly created with instances
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
+//            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
             /*            if(unzipRes.get()!=true){
