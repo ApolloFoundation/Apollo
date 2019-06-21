@@ -393,10 +393,18 @@ public final class Peers {
     }
 
     public static void shutdown() {
-        shutdown = true;
-        peerHttpServer.shutdown();
-        ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
-        ThreadPool.shutdownExecutor("peersService", peersService, 5);
+        try {
+            shutdown = true;
+            peerHttpServer.shutdown();
+            ThreadPool.shutdownExecutor("sendingService", sendingService, 2);
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
+        try {
+            ThreadPool.shutdownExecutor("peersService", peersService, 5);
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
     }
 
     public static void suspend() {

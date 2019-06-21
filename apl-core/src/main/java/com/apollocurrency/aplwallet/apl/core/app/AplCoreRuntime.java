@@ -96,6 +96,10 @@ public class AplCoreRuntime {
         return dirProvider.getVaultKeystoreDir();
     }
 
+    public Path getSecureStorageDir() {
+        return dirProvider.getSecureStorageDir();
+    }
+
     public Path get2FADir() {
         return dirProvider.get2FADir();
     }

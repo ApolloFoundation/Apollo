@@ -55,12 +55,15 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Main Apollo startup class
  *
  * @author alukin@gmail.com
  */
+@Singleton
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE="apl.pid";
@@ -147,15 +150,6 @@ public class Apollo {
         updaterCore.init(attachmentFilePath, debug);
     }
 
-    public static void shutdown() {
-        aplCoreRuntime.shutdown();
-        try {
-            container.shutdown();
-        } catch (IllegalStateException e) {
-            log.error("Weld is stopped");
-        }
-    }
-
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
                 customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
@@ -172,6 +166,7 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
+
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
@@ -279,7 +274,7 @@ public class Apollo {
         aplCoreRuntime.setup(runtimeMode, dirProvider, configDirProvider);
         
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debug > 2);
             /*            if(unzipRes.get()!=true){
@@ -292,6 +287,14 @@ public class Apollo {
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
+        }
+    }
+
+    public static void shutdownWeldContainer(){
+        try {
+            container.shutdown();
+        } catch (Exception ex){
+            log.error(ex.getMessage(), ex);
         }
     }
 

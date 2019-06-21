@@ -546,9 +546,13 @@ public class FundingMonitor {
      * Stop monitor processing
      */
     public static void shutdown() {
-        if (started && !stopped) {
-            stopped = true;
-            processSemaphore.release();
+        try {
+            if (started && !stopped) {
+                stopped = true;
+                processSemaphore.release();
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
         }
     }
 

@@ -30,6 +30,7 @@ public class RestEasyApplication extends Application  {
 //        set.add(WalletEthController.class);
         set.add(DexController.class);
         set.add(BackendControlController.class);
+        set.add(TransportInteractionController.class);
 
 
         //TODO: add all endpoints below

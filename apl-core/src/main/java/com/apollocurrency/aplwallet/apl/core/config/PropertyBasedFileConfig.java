@@ -9,11 +9,10 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Path;
 
 public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
@@ -29,6 +28,12 @@ public class PropertyBasedFileConfig {
     @Named("keystoreDirPath")
     public Path getKeystoreDirFilePath() {
         return aplCoreRuntime.getVaultKeystoreDir().toAbsolutePath();
+    }
+
+    @Produces
+    @Named("secureStoreDirPath")
+    public Path getSecureStoreDirPath() {
+        return aplCoreRuntime.getSecureStorageDir().toAbsolutePath();
     }
 
 

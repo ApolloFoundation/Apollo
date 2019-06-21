@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -76,13 +77,14 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private static volatile Time time = CDI.current().select(EpochTime.class).get();
     private final PropertiesHolder propertiesHolder;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
+    private static TransportInteractionService transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
+    
     //this should saty static
     private final AplCoreRuntime aplCoreRuntime;
     
@@ -116,11 +118,12 @@ public final class AplCore {
     }
 
     public void shutdown() {
-        LOG.info("Shutting down...");        
+        LOG.info("Shutting down...");
         AddOns.shutdown();
         API.shutdown();
         FundingMonitor.shutdown();
         ThreadPool.shutdown();
+
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
@@ -131,9 +134,15 @@ public final class AplCore {
 
         if (databaseManager != null) {
             databaseManager.shutdown();
-            LOG.info("blockchainProcessor Shutdown...");
+            LOG.info("databaseManager Shutdown...");
         }
+                
+        LOG.info("transport interaction service shutdown...");
+        transportInteractionService.stop();
+        
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
+        
+        
         AplCore.shutdown = true;
     }
 
@@ -168,6 +177,8 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.0, "API initialization done");
 
 //                CDI.current().select(NtpTime.class).get().start();
+               aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
+               transportInteractionService.start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
