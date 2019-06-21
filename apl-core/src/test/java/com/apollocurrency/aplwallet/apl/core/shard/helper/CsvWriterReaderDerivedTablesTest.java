@@ -145,8 +145,7 @@ class CsvWriterReaderDerivedTablesTest {
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
-            DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
+            TaggedDataDao.class, PropertyBasedFileConfig.class,
             DGSGoodsTable.class,
             DataTagDao.class,
             KeyFactoryProducer.class, FeeCalculator.class,
@@ -159,8 +158,6 @@ class CsvWriterReaderDerivedTablesTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            DexOfferTransactionCreator.class, DexSmartContractService.class, DexEthService.class,
-            EthGasStationInfoDao.class, AdminPasswordVerifier.class, ElGamalEncryptor.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))

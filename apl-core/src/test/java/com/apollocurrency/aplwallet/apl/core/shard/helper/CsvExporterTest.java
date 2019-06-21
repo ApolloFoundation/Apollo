@@ -175,8 +175,7 @@ class CsvExporterTest {
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
-            DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
+            TaggedDataDao.class, PropertyBasedFileConfig.class,
             DataTagDao.class, KeyFactoryProducer.class, FeeCalculator.class,
             DGSGoodsTable.class,
             TaggedDataTimestampDao.class,
@@ -187,8 +186,6 @@ class CsvExporterTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            DexOfferTransactionCreator.class, DexSmartContractService.class,
-            DexEthService.class, EthGasStationInfoDao.class, AdminPasswordVerifier.class, ElGamalEncryptor.class,
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)

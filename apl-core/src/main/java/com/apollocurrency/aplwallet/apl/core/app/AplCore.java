@@ -85,7 +85,6 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private final PropertiesHolder propertiesHolder;
     private Time time;
 
     private static Blockchain blockchain;

@@ -112,13 +112,12 @@ class CsvImporterTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            TrimService.class, ShardDaoJdbcImpl.class,
+            TrimService.class,
             JdbiHandleFactory.class, ShardDaoJdbcImpl.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class, DexService.class, DexOfferTable.class, EthereumWalletService.class,
-            DexOfferMapper.class, WalletClientProducer.class, PropertyBasedFileConfig.class,
+            TaggedDataDao.class,
             DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class,
             KeyFactoryProducer.class, FeeCalculator.class,
@@ -127,8 +126,6 @@ class CsvImporterTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             AplAppStatus.class,
-            DexOfferTransactionCreator.class, DexSmartContractService.class, DexEthService.class,
-            EthGasStationInfoDao.class, AdminPasswordVerifier.class, ElGamalEncryptor.class, VaultKeyStoreServiceImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))

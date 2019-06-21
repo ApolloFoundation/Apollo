@@ -363,7 +363,7 @@ public final class Peers {
             LOG.error(ex.getMessage(), ex);
         }
         try {
-            ThreadPool.shutdownExecutor("peersService", peersService, 5);
+            ThreadPool.shutdownExecutor("peersService", peersExecutorService, 5);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         }

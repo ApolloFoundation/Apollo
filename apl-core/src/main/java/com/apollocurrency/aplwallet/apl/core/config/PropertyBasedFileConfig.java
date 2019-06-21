@@ -33,7 +33,7 @@ public class PropertyBasedFileConfig {
     @Produces
     @Named("secureStoreDirPath")
     public Path getSecureStoreDirPath() {
-        return aplCoreRuntime.getSecureStorageDir().toAbsolutePath();
+        return dirProvider.getSecureStorageDir().toAbsolutePath();
     }
 
 
