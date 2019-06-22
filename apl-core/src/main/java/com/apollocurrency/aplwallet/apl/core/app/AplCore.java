@@ -279,12 +279,14 @@ public final class AplCore {
                 }
                 catch (InterruptedException ignore) {}
                 testSecureRandom();
-
-                // run shard file downloading component
-                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
-                CDI.current().select(ShardDownloadPresenceObserver.class).get();
-                shardDownloader.prepareAndStartDownload(); // ignore result
-
+                //TODO: check if we already have DB
+                boolean haveDB=false;
+                if(haveDB){
+                    // run shard file downloading component
+                    ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
+                    CDI.current().select(ShardDownloadPresenceObserver.class).get();
+                    shardDownloader.prepareAndStartDownload(); // ignore result, we have events
+                }
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";
@@ -308,6 +310,7 @@ public final class AplCore {
                         throw e; //re-throw non-db exception
                     }
                 }
+                aplAppStatus.durableTaskFinished(initCoreTaskID, true, "AplCore init failed (DB)");
                 LOG.error("Database initialization failed ", e);
                 //TODO: move DB operations to proper place
                 // AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
