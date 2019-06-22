@@ -12,10 +12,10 @@ import java.math.BigDecimal;
  */
 public class DexOfferDBMatchingRequest {
 
-    public DexOfferDBMatchingRequest(Integer type, Integer currentTime, Integer offerCur, BigDecimal offerAmount, Integer pairCur, BigDecimal pairRate) {
-        this.type = type;
+    public DexOfferDBMatchingRequest(OfferType type, Integer currentTime, Integer offerCur, BigDecimal offerAmount, Integer pairCur, BigDecimal pairRate) {
+        this.type = this.type = type != null ? type.ordinal() : null;
         this.currentTime = currentTime;
-        this.offerCur = offerCur;
+        this.offerCur = offerCur;                     
         this.offerAmount = offerAmount;
         this.pairCur = pairCur;
         this.pairRate = pairRate;

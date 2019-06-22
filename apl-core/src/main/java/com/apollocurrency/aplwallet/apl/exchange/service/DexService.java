@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
@@ -72,7 +73,12 @@ public class DexService {
     public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest){
         return dexOfferDao.getOffers(dexOfferDBRequest);
     }
-
+    
+    @Transactional
+    public List<DexOffer> getOffersForMatching(DexOfferDBMatchingRequest dexOfferDBMatchingRequest){
+        return dexOfferDao.getOffersForMatching(dexOfferDBMatchingRequest);
+    }
+    
     public WalletsBalance getBalances(GetBalancesRequest getBalancesRequest){
         List<String> eth = getBalancesRequest.ethAddresses;
         List<EthWalletBalanceInfo> ethWalletsBalance = new ArrayList<>();
