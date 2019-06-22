@@ -628,7 +628,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             return;
         }
         // try import genesis OR start downloading shard zip data
-        setGetMoreBlocks(false); // turn off automatic blockchain downloading
+        suspendBlockchainDownloading(); // turn off automatic blockchain downloading
         log.warn("NODE IS WAITING FOR no/shard decision and proceeding with necessary data by ShardPresentEventType....");
 
         ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
@@ -1453,6 +1453,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
                 connectedPublicPeers = Peers.getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
+                    log.debug("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
+                            connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
                 peerHasMore = true;

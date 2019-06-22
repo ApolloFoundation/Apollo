@@ -53,9 +53,9 @@ public class ShardDownloader {
                            javax.enterprise.event.Event<ShardPresentData> presentDataEvent) {
         Objects.requireNonNull( chainsConfig, "chainConfig is NULL");
         this.myChainId = Objects.requireNonNull( chainsConfig.getActiveChain().getChainId(), "chainId is NULL");
-        this.additionalPeers =  new HashSet<>();
+        this.additionalPeers =  Collections.synchronizedSet(new HashSet<>());
         this.fileDownloader = Objects.requireNonNull( fileDownloader, "fileDownloader is NULL");
-        this.sortedShards = new HashMap<>();
+        this.sortedShards = Collections.synchronizedMap(new HashMap<>());
         this.dirProvider = Objects.requireNonNull( dirProvider, "dirProvider is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
     }
@@ -71,12 +71,14 @@ public class ShardDownloader {
                 if (myChainId.equals(UUID.fromString(s.chainId))) {
                     haveShard = true;
                     si.source = p.getAnnouncedAddress();
-                    Set<ShardInfo> rs = sortedShards.get(s.shardId);
-                    if (rs == null) {
-                        rs = new HashSet<>();
-                        sortedShards.put(s.shardId, rs);
+                    synchronized (this) {
+                        Set<ShardInfo> rs = sortedShards.get(s.shardId);
+                        if (rs == null) {
+                            rs = new HashSet<>();
+                            sortedShards.put(s.shardId, rs);
+                        }
+                        rs.add(s);
                     }
-                    rs.add(s);
                 }
             }
         }
