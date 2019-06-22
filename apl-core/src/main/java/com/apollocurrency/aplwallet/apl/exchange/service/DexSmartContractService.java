@@ -58,6 +58,11 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
+       //TODO mock for production, till we don't finish smart contract.
+        if(true){
+            return "Mock response.(transaction hash)";
+        }
+
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         if(keyStore==null){
             throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
@@ -90,6 +95,11 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger weiValue, Long gas, DexCurrencies currency) throws AplException.ExecutiveProcessException {
+        //TODO mock for production, till we don't finish smart contract.
+        if(true){
+            return "Mock response.(transaction hash)";
+        }
+
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
 
         if(keyStore==null){
