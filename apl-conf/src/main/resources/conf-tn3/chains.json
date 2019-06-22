@@ -358,6 +358,10 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 4000
         }
       }
     ]
