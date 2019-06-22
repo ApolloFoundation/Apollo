@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +25,7 @@ public class H2DbInfoExtractorTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        DbManipulator manipulator = new DbManipulator(path);
+        DbManipulator manipulator = new DbManipulator(DbTestData.getDbFileProperties(path.toAbsolutePath().toString()));
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();

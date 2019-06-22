@@ -3,14 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
@@ -23,6 +19,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.Arrays;
+import java.util.List;
+import javax.inject.Inject;
+
 /**
  *
  * @author alukin@gmail.com
@@ -34,7 +34,7 @@ public class GetShardingInfo extends PeerRequestHandler{
     @Inject @Setter
     private ShardDao shardDao;
     @Inject @Setter
-    private ChainsConfigHolder chainsConfig;
+    private BlockchainConfig chainsConfig;
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
@@ -48,7 +48,7 @@ public class GetShardingInfo extends PeerRequestHandler{
             // create shardInfo from Shard record
             ShardInfo shardInfo = new ShardInfo(
                     shard.getShardId(),
-                    chainsConfig.getActiveChain().getChainId().toString() /* no chainId in db */,
+                    chainsConfig.getChain().getChainId().toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
                     Convert.toHexString(shard.getZipHashCrc()),
                     shard.getShardHeight().longValue()

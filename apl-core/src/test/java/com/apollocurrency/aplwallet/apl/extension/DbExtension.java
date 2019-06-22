@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -38,11 +39,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private FullTextSearchService ftl;
     private Map<String, List<String>> tableWithColumns;
     private Path indexDir;
+    private Path dbDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
-
-    public DbExtension(Path path) {
-        manipulator = new DbManipulator(path);
-    }
 
     public DbExtension(DbProperties dbProperties) {
         this(dbProperties, null, null, null);
@@ -51,6 +49,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
         manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
     }
+
 
 
     public DbExtension(Map<String, List<String>> tableWithColumns) {
@@ -73,8 +72,13 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
     }
 
+    public DbExtension(Path dbDir, String dbName, String dataScript) {
+        manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
+        this.dbDir = dbDir;
+    }
+
     public DbExtension() {
-        manipulator = new DbManipulator();
+        manipulator = new DbManipulator(DbTestData.getInMemDbProps());
     }
 
     public DatabaseManager getDatabaseManager() {
@@ -93,6 +97,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         if (ftl != null) {
             ftl.shutdown();
             FileUtils.deleteDirectory(indexDir.toFile());
+        }
+        if (dbDir != null) {
+            FileUtils.deleteDirectory(dbDir.toFile());
         }
     }
 

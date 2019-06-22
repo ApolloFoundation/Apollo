@@ -24,7 +24,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -36,6 +41,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
@@ -71,9 +78,11 @@ public class CompactDatabase {
         //
         // Get the database URL
         //
-
-        DbProperties dbProperties  = new DbConfig(propertiesHolder).getDbConfig();
-        
+        ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
+        ChainsConfigHolder chainsConfigHolder = new ChainsConfigHolder();
+        Map<UUID, Chain> loadedChains = new ChainsConfigLoader(configDirProvider, false).load();
+        DbProperties dbProperties  = new DbConfig(propertiesHolder, chainsConfigHolder).getDbConfig();
+        chainsConfigHolder.setChains(loadedChains);
         if (!"h2".equals(dbProperties.getDbType())) {
             LOG.error("Database type must be 'h2'");
             return 1;

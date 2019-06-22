@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -69,7 +68,7 @@ public class DbMigrationExecutorTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
             TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, JdbiHandleFactory.class,
-            GlobalSyncImpl.class, ChainsConfigHolder.class,
+            GlobalSyncImpl.class,
             BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
             FullTextConfigImpl.class, EpochTime.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
@@ -101,7 +100,7 @@ public class DbMigrationExecutorTest {
     void setUp() throws IOException {
         this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(
             "migrationDb-1");
-        manipulator = new DbManipulator(pathToDbForMigration);
+        manipulator = new DbManipulator(DbTestData.getDbFileProperties(pathToDbForMigration.toAbsolutePath().toString()));
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();

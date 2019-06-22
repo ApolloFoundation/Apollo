@@ -41,7 +41,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
@@ -83,7 +82,7 @@ class BlockchainTest {
 
     private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
-    static DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(blockchainTestDbPath.resolve("mainDb").toAbsolutePath().toString()), "db/shard-main-data.sql", null);
+    static DbExtension extension = new DbExtension(blockchainTestDbPath,"mainDb", "db/shard-main-data.sql");
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     EpochTime epochTime = mock(EpochTime.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -127,6 +126,7 @@ class BlockchainTest {
 
     @AfterAll
     static void shutdown() throws IOException {
+        extension.getDatabaseManager().shutdown();
         FileUtils.deleteDirectory(blockchainTestDbPath.toFile());
     }
 

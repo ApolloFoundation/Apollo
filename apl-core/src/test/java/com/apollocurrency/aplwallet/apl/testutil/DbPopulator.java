@@ -4,21 +4,25 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import java.util.StringTokenizer;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.sql.DataSource;
 
 public class DbPopulator {
@@ -35,17 +39,12 @@ public class DbPopulator {
     }
 
     public void initDb() {
-        try {
-            Path schemaDbPath = Paths.get(getClass().getClassLoader().getResource(schemaScriptPath).toURI());
-            loadSqlAndExecute(schemaDbPath);
-        }
-        catch (URISyntaxException | IOException e) {
-            throw new RuntimeException("Unable to load sql commands", e);
-        }
+        findAndExecute(schemaScriptPath, "Schema");
     }
 
-    private void loadSqlAndExecute(Path file) throws IOException {
-        byte[] bytes = Files.readAllBytes(file);
+    private void loadSqlAndExecute(URI file) {
+        byte[] bytes = readAllBytes(file);
+
         StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
         while (tokenizer.hasMoreElements()) {
             String sqlCommand = tokenizer.nextToken();
@@ -61,16 +60,38 @@ public class DbPopulator {
 
     }
 
+    private byte[] readAllBytes(URI file) {
+        try (InputStream inputStream = new FileInputStream(new File(file))) {
+            return inputStream.readAllBytes();
+        }
+        catch (IOException exception) {
+            throw new RuntimeException("Unable to read file " + file);
+        }
+    }
+
+
     public void populateDb() {
+        findAndExecute(dataScriptPath, "Data");
+    }
+
+    public void findAndExecute(String resource, String name) {
+        if (StringUtils.isNotBlank(resource)) {
+            URI resourceUri = findResource(resource, name);
+            loadSqlAndExecute(resourceUri);
+        }
+    }
+
+    public URI findResource(String resourcePath, String name) {
+        StringValidator.requireNonBlank(resourcePath, "db resource " + name);
+        URL resource = getClass().getClassLoader().getResource(resourcePath);
+        Objects.requireNonNull(resource, "Resource not found  in classpath: " + resourcePath);
         try {
-            if (dataScriptPath != null && !dataScriptPath.isEmpty()) {
-                Path dataDbPath = Paths.get(getClass().getClassLoader().getResource(dataScriptPath).toURI());
-                loadSqlAndExecute(dataDbPath);
-            }
+            return resource.toURI();
         }
-        catch (URISyntaxException | IOException e) {
-            throw new RuntimeException("Unable to load sql commands", e);
+        catch (URISyntaxException e) {
+            throw new RuntimeException(e.toString(), e);
         }
+
     }
 
 

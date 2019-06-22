@@ -3,9 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,18 +25,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-
-import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import lombok.extern.slf4j.Slf4j;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
@@ -48,11 +48,11 @@ public class ShardDownloader {
 
     @Inject
     public ShardDownloader(FileDownloader fileDownloader,
-                           ChainsConfigHolder chainsConfig,
+                           BlockchainConfig blockchainConfig,
                            DirProvider dirProvider,
                            javax.enterprise.event.Event<ShardPresentData> presentDataEvent) {
-        Objects.requireNonNull( chainsConfig, "chainConfig is NULL");
-        this.myChainId = Objects.requireNonNull( chainsConfig.getActiveChain().getChainId(), "chainId is NULL");
+        Objects.requireNonNull( blockchainConfig, "chainId is NULL");
+        this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers =  new HashSet<>();
         this.fileDownloader = Objects.requireNonNull( fileDownloader, "fileDownloader is NULL");
         this.sortedShards = new HashMap<>();

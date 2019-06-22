@@ -2,10 +2,10 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.chainid;
+package com.apollocurrency.aplwallet.apl.util.injectable;
 
-import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 
 import java.util.Map;
 import java.util.UUID;

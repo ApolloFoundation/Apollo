@@ -8,16 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.AfterEach;
@@ -31,7 +27,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.UUID;
 
 
 class DatabaseManagerTest {
@@ -43,20 +38,11 @@ class DatabaseManagerTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     private DbProperties baseDbProperties;
     private DatabaseManager databaseManager;
-    private ChainsConfigHolder chainCoinfig;
-    private Chain chain;
-    private final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");    
-    {
-        chain = mock(Chain.class);
-        when(chain.getChainId()).thenReturn(chainId);
-        chainCoinfig = mock(ChainsConfigHolder.class);
-        when(chainCoinfig.getActiveChain()).thenReturn(chain);        
-    }
     @BeforeEach
     public void setUp() throws IOException {
         Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
         baseDbProperties = DbTestData.getDbFileProperties(dbFilePath.toAbsolutePath().toString());
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder,chainCoinfig);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
         DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/db-manager-data.sql");
         dbPopulator.initDb();
         dbPopulator.populateDb();
