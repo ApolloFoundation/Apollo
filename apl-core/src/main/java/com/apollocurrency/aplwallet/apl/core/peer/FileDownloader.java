@@ -81,7 +81,6 @@ public class FileDownloader {
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
     }
     
     public void setFileId(String fileID){
@@ -93,6 +92,7 @@ public class FileDownloader {
     }
     
     public void startDownload() {
+        this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
         CompletableFuture<Boolean> prepare;
         prepare = CompletableFuture.supplyAsync(() -> {
@@ -180,7 +180,8 @@ public class FileDownloader {
                 status.chunksReady++;
                 fci.present = FileChunkState.SAVED;
             }else{
-              fci.present=FileChunkState.PRESENT;
+//              fci.present=FileChunkState.PRESENT;
+              fci.present=FileChunkState.NOT_PRESENT; // no info, no connect ??
             }
             fci = getNextEmptyChunk();
         }
