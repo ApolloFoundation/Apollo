@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
+import java.io.StringWriter;
+
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 
 @Vetoed
 public final class GetInfo extends PeerRequestHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(GetInfo.class);
+    private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private  ObjectMapper mapper = new ObjectMapper();
  
@@ -66,6 +66,7 @@ public final class GetInfo extends PeerRequestHandler {
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
+        log.debug("GetInfo - PeerInfo = {}", pi);
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
         String servicesString = pi.services;
@@ -78,16 +79,16 @@ public final class GetInfo extends PeerRequestHandler {
                 announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
                     if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
-                        LOG.debug("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
+                        log.debug("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
-                            LOG.debug("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
+                            log.debug("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             Peers.setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate();
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
-                        LOG.debug("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
+                        log.debug("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
                         if (peerImpl.getPort() != oldPort) {
@@ -105,7 +106,8 @@ public final class GetInfo extends PeerRequestHandler {
         }
 
         if(!peerImpl.setApplication(pi.application.trim())){
-            LOG.debug("Invalid application. IP: {}, application: {}, removng", peerImpl.getHost(),pi.application);
+//            log.debug("Invalid application. IP: {}, application: {}, removing", peerImpl.getHost(), pi.application);
+            log.debug("Peer = {} Received Invalid App in PI = \n{}", peerImpl, pi);
             peerImpl.remove();
         }
 
@@ -114,10 +116,10 @@ public final class GetInfo extends PeerRequestHandler {
             version = new Version(pi.version);
         }
         catch (Exception e) {
-            LOG.error("Cannot parse version.", e);
+            log.error("Cannot parse version.", e);
             version = new Version(1, 0, 0);
         }
-        LOG.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.application, version);
+        log.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.application, version);
         peerImpl.setVersion(version);
 
         if (pi.platform == null) {
@@ -136,8 +138,17 @@ public final class GetInfo extends PeerRequestHandler {
         if (peerImpl.getServices() != origServices) {
             Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
         }
+        JSONStreamAware myPeerInfoResponse = Peers.getMyPeerInfoResponse();
+        try {
+            StringWriter writer = new StringWriter(1000);
+            JSON.writeJSONString(myPeerInfoResponse, writer);
+            String response = writer.toString();
+            log.debug("myPeerInfoResponse = {}", response);
+        } catch (IOException e) {
+            log.error("ERROR, DUMP myPeerInfoResponse", e);
+        }
 
-        return Peers.getMyPeerInfoResponse();
+        return myPeerInfoResponse;
 
     }
 

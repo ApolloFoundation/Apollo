@@ -280,13 +280,14 @@ public final class AplCore {
                 catch (InterruptedException ignore) {}
                 testSecureRandom();
                 //TODO: check if we already have DB
-                boolean haveDB=false;
+                boolean haveDB=true;
                 if(haveDB){
                     // run shard file downloading component
                     ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
                     CDI.current().select(ShardDownloadPresenceObserver.class).get();
                     shardDownloader.prepareAndStartDownload(); // ignore result, we have events
                 }
+
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";
