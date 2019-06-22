@@ -281,7 +281,7 @@ public final class AplCore {
                 testSecureRandom();
                 //TODO: check if we already have DB
                 boolean haveDB=true;
-                if(haveDB){
+                if(!haveDB){
                     // run shard file downloading component
                     ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
                     CDI.current().select(ShardDownloadPresenceObserver.class).get();
