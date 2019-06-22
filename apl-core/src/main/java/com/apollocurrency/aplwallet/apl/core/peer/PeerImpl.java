@@ -22,32 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
-import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -77,6 +51,32 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
+
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
+import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
+import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
@@ -241,7 +241,7 @@ public final class PeerImpl implements Peer {
                 || application.length() > Peers.MAX_APPLICATION_LENGTH
                 || ! application.equalsIgnoreCase(Constants.APPLICATION)
            ) {
-            LOG.debug("Invalid application: {} from host:{}",application,host);
+            LOG.debug("Invalid application value='{}' from host:{}", application, host);
             res=false;
         }else{        
             this.pi.application = application.trim();
@@ -745,6 +745,7 @@ public final class PeerImpl implements Peer {
             if (response != null) {
                 //TODO: parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
+                LOG.debug("Parsed newPi = {}", newPi);
                 if (newPi.errorCode != null && newPi.errorCode!=0) {
                     setState(PeerState.NON_CONNECTED);
                     LOG.debug("NULL or error response from {}",host);

@@ -61,7 +61,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
@@ -281,9 +280,9 @@ public final class AplCore {
                 testSecureRandom();
 
                 // run shard file downloading component
-                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
-                CDI.current().select(ShardDownloadPresenceObserver.class).get();
-                shardDownloader.prepareAndStartDownload(); // ignore result
+//                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
+//                CDI.current().select(ShardDownloadPresenceObserver.class).get();
+//                shardDownloader.prepareAndStartDownload(); // ignore result
 
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");

@@ -4,6 +4,19 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
@@ -15,21 +28,7 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Downloadable files info
@@ -37,10 +36,10 @@ import javax.inject.Singleton;
  * @author alukin@gmail.com
  */
 //TODO: cache purging
+@Slf4j
 @Singleton
 public class DownloadableFilesManager {
 
-    private static final Logger log =LoggerFactory.getLogger(DownloadableFilesManager.class);
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
     public final static int FILE_CHUNK_SIZE = 32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR = "downloadables";
@@ -78,8 +77,10 @@ public class DownloadableFilesManager {
     }
 
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
+        log.debug("getFileDownloadInfo( '{}' }", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
+        log.debug("getFileDownloadInfo fdi in CACHE = {}", fdi);
         if (fdi == null) {
             fdi=createFileDownloadInfo(fileId);
         }
@@ -87,9 +88,11 @@ public class DownloadableFilesManager {
     }
 
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
+        log.debug("createFileDownloadInfo( '{}' )", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = mapFileIdToLocalPath(fileId);
+        log.debug("createFileDownloadInfo() fpath = '{}'", fpath);
         downloadInfo.fileInfo.fileId = fileId;
         if (fpath != null && Files.isReadable(fpath)) {
             downloadInfo.fileInfo.isPresent = true;
@@ -112,8 +115,10 @@ public class DownloadableFilesManager {
                 fci.chunkId = i;
                 downloadInfo.chunks.add(fci);
             }
+            log.warn("createFileDownloadInfo STORE = '{}'", downloadInfo);
             fdiCache.put(fileId, downloadInfo);
         } else {
+            log.warn("createFileDownloadInfo = '{}'", downloadInfo.fileInfo.isPresent);
             downloadInfo.fileInfo.isPresent = false;
         }
         return downloadInfo;

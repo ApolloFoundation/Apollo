@@ -39,10 +39,10 @@ public class GetShardingInfo extends PeerRequestHandler{
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         ShardingInfoResponse res = new ShardingInfoResponse();
         ShardingInfoRequest rq  = mapper.convertValue(request, ShardingInfoRequest.class);
-        log.trace("ShardingInfoRequest = {}", rq);
+        log.debug("ShardingInfoRequest = {}", rq);
 
-        List<Shard> allShards = shardDao.getAllShard(); //TODO: we can thing to use only - shardDao.getLastShard()
-        log.trace("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
+        List<Shard> allShards = shardDao.getAllShard();
+        log.debug("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
         for (Shard shard: allShards) {
             // create shardInfo from Shard record
             ShardInfo shardInfo = new ShardInfo(
@@ -54,7 +54,8 @@ public class GetShardingInfo extends PeerRequestHandler{
             );
             res.shardingInfo.shards.add(shardInfo);
         }
-        if(rq.full){ //add list of known peers
+        log.debug("allShardInfo = [{}], rq.full? = {}", res.shardingInfo.shards.size(), rq.full) ;
+        if( rq.full ){ //add list of known peers
             for(Peer p: Peers.getAllPeers()){
                 String address = p.getAnnouncedAddress();
                 if(StringUtils.isBlank(address)){
@@ -64,7 +65,8 @@ public class GetShardingInfo extends PeerRequestHandler{
             }
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
-        return response;        
+        log.debug("ShardingInfoResponse = {}", response);
+        return response;
     }
 
     @Override

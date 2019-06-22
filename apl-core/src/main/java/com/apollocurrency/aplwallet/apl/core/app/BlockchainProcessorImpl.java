@@ -69,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -626,14 +627,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             setGetMoreBlocks(true); // turn ON blockchain downloading
             return;
         }
-        // try import genesis / shard data
+        // try import genesis OR start downloading shard zip data
         setGetMoreBlocks(false); // turn off automatic blockchain downloading
         log.warn("NODE IS WAITING FOR no/shard decision and proceeding with necessary data by ShardPresentEventType....");
 
-//        FileDownloader downloader; ???
-//        downloader.startDownload(id); ???
-//        FileDownloadDecision decision = downloader.prepareForDownloading(); ???
-//        FileDownloadInfo fdi = downloader.getDownloadInfo(); ??
+        ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
+        CDI.current().select(ShardDownloadPresenceObserver.class).get();
+        shardDownloader.prepareAndStartDownload(); // ignore result
 
 /*
         log.info("Genesis block not in database, starting from scratch");
@@ -645,7 +645,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(genesisBlock);
             initialBlock = genesisBlock.getId();
-            Genesis.apply();
+            Genesis.apply(false);
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.createSearchIndex(con);
             }

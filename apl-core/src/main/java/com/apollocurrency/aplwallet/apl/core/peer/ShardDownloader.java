@@ -84,15 +84,18 @@ public class ShardDownloader {
     }
 
     public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
+        log.debug("Request ShardInfo from Peers...");
         int counter = 0;
 
         Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
+        log.debug("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
             if (processPeerShardInfo(p)) {
                 counter++;
             }
             if (counter > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
                 break;
             }
         }
@@ -104,10 +107,12 @@ public class ShardDownloader {
                     counter++;
                 }
                 if (counter > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                    log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
                     break;
                 }
             }
         }
+        log.debug("Request ShardInfo result {}", sortedShards);
         return sortedShards;
     }
 
@@ -121,6 +126,7 @@ public class ShardDownloader {
         if (sortedShards.isEmpty()) {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
+            log.debug("result = {}, Fire = {}", result, "NO_SHARD");
             ShardPresentData shardPresentData = new ShardPresentData();
             presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
 
@@ -131,10 +137,12 @@ public class ShardDownloader {
             Long lastShard = shardIds.get(shardIds.size() - 1);
             log.debug("Last known ShardId '{}'", lastShard);
             String fileID = shardNameHelper.getShardNameByShardId(lastShard, myChainId);
+            log.debug("fileID = '{}'", fileID);
             fileDownloader.setFileId(fileID);
             // check if zip file exists on local node
             String zipFileName = shardNameHelper.getShardArchiveNameByShardId(lastShard, myChainId);
             File zipInExportedFolder = dirProvider.getDataExportDir().resolve(zipFileName).toFile();
+            log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
             if (zipInExportedFolder.exists()) {
                 log.info("No need to download '{}'  as it is found in folder = '{}'", zipFileName,
                         dirProvider.getDataExportDir());
@@ -142,7 +150,7 @@ public class ShardDownloader {
                 return result;
             }
             // prepare downloading
-            log.debug("Start preparation to downloading ");
+            log.debug("Start preparation to downloading...");
             result = fileDownloader.prepareForDownloading();
             if( result == FileDownloadDecision.AbsOK
                     || result == FileDownloadDecision.OK
