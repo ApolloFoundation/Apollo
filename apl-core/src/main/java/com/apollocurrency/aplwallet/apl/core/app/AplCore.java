@@ -221,6 +221,7 @@ public final class AplCore {
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 GlobalSync sync = CDI.current().select(GlobalSync.class).get();
+                Peers.init();
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
@@ -253,7 +254,6 @@ public final class AplCore {
                 PrunableMessage.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");
-                Peers.init();
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();

@@ -89,6 +89,10 @@ public class PeerClient {
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
         log.debug("downloadChunk() fci = {}", fci);
+        if(!checkConnection()){
+            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+            return null;
+        }         
        FileChunk fc;
        FileChunkRequest rq = new FileChunkRequest();
        rq.fileId=fci.fileId;
@@ -112,6 +116,10 @@ public class PeerClient {
     }
     
     public ShardingInfo getShardingInfo(){
+        if(!checkConnection()){
+            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+            return null;
+        }         
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
