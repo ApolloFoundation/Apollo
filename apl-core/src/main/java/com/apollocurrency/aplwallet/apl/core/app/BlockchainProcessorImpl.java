@@ -632,7 +632,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
-g        log.warn("NODE IS WAITING FOR 'shard/(no shard) decision' and proceeding with necessary data by ShardPresentEventType....");
+        log.warn("NODE IS WAITING FOR 'shard/(no shard) decision' and proceeding with necessary data by ShardPresentEventType....");
         shardDownloader.prepareAndStartDownload(); // ignore result
 
 /*
