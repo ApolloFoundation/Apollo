@@ -126,7 +126,7 @@ public class PeerClient {
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
         log.trace("{}", resp);
         if(resp==null){
-            log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+            log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
         ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
