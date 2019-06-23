@@ -514,7 +514,7 @@ public final class PeerImpl implements Peer {
             handshake(chainId);
         }
         if(state!=PeerState.CONNECTED){
-            LOG.error("Peer: {}  handshake failed.", getAnnouncedAddress());
+            LOG.error("Peer: {}  handshake failed with state = {}.", state, getAnnouncedAddress());
             return null;
         }else{        
             return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
@@ -541,7 +541,7 @@ public final class PeerImpl implements Peer {
                 request.writeJSONString(out);
                 reqAsString = out.toString();
             } catch (IOException e) {
-                LOG.warn("IOExeception wile writing Peer request", e);
+                LOG.warn("IOException while writing Peer request", e);
             }
             LOG.trace("SEND() Request = '{}'\n, host='{}'", reqAsString, host);
         }
@@ -719,6 +719,7 @@ public final class PeerImpl implements Peer {
     
     @Override   
     public void handshake(UUID targetChainId) {
+        LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
             if (!Peers.ignorePeerAnnouncedAddress && pi.announcedAddress != null) {
@@ -730,6 +731,7 @@ public final class PeerImpl implements Peer {
                         Peers.removePeer(this);
                         PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, pi.announcedAddress, true);
                         if (newPeer != null) {
+                            LOG.trace("Prepare Handshake with : {}", newPeer);
                             Peers.addPeer(newPeer);
                             newPeer.handshake(targetChainId);
                         }
@@ -741,23 +743,25 @@ public final class PeerImpl implements Peer {
                 }
             }
             JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE);
+            LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
             PeerInfo newPi;
             if (response != null) {
                 //TODO: parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
-                LOG.debug("Parsed newPi = {}", newPi);
+                LOG.debug("handshake Parsed newPi = {}", newPi);
                 if (newPi.errorCode != null && newPi.errorCode!=0) {
                     setState(PeerState.NON_CONNECTED);
                     LOG.debug("NULL or error response from {}",host);
                     return;
                 }
                 if(!setApplication(newPi.application)){
+                    LOG.debug("Peer: {} has different Application: {}, removing", getHost(), newPi.application);
                     remove();
                     return;
                 }
 
                 if (newPi.chainId == null || ! targetChainId.equals(UUID.fromString(newPi.chainId))) {
-                    LOG.debug("Peer: {} has different chainId: {}, removing",getHost(),newPi.chainId);
+                    LOG.debug("Peer: {} has different chainId: {}, removing", getHost(), newPi.chainId);
                     remove();
                     return;
                 }
@@ -812,8 +816,8 @@ public final class PeerImpl implements Peer {
                   if (services != origServices) {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                   }
-               } else {
-                LOG.debug("Failed to connect to peer: {} ", getAnnouncedAddress());
+            } else {
+                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getAnnouncedAddress());
                 setState(PeerState.NON_CONNECTED);
             }
         } catch (RuntimeException e) {

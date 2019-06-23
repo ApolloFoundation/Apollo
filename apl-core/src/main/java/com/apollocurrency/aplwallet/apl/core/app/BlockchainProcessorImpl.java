@@ -627,7 +627,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             setGetMoreBlocks(true); // turn ON blockchain downloading
             return;
         }
-        // try import genesis OR start downloading shard zip data
+        // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
         log.warn("NODE IS WAITING FOR no/shard decision and proceeding with necessary data by ShardPresentEventType....");
 
@@ -636,6 +636,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         shardDownloader.prepareAndStartDownload(); // ignore result
 
 /*
+        // PREVIOUS start-up LOGIC
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = lookupDataSource();
         Connection con = dataSource.begin();
@@ -651,6 +652,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             blockchain.commit(genesisBlock);
             dataSource.commit();
+            log.debug("Saved Genesis block = {}", genesisBlock);
         } catch (SQLException e) {
             dataSource.rollback();
             log.info(e.getMessage());
@@ -1453,7 +1455,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
                 connectedPublicPeers = Peers.getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
-                    log.debug("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
+                    log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
                             connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
