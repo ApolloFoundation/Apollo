@@ -166,6 +166,10 @@ public final class ShufflingParticipant {
     };
 
     private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<>("shuffling_data", shufflingDataDbKeyFactory) {
+        @Override
+        public boolean isScanSafe() {
+            return false; // shuffling data cannot be recovered from transactions (only by downloading/generating blocks)
+        }
 
         @Override
         public ShufflingData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -176,6 +180,8 @@ public final class ShufflingParticipant {
         public void save(Connection con, ShufflingData shufflingData) throws SQLException {
             shufflingData.save(con);
         }
+
+        public void rollbackOnScan(int height) {}
 
     };
 

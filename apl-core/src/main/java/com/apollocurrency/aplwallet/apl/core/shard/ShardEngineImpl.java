@@ -4,19 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.*;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -158,12 +146,24 @@ public class ShardEngineImpl implements ShardEngine {
         Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
         try {
-            // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(null, dbVersion);
-            createdShardId = createdShardSource.getDbIdentity().isPresent() ?
-                    createdShardSource.getDbIdentity().get() : null; // MANDATORY ACTION FOR SUCCESS completion !!
-            if (dbVersion instanceof ShardAddConstraintsSchemaVersion
-                    || dbVersion instanceof AplDbVersion) {
+            boolean isConstraintSchema = dbVersion instanceof ShardAddConstraintsSchemaVersion || dbVersion instanceof AplDbVersion;
+            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(databaseManager.getDataSource());
+            if (recovery != null) {
+                if (recovery.getState().getValue() >= SHARD_SCHEMA_FULL.getValue()) {
+                    // skip to next step
+                    return state = SHARD_SCHEMA_FULL;
+                }
+                if (!isConstraintSchema && recovery.getState().getValue() >= SHARD_SCHEMA_CREATED.getValue()) {
+                    return state = SHARD_SCHEMA_CREATED;
+                }
+            } else {
+                if (isConstraintSchema) {
+                    throw new IllegalStateException("Unable to apply constrains: Shard db was not created (recovery is null)");
+                }
+            }
+
+
+            if (isConstraintSchema) {
                 // that code is called when 'shard index/constraints' sql class is applied to shard db
                 state = SHARD_SCHEMA_FULL;
                 if (shardHash != null && shardHash.length > 0) {
@@ -192,6 +192,8 @@ public class ShardEngineImpl implements ShardEngine {
                 (System.currentTimeMillis() - start)/1000);
         return state;
     }
+
+
 
     /**
      * Create new Recovery info record (if it's missing in specified dataSource) or load existing one.

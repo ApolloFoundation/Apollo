@@ -1014,6 +1014,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 scheduleScan(0, false);
                 long blockIdAtHeight = blockchain.getBlockIdAtHeight(height);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
+                // rollback not scan safe derived tables with blocks and transactions
+                for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
+                    if (!derivedTable.isScanSafe()) {
+                        derivedTable.rollback(height);
+                    }
+                }
                 lookupBlockhain().setLastBlock(lastBLock);
 
                 lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
@@ -1238,10 +1244,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 for (DerivedTableInterface table : derivedTables) {
                     aplAppStatus.durableTaskUpdate(scanTaskId,
                             "Rollback table \'" + table.toString() + "\' to height " + height, 0.0);
-                    if (height == 0) {
-                        table.truncate();
-                    } else {
-                        table.rollback(height - 1);
+                    if (table.isScanSafe()) {
+                        if (height == 0) {
+                            table.truncate();
+                        } else {
+                            table.rollback(height - 1);
+                        }
                     }
                     aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
