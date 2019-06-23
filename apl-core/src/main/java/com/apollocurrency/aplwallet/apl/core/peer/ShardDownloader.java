@@ -42,6 +42,7 @@ public class ShardDownloader {
     private Set<String> additionalPeers;
     private UUID myChainId;
     private Map<Long, Set<ShardInfo>> sortedShards;
+    private Map<Long, Set<Peer>> shardsPeers;    
     private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private ShardNameHelper shardNameHelper = new ShardNameHelper();
     private DirProvider dirProvider;
@@ -56,6 +57,7 @@ public class ShardDownloader {
         this.additionalPeers =  Collections.synchronizedSet(new HashSet<>());
         this.fileDownloader = Objects.requireNonNull( fileDownloader, "fileDownloader is NULL");
         this.sortedShards = Collections.synchronizedMap(new HashMap<>());
+        this.shardsPeers = Collections.synchronizedMap(new HashMap<>());
         this.dirProvider = Objects.requireNonNull( dirProvider, "dirProvider is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
     }
@@ -72,6 +74,13 @@ public class ShardDownloader {
                     haveShard = true;
                     si.source = p.getAnnouncedAddress();
                     synchronized (this) {
+                        Set<Peer> ps = shardsPeers.get(s.shardId);
+                        if(ps==null){
+                            ps=new HashSet<>();
+                            shardsPeers.put(s.shardId,ps);
+                        }
+                        ps.add(p);
+ 
                         Set<ShardInfo> rs = sortedShards.get(s.shardId);
                         if (rs == null) {
                             rs = new HashSet<>();
@@ -156,7 +165,7 @@ public class ShardDownloader {
             }
             // prepare downloading
             log.debug("Start preparation to downloading...");
-            result = fileDownloader.prepareForDownloading();
+            result = fileDownloader.prepareForDownloading(shardsPeers.get(lastShard));
             if( result == FileDownloadDecision.AbsOK
                     || result == FileDownloadDecision.OK
                     || result == FileDownloadDecision.Risky ) {

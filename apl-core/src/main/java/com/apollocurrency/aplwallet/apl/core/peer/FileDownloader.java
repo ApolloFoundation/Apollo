@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -96,7 +97,7 @@ public class FileDownloader {
         log.debug("startDownload()...");
         CompletableFuture<Boolean> prepare;
         prepare = CompletableFuture.supplyAsync(() -> {
-            status.decision = prepareForDownloading();
+            status.decision = prepareForDownloading(null);
             Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
             return res;
         });
@@ -121,10 +122,16 @@ public class FileDownloader {
         return downloadInfo;
     }
 
-    public FileDownloadDecision prepareForDownloading() {
+    public FileDownloadDecision prepareForDownloading(Set<Peer> onlyPeers) {
         log.debug("prepareForDownloading()...");
         FileDownloadDecision res;
-        Set<Peer> allPeers = getAllAvailablePeers();
+        Set<Peer> allPeers;
+        if(onlyPeers==null || onlyPeers.isEmpty()){
+           allPeers = getAllAvailablePeers();
+        }else{
+           allPeers=new HashSet<>(); 
+           allPeers.addAll(onlyPeers);
+        }
         log.debug("prepareForDownloading(), allPeers = {}", allPeers);
         PeersList pl = new PeersList();
         allPeers.forEach((pi) -> {
