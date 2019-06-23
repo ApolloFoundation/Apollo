@@ -162,6 +162,11 @@ public class ShardEngineImpl implements ShardEngine {
                 }
             }
 
+            // we ALWAYS need to do that STEP to attach to new/existing shard db !!
+            createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(null, dbVersion);
+            createdShardId = createdShardSource.getDbIdentity().isPresent() ?
+                    createdShardSource.getDbIdentity().get() : null; // MANDATORY ACTION FOR SUCCESS completion !!
+
 
             if (isConstraintSchema) {
                 // that code is called when 'shard index/constraints' sql class is applied to shard db
@@ -182,14 +187,14 @@ public class ShardEngineImpl implements ShardEngine {
             }
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
+            log.debug("INIT shard db={} by schema={} ({}) in {} sec",
+                    createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
+                    (System.currentTimeMillis() - start)/1000);
         } catch (Exception e) {
             log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
             durableTaskUpdateByState(state, null, null);
         }
-        log.debug("INIT shard db={} by schema={} ({}) in {} sec",
-                createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
-                (System.currentTimeMillis() - start)/1000);
         return state;
     }
 
