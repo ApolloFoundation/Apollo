@@ -139,15 +139,17 @@ public final class GetInfo extends PeerRequestHandler {
             Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
         }
         JSONStreamAware myPeerInfoResponse = Peers.getMyPeerInfoResponse();
-        try {
-            StringWriter writer = new StringWriter(1000);
-            JSON.writeJSONString(myPeerInfoResponse, writer);
-            String response = writer.toString();
-            log.debug("myPeerInfoResponse = {}", response);
-        } catch (IOException e) {
-            log.error("ERROR, DUMP myPeerInfoResponse", e);
-        }
 
+        if (log.isTraceEnabled()) {
+            try {
+                StringWriter writer = new StringWriter(1000);
+                JSON.writeJSONString(myPeerInfoResponse, writer);
+                String response = writer.toString();
+                log.trace("myPeerInfoResponse = {}", response);
+            } catch (IOException e) {
+                log.error("ERROR, DUMP myPeerInfoResponse", e);
+            }
+        }
         return myPeerInfoResponse;
 
     }
