@@ -24,13 +24,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -43,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -76,6 +70,13 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
 import org.slf4j.Logger;
+
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -327,7 +328,8 @@ public final class AplCore {
             ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
             blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
-            executor.createAllCommands(shardDao.getLastShard().getShardHeight());
+            Shard lastShard = shardDao.getLastShard();
+            executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
             executor.executeAllOperations();
             aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
         }

@@ -79,7 +79,7 @@ public class ShardObserver {
                         Shard newShard = new Shard(nextShardId, minRollbackHeight);
                         shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
-                        completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight))
+                        completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight, nextShardId))
                                 .thenApply((result) -> {
                                     blockchainProcessor.updateInitialBlockId();
                                     return result;
@@ -106,7 +106,7 @@ public class ShardObserver {
         }
     }
 
-    public boolean performSharding(int minRollbackHeight) {
+    public boolean performSharding(int minRollbackHeight, long shardId) {
         boolean result = false;
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();
@@ -116,7 +116,7 @@ public class ShardObserver {
             log.debug("Clean commands....");
             shardMigrationExecutor.cleanCommands();
             log.debug("Create all commands....");
-            shardMigrationExecutor.createAllCommands(minRollbackHeight);
+            shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, MigrateState.INIT);
             log.debug("Start all commands....");
             state = shardMigrationExecutor.executeAllOperations();
             result = true;

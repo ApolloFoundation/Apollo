@@ -196,6 +196,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::createAndAddShard).collect(Collectors.toList());
         return dataSources;
     }
+
+    @Override
+    public TransactionalDataSource getShardDataSourceById(long shardId) {
+        return connectedShardDataSourceMap.get(shardId);
+    }
+
     /**
      * {@inheritDoc}
      */

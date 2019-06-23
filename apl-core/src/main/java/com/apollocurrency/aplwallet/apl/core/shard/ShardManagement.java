@@ -88,4 +88,6 @@ public interface ShardManagement {
      * @return list of full shard datasources
      */
     List<TransactionalDataSource> getFullDatasources();
+
+    TransactionalDataSource getShardDataSourceById(long shardId);
 }

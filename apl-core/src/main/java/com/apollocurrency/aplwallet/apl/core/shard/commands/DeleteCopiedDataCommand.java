@@ -22,34 +22,24 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private ShardEngine shardEngine;
     private List<String> tableNameList = new ArrayList<>();
     private int commitBatchSize = ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
-    private ExcludeInfo excludedTxs;
+    private ExcludeInfo excludeInfo;
     private int snapshotBlockHeight;
 
     public DeleteCopiedDataCommand(ShardEngine shardEngine,
-                                   int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludedTxs) {
-        this(shardEngine, snapshotBlockHeight, excludedTxs);
+                                   int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludeInfo) {
+        this(shardEngine, snapshotBlockHeight, excludeInfo);
         this.commitBatchSize = commitBatchSize;
     }
 
     public DeleteCopiedDataCommand(ShardEngine shardEngine,
-                                   int snapshotBlockHeight, ExcludeInfo excludedTxs) {
+                                   int snapshotBlockHeight, ExcludeInfo excludeInfo) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
-        this.excludedTxs = Objects.requireNonNull(excludedTxs, "excludedTxs set is NULL");
+        this.excludeInfo = Objects.requireNonNull(excludeInfo, "excludeInfo set is NULL");
         tableNameList.add(ShardConstants.BLOCK_TABLE_NAME);
         tableNameList.add(ShardConstants.TRANSACTION_TABLE_NAME);
     }
 
-    public DeleteCopiedDataCommand(
-            ShardEngine shardEngine,
-            List<String> tableNameList,
-            int commitBatchSize,
-            int snapshotBlockHeight) {
-        this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
-        this.tableNameList = Objects.requireNonNull(tableNameList, "tableNameList is NULL");
-        this.commitBatchSize = commitBatchSize;
-        this.snapshotBlockHeight = snapshotBlockHeight;
-    }
 
     /**
      * {@inheritDoc}
@@ -57,8 +47,12 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Delete Block/Transaction Data from main DB Command execute...");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, excludedTxs);
+        CommandParamInfo paramInfo = CommandParamInfo.builder()
+                .tableNameList(this.tableNameList)
+                .commitBatchSize(this.commitBatchSize)
+                .snapshotBlockHeight(this.snapshotBlockHeight)
+                .excludeInfo(this.excludeInfo)
+                .build();
         return shardEngine.deleteCopiedData(paramInfo);
     }
 
