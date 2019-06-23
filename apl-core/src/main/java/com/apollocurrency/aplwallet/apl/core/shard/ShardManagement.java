@@ -95,5 +95,4 @@ public interface ShardManagement {
      */
     List<TransactionalDataSource> getFullDatasources();
 
-    TransactionalDataSource getShardDataSourceById(long shardId);
 }
