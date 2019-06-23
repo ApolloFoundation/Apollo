@@ -35,12 +35,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -89,6 +90,8 @@ public class FundingMonitor {
     private static FeeCalculator feeCalculator = new FeeCalculator();
     private static TransactionProcessor transactionProcessor;
     private static GlobalSync globalSync; // prevent fail on node shutdown
+    private static AccountService accountService;
+
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -274,6 +277,7 @@ public class FundingMonitor {
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         blockchain = CDI.current().select(Blockchain.class).get();
         transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        accountService = CDI.current().select(AccountServiceImpl.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -530,11 +534,11 @@ public class FundingMonitor {
             //
             // Register our event listeners
             //
-            Account.addListener(new AccountEventHandler(), Account.Event.BALANCE);
-            Account.addAssetListener(new AssetEventHandler(), Account.Event.ASSET_BALANCE);
-            Account.addCurrencyListener(new CurrencyEventHandler(), Account.Event.CURRENCY_BALANCE);
-            Account.addPropertyListener(new SetPropertyEventHandler(), Account.Event.SET_PROPERTY);
-            Account.addPropertyListener(new DeletePropertyEventHandler(), Account.Event.DELETE_PROPERTY);
+            AccountService.addListener(new AccountEventHandler(), Account.Event.BALANCE);
+            AccountAssetService.addAssetListener(new AssetEventHandler(), Account.Event.ASSET_BALANCE);
+            AccountCurrencyService.addCurrencyListener(new CurrencyEventHandler(), Account.Event.CURRENCY_BALANCE);
+            AccountPropertyService.addPropertyListener(new SetPropertyEventHandler(), Account.Event.SET_PROPERTY);
+            AccountPropertyService.addPropertyListener(new DeletePropertyEventHandler(), Account.Event.DELETE_PROPERTY);
             //
             // All done
             //
@@ -616,8 +620,8 @@ public class FundingMonitor {
                     MonitoredAccount monitoredAccount;
                     while ((monitoredAccount = pendingEvents.poll()) != null) {
                         try {
-                            Account targetAccount = Account.getAccount(monitoredAccount.accountId);
-                            Account fundingAccount = Account.getAccount(monitoredAccount.monitor.accountId);
+                            Account targetAccount = accountService.getAccount(monitoredAccount.accountId);
+                            Account fundingAccount = accountService.getAccount(monitoredAccount.monitor.accountId);
                             if (blockchain.getHeight() - monitoredAccount.height < monitoredAccount.interval) {
                                 if (!suspendedEvents.contains(monitoredAccount)) {
                                     suspendedEvents.add(monitoredAccount);

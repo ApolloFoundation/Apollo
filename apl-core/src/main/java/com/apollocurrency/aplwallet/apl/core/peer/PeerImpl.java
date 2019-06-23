@@ -24,6 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -110,17 +111,19 @@ public final class PeerImpl implements Peer {
     private final Blockchain blockchain;
     private volatile EpochTime timeService;
     private final PropertiesHolder propertiesHolder;
+    private AccountService accountService;
     
     private PeerInfo pi = new PeerInfo();
     //Jackson JSON
     private final  ObjectMapper mapper = new ObjectMapper();
     
-    PeerImpl(String host, 
+    PeerImpl(String host,
             String announcedAddress,
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
             EpochTime timeService,
-            PropertiesHolder propertiesHolder
+            PropertiesHolder propertiesHolder,
+            AccountService accountService
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -147,6 +150,7 @@ public final class PeerImpl implements Peer {
         this.blockchain = blockchain;
         this.timeService=timeService;
         isLightClient=propertiesHolder.isLightClient();
+        this.accountService = accountService;
     }
     
     @Override
@@ -377,7 +381,7 @@ public final class PeerImpl implements Peer {
         }
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < blockchain.getHeight() - 60) {
             long accountId = hallmark.getAccountId();
-            Account account = Account.getAccount(accountId);
+            Account account = accountService.getAccount(accountId);
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = blockchain.getHeight();
         }

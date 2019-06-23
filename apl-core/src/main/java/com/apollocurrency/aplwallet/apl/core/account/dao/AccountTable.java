@@ -1,42 +1,38 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.dao;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.sql.*;
 import java.util.Collections;
 import java.util.EnumSet;
-import javax.inject.Singleton;
 
 /**
  *
  * @author al
  */
 @Singleton
-public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
-    private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
+public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity> {
+    private static final LongKeyFactory<AccountEntity> accountDbKeyFactory = new LongKeyFactory<AccountEntity>("id") {
 
         @Override
-        public DbKey newKey(Account account) {
-            return account.dbKey == null ? newKey(account.id) : account.dbKey;
+        public DbKey newKey(AccountEntity account) {
+            return account.getDbKey() == null ? newKey(account.getId()) : account.getDbKey();
         }
 
         @Override
-        public Account newEntity(DbKey dbKey) {
-            return new Account(((LongKey) dbKey).getId());
+        public AccountEntity newEntity(DbKey dbKey) {
+            return new AccountEntity(((LongKey) dbKey).getId(), dbKey);
         }
 
     };
@@ -45,49 +41,55 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         return accountDbKeyFactory.newKey(id);
     }
     
-    public static DbKey newKey(Account a){
+    public static DbKey newKey(AccountEntity a){
         return accountDbKeyFactory.newKey(a);
     }
-    
-    public AccountTable() {
+
+    private BlockchainConfig blockchainConfig;
+    private Blockchain blockchain;
+
+    @Inject
+    public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig) {
         super("account", accountDbKeyFactory, false);
+        this.blockchain = blockchain;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @Override
-    public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountEntity load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         long id = rs.getLong("id");
-        Account res = new Account(id);
-        res.dbKey = dbKey;
-        res.balanceATM = rs.getLong("balance");
-        res.unconfirmedBalanceATM = rs.getLong("unconfirmed_balance");
-        res.forgedBalanceATM = rs.getLong("forged_balance");
-        res.activeLesseeId = rs.getLong("active_lessee_id");
+        AccountEntity res = new AccountEntity(id, dbKey,
+                                      rs.getLong("balance"),
+                                      rs.getLong("unconfirmed_balance"),
+                                      rs.getLong("forged_balance"),
+                                      rs.getLong("active_lessee_id"));
+
         if (rs.getBoolean("has_control_phasing")) {
-            res.controls = Collections.unmodifiableSet(EnumSet.of(Account.ControlType.PHASING_ONLY));
+            res.setControls(Collections.unmodifiableSet(EnumSet.of(Account.ControlType.PHASING_ONLY)));
         } else {
-            res.controls = Collections.emptySet();
+            res.setControls(Collections.emptySet());
         }
         return res;
     }
 
     @Override
-    public void save(Connection con, Account account) throws SQLException {
+    public void save(Connection con, AccountEntity account) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, account.id);
-            pstmt.setLong(++i, account.balanceATM);
-            pstmt.setLong(++i, account.unconfirmedBalanceATM);
-            pstmt.setLong(++i, account.forgedBalanceATM);
-            DbUtils.setLongZeroToNull(pstmt, ++i, account.activeLesseeId);
-            pstmt.setBoolean(++i, account.controls.contains(Account.ControlType.PHASING_ONLY));
-            pstmt.setInt(++i, Account.blockchain.getHeight());
+            pstmt.setLong(++i, account.getId());
+            pstmt.setLong(++i, account.getBalanceATM());
+            pstmt.setLong(++i, account.getUnconfirmedBalanceATM());
+            pstmt.setLong(++i, account.getForgedBalanceATM());
+            DbUtils.setLongZeroToNull(pstmt, ++i, account.getActiveLesseeId());
+            pstmt.setBoolean(++i, account.getControls().contains(Account.ControlType.PHASING_ONLY));
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }
 
     @Override
     public void trim(int height) {
-        if (height <= Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
+        if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
         super.trim(height);
@@ -95,12 +97,12 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public void checkAvailable(int height) {
-        if (height > Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
+        if (height > blockchainConfig.getGuaranteedBalanceConfirmations()) {
             super.checkAvailable(height);
             return;
         }
-        if (height > Account.blockchain.getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Account.blockchain.getHeight());
+        if (height > blockchain.getHeight()) {
+            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
         }
     }
  
@@ -119,14 +121,15 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             }
         }
     }
-     public  DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+
+    public  DbIterator<AccountEntity> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
                             " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             return getManyBy(con, pstmt, false);
     }
-     
+
     public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
         try (
                 PreparedStatement pstmt =

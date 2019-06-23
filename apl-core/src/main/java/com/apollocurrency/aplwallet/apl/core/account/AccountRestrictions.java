@@ -21,26 +21,28 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
-import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account.ControlType;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
+@Slf4j
 public final class AccountRestrictions {
-        private static final Logger LOG = getLogger(AccountRestrictions.class);
 
-
+    static AccountService accountService;
 
     static final LongKeyFactory<PhasingOnly> phasingControlDbKeyFactory = new LongKeyFactory<PhasingOnly>("account_id") {
         @Override
@@ -62,11 +64,20 @@ public final class AccountRestrictions {
         }
     };
 
+    private static AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
     public static void init() {
+        lookupAccountService();
+
     }
 
     public static void checkTransaction(Transaction transaction) throws AplException.NotCurrentlyValidException {
-        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
         if (senderAccount == null) {
             throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
         }
@@ -77,9 +88,9 @@ public final class AccountRestrictions {
     }
 
     public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
         return
-                senderAccount.getControls().contains(ControlType.PHASING_ONLY)
+                senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)
                 && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
                 && transaction.getType() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,

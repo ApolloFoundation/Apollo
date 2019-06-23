@@ -14,10 +14,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -90,11 +91,15 @@ public class PhasingPollServiceTest {
             PhasingPollLinkedTransactionTable.class,
             PhasingVoteTable.class,
             PublicKeyTable.class,
-            AccountTable.class,
             FullTextConfigImpl.class,
             AccountGuaranteedBalanceTable.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            AccountServiceImpl.class, AccountAssetServiceImpl.class,
+            AccountPublickKeyServiceImpl.class, AccountCurrencyServiceImpl.class,
+            AccountFactory.class,
+            AccountTable.class, AccountCurrencyTable.class, AccountPropertyTable.class
+    )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -107,9 +112,8 @@ public class PhasingPollServiceTest {
     @Inject
     Blockchain blockchain;
     @Inject
-    PublicKeyTable publicKeyTable;
-    @Inject
-    AccountTable accountTable;
+    AccountService accountService;
+
     PhasingTestData ptd;
     TransactionTestData ttd;
     BlockTestData btd;
@@ -332,7 +336,7 @@ public class PhasingPollServiceTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        Account.init(extension.getDatabaseManager(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable);
+        //Account.init(extension.getDatabaseManager(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = service.countVotes(ptd.POLL_3);
 
@@ -414,7 +418,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testAddVote() throws SQLException {
-        inTransaction(con -> service.addVote(ptd.NEW_VOTE_TX, new Account(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId()));
+        inTransaction(con -> service.addVote(ptd.NEW_VOTE_TX, accountService.getAccount(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId()));
         long voteCount = service.getVoteCount(ptd.POLL_1.getId());
 
         assertEquals(voteCount, 3);

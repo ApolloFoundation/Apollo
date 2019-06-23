@@ -21,9 +21,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -96,7 +99,12 @@ public class DGSServiceTest {
             AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class)
+            DerivedDbTablesRegistryImpl.class,
+            AccountServiceImpl.class, AccountAssetServiceImpl.class,
+            AccountPublickKeyServiceImpl.class, AccountCurrencyServiceImpl.class,
+            AccountFactory.class,
+            AccountTable.class, AccountPropertyTable.class
+    )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -114,7 +122,7 @@ public class DGSServiceTest {
     DGSGoodsTable goodsTable;
 
     @Inject
-    AccountTable accountTable;
+    AccountService accountService;
 
     DGSTestData dtd;
 
@@ -1153,12 +1161,12 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseForDelistedGoods() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = Account.getAccount(50);
+        Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con)-> {
@@ -1169,12 +1177,12 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceNotMatch() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = Account.getAccount(50);
+        Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
         DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
@@ -1183,12 +1191,12 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = Account.getAccount(50);
+        Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
@@ -1197,7 +1205,7 @@ public class DGSServiceTest {
 
     @Test
     void testDeliver() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
         Transaction deliverTransaction = mock(Transaction.class);
         int height = 1_000_000;
         long txId = 100L;
@@ -1227,7 +1235,7 @@ public class DGSServiceTest {
 
     @Test
     void testRefund() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
         doReturn(1_500_000).when(blockchain).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
@@ -1325,7 +1333,7 @@ public class DGSServiceTest {
 
 
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
-        Account account = Account.getAccount(accountId);
+        Account account = accountService.getAccount(accountId);
         if (balance != null) {
             assertEquals(balance, account.getBalanceATM());
         }

@@ -22,7 +22,7 @@ public class GetTotalSupply extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         JSONObject response = new JSONObject();
-        response.put("totalAmount", Account.getTotalSupply());
+        response.put("totalAmount", lookupAccountService().getTotalSupply());
         return response;
     }
 }

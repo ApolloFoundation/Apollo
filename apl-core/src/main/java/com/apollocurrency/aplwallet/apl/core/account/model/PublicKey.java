@@ -1,10 +1,12 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,9 +17,11 @@ import java.util.Objects;
  *
  * @author al
  */
+@Getter @Setter
 public final class PublicKey extends VersionedDerivedEntity {
+    //TODO remove the unneeded public scope
     public final long accountId;
-    byte[] publicKey;
+    public byte[] publicKey;
 
     public PublicKey(long accountId, byte[] publicKey, int height) {
         super(null, height);
@@ -30,14 +34,6 @@ public final class PublicKey extends VersionedDerivedEntity {
         this.accountId = rs.getLong("account_id");
         this.publicKey = rs.getBytes("public_key");
         setDbKey(dbKey);
-    }
-
-    public long getAccountId() {
-        return accountId;
-    }
-
-    public byte[] getPublicKey() {
-        return publicKey;
     }
 
     @Override

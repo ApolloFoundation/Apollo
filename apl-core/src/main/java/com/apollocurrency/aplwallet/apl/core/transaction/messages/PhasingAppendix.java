@@ -7,7 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -39,8 +43,10 @@ import javax.enterprise.inject.spi.CDI;
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
     private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
+    private static AccountService accountService;
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
@@ -296,9 +302,8 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private void release(Transaction transaction) {
-
-        Account senderAccount = Account.getAccount(transaction.getSenderId());
-        Account recipientAccount = transaction.getRecipientId() == 0 ? null : Account.getAccount(transaction.getRecipientId());
+        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
+        Account recipientAccount = transaction.getRecipientId() == 0 ? null : lookupAccountService().getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
             if (appendage.isPhasable()) {
                 appendage.apply(transaction, senderAccount, recipientAccount);
@@ -312,7 +317,8 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void reject(Transaction transaction) {
-        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
+
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                 transaction.getAmountATM());
@@ -408,4 +414,10 @@ public class PhasingAppendix extends AbstractAppendix {
         return blockchain;
     }
 
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
 }

@@ -75,11 +75,11 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
                 if (data.length != 0) {
                     if (keySeed != null) {
                         byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
-                        byte[] sellerPublicKey = Account.getPublicKey(purchase.getSellerId());
-                        byte[] buyerPublicKey = Account.getPublicKey(purchase.getBuyerId());
+                        byte[] sellerPublicKey = lookupAccountService().getPublicKey(purchase.getSellerId());
+                        byte[] buyerPublicKey = lookupAccountService().getPublicKey(purchase.getBuyerId());
                         byte[] publicKey = Arrays.equals(sellerPublicKey, readerPublicKey) ? buyerPublicKey : sellerPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
+                            decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(purchase.getEncryptedGoods().getData(), sharedKey);

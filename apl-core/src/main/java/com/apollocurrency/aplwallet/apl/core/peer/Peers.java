@@ -21,6 +21,8 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -52,16 +54,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -162,7 +160,7 @@ public final class Peers {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
     public static int myPort;
 
@@ -260,7 +258,7 @@ public final class Peers {
             }
         }), Peers.Event.CHANGED_SERVICES);
 
-        Account.addListener(account -> peers.values().forEach(peer -> {
+        AccountService.addListener(account -> peers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 listeners.notify(peer, Event.WEIGHT);
             }
@@ -529,7 +527,7 @@ public final class Peers {
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
             return null;
         }
-        peer = new PeerImpl(host, announcedAddress, blockchainConfig, blockchain, timeService, propertiesHolder);
+        peer = new PeerImpl(host, announcedAddress, blockchainConfig, blockchain, timeService, propertiesHolder, accountService);
         return peer;
     }
 

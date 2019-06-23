@@ -40,13 +40,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -71,7 +68,7 @@ public final class GetState extends AbstractAPIRequestHandler {
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && apw.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
-            response.put("numberOfAccounts", Account.getCount());
+            response.put("numberOfAccounts", lookupAccountService().getCount());
             response.put("numberOfAssets", Asset.getCount());
             int askCount = Order.Ask.getCount();
             int bidCount = Order.Bid.getCount();
@@ -95,7 +92,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfTaggedData", taggedDataService.getTaggedDataCount());
             response.put("numberOfDataTags", taggedDataService.getDataTagCount());
             response.put("numberOfAccountLeases", AccountLeaseTable.getAccountLeaseCount());
-            response.put("numberOfActiveAccountLeases", Account.getActiveLeaseCount());
+            response.put("numberOfActiveAccountLeases", lookupAccountService().getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
             response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());

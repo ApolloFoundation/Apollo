@@ -48,7 +48,7 @@ public final class GetSharedKey extends AbstractAPIRequestHandler {
 
         long participantAccountId = ParameterParser.getAccountId(req,"participantAccount", true);
         byte[] nonce = ParameterParser.getBytes(req, "nonce", true);
-        byte[] publicKey = Account.getPublicKey(participantAccountId);
+        byte[] publicKey = lookupAccountService().getPublicKey(participantAccountId);
         if (publicKey == null) {
             return JSONResponses.INCORRECT_ACCOUNT;
         }

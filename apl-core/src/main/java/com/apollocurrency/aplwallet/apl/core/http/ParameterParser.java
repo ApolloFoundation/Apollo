@@ -21,6 +21,11 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
+
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
@@ -116,6 +121,9 @@ public final class ParameterParser {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();;
+
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountPublickKeyService accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
 
     private static final int DEFAULT_LAST_INDEX = 250;
 
@@ -462,7 +470,7 @@ public final class ParameterParser {
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
-                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = accountPublickKeyService.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -585,7 +593,7 @@ public final class ParameterParser {
         if (publicKey == null) {
             throw new ParameterException(UNKNOWN_PUBLIC_KEY);
         }
-        Account account = Account.getAccount(publicKey);
+        Account account = accountService.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
@@ -603,7 +611,7 @@ public final class ParameterParser {
         if (accountId == 0 && !isMandatory) {
             return null;
         }
-        Account account = Account.getAccount(accountId);
+        Account account = accountService.getAccount(accountId);
         if (account == null) {
             throw new ParameterException(JSONResponses.unknownAccount(accountId));
         }
@@ -657,7 +665,7 @@ public final class ParameterParser {
                 continue;
             }
             try {
-                Account account = Account.getAccount(Convert.parseAccountId(accountValue));
+                Account account = accountService.getAccount(Convert.parseAccountId(accountValue));
                 if (account == null) {
                     throw new ParameterException(UNKNOWN_ACCOUNT);
                 }
@@ -871,7 +879,7 @@ public final class ParameterParser {
                 }
             }
             if (recipient != null) {
-                recipientPublicKey = Account.getPublicKey(recipient.getId());
+                recipientPublicKey = accountService.getPublicKey(recipient.getId());
             }
             if (recipientPublicKey == null) {
                 recipientPublicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter("recipientPublicKey")));
@@ -881,7 +889,7 @@ public final class ParameterParser {
             }
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
-                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = accountPublickKeyService.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {

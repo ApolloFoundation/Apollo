@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
@@ -43,6 +45,7 @@ import java.sql.SQLException;
 public abstract class Order {
 
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static DatabaseManager databaseManager;
 
     private final long id;
@@ -90,13 +93,13 @@ public abstract class Order {
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
 
             askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account askAccount = Account.getAccount(askOrder.getAccountId());
+            Account askAccount = accountService.getAccount(askOrder.getAccountId());
             askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
             askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
             bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account bidAccount = Account.getAccount(bidOrder.getAccountId());
+            Account bidAccount = accountService.getAccount(bidOrder.getAccountId());
             bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     assetId, trade.getQuantityATU());
             bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),

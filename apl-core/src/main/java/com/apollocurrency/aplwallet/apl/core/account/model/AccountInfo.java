@@ -3,11 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -15,12 +19,13 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@Getter @Setter
 public final class AccountInfo {
-    
-    final long accountId;
-    final DbKey dbKey;
-    String name;
-    String description;
+    //TODO remove the unneeded public scope
+    public final long accountId;
+    public final DbKey dbKey;
+    public String name;
+    public String description;
     
     public AccountInfo(long accountId, String name, String description) {
         this.accountId = accountId;
@@ -36,27 +41,11 @@ public final class AccountInfo {
         this.description = rs.getString("description");
     }
 
-    public long getAccountId() {
-        return accountId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    void save() {
+    public void save() {
         if (this.name != null || this.description != null) {
             AccountInfoTable.getInstance().insert(this);
         } else {
             AccountInfoTable.getInstance().delete(this);
         }
     }
-  
-    public static DbIterator<AccountInfo> searchAccounts(String query, int from, int to) {
-        return AccountInfoTable.getInstance().search(query, DbClause.EMPTY_CLAUSE, from, to);
-    } 
 }

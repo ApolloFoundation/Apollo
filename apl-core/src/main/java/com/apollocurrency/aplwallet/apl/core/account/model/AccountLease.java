@@ -1,9 +1,13 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -11,16 +15,18 @@ import java.sql.SQLException;
  *
  * @author al
  */
+
+@Getter @Setter
 public final class AccountLease {
-    
-    final long lessorId;
-    final DbKey dbKey;
-    long currentLesseeId;
-    int currentLeasingHeightFrom;
-    int currentLeasingHeightTo;
-    long nextLesseeId;
-    int nextLeasingHeightFrom;
-    int nextLeasingHeightTo;
+    //TODO remove the unneeded public scope
+    public final long lessorId;
+    public final DbKey dbKey;
+    public long currentLesseeId;
+    public int currentLeasingHeightFrom;
+    public int currentLeasingHeightTo;
+    public long nextLesseeId;
+    public int nextLeasingHeightFrom;
+    public int nextLeasingHeightTo;
     
     public AccountLease(long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId) {
         this.lessorId = lessorId;
@@ -39,34 +45,6 @@ public final class AccountLease {
         this.nextLeasingHeightFrom = rs.getInt("next_leasing_height_from");
         this.nextLeasingHeightTo = rs.getInt("next_leasing_height_to");
         this.nextLesseeId = rs.getLong("next_lessee_id");
-    }
-
-    public long getLessorId() {
-        return lessorId;
-    }
-
-    public long getCurrentLesseeId() {
-        return currentLesseeId;
-    }
-
-    public int getCurrentLeasingHeightFrom() {
-        return currentLeasingHeightFrom;
-    }
-
-    public int getCurrentLeasingHeightTo() {
-        return currentLeasingHeightTo;
-    }
-
-    public long getNextLesseeId() {
-        return nextLesseeId;
-    }
-
-    public int getNextLeasingHeightFrom() {
-        return nextLeasingHeightFrom;
-    }
-
-    public int getNextLeasingHeightTo() {
-        return nextLeasingHeightTo;
     }
     
 }

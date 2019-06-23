@@ -22,6 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -45,6 +47,7 @@ import javax.inject.Singleton;
 public abstract class CurrencyExchangeOffer {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     public static final class AvailableOffers {
 
@@ -155,7 +158,7 @@ public abstract class CurrencyExchangeOffer {
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
-            Account counterAccount = Account.getAccount(offer.getAccountId());
+            Account counterAccount = accountService.getAccount(offer.getAccountId());
             counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountATM);
             counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
             counterAccount.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
@@ -205,7 +208,7 @@ public abstract class CurrencyExchangeOffer {
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
-            Account counterAccount = Account.getAccount(offer.getAccountId());
+            Account counterAccount = accountService.getAccount(offer.getAccountId());
             counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountATM);
             counterAccount.addToUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
                     Math.addExact(
@@ -230,7 +233,7 @@ public abstract class CurrencyExchangeOffer {
         CurrencyBuyOffer.remove(buyOffer);
         CurrencySellOffer.remove(sellOffer);
 
-        Account account = Account.getAccount(buyOffer.getAccountId());
+        Account account = accountService.getAccount(buyOffer.getAccountId());
         account.addToUnconfirmedBalanceATM(event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateATM()));
         account.addToUnconfirmedCurrencyUnits(event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }

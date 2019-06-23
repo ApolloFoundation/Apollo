@@ -24,22 +24,17 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.*;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -118,6 +113,7 @@ public final class JSONData {
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     private JSONData() {} // never
 
@@ -420,7 +416,7 @@ public final class JSONData {
             long totalSupply = AccountTable.getTotalSupply(con);
             long totalAccounts = AccountTable.getTotalNumberOfAccounts(con);
             long totalAmountOnTopAccounts = AccountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            try(DbIterator<Account> topHolders = Account.getTopHolders(con, numberOfAccounts)) {
+            try(DbIterator<AccountEntity> topHolders = accountService.getTopHolders(con, numberOfAccounts)) {
                 return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
             }
         }
@@ -432,7 +428,7 @@ public final class JSONData {
         }
     }
 
-    private static JSONObject accounts(DbIterator<Account> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
+    private static JSONObject accounts(DbIterator<AccountEntity> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
                                        int numberOfAccounts) {
         JSONObject result = new JSONObject();
         result.put("totalSupply", totalSupply);
@@ -441,8 +437,8 @@ public final class JSONData {
         result.put("totalAmountOnTopAccounts", totalAmountOnTopAccounts);
         JSONArray holders = new JSONArray();
         while (topAccountsIterator.hasNext()) {
-            Account account = topAccountsIterator.next();
-            JSONObject accountJson = JSONData.accountBalance(account, false);
+            AccountEntity account = topAccountsIterator.next();
+            JSONObject accountJson = JSONData.accountBalance(accountService.getAccount(account), false);
             JSONData.putAccount(accountJson, "account", account.getId());
             holders.add(accountJson);
         }

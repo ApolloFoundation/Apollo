@@ -1,9 +1,13 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -11,13 +15,15 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@Getter @Setter
 public final class AccountAsset {
-    
-    final long accountId;
-    final long assetId;
-    final DbKey dbKey;
-    long quantityATU;
-    long unconfirmedQuantityATU;
+
+    //TODO remove the unneeded public scope
+    public final long accountId;
+    public final long assetId;
+    public final DbKey dbKey;
+    public long quantityATU;
+    public long unconfirmedQuantityATU;
 
     
     public AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU) {
@@ -34,22 +40,6 @@ public final class AccountAsset {
         this.dbKey = dbKey;
         this.quantityATU = rs.getLong("quantity");
         this.unconfirmedQuantityATU = rs.getLong("unconfirmed_quantity");
-    }
-
-    public long getAccountId() {
-        return accountId;
-    }
-
-    public long getAssetId() {
-        return assetId;
-    }
-
-    public long getQuantityATU() {
-        return quantityATU;
-    }
-
-    public long getUnconfirmedQuantityATU() {
-        return unconfirmedQuantityATU;
     }
 
     @Override

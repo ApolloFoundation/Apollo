@@ -5,13 +5,26 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 
 /**
  * Active generator
  */
 public class ActiveGenerator implements Comparable<ActiveGenerator> {
+
+    private static AccountService accountService;
+
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
     private final long accountId;
     private long hitTime;
     private long effectiveBalanceAPL;
@@ -36,14 +49,14 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
     public void setLastBlock(Block lastBlock) {
         if (publicKey == null) {
-            publicKey = Account.getPublicKey(accountId);
+            publicKey = lookupAccountService().getPublicKey(accountId);
             if (publicKey == null) {
                 hitTime = Long.MAX_VALUE;
                 return;
             }
         }
         int height = lastBlock.getHeight();
-        Account account = Account.getAccount(accountId, height);
+        Account account = lookupAccountService().getAccount(accountId, height);
         if (account == null) {
             hitTime = Long.MAX_VALUE;
             return;

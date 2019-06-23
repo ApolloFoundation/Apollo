@@ -28,6 +28,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -45,6 +49,8 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 public final class PrunableMessage {
 
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountPublickKeyService accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
@@ -289,8 +295,8 @@ public final class PrunableMessage {
             return null;
         }
         byte[] publicKey = senderId == Account.getId(Crypto.getPublicKey(keySeed))
-                ? Account.getPublicKey(recipientId) : Account.getPublicKey(senderId);
-        return Account.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
+                ? accountService.getPublicKey(recipientId) : accountService.getPublicKey(senderId);
+        return accountPublickKeyService.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }
 
     public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {

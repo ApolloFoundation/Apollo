@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;

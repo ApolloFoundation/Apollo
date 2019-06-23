@@ -2,9 +2,14 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -13,13 +18,14 @@ import java.sql.SQLException;
  * @author al
  */
 @SuppressWarnings(value = "UnusedDeclaration")
+@Getter @Setter
 public final class AccountCurrency {
-    
-    final long accountId;
-    final long currencyId;
-    final DbKey dbKey;
-    long units;
-    long unconfirmedUnits;
+    //TODO remove the unneeded public scope
+    public final long accountId;
+    public final long currencyId;
+    public final DbKey dbKey;
+    public long units;
+    public long unconfirmedUnits;
     
     public AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU) {
         this.accountId = accountId;
@@ -35,31 +41,6 @@ public final class AccountCurrency {
         this.dbKey = dbKey;
         this.units = rs.getLong("units");
         this.unconfirmedUnits = rs.getLong("unconfirmed_units");
-    }
-
-    public long getAccountId() {
-        return accountId;
-    }
-
-    public long getCurrencyId() {
-        return currencyId;
-    }
-
-    public long getUnits() {
-        return units;
-    }
-
-    public long getUnconfirmedUnits() {
-        return unconfirmedUnits;
-    }
-
-    void save() {
-        Account.checkBalance(this.accountId, this.units, this.unconfirmedUnits);
-        if (this.units > 0 || this.unconfirmedUnits > 0) {
-            AccountCurrencyTable.getInstance().insert(this);
-        } else if (this.units == 0 && this.unconfirmedUnits == 0) {
-            AccountCurrencyTable.getInstance().delete(this);
-        }
     }
 
     @Override

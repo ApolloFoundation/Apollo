@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -65,7 +67,7 @@ public final class Genesis {
     private static  ConfigDirProvider configDirProvider = CDI.current().select(ConfigDirProvider.class).get();
 //    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
     private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
-
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl .class).get();
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
     private static String genesisTaskId;
@@ -132,7 +134,7 @@ public final class Genesis {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
+        Account creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
         creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
@@ -147,7 +149,7 @@ public final class Genesis {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
-            Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
+            Account account = accountService.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
             account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
@@ -170,7 +172,7 @@ public final class Genesis {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
-            Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
+            Account account = accountService.addOrGetAccount(Account.getId(publicKey), true);
             account.apply(publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);

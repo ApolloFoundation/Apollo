@@ -162,7 +162,7 @@ public class AccountLedger {
         return listeners.removeListener(listener, eventType);
     }
 
-    static boolean mustLogEntry(long accountId, boolean isUnconfirmed) {
+    public static boolean mustLogEntry(long accountId, boolean isUnconfirmed) {
         //
         // Must be tracking this account
         //
@@ -203,7 +203,7 @@ public class AccountLedger {
      *
      * @param   ledgerEntry                 Ledger entry
      */
-    static void logEntry(LedgerEntry ledgerEntry) {
+    public static void logEntry(LedgerEntry ledgerEntry) {
         //
         // Must be in a database transaction
         //

@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -56,7 +58,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.nextLeasingHeightFrom);
             DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.nextLeasingHeightTo);
             DbUtils.setLongZeroToNull(pstmt, ++i, accountLease.nextLesseeId);
-            pstmt.setInt(++i, Account.blockchain.getHeight());
+            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
             pstmt.executeUpdate();
         }
     }
@@ -65,7 +67,8 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
     public static int getAccountLeaseCount() {
         return accountLeaseTable.getCount();
     }
-    DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
+
+    public DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {

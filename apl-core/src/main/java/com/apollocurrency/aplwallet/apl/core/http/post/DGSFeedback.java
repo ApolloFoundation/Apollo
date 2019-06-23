@@ -60,7 +60,7 @@ public final class DGSFeedback extends CreateTransaction {
             return GOODS_NOT_DELIVERED;
         }
 
-        Account sellerAccount = Account.getAccount(purchase.getSellerId());
+        Account sellerAccount = accountService.getAccount(purchase.getSellerId());
         Attachment attachment = new DigitalGoodsFeedback(purchase.getId());
         return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
     }

@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOfferAttachmentFactory;
@@ -35,6 +37,7 @@ public class DexOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
     private EpochTime epochTime = CDI.current().select(EpochTime.class).get();
+    private AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     @Override
     public byte getSubtype() {
@@ -104,7 +107,7 @@ public class DexOfferTransaction extends DEX {
 
         if (OfferType.SELL.ordinal() == attachment.getType()) {
             Long amountATM = attachment.getOfferAmount();
-            Account sender = Account.getAccount(transaction.getSenderId());
+            Account sender = accountService.getAccount(transaction.getSenderId());
 
             if (sender.getUnconfirmedBalanceATM() < amountATM) {
                 throw new AplException.NotValidException("Not enough money.");

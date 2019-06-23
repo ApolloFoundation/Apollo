@@ -47,6 +47,8 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -90,6 +92,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static int maxUnconfirmedTransactions;
@@ -752,7 +755,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (! transaction.verifySignature()) {
-                    if (Account.getAccount(transaction.getSenderId()) != null) {
+                    if (accountService.getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");

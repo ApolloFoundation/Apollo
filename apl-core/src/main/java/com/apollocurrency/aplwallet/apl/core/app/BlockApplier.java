@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
@@ -24,8 +25,11 @@ public class BlockApplier {
     @Setter
     private ShardDao shardDao;
 
+    @Inject @Setter
+    private AccountService accountService;
+
     public void apply(Block block) {
-        Account generatorAccount = Account.addOrGetAccount(block.getGeneratorId());
+        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
         generatorAccount.apply(block.getGeneratorPublicKey());
         long totalBackFees = 0;
         int height = block.getHeight();
@@ -51,9 +55,9 @@ public class BlockApplier {
                 Account previousGeneratorAccount;
                 if (shardHeight > blockHeight) {
                     int index = shardHeight - blockHeight - 1;
-                    previousGeneratorAccount = Account.getAccount(generators[index]);
+                    previousGeneratorAccount = accountService.getAccount(generators[index]);
                 } else {
-                    previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                    previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
                 log.trace("Back fees {} to forger at height {}", ((double)backFees[i])/ Constants.ONE_APL,
                         height - i - 1);

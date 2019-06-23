@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -56,7 +58,7 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
             pstmt.setLong(++i, accountInfo.accountId);
             DbUtils.setString(pstmt, ++i, accountInfo.name);
             DbUtils.setString(pstmt, ++i, accountInfo.description);
-            pstmt.setInt(++i, Account.blockchain.getHeight());
+            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
             pstmt.executeUpdate();
         }
     }
@@ -64,5 +66,5 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
 
     public static DbIterator<AccountInfo> searchAccounts(String query, int from, int to) {
         return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
-    } 
+    }
 }

@@ -36,6 +36,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
     }
 
     @Override
+    @Deprecated
     public boolean delete(T t) { //TODO remove blockchain
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
         return delete(t, false, blockchain.getHeight());

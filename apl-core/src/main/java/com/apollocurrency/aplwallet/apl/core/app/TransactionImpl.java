@@ -34,6 +34,8 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
@@ -65,6 +67,9 @@ public class TransactionImpl implements Transaction {
 
     @Inject
     private static BlockchainImpl blockchain;
+
+    @Inject
+    private static AccountPublickKeyService accountPublickKeyService;
 
     public static final class BuilderImpl implements Builder {
 
@@ -130,6 +135,13 @@ public class TransactionImpl implements Transaction {
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
             }
             return blockchain;
+        }
+
+        private AccountPublickKeyService lookupAndInjectAccountService() {
+            if (accountPublickKeyService == null) {
+                accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+            }
+            return accountPublickKeyService;
         }
 
         @Override
@@ -397,6 +409,13 @@ public class TransactionImpl implements Transaction {
         return blockchain;
     }
 
+    private AccountPublickKeyService lookupAndInjectAccountService() {
+        if (accountPublickKeyService == null) {
+            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+        }
+        return accountPublickKeyService;
+    }
+
     @Override
     public short getDeadline() {
         return deadline;
@@ -405,7 +424,8 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         if (senderPublicKey == null) {
-            senderPublicKey = Account.getPublicKey(senderId);
+            lookupAndInjectAccountService();
+            senderPublicKey = lookupAndInjectAccountService().getPublicKey(senderId);
         }
         return senderPublicKey;
     }
@@ -955,7 +975,8 @@ public class TransactionImpl implements Transaction {
     }
 
     public boolean verifySignature() {
-        return checkSignature() && Account.setOrVerify(getSenderId(), getSenderPublicKey());
+        lookupAndInjectAccountService();
+        return checkSignature() && lookupAndInjectAccountService().setOrVerify(getSenderId(), getSenderPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;

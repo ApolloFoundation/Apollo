@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;

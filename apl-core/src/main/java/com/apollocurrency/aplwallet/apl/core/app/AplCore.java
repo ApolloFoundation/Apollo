@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
@@ -225,7 +225,7 @@ public final class AplCore {
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
-                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable);
+                //Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");

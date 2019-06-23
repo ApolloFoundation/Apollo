@@ -14,6 +14,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -41,8 +45,24 @@ public abstract class AbstractAPIRequestHandler {
     private DatabaseManager databaseManager;
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    
+    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static AccountService accountService;
+    private static AccountPublickKeyService accountPublickKeyService;
+
+    protected AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    protected AccountPublickKeyService lookupAccountPublickKeyService(){
+        if ( accountPublickKeyService == null) {
+            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+        }
+        return accountPublickKeyService;
+    }
+
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;

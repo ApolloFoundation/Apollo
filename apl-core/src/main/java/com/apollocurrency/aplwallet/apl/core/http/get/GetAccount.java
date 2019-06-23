@@ -21,10 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.model.*;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -67,7 +64,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
         response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
-        byte[] publicKey = Account.getPublicKey(account.getId());
+        byte[] publicKey = lookupAccountService().getPublicKey(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }
@@ -95,16 +92,16 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeLessors) {
-            try (DbIterator<Account> lessors = account.getLessors()) {
+            try (DbIterator<AccountEntity> lessors = lookupAccountService().getLessorsIterator(account.getEntity())) {
                 if (lessors.hasNext()) {
                     JSONArray lessorIds = new JSONArray();
                     JSONArray lessorIdsRS = new JSONArray();
                     JSONArray lessorInfo = new JSONArray();
                     while (lessors.hasNext()) {
-                        Account lessor = lessors.next();
+                        AccountEntity lessor = lessors.next();
                         lessorIds.add(Long.toUnsignedString(lessor.getId()));
                         lessorIdsRS.add(Convert2.rsAccount(lessor.getId()));
-                        lessorInfo.add(JSONData.lessor(lessor, includeEffectiveBalance));
+                        lessorInfo.add(JSONData.lessor(lookupAccountService().getAccount(lessor), includeEffectiveBalance));
                     }
                     response.put("lessors", lessorIds);
                     response.put("lessorsRS", lessorIdsRS);

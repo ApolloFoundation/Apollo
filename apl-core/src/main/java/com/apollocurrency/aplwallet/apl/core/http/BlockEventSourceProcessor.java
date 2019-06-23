@@ -10,11 +10,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -34,6 +36,7 @@ public class BlockEventSourceProcessor implements Runnable {
     private final long accountId;
     private final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
+    private AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -121,11 +124,11 @@ public class BlockEventSourceProcessor implements Runnable {
     }
 
     private JSONObject putAccount(long accountId) {
-        Account account = Account.getAccount(accountId);
+        Account account = accountService.getAccount(accountId);
         JSONObject response = JSONData.accountBalance(account, false);
         JSONData.putAccount(response, "account", account.getId());
 
-        byte[] publicKey = Account.getPublicKey(account.getId());
+        byte[] publicKey = accountService.getPublicKey(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }

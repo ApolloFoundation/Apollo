@@ -79,7 +79,7 @@ public final class DGSDelivery extends CreateTransaction {
             return INCORRECT_DGS_DISCOUNT;
         }
 
-        Account buyerAccount = Account.getAccount(purchase.getBuyerId());
+        Account buyerAccount = accountService.getAccount(purchase.getBuyerId());
         boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
         EncryptedData encryptedGoods = ParameterParser.getEncryptedData(req, "goods");
         byte[] goodsBytes = null;
@@ -103,7 +103,7 @@ public final class DGSDelivery extends CreateTransaction {
 
         Attachment attachment = encryptedGoods == null ?
                 new UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
-                        goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
+                        goodsIsText, discountATM, accountService.getPublicKey(buyerAccount.getId())) :
                 new DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
                         goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);

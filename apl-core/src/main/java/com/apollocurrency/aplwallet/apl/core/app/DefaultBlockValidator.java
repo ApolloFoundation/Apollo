@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
@@ -15,8 +16,8 @@ import javax.inject.Singleton;
 public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Inject
-    public DefaultBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
-        super(blockchain, blockchainConfig);
+    public DefaultBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig, AccountService accountService) {
+        super(blockchain, blockchainConfig, accountService);
     }
 
     @Override

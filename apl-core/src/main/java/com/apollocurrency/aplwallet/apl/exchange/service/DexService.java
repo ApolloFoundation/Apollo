@@ -10,7 +10,9 @@ import java.util.concurrent.ExecutionException;
 
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
@@ -44,17 +46,20 @@ public class DexService {
     private DexOfferTable dexOfferTable;
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
+    private AccountService accountService;
 
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
-                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService) {
+                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService,
+                      AccountService accountService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
+        this.accountService = accountService;
     }
 
 
@@ -135,7 +140,7 @@ public class DexService {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for Buy " + offer.getPairCurrency());
         }
         //Return APL.
-        Account account = Account.getAccount(offer.getAccountId());
+        Account account = accountService.getAccount(offer.getAccountId());
         account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
     }
 

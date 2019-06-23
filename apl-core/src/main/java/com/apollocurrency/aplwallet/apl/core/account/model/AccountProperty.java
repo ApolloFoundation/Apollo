@@ -1,9 +1,13 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -11,14 +15,16 @@ import java.sql.SQLException;
  *
  * @author al
  */
+
+@Getter @Setter
 public final class AccountProperty {
-    
-    final long id;
-    final DbKey dbKey;
-    final long recipientId;
-    final long setterId;
-    String property;
-    String value;
+    //TODO remove the unneeded public scope
+    public final long id;
+    public final DbKey dbKey;
+    public final long recipientId;
+    public final long setterId;
+    public String property;
+    public String value;
 
     
     public AccountProperty(long id, long recipientId, long setterId, String property, String value) {
@@ -38,26 +44,6 @@ public final class AccountProperty {
         this.setterId = setterIdL == 0 ? recipientId : setterIdL;
         this.property = rs.getString("property");
         this.value = rs.getString("value");
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getRecipientId() {
-        return recipientId;
-    }
-
-    public long getSetterId() {
-        return setterId;
-    }
-
-    public String getProperty() {
-        return property;
-    }
-
-    public String getValue() {
-        return value;
     }
     
 }

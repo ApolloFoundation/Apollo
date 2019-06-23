@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -49,6 +51,7 @@ public final class BlockImpl implements Block {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static AccountService accountService;
 
     private final int version;
     private final int timestamp;
@@ -141,6 +144,13 @@ public final class BlockImpl implements Block {
         }
     }
 
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
     @Override
     public int getTimeout() {
         return timeout;
@@ -164,7 +174,7 @@ public final class BlockImpl implements Block {
     @Override
     public byte[] getGeneratorPublicKey() {
         if (generatorPublicKey == null) {
-            generatorPublicKey = Account.getPublicKey(generatorId);
+            generatorPublicKey = lookupAccountService().getPublicKey(generatorId);
         }
         return generatorPublicKey;
     }
@@ -385,7 +395,7 @@ public final class BlockImpl implements Block {
 
     @Override
     public boolean verifyBlockSignature() {
-        return checkSignature() && Account.setOrVerify(getGeneratorId(), getGeneratorPublicKey());
+        return checkSignature() && lookupAccountService().setOrVerify(getGeneratorId(), getGeneratorPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;
@@ -409,7 +419,7 @@ public final class BlockImpl implements Block {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
 
-            Account account = Account.getAccount(getGeneratorId());
+            Account account = lookupAccountService().getAccount(getGeneratorId());
             long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceAPL();
             if (effectiveBalance <= 0) {
                 LOG.warn("Account: {} Effective ballance: {},  verification failed",account,effectiveBalance);

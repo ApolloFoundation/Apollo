@@ -113,7 +113,7 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
                 }
                 break;
         }
-        Account account = Account.getAccount(Crypto.getPublicKey(keySeed));
+        Account account = lookupAccountService().getAccount(Crypto.getPublicKey(keySeed));
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }

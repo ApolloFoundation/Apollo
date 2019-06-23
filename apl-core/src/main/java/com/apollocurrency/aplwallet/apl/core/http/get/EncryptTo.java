@@ -49,7 +49,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long senderAccountId = ParameterParser.getAccountId(req, "account", false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", true);
-        byte[] recipientPublicKey = Account.getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountService().getPublicKey(recipientId);
         if (recipientPublicKey == null) {
             return INCORRECT_RECIPIENT;
         }
@@ -66,7 +66,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
         byte[] keySeed = ParameterParser.getKeySeed(req, senderAccountId, true);
-        EncryptedData encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+        EncryptedData encryptedData = lookupAccountPublickKeyService().encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 
     }

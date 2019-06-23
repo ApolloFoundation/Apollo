@@ -46,7 +46,7 @@ public final class GetBalance extends AbstractAPIRequestHandler {
         if (height < 0) {
             height = lookupBlockchain().getHeight();
         }
-        Account account = Account.getAccount(accountId, height);
+        Account account = lookupAccountService().getAccount(accountId, height);
         return JSONData.accountBalance(account, includeEffectiveBalance, height);
     }
 
