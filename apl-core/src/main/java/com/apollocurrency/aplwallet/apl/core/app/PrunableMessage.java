@@ -65,6 +65,10 @@ public final class PrunableMessage {
     };
 
     private static final PrunableDbTable<PrunableMessage> prunableMessageTable = new PrunableDbTable<PrunableMessage>("prunable_message", prunableMessageKeyFactory) {
+        @Override
+        public boolean isScanSafe() {
+            return false; // all messages cannot be recovered from transaction attachment data, so that should not be reverted without block popOff
+        }
 
         @Override
         public PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -189,16 +193,6 @@ public final class PrunableMessage {
         this.blockTimestamp = rs.getInt("block_timestamp");
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
         this.height = rs.getInt("height");
-    }
-
-    private PrunableMessage(long id, DbKey dbKey, long senderId, long recipientId, int transactionTimestamp, int blockTimestamp, int height) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.senderId = senderId;
-        this.recipientId = recipientId;
-        this.transactionTimestamp = transactionTimestamp;
-        this.blockTimestamp = blockTimestamp;
-        this.height = height;
     }
 
     private void save(Connection con) throws SQLException {

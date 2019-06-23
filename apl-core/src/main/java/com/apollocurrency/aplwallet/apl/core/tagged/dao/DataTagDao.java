@@ -65,6 +65,11 @@ public class DataTagDao extends EntityDbTable<DataTag> {
         }
     }
 
+    @Override
+    public boolean isScanSafe() {
+        return false; // data tag is tightly couple with tagged data so that also cannot be recovered from blockchain, so we should not rollback it during scan
+    }
+
     public void add(TaggedData taggedData, int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();

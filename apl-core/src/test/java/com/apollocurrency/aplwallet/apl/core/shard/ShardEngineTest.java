@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -100,6 +101,9 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.inject.spi.Bean;
@@ -228,6 +232,39 @@ class ShardEngineTest {
         assertEquals(MigrateState.INIT, state);
         state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), null, null);
         assertEquals(SHARD_SCHEMA_CREATED, state);
+
+        checkDbVersion(5, 3);
+        checkTableExist(new String[] {"block", "option", "transaction"}, 3);
+    }
+
+    private void checkTableExist(String[] strings, int shardId) {
+        TransactionalDataSource dataSource = ((ShardManagement) extension.getDatabaseManager()).getShardDataSourceById(shardId);
+        assertNotNull(dataSource, "Shard datasource should be initialized");
+        for (String table : strings) {
+            DbUtils.inTransaction(dataSource, (con) -> {
+                try  {
+                    con.createStatement().executeQuery("select 1 from " + table);
+                }
+                catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
+            });
+        }
+    }
+
+    private void checkDbVersion(int version, int shardId) {
+        TransactionalDataSource dataSource = ((ShardManagement) extension.getDatabaseManager()).getShardDataSourceById(shardId);
+        assertNotNull(dataSource, "Shard datasource should be initialized");
+        DbUtils.inTransaction(dataSource, (con)-> {
+            try(PreparedStatement pstmt = con.prepareStatement("select * from version");
+                ResultSet rs = pstmt.executeQuery()) {
+                assertTrue(rs.next(), "Version table should contain rows");
+                assertEquals(version, rs.getInt(1));
+            }
+            catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        });
     }
 
     @Test
@@ -236,9 +273,45 @@ class ShardEngineTest {
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
 
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), null, null);
+        byte[] shardHash = new byte[32];
+        Long[] generators = {1L, 2L, 3L};
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), shardHash, generators);
         assertEquals(SHARD_SCHEMA_FULL, state);
+        checkDbVersion(21, 3);
+        checkTableExist(new String[] {"block", "option", "transaction"}, 3);
+        Shard lastShard = shardDao.getLastShard();
+        assertArrayEquals(generators, Convert.toArray(lastShard.getGeneratorIds()));
+        assertArrayEquals(shardHash, lastShard.getShardHash());
     }
+
+    @Test
+    void createSchemaShardDbWhenAlreadyCreatedByRecovery() {
+        createShardDbWhenAlreadyCreated(new ShardInitTableSchemaVersion(), SHARD_SCHEMA_CREATED);
+    }
+
+    @Test
+    void createFullShardDbWhenAlreadyCreatedByRecovery() {
+        createShardDbWhenAlreadyCreated(new ShardAddConstraintsSchemaVersion(), SHARD_SCHEMA_FULL);
+    }
+
+    private void createShardDbWhenAlreadyCreated(DbVersion dbVersion, MigrateState state) {
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        ShardRecovery recovery = new ShardRecovery(state);
+        TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
+        shardRecoveryDaoJdbc.saveShardRecovery(dataSource, recovery);
+        MigrateState shardState = shardEngine.addOrCreateShard(dbVersion, new byte[32], new Long[0]);
+        assertEquals(shardState, state);
+        ShardRecovery actualRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(dataSource);
+        assertEquals(state, actualRecovery.getState());
+    }
+
+    @Test
+    void createFullShardDbWhenNoRecoveryPresent() {
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        MigrateState shardState = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), new byte[32], new Long[0]);
+        assertEquals(MigrateState.FAILED, shardState);
+    }
+
 
     @Test           
     void createShardDbDoAllOperations() throws IOException {

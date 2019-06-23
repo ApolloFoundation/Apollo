@@ -28,6 +28,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+/**
+ * We will not store files in transaction attachment, alternatively we will store it only in tagged_data table
+ * and change default behavior for rollback on scan to do not clear values, which cannot be restored
+ */
 public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
@@ -227,7 +231,12 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     }
 */
 
-/*
+    @Override
+    public boolean isScanSafe() {
+        return false; // tagged data stored only in this table, taggedDataAttachment in transaction contains only hash, so we should not rollback it during scan
+    }
+
+   /*
     public void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         this.insert(taggedData);
@@ -248,6 +257,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
             this.insert(taggedData);
         }
     }
+
 */
 
     public boolean isPruned(long transactionId) {
