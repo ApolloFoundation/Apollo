@@ -6,11 +6,7 @@ package com.apollocurrency.aplwallet.apl.testutil;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import org.slf4j.Logger;
-
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,7 +19,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
 import java.util.StringTokenizer;
-import javax.sql.DataSource;
+
+import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import org.slf4j.Logger;
 
 public class DbPopulator {
     private static final Logger LOG = getLogger(DbPopulator.class);

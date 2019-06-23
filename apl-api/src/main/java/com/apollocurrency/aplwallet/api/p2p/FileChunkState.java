@@ -16,7 +16,7 @@ public enum FileChunkState {
      * 3 - saved;
      */
     NOT_PRESENT(0),
-    DOWNLOAD_IN_PROCGRESS(1),
+    DOWNLOAD_IN_PROGRESS(1),
     PRESENT(2),
     SAVED(3);
 

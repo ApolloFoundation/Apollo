@@ -69,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -137,6 +138,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TrimService trimService;
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
+    private final ShardDownloader shardDownloader;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -270,7 +272,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TransactionValidator transactionValidator,
                                    TransactionApplier transactionApplier,
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
-                                    BlockApplier blockApplier,AplAppStatus aplAppStatus) {
+                                   BlockApplier blockApplier, AplAppStatus aplAppStatus,
+                                   ShardDownloader shardDownloader) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -284,6 +287,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.dexService = dexService;
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
+        this.shardDownloader = shardDownloader;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -626,16 +630,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             setGetMoreBlocks(true); // turn ON blockchain downloading
             return;
         }
-        // try import genesis / shard data
-        setGetMoreBlocks(false); // turn off automatic blockchain downloading
-        log.warn("NODE IS WAITING FOR no/shard decision and proceeding with necessary data by ShardPresentEventType....");
-
-//        FileDownloader downloader; ???
-//        downloader.startDownload(id); ???
-//        FileDownloadDecision decision = downloader.prepareForDownloading(); ???
-//        FileDownloadInfo fdi = downloader.getDownloadInfo(); ??
+        // NEW START-UP logic, try import genesis OR start downloading shard zip data
+        suspendBlockchainDownloading(); // turn off automatic blockchain downloading
+        log.warn("NODE IS WAITING FOR 'shard/(no shard) decision' and proceeding with necessary data by ShardPresentEventType....");
+        shardDownloader.prepareAndStartDownload(); // ignore result
 
 /*
+        // PREVIOUS start-up LOGIC
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = lookupDataSource();
         Connection con = dataSource.begin();
@@ -645,12 +646,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(genesisBlock);
             initialBlock = genesisBlock.getId();
-            Genesis.apply();
+            Genesis.apply(false);
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 table.createSearchIndex(con);
             }
             blockchain.commit(genesisBlock);
             dataSource.commit();
+            log.debug("Saved Genesis block = {}", genesisBlock);
         } catch (SQLException e) {
             dataSource.rollback();
             log.info(e.getMessage());
@@ -1461,6 +1463,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
                 connectedPublicPeers = Peers.getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
+                    log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
+                            connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
                 peerHasMore = true;

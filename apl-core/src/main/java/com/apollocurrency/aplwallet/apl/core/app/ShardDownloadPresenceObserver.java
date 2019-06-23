@@ -97,7 +97,8 @@ public class ShardDownloadPresenceObserver {
             }
         }
         // set to start work block download thread (starting from shard's snapshot block here)
-        blockchainProcessor.setGetMoreBlocks(true); // IMPORTANT CALL !!!
+        blockchainProcessor.updateInitialBlockId();
+        blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
     }
 
     /**
@@ -128,7 +129,8 @@ public class ShardDownloadPresenceObserver {
             throw new RuntimeException(e.toString(), e);
         }
         // set to start work block download thread (starting from Genesis block here)
-        blockchainProcessor.setGetMoreBlocks(true); // IMPORTANT CALL !!!
+        blockchainProcessor.updateInitialBlockId();
+        blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
     }
 
     private void addBlock(TransactionalDataSource dataSource, Block block) {

@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
 import java.util.UUID;
+
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 
 public class DbTestData {
     private static final Random random = new Random();

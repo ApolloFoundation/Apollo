@@ -6,6 +6,13 @@ package com.apollocurrency.aplwallet.apl.extension;
 
 import static org.mockito.Mockito.mock;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
@@ -24,13 +31,6 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);

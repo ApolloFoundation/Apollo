@@ -7,10 +7,10 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
 
 class FbWalletUtilTest {
 

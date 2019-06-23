@@ -8,9 +8,9 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test for class used for generating shard name file by specified pattern.

@@ -33,7 +33,7 @@ public class PeerClient {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private Peer peer;
-    private static final Logger LOG = LoggerFactory.getLogger(PeerClient.class);
+    private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
 
     public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
@@ -58,31 +58,41 @@ public class PeerClient {
     }
     
     public FileDownloadInfo getFileInfo(String entityId){
+        log.debug("getFileInfo() entityId = {}", entityId);
         if(!checkConnection()){
-            LOG.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());            
+            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
             return null;
         }        
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
+        log.debug("getFileInfo() resp = {}", req.toJSONString());
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
-        if(resp==null){
-            LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+        log.debug("getFileInfo() resp = {}", resp.toJSONString());
+        if(resp == null){
+            log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
+        log.debug("getFileInfo() FInfoResp = {}", res);
         if(res==null){
             res=new FileDownloadInfoResponse();
             res.errorCode=-3;
             res.error="Null returned from peer";
         }
         if (res.errorCode != 0 || res.error!=null) {
-            LOG.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
+            log.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
+        log.debug("getFileInfo() result = {}", res);
         return res.downloadInfo;
     }
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
+        log.debug("downloadChunk() fci = {}", fci);
+        if(!checkConnection()){
+            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+            return null;
+        }         
        FileChunk fc;
        FileChunkRequest rq = new FileChunkRequest();
        rq.fileId=fci.fileId;
@@ -92,7 +102,7 @@ public class PeerClient {
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
         if(resp==null){
-            LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+            log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
        FileChunkResponse res = mapper.convertValue(resp, FileChunkResponse.class);
@@ -101,21 +111,27 @@ public class PeerClient {
        }else{
            fc=null;
        }
-       return fc;
+        log.debug("downloadChunk() result = {}", fc);
+        return fc;
     }
     
     public ShardingInfo getShardingInfo(){
+        if(!checkConnection()){
+            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+            return null;
+        }         
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
-        LOG.trace("{}", resp);
+        log.trace("{}", resp);
         if(resp==null){
-            LOG.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+            log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
         ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
-        LOG.trace("{}", res);
+        log.trace("{}", res);
+        log.debug("getShardingInfo() = {}", res);
         return res.shardingInfo;
     }     
 }

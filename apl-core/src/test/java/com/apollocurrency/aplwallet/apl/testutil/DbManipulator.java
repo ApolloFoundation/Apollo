@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.testutil;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
+import java.util.Objects;
+
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.util.Objects;
 
 
 public class DbManipulator {

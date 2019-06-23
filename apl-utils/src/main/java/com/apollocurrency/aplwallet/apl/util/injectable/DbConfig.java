@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
 @Singleton
 public class DbConfig {

@@ -6,13 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jdbi.v3.core.Jdbi;
-import org.slf4j.Logger;
-
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,9 +23,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
 
 /**
  * Class is used for high level database and shard management.

@@ -22,6 +22,15 @@ package com.apollocurrency.aplwallet.apl.tools.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.UUID;
+
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -34,15 +43,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be

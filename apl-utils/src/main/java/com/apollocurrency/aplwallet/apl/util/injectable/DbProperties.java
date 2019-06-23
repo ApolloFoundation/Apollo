@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
 import java.util.UUID;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DbProperties implements Cloneable {
