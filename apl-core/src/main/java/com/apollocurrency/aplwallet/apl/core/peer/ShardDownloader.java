@@ -103,7 +103,10 @@ public class ShardDownloader {
         }
         //we have not enough known peers, connect to additional
         if (counter < ENOUGH_PEERS_FOR_SHARD_INFO) {
-            for (String pa : additionalPeers) {
+            Set<String> additionalPeersCopy = new HashSet<>();
+            additionalPeersCopy.addAll(additionalPeers);
+            //avoid modification while iterating
+            for (String pa : additionalPeersCopy) {
                 Peer p = Peers.findOrCreatePeer(pa, true);
                 if (processPeerShardInfo(p)) {
                     counter++;
