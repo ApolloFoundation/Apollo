@@ -27,6 +27,18 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -41,7 +53,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
@@ -64,18 +75,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import javax.inject.Inject;
-
 @EnableWeld
 @Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
 class BlockchainTest {
@@ -83,7 +82,7 @@ class BlockchainTest {
 
     private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
-    static DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(blockchainTestDbPath.resolve("mainDb").toAbsolutePath().toString()), "db/shard-main-data.sql", null);
+    static DbExtension extension = new DbExtension(blockchainTestDbPath,"mainDb", "db/shard-main-data.sql");
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     EpochTime epochTime = mock(EpochTime.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -127,6 +126,7 @@ class BlockchainTest {
 
     @AfterAll
     static void shutdown() throws IOException {
+        extension.getDatabaseManager().shutdown();
         FileUtils.deleteDirectory(blockchainTestDbPath.toFile());
     }
 

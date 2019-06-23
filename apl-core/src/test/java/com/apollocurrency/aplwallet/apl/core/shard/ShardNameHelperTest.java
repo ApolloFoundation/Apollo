@@ -5,16 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
-import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeAll;
+
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for class used for generating shard name file by specified pattern.

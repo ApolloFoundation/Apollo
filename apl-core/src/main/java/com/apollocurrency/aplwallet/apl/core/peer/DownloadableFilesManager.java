@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
@@ -51,7 +51,7 @@ public class DownloadableFilesManager {
     
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;
-    private final ChainsConfigHolder chainsConfig;
+    private final BlockchainConfig blockchainConfig;
     
     private class ParsedFileId {
         Integer key = -1;
@@ -60,12 +60,12 @@ public class DownloadableFilesManager {
     }
 
     @Inject
-    public DownloadableFilesManager(DirProvider dirProvider, ShardNameHelper shardNameHelper, ChainsConfigHolder chainsConfig) {
+    public DownloadableFilesManager(DirProvider dirProvider, ShardNameHelper shardNameHelper, BlockchainConfig blockchainConfig) {
         Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         Objects.requireNonNull(dirProvider.getDataExportDir(), "dataExportDir in dirProvider is NULL");
         this.dirProvider=dirProvider;
         this.shardNameHelper = shardNameHelper;
-        this.chainsConfig = chainsConfig;
+        this.blockchainConfig = blockchainConfig;
     }
 
     public FileInfo getFileInfo(String fileId) {
@@ -175,7 +175,7 @@ public class DownloadableFilesManager {
                     shardId = Long.valueOf(parsed.fileId);
                     UUID chainId;
                     if(parsed.modifiers.isEmpty()){
-                      chainId=chainsConfig.getActiveChain().getChainId();
+                      chainId=blockchainConfig.getChain().getChainId();
                     }else{
                        String chainIdStr = parsed.modifiers.get(MOD_CHAINID);
                        chainId=UUID.fromString(chainIdStr);

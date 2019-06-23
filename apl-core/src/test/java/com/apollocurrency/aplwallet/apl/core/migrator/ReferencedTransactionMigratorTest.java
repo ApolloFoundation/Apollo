@@ -6,12 +6,19 @@ package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import javax.inject.Inject;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -20,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -29,14 +37,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 @EnableWeld
 public class ReferencedTransactionMigratorTest {

@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -14,13 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -31,9 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
 //TODO fix several methods
 @EnableWeld
@@ -50,7 +46,7 @@ class PhasingAppendixTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-            PropertiesHolder.class, DbConfig.class,
+            PropertiesHolder.class,
              TransactionDaoImpl.class, TransactionProcessor.class,
             TransactionalDataSource.class)
             .addBeans(MockBean.of(mock(DatabaseManager.class), DatabaseManager.class))
