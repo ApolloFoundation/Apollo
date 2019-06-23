@@ -138,6 +138,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TrimService trimService;
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
+    private final ShardDownloader shardDownloader;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -271,7 +272,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TransactionValidator transactionValidator,
                                    TransactionApplier transactionApplier,
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
-                                    BlockApplier blockApplier,AplAppStatus aplAppStatus) {
+                                   BlockApplier blockApplier, AplAppStatus aplAppStatus,
+                                   ShardDownloader shardDownloader) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -285,6 +287,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.dexService = dexService;
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
+        this.shardDownloader = shardDownloader;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -629,10 +632,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
-        log.warn("NODE IS WAITING FOR no/shard decision and proceeding with necessary data by ShardPresentEventType....");
-
-        ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
-        CDI.current().select(ShardDownloadPresenceObserver.class).get();
+        log.warn("NODE IS WAITING FOR 'shard/(no shard) decision' and proceeding with necessary data by ShardPresentEventType....");
         shardDownloader.prepareAndStartDownload(); // ignore result
 
 /*
