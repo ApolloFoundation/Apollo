@@ -18,7 +18,9 @@ public class DbUtils {
         inTransaction(extension.getDatabaseManager(), consumer);
     }
     public static void inTransaction(DatabaseManager manager, Consumer<Connection> consumer) {
-        TransactionalDataSource dataSource = manager.getDataSource();
+        inTransaction(manager.getDataSource(), consumer);
+    }
+    public static void inTransaction(TransactionalDataSource dataSource, Consumer<Connection> consumer) {
         try (Connection con = dataSource.begin()) { // start new transaction
             consumer.accept(con);
             dataSource.commit();
@@ -28,6 +30,9 @@ public class DbUtils {
             throw new RuntimeException(e);
         }
     }
+
+
+
     public static<T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         try (Connection con = dataSource.begin()) { // start new transaction

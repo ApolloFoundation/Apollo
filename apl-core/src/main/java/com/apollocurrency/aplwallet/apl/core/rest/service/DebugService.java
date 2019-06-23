@@ -22,7 +22,7 @@ public class DebugService {
     
     public FileDownloadInfo startFileDownload(String id, String adminPassword){
 //        downloader.startDownload(id);
-        FileDownloadDecision decision = downloader.prepareForDownloading();
+        FileDownloadDecision decision = downloader.prepareForDownloading(null);
         FileDownloadInfo fdi = downloader.getDownloadInfo();
         FileInfo fi = new FileInfo();
         fdi.fileInfo=fi;

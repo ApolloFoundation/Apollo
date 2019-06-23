@@ -4,15 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.UUID;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
@@ -21,19 +28,12 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
 
 @EnableWeld
@@ -41,15 +41,15 @@ class DownloadableFilesManagerTest {
     private static final Logger log = getLogger(DownloadableFilesManagerTest.class);
     private Path csvResourcesPath = new ResourceFileLoader().getResourcePath().toAbsolutePath();
     private DirProvider dirProvider = mock(DirProvider.class);
-    private ChainsConfigHolder chainCoinfig;
+    private BlockchainConfig chainCoinfig;
     private Chain chain;
     private final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");    
     {
         doReturn(csvResourcesPath).when(dirProvider).getDataExportDir();
         chain = mock(Chain.class);
         when(chain.getChainId()).thenReturn(chainId);
-        chainCoinfig = mock(ChainsConfigHolder.class);
-        when(chainCoinfig.getActiveChain()).thenReturn(chain);        
+        chainCoinfig = mock(BlockchainConfig.class);
+        when(chainCoinfig.getChain()).thenReturn(chain);
     }
 
     @WeldSetup
@@ -57,7 +57,7 @@ class DownloadableFilesManagerTest {
                ShardNameHelper.class, 
                DownloadableFilesManager.class)
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
-            .addBeans(MockBean.of(chainCoinfig, ChainsConfigHolder.class))
+            .addBeans(MockBean.of(chainCoinfig, BlockchainConfig.class))
             .build();
     String fileBaseDir =System.getProperty("java.io.tmpdir")+"/"+Constants.APPLICATION;
     String zipFileName = "apl-blockchain-arch-1.zip";

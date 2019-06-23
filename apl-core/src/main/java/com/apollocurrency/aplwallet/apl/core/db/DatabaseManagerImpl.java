@@ -6,14 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jdbi.v3.core.Jdbi;
-import org.slf4j.Logger;
-
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,9 +23,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
 
 /**
  * Class is used for high level database and shard management.
@@ -45,7 +44,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
-    private ChainsConfigHolder chainsConfig;
 //    @Inject @Setter
 //    private ShardNameHelper shardNameHelper;
     /**
@@ -67,13 +65,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * @param propertiesHolderParam the rest global properties in holder from CDI
      */
     @Inject
-    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, ChainsConfigHolder chainsConfig) {
+    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
         // init internal data source stuff only one time till next shutdown() will be called
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         jdbi = currentTransactionalDataSource.init(new AplDbVersion());
-        this.chainsConfig=chainsConfig;
 //        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
     }
 //not used yet
@@ -230,6 +227,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return temporaryDataSource;
     }
 
+    @Override
+    public TransactionalDataSource getShardDataSourceById(long shardId) {
+        return connectedShardDataSourceMap.get(shardId);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -308,6 +310,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         dataSource.shutdown();
     }
 
+    @Override
+    public UUID getChainId() {
+        return baseDbProperties.getChainId();
+    }
+
     public DatabaseManagerImpl() {} // never use it directly
 
 //    /**
@@ -331,11 +338,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         sb.append(", connectedShardDataSourceMap=[{}]").append(connectedShardDataSourceMap != null ? connectedShardDataSourceMap.size() : -1);
         sb.append('}');
         return sb.toString();
-    }
-
-    @Override
-    public UUID getChainId() {
-        return chainsConfig.getActiveChain().getChainId();
     }
 
 }

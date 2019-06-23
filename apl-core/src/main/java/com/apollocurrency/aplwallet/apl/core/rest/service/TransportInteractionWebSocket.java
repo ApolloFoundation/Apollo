@@ -133,7 +133,6 @@ public class TransportInteractionWebSocket {
     /**
      * Callback hook for Connection close events.
      *
-     * @param userSession the userSession which is getting closed.
      * @param statusCode code of error in case of problems
      * @param reason the reason for connection close
      */
@@ -253,14 +252,14 @@ public class TransportInteractionWebSocket {
      */
 
     private void getSecureTransportStatus( ) {                
-        log.debug("TransportInteractionWebSocket: getSecureTransportStatus");
+        log.trace("TransportInteractionWebSocket: getSecureTransportStatus");
         TransportStopRequest stopRequest = new TransportStopRequest();
         stopRequest.type = "GETSTATUSREQUEST";        
         stopRequest.id = rand.nextInt(255);          
                      
         try {
             String stopRequestString = mapper.writeValueAsString(stopRequest);            
-            log.debug("getting status: {}", stopRequestString);            
+            log.trace("getting status: {}", stopRequestString);
             sendMessage(stopRequestString);            
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: Error while creating Getting Status request: {}", ex.getMessage().toString() );                   
@@ -327,7 +326,7 @@ public class TransportInteractionWebSocket {
             
             switch (secureTransportStatus) {
                 case INITIAL: {
-                    log.debug("Initial state, need to figure out the status of connection");                    
+                    log.trace("Initial state, need to figure out the status of connection");
                     getSecureTransportStatus();
                     break;
                 }

@@ -18,6 +18,13 @@ public interface DerivedTableInterface<T> {
 
     void rollback(int height);
 
+    /**
+     * @return true, when this table is not a part of blockchain core data and can be reverted and re-populated
+     * during blockchain scan without downloading data from peers, othervise return false, which means that this table
+     * cannot be rolled back without blocks popOff
+     */
+    boolean isScanSafe();
+
     void truncate();
 
     void trim(int height);

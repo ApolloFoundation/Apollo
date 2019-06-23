@@ -312,7 +312,7 @@ class ShardEngineTest {
     }
 
 
-    @Test           
+    @Test
     void createShardDbDoAllOperations() throws IOException {
         // folder to backup step
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();

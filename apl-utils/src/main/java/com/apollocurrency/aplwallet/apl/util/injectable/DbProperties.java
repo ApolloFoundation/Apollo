@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
+import java.util.UUID;
 
 @Vetoed
 public final class DbProperties implements Cloneable {
@@ -18,11 +19,12 @@ public final class DbProperties implements Cloneable {
     private String dbParams;
     private String dbUsername;
     private String dbPassword;
+    private UUID chainId;
     private int maxConnections;
     private int loginTimeout;
     private int defaultLockTimeout;
     private int maxMemoryRows;
-    private Optional<Long> dbIdentity = Optional.empty();
+    private Long dbIdentity = null;
 
     public long getMaxCacheSize() {
         return maxCacheSize;
@@ -73,7 +75,7 @@ public final class DbProperties implements Cloneable {
     }
 
     public Optional<Long> getDbIdentity() {
-        return dbIdentity;
+        return Optional.ofNullable(dbIdentity);
     }
 
     public DbProperties maxCacheSize(int maxCacheSize) {
@@ -121,6 +123,11 @@ public final class DbProperties implements Cloneable {
         return this;
     }
 
+    public DbProperties chainId(UUID chainId) {
+        this.chainId = chainId;
+        return this;
+    }
+
     public DbProperties loginTimeout(int loginTimeout) {
         this.loginTimeout = loginTimeout;
         return this;
@@ -140,40 +147,12 @@ public final class DbProperties implements Cloneable {
         if (shardIdOrTempId == 0) {
             return this;
         }
-        this.dbIdentity = Optional.of(shardIdOrTempId);
+        this.dbIdentity = shardIdOrTempId;
         return this;
     }
 
     public DbProperties deepCopy() throws CloneNotSupportedException {
-        DbProperties clonedObj = (DbProperties) super.clone();
-        clonedObj.maxCacheSize = this.maxCacheSize;
-        if (this.dbUrl != null) {
-            clonedObj.dbUrl = new String(this.dbUrl);
-        }
-        if (this.dbType != null) {
-            clonedObj.dbType = new String(this.dbType);
-        }
-        if (this.dbDir != null) {
-            clonedObj.dbDir = new String(this.dbDir);
-        }
-        if (this.dbFileName != null) {
-            clonedObj.dbFileName = new String(this.dbFileName);
-        }
-        if (this.dbParams != null) {
-            clonedObj.dbParams = new String(this.dbParams);
-        }
-        if (this.dbUsername != null) {
-            clonedObj.dbUsername = new String(this.dbUsername);
-        }
-        if (this.dbPassword != null) {
-            clonedObj.dbPassword = new String(this.dbPassword);
-        }
-        clonedObj.maxConnections = this.maxConnections;
-        clonedObj.loginTimeout = this.loginTimeout;
-        clonedObj.defaultLockTimeout = this.defaultLockTimeout;
-        clonedObj.maxMemoryRows = this.maxMemoryRows;
-        clonedObj.dbIdentity = Optional.empty();
-        return clonedObj;
+        return (DbProperties) super.clone();
     }
 
     @Override
@@ -183,13 +162,20 @@ public final class DbProperties implements Cloneable {
                 ", dbUrl='" + dbUrl + '\'' +
                 ", dbType='" + dbType + '\'' +
                 ", dbDir='" + dbDir + '\'' +
+                ", dbFileName='" + dbFileName + '\'' +
                 ", dbParams='" + dbParams + '\'' +
                 ", dbUsername='" + dbUsername + '\'' +
                 ", dbPassword='" + dbPassword + '\'' +
+                ", chainId=" + chainId +
                 ", maxConnections=" + maxConnections +
                 ", loginTimeout=" + loginTimeout +
                 ", defaultLockTimeout=" + defaultLockTimeout +
                 ", maxMemoryRows=" + maxMemoryRows +
+                ", dbIdentity=" + dbIdentity +
                 '}';
+    }
+
+    public UUID getChainId() {
+        return chainId;
     }
 }

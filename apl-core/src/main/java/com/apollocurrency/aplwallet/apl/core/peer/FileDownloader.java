@@ -36,14 +36,15 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class performs complete file downloading from peers
  *
  * @author alukin@gmail.com
  */
+@Slf4j
 public class FileDownloader {
 
     @Vetoed
@@ -64,7 +65,6 @@ public class FileDownloader {
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
     private final Status status = new Status();
-    private static final Logger log = LoggerFactory.getLogger(FileDownloader.class);
 
     private DownloadableFilesManager manager;
     private AplAppStatus aplAppStatus;
@@ -82,7 +82,6 @@ public class FileDownloader {
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
     }
     
     public void setFileId(String fileID){
@@ -94,9 +93,11 @@ public class FileDownloader {
     }
     
     public void startDownload() {
+        this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
+        log.debug("startDownload()...");
         CompletableFuture<Boolean> prepare;
         prepare = CompletableFuture.supplyAsync(() -> {
-            status.decision = prepareForDownloading();
+            status.decision = prepareForDownloading(null);
             Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
             return res;
         });
@@ -121,36 +122,50 @@ public class FileDownloader {
         return downloadInfo;
     }
 
-    public FileDownloadDecision prepareForDownloading() {
+    public FileDownloadDecision prepareForDownloading(Set<Peer> onlyPeers) {
+        log.debug("prepareForDownloading()...");
         FileDownloadDecision res;
-        Set<Peer> allPeers = getAllAvailablePeers();
+        Set<Peer> allPeers;
+        if(onlyPeers==null || onlyPeers.isEmpty()){
+           allPeers = getAllAvailablePeers();
+        }else{
+           allPeers=new HashSet<>(); 
+           allPeers.addAll(onlyPeers);
+        }
+        log.debug("prepareForDownloading(), allPeers = {}", allPeers);
         PeersList pl = new PeersList();
         allPeers.forEach((pi) -> {
             PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
             pl.add(pfi);
         });
+        log.debug("prepareForDownloading(), pl = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
         res = pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();
         badPeers = pvdm.getInvalidPeers();
+        log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
         if(pvdm.isNetworkUsable()){
             PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
             downloadInfo = pfi.getFdi();
         }
+        log.debug("prepareForDownloading(), res = {}", res);
         return res;
     }
 
     private synchronized FileChunkInfo getNextEmptyChunk() {
+        log.debug("getNextEmptyChunk()...");
         FileChunkInfo res = null;
         for (FileChunkInfo fci : downloadInfo.chunks) {
-            if (fci.present.ordinal() < FileChunkState.DOWNLOAD_IN_PROCGRESS.ordinal()) {
+            if (fci.present.ordinal() < FileChunkState.DOWNLOAD_IN_PROGRESS.ordinal()) {
                 res = fci;
+                log.debug("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
                 break;
             }
             this.aplAppStatus.durableTaskUpdate(this.taskId,
                     (double) (downloadInfo.chunks.size() / Math.max (fci.chunkId, 1) ), "File downloading...");
         }
         if (res == null) { //NO more empty chunks. File is ready
+            log.debug("getNextEmptyChunk() fileID = {}", fileID);
             this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
             //FIRE event when shard is PRESENT + ZIP is downloaded
             ShardPresentData shardPresentData = new ShardPresentData(fileID);
@@ -164,7 +179,7 @@ public class FileDownloader {
         FileChunkInfo fci = getNextEmptyChunk();
         ChunkedFileOps fops = new ChunkedFileOps(manager.mapFileIdToLocalPath(fileID));
         while (fci != null) {
-            fci.present=FileChunkState.DOWNLOAD_IN_PROCGRESS;
+            fci.present=FileChunkState.DOWNLOAD_IN_PROGRESS;
             FileChunk fc = p.downloadChunk(fci);
             if(fc!=null){
                 byte[] data = Base64.getDecoder().decode(fc.mime64data);
@@ -172,10 +187,12 @@ public class FileDownloader {
                 status.chunksReady++;
                 fci.present = FileChunkState.SAVED;
             }else{
-              fci.present=FileChunkState.PRESENT;
+//              fci.present=FileChunkState.PRESENT;
+              fci.present=FileChunkState.NOT_PRESENT; // no info, no connect ??
             }
             fci = getNextEmptyChunk();
         }
+        log.debug("doPeerDownload() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
         return res;
     }
 

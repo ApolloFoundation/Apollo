@@ -18,6 +18,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.*;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -204,6 +205,8 @@ public class ShardEngineImpl implements ShardEngine {
         }
         return state;
     }
+
+
 
     /**
      * Create new Recovery info record (if it's missing in specified dataSource) or load existing one.
