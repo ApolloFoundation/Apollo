@@ -68,6 +68,19 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
     /**
      * Core event for matcher - when offer is created, it is called back     
+     * @param DexOffer  myOffer - some data of offer, that is being created
+     * @param DexOffer  hisOffer - the most suitable offer the Deal
+     */ 
+    
+    private void onOfferMatch ( DexOffer myOffer, DexOffer hisOffer) {
+        
+    }
+    
+    
+    
+
+    /**
+     * Core event for matcher - when offer is created, it is called back     
      * @param offerType  Type of the offer. (BUY/SELL) 0/1
      * @param walletAddress From address
      * @param offerAmount Offer amount in Gwei (1 Gwei = 0.000000001)
@@ -129,6 +142,23 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
         log.debug("got offers: " + offers.size() );
         
+        // DexOffer match = offers.
+        
+        if (offers.size() >= 1) {
+            DexOffer match = offers.get(0);
+            DexOffer my = new DexOffer();
+            my.setType(type);
+            my.setAccountId(accountId);
+            my.setOfferCurrency(DexCurrencies.APL);
+            my.setOfferAmount(offerAmount);
+            my.setPairCurrency(pairCur);
+            my.setPairRate(pairRate);
+            my.setStatus(offerStatus);
+            my.setFromAddress(walletAddress);
+            
+            onOfferMatch(my, match);
+            
+        }
         
         
         

@@ -384,7 +384,6 @@ public class DexController {
         }
                         
         DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(type, currentTime, offerCurrency, offerAmount, pairCurrency, pairRate );
-                // type, currentTime, offerCurr, offerAmount, pairCurr, pairRate);
         
         List<DexOffer> offers = service.getOffersForMatching(dexOfferDBMatchingRequest);
 
