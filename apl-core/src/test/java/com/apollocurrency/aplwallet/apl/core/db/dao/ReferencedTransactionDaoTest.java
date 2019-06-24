@@ -6,8 +6,18 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_3;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+
+import javax.inject.Inject;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -24,8 +34,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -35,19 +50,12 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 @EnableWeld
 class ReferencedTransactionDaoTest {
 
-    @Inject
-    private JdbiHandleFactory jdbiHandleFactory;
     @RegisterExtension
     static DbExtension extension = new DbExtension();
     @WeldSetup
@@ -57,10 +65,13 @@ class ReferencedTransactionDaoTest {
             GlobalSync.class, TransactionTestData.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
+            PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
+            PhasingVoteTable.class, PhasingPollTable.class,
             FullTextConfigImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManger().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
@@ -69,10 +80,6 @@ class ReferencedTransactionDaoTest {
     @Inject
     private ReferencedTransactionDao dao;
 
-    @AfterEach
-    void cleanup() {
-        jdbiHandleFactory.close();
-    }
 
     @Test
     void testGetAll() {

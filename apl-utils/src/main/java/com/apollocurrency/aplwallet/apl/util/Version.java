@@ -81,4 +81,19 @@ public class Version implements Comparable<Version> {
     public boolean lessThan(Version v) {
         return compareTo(v) < 0;
     }
+
+    public static boolean isOldVersion(Version version, Version minVersion) {
+        if (version == null) {
+            return true;
+        }
+        return version.lessThan(minVersion);
+    }
+
+
+    public static boolean isNewVersion(Version version) {
+        if (version == null) {
+            return true;
+        }
+        return version.greaterThan(Constants.VERSION);
+    }    
 }

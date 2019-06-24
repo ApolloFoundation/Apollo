@@ -112,25 +112,33 @@ public final class ThreadPool {
     }
 
     public static void shutdown() {
-        if (scheduledThreadPool != null) {
-	        LOG.info("Stopping background jobs...");
-            shutdownExecutor("ScheduledBackgroundPool", scheduledThreadPool, 10);
-            scheduledThreadPool = null;
-        	LOG.info("...Done");
+        try {
+            if (scheduledThreadPool != null) {
+                LOG.info("Stopping background jobs...");
+                shutdownExecutor("ScheduledBackgroundPool", scheduledThreadPool, 10);
+                scheduledThreadPool = null;
+                LOG.info("...Done");
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
         }
     }
 
     public static void shutdownExecutor(String name, ExecutorService executor, int timeout) {
-        LOG.info("shutting down " + name);
-        executor.shutdown();
         try {
-            executor.awaitTermination(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        if (! executor.isTerminated()) {
-            LOG.info("some threads in " + name + " didn't terminate, forcing shutdown");
-            executor.shutdownNow();
+            LOG.info("shutting down " + name);
+            executor.shutdown();
+            try {
+                executor.awaitTermination(timeout, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            if (!executor.isTerminated()) {
+                LOG.info("some threads in " + name + " didn't terminate, forcing shutdown");
+                executor.shutdownNow();
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
         }
     }
 

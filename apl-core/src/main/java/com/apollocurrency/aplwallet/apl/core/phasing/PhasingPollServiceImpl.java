@@ -15,16 +15,22 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingCreator;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -38,7 +44,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final Blockchain blockchain;
 
     @Inject
-    public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable, PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable, PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
+    public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
+                                  PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
+                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -63,10 +71,15 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPoll phasingPoll = phasingPollTable.get(id);
         if (phasingPoll != null) {
             getAndSetLinkedFullHashes(phasingPoll);
-            byte[] fullHash = blockchain.getFullHash(phasingPoll.getId());
+            long phasingPollId = phasingPoll.getId();
+            byte[] fullHash = blockchain.getFullHash(phasingPollId);
             phasingPoll.setFullHash(fullHash);
             if (phasingPoll.getWhitelist() == null) {
-                phasingPoll.setWhitelist(Convert.toArray(voterTable.get(phasingPoll.getId())));
+                List<Long> voteIds = voterTable.get(phasingPollId)
+                        .stream()
+                        .map(PhasingPollVoter::getVoterId)
+                        .collect(Collectors.toList());
+                phasingPoll.setWhitelist(Convert.toArray(voteIds));
             }
         }
         return phasingPoll;
@@ -96,7 +109,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) {
         try {
-            return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to);
+            return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -106,7 +119,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
-            return phasingPollTable.getAccountPhasedTransactions(accountId, from, to);
+            return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -116,7 +129,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public int getAccountPhasedTransactionCount(long accountId) {
         try {
-            return phasingPollTable.getAccountPhasedTransactionCount(accountId);
+            return phasingPollTable.getAccountPhasedTransactionCount(accountId, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -137,7 +150,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public long getSenderPhasedTransactionFees(long accountId) {
         try {
-            return phasingPollTable.getSenderPhasedTransactionFees(accountId);
+            return phasingPollTable.getSenderPhasedTransactionFees(accountId, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -146,28 +159,38 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void addPoll(Transaction transaction, PhasingAppendix appendix) {
-        PhasingPoll poll = new PhasingPoll(transaction, appendix);
+        PhasingPoll poll = PhasingCreator.createPoll(transaction, appendix);
         phasingPollTable.insert(poll);
         long[] voters = poll.getWhitelist();
         if (voters.length > 0) {
-            voterTable.insert(poll, Convert.toList(voters));
+            List<PhasingPollVoter> voterList = Convert.toList(voters)
+                    .stream()
+                    .map(v -> new PhasingPollVoter(null, poll.getHeight(), poll.getId(),  v))
+                    .collect(Collectors.toList());
+            voterTable.insert(voterList);
         }
         if (appendix.getLinkedFullHashes().length > 0) {
-            List<byte[]> linkedFullHashes = new ArrayList<>(appendix.getLinkedFullHashes().length);
+            List<byte[]> linkedFullHashes = new ArrayList<>();
             Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
-            linkedTransactionTable.insert(poll, linkedFullHashes);
+            List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedFullHashes
+                    .stream()
+                    .map(fullHash -> new PhasingPollLinkedTransaction(null, poll.getHeight(), poll.getId(), Convert.fullHashToId(fullHash), fullHash))
+                    .collect(Collectors.toList());
+            linkedTransactionTable.insert(phasingPollLinkedTransactions);
         }
     }
 
     @Override
     public void finish(PhasingPoll phasingPoll, long result) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight());
+        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
+//        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight());
         resultTable.insert(phasingPollResult);
     }
 
     public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
         if (phasingPoll.getLinkedFullHashes() == null) {
-            List<byte[]> linkedFullHashes = linkedTransactionTable.get(phasingPoll.getId());
+            List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedTransactionTable.get(phasingPoll.getId());
+            List<byte[]> linkedFullHashes = phasingPollLinkedTransactions.stream().map(PhasingPollLinkedTransaction::getFullHash).collect(Collectors.toList());
             phasingPoll.setLinkedFullHashes(linkedFullHashes);
             return linkedFullHashes;
         } else {
@@ -204,6 +227,11 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         return cumulativeWeight;
     }
 
+    public boolean verifySecret(PhasingPoll poll, byte[] revealedSecret) {
+        HashFunction hashFunction = PhasingPollService.getHashFunction(poll.getAlgorithm());
+        return hashFunction != null && Arrays.equals(poll.getHashedSecret(), hashFunction.hash(revealedSecret));
+    }
+
     @Override
     public DbIterator<PhasingVote> getVotes(long phasedTransactionId, int from, int to) {
         return phasingVoteTable.getManyBy(new DbClause.LongClause("transaction_id", phasedTransactionId), from, to);
@@ -215,7 +243,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public List<Long> getActivePhasedTransactionDbIdsAtHeight(int height) {
+    public List<TransactionDbInfo> getActivePhasedTransactionDbInfoAtHeight(int height) {
         try {
             return phasingPollTable.getActivePhasedTransactionDbIds(height);
         }
@@ -233,7 +261,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
         PhasingVote phasingVote = phasingVoteTable.get(phasedTransactionId, voter.getId());
         if (phasingVote == null) {
-            phasingVote = new PhasingVote(transaction, voter, phasedTransactionId);
+            phasingVote =  new PhasingVote(null, transaction.getHeight(),phasedTransactionId, voter.getId(), transaction.getId());
             phasingVoteTable.insert(phasingVote);
         }
     }

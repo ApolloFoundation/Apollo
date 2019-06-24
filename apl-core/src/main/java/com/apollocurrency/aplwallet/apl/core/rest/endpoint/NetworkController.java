@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.api.response.GetPeersSimpleResponse;
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.apollocurrency.aplwallet.api.response.ResponseDone;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
@@ -157,10 +158,10 @@ public class NetworkController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
 
-        Peer.State state;
+        PeerState state;
         if (stateValue != null) {
             try {
-                state = Peer.State.valueOf(stateValue);
+                state = PeerState.valueOf(stateValue);
             } catch (RuntimeException exc) {
                 return response.error(ApiErrors.INCORRECT_VALUE, "state", stateValue).build();
             }
@@ -305,7 +306,7 @@ public class NetworkController {
                 return response.error(ApiErrors.UNKNOWN_VALUE, "peer", peerAddress).build();
             }
 
-            if (peer.getState() != Peer.State.CONNECTED) {
+            if (peer.getState() != PeerState.CONNECTED) {
                 return response.error(ApiErrors.PEER_NOT_CONNECTED).build();
             }
             if (!peer.isOpenAPI()) {

@@ -1,4 +1,19 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exec;
+
+import javax.enterprise.inject.spi.CDI;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -6,17 +21,17 @@ import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
-import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
+import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -39,29 +54,18 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
+import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 /**
  * Main Apollo startup class
  *
  * @author alukin@gmail.com
  */
+// @Singleton
 public class Apollo {
 //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE="apl.pid";
@@ -74,7 +78,7 @@ public class Apollo {
             "apl.enablePeerUPnP",
             "apl.enableAPIUPnP"
     );
-        
+
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");
     //We have dir provider configured in logback.xml so should init log later
@@ -111,7 +115,7 @@ public class Apollo {
             cmdline = cmdline + s + " ";
         }
         Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
-        String home = hp.toString()+File.separator;
+        String home = hp.toString()+ File.separator;
         File dir = new File(home);
         if(!dir.exists()){
             dir.mkdirs();
@@ -148,22 +152,14 @@ public class Apollo {
         updaterCore.init(attachmentFilePath, debug);
     }
 
-    public static void shutdown() {
-        aplCoreRuntime.shutdown();
-        try {
-            container.shutdown();
-        } catch (IllegalStateException e) {
-            log.error("Weld is stopped");
-        }
-    }
-
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
                 customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
                 StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
                 StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir
         );
     }
 
@@ -173,7 +169,7 @@ public class Apollo {
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
-        
+
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
@@ -199,11 +195,12 @@ public class Apollo {
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
-//cheat classloader to get access to package resources        
+//cheat classloader to get access to package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProvider configDirProvider = new ConfigDirProviderFactory().getInstance(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
@@ -223,7 +220,8 @@ public class Apollo {
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-        dirProvider = DirProviderFactory.getProvider(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
@@ -241,7 +239,8 @@ public class Apollo {
          */
 
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
-        runtimeMode.init();
+        runtimeMode.init(); // instance is NOT PROXIED by CDI !!
+
         //save command line params and PID
         if(!saveStartParams(argv, args.pidFile,configDirProvider)){
             System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
@@ -262,8 +261,9 @@ public class Apollo {
                 .recursiveScanPackages(DerivedTablesRegistry.class)
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
+                .recursiveScanPackages(DirProvider.class)
                 .annotatedDiscoveryMode()
-//                .interceptors(JdbiTransactionalInterceptor.class)
+// we already have it in beans.xml in core
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
@@ -277,13 +277,18 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
+        dirProvider = CDI.current().select(DirProvider.class).get();
+        // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
+        SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.setup(runtimeMode, dirProvider, configDirProvider);
-        
+        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
+
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread"));
+            // updated shutdown hook explicitly created with instances
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
+//            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
-            app.initUpdater(args.updateAttachmentFile, args.debug > 2);
+            app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }
@@ -294,6 +299,14 @@ public class Apollo {
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
+        }
+    }
+
+    public static void shutdownWeldContainer(){
+        try {
+            container.shutdown();
+        } catch (Exception ex){
+            log.error(ex.getMessage(), ex);
         }
     }
 

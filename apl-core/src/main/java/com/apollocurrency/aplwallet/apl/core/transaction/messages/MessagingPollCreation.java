@@ -136,7 +136,7 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         int size = 2 + Convert.toBytes(pollName).length + 2 + Convert.toBytes(pollDescription).length + 1;
         for (String pollOption : pollOptions) {
             size += 2 + Convert.toBytes(pollOption).length;
@@ -146,7 +146,7 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] name = Convert.toBytes(this.pollName);
         byte[] description = Convert.toBytes(this.pollDescription);
         byte[][] options = new byte[this.pollOptions.length][];
@@ -174,7 +174,7 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("name", this.pollName);
         attachment.put("description", this.pollDescription);
         attachment.put("finishHeight", this.finishHeight);

@@ -2,21 +2,22 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
@@ -48,12 +49,12 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
     }
 
     @Override
-    protected DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return dexOfferMapper.map(rs, null);
     }
 
     @Override
-    protected void save(Connection con, DexOffer offer) throws SQLException {
+    public void save(Connection con, DexOffer offer) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (transaction_id, account_id, type, " +
                 "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")){

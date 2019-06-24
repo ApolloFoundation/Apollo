@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
-
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
 
 public interface BlockchainProcessor {
 
@@ -73,7 +73,9 @@ public interface BlockchainProcessor {
 
     Transaction restorePrunedTransaction(long transactionId);
 
-    long getGenesisBlockId();
+    long getInitialBlock();
+
+    void updateInitialBlockId();
 
     class BlockNotAcceptedException extends AplException {
 

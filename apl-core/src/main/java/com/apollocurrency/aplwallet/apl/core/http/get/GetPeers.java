@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
@@ -50,10 +51,10 @@ public final class GetPeers extends AbstractAPIRequestHandler {
         String stateValue = Convert.emptyToNull(req.getParameter("state"));
         String[] serviceValues = req.getParameterValues("service");
         boolean includePeerInfo = "true".equalsIgnoreCase(req.getParameter("includePeerInfo"));
-        Peer.State state;
+        PeerState state;
         if (stateValue != null) {
             try {
-                state = Peer.State.valueOf(stateValue);
+                state = PeerState.valueOf(stateValue);
             } catch (RuntimeException exc) {
                 return JSONResponses.incorrect("state", "- '" + stateValue + "' is not defined");
             }

@@ -82,7 +82,7 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         int size = super.getMySize();
         size += 1;
         for (byte[] bytes : blameData) {
@@ -96,7 +96,7 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
         buffer.put((byte) blameData.length);
         for (byte[] bytes : blameData) {
@@ -111,7 +111,7 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
         JSONArray jsonArray = new JSONArray();
         attachment.put("blameData", jsonArray);

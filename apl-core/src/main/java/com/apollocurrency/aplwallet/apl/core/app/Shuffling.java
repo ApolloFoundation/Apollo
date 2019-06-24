@@ -22,35 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
-
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -68,9 +42,36 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.AnonymouslyEncryptedData;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 public final class Shuffling {
     /**
@@ -170,7 +171,8 @@ public final class Shuffling {
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static ShardDao shardDao = CDI.current().select(ShardDao.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
 
@@ -192,15 +194,14 @@ public final class Shuffling {
 
     };
 
-    private static final VersionedEntityDbTable<Shuffling> shufflingTable = new VersionedEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
-
+    private static final VersionedDeletableEntityDbTable<Shuffling> shufflingTable = new VersionedDeletableEntityDbTable<>("shuffling", shufflingDbKeyFactory) {
         @Override
-        protected Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Shuffling(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Shuffling shuffling) throws SQLException {
+        public void save(Connection con, Shuffling shuffling) throws SQLException {
             shuffling.save(con);
         }
     };
@@ -691,7 +692,7 @@ public final class Shuffling {
         byte[][] data = attachment.getData();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
         participant.setData(data, transaction.getTimestamp());
-        participant.setProcessed(transaction.getFullHash());
+        participant.setProcessed(transaction.getFullHash(), attachment.getHash());
         if (data != null && data.length == 0) {
             // couldn't decrypt all data from previous participants
             cancelBy(participant);
@@ -707,7 +708,7 @@ public final class Shuffling {
         long participantId = transaction.getSenderId();
         this.recipientPublicKeys = attachment.getRecipientPublicKeys();
         ShufflingParticipant participant = ShufflingParticipant.getParticipant(this.id, participantId);
-        participant.setProcessed(transaction.getFullHash());
+        participant.setProcessed(transaction.getFullHash(), null);
         if (recipientPublicKeys.length == 0) {
             // couldn't decrypt all data from previous participants
             cancelBy(participant);
@@ -812,8 +813,21 @@ public final class Shuffling {
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
             long fee = blockchainConfig.getShufflingDepositAtm() / 4;
+            int shardHeight = blockchain.getShardInitialBlock().getHeight();
+            long[] generators = null;
             for (int i = 0; i < 3; i++) {
-                Account previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(block.getHeight() - i - 1).getGeneratorId());
+                int blockHeight = block.getHeight() - i - 1;
+                if (generators == null && shardHeight > blockHeight) {
+                    generators = shardDao.getLastShard().getGeneratorIds();
+
+                }
+                Account previousGeneratorAccount;
+                if (shardHeight > blockHeight) {
+                    int diff = shardHeight - blockHeight - 1;
+                    previousGeneratorAccount = Account.getAccount(generators[diff]);
+                } else {
+                    previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                }
                 previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
                 LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
@@ -843,7 +857,7 @@ public final class Shuffling {
         }
         // if no one submitted cancellation, blame the first one that did not submit processing data
         if (stage == Stage.PROCESSING) {
-            LOG.debug("Participant %s did not submit processing", Long.toUnsignedString(assigneeAccountId));
+            LOG.debug("Participant {} did not submit processing", Long.toUnsignedString(assigneeAccountId));
             return assigneeAccountId;
         }
         List<ShufflingParticipant> participants = new ArrayList<>();
@@ -856,7 +870,7 @@ public final class Shuffling {
             // if verification started, blame the first one who did not submit verification
             for (ShufflingParticipant participant : participants) {
                 if (participant.getState() != ShufflingParticipant.State.VERIFIED) {
-                    LOG.debug("Participant %s did not submit verification", Long.toUnsignedString(participant.getAccountId()));
+                    LOG.debug("Participant {} did not submit verification", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
             }
@@ -869,7 +883,7 @@ public final class Shuffling {
             byte[][] keySeeds = participant.getKeySeeds();
             // if participant couldn't submit key seeds because he also couldn't decrypt some of the previous data, this should have been caught before
             if (keySeeds.length == 0) {
-                LOG.debug("Participant %s did not reveal keys", Long.toUnsignedString(participant.getAccountId()));
+                LOG.debug("Participant {} did not reveal keys", Long.toUnsignedString(participant.getAccountId()));
                 return participant.getAccountId();
             }
             byte[] publicKey = Crypto.getPublicKey(keySeeds[0]);
@@ -883,7 +897,7 @@ public final class Shuffling {
             }
             if (encryptedData == null || !Arrays.equals(publicKey, encryptedData.getPublicKey())) {
                 // participant lied about key seeds or data
-                LOG.debug("Participant %s did not submit blame data, or revealed invalid keys", Long.toUnsignedString(participant.getAccountId()));
+                LOG.debug("Participant {} did not submit blame data, or revealed invalid keys", Long.toUnsignedString(participant.getAccountId()));
                 return participant.getAccountId();
             }
             for (int k = i + 1; k < participantCount; k++) {
@@ -895,7 +909,7 @@ public final class Shuffling {
                     participantBytes = encryptedData.decrypt(keySeed, nextParticipantPublicKey);
                 } catch (Exception e) {
                     // the next participant couldn't decrypt the data either, blame this one
-                    LOG.debug("Could not decrypt data from participant %s", Long.toUnsignedString(participant.getAccountId()));
+                    LOG.debug("Could not decrypt data from participant {}", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
                 boolean isLast = k == participantCount - 1;
@@ -903,17 +917,17 @@ public final class Shuffling {
                     // not encrypted data but plaintext recipient public key
                     if (!Crypto.isCanonicalPublicKey(publicKey)) {
                         // not a valid public key
-                        LOG.debug("Participant %s submitted invalid recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant {} submitted invalid recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                     // check for collisions and assume they are intentional
                     byte[] currentPublicKey = Account.getPublicKey(Account.getId(participantBytes));
                     if (currentPublicKey != null && !Arrays.equals(currentPublicKey, participantBytes)) {
-                        LOG.debug("Participant %s submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant {} submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                     if (!recipientAccounts.add(Account.getId(participantBytes))) {
-                        LOG.debug("Participant %s submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
+                        LOG.debug("Participant {} submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
                 }
@@ -929,7 +943,7 @@ public final class Shuffling {
                 }
                 if (!found) {
                     // the next participant did not include this participant's data
-                    LOG.debug("Participant %s did not include previous data", Long.toUnsignedString(nextParticipant.getAccountId()));
+                    LOG.debug("Participant {} did not include previous data", Long.toUnsignedString(nextParticipant.getAccountId()));
                     return nextParticipant.getAccountId();
                 }
                 if (!isLast) {

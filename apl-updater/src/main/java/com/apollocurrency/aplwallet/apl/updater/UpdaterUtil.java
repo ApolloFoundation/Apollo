@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +28,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.ArrayUtils;
 import javax.enterprise.inject.Vetoed;
+
 //TODO: how to read from resources
 //       ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 //        try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {

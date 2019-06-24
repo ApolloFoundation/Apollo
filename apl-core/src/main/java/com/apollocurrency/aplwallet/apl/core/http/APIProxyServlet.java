@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
@@ -55,6 +56,10 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     private static final String REMOTE_URL = APIProxyServlet.class.getName() + ".remoteUrl";
     private static final String REMOTE_SERVER_IDLE_TIMEOUT = APIProxyServlet.class.getName() + ".remoteServerIdleTimeout";
     static final int PROXY_IDLE_TIMEOUT_DELTA = 5000;
+    
+
+    public APIProxyServlet() {
+    }
 
     @Override
     public void init(ServletConfig config) throws ServletException {

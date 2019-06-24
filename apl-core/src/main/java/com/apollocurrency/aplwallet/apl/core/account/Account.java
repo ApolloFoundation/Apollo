@@ -20,15 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,35 +38,38 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 
 /**
  * Used as global access point to all interactions with account and public keys
@@ -95,11 +94,6 @@ public final class Account {
     private static DatabaseManager databaseManager;
     private static GlobalSync sync;
     private static PublicKeyTable publicKeyTable;
-    private static AccountInfoTable accountInfoTable;
-    private static AccountAssetTable accountAssetTable;
-    private static AccountCurrencyTable accountCurrencyTable;
-    private static AccountLeaseTable accountLeaseTable;
-    private static AccountPropertyTable accountPropertyTable;
     private static GenesisPublicKeyTable genesisPublicKeyTable;
     private static AccountTable accountTable;
 
@@ -127,7 +121,8 @@ public final class Account {
                             BlockchainConfig blockchainConfigParam,
                             Blockchain blockchainParam,
                             GlobalSync globalSync,
-                            PublicKeyTable pkTable
+                            PublicKeyTable pkTable,
+                            AccountTable accTable
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -135,19 +130,14 @@ public final class Account {
         blockchain = blockchainParam;
         publicKeyTable = pkTable;
         sync = globalSync;
+        accountTable = accTable;
         CDI.current().select(AccountGuaranteedBalanceTable.class).get();
-        accountAssetTable = AccountAssetTable.getInstance();
-        accountInfoTable = AccountInfoTable.getInstance();
-        accountCurrencyTable = AccountCurrencyTable.getInstance();
-        accountLeaseTable = AccountLeaseTable.getInstance();
-        accountPropertyTable = AccountPropertyTable.getInstance();
-        accountTable = AccountTable.getInstance();
         genesisPublicKeyTable = GenesisPublicKeyTable.getInstance();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
         }
-        }
+    }
 
 
     @Singleton
@@ -290,7 +280,7 @@ public final class Account {
 
     public static Account getAccount(long id, int height) {
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = AccountTable.getInstance().get(dbKey, height);
+        Account account = accountTable.get(dbKey, height);
         if (account == null) {
             PublicKey publicKey = getPublicKey(dbKey, height);
             if (publicKey != null) {
@@ -341,8 +331,15 @@ public final class Account {
             throw new RuntimeException(e.toString(), e);
         }
     }
+    public  static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
+        try {
+            return accountTable.getTopHolders(con, numberOfTopAccounts);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
-    
     public static long getTotalSupply() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
@@ -450,7 +447,7 @@ public final class Account {
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
-            publicKey.height = blockchain.getHeight();
+            publicKey.setHeight(blockchain.getHeight());
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
@@ -473,7 +470,7 @@ public final class Account {
 
     private void save() {
         if (balanceATM == 0 && unconfirmedBalanceATM == 0 && forgedBalanceATM == 0 && activeLesseeId == 0 && controls.isEmpty()) {
-            accountTable.delete(this, true);
+            accountTable.delete(this, true, blockchain.getHeight());
         } else {
             accountTable.insert(this);
         }
@@ -484,7 +481,7 @@ public final class Account {
     }
 
     public AccountInfo getAccountInfo() {
-        return accountInfoTable.get(AccountTable.newKey(this));
+        return AccountInfoTable.getInstance().get(AccountTable.newKey(this));
     }
 
     public void setAccountInfo(String name, String description) {
@@ -501,7 +498,7 @@ public final class Account {
     }
 
     public AccountLease getAccountLease() {
-        return accountLeaseTable.get(AccountTable.newKey(this));
+        return AccountLeaseTable.getInstance().get(AccountTable.newKey(this));
     }
 
     public EncryptedData encryptTo(byte[] data, byte[] keySeed, boolean compress) {
@@ -533,10 +530,10 @@ public final class Account {
     }
 
     public long getEffectiveBalanceAPL() {
-        return getEffectiveBalanceAPL(blockchain.getHeight());
+        return getEffectiveBalanceAPL(blockchain.getHeight(), true);
     }
 
-    public long getEffectiveBalanceAPL(int height) {
+    public long getEffectiveBalanceAPL(int height, boolean lock) {
         if (height <= 1440) {
             Account genesisAccount = getAccount(id, 0);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
@@ -544,10 +541,12 @@ public final class Account {
         if (this.publicKey == null) {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
-        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.height <= 1440) {
+        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
-        sync.readLock();
+        if (lock) {
+            sync.readLock();
+        }
         try {
             long effectiveBalanceATM = getLessorsGuaranteedBalanceATM(height);
             if (activeLesseeId == 0) {
@@ -556,7 +555,9 @@ public final class Account {
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
         }
         finally {
-            sync.readUnlock();
+            if (lock) {
+                sync.readUnlock();
+            }
         }
     }
 
@@ -652,11 +653,11 @@ public final class Account {
     }
 
     public DbIterator<AccountAsset> getAssets(int from, int to) {
-        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
+        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
     }
 
     public DbIterator<AccountAsset> getAssets(int height, int from, int to) {
-        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
+        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
     public DbIterator<Trade> getTrades(int from, int to) {
@@ -676,11 +677,11 @@ public final class Account {
     }
 
     public AccountAsset getAsset(long assetId) {
-        return accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
+        return AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
     }
 
     public AccountAsset getAsset(long assetId, int height) {
-        return accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId), height);
+        return AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId), height);
     }
 
     public long getAssetBalanceATU(long assetId) {
@@ -696,19 +697,19 @@ public final class Account {
     }
 
     public AccountCurrency getCurrency(long currencyId) {
-        return accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
+        return AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
     }
 
     public AccountCurrency getCurrency(long currencyId, int height) {
-        return accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId), height);
+        return AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId), height);
     }
 
     public DbIterator<AccountCurrency> getCurrencies(int from, int to) {
-        return accountCurrencyTable.getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
+        return AccountCurrencyTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
     }
 
     public DbIterator<AccountCurrency> getCurrencies(int height, int from, int to) {
-        return accountCurrencyTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
+        return AccountCurrencyTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
     public long getCurrencyUnits(long currencyId) {
@@ -729,7 +730,7 @@ public final class Account {
 
     public void leaseEffectiveBalance(long lesseeId, int period) {
         int height = blockchain.getHeight();
-        AccountLease accountLease = accountLeaseTable.get(AccountTable.newKey(this));
+        AccountLease accountLease = AccountLeaseTable.getInstance().get(AccountTable.newKey(this));
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
@@ -748,7 +749,7 @@ public final class Account {
             accountLease.nextLeasingHeightTo = accountLease.nextLeasingHeightFrom + period;
             accountLease.nextLesseeId = lesseeId;
         }
-        accountLeaseTable.insert(accountLease);
+        AccountLeaseTable.getInstance().insert(accountLease);
         leaseListeners.notify(accountLease, Event.LEASE_SCHEDULED);
     }
 
@@ -759,7 +760,7 @@ public final class Account {
         EnumSet<ControlType> newControls = EnumSet.of(control);
         newControls.addAll(controls);
         controls = Collections.unmodifiableSet(newControls);
-        AccountTable.getInstance().insert(this);
+        accountTable.insert(this);
     }
 
     public void removeControl(ControlType control) {
@@ -780,20 +781,20 @@ public final class Account {
         } else {
             accountProperty.value = value;
         }
-        accountPropertyTable.insert(accountProperty);
+        AccountPropertyTable.getInstance().insert(accountProperty);
         listeners.notify(this, Event.SET_PROPERTY);
         propertyListeners.notify(accountProperty, Event.SET_PROPERTY);
     }
 
    public  void deleteProperty(long propertyId) {
-        AccountProperty accountProperty = accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
+        AccountProperty accountProperty = AccountPropertyTable.getInstance().get(AccountPropertyTable.newKey(propertyId));
         if (accountProperty == null) {
             return;
         }
         if (accountProperty.getSetterId() != this.id && accountProperty.getRecipientId() != this.id) {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(this.id));
         }
-        accountPropertyTable.delete(accountProperty);
+        AccountPropertyTable.getInstance().delete(accountProperty);
         listeners.notify(this, Event.DELETE_PROPERTY);
         propertyListeners.notify(accountProperty, Event.DELETE_PROPERTY);
     }
@@ -810,13 +811,13 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
-                genesisPublicKeyTable.insert(publicKey);
+                GenesisPublicKeyTable.getInstance().insert(publicKey);
             } else {
                publicKeyTable.insert(publicKey);
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
-        } else if (publicKey.height >= blockchain.getHeight() - 1) {
+        } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);
@@ -833,7 +834,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
@@ -841,7 +842,7 @@ public final class Account {
         } else {
             accountAsset.quantityATU = assetBalance;
         }
-        accountAssetTable.save(accountAsset);
+        AccountAssetTable.getInstance().save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
@@ -855,7 +856,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
@@ -863,7 +864,7 @@ public final class Account {
         } else {
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        accountAssetTable.save(accountAsset);
+        AccountAssetTable.getInstance().save(accountAsset);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (event == null) {
@@ -881,7 +882,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
@@ -892,7 +893,7 @@ public final class Account {
             accountAsset.quantityATU = assetBalance;
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        accountAssetTable.save(accountAsset);
+        AccountAssetTable.getInstance().save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
@@ -914,7 +915,7 @@ public final class Account {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
+        accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
         currencyUnits = Math.addExact(currencyUnits, units);
         if (accountCurrency == null) {
@@ -935,7 +936,7 @@ public final class Account {
         if (units == 0) {
             return;
         }
-        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
+        AccountCurrency accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {

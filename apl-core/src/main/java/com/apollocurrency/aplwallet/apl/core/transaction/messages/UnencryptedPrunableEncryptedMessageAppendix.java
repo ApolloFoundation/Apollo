@@ -35,7 +35,7 @@ public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncrypt
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         if (getEncryptedData() == null) {
             throw new AplException.NotYetEncryptedException("Prunable encrypted message not yet encrypted");
         }
@@ -43,7 +43,7 @@ public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncrypt
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         if (getEncryptedData() == null) {
             JSONObject encryptedMessageJSON = new JSONObject();
             encryptedMessageJSON.put("messageToEncrypt", isText() ? Convert.toString(messageToEncrypt) : Convert.toHexString(messageToEncrypt));

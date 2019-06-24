@@ -65,7 +65,7 @@ public class GetPrivateAccountLedgerEntry extends AbstractAPIRequestHandler {
         JSONData.ledgerEntry(response, ledgerEntry, includeTransaction, includeHoldingInfo);
         if (data.isEncrypt()) {
             response = JSONData.encryptedLedgerEntry(response, data.getSharedKey());
-            response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+            response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         }
         return response;
     }

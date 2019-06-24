@@ -59,7 +59,7 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
             Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
             response.put("stoppedShuffler", shuffler != null);
         } else {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length != 0) {
                 Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
                 response.put("stoppedShuffler", shuffler != null);

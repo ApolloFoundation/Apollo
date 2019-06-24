@@ -41,7 +41,7 @@ public final class Search {
     private static final Analyzer analyzer = new StandardAnalyzer();
 
     public static String[] parseTags(String tags, int minTagLength, int maxTagLength, int maxTagCount) {
-        if (tags.trim().length() == 0) {
+        if (tags == null || tags.trim().length() == 0) {
             return Convert.EMPTY_STRING;
         }
         List<String> list = new ArrayList<>();

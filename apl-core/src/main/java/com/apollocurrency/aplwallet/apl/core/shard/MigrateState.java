@@ -29,44 +29,59 @@ public enum MigrateState {
     /**
      * We finished copying data (block + tr) from main into shard
      */
-    DATA_COPIED_TO_SHARD(4),
+    DATA_COPY_TO_SHARD_FINISHED(4),
 
     /**
      * Shard schema is updated with all constraints/indexes, so it's FULLY created now.
      */
     SHARD_SCHEMA_FULL(5),
 
-    /**
-     * We started updating several tables to link/reference to shard's snapshot block
-     */
-    DATA_RELINK_STARTED(6),
-    /**
-     * Several tables were processed and records were updated to reference shard's snapshot block
-     */
-    DATA_RELINKED_IN_MAIN(7),
+//    @Deprecated
+//    DATA_RELINK_STARTED(6),
+
+//    @Deprecated
+//    DATA_RELINKED_IN_MAIN(7),
 
     /**
      * We started updating block/tr secondary indexes with shard's block related info
      */
-    SECONDARY_INDEX_STARTED(8),
+    SECONDARY_INDEX_STARTED(6),
     /**
      * The block/tr secondary indexes were updated with shard related info
      */
-    SECONDARY_INDEX_UPDATED(9),
+    SECONDARY_INDEX_FINISHED(7),
+
+    /**
+     * We started export different tables data into CSV files
+     */
+    CSV_EXPORT_STARTED(8),
+    /**
+     * CSV export tables data into CSV is finished
+     */
+    CSV_EXPORT_FINISHED(9),
+
+    /**
+     * We started archiving CSV files into ZIP and putting CRC/hash on last step
+     */
+    ZIP_ARCHIVE_STARTED(10),
+    /**
+     * Creating ZIP archive with CSV files is finished
+     */
+    ZIP_ARCHIVE_FINISHED(11),
 
     /**
      * We started deleting Block/tr data from main db after it has been copied to shard db
      */
-    DATA_REMOVE_STARTED(10),
+    DATA_REMOVE_STARTED(12),
     /**
      * Block/tr data were deleted from main db after it has been copied to shard db
      */
-    DATA_REMOVED_FROM_MAIN(11),
+    DATA_REMOVED_FROM_MAIN(13),
 
     /**
      * Shard record is inserted in main db and sharding process is completed
      */
-    COMPLETED(12),
+    COMPLETED(14),
     /**
      * Process failed at any step
      */

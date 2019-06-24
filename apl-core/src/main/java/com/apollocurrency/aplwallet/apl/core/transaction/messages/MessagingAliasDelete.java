@@ -44,19 +44,19 @@ public final class MessagingAliasDelete extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + Convert.toBytes(aliasName).length;
     }
 
     @Override
-    void putMyBytes(final ByteBuffer buffer) {
+    public void putMyBytes(final ByteBuffer buffer) {
         byte[] aliasBytes = Convert.toBytes(aliasName);
         buffer.put((byte) aliasBytes.length);
         buffer.put(aliasBytes);
     }
 
     @Override
-    void putMyJSON(final JSONObject attachment) {
+    public void putMyJSON(final JSONObject attachment) {
         attachment.put("alias", aliasName);
     }
 

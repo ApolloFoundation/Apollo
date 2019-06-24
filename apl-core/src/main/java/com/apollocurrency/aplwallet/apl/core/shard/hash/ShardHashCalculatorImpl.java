@@ -82,7 +82,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
     @Override
     public byte[] calculateHash(int shardStartHeight, int shardEndHeight) {
         if (shardStartHeight >= shardEndHeight) {
-            throw new IllegalArgumentException("shard start height should be less than shard end height");
+            throw new IllegalArgumentException("shard start height should be less than shard end height " + String.format("start - %d, finish - %d", shardStartHeight, shardEndHeight));
         }
         long startTime = System.currentTimeMillis();
         List<byte[]> blockSignatures = retrieveBlockSignatures(shardStartHeight, shardEndHeight);
@@ -92,7 +92,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
             return null;
         }
         long merkleTreeStartTime = System.currentTimeMillis();
-        byte[] prevHash = getPrevShardHash(shardStartHeight - 1);
+        byte[] prevHash = getPrevShardHash(shardStartHeight);
         blockSignatures.add(prevHash);
         byte[] hash = calculateMerkleRoot(blockSignatures);
         log.debug("Built merkle tree in {} ms", System.currentTimeMillis() - merkleTreeStartTime);

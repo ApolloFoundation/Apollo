@@ -66,11 +66,16 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
 
 
     @Inject
-    public LuceneFullTextSearchEngine(NtpTime ntpTime, @Named("indexDirPath") Path indexPath) throws IOException {
+    public LuceneFullTextSearchEngine(NtpTime ntpTime, @Named("indexDirPath") Path indexPath) {
         this.ntpTime = ntpTime;
         this.indexDirPath = indexPath;
         if (!Files.exists(indexPath)) {
-            Files.createDirectories(indexPath);
+            try {
+                Files.createDirectories(indexPath);
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Cannot create index directory", e);
+            }
         }
     }
 

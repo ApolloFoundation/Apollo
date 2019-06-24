@@ -1,12 +1,13 @@
 package com.apollocurrency.aplwallet.apl.eth.contracts;
 
-import io.reactivex.Flowable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;

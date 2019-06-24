@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import java.io.File;
-import java.net.URI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

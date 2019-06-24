@@ -4,36 +4,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URI;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.apollocurrency.aplwallet.api.transport.TransportEventDescriptor;
 import com.apollocurrency.aplwallet.api.transport.TransportStartRequest;
 import com.apollocurrency.aplwallet.api.transport.TransportStatusReply;
 import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.URI;
-import java.util.Random;
-
 import lombok.Getter;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
@@ -136,7 +133,6 @@ public class TransportInteractionWebSocket {
     /**
      * Callback hook for Connection close events.
      *
-     * @param userSession the userSession which is getting closed.
      * @param statusCode code of error in case of problems
      * @param reason the reason for connection close
      */
@@ -256,14 +252,14 @@ public class TransportInteractionWebSocket {
      */
 
     private void getSecureTransportStatus( ) {                
-        log.debug("TransportInteractionWebSocket: getSecureTransportStatus");
+        log.trace("TransportInteractionWebSocket: getSecureTransportStatus");
         TransportStopRequest stopRequest = new TransportStopRequest();
         stopRequest.type = "GETSTATUSREQUEST";        
         stopRequest.id = rand.nextInt(255);          
                      
         try {
             String stopRequestString = mapper.writeValueAsString(stopRequest);            
-            log.debug("getting status: {}", stopRequestString);            
+            log.trace("getting status: {}", stopRequestString);
             sendMessage(stopRequestString);            
         } catch (JsonProcessingException ex) {
             log.error("TransportInteractionWebSocket: Error while creating Getting Status request: {}", ex.getMessage().toString() );                   
@@ -330,7 +326,7 @@ public class TransportInteractionWebSocket {
             
             switch (secureTransportStatus) {
                 case INITIAL: {
-                    log.debug("Initial state, need to figure out the status of connection");                    
+                    log.trace("Initial state, need to figure out the status of connection");
                     getSecureTransportStatus();
                     break;
                 }

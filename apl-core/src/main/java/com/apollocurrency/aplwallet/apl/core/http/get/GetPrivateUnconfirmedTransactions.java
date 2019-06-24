@@ -54,7 +54,7 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
         }
         JSONObject response = new JSONObject();
         response.put("unconfirmedTransactions", transactions);
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

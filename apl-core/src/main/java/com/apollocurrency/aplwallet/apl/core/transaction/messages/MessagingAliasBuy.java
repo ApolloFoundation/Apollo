@@ -44,19 +44,19 @@ public final class MessagingAliasBuy extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + Convert.toBytes(aliasName).length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] aliasBytes = Convert.toBytes(aliasName);
         buffer.put((byte) aliasBytes.length);
         buffer.put(aliasBytes);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("alias", aliasName);
     }
 

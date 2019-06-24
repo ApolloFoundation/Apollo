@@ -4,6 +4,33 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -12,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
@@ -46,33 +72,7 @@ import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
 @OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
@@ -116,7 +116,7 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
         ) throws NotFoundException {
-        
+
         log.debug("getBalances: ");
 
         for (String ethAddress : ethAddresses) {
@@ -127,7 +127,7 @@ public class DexController {
             }
         }
 
-        WalletsBalance customerWalletsBalance = service.getBalances(new GetBalancesRequest(ethAddresses));
+        WalletsBalance customerWalletsBalance = service.getBalances(new GetEthBalancesRequest(ethAddresses));
 
         try {
             return Response.ok(mapper.writeValueAsString(customerWalletsBalance)).build();
@@ -147,7 +147,7 @@ public class DexController {
             throws NotFoundException {
 
         log.debug("getHistory: account: {}, pair: {}, type: {}", account, pair, type );
-        
+
         return Response.ok(service.getHistory(account,pair,type)).build();
     }
 
@@ -165,12 +165,12 @@ public class DexController {
                                 @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
-        
-        
+
+
         log.debug("createOffer: offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
-        
-        
-        
+
+
+
         if (pairRate <= 0 ) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
@@ -259,10 +259,10 @@ public class DexController {
             String freezeTx=null;
 
             // Looks like this is the correct position for event handling
-            // for matcher. 
-            
+            // for matcher.
+
             dexMatcherService.onCreateOffer(offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime);
-                        
+
             try {
                 if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
                     String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
@@ -306,9 +306,9 @@ public class DexController {
                                 @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                                 @Context HttpServletRequest req) throws NotFoundException {
-        
+
         log.debug("getOffers:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}",orderType, pairCurrency,status, accountIdStr,isAvailableForNow, minAskPrice, maxBidPrice);
-        
+
         OfferType type = null;
         OfferStatus offerStatus = null;
         DexCurrencies pairCur = null;
@@ -340,9 +340,9 @@ public class DexController {
         int lastIndex = ParameterParser.getLastIndex(req);
         int offset = firstIndex > 0 ? firstIndex : 0;
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
-                
-        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit );        
-        
+
+        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit );
+
         DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, DexCurrencies.APL, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
@@ -360,21 +360,21 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getOffersMatch( @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
-                                    @Parameter(description = "Offer currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Integer offerCurrency,  
+                                    @Parameter(description = "Offer currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Integer offerCurrency,
                                     @Parameter(description = "The amount of offer") @QueryParam("offerAmount") BigDecimal offerAmount,
-                                    @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Integer pairCurrency,                                     
+                                    @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Integer pairCurrency,
                                     @Parameter(description = "Pair rate") @QueryParam("pairRate") BigDecimal pairRate,
                                     @Context HttpServletRequest req) throws NotFoundException {
-        
+
         log.debug("getOfoffersMatchfers:  orderType: {}, offerCurrency: {}, offerAmount: {}, pairCurrency: {}, pairRate: {} ",orderType, offerCurrency, offerAmount, pairCurrency, pairRate );
-        
-        OfferType type = null;        
+
+        OfferType type = null;
         DexCurrencies pairCurr = null, offerCurr = null;
         Integer currentTime = epochTime.getEpochTime();
-        
+
 
         //Validate
-        
+
         try {
             if (orderType != null) {
                 type = OfferType.getType(orderType);
@@ -382,9 +382,9 @@ public class DexController {
         } catch (Exception ex){
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
-                        
+
         DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(type, currentTime, offerCurrency, offerAmount, pairCurrency, pairRate );
-        
+
         List<DexOffer> offers = service.getOffersForMatching(dexOfferDBMatchingRequest);
 
         return Response.ok(offers.stream()
@@ -404,9 +404,9 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
                                          @Context HttpServletRequest req) throws NotFoundException {
-        
+
         log.debug("cancelOrderByOrderID: {}", transactionIdStr);
-         
+
         try{
             Long transactionId;
             Account account = ParameterParser.getSenderAccount(req);
@@ -478,9 +478,9 @@ public class DexController {
                                     @NotNull @Parameter(description = "Transfer fee in GWei") @FormParam("transferFee") Long transferFee,
                                     @NotNull @Parameter(description = "crypto currency for withdraw:ETH=1/PAX=2") @FormParam("cryptocurrency") Byte cryptocurrency,
                                     @Context HttpServletRequest req) {
-        
+
         log.debug("dexWithdrawPost, amount: {}, fromAddress: {}, toAddr: {}, transferFee: {}, currency: ", amount, fromAddress, toAddress, transferFee, cryptocurrency);
-                
+
         DexCurrencies currencies = null;
         String passphrase;
         Account sender;
@@ -544,9 +544,9 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
-        
+
         log.debug("dexEthInfo: ");
-        
+
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();

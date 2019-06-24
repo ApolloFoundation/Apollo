@@ -3,26 +3,22 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.GENESIS_PUBLIC_KEY_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.PUBLIC_KEY_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Helper class is used for changing/updating linked table's records to point to snapshot Block record.
  *
  * @author yuriy.larin
  */
+@Deprecated
 public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
     private static final Logger log = getLogger(RelinkingToSnapshotBlockHelper.class);
 
@@ -43,6 +39,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
         assignMainBottomTopSelectSql();
         recoveryValue = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
 
+/*
         // select upper, bottom DB_ID
         this.upperBoundIdValue = selectUpperBoundValue(sourceConnect, operationParams);
 
@@ -116,6 +113,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
             executeUpdateQuery(sourceConnect,
                     "ALTER TABLE PUBLIC_KEY ADD CONSTRAINT IF NOT EXISTS CONSTRAINT_8E8 FOREIGN KEY (HEIGHT) REFERENCES block (HEIGHT) ON DELETE CASCADE");
         }
+*/
         log.debug("'{}' = [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
         return totalSelectedRows;
     }
@@ -140,7 +138,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
         paginateResultWrapper.lowerBoundColumnValue += batchCommitSize;
         // update recovery state + db_id value
         recoveryValue.setObjectName(currentTableName);
-        recoveryValue.setState(MigrateState.DATA_RELINK_STARTED);
+//        recoveryValue.setState(MigrateState.DATA_RELINK_STARTED);
         recoveryValue.setColumnName(BASE_COLUMN_NAME);
         recoveryValue.setLastColumnValue(paginateResultWrapper.lowerBoundColumnValue);
         shardRecoveryDao.updateShardRecovery(sourceConnect, recoveryValue); // update recovery info
@@ -150,7 +148,7 @@ public class RelinkingToSnapshotBlockHelper extends AbstractHelper {
     }
 
     private void assignMainBottomTopSelectSql() {
-        if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set block_id = ? where db_id = ? ";
         } else {
             sqlToExecuteWithPaging = "UPDATE " + currentTableName + " set HEIGHT = ? where DB_ID > ? AND DB_ID < ? limit ?";
