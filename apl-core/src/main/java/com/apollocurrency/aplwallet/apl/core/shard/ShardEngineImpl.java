@@ -18,7 +18,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.*;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -44,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.HelperFactoryImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.TableOperationParams;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -51,7 +51,6 @@ import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -286,10 +285,10 @@ public class ShardEngineImpl implements ShardEngine {
 
                     long totalCount = paginationOperationHelper.processOperation(
                             sourceConnect, targetConnect, operationParams);
-                    targetDataSource.commit(false);
                     log.debug("Totally inserted '{}' records in table ='{}' within {} sec", totalCount, tableName, (System.currentTimeMillis() - start)/1000);
-                    paginationOperationHelper.reset();
+                paginationOperationHelper.reset();
                 recovery = updateShardRecoveryProcessedTableList(sourceConnect, currentTable, DATA_COPY_TO_SHARD_STARTED);
+                targetDataSource.commit(false);
                 incrementDurableTaskUpdateByPercent(1.5);
             }
             state = DATA_COPY_TO_SHARD_FINISHED;
@@ -401,6 +400,11 @@ public class ShardEngineImpl implements ShardEngine {
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
             trimDerivedTables(paramInfo.getSnapshotBlockHeight());
+            if (StringUtils.isBlank(recovery.getProcessedObject())) {
+                Files.list(csvExporter.getDataExportPath())
+                        .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
+                        .forEach(FileUtils::deleteFileIfExistsQuietly);
+            }
             for (String tableName : allTables) {
                 exportTableWithRecovery(recovery, tableName, () -> {
                     switch (tableName.toLowerCase()) {
@@ -471,13 +475,10 @@ public class ShardEngineImpl implements ShardEngine {
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
             log.trace("Exporting '{}'...", tableCsvPath);
-            try {
-                Files.deleteIfExists(tableCsvPath);
-            }
-            catch (IOException e) {
+            FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e)-> {
                 durableTaskUpdateByState(state, null, null);
                 throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
-            }
+            });
             long startTableExportTime = System.currentTimeMillis();
             Long exported = exportPerformer.get();
             log.debug("Exported - {}, from {} to {} in {} secs", exported, tableName, tableCsvPath,
@@ -514,14 +515,13 @@ public class ShardEngineImpl implements ShardEngine {
 
         Path shardZipFilePath = dirProvider.getDataExportDir().resolve(shardFileName);
         log.debug("Zip file name = '{}' will be searched/stored in '{}'", shardFileName, shardZipFilePath);
-        try {
-            // delete if something left in previous run
-            boolean isRemoved = Files.deleteIfExists(shardZipFilePath);
-            log.debug("Previous Zip in '{}' was '{}'", shardFileName, isRemoved ? "REMOVED" : "NOT FOUND");
-        } catch (IOException e) {
+        // delete if something left in previous run
+        boolean isRemoved = FileUtils.deleteFileIfExistsAndHandleException(shardZipFilePath, (e) -> {
             durableTaskUpdateByState(FAILED, null, null);
             throw new RuntimeException("Unable to remove previous ZIP file: " + shardZipFilePath.toAbsolutePath().toString());
-        }
+        });
+        log.debug("Previous Zip in '{}' was '{}'", shardFileName, isRemoved ? "REMOVED" : "NOT FOUND");
+
 //        try (Connection sourceConnect = sourceDataSource.begin()) {
         try (Connection sourceConnect = sourceDataSource.getConnection()) {
             state = ZIP_ARCHIVE_STARTED;
@@ -720,8 +720,8 @@ public class ShardEngineImpl implements ShardEngine {
         // - add table name if it not exists in list separated by space
         recovery.setProcessedObject(recovery.getProcessedObject() != null ?
                 (!AbstractHelper.isContain(recovery.getProcessedObject(), currentTable) ?
-                        recovery.getProcessedObject() + " " + currentTable.toUpperCase() : recovery.getProcessedObject())
-                : currentTable.toUpperCase()); // add processed table name into list if NOT exists
+                        recovery.getProcessedObject() + " " + currentTable.toLowerCase() : recovery.getProcessedObject())
+                : currentTable.toLowerCase()); // add processed table name into list if NOT exists
         shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
         return recovery;
     }

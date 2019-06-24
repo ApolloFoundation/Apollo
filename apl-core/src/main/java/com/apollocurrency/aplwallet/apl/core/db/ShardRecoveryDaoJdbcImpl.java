@@ -185,7 +185,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         Objects.requireNonNull(con,"connection is NULL");
         Objects.requireNonNull(recovery,"recovery is NULL");
         Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
-        int updated = -1;
+        int updated;
         try (PreparedStatement pstmt = con.prepareStatement(
                 "UPDATE shard_recovery SET state=?, object_name=?, column_name=?, " +
                         "last_column_value=?, processed_object=?, updated=CURRENT_TIMESTAMP() " +
