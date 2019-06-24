@@ -24,12 +24,15 @@ public class ExcludedTransactionDbIdExtractor {
         this.blockchain = blockchain;
     }
 
-    public ExcludeInfo getExcludeInfo(int height) {
-        List<TransactionDbInfo> activePhasedTransactions = phasingPollService.getActivePhasedTransactionDbInfoAtHeight(height);
-        List<TransactionDbInfo> transactionsBeforeHeight = blockchain.getTransactionsBeforeHeight(height);
+    public ExcludeInfo getExcludeInfo(int startHeight, int finishHeight) {
+        if (startHeight >= finishHeight) {
+            throw new IllegalArgumentException("startHeight should be less than finish height but got start=" + startHeight + " and finish" + finishHeight);
+        }
+        List<TransactionDbInfo> activePhasedTransactions = phasingPollService.getActivePhasedTransactionDbInfoAtHeight(finishHeight);
+        List<TransactionDbInfo> transactionsBeforeHeight = blockchain.getTransactionsBeforeHeight(startHeight);
         List<TransactionDbInfo> deleteNotExportNotCopy = transactionsBeforeHeight.stream().filter(tdi->!activePhasedTransactions.contains(tdi)).collect(Collectors.toList());
         List<TransactionDbInfo> notDeleteExportNotCopy = transactionsBeforeHeight.stream().filter(activePhasedTransactions::contains).collect(Collectors.toList());
         List<TransactionDbInfo> notDeleteExportCopy = activePhasedTransactions.stream().filter(e -> !notDeleteExportNotCopy.contains(e)).collect(Collectors.toList());
-        return new ExcludeInfo(deleteNotExportNotCopy, notDeleteExportNotCopy, activePhasedTransactions);
+        return new ExcludeInfo(deleteNotExportNotCopy, notDeleteExportNotCopy, notDeleteExportCopy);
     }
 }

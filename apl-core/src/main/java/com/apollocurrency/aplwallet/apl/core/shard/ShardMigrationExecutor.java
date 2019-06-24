@@ -89,7 +89,8 @@ public class ShardMigrationExecutor {
 
     @Transactional
     public void createAllCommands(int height, long shardId, MigrateState state) {
-
+        int shardStartHeight = getShardStartHeight();
+        log.info("Create commands for shard between heights[{},{}]", shardStartHeight, height);
         switch (state) {
             case INIT:
                 if (backupDb) {
@@ -103,7 +104,7 @@ public class ShardMigrationExecutor {
                 addCreateSchemaCommand(shardId); //should happen only when enabled backup
             case SHARD_SCHEMA_CREATED:
             case DATA_COPY_TO_SHARD_STARTED:
-                ExcludeInfo excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(height);
+                ExcludeInfo excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
                 CopyDataCommand copyDataCommand = new CopyDataCommand(shardId, shardEngine, height, excludeInfo);
                 this.addOperation(copyDataCommand);
             case DATA_COPY_TO_SHARD_FINISHED:
@@ -118,13 +119,13 @@ public class ShardMigrationExecutor {
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:
-                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(height);
+                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
                 UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
                         (shardEngine, height, excludeInfo);
                 this.addOperation(updateSecondaryIndexCommand);
             case SECONDARY_INDEX_FINISHED:
             case CSV_EXPORT_STARTED:
-                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(height);
+                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
                 List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
                 tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
                 CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo);
@@ -136,7 +137,7 @@ public class ShardMigrationExecutor {
                 this.addOperation(zipArchiveCommand);
             case ZIP_ARCHIVE_FINISHED:
             case DATA_REMOVE_STARTED:
-                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(height);
+                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
                 DeleteCopiedDataCommand deleteCopiedDataCommand =
                         new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
                 this.addOperation(deleteCopiedDataCommand);
@@ -153,11 +154,11 @@ public class ShardMigrationExecutor {
     }
 
     private byte[] calculateHash(int height) {
-        int lastShardHeight = getHeight();
+        int lastShardHeight = getShardStartHeight();
         return shardHashCalculator.calculateHash(lastShardHeight, height);
     }
 
-    private int getHeight() {
+    private int getShardStartHeight() {
         Shard lastCompletedShard = shardDao.getLastCompletedShard(); // last shard is missing on the first time
         return lastCompletedShard != null ? lastCompletedShard.getShardHeight() : 0;
     }
