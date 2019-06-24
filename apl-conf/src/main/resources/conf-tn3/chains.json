@@ -361,6 +361,24 @@
         },
         "shardingSettings": {
           "enabled": true,
+          "frequency": 13000
+        }
+      },
+      {
+        "height": 34001,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
           "frequency": 14000
         }
       }
