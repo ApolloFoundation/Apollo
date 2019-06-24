@@ -576,7 +576,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.FAILED, state);
-        verify(csvExporter, times(1)).getDataExportPath();
+        verify(csvExporter, times(2)).getDataExportPath();
         verifyNoMoreInteractions(csvExporter);
     }
 
@@ -592,11 +592,43 @@ class ShardEngineTest {
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
-        verify(csvExporter, times(1)).getDataExportPath();
+        verify(csvExporter, times(2)).getDataExportPath();
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(2, recovery.getShardRecoveryId());
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, recovery.getState());
+    }
+
+    @Test
+    void testExportTablesWhenRecoveryInfoNotExistAndExistOldCsvAndNotCsvFiles() throws IOException {
+        BlockTestData btd = new BlockTestData();
+        int snaphotBlockHeight = btd.BLOCK_10.getHeight();
+        int batchLimit = 1;
+        List<String> tables = List.of("goods");
+        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        CommandParamInfo paramInfo = CommandParamInfo.builder().tableNameList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
+        Path csvFile = Files.createFile(dataExportDirPath.resolve("old.csv"));
+        Path emptyDir = Files.createDirectory(dataExportDirPath.resolve("empty-dir"));
+        Path directory = Files.createDirectory(dataExportDirPath.resolve("export-dir"));
+        Path txtFile = directory.resolve("old.txt");
+        Files.createFile(txtFile);
+        Path anotherCsvFile = Files.createFile(directory.resolve("another.csv"));
+
+        MigrateState state = shardEngine.exportCsv(paramInfo);
+
+        assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
+        verify(csvExporter, times(2)).getDataExportPath();
+        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
+        verifyNoMoreInteractions(csvExporter);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
+        assertEquals(2, recovery.getShardRecoveryId());
+        assertEquals(MigrateState.CSV_EXPORT_FINISHED, recovery.getState());
+
+        assertTrue(Files.exists(emptyDir));
+        assertTrue(Files.exists(txtFile));
+        assertFalse(Files.exists(csvFile));
+        assertTrue(Files.exists(anotherCsvFile));
+        assertTrue(Files.exists(directory));
     }
 }
