@@ -40,6 +40,8 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
     private EpochTime epochTime;
+    private DexOffer lastMatchedOffer; 
+        
 
     @Inject
     DexMatcherServiceImpl( DexService dexService, EpochTime epochTime ) {
@@ -54,6 +56,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     @Override
     public void initialize() {
         log.debug("DexMatcherService : initialization routine");
+        this.lastMatchedOffer = null;
     }
 
     /**
@@ -65,6 +68,52 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         log.debug("DexMatcherService : deinitialization routine");        
     }
     
+    
+    /**
+     * currency-specific validation (Ethereum)
+     * @param DexOffer  offer to validate
+     */ 
+    private boolean validateOfferETH(DexOffer offer) {
+        // TODO: add validation routine
+        return true;         
+    }
+
+    /**
+     * currency-specific validation (Apollo)
+     * @param DexOffer  offer to validate
+     */ 
+    private boolean validateOfferAPL(DexOffer offer) {
+        // TODO: add validation routine
+        return true;         
+    }
+    
+    /**
+     * currency-specific validation (Pax)
+     * @param DexOffer  offer to validate
+     */ 
+    private boolean validateOfferPAX(DexOffer offer) {
+        // TODO: add validation routine
+        return true;         
+    }
+    
+    
+    /**
+     * Common validation routine for offer  
+     * @param DexOffer  offer - offer to validate
+     */ 
+    private boolean validateOffer( DexOffer offer) {
+        
+        DexCurrencies curr = offer.getOfferCurrency();        
+        switch (curr) {
+            case APL: return validateOfferAPL(offer);
+            case ETH: return validateOfferETH(offer);
+            case PAX: return validateOfferPAX(offer);
+            default: return false;
+        }        
+        
+    }
+    
+            
 
     /**
      * Core event for matcher - when offer is created, it is called back     
@@ -73,7 +122,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      */ 
     
     private void onOfferMatch ( DexOffer myOffer, DexOffer hisOffer) {
-        
+        log.debug("DexMatcherService.onOfferMatch callback ");
     }
     
     
@@ -97,7 +146,6 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
                                 Integer amountOfTime ) {
         
         log.debug("DexMatcherServiceImpl:onCreateOffer, offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
-        
         
         OfferType type = null;
         OfferStatus offerStatus = null;
@@ -142,30 +190,32 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
         log.debug("got offers: " + offers.size() );
         
+        DexOffer my = new DexOffer();
+        my.setType(type);
+        my.setAccountId(accountId);
+        my.setOfferCurrency(DexCurrencies.APL);
+        my.setOfferAmount(offerAmount);
+        my.setPairCurrency(pairCur);
+        my.setPairRate(pairRate);
+        my.setStatus(offerStatus);
+        my.setFromAddress(walletAddress);              
+        
+        
         // DexOffer match = offers.
+        int nOffers = offers.size();
         
-        if (offers.size() >= 1) {
-            DexOffer match = offers.get(0);
-            DexOffer my = new DexOffer();
-            my.setType(type);
-            my.setAccountId(accountId);
-            my.setOfferCurrency(DexCurrencies.APL);
-            my.setOfferAmount(offerAmount);
-            my.setPairCurrency(pairCur);
-            my.setPairRate(pairRate);
-            my.setStatus(offerStatus);
-            my.setFromAddress(walletAddress);
-            
-            onOfferMatch(my, match);
-            
-        }
-        
-        
-        
-
-
-        
-        
-    }
-    
+        if ( nOffers >= 1) {                        
+            for (int i=0; i<nOffers; i++) {
+                DexOffer currentOffer = offers.get(i);                
+                if (validateOffer(currentOffer)) {
+                    // matched...
+                    onOfferMatch(my, currentOffer); 
+                    return;
+                } else {
+                    log.debug("something went wrong: offer {} is not valid", currentOffer.getId());
+                }                
+            }                     
+        }        
+        log.debug("Something went wrong: there's no matching for this offer");
+    }    
 }
