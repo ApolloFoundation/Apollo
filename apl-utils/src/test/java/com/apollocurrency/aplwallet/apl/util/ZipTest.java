@@ -8,12 +8,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
@@ -48,35 +50,55 @@ class ZipTest {
     void compressAndExtractFiles() throws Exception {
         // create ZIP in temp folder for unit test
         String folderWithZip = temporaryFolderExtension.getRoot().toPath().toFile().getAbsolutePath();
+        log.debug("Create zip into = '{}'", folderWithZip);
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderWithZip + File.separator + zipFileName;
+        log.debug("Create zip full name = '{}'", zipFileInPath);
         // start creating zip for all CSV
+        FilenameFilter CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
         byte[] zipCrc = zipComponent.compressAndHash(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
-                null, null, false);
+                null, CSV_FILE_FILTER, false);
         assertTrue(zipCrc != null && zipCrc.length > 0, "CSV files were NOT compressed into ZIP!!");
 
-        String[] extensions = new String[]{"zip"};
+        String[] zipExtension = new String[]{"zip"};
         // check ZIP is created
-        Collection filesInFolder = FileUtils.listFiles(temporaryFolderExtension.getRoot().toPath().toFile(), extensions, false);
+        Collection filesInFolder = FileUtils.listFiles(temporaryFolderExtension.getRoot().toPath().toFile(), zipExtension, false);
         assertNotNull(filesInFolder);
-        assertEquals(1, filesInFolder.size());
+        assertEquals(1, filesInFolder.size());// first zip is created, the second is
+
 
         // extract all csv files from ZIP and check CSV content
-        boolean isExtracted = zipComponent.extract(zipFileInPath, folderWithZip);
+        String anotherFolderExtract = temporaryFolderExtension.getRoot().toPath().toFile().getAbsolutePath()
+                + File.separator + "EXTRACT_TO";
+        log.debug("Extract zip into another folder = '{}'", anotherFolderExtract);
+
+        log.debug("Copy zip '{}' into another folder '{}'...", zipFileInPath, anotherFolderExtract);
+        FileUtils.copyFileToDirectory(new File( zipFileInPath), new File( anotherFolderExtract));
+
+        // zip file was copied into another folder
+        String anotherZipToExtract = anotherFolderExtract + File.separator + zipFileName;
+
+        boolean isExtracted = zipComponent.extract(anotherZipToExtract, anotherFolderExtract);
         assertTrue(isExtracted, "CSV files were NOT extracted from ZIP!!");
-        extensions = new String[]{"csv"};
+
         int csvFilesNumber = 0;
-        Iterator iterator = FileUtils.iterateFiles(temporaryFolderExtension.getRoot().toPath().toFile(), extensions, false);
+        Iterator iterator = FileUtils.iterateFiles(new File(anotherFolderExtract), null, false);
         while (iterator.hasNext()) {
             Object csvFile = iterator.next();
             log.debug("Reading extracted CSV '{}'", csvFile);
+            assertNotNull(csvFile);
             File file = new File(csvFile.toString());
+            if (csvFile.toString().endsWith(".zip")) {
+                // that will trigger if there is 'another-archive-1.zip' or something else like that is in folder
+                assertTrue(csvFile.toString().contains(zipFileName), // only source zip file name
+                        "Another file ZIP should not be present inside ZIP, but there is file = " + csvFile.toString());
+            }
             // check CSV content
             List lines = FileUtils.readLines(file);
             assertTrue(lines.size() > 1, "CSV file" + csvFile + " is EMPTY !");
-            csvFilesNumber++; // count CSV files
+            csvFilesNumber++; // count all files in folder
         }
-        assertEquals(7, csvFilesNumber);
+        assertEquals(8, csvFilesNumber); // count CSV files + original ZIP
     }
 
     @Test
