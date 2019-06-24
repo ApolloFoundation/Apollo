@@ -514,7 +514,7 @@ public final class PeerImpl implements Peer {
             handshake(chainId);
         }
         if(state!=PeerState.CONNECTED){
-            LOG.error("Peer: {}  handshake failed with state = {}.", state, getAnnouncedAddress());
+            LOG.error("Peer: {}  handshake failed with state = {}.", getAnnouncedAddress(), state);
             return null;
         }else{        
             return send(request, chainId, Peers.MAX_RESPONSE_SIZE);

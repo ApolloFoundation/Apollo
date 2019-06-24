@@ -197,7 +197,7 @@ public class ZipImpl implements Zip {
 
         fileList.clear();
         File[] files;
-        if (filenameFilter != null) {
+        if (filenameFilter == null) {
             files = directory.listFiles();
         } else {
             files = directory.listFiles(filenameFilter);
