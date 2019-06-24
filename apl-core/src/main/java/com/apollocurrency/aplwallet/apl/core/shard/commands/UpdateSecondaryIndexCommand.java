@@ -64,8 +64,12 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Update Secondary Index Data Command execute...");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, this.excludeInfo);
+        CommandParamInfo paramInfo = CommandParamInfo.builder()
+                .tableNameList(this.tableNameList)
+                .commitBatchSize(this.commitBatchSize)
+                .snapshotBlockHeight(this.snapshotBlockHeight)
+                .excludeInfo(this.excludeInfo)
+                .build();
         return shardEngine.updateSecondaryIndex(paramInfo);
     }
 

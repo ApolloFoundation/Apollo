@@ -1,11 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import javax.enterprise.inject.Produces;
-
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.util.UUID;
 import org.jdbi.v3.core.Jdbi;
+
+import java.util.UUID;
+import javax.enterprise.inject.Produces;
 
 public interface DatabaseManager {
 
@@ -22,5 +22,5 @@ public interface DatabaseManager {
 
     void shutdown(TransactionalDataSource dataSource);
 
-    public UUID getChainId();
+    UUID getChainId();
 }

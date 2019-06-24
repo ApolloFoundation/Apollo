@@ -1,47 +1,30 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Interface command parameters information. It keeps the info passed to steps.
- *
- * @author yuriy.larin
+ * {@inheritDoc}
  */
-public interface CommandParamInfo {
+@Builder
+@Getter
+public class CommandParamInfo {
 
-    List<String> getTableNameList();
-
-    void setTableNameList(List<String> tableNameList);
-
-    int getCommitBatchSize();
-
-    void setCommitBatchSize(int commitBatchSize);
-
-    Integer getSnapshotBlockHeight();
-
-    void setSnapshotBlockHeight(Integer snapshotBlockHeight);
-
-    byte[] getShardHash();
-
-    void setShardHash(byte[] shardHash);
-
-    ExcludeInfo getExcludeInfo();
-
-    void setExcludeInfo(ExcludeInfo excludeInfo);
-
-    /**
-     * To check if getShardHash() returns 'merkle tree hash' or 'zip crc hash'
-     * @return true when 'zip crc'
-     */
-    boolean isZipCrcStored();
-
-    default Long[] getGeneratorIds() {
-        return null;
-    }
+    private List<String> tableNameList = Collections.emptyList(); // processed tables list
+    private int commitBatchSize = DEFAULT_COMMIT_BATCH_SIZE;
+    private Integer snapshotBlockHeight = -1;
+    private byte[] shardHash; // either 'merkle tree hash' or 'zip CRC'
+    private ExcludeInfo excludeInfo; // 'phased transaction' db_id to be excluded from all processing (no copy, delete, export)
+    private boolean isZipCrcStored = false; // either ZIP or merkle tree hash
+    private Long[] generatorIds; // 3 generator ids before snapshot block with height offset (-1, -2, -3)
+    private Long shardId; // id of shard to create
 }

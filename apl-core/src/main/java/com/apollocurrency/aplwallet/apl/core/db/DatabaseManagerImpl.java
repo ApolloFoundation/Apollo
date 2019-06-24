@@ -6,9 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,13 +27,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jdbi.v3.core.Jdbi;
-import org.slf4j.Logger;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Class is used for high level database and shard management.
@@ -193,6 +193,8 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::createAndAddShard).collect(Collectors.toList());
         return dataSources;
     }
+
+
     /**
      * {@inheritDoc}
      */
@@ -219,6 +221,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         connectedShardDataSourceMap.put(TEMP_DB_IDENTITY, temporaryDataSource); // put temporary DS with special ID
         log.debug("new temporaryDataSource '{}' is CREATED", temporaryDatabaseName);
         return temporaryDataSource;
+    }
+
+    @Override
+    public TransactionalDataSource getShardDataSourceById(long shardId) {
+        return connectedShardDataSourceMap.get(shardId);
     }
 
     /**

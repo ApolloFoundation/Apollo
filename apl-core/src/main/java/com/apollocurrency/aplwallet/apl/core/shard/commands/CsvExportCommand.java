@@ -37,20 +37,6 @@ public class CsvExportCommand implements DataMigrateOperation {
         this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
     }
 
-    public CsvExportCommand(ShardEngine shardEngine,
-                            int snapshotBlockHeight, ExcludeInfo excludeInfo) {
-        this(shardEngine,  null, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, excludeInfo);
-        // tables to be exported together with 'derived tables'
-        tableNameList = List.of(ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME);
-    }
-
-    public CsvExportCommand(
-            ShardEngine shardEngine,
-            List<String> tableNameList,
-            int commitBatchSize,
-            int snapshotBlockHeight, ExcludeInfo excludeInfo) {
-        this(shardEngine, commitBatchSize, snapshotBlockHeight, tableNameList, excludeInfo);
-    }
 
     /**
      * {@inheritDoc}
@@ -58,8 +44,12 @@ public class CsvExportCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("CSV Export Command execute...");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, excludeInfo);
+        CommandParamInfo paramInfo = CommandParamInfo.builder()
+                .tableNameList(this.tableNameList)
+                .commitBatchSize(this.commitBatchSize)
+                .snapshotBlockHeight(this.snapshotBlockHeight)
+                .excludeInfo(this.excludeInfo)
+                .build();
         return shardEngine.exportCsv(paramInfo);
     }
 
