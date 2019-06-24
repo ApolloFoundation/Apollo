@@ -92,8 +92,6 @@ public interface AccountService {
 
     void addToUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM);
 
-    void payDividends(AccountEntity account, long transactionId, ColoredCoinsDividendPayment attachment);
-
     long getTotalAmountOnTopAccounts(int numberOfTopAccounts);
 
     long getTotalAmountOnTopAccounts();

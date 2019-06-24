@@ -8,8 +8,11 @@ import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
@@ -23,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -49,12 +53,23 @@ public class DGSServiceSearchTest {
             DGSTagTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class)
+            DerivedDbTablesRegistryImpl.class,
+            AccountServiceImpl.class, AccountTable.class, GlobalSyncImpl.class,
+            BlockchainConfig.class,
+            PropertiesHolder.class,
+            AccountInfoServiceImpl.class, AccountInfoTable.class,
+            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
+            AccountAssetServiceImpl.class, AccountAssetTable.class,
+            AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
+            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
+            AccountFactory.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .build();
     @Inject
     DGSService service;

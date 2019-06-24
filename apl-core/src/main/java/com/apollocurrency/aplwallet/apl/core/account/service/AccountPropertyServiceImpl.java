@@ -9,10 +9,12 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Setter;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Singleton
 public class AccountPropertyServiceImpl implements AccountPropertyService {
 
     @Inject @Setter

@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -45,4 +46,6 @@ public interface AccountAssetService {
     void addToUnconfirmedAssetBalanceATU(AccountEntity account, LedgerEvent event, long eventId, long assetId, long quantityATU);
 
     void addToAssetAndUnconfirmedAssetBalanceATU(AccountEntity account, LedgerEvent event, long eventId, long assetId, long quantityATU);
+
+    void payDividends(AccountEntity account, long transactionId, ColoredCoinsDividendPayment attachment);
 }

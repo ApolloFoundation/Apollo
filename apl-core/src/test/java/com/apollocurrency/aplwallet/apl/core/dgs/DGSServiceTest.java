@@ -20,24 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
@@ -88,7 +78,7 @@ public class DGSServiceTest {
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class,
+            PropertiesHolder.class,
             EpochTime.class,
             GlobalSyncImpl.class,
             FullTextConfigImpl.class,
@@ -96,14 +86,18 @@ public class DGSServiceTest {
             DGSFeedbackTable.class,
             DGSGoodsTable.class,
             DGSTagTable.class,
-            AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            AccountServiceImpl.class, AccountAssetServiceImpl.class,
-            AccountPublickKeyServiceImpl.class, AccountCurrencyServiceImpl.class,
-            AccountFactory.class,
-            AccountTable.class, AccountPropertyTable.class
+            AccountServiceImpl.class, AccountTable.class,
+            BlockchainConfig.class,
+            AccountInfoServiceImpl.class, AccountInfoTable.class,
+            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
+            AccountAssetServiceImpl.class, AccountAssetTable.class,
+            AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
+            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
+            AccountFactory.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -130,6 +124,7 @@ public class DGSServiceTest {
     @BeforeEach
     public void setUp() {
         dtd = new DGSTestData();
+        //accountService.setDatabaseManager(extension.getDatabaseManager());
     }
 
     @Test

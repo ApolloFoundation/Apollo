@@ -19,19 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -95,14 +83,20 @@ public class PhasingPollServiceTest {
             AccountGuaranteedBalanceTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            AccountServiceImpl.class, AccountAssetServiceImpl.class,
-            AccountPublickKeyServiceImpl.class, AccountCurrencyServiceImpl.class,
-            AccountFactory.class,
-            AccountTable.class, AccountCurrencyTable.class, AccountPropertyTable.class
+            AccountServiceImpl.class, AccountTable.class,
+            BlockchainConfig.class,
+            AccountInfoServiceImpl.class, AccountInfoTable.class,
+            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
+            AccountAssetServiceImpl.class, AccountAssetTable.class,
+            AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
+            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
+            AccountFactory.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
     @Inject

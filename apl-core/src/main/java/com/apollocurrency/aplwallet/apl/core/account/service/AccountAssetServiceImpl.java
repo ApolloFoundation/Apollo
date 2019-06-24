@@ -4,15 +4,19 @@ import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import lombok.Setter;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Singleton
 public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Inject @Setter
@@ -147,6 +151,24 @@ public class AccountAssetServiceImpl implements AccountAssetService {
                     LedgerHolding.ASSET_BALANCE, assetId,
                     quantityATU, assetBalance));
         }
+    }
+
+    @Override
+    public void payDividends(AccountEntity account, final long transactionId, ColoredCoinsDividendPayment attachment) {
+        long totalDividend = 0;
+        List<AccountAsset> accountAssets = getAssetAccounts(attachment.getAssetId(), attachment.getHeight());
+        final long amountATMPerATU = attachment.getAmountATMPerATU();
+        long numAccounts = 0;
+        for (final AccountAsset accountAsset : accountAssets) {
+            if (accountAsset.getAccountId() != account.getId() && accountAsset.getQuantityATU() != 0) {
+                long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU);
+                accountService.addToBalanceAndUnconfirmedBalanceATM(accountService.getAccountEntity(accountAsset.getAccountId()), LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
+                totalDividend += dividend;
+                numAccounts += 1;
+            }
+        }
+        accountService.addToBalanceATM(account, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
+        AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 
 }

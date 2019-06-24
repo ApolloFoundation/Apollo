@@ -4,19 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class BlockchainHelper {
 
     private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static int getBlockchainHeight(){
         return blockchain.getHeight();

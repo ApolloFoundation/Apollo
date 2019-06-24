@@ -15,15 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -124,7 +119,16 @@ class DerivedDbTableListingTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            AccountServiceImpl.class, AccountTable.class,
+            AccountInfoServiceImpl.class, AccountInfoTable.class,
+            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
+            AccountAssetServiceImpl.class, AccountAssetTable.class,
+            AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
+            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
+            AccountFactory.class
+            )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -143,7 +147,7 @@ class DerivedDbTableListingTest {
     @Inject
     private Blockchain blockchain;
     @Inject
-    AccountTable accountTable;
+    AccountService accountService;
     @Inject
     DerivedTablesRegistry registry;
 

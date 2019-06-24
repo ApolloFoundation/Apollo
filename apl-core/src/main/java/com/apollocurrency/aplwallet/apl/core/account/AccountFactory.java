@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import com.apollocurrency.aplwallet.apl.core.account.model.*;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -34,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDi
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import lombok.Setter;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Set;
@@ -44,30 +46,22 @@ import java.util.Set;
 @Singleton
 public final class AccountFactory {
 
-    @Inject @Setter
-    private Blockchain blockchain;
+    private static Blockchain blockchain;
+    private static BlockchainConfig blockchainConfig;
 
-    @Inject @Setter
-    private BlockchainConfig blockchainConfig;
+    private static AccountService accountService;
+    private static AccountInfoService accountInfoService;
+    private static AccountLeaseService accountLeaseService;
+    private static AccountAssetService accountAssetService;
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountPropertyService accountPropertyService;
+    private static AccountPublickKeyService accountPublickKeyService;
 
-    @Inject @Setter
-    private AccountService accountService;
-    @Inject @Setter
-    private AccountInfoService accountInfoService;
-    @Inject @Setter
-    private AccountLeaseService accountLeaseService;
-    @Inject @Setter
-    private AccountAssetService accountAssetService;
-    @Inject @Setter
-    private AccountCurrencyService accountCurrencyService;
-    @Inject @Setter
-    private AccountPropertyService accountPropertyService;
-    @Inject @Setter
-    private AccountPublickKeyService accountPublickKeyService;
-
-    public Account createAccount(AccountEntity entity){
+    public static Account createAccount(AccountEntity entity){
         if (entity == null)
             return null;
+
+        lookupBeans();
 
         Account account = new AccountWrapper( entity,
                 blockchain, blockchainConfig,
@@ -77,7 +71,21 @@ public final class AccountFactory {
         return account;
     }
 
-    private class AccountWrapper implements Account {
+    private static void lookupBeans(){
+        if ( blockchain == null ) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+            accountPublickKeyService = CDI.current().select(AccountPublickKeyService.class).get();
+        }
+    }
+
+    private static class AccountWrapper implements Account {
 
         private AccountEntity account;
 
@@ -92,6 +100,10 @@ public final class AccountFactory {
         private AccountPropertyService accountPropertyService;
         private AccountPublickKeyService accountPublickKeyService;
 
+        private AccountWrapper(AccountEntity account) {
+            this.account = account;
+        }
+
         AccountWrapper(AccountEntity account,
                        Blockchain blockchain,
                        BlockchainConfig blockchainConfig,
@@ -102,7 +114,7 @@ public final class AccountFactory {
                        AccountCurrencyService accountCurrencyService,
                        AccountPropertyService accountPropertyService,
                        AccountPublickKeyService accountPublickKeyService) {
-            this.account = account;
+            this(account);
 
             this.blockchain = blockchain;
             this.blockchainConfig = blockchainConfig;
@@ -420,7 +432,7 @@ public final class AccountFactory {
 
         @Override
         public void payDividends(final long transactionId, ColoredCoinsDividendPayment attachment) {
-            accountService.payDividends(account, transactionId, attachment);
+            accountAssetService.payDividends(account, transactionId, attachment);
         }
 
     }

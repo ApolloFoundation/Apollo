@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -52,17 +53,18 @@ public class AccountServiceImpl implements AccountService {
     @Inject @Setter
     private GlobalSync sync;
 
-    @Inject @Setter
     private DatabaseManager databaseManager;
-
-    @Inject @Setter
-    private AccountAssetService accountAssetService;
 
     @Inject @Setter
     private AccountPublickKeyService accountPublickKeyService;
 
     @Inject @Setter
     private AccountFactory accountFactory;
+
+    @PostConstruct
+    private void setup(){
+        databaseManager = accountTable.getDatabaseManager();
+    }
 
     @Override
     public int getCount() {
@@ -439,24 +441,6 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void addToUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM) {
         addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
-    }
-
-    @Override
-    public void payDividends(AccountEntity account, final long transactionId, ColoredCoinsDividendPayment attachment) {
-        long totalDividend = 0;
-        List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(attachment.getAssetId(), attachment.getHeight());
-        final long amountATMPerATU = attachment.getAmountATMPerATU();
-        long numAccounts = 0;
-        for (final AccountAsset accountAsset : accountAssets) {
-            if (accountAsset.getAccountId() != account.getId() && accountAsset.getQuantityATU() != 0) {
-                long dividend = Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU);
-                addToBalanceAndUnconfirmedBalanceATM(getAccountEntity(accountAsset.getAccountId()), LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, dividend);
-                totalDividend += dividend;
-                numAccounts += 1;
-            }
-        }
-        addToBalanceATM(account, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
-        AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 
     @Override

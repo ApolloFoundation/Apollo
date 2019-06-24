@@ -32,11 +32,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -118,6 +116,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
@@ -158,7 +157,15 @@ class CsvWriterReaderDerivedTablesTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            AccountServiceImpl.class, AccountTable.class,
+            AccountInfoServiceImpl.class, AccountInfoTable.class,
+            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
+            AccountAssetServiceImpl.class, AccountAssetTable.class,
+            AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
+            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
+            AccountFactory.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
