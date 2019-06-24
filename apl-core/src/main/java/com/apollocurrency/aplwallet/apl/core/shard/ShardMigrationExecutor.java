@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
@@ -157,8 +158,8 @@ public class ShardMigrationExecutor {
     }
 
     private int getHeight() {
-        Integer lastShardHeight = shardDao.getLastCompletedShard().getShardHeight();
-        return lastShardHeight != null ? lastShardHeight + 1 : 0;
+        Shard lastCompletedShard = shardDao.getLastCompletedShard(); // last shard is missing on the first time
+        return lastCompletedShard != null ? lastCompletedShard.getShardHeight() : 0;
     }
 
     @Transactional
