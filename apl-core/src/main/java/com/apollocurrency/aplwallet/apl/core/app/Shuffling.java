@@ -336,6 +336,16 @@ public final class Shuffling {
             LOG.trace("Shuffling observer time: {}", System.currentTimeMillis() - startTime);
         }
 
+        public void onBlockPopOff(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+            boolean containsShufflings = block.getTransactions().stream().anyMatch(tx -> tx.getType().getType() == ShufflingTransaction.TYPE_SHUFFLING);
+            if (containsShufflings) {
+                Shuffling.init();
+            } else {
+                List<Shuffling> processedShufflings = activeShufflingsCache.values().stream().filter(s-> s.getHeight() == block.getHeight()).collect(Collectors.toList());
+                processedShufflings.forEach((shuffling) -> shuffling.blocksRemaining++);
+            }
+        }
+
         public void onRescanBegin(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
             Shuffling.init();
         }
@@ -386,16 +396,6 @@ public final class Shuffling {
         this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
         this.height = rs.getInt("height");
-    }
-
-    private Shuffling(long id, DbKey dbKey, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.holdingId = holdingId;
-        this.holdingType = holdingType;
-        this.issuerId = issuerId;
-        this.amount = amount;
-        this.participantCount = participantCount;
     }
 
     private void save(Connection con) throws SQLException {
