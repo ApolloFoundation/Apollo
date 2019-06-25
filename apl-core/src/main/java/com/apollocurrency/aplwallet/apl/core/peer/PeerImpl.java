@@ -751,7 +751,7 @@ public final class PeerImpl implements Peer {
                 //TODO: parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
                 LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
-                if(newPi.error.equalsIgnoreCase(Errors.BLACKLISTED)){
+                if(newPi.error != null && newPi.error.equalsIgnoreCase(Errors.BLACKLISTED)){
                     LOG.debug("We are blacklisted by host: {} reason: {}", getHostWithPort(), newPi.getCause());
                     return;
                 }
