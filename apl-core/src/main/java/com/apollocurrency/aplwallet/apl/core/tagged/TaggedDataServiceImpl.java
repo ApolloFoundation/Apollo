@@ -70,7 +70,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                 dataTagDao.add(taggedData);
             }
         }
-        TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp());
+        TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp(), blockchain.getHeight());
         taggedDataTimestampDao.insert(timestamp);
     }
 
