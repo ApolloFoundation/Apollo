@@ -143,10 +143,6 @@ public final class Peers {
 
     // used by threads so shoudl be ConcurrentMap
     static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
-//
-//    private static final ConcurrentMap<String, String> selfAnnouncedAddresses = new ConcurrentHashMap<>();
-//
-//    static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
     public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
 
