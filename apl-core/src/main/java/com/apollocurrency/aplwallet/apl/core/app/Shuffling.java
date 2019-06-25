@@ -74,6 +74,10 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 public final class Shuffling {
+    public boolean isRemoved() {
+        return removed;
+    }
+
     /**
      * Cache, which contains all active shufflings required for processing on each block push
      * Purpose: getActiveShufflings db call require at least 50-100ms, with cache we can shorten time to 10-20ms
@@ -169,6 +173,7 @@ public final class Shuffling {
 
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
@@ -319,7 +324,7 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
+            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().filter(s-> !s.removed).sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
 
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
@@ -333,6 +338,14 @@ public final class Shuffling {
                     insert(shuffling);
                 }
             });
+            // remove expired deleted shufflings from cache to avoid high memory consumption
+            List<Long> expiredShufflingIds = activeShufflingsCache
+                    .values()
+                    .stream()
+                    .filter(s -> s.isRemoved() && s.getHeight() < blockchainProcessor.getMinRollbackHeight())
+                    .map(Shuffling::getId)
+                    .collect(Collectors.toList());
+            expiredShufflingIds.forEach(activeShufflingsCache::remove);
             LOG.trace("Shuffling observer time: {}", System.currentTimeMillis() - startTime);
         }
 
@@ -342,7 +355,10 @@ public final class Shuffling {
                 Shuffling.init();
             } else {
                 List<Shuffling> processedShufflings = activeShufflingsCache.values().stream().filter(s-> s.getHeight() == block.getHeight()).collect(Collectors.toList());
-                processedShufflings.forEach((shuffling) -> shuffling.blocksRemaining++);
+                processedShufflings.forEach((shuffling) -> {
+                    shuffling.blocksRemaining++;
+                    shuffling.removed = false;
+                });
             }
         }
 
@@ -361,6 +377,7 @@ public final class Shuffling {
     private short blocksRemaining;
     private byte registrantCount;
     private int height;
+    private boolean removed; // required only for cache (for restoring canceled shufflings during popOff) and should not be stored to db
 
     private Stage stage;
     private long assigneeAccountId;
@@ -485,9 +502,9 @@ public final class Shuffling {
     private static void insert(Shuffling shuffling) {
         long id = shuffling.getId();
         shuffling.height = blockchain.getHeight();
-        if (shuffling.getBlocksRemaining() == 0) {
+        if (shuffling.getBlocksRemaining() <= 0) {
             if (activeShufflingsCache.get(id) != null) {
-                activeShufflingsCache.remove(id);
+                activeShufflingsCache.get(id).removed = true;
             }
         } else { // add new or replace
             activeShufflingsCache.put(id, shuffling);

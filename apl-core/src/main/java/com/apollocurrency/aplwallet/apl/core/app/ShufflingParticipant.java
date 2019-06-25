@@ -181,8 +181,6 @@ public final class ShufflingParticipant {
             shufflingData.save(con);
         }
 
-        public void rollbackOnScan(int height) {}
-
     };
 
     public static boolean addListener(Listener<ShufflingParticipant> listener, Event eventType) {

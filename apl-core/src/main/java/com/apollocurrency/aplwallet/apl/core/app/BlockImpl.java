@@ -27,10 +27,8 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -333,6 +331,7 @@ public final class BlockImpl implements Block {
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
             }
+            blockTransactions = blockTransactions.stream().sorted(Comparator.comparing(Transaction::getIndex)).collect(Collectors.toList());
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
                     generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions);
             if (!block.checkSignature()) {
