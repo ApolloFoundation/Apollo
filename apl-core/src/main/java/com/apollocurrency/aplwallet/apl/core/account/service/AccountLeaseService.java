@@ -1,6 +1,10 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -13,12 +17,12 @@ import java.util.List;
  */
 public interface AccountLeaseService {
 
-    Listeners<AccountLease, Account.Event> leaseListeners = new Listeners<>();
-    static boolean addLeaseListener(Listener<AccountLease> listener, Account.Event eventType) {
+    Listeners<AccountLease, AccountEvent> leaseListeners = new Listeners<>();
+    static boolean addLeaseListener(Listener<AccountLease> listener, AccountEvent eventType) {
         return leaseListeners.addListener(listener, eventType);
     }
 
-    static boolean removeLeaseListener(Listener<AccountLease> listener, Account.Event eventType) {
+    static boolean removeLeaseListener(Listener<AccountLease> listener, AccountEvent eventType) {
         return leaseListeners.removeListener(listener, eventType);
     }
 

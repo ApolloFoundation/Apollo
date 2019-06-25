@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
 import java.util.Arrays;
 
@@ -111,7 +110,7 @@ public final class Token {
         byte[] data = new byte[messageBytes.length + 36];
         System.arraycopy(messageBytes, 0, data, 0, messageBytes.length);
         System.arraycopy(tokenBytes, 0, data, messageBytes.length, 36);
-        byte[] announcedPublicKey = accountService.getPublicKey(Account.getId(publicKey));
+        byte[] announcedPublicKey = accountService.getPublicKey(AccountService.getId(publicKey));
         boolean isValid = Crypto.verify(signature, data, publicKey)
                 && (announcedPublicKey == null || Arrays.equals(publicKey, announcedPublicKey));
 

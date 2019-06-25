@@ -27,7 +27,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -294,7 +293,7 @@ public final class PrunableMessage {
         if (encryptedData == null) {
             return null;
         }
-        byte[] publicKey = senderId == Account.getId(Crypto.getPublicKey(keySeed))
+        byte[] publicKey = senderId == AccountService.getId(Crypto.getPublicKey(keySeed))
                 ? accountService.getPublicKey(recipientId) : accountService.getPublicKey(senderId);
         return accountPublickKeyService.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }

@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -46,7 +46,7 @@ public final class DGSPriceChange extends CreateTransaction {
     private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
         DGSGoods goods = ParameterParser.getGoods(service, req);
         long priceATM = ParameterParser.getPriceATM(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {

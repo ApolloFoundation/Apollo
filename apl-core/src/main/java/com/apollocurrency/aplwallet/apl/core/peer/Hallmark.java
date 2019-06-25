@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -137,7 +137,7 @@ public final class Hallmark {
         this.host = pa.getHost();
         this.port = pa.getPort();
         this.publicKey = publicKey;
-        this.accountId = Account.getId(publicKey);
+        this.accountId = AccountService.getId(publicKey);
         this.signature = signature;
         this.weight = weight;
         this.date = date;

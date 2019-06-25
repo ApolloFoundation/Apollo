@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -96,8 +97,7 @@ public class DGSServiceTest {
             AccountAssetServiceImpl.class, AccountAssetTable.class,
             AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
             AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
-            AccountFactory.class
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -1161,7 +1161,7 @@ public class DGSServiceTest {
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = accountService.getAccount(50);
+        AccountEntity account = accountService.getAccountEntity(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con)-> {
@@ -1177,7 +1177,7 @@ public class DGSServiceTest {
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = accountService.getAccount(50);
+        AccountEntity account = accountService.getAccountEntity(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
         DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
@@ -1191,7 +1191,7 @@ public class DGSServiceTest {
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = accountService.getAccount(50);
+        AccountEntity account = accountService.getAccountEntity(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
@@ -1328,7 +1328,7 @@ public class DGSServiceTest {
 
 
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
-        Account account = accountService.getAccount(accountId);
+        AccountEntity account = accountService.getAccountEntity(accountId);
         if (balance != null) {
             assertEquals(balance, account.getBalanceATM());
         }

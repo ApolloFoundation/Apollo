@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -287,7 +287,7 @@ public final class BlockImpl implements Block {
     @Override
     public long getGeneratorId() {
         if (generatorId == 0) {
-            generatorId = Account.getId(getGeneratorPublicKey());
+            generatorId = AccountService.getId(getGeneratorPublicKey());
         }
         return generatorId;
     }
@@ -419,8 +419,8 @@ public final class BlockImpl implements Block {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
 
-            Account account = lookupAccountService().getAccount(getGeneratorId());
-            long effectiveBalance = account == null ? 0 : account.getEffectiveBalanceAPL();
+            AccountEntity account = lookupAccountService().getAccountEntity(getGeneratorId());
+            long effectiveBalance = account == null ? 0 : lookupAccountService().getEffectiveBalanceAPL(account, blockchain.getHeight(), true);
             if (effectiveBalance <= 0) {
                 LOG.warn("Account: {} Effective ballance: {},  verification failed",account,effectiveBalance);
                 return false;

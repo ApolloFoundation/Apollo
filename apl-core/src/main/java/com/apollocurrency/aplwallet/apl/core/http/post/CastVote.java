@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -69,7 +69,7 @@ public final class CastVote extends CreateTransaction {
             return INCORRECT_VOTE;
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new MessagingVoteCasting(poll.getId(), vote);
         return createTransaction(req, account, attachment);
     }

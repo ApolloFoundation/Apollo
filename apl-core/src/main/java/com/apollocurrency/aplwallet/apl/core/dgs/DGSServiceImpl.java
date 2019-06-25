@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -319,8 +319,8 @@ public class DGSServiceImpl implements DGSService {
             DGSPurchase purchase = new DGSPurchase(transaction, attachment, goods.getSellerId(), blockchain.getLastBlockTimestamp(), new ArrayList<>());
             purchaseTable.insert(purchase);
         } else {
-            Account buyer = accountService.getAccount(transaction.getSenderId());
-            buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELISTED, transaction.getId(),
+            AccountEntity buyer = accountService.getAccountEntity(transaction.getSenderId());
+            accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELISTED, transaction.getId(),
                     Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
             // restoring the unconfirmed balance if purchase not successful, however buyer still lost the transaction fees
         }
@@ -331,14 +331,15 @@ public class DGSServiceImpl implements DGSService {
         purchase.setHeight(blockchain.getHeight());
         setPending(purchase, false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
-        Account buyer = accountService.getAccount(purchase.getBuyerId());
+        AccountEntity buyer = accountService.getAccountEntity(purchase.getBuyerId());
         long transactionId = transaction.getId();
-        buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
-                Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
-        buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
-        Account seller = accountService.getAccount(transaction.getSenderId());
-        seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
-                Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
+        //buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
+        accountService.addToBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
+        //buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
+        accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
+        AccountEntity seller = accountService.getAccountEntity(transaction.getSenderId());
+        //seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
+        accountService.addToBalanceAndUnconfirmedBalanceATM(seller, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         setEncryptedGoods(purchase, attachment.getGoods(), attachment.goodsIsText());
         setDiscountATM(purchase, attachment.getDiscountATM());
 
@@ -348,10 +349,10 @@ public class DGSServiceImpl implements DGSService {
                        EncryptedMessageAppendix encryptedMessage) {
         DGSPurchase purchase = purchaseTable.get(purchaseId);
         purchase.setHeight(blockchain.getHeight());
-        Account seller = accountService.getAccount(sellerId);
-        seller.addToBalanceATM(event, eventId, -refundATM);
-        Account buyer = accountService.getAccount(purchase.getBuyerId());
-        buyer.addToBalanceAndUnconfirmedBalanceATM(event, eventId, refundATM);
+        AccountEntity seller = accountService.getAccountEntity(sellerId);
+        accountService.addToBalanceATM(seller, event, eventId, -refundATM);
+        AccountEntity buyer = accountService.getAccountEntity(purchase.getBuyerId());
+        accountService.addToBalanceAndUnconfirmedBalanceATM(buyer, event, eventId, refundATM);
         if (encryptedMessage != null) {
             setRefundNote(purchase, encryptedMessage.getEncryptedData());
         }

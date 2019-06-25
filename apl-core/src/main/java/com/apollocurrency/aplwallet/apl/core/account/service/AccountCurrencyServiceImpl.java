@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.*;
@@ -5,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 import lombok.Setter;
 
 import javax.inject.Inject;
@@ -85,8 +88,8 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.units = currencyUnits;
         }
         save(accountCurrency);
-        accountService.listeners.notify(accountService.getAccount(accountEntity), Account.Event.CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, Account.Event.CURRENCY_BALANCE);
+        accountService.listeners.notify(accountEntity, AccountEvent.CURRENCY_BALANCE);
+        currencyListeners.notify(accountCurrency, AccountEvent.CURRENCY_BALANCE);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), false)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
                     units, currencyUnits));
@@ -107,8 +110,8 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
         }
         save(accountCurrency);
-        accountService.listeners.notify(accountService.getAccount(accountEntity), Account.Event.UNCONFIRMED_CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, Account.Event.UNCONFIRMED_CURRENCY_BALANCE);
+        accountService.listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
+        currencyListeners.notify(accountCurrency, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(),
                     LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
@@ -134,10 +137,10 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
         }
         save(accountCurrency);
-        accountService.listeners.notify(accountService.getAccount(accountEntity), Account.Event.CURRENCY_BALANCE);
-        accountService.listeners.notify(accountService.getAccount(accountEntity), Account.Event.UNCONFIRMED_CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, Account.Event.CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, Account.Event.UNCONFIRMED_CURRENCY_BALANCE);
+        accountService.listeners.notify(accountEntity, AccountEvent.CURRENCY_BALANCE);
+        accountService.listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
+        currencyListeners.notify(accountCurrency, AccountEvent.CURRENCY_BALANCE);
+        currencyListeners.notify(accountCurrency, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(),
                     LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
@@ -149,6 +152,4 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
                     units, currencyUnits));
         }
     }
-
-
 }

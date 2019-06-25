@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -54,7 +54,7 @@ public final class ShufflingProcess extends CreateTransaction {
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());
             return JSON.prepare(response);
         }
-        Account senderAccount = ParameterParser.getSenderAccount(req);
+        AccountEntity senderAccount = ParameterParser.getSenderAccount(req);
         long senderId = senderAccount.getId();
         if (shuffling.getAssigneeAccountId() != senderId) {
             JSONObject response = new JSONObject();
@@ -75,7 +75,7 @@ public final class ShufflingProcess extends CreateTransaction {
         long accountId = ParameterParser.getAccountId(req, this.vaultAccountName(), false);
         byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient");
-        if (accountService.getAccount(recipientPublicKey) != null) {
+        if (accountService.getAccountEntity(recipientPublicKey) != null) {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 

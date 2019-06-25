@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
@@ -34,7 +34,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Publish exchange offer for {@link com.apollocurrency.aplwallet.apl.CurrencyType#EXCHANGEABLE} currency
+ * Publish exchange offer for {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#EXCHANGEABLE} currency
  * <p>
  * Parameters
  * <ul>
@@ -81,7 +81,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
         long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
         long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
         int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
                 totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);

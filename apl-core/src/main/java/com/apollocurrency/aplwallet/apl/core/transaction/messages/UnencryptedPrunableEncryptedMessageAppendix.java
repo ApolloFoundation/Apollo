@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import java.nio.ByteBuffer;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -70,7 +70,7 @@ public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncrypt
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         if (getEncryptedData() == null) {
             throw new AplException.NotYetEncryptedException("Prunable encrypted message not yet encrypted");
         }

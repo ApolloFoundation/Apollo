@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -73,20 +73,20 @@ class CCAssetIssuance extends ColoredCoins {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         return true;
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
         long assetId = transaction.getId();
         Asset.addAsset(transaction, attachment);
-        senderAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
+        lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
     }
 
     @Override

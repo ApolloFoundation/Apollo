@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -46,7 +46,7 @@ public final class GetBalance extends AbstractAPIRequestHandler {
         if (height < 0) {
             height = lookupBlockchain().getHeight();
         }
-        Account account = lookupAccountService().getAccount(accountId, height);
+        AccountEntity account = lookupAccountService().getAccountEntity(accountId, height);
         return JSONData.accountBalance(account, includeEffectiveBalance, height);
     }
 

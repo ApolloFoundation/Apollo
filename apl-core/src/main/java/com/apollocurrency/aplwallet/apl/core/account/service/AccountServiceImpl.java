@@ -1,20 +1,20 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.*;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -22,8 +22,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-
-import static com.apollocurrency.aplwallet.apl.core.account.Account.getId;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -53,18 +51,11 @@ public class AccountServiceImpl implements AccountService {
     @Inject @Setter
     private GlobalSync sync;
 
+    @Inject @Setter
     private DatabaseManager databaseManager;
 
     @Inject @Setter
     private AccountPublickKeyService accountPublickKeyService;
-
-    @Inject @Setter
-    private AccountFactory accountFactory;
-
-    @PostConstruct
-    private void setup(){
-        databaseManager = accountTable.getDatabaseManager();
-    }
 
     @Override
     public int getCount() {
@@ -74,29 +65,6 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public int getActiveLeaseCount() {
         return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
-    }
-
-    @Override
-    public Account getAccount(AccountEntity entity) {
-        return accountFactory.createAccount(entity);
-    }
-
-    @Override
-    public Account getAccount(long id) {
-        AccountEntity entity = getAccountEntity(id);
-        return accountFactory.createAccount(entity);
-    }
-
-    @Override
-    public Account getAccount(long id, int height) {
-        AccountEntity entity = getAccountEntity(id, height);
-        return accountFactory.createAccount(entity);
-    }
-
-    @Override
-    public Account getAccount(byte[] publicKey) {
-        AccountEntity entity = getAccountEntity(publicKey);
-        return accountFactory.createAccount(entity);
     }
 
     @Override
@@ -129,7 +97,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountEntity getAccountEntity(byte[] publicKey) {
-        long accountId = getId(publicKey);
+        long accountId = AccountService.getId(publicKey);
         AccountEntity account = getAccountEntity(accountId);
         if (account == null) {
             return null;
@@ -145,12 +113,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account addOrGetAccount(long id) {
+    public AccountEntity addOrGetAccount(long id) {
         return addOrGetAccount(id, false);
     }
 
     @Override
-    public Account addOrGetAccount(long id, boolean isGenesis) {
+    public AccountEntity addOrGetAccount(long id, boolean isGenesis) {
         if (id == 0) {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
@@ -170,7 +138,7 @@ public class AccountServiceImpl implements AccountService {
             }
             accountEntity.setPublicKey(publicKey);
         }
-        return accountFactory.createAccount(accountEntity);
+        return accountEntity;
     }
 
     @Override
@@ -213,6 +181,11 @@ public class AccountServiceImpl implements AccountService {
                 sync.readUnlock();
             }
         }
+    }
+
+    @Override
+    public long getGuaranteedBalanceATM(AccountEntity account) {
+        return getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), blockchain.getHeight());
     }
 
     @Override
@@ -359,7 +332,7 @@ public class AccountServiceImpl implements AccountService {
         addToGuaranteedBalanceATM(accountEntity, totalAmountATM);
         AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
         save(accountEntity);
-        listeners.notify(getAccount(accountEntity), Account.Event.BALANCE);
+        listeners.notify(accountEntity, AccountEvent.BALANCE);
         logEntryConfirmed(accountEntity, event, eventId, amountATM, feeATM);
     }
 
@@ -379,8 +352,8 @@ public class AccountServiceImpl implements AccountService {
         addToGuaranteedBalanceATM(accountEntity, totalAmountATM);
         AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
         save(accountEntity);
-        listeners.notify(getAccount(accountEntity), Account.Event.BALANCE);
-        listeners.notify(getAccount(accountEntity), Account.Event.UNCONFIRMED_BALANCE);
+        listeners.notify(accountEntity, AccountEvent.BALANCE);
+        listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_BALANCE);
         if (event == null) {
             return;
         }
@@ -431,7 +404,7 @@ public class AccountServiceImpl implements AccountService {
         accountEntity.setUnconfirmedBalanceATM(Math.addExact(accountEntity.getUnconfirmedBalanceATM(), totalAmountATM));
         AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
         save(accountEntity);
-        listeners.notify(getAccount(accountEntity), Account.Event.UNCONFIRMED_BALANCE);
+        listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_BALANCE);
         if (event == null) {
             return;
         }

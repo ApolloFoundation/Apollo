@@ -20,10 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -46,6 +48,7 @@ public abstract class Order {
 
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private static DatabaseManager databaseManager;
 
     private final long id;
@@ -93,18 +96,18 @@ public abstract class Order {
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
 
             askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account askAccount = accountService.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+            AccountEntity askAccount = accountService.getAccountEntity(askOrder.getAccountId());
+            accountService.addToBalanceAndUnconfirmedBalanceATM(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
+            accountAssetService.addToAssetBalanceATU(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
             bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account bidAccount = accountService.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            AccountEntity bidAccount = accountService.getAccountEntity(bidOrder.getAccountId());
+            accountAssetService.addToAssetAndUnconfirmedAssetBalanceATU(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     assetId, trade.getQuantityATU());
-            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            accountService.addToBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            accountService.addToUnconfirmedBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 

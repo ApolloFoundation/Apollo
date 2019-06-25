@@ -20,7 +20,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -262,7 +262,7 @@ public final class Peers {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 listeners.notify(peer, Event.WEIGHT);
             }
-        }), Account.Event.BALANCE);
+        }), AccountEvent.BALANCE);
 
         if (!propertiesHolder.isOffline()) {
             ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(timeService), 20);

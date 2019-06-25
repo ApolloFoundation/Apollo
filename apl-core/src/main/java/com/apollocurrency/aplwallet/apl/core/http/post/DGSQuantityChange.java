@@ -24,7 +24,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELTA_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -52,7 +52,7 @@ public final class DGSQuantityChange extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
         DGSGoods goods = ParameterParser.getGoods(service, req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;

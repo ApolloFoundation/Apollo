@@ -25,7 +25,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_T
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.TOO_MANY_PHASING_VOTES;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
@@ -88,7 +88,7 @@ public class ApproveTransaction extends CreateTransaction {
                 secret = Convert.EMPTY_BYTE;
             }
         }
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new MessagingPhasingVoteCasting(phasedTransactionFullHashes, secret);
         return createTransaction(req, account, attachment);
     }

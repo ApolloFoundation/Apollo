@@ -1,21 +1,22 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 import lombok.Setter;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -70,7 +71,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
             accountLease.setNextLesseeId(lesseeId);
         }
         accountLeaseTable.insert(accountLease);
-        leaseListeners.notify(accountLease, Account.Event.LEASE_SCHEDULED);
+        leaseListeners.notify(accountLease, AccountEvent.LEASE_SCHEDULED);
     }
 
 

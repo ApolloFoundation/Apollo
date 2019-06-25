@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mock;
 import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -85,8 +86,7 @@ public class DGSObserverTest {
             AccountAssetServiceImpl.class, AccountAssetTable.class,
             AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
             AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
-            AccountFactory.class)
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -163,7 +163,7 @@ public class DGSObserverTest {
         };
     }
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
-        Account account = accountService.getAccount(accountId);
+        AccountEntity account = accountService.getAccountEntity(accountId);
         if (balance != null) {
             assertEquals(balance, account.getBalanceATM());
         }

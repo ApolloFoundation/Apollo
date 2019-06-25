@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;

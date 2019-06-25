@@ -1,6 +1,10 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
@@ -15,13 +19,13 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountAssetService {
-    Listeners<AccountAsset, Account.Event> assetListeners = new Listeners<>();
+    Listeners<AccountAsset, AccountEvent> assetListeners = new Listeners<>();
 
-    static boolean addAssetListener(Listener<AccountAsset> listener, Account.Event eventType) {
+    static boolean addAssetListener(Listener<AccountAsset> listener, AccountEvent eventType) {
         return assetListeners.addListener(listener, eventType);
     }
 
-    static boolean removeAssetListener(Listener<AccountAsset> listener, Account.Event eventType) {
+    static boolean removeAssetListener(Listener<AccountAsset> listener, AccountEvent eventType) {
         return assetListeners.removeListener(listener, eventType);
     }
 

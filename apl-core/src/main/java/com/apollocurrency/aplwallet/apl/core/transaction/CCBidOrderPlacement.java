@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
@@ -47,25 +47,25 @@ class CCBidOrderPlacement extends ColoredCoinsOrderPlacement {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         ColoredCoinsBidOrderPlacement attachment = (ColoredCoinsBidOrderPlacement) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
+            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
             return true;
         }
         return false;
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         ColoredCoinsBidOrderPlacement attachment = (ColoredCoinsBidOrderPlacement) transaction.getAttachment();
         Order.Bid.addOrder(transaction, attachment);
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         ColoredCoinsBidOrderPlacement attachment = (ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
     }
     
 }

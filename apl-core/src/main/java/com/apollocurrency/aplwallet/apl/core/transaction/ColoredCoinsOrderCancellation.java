@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
 import java.util.Map;
@@ -15,12 +15,12 @@ import java.util.Map;
 public abstract class ColoredCoinsOrderCancellation extends ColoredCoins {
     
     @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         return true;
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
     }
 
     @Override

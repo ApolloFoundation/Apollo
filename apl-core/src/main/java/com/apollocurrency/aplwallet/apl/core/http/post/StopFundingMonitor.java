@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -76,11 +76,11 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
         if (keySeed != null || accountId != 0) {
             if (keySeed != null) {
                 if (accountId != 0) {
-                    if (Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
+                    if (AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                         return JSONResponses.INCORRECT_ACCOUNT;
                     }
                 } else {
-                    accountId = Account.getId(Crypto.getPublicKey(keySeed));
+                    accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
                 }
             }
             HoldingType holdingType = ParameterParser.getHoldingType(req);

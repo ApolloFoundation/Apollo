@@ -46,7 +46,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -755,7 +754,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (! transaction.verifySignature()) {
-                    if (accountService.getAccount(transaction.getSenderId()) != null) {
+                    if (accountService.getAccountEntity(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");

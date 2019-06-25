@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
@@ -65,7 +65,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity>
                                       rs.getLong("active_lessee_id"));
 
         if (rs.getBoolean("has_control_phasing")) {
-            res.setControls(Collections.unmodifiableSet(EnumSet.of(Account.ControlType.PHASING_ONLY)));
+            res.setControls(Collections.unmodifiableSet(EnumSet.of(AccountControlType.PHASING_ONLY)));
         } else {
             res.setControls(Collections.emptySet());
         }
@@ -81,7 +81,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity>
             pstmt.setLong(++i, account.getUnconfirmedBalanceATM());
             pstmt.setLong(++i, account.getForgedBalanceATM());
             DbUtils.setLongZeroToNull(pstmt, ++i, account.getActiveLesseeId());
-            pstmt.setBoolean(++i, account.getControls().contains(Account.ControlType.PHASING_ONLY));
+            pstmt.setBoolean(++i, account.getControls().contains(AccountControlType.PHASING_ONLY));
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  * <p>
  * Constraints
- * <p>This transaction is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE} and is already active.<br>
+ * <p>This transaction is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE} and is already active.<br>
  */
 @Vetoed
 public final class CurrencyReserveClaim extends CreateTransaction {
@@ -56,7 +56,7 @@ public final class CurrencyReserveClaim extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = ParameterParser.getCurrency(req);
         long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new MonetarySystemReserveClaim(currency.getId(), units);
         return createTransaction(req, account, attachment);
 

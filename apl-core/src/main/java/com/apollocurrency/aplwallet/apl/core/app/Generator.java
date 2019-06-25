@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -306,7 +306,7 @@ public final class Generator implements Comparable<Generator> {
     private Generator(byte[] keySeed) {
         this.keySeed = keySeed;
         this.publicKey = Crypto.getPublicKey(keySeed);
-        this.accountId = Account.getId(publicKey);
+        this.accountId = AccountService.getId(publicKey);
         globalSync.updateLock();
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
@@ -350,11 +350,11 @@ public final class Generator implements Comparable<Generator> {
 
     private void setLastBlock(Block lastBlock) {
         int height = lastBlock.getHeight();
-        Account account = accountService.getAccount(accountId, height);
+        AccountEntity account = accountService.getAccountEntity(accountId, height);
         if (account == null) {
             effectiveBalance = BigInteger.ZERO;
         } else {
-            effectiveBalance = BigInteger.valueOf(Math.max(account.getEffectiveBalanceAPL(height, true), 0));
+            effectiveBalance = BigInteger.valueOf(Math.max(accountService.getEffectiveBalanceAPL(account, height, true), 0));
         }
         if (effectiveBalance.signum() == 0) {
             hitTime = 0;

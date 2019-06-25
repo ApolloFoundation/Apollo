@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -60,12 +60,12 @@ public abstract class Messaging extends TransactionType {
     }
 
     @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         return true;
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
     }
     public static final TransactionType ARBITRARY_MESSAGE = new Messaging() {
         @Override
@@ -94,7 +94,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         }
 
         @Override
@@ -164,7 +164,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
             Alias.addOrUpdateAlias(transaction, attachment);
         }
@@ -235,7 +235,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
             Alias.sellAlias(transaction, attachment);
         }
@@ -321,7 +321,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             final MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
             Alias.changeOwner(transaction.getSenderId(), aliasName);
@@ -394,7 +394,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(final Transaction transaction, final Account senderAccount, final Account recipientAccount) {
+        public void applyAttachment(final Transaction transaction, final AccountEntity senderAccount, final AccountEntity recipientAccount) {
             final MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
             Alias.deleteAlias(attachment.getAliasName());
         }
@@ -483,7 +483,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
             Poll.addPoll(transaction, attachment);
         }
@@ -560,7 +560,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
             Vote.addVote(transaction, attachment);
         }
@@ -713,7 +713,7 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public final void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
@@ -774,9 +774,9 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
-            senderAccount.setAccountInfo(attachment.getName(), attachment.getDescription());
+            lookupAccountInfoService().updateAccountInfo(senderAccount, attachment.getName(), attachment.getDescription());
         }
 
         @Override
@@ -848,9 +848,9 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
-            recipientAccount.setProperty(transaction, senderAccount, attachment.getProperty(), attachment.getValue());
+            lookupAccountPropertyService().setProperty(recipientAccount, transaction, senderAccount, attachment.getProperty(), attachment.getValue());
         }
 
         @Override
@@ -911,9 +911,9 @@ public abstract class Messaging extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
-            senderAccount.deleteProperty(attachment.getPropertyId());
+            lookupAccountPropertyService().deleteProperty(senderAccount, attachment.getPropertyId());
         }
 
         @Override

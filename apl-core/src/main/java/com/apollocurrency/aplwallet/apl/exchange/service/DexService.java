@@ -9,9 +9,8 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
@@ -140,8 +139,8 @@ public class DexService {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for Buy " + offer.getPairCurrency());
         }
         //Return APL.
-        Account account = accountService.getAccount(offer.getAccountId());
-        account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
+        AccountEntity account = accountService.getAccountEntity(offer.getAccountId());
+        accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
     }
 
     public String refundEthPaxFrozenMoney(String passphrase, DexOffer offer) throws AplException.ExecutiveProcessException {

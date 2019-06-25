@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -32,10 +33,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
@@ -630,7 +631,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public long getSenderId() {
         if (senderId == 0) {
-            senderId = Account.getId(getSenderPublicKey());
+            senderId = AccountService.getId(getSenderPublicKey());
         }
         return senderId;
     }

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.Getter;
@@ -56,7 +56,7 @@ public final class AccountEntity {
     @Setter
     private long activeLesseeId;
     @Setter
-    private Set<Account.ControlType> controls;
+    private Set<AccountControlType> controls;
 
     public AccountEntity(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
@@ -88,7 +88,7 @@ public final class AccountEntity {
         return true;
     }
 
-    public Set<Account.ControlType> getControls() {
+    public Set<AccountControlType> getControls() {
         return controls;
     }
 
@@ -98,11 +98,11 @@ public final class AccountEntity {
      * @return  true if a control was added successfully and false otherwise.
      * In case of success, the account needs to be updated in the repository.
      */
-    public boolean addControl(Account.ControlType control) {
+    public boolean addControl(AccountControlType control) {
         if (controls.contains(control)) {
             return false;
         }
-        EnumSet<Account.ControlType> newControls = EnumSet.of(control);
+        EnumSet<AccountControlType> newControls = EnumSet.of(control);
         newControls.addAll(controls);
         controls = Collections.unmodifiableSet(newControls);
         return true;
@@ -114,11 +114,11 @@ public final class AccountEntity {
      * @return  true if a control was removed successfully and false otherwise.
      * In case of success, the account needs to be updated in the repository.
      */
-    public boolean removeControl(Account.ControlType control) {
+    public boolean removeControl(AccountControlType control) {
         if (!controls.contains(control)) {
             return false;
         }
-        EnumSet<Account.ControlType> newControls = EnumSet.copyOf(controls);
+        EnumSet<AccountControlType> newControls = EnumSet.copyOf(controls);
         newControls.remove(control);
         controls = Collections.unmodifiableSet(newControls);
         return true;

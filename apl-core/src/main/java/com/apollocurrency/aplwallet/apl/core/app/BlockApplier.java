@@ -7,8 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -28,9 +29,12 @@ public class BlockApplier {
     @Inject @Setter
     private AccountService accountService;
 
+    @Inject @Setter
+    private AccountPublickKeyService accountPublickKeyService;
+
     public void apply(Block block) {
-        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
-        generatorAccount.apply(block.getGeneratorPublicKey());
+        AccountEntity generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
+        accountPublickKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         long totalBackFees = 0;
         int height = block.getHeight();
         if (height > 3) {
@@ -52,23 +56,23 @@ public class BlockApplier {
                 if (generators == null && shardHeight > blockHeight) {
                     generators = shardDao.getLastShard().getGeneratorIds();
                 }
-                Account previousGeneratorAccount;
+                AccountEntity previousGeneratorAccount;
                 if (shardHeight > blockHeight) {
                     int index = shardHeight - blockHeight - 1;
-                    previousGeneratorAccount = accountService.getAccount(generators[index]);
+                    previousGeneratorAccount = accountService.getAccountEntity(generators[index]);
                 } else {
-                    previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                    previousGeneratorAccount = accountService.getAccountEntity(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
                 log.trace("Back fees {} to forger at height {}", ((double)backFees[i])/ Constants.ONE_APL,
                         height - i - 1);
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
+                accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
                 previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
             }
         }
         if (totalBackFees != 0) {
             log.trace("Fee reduced by {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, height);
         }
-        generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
+        accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         generatorAccount.addToForgedBalanceATM(block.getTotalFeeATM() - totalBackFees);
     }
 

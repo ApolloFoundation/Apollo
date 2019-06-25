@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -48,7 +48,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         getTransactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
     }
 

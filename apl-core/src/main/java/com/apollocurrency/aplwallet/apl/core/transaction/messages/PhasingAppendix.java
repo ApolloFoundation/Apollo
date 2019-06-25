@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -287,7 +285,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         phasingPollService.addPoll(transaction, this);
     }
 
@@ -302,8 +300,8 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private void release(Transaction transaction) {
-        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
-        Account recipientAccount = transaction.getRecipientId() == 0 ? null : lookupAccountService().getAccount(transaction.getRecipientId());
+        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
+        AccountEntity recipientAccount = transaction.getRecipientId() == 0 ? null : lookupAccountService().getAccountEntity(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
             if (appendage.isPhasable()) {
                 appendage.apply(transaction, senderAccount, recipientAccount);
@@ -317,10 +315,10 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void reject(Transaction transaction) {
-        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
+        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
 
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                 transaction.getAmountATM());
 
         TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();

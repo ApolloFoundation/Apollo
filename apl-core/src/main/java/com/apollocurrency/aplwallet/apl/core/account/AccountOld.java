@@ -8,34 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public interface Account {
-
-    enum ControlType {
-        PHASING_ONLY
-    }
-
-    enum Event {
-        BALANCE, UNCONFIRMED_BALANCE, ASSET_BALANCE, UNCONFIRMED_ASSET_BALANCE, CURRENCY_BALANCE, UNCONFIRMED_CURRENCY_BALANCE,
-        LEASE_SCHEDULED, LEASE_STARTED, LEASE_ENDED, SET_PROPERTY, DELETE_PROPERTY
-    }
-
-    static long getId(byte[] publicKey) {
-        byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.fullHashToId(publicKeyHash);
-    }
-
-    Account getAccount(long id);
+@Deprecated
+public interface AccountOld {
 
     AccountEntity getEntity();
     //delegated from AccountEntity
@@ -44,9 +25,9 @@ public interface Account {
     long getUnconfirmedBalanceATM();
     long getForgedBalanceATM();
     long getActiveLesseeId();
-    Set<ControlType> getControls();
-    boolean addControl(Account.ControlType control);
-    boolean removeControl(Account.ControlType control);
+    Set<AccountControlType> getControls();
+    boolean addControl(AccountControlType control);
+    boolean removeControl(AccountControlType control);
     void addToForgedBalanceATM(long amountATM);
     //
 
@@ -117,7 +98,7 @@ public interface Account {
 
     void leaseEffectiveBalance(long lesseeId, int period);
 
-    void setProperty(Transaction transaction, Account setterAccount, String property, String value);
+    void setProperty(Transaction transaction, AccountOld setterAccount, String property, String value);
 
     void deleteProperty(long propertyId);
 

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -50,7 +50,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
             return JSONResponses.INCORRECT_UPDATE_HASH_LENGTH;
         }
         DoubleByteArrayTuple url = new DoubleByteArrayTuple(urlFirstPart, urlSecondPart);
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
         Attachment attachment = UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
         return createTransaction(req, account, attachment);
     }

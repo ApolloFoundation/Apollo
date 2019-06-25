@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -60,18 +60,18 @@ class MSReverseIncrease extends MonetarySystem {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM())) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
+            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
             return true;
         }
         return false;
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
         long reserveSupply;
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());
@@ -86,11 +86,11 @@ class MSReverseIncrease extends MonetarySystem {
             MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
             reserveSupply = currencyIssuanceAttachment.getReserveSupply();
         }
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitATM()));
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitATM()));
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
         Currency.increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getAmountPerUnitATM());
     }

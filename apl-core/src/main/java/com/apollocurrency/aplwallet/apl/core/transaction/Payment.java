@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
@@ -33,19 +33,19 @@ public abstract class Payment extends TransactionType {
     }
 
     @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         return true;
     }
 
     @Override
-    public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public final void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         if (recipientAccount == null) {
-            lookupAccountService().getAccount(Genesis.CREATOR_ID).addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
+            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(lookupAccountService().getAccountEntity(Genesis.CREATOR_ID), getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
         }
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
     }
 
     @Override
@@ -56,13 +56,6 @@ public abstract class Payment extends TransactionType {
     @Override
     public final boolean isPhasingSafe() {
         return true;
-    }
-
-    private AccountService lookupAccountService(){
-        if ( accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
     }
 
     public static final TransactionType ORDINARY = new Payment() {

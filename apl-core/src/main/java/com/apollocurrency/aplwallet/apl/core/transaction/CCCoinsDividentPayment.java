@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -50,39 +50,39 @@ class CCCoinsDividentPayment extends ColoredCoins {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
         Asset asset = Asset.getAsset(assetId, attachment.getHeight());
         if (asset == null) {
             return true;
         }
-        long quantityATU = asset.getQuantityATU() - senderAccount.getAssetBalanceATU(assetId, attachment.getHeight());
+        long quantityATU = asset.getQuantityATU() - lookupAccountAssetService().getAssetBalanceATU(senderAccount, assetId, attachment.getHeight());
         long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
         if (senderAccount.getUnconfirmedBalanceATM() >= totalDividendPayment) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -totalDividendPayment);
             return true;
         }
         return false;
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
-        senderAccount.payDividends(transaction.getId(), attachment);
+        lookupAccountAssetService().payDividends(senderAccount, transaction.getId(), attachment);
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
         Asset asset = Asset.getAsset(assetId, attachment.getHeight());
         if (asset == null) {
             return;
         }
-        long quantityATU = asset.getQuantityATU() - senderAccount.getAssetBalanceATU(assetId, attachment.getHeight());
+        long quantityATU = asset.getQuantityATU() - lookupAccountAssetService().getAssetBalanceATU(senderAccount, assetId, attachment.getHeight());
         long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), totalDividendPayment);
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), totalDividendPayment);
     }
 
     @Override

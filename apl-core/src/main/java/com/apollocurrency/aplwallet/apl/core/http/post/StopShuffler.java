@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -48,10 +48,10 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
         byte[] keySeed = ParameterParser.getKeySeed(req,accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
-            if (accountId != 0 && Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
+            if (accountId != 0 && AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
-            accountId = Account.getId(Crypto.getPublicKey(keySeed));
+            accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
                 return JSONResponses.missing("shufflingFullHash");
             }

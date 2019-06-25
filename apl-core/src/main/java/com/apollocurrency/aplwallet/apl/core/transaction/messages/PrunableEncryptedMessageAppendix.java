@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
@@ -157,7 +157,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
             PrunableMessage.add((TransactionImpl)transaction, this);
         }

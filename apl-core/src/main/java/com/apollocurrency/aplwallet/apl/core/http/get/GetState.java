@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;

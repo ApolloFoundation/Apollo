@@ -10,7 +10,7 @@ import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
@@ -141,7 +141,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
             PrunableMessage.add((TransactionImpl)transaction, this);
         }

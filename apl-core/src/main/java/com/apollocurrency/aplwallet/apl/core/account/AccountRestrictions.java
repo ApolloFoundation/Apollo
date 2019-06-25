@@ -81,7 +81,7 @@ public final class AccountRestrictions {
         if (senderAccount == null) {
             throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
         }
-        if (senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+        if (senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)) {
             PhasingOnly phasingOnly = PhasingOnly.get(transaction.getSenderId());
             phasingOnly.checkTransaction(transaction);
         }
@@ -90,7 +90,7 @@ public final class AccountRestrictions {
     public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
         return
-                senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)
+                senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)
                 && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
                 && transaction.getType() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,

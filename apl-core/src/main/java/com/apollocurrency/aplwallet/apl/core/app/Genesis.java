@@ -34,7 +34,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -68,6 +70,7 @@ public final class Genesis {
 //    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
     private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
     private static AccountService accountService = CDI.current().select(AccountServiceImpl .class).get();
+    private static AccountPublickKeyService accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
     private static String genesisTaskId;
@@ -75,7 +78,7 @@ public final class Genesis {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
             CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
-            CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
+            CREATOR_ID = AccountService.getId(CREATOR_PUBLIC_KEY);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
             EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
         } catch (ParseException|IOException|java.text.ParseException e) {
@@ -134,9 +137,9 @@ public final class Genesis {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        Account creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
-        creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
-        creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
+        AccountEntity creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
+        accountPublickKeyService.apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
+        accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
     }
@@ -149,8 +152,8 @@ public final class Genesis {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
-            Account account = accountService.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
-            account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
+            AccountEntity account = accountService.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
+            accountService.addToBalanceAndUnconfirmedBalanceATM(account, null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
@@ -172,8 +175,8 @@ public final class Genesis {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
-            Account account = accountService.addOrGetAccount(Account.getId(publicKey), true);
-            account.apply(publicKey, true);
+            AccountEntity account = accountService.addOrGetAccount(AccountService.getId(publicKey), true);
+            accountPublickKeyService.apply(account, publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }

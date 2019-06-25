@@ -7,8 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountFactory;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -30,21 +31,20 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         return new PublicKeyAnnouncementAppendix(attachmentData);
     }
     private static AccountService accountService;
+    private static AccountPublickKeyService accountPublickKeyService;
 
-    private static AccountFactory accountFactory;
-
-    private AccountService lookupAccountService(){
+    protected AccountService lookupAccountService(){
         if ( accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
     }
 
-    private AccountFactory lookupAccountFactory(){
-        if ( accountFactory == null) {
-            accountFactory = CDI.current().select(AccountFactory.class).get();
+    protected AccountPublickKeyService lookupAccountPublickKeyService(){
+        if ( accountPublickKeyService == null) {
+            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
         }
-        return accountFactory;
+        return accountPublickKeyService;
     }
 
     private final byte[] publicKey;
@@ -93,7 +93,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
             throw new AplException.NotValidException("Invalid recipient public key: " + Convert.toHexString(publicKey));
         }
         long recipientId = transaction.getRecipientId();
-        if (Account.getId(this.publicKey) != recipientId) {
+        if (AccountService.getId(this.publicKey) != recipientId) {
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
         }
         byte[] recipientPublicKey = lookupAccountService().getPublicKey(recipientId);
@@ -103,9 +103,9 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         if (lookupAccountService().setOrVerify(recipientAccount.getId(), publicKey)) {
-            recipientAccount.apply(this.publicKey);
+            lookupAccountPublickKeyService().apply(recipientAccount, this.publicKey);
         }
     }
 

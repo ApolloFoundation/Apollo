@@ -28,7 +28,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;

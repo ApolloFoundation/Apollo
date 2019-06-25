@@ -34,13 +34,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -287,7 +285,7 @@ public class FundingMonitor {
         // won't be used.
         //
         init();
-        long accountId = Account.getId(Crypto.getPublicKey(keySeed));
+        long accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
         //
         // Create the monitor
         //
@@ -534,11 +532,11 @@ public class FundingMonitor {
             //
             // Register our event listeners
             //
-            AccountService.addListener(new AccountEventHandler(), Account.Event.BALANCE);
-            AccountAssetService.addAssetListener(new AssetEventHandler(), Account.Event.ASSET_BALANCE);
-            AccountCurrencyService.addCurrencyListener(new CurrencyEventHandler(), Account.Event.CURRENCY_BALANCE);
-            AccountPropertyService.addPropertyListener(new SetPropertyEventHandler(), Account.Event.SET_PROPERTY);
-            AccountPropertyService.addPropertyListener(new DeletePropertyEventHandler(), Account.Event.DELETE_PROPERTY);
+            AccountService.addListener(new AccountEventHandler(), AccountEvent.BALANCE);
+            AccountAssetService.addAssetListener(new AssetEventHandler(), AccountEvent.ASSET_BALANCE);
+            AccountCurrencyService.addCurrencyListener(new CurrencyEventHandler(), AccountEvent.CURRENCY_BALANCE);
+            AccountPropertyService.addPropertyListener(new SetPropertyEventHandler(), AccountEvent.SET_PROPERTY);
+            AccountPropertyService.addPropertyListener(new DeletePropertyEventHandler(), AccountEvent.DELETE_PROPERTY);
             //
             // All done
             //
@@ -620,8 +618,8 @@ public class FundingMonitor {
                     MonitoredAccount monitoredAccount;
                     while ((monitoredAccount = pendingEvents.poll()) != null) {
                         try {
-                            Account targetAccount = accountService.getAccount(monitoredAccount.accountId);
-                            Account fundingAccount = accountService.getAccount(monitoredAccount.monitor.accountId);
+                            AccountEntity targetAccount = accountService.getAccountEntity(monitoredAccount.accountId);
+                            AccountEntity fundingAccount = accountService.getAccountEntity(monitoredAccount.monitor.accountId);
                             if (blockchain.getHeight() - monitoredAccount.height < monitoredAccount.interval) {
                                 if (!suspendedEvents.contains(monitoredAccount)) {
                                     suspendedEvents.add(monitoredAccount);
@@ -672,7 +670,7 @@ public class FundingMonitor {
      * @param   fundingAccount              Funding account
      * @throws  AplException                Unable to create transaction
      */
-    private static void processAplEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
+    private static void processAplEvent(MonitoredAccount monitoredAccount, AccountEntity targetAccount, AccountEntity fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
@@ -705,7 +703,7 @@ public class FundingMonitor {
      * @param   fundingAccount              Funding account
      * @throws  AplException                Unable to create transaction
      */
-    private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
+    private static void processAssetEvent(MonitoredAccount monitoredAccount, AccountEntity targetAccount, AccountEntity fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         AccountAsset targetAsset = AccountAssetTable.getAccountAsset(targetAccount.getId(), monitor.holdingId);
@@ -743,7 +741,7 @@ public class FundingMonitor {
      * @param   fundingAccount              Funding account
      * @throws  AplException                Unable to create transaction
      */
-    private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
+    private static void processCurrencyEvent(MonitoredAccount monitoredAccount, AccountEntity targetAccount, AccountEntity fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         AccountCurrency targetCurrency = AccountCurrencyTable.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
@@ -875,7 +873,7 @@ public class FundingMonitor {
     /**
      * Account event handler (BALANCE event)
      */
-    private static final class AccountEventHandler implements Listener<Account> {
+    private static final class AccountEventHandler implements Listener<AccountEntity> {
 
         /**
          * Account event notification
@@ -883,7 +881,7 @@ public class FundingMonitor {
          * @param   account                 Account
          */
         @Override
-        public void notify(Account account) {
+        public void notify(AccountEntity account) {
             if (stopped) {
                 return;
             }

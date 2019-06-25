@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -258,7 +258,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
+    public void addVote(Transaction transaction, AccountEntity voter, long phasedTransactionId) {
         PhasingVote phasingVote = phasingVoteTable.get(phasedTransactionId, voter.getId());
         if (phasingVote == null) {
             phasingVote =  new PhasingVote(null, transaction.getHeight(),phasedTransactionId, voter.getId(), transaction.getId());

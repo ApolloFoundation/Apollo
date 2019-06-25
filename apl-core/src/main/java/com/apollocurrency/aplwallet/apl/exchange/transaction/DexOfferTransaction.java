@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -107,7 +107,7 @@ public class DexOfferTransaction extends DEX {
 
         if (OfferType.SELL.ordinal() == attachment.getType()) {
             Long amountATM = attachment.getOfferAmount();
-            Account sender = accountService.getAccount(transaction.getSenderId());
+            AccountEntity sender = accountService.getAccountEntity(transaction.getSenderId());
 
             if (sender.getUnconfirmedBalanceATM() < amountATM) {
                 throw new AplException.NotValidException("Not enough money.");
@@ -121,12 +121,12 @@ public class DexOfferTransaction extends DEX {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         return true;
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
         // On the Apl side.
@@ -137,15 +137,15 @@ public class DexOfferTransaction extends DEX {
         dexService.saveOffer(new DexOffer(transaction, attachment));
     }
 
-    private void lockOnAplSide(Transaction transaction, Account senderAccount){
+    private void lockOnAplSide(Transaction transaction, AccountEntity senderAccount){
         DexOfferAttachment dexOfferAttachment = (DexOfferAttachment) transaction.getAttachment();
         long amountATM = dexOfferAttachment.getOfferAmount();
 
-        senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -amountATM);
+        accountService.addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -amountATM);
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
     }
 
     @Override

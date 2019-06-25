@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.observer;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
@@ -53,7 +53,7 @@ public class AccountObserver {
                 if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
                     ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
                     for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                        accountPublickKeyService.getPublicKeyCache().remove(AccountTable.newKey(Account.getId(publicKey)));
+                        accountPublickKeyService.getPublicKeyCache().remove(AccountTable.newKey(AccountService.getId(publicKey)));
                     }
                 }
             });
@@ -67,9 +67,9 @@ public class AccountObserver {
             AccountEntity lessor = accountService.getAccountEntity(lease.lessorId);
             if (height == lease.currentLeasingHeightFrom) {
                 lessor.setActiveLesseeId(lease.currentLesseeId);
-                leaseListeners.notify(lease, Account.Event.LEASE_STARTED);
+                leaseListeners.notify(lease, AccountEvent.LEASE_STARTED);
             } else if (height == lease.currentLeasingHeightTo) {
-                leaseListeners.notify(lease, Account.Event.LEASE_ENDED);
+                leaseListeners.notify(lease, AccountEvent.LEASE_ENDED);
                 lessor.setActiveLesseeId(0);
                 if (lease.nextLeasingHeightFrom == 0) {
                     lease.currentLeasingHeightFrom = 0;
@@ -86,7 +86,7 @@ public class AccountObserver {
                     AccountLeaseTable.getInstance().insert(lease);
                     if (height == lease.currentLeasingHeightFrom) {
                         lessor.setActiveLesseeId(lease.currentLesseeId);
-                        leaseListeners.notify(lease, Account.Event.LEASE_STARTED);
+                        leaseListeners.notify(lease, AccountEvent.LEASE_STARTED);
                     }
                 }
             }

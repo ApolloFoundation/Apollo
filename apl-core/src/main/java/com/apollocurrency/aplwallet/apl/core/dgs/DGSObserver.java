@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -14,11 +14,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class DGSObserver {
@@ -42,8 +42,8 @@ public class DGSObserver {
             }
         }
         for (DGSPurchase purchase : expiredPurchases) {
-            Account buyer = accountService.getAccount(purchase.getBuyerId());
-            buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
+            AccountEntity buyer = accountService.getAccountEntity(purchase.getBuyerId());
+            accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
                     Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM()));
             DGSGoods goods = service.getGoods(purchase.getGoodsId());
             goods.setHeight(block.getHeight());

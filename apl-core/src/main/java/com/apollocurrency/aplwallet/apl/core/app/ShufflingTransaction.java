@@ -20,8 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
@@ -164,19 +165,19 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
                         && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
-                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
                     return true;
                 }
             } else {
                 if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getAmount()) {
-                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -attachment.getAmount());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -attachment.getAmount());
                     return true;
                 }
             }
@@ -184,20 +185,20 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
             Shuffling.addShuffling(transaction, attachment);
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
             HoldingType holdingType = attachment.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), attachment.getAmount());
-                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), blockchainConfig.getShufflingDepositAtm());
+                lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), blockchainConfig.getShufflingDepositAtm());
             } else {
-                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getAmount());
+                lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAmount());
             }
         }
 
@@ -280,7 +281,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
@@ -288,12 +289,12 @@ public abstract class ShufflingTransaction extends TransactionType {
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
                         && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
                     return true;
                 }
             } else {
                 if (senderAccount.getUnconfirmedBalanceATM() >= shuffling.getAmount()) {
-                    senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -shuffling.getAmount());
                     return true;
                 }
             }
@@ -301,22 +302,22 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.addParticipant(transaction.getSenderId());
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             HoldingType holdingType = shuffling.getHoldingType();
             if (holdingType != HoldingType.APL) {
                 holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), shuffling.getAmount());
-                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), blockchainConfig.getShufflingDepositAtm());
+                lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), blockchainConfig.getShufflingDepositAtm());
             } else {
-                senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), shuffling.getAmount());
+                lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getAmount());
             }
         }
 
@@ -416,19 +417,19 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             return true;
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.updateParticipantData(transaction, attachment);
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -518,7 +519,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 if (!Crypto.isCanonicalPublicKey(recipientPublicKey)) {
                     throw new AplException.NotValidException("Invalid recipient public key " + Convert.toHexString(recipientPublicKey));
                 }
-                if (!recipientAccounts.add(Account.getId(recipientPublicKey))) {
+                if (!recipientAccounts.add(AccountService.getId(recipientPublicKey))) {
                     throw new AplException.NotValidException("Duplicate recipient accounts");
                 }
             }
@@ -532,19 +533,19 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             return true;
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             ShufflingRecipientsAttachment attachment = (ShufflingRecipientsAttachment)transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.updateRecipients(transaction, attachment);
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {}
 
         @Override
         public boolean isPhasable() {
@@ -617,19 +618,19 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             return true;
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             ShufflingVerificationAttachment attachment = (ShufflingVerificationAttachment) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             shuffling.verify(transaction.getSenderId());
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         }
 
         @Override
@@ -731,12 +732,12 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
             return true;
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
             ShufflingCancellationAttachment attachment = (ShufflingCancellationAttachment) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
             ShufflingParticipant participant = ShufflingParticipant.getParticipant(shuffling.getId(), senderAccount.getId());
@@ -744,7 +745,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {}
 
         @Override
         public boolean isPhasable() {

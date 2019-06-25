@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import lombok.Getter;

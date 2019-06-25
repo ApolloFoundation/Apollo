@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -52,7 +52,7 @@ public final class DGSFeedback extends CreateTransaction {
 
         DGSPurchase purchase = ParameterParser.getPurchase(service, req);
 
-        Account buyerAccount = ParameterParser.getSenderAccount(req);
+        AccountEntity buyerAccount = ParameterParser.getSenderAccount(req);
         if (buyerAccount.getId() != purchase.getBuyerId()) {
             return INCORRECT_PURCHASE;
         }
@@ -60,7 +60,7 @@ public final class DGSFeedback extends CreateTransaction {
             return GOODS_NOT_DELIVERED;
         }
 
-        Account sellerAccount = accountService.getAccount(purchase.getSellerId());
+        AccountEntity sellerAccount = accountService.getAccountEntity(purchase.getSellerId());
         Attachment attachment = new DigitalGoodsFeedback(purchase.getId());
         return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
     }

@@ -26,13 +26,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.*;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
@@ -114,6 +115,7 @@ public final class JSONData {
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
 
     private JSONData() {} // never
 
@@ -134,7 +136,7 @@ public final class JSONData {
         return json;
     }
 
-    static void putAccountBalancePercentage(JSONObject json, Account account, long totalAmount) {
+    static void putAccountBalancePercentage(JSONObject json, AccountEntity account, long totalAmount) {
         json.put("percentage", String.format("%.4f%%", 100D * account.getBalanceATM() / totalAmount));
     }
 
@@ -142,7 +144,7 @@ public final class JSONData {
      * Use com.apollocurrency.aplwallet.apl.core.rest.service.AccountService#getAccountBalances(com.apollocurrency.aplwallet.apl.core.account.Account, boolean, java.lang.String, java.lang.String)
      */
     @Deprecated
-    public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
+    public static JSONObject accountBalance(AccountEntity account, boolean includeEffectiveBalance) {
         return accountBalance(account, includeEffectiveBalance, blockchain.getHeight());
     }
 
@@ -150,7 +152,7 @@ public final class JSONData {
      * Use com.apollocurrency.aplwallet.apl.core.rest.service.AccountService#getAccountBalances(com.apollocurrency.aplwallet.apl.core.account.Account, boolean, java.lang.String, java.lang.String)
      */
     @Deprecated
-    public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
+    public static JSONObject accountBalance(AccountEntity account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
             json.put("balanceATM", "0");
@@ -165,22 +167,22 @@ public final class JSONData {
             json.put("unconfirmedBalanceATM", String.valueOf(account.getUnconfirmedBalanceATM()));
             json.put("forgedBalanceATM", String.valueOf(account.getForgedBalanceATM()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceAPL", account.getEffectiveBalanceAPL(height, false));
-                json.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), height)));
+                json.put("effectiveBalanceAPL", accountService.getEffectiveBalanceAPL(account, height, false));
+                json.put("guaranteedBalanceATM", String.valueOf(accountService.getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height)));
             }
         }
         return json;
     }
 
-    public static JSONObject lessor(Account account, boolean includeEffectiveBalance) {
+    public static JSONObject lessor(AccountEntity account, boolean includeEffectiveBalance) {
         JSONObject json = new JSONObject();
-        AccountLease accountLease = account.getAccountLease();
+        AccountLease accountLease = accountLeaseService.getAccountLease(account);
         if (accountLease.getCurrentLesseeId() != 0) {
             putAccount(json, "currentLessee", accountLease.getCurrentLesseeId());
             json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
             json.put("currentHeightTo", String.valueOf(accountLease.getCurrentLeasingHeightTo()));
             if (includeEffectiveBalance) {
-                json.put("effectiveBalanceAPL", String.valueOf(account.getGuaranteedBalanceATM() / Constants.ONE_APL));
+                json.put("effectiveBalanceAPL", String.valueOf(accountService.getGuaranteedBalanceATM(account) / Constants.ONE_APL));
             }
         }
         if (accountLease.getNextLesseeId() != 0) {
@@ -438,7 +440,7 @@ public final class JSONData {
         JSONArray holders = new JSONArray();
         while (topAccountsIterator.hasNext()) {
             AccountEntity account = topAccountsIterator.next();
-            JSONObject accountJson = JSONData.accountBalance(accountService.getAccount(account), false);
+            JSONObject accountJson = JSONData.accountBalance(account, false);
             JSONData.putAccount(accountJson, "account", account.getId());
             holders.add(accountJson);
         }
@@ -501,7 +503,7 @@ public final class JSONData {
     public static JSONObject shuffler(Shuffler shuffler, boolean includeParticipantState) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", shuffler.getAccountId());
-        putAccount(json, "recipient", Account.getId(shuffler.getRecipientPublicKey()));
+        putAccount(json, "recipient", AccountService.getId(shuffler.getRecipientPublicKey()));
         json.put("shufflingFullHash", Convert.toHexString(shuffler.getShufflingFullHash()));
         json.put("shuffling", Long.toUnsignedString(Convert.fullHashToId(shuffler.getShufflingFullHash())));
         if (shuffler.getFailedTransaction() != null) {
@@ -621,7 +623,7 @@ public final class JSONData {
 
     public static JSONObject hallmark(Hallmark hallmark) {
         JSONObject json = new JSONObject();
-        putAccount(json, "account", Account.getId(hallmark.getPublicKey()));
+        putAccount(json, "account", AccountService.getId(hallmark.getPublicKey()));
         json.put("host", hallmark.getHost());
         json.put("port", hallmark.getPort());
         json.put("weight", hallmark.getWeight());
@@ -633,7 +635,7 @@ public final class JSONData {
 
     public static JSONObject token(Token token) {
         JSONObject json = new JSONObject();
-        putAccount(json, "account", Account.getId(token.getPublicKey()));
+        putAccount(json, "account", AccountService.getId(token.getPublicKey()));
         json.put("timestamp", token.getTimestamp());
         json.put("valid", token.isValid());
         return json;

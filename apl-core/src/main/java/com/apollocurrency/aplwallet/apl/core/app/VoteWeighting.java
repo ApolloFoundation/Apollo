@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -61,7 +60,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atmBalance = lookupAccountService().getAccount(voterId, height).getBalanceATM();
+                long atmBalance = lookupAccountService().getAccountEntity(voterId, height).getBalanceATM();
                 return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
             }
             @Override
@@ -154,7 +153,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return lookupAccountService().getAccount(voterId, height).getBalanceATM();
+                return lookupAccountService().getAccountEntity(voterId, height).getBalanceATM();
             }
         },
         ASSET(2) {

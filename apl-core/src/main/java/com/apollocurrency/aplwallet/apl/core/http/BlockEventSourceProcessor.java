@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
@@ -37,6 +39,7 @@ public class BlockEventSourceProcessor implements Runnable {
     private final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -124,7 +127,7 @@ public class BlockEventSourceProcessor implements Runnable {
     }
 
     private JSONObject putAccount(long accountId) {
-        Account account = accountService.getAccount(accountId);
+        AccountEntity account = accountService.getAccountEntity(accountId);
         JSONObject response = JSONData.accountBalance(account, false);
         JSONData.putAccount(response, "account", account.getId());
 
@@ -132,7 +135,7 @@ public class BlockEventSourceProcessor implements Runnable {
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }
-        AccountInfo accountInfo = account.getAccountInfo();
+        AccountInfo accountInfo = accountInfoService.getAccountInfo(account);
         if (accountInfo != null) {
             response.put("name", Convert.nullToEmpty(accountInfo.getName()));
             response.put("description", Convert.nullToEmpty(accountInfo.getDescription()));

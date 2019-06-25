@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
@@ -63,7 +63,7 @@ public final class CurrencyBuy extends CreateTransaction {
         Currency currency = ParameterParser.getCurrency(req);
         long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
         long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
         try {

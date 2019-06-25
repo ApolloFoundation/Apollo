@@ -22,8 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -111,6 +112,54 @@ public abstract class TransactionType {
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     public static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static AccountService accountService; // = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountCurrencyService accountCurrencyService; // = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private static  AccountLeaseService accountLeaseService; // = CDI.current().select(AccountLeaseServiceImpl.class).get();
+    private static AccountAssetService accountAssetService;
+    private static AccountPropertyService accountPropertyService;
+    private static AccountInfoService accountInfoService;
+
+    public static AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    public static AccountCurrencyService lookupAccountCurrencyService(){
+        if ( accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
+
+    public static AccountLeaseService lookupAccountLeaseService(){
+        if ( accountLeaseService == null) {
+            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+        }
+        return accountLeaseService;
+    }
+
+    public static AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null) {
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    public static AccountPropertyService lookupAccountPropertyService(){
+        if ( accountPropertyService == null) {
+            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        }
+        return accountPropertyService;
+    }
+
+    public static AccountInfoService lookupAccountInfoService(){
+        if ( accountInfoService == null) {
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+        }
+        return accountInfoService;
+    }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -256,7 +305,7 @@ public abstract class TransactionType {
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
-    public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
+    public final boolean applyUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
@@ -266,43 +315,43 @@ public abstract class TransactionType {
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
             return false;
         }
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
+        accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), amountATM, feeATM);
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amountATM, feeATM);
             return false;
         }
         return true;
     }
 
-    public abstract boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
+    public abstract boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount);
 
-    public void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(TransactionImpl transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
-            senderAccount.addToBalanceATM(getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
+            accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
         } else {
-            senderAccount.addToBalanceATM(getLedgerEvent(), transactionId, -amount);
+            accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
-            recipientAccount.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transactionId, amount);
+            accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
 
-    public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
+    public abstract void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount);
 
-    public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
+    public final void undoUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
+        accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), 0,
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
                     blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
     }
 
-    public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
+    public abstract void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount);
 
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         return false;

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -46,7 +46,7 @@ public final class SetAccountProperty extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req);
+        AccountEntity senderAccount = ParameterParser.getSenderAccount(req);
         long recipientId = ParameterParser.getAccountId(req, "recipient", false);
         if (recipientId == 0) {
             recipientId = senderAccount.getId();

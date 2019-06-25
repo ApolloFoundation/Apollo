@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -46,7 +46,7 @@ public final class DeleteAssetShares extends CreateTransaction {
 
         Asset asset = ParameterParser.getAsset(req);
         long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        AccountEntity account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsAssetDelete(asset.getId(), quantityATU);
         try {

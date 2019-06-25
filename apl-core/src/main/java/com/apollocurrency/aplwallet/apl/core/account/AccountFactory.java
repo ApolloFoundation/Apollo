@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import com.apollocurrency.aplwallet.apl.core.account.model.*;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -33,16 +32,15 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import lombok.Setter;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Set;
 
 /**
  * Used as factory to produce the Account objects
  */
+@Deprecated
 @Singleton
 public final class AccountFactory {
 
@@ -57,13 +55,13 @@ public final class AccountFactory {
     private static AccountPropertyService accountPropertyService;
     private static AccountPublickKeyService accountPublickKeyService;
 
-    public static Account createAccount(AccountEntity entity){
+    public static AccountOld createAccount(AccountEntity entity){
         if (entity == null)
             return null;
 
         lookupBeans();
 
-        Account account = new AccountWrapper( entity,
+        AccountOld account = new AccountWrapper( entity,
                 blockchain, blockchainConfig,
                 accountService, accountInfoService,
                 accountLeaseService, accountAssetService, accountCurrencyService,
@@ -85,7 +83,7 @@ public final class AccountFactory {
         }
     }
 
-    private static class AccountWrapper implements Account {
+    private static class AccountWrapper implements AccountOld {
 
         private AccountEntity account;
 
@@ -130,11 +128,6 @@ public final class AccountFactory {
         }
 
         @Override
-        public Account getAccount(long id) {
-            return accountService.getAccount(id);
-        }
-
-        @Override
         public AccountEntity getEntity(){
             return account;
         }
@@ -169,17 +162,17 @@ public final class AccountFactory {
         }
 
         @Override
-        public Set<ControlType> getControls() {
+        public Set<AccountControlType> getControls() {
             return account.getControls();
         }
 
         @Override
-        public boolean addControl(ControlType control) {
+        public boolean addControl(AccountControlType control) {
             return account.addControl(control);
         }
 
         @Override
-        public boolean removeControl(ControlType control) {
+        public boolean removeControl(AccountControlType control) {
             return account.removeControl(control);
         }
 
@@ -339,7 +332,7 @@ public final class AccountFactory {
         }
 
         @Override
-        public void setProperty(Transaction transaction, Account setterAccount, String property, String value) {
+        public void setProperty(Transaction transaction, AccountOld setterAccount, String property, String value) {
             accountPropertyService.setProperty(account, transaction, setterAccount.getEntity(), property, value);
         }
 

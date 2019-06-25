@@ -1,6 +1,10 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
@@ -33,8 +37,8 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
             accountProperty.setValue(value);
         }
         accountPropertyTable.insert(accountProperty);
-        accountService.listeners.notify(accountService.getAccount(accountEntity), Account.Event.SET_PROPERTY);
-        propertyListeners.notify(accountProperty, Account.Event.SET_PROPERTY);
+        accountService.listeners.notify(accountEntity, AccountEvent.SET_PROPERTY);
+        propertyListeners.notify(accountProperty, AccountEvent.SET_PROPERTY);
 
     }
 
@@ -48,8 +52,8 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(accountEntity.getId()));
         }
         AccountPropertyTable.getInstance().delete(accountProperty);
-        accountService.listeners.notify(accountService.getAccount(accountEntity), Account.Event.DELETE_PROPERTY);
-        propertyListeners.notify(accountProperty, Account.Event.DELETE_PROPERTY);
+        accountService.listeners.notify(accountEntity, AccountEvent.DELETE_PROPERTY);
+        propertyListeners.notify(accountProperty, AccountEvent.DELETE_PROPERTY);
     }
 
 }

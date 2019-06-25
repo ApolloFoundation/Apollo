@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -381,7 +381,7 @@ public final class PeerImpl implements Peer {
         }
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < blockchain.getHeight() - 60) {
             long accountId = hallmark.getAccountId();
-            Account account = accountService.getAccount(accountId);
+            AccountEntity account = accountService.getAccountEntity(accountId);
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = blockchain.getHeight();
         }
@@ -892,7 +892,7 @@ public final class PeerImpl implements Peer {
                 }
             }
             setHallmark(hallmark);
-            long accountId = Account.getId(hallmark.getPublicKey());
+            long accountId = AccountService.getId(hallmark.getPublicKey());
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;
             long totalWeight = 0;

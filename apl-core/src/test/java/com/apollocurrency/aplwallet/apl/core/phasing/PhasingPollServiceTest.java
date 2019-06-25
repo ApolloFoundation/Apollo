@@ -90,8 +90,7 @@ public class PhasingPollServiceTest {
             AccountAssetServiceImpl.class, AccountAssetTable.class,
             AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
             AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
-            AccountFactory.class
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -412,7 +411,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testAddVote() throws SQLException {
-        inTransaction(con -> service.addVote(ptd.NEW_VOTE_TX, accountService.getAccount(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId()));
+        inTransaction(con -> service.addVote(ptd.NEW_VOTE_TX, accountService.getAccountEntity(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId()));
         long voteCount = service.getVoteCount(ptd.POLL_1.getId());
 
         assertEquals(voteCount, 3);

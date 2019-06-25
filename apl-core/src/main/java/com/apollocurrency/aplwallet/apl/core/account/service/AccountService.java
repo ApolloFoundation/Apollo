@@ -1,12 +1,17 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -17,27 +22,25 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountService {
-    Listeners<Account, Account.Event> listeners = new Listeners<>();
+    Listeners<AccountEntity, AccountEvent> listeners = new Listeners<>();
 
-    static boolean addListener(Listener<Account> listener, Account.Event eventType) {
+    static boolean addListener(Listener<AccountEntity> listener, AccountEvent eventType) {
         return listeners.addListener(listener, eventType);
     }
 
-    static boolean removeListener(Listener<Account> listener, Account.Event eventType) {
+    static boolean removeListener(Listener<AccountEntity> listener, AccountEvent eventType) {
         return listeners.removeListener(listener, eventType);
     }
+
+    static long getId(byte[] publicKey) {
+        byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
+        return Convert.fullHashToId(publicKeyHash);
+    }
+
 
     int getCount();
 
     int getActiveLeaseCount();
-
-    Account getAccount(AccountEntity entity);
-
-    Account getAccount(long id);
-
-    Account getAccount(long id, int height);
-
-    Account getAccount(byte[] publicKey);
 
     AccountEntity getAccountEntity(long id);
 
@@ -45,13 +48,15 @@ public interface AccountService {
 
     AccountEntity getAccountEntity(byte[] publicKey);
 
-    Account addOrGetAccount(long id);
+    AccountEntity addOrGetAccount(long id);
 
-    Account addOrGetAccount(long id, boolean isGenesis);
+    AccountEntity addOrGetAccount(long id, boolean isGenesis);
 
     void save(AccountEntity account);
 
     long getEffectiveBalanceAPL(AccountEntity account, int height, boolean lock);
+
+    long getGuaranteedBalanceATM(AccountEntity account);
 
     long getGuaranteedBalanceATM(AccountEntity account, int numberOfConfirmations, int currentHeight);
 

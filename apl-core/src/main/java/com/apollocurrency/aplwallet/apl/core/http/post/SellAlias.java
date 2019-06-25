@@ -26,7 +26,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
@@ -48,7 +48,7 @@ public final class SellAlias extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Alias alias = ParameterParser.getAlias(req);
-        Account owner = ParameterParser.getSenderAccount(req);
+        AccountEntity owner = ParameterParser.getSenderAccount(req);
 
         long priceATM =
                 ParameterParser.getLong(req, "priceATM", 0L, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),

@@ -23,10 +23,10 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -48,9 +48,10 @@ public final class Demo implements AddOn {
     }
 
     public void onBlockBeforeApply(@Observes @BlockEvent(BlockEventType.BEFORE_BLOCK_APPLY) Block block) {
+
         LOG.info("Block " + block.getStringId()
                 + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
-                + accountService.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL());
+                + accountService.getEffectiveBalanceAPL(accountService.getAccountEntity(block.getGeneratorId()), BlockchainHelper.getBlockchainHeight(), true));
     }
 
 

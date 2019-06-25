@@ -179,8 +179,7 @@ class CsvExporterTest {
             AccountAssetServiceImpl.class, AccountAssetTable.class,
             AccountPublickKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
             AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class,
-            AccountFactory.class
+            AccountPropertyServiceImpl.class, AccountPropertyTable.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))

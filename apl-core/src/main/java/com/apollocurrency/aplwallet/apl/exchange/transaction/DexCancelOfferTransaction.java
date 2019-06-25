@@ -4,8 +4,8 @@ import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -62,12 +62,12 @@ public class DexCancelOfferTransaction extends DEX {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
         return true;
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
         DexOfferCancelAttachment attachment = (DexOfferCancelAttachment) transaction.getAttachment();
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getTransactionId());
 
@@ -83,7 +83,7 @@ public class DexCancelOfferTransaction extends DEX {
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
 
     }
 

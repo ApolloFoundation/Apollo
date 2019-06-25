@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -18,38 +19,41 @@ public class TransactionApplier {
     private BlockchainConfig blockchainConfig;
     private ReferencedTransactionDaoImpl referencedTransactionDao;
     private AccountService accountService;
+    private AccountPublickKeyService accountPublickKeyService;
+
 
     @Inject
-    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDaoImpl referencedTransactionDao, AccountService accountService) {
+    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDaoImpl referencedTransactionDao, AccountService accountService, AccountPublickKeyService accountPublickKeyService) {
         this.blockchainConfig = blockchainConfig;
         this.referencedTransactionDao = referencedTransactionDao;
         this.accountService = accountService;
+        this.accountPublickKeyService = accountPublickKeyService;
     }
 
     // returns false iff double spending
     public boolean applyUnconfirmed(Transaction transaction) {
-        Account senderAccount = accountService.getAccount(transaction.getSenderId());
+        AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
         return senderAccount != null && transaction.getType().applyUnconfirmed(transaction, senderAccount);
     }
 
     public void apply(Transaction transaction) {
-        Account senderAccount = accountService.getAccount(transaction.getSenderId());
-        senderAccount.apply(transaction.getSenderPublicKey());
-        Account recipientAccount = null;
+        AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
+        accountPublickKeyService.apply(senderAccount, transaction.getSenderPublicKey());
+        AccountEntity recipientAccount = null;
         if (transaction.getRecipientId() != 0) {
-            recipientAccount = accountService.getAccount(transaction.getRecipientId());
+            recipientAccount = accountService.getAccountEntity(transaction.getRecipientId());
             if (recipientAccount == null) {
                 recipientAccount = accountService.addOrGetAccount(transaction.getRecipientId());
             }
         }
         if (transaction.getReferencedTransactionFullHash() != null) {
-            senderAccount.addToUnconfirmedBalanceATM(transaction.getType().getLedgerEvent(), transaction.getId(),
+            accountService.addToUnconfirmedBalanceATM(senderAccount, transaction.getType().getLedgerEvent(), transaction.getId(),
                     0, blockchainConfig.getUnconfirmedPoolDepositAtm());
 
             referencedTransactionDao.insert(new ReferencedTransaction((long) 0, transaction.getId(), Convert.fullHashToId(transaction.referencedTransactionFullHash()), transaction.getHeight()));
         }
         if (transaction.attachmentIsPhased()) {
-            senderAccount.addToBalanceATM(transaction.getType().getLedgerEvent(), transaction.getId(), 0, -transaction.getFeeATM());
+            accountService.addToBalanceATM(senderAccount, transaction.getType().getLedgerEvent(), transaction.getId(), 0, -transaction.getFeeATM());
         }
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             if (!appendage.isPhased(transaction)) {
@@ -60,7 +64,7 @@ public class TransactionApplier {
     }
 
     public void undoUnconfirmed(Transaction transaction) {
-        Account senderAccount = accountService.getAccount(transaction.getSenderId());
+        AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
         transaction.getType().undoUnconfirmed(transaction, senderAccount);
     }
 }

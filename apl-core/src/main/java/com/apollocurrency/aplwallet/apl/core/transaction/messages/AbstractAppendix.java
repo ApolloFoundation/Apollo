@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import java.nio.ByteBuffer;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -109,7 +109,7 @@ public abstract class AbstractAppendix implements Appendix {
         validate(transaction, blockHeight);
     }
 
-    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
+    public abstract void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount);
 
     public void loadPrunable(Transaction transaction) {
         loadPrunable(transaction, false);
