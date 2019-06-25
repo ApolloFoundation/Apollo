@@ -169,5 +169,9 @@ public class PeerInfo extends BaseP2PResponse {
      * New!
      */
     private String X509_cert;
+    /**
+     * blacklist cause
+     */
+    private String cause;
 
 }

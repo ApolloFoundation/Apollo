@@ -125,7 +125,7 @@ public final class PeerServlet extends WebSocketServlet {
                 res = new GetFileDownloadInfo(downloadableFilesManager);
                 break;
             case "getFileChunk":
-                res = new GetFileChunk();
+                res = new GetFileChunk(downloadableFilesManager);
                 break; 
             case "getShardingInfo":
                 res = new GetShardingInfo(shardDao, blockchainConfig);
