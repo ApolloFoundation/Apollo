@@ -44,7 +44,7 @@ public class PeerFileInfo implements HasHashSum {
        if(fdi==null || fdi.fileInfo==null || fdi.fileInfo.hash==null){
           hash=null;
        }else{
-            hash=new BigInteger(fdi.fileInfo.hash); 
+          hash=new BigInteger(fdi.fileInfo.hash); 
        }
        return hash;
     }

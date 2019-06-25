@@ -143,7 +143,7 @@ public class ShardDownloader {
     public FileDownloadDecision prepareAndStartDownload() {
         log.debug("prepareAndStartDownload...");
         FileDownloadDecision result = FileDownloadDecision.NotReady;
-        if (sortedShards.isEmpty()) {
+        if (sortedShards.isEmpty()) { //???
             getShardInfoFromPeers();
             log.debug("Shards received from Peers '{}'", sortedShards);
         }
@@ -156,10 +156,10 @@ public class ShardDownloader {
 
         } else {
             //we have some shards available on the networks, let's decide what to do
-            List<Long> shardIds = new ArrayList(sortedShards.entrySet());
+            List<Long> shardIds = new ArrayList(sortedShards.keySet());
             Collections.sort(shardIds);
             Long lastShard = shardIds.get(shardIds.size() - 1);
-            log.debug("Last known ShardId '{}'", lastShard);
+            log.debug("Last known ShardId '{}'", lastShard);            
             String fileID = shardNameHelper.getShardNameByShardId(lastShard, myChainId);
             log.debug("fileID = '{}'", fileID);
             fileDownloader.setFileId(fileID);
@@ -174,8 +174,17 @@ public class ShardDownloader {
                 return result;
             }
             // prepare downloading
+            Set<Peer> lastShardPeers = shardsPeers.get(lastShard);
+            if(lastShardPeers.size()<2){ //we cannot useStudent's distribution with 1
+              result = FileDownloadDecision.NoPeers;
+             //FIRE event when shard is NOT PRESENT
+              log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
+              ShardPresentData shardPresentData = new ShardPresentData();
+              presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
+              return result;
+            }
             log.debug("Start preparation to downloading...");
-            result = fileDownloader.prepareForDownloading(shardsPeers.get(lastShard));
+            result = fileDownloader.prepareForDownloading(lastShardPeers);
             if (result == FileDownloadDecision.AbsOK
                     || result == FileDownloadDecision.OK
                     || result == FileDownloadDecision.Risky) {

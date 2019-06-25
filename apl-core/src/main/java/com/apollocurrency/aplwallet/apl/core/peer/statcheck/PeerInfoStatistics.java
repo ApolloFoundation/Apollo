@@ -41,11 +41,14 @@ public class PeerInfoStatistics {
         return res;
     }
     
-    public Map<BigInteger,ProbabInfo> getFrequences(){
+    public Map<BigInteger,ProbabInfo> getFrequences() throws NotEnoughDataException{
         Map<BigInteger,ProbabInfo> res = new HashMap();
         long all=0;
         for(BigInteger hash: sorted.keySet()){
             all=all+sorted.get(hash).count();
+        }
+        if(all<2){
+            throw new NotEnoughDataException("Count of samples is less then 2 and not enough for statistics");
         }
         double t = StudentsT(BETA, all);
         for(BigInteger hash: sorted.keySet()){
