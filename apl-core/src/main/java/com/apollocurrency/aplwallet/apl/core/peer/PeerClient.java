@@ -68,7 +68,7 @@ public class PeerClient {
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         log.debug("getFileInfo() resp = {}", req.toJSONString());
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         log.debug("getFileInfo() resp = {}", resp.toJSONString());
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
@@ -100,7 +100,7 @@ public class PeerClient {
        rq.offset=fci.offset.intValue();
        rq.size=fci.size.intValue();
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         if(resp==null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
@@ -123,7 +123,7 @@ public class PeerClient {
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         log.trace("{}", resp);
         if(resp==null){
             log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());

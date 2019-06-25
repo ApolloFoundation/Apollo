@@ -127,8 +127,8 @@ public final class PeerImpl implements Peer {
         
         this.host = host;
         this.propertiesHolder=propertiesHolder;
-        pi.announcedAddress = announcedAddress;
-        pi.shareAddress = true;
+        pi.setAnnouncedAddress(announcedAddress);
+        pi.setShareAddress(true);
         PeerAddress pa;
         if(announcedAddress==null || announcedAddress.isEmpty()){
             LOG.trace("got empty announcedAddress from host {}",host);
@@ -141,7 +141,7 @@ public final class PeerImpl implements Peer {
         this.webSocket = new PeerWebSocket();
         this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
-        pi.apiServerIdleTimeout = API.apiServerIdleTimeout;
+        pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
         this.blockchainState = BlockchainState.UP_TO_DATE;
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
@@ -215,7 +215,8 @@ public final class PeerImpl implements Peer {
         boolean versionChanged = version == null || !version.equals(this.version);
         this.version = version;
         isOldVersion = false;
-        if (Constants.APPLICATION.equals(pi.application)) {
+        LOG.trace("setVersion to Application = {} for pi = {}", pi.getApplication(), pi);
+        if (Constants.APPLICATION.equals(pi.getApplication())) {
             isOldVersion = Version.isOldVersion(version, Constants.MIN_VERSION);
             if (isOldVersion) {
                 if (versionChanged) {
@@ -232,7 +233,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public String getApplication() {
-        return pi.application;
+        return pi.getApplication();
     }
 
     public boolean setApplication(String application) {
@@ -243,22 +244,22 @@ public final class PeerImpl implements Peer {
            ) {
             LOG.debug("Invalid application value='{}' from host:{}", application, host);
             res=false;
-        }else{        
-            this.pi.application = application.trim();
+        } else {
+            this.pi.setApplication(application.trim());
         }
         return res;
     }
 
     @Override
     public String getPlatform() {
-        return pi.platform;
+        return pi.getPlatform();
     }
 
     public void setPlatform(String platform) {
         if (platform != null && platform.length() > PeerHttpServer.MAX_PLATFORM_LENGTH) {
             throw new IllegalArgumentException("Invalid platform length: " + platform.length());
         }
-        pi.platform = platform;
+        pi.setPlatform(platform);
     }
 
     @Override
@@ -272,20 +273,20 @@ public final class PeerImpl implements Peer {
 
     @Override
     public String getSoftware() {
-        return Convert.truncate(pi.application, "?", 10, false)
+        return Convert.truncate(pi.getApplication(), "?", 10, false)
                 + " (" + Convert.truncate(version.toString(), "?", 10, false) + ")"
-                + " @ " + Convert.truncate(pi.platform, "?", 10, false);
+                + " @ " + Convert.truncate(pi.getPlatform(), "?", 10, false);
     }
 
     @Override
     public int getApiPort() {
-        return pi.apiPort;
+        return pi.getApiPort();
     }
 
     public void setApiPort(Object apiPortValue) {
         if (apiPortValue != null) {
             try {
-                pi.apiPort = (Integer)apiPortValue;
+                pi.setApiPort((Integer)apiPortValue);
             } catch (RuntimeException e) {
                 throw new IllegalArgumentException("Invalid peer apiPort " + apiPortValue);
             }
@@ -294,13 +295,13 @@ public final class PeerImpl implements Peer {
 
     @Override
     public int getApiSSLPort() {
-        return pi.apiSSLPort;
+        return pi.getApiSSLPort();
     }
 
     public void setApiSSLPort(Object apiSSLPortValue) {
         if (apiSSLPortValue != null) {
             try {
-                pi.apiSSLPort = (Integer)apiSSLPortValue;
+                pi.setApiSSLPort((Integer)apiSSLPortValue);
             } catch (RuntimeException e) {
                 throw new IllegalArgumentException("Invalid peer apiSSLPort " + apiSSLPortValue);
             }
@@ -320,7 +321,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public int getApiServerIdleTimeout() {
-        return pi.apiServerIdleTimeout;
+        return pi.getApiServerIdleTimeout();
     }
 
     @Override
@@ -339,16 +340,16 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean shareAddress() {
-        return pi.shareAddress;
+        return pi.getShareAddress();
     }
 
     public void setShareAddress(boolean shareAddress) {
-        pi.shareAddress = shareAddress;
+        pi.setShareAddress(shareAddress);
     }
 
     @Override
     public String getAnnouncedAddress() {
-        return pi.announcedAddress;
+        return pi.getAnnouncedAddress();
     }
 
     void setAnnouncedAddress(String announcedAddress) throws MalformedURLException, UnknownHostException {
@@ -356,7 +357,7 @@ public final class PeerImpl implements Peer {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
         PeerAddress pa = new PeerAddress(announcedAddress);
-        pi.announcedAddress = pa.getAddrWithPort();
+        pi.setAnnouncedAddress(pa.getAddrWithPort());
         this.port=pa.getPort();
     }
 
@@ -387,7 +388,7 @@ public final class PeerImpl implements Peer {
     @Override
     public boolean isBlacklisted() {
         return blacklistingTime > 0 || isOldVersion || Peers.knownBlacklistedPeers.contains(host)
-                || (pi.announcedAddress != null && Peers.knownBlacklistedPeers.contains(pi.announcedAddress));
+                || (pi.getAnnouncedAddress() != null && Peers.knownBlacklistedPeers.contains(pi.getAnnouncedAddress()));
     }
 
     @Override
@@ -714,7 +715,7 @@ public final class PeerImpl implements Peer {
         }else{
            prefix="https://";             
         }
-        return new URI(prefix + pi.announcedAddress);
+        return new URI(prefix + pi.getAnnouncedAddress());
     }
     
     @Override   
@@ -722,14 +723,15 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            if (!Peers.ignorePeerAnnouncedAddress && pi.announcedAddress != null) {
+            if (!Peers.ignorePeerAnnouncedAddress && pi.getAnnouncedAddress() != null) {
                 try {
                     URI uri = getURI(false);
                     InetAddress inetAddress = InetAddress.getByName(uri.getHost());
                     if (!inetAddress.equals(InetAddress.getByName(host))) {
-                        LOG.debug("Connect: announced address " + pi.announcedAddress + " now points to " + inetAddress.getHostAddress() + ", replacing peer " + host);
+                        LOG.debug("Connect: announced address '{}' now points to '{}', replacing peer '{}'",
+                                pi.getAnnouncedAddress(),  inetAddress.getHostAddress(), host);
                         Peers.removePeer(this);
-                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, pi.announcedAddress, true);
+                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, pi.getAnnouncedAddress(), true);
                         if (newPeer != null) {
                             LOG.trace("Prepare Handshake with : {}", newPeer);
                             Peers.addPeer(newPeer);
@@ -748,60 +750,64 @@ public final class PeerImpl implements Peer {
             if (response != null) {
                 //TODO: parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
-                LOG.debug("handshake Parsed newPi = {}", newPi);
+                LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
                 if (newPi.errorCode != null && newPi.errorCode!=0) {
                     setState(PeerState.NON_CONNECTED);
                     LOG.debug("NULL or error response from {}",host);
                     return;
                 }
-                if(!setApplication(newPi.application)){
-                    LOG.debug("Peer: {} has different Application: {}, removing", getHost(), newPi.application);
+                if(!setApplication(newPi.getApplication())){
+                    LOG.debug("Peer: {} has different Application value '{}', removing",
+                            getHost(), newPi.getApplication());
                     remove();
                     return;
                 }
 
-                if (newPi.chainId == null || ! targetChainId.equals(UUID.fromString(newPi.chainId))) {
-                    LOG.debug("Peer: {} has different chainId: {}, removing", getHost(), newPi.chainId);
+                if (newPi.getChainId() == null || !targetChainId.equals(UUID.fromString(newPi.getChainId()))) {
+                    LOG.debug("Peer: {} has different chainId: '{}', removing",
+                            getHost(), newPi.getChainId());
                     remove();
                     return;
                 }
-                Version peerVersion = new Version(newPi.version);
+                Version peerVersion = new Version(newPi.getVersion());
                 setVersion(peerVersion);
                 if(isOldVersion){
                     LOG.debug("PEER-Connect host{}: version: {} is too old, blacklisting",host, peerVersion);
                     blacklist("Old version: "+peerVersion.toString());
                     return;
                 }
-                if(!analyzeHallmark(newPi.hallmark)){
-                    LOG.debug("PEER-Connect host{}: version: {} hallmark failed, blacklisting",host, peerVersion); 
+                if(!analyzeHallmark(newPi.getHallmark())){
+                    LOG.debug("PEER-Connect host {}: version: {} hallmark failed, blacklisting",
+                            host, peerVersion);
                     blacklist("Old version: "+peerVersion.toString());
                     return;
                 }
                 
-                chainId.set(UUID.fromString(newPi.chainId));     
+                chainId.set(UUID.fromString(newPi.getChainId()));
                 String servicesString = (String)response.get("services");
                 long origServices = services;                
                 services = (servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-                setApiPort(newPi.apiPort);
-                setApiSSLPort(newPi.apiSSLPort);
-                setDisabledAPIs(newPi.disabledAPIs);
-                setBlockchainState(newPi.blockchainState);
+                setApiPort(newPi.getApiPort());
+                setApiSSLPort(newPi.getApiSSLPort());
+                setDisabledAPIs(newPi.getDisabledAPIs());
+                setBlockchainState(newPi.getBlockchainState());
                 lastUpdated = lastConnectAttempt;
 
-                setPlatform(newPi.platform);
-                setShareAddress(newPi.shareAddress);
+                setPlatform(newPi.getPlatform());
+                setShareAddress(newPi.getShareAddress());
  
                 if (!Peers.ignorePeerAnnouncedAddress) {
-                    if (newPi.announcedAddress != null) {
-                            if (!verifyAnnouncedAddress(newPi.announcedAddress)) {
-                                LOG.debug("Connect: new announced address: {} for host: {}  not accepted", newPi.announcedAddress, host);
+                    if (newPi.getAnnouncedAddress() != null) {
+                            if (!verifyAnnouncedAddress(newPi.getAnnouncedAddress())) {
+                                LOG.debug("Connect: new announced address: {} for host: {}  not accepted", newPi.getAnnouncedAddress(), host);
                                 setState(PeerState.NON_CONNECTED);
                                 return;
                             }
-                            if (!newPi.announcedAddress.equalsIgnoreCase(pi.announcedAddress)) {
-                                LOG.debug("Connect: peer " + host + " has new announced address " + newPi.announcedAddress + ", old is " + pi.announcedAddress);
+                            if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
+                                LOG.debug("Connect: peer '{}' has new announced address '{}', old is '{}'",
+                                        host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
                                 int oldPort = getPort();
-                                Peers.setAnnouncedAddress(this, newPi.announcedAddress);
+                                Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                                 if (getPort() != oldPort) {
                                     // force checking connectivity to new announced port
                                     setState(PeerState.NON_CONNECTED);
@@ -1020,9 +1026,9 @@ public final class PeerImpl implements Peer {
         }
         uri.append(host).append(":");
         if (providesService(Peer.Service.API_SSL)) {
-            uri.append(pi.apiSSLPort);
+            uri.append(pi.getApiSSLPort());
         } else {
-            uri.append(pi.apiPort);
+            uri.append(pi.getApiPort());
         }
         return uri;
     }
@@ -1034,21 +1040,22 @@ public final class PeerImpl implements Peer {
         PeerImpl peer = (PeerImpl) o;
         return port == peer.port &&
                 Objects.equals(host, peer.host) &&
-                Objects.equals(pi.announcedAddress, peer.getAnnouncedAddress());
+                Objects.equals(pi.getAnnouncedAddress(), peer.getAnnouncedAddress());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(host, pi.announcedAddress, port);
+        return Objects.hash(host, pi.getAnnouncedAddress(), port);
     }
 
     @Override
     public String toString() {
         return "Peer{" +
                 "state=" + state +
-                ", announcedAddress='" + pi.announcedAddress + '\'' +
+                ", announcedAddress='" + pi.getAnnouncedAddress() + '\'' +
                 ", services=" + services +
                 ", host='" + host + '\'' +
+                ", application ='" + getApplication() + '\'' +
                 ", version='" + version + '\'' +
                 '}';
     }
@@ -1067,6 +1074,6 @@ public final class PeerImpl implements Peer {
 
 
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
-        pi.apiServerIdleTimeout=apiServerIdleTimeout;
+        pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
 }
