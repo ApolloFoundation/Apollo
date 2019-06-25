@@ -7,24 +7,15 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

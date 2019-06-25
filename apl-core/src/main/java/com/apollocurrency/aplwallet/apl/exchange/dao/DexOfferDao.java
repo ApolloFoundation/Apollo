@@ -15,7 +15,6 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.List;
-import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 
 public interface DexOfferDao {
 
@@ -47,6 +46,7 @@ public interface DexOfferDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             " WHERE latest = true" +
+            " AND offer.type = :type" + 
             " AND offer.finish_time > :currentTime" +
             " AND offer.offer_currency = :offerCur" +
             " AND offer.offer_amount = :offerAmount" +
