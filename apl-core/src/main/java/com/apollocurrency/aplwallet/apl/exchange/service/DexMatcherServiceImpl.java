@@ -12,11 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -103,7 +105,9 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      */ 
     private boolean validateOffer( DexOffer offer) {
         
-        DexCurrencies curr = offer.getOfferCurrency();        
+        DexCurrencies curr = offer.getOfferCurrency(); 
+        log.debug("currency: {}", curr );
+        
         switch (curr) {
             case APL: return validateOfferAPL(offer);
             case ETH: return validateOfferETH(offer);
@@ -123,99 +127,55 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private void onOfferMatch ( DexOffer myOffer, DexOffer hisOffer) {
         log.debug("DexMatcherService.onOfferMatch callback ");
+        // TODO: 
     }
     
-    
-    
-
+        
     /**
      * Core event for matcher - when offer is created, it is called back     
      * @param offerType  Type of the offer. (BUY/SELL) 0/1
-     * @param walletAddress From address
-     * @param offerAmount Offer amount in Gwei (1 Gwei = 0.000000001)
-     * @param pairCurrency Paired currency. (APL=0, ETH=1, PAX=2)
-     * @param pairRate Pair rate in Gwei. (1 Gwei = 0.000000001)
-     * @param amountOfTime Amount of time for this offer. (seconds)
      */
-    
-    public void onCreateOffer ( Byte offerType,
-                                String walletAddress,
-                                Long offerAmount,   
-                                Byte pairCurrency,
-                                Long pairRate,
-                                Integer amountOfTime ) {
+
+    public void onCreateOffer( DexOffer createdOffer ) {
         
-        log.debug("DexMatcherServiceImpl:onCreateOffer, offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
+        log.debug("DexMatcherServiceImpl:onCreateOffer()");
         
         OfferType type = null;
-        OfferStatus offerStatus = null;
-        DexCurrencies pairCur = null;
-        Integer currentTime = null;
-        Long accountId = null;
+    
+        // vice versa - if we create buy offer we need to look up sell             
+        if ( createdOffer.getType().equals(OfferType.SELL)) type = OfferType.BUY;
+                else type = OfferType.SELL;        
+                
+        Integer currentTime = epochTime.getEpochTime();        
+        BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
+        Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
+        BigDecimal pairRate = new BigDecimal(createdOffer.getPairRate()); 
         
-        boolean isAvailableForNow = true;
-        String accountIdStr = "6141493552915739570";
-
-        //Validate
-        try {
-            if (offerType != null) {
-                type = OfferType.getType(offerType);
-            }
-            if (pairCurrency != null) {
-                pairCur = DexCurrencies.getType(pairCurrency);
-            }
-            if (isAvailableForNow) {
-                currentTime = epochTime.getEpochTime();
-            }
-            if(!StringUtils.isBlank(accountIdStr)){
-                accountId = Long.parseUnsignedLong(accountIdStr);
-            }
-            // if(status != null){
-                offerStatus = OfferStatus.OPEN; //getType(status);
-            // }
-        } catch (Exception ex){
-            // return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
-            log.error("incorrect request data");
-        }
-
-        int firstIndex = 0;//ParameterParser.getFirstIndex(req);
-        int lastIndex = Integer.MAX_VALUE;//0xFFFFFFFF;//ParameterParser.getLastIndex(req);
-        int offset = firstIndex > 0 ? firstIndex : 0;
-        int limit = Integer.MAX_VALUE - 1;//DbUtils.calculateLimit(firstIndex, lastIndex);
-
-        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, offerStatus, offset, limit );        
-
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, DexCurrencies.APL, pairCur, accountId, offerStatus, null, null, offset, limit);
-        List<DexOffer> offers = dexService.getOffers(dexOfferDBRequest);
-        
-        log.debug("got offers: " + offers.size() );
-        
-        DexOffer my = new DexOffer();
-        my.setType(type);
-        my.setAccountId(accountId);
-        my.setOfferCurrency(DexCurrencies.APL);
-        my.setOfferAmount(offerAmount);
-        my.setPairCurrency(pairCur);
-        my.setPairRate(pairRate);
-        my.setStatus(offerStatus);
-        my.setFromAddress(walletAddress);              
-        
-        
+        log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", type, currentTime, offerAmount, pairCurrency, pairRate );
+                
+        DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(type, currentTime,  0 , offerAmount, pairCurrency.intValue(), pairRate );        
+        List<DexOffer> offers = dexService.getOffersForMatching(dexOfferDBMatchingRequest);
+                       
         // DexOffer match = offers.
         int nOffers = offers.size();
+        log.debug("offers found: {}", nOffers );
         
         if ( nOffers >= 1) {                        
             for (int i=0; i<nOffers; i++) {
                 DexOffer currentOffer = offers.get(i);                
                 if (validateOffer(currentOffer)) {
                     // matched...
-                    onOfferMatch(my, currentOffer); 
+                    log.debug("match found: {}", currentOffer.getId() );
+                    this.lastMatchedOffer = currentOffer;
+                    onOfferMatch(createdOffer, currentOffer); 
+                    
                     return;
                 } else {
-                    log.debug("something went wrong: offer {} is not valid", currentOffer.getId());
+                    log.debug("Choosing between offers: {} was not validated", currentOffer.getId());
                 }                
             }                     
         }        
-        log.debug("Something went wrong: there's no matching for this offer");
+        log.debug("Something went wrong: there's no matching for this offer");    
     }    
+    
 }

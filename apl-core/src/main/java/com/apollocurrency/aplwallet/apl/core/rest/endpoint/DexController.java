@@ -261,7 +261,7 @@ public class DexController {
             // Looks like this is the correct position for event handling
             // for matcher.
 
-            dexMatcherService.onCreateOffer(offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime);
+            dexMatcherService.onCreateOffer(offer);
 
             try {
                 if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
