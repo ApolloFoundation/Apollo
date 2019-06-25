@@ -53,7 +53,7 @@ public interface DexOfferDao {
             " AND offer.pair_currency = :pairCur" + 
             " AND offer.pair_rate <= :pairRate" +
             " AND offer.status = 0" +
-            " ORDER BY offer.pair_rate DESC")
+            " ORDER BY offer.pair_rate ASC")
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffersForMatching(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest );
 

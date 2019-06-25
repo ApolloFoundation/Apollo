@@ -118,7 +118,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private void onOfferMatch ( DexOffer myOffer, DexOffer hisOffer) {
         log.debug("DexMatcherService.onOfferMatch callback ");
-        // TODO: 
+        log.debug("match..  id: {}, offerCurrency: {}, offerAmount: {}, pairCurrency: {}, pairRate: {} ", hisOffer.getAccountId(), hisOffer.getOfferCurrency(), hisOffer.getOfferAmount(), hisOffer.getPairCurrency(), hisOffer.getPairRate() ); 
     }
     
         
