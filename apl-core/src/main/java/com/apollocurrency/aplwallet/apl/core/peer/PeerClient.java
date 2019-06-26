@@ -98,8 +98,8 @@ public class PeerClient {
        FileChunkRequest rq = new FileChunkRequest();
        rq.fileId=fci.fileId;
        rq.id = fci.chunkId;
-       rq.offset=fci.offset.intValue();
-       rq.size=fci.size.intValue();
+       rq.offset=fci.offset;
+       rq.size=fci.size;
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         if(resp==null){

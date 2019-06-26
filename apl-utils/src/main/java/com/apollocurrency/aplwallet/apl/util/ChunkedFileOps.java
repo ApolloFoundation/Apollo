@@ -68,17 +68,17 @@ public class ChunkedFileOps {
         return res;
     }
     
-    public int readChunk(int offset, int size, byte[] dataBuf) throws IOException{
+    public int readChunk(Long offset, Long size, byte[] dataBuf) throws IOException{
         int res;
         if(!absPath.toFile().exists()){
            res=-2;
            return res;
         }        
         RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r");
-        rf.skipBytes(offset);
-        res = rf.read(dataBuf,0,size);
+        rf.skipBytes(offset.intValue());
+        res = rf.read(dataBuf,0,size.intValue());
         CheckSum cs = new CheckSum();
-        cs.update(dataBuf,size);
+        cs.update(dataBuf,size.intValue());
         lastRDChunkCrc=cs.finish();
         return res;
     }
