@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -34,15 +35,6 @@ public class AccountServiceImpl implements AccountService {
     private AccountTable accountTable;
 
     @Inject @Setter
-    private PublicKeyTable publicKeyTable;
-
-    @Inject @Setter
-    private GenesisPublicKeyTable genesisPublicKeyTable;
-
-    @Inject @Setter
-    private BlockchainProcessor blockchainProcessor;
-
-    @Inject @Setter
     private Blockchain blockchain;
 
     @Inject @Setter
@@ -58,13 +50,16 @@ public class AccountServiceImpl implements AccountService {
     private AccountPublickKeyService accountPublickKeyService;
 
     @Override
-    public int getCount() {
-        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
-    }
-
-    @Override
     public int getActiveLeaseCount() {
         return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
+    }
+
+    private BlockchainProcessor blockchainProcessor;
+    //need to prevent the cyclic dependencies
+    private void lookupAnInjectBlockchainProcessor() {
+        if (this.blockchainProcessor == null) {
+            this.blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        }
     }
 
     @Override
@@ -128,13 +123,7 @@ public class AccountServiceImpl implements AccountService {
             accountEntity = accountTable.newEntity(dbKey);
             PublicKey publicKey = accountPublickKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
-                if (isGenesis) {
-                    publicKey = genesisPublicKeyTable.newEntity(dbKey);
-                    genesisPublicKeyTable.insert(publicKey);
-                } else {
-                    publicKey = publicKeyTable.newEntity(dbKey);
-                    publicKeyTable.insert(publicKey);
-                }
+                accountPublickKeyService.insertNewPublicKey(dbKey, isGenesis);
             }
             accountEntity.setPublicKey(publicKey);
         }
@@ -190,6 +179,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getGuaranteedBalanceATM(AccountEntity account, final int numberOfConfirmations, final int currentHeight) {
+        lookupAnInjectBlockchainProcessor();
         sync.readLock();
         try {
             int height = currentHeight - numberOfConfirmations;

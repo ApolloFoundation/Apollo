@@ -37,9 +37,6 @@ public interface AccountService {
         return Convert.fullHashToId(publicKeyHash);
     }
 
-
-    int getCount();
-
     int getActiveLeaseCount();
 
     AccountEntity getAccountEntity(long id);

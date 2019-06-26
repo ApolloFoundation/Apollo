@@ -19,6 +19,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -262,7 +263,7 @@ public class Apollo {
                 .recursiveScanPackages(Updater.class)
                 .recursiveScanPackages(ServerInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
-                .recursiveScanPackages(Account.class)
+                .recursiveScanPackages(AccountService.class)
                 .recursiveScanPackages(TransactionType.class)
                 .recursiveScanPackages(FullTextTrigger.class)
                 .recursiveScanPackages(BlockchainConfig.class)
@@ -287,7 +288,8 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
-        aplCoreRuntime = new AplCoreRuntime(runtimeMode);
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
         
         try {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());

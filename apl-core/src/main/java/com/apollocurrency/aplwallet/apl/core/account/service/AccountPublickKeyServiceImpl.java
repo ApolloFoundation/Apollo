@@ -51,6 +51,11 @@ public class AccountPublickKeyServiceImpl implements AccountPublickKeyService {
     }
 
     @Override
+    public int getCount(){
+        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
+    }
+
+    @Override
     public Map<DbKey, byte[]> getPublicKeyCache() {
         return publicKeyCache;
     }
@@ -180,5 +185,17 @@ public class AccountPublickKeyServiceImpl implements AccountPublickKeyService {
             publicKeyCache.put(account.getDbKey(), key);
         }
         account.setPublicKey(publicKey);
+    }
+
+    @Override
+    public void insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
+        PublicKey publicKey;
+        if (isGenesis) {
+                publicKey = genesisPublicKeyTable.newEntity(dbKey);
+                genesisPublicKeyTable.insert(publicKey);
+        } else {
+                publicKey = publicKeyTable.newEntity(dbKey);
+                publicKeyTable.insert(publicKey);
+        }
     }
 }

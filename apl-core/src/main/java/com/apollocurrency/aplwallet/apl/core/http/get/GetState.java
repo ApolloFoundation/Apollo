@@ -67,7 +67,7 @@ public final class GetState extends AbstractAPIRequestHandler {
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && apw.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
-            response.put("numberOfAccounts", lookupAccountService().getCount());
+            response.put("numberOfAccounts", lookupAccountPublickKeyService().getCount());
             response.put("numberOfAssets", Asset.getCount());
             int askCount = Order.Ask.getCount();
             int bidCount = Order.Bid.getCount();

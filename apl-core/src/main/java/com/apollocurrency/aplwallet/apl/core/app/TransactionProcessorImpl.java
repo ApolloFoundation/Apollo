@@ -91,7 +91,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
-    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountService accountService;
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static int maxUnconfirmedTransactions;
@@ -108,6 +108,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
         return databaseManager.getDataSource();
+    }
+
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
     }
 
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
@@ -754,7 +761,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (! transaction.verifySignature()) {
-                    if (accountService.getAccountEntity(transaction.getSenderId()) != null) {
+                    if (lookupAccountService().getAccountEntity(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");

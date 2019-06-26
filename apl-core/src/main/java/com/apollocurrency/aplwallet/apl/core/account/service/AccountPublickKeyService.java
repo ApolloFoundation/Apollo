@@ -17,6 +17,8 @@ import java.util.Map;
 public interface AccountPublickKeyService {
 
 
+    int getCount();
+
     Map<DbKey, byte[]> getPublicKeyCache();
 
     byte[] getPublicKey(long id);
@@ -38,4 +40,7 @@ public interface AccountPublickKeyService {
     void apply(AccountEntity account, byte[] key);
 
     void apply(AccountEntity account, byte[] key, boolean isGenesis);
+
+    void insertNewPublicKey(DbKey dbKey, boolean isGenesis);
+
 }
