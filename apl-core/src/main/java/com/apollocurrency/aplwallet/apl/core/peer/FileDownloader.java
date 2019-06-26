@@ -136,7 +136,9 @@ public class FileDownloader {
         PeersList pl = new PeersList();
         allPeers.forEach((pi) -> {
             PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
-            pl.add(pfi);
+            if(pfi.retreiveHash()!=null){
+              pl.add(pfi);
+            }
         });
         log.debug("prepareForDownloading(), pl = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
