@@ -51,6 +51,7 @@ public class PeersList {
                    res.add(p);
                  }else{
                    log.trace("Can not get hash from {}",p.getId());
+                   res.add(p);
                  }
              }
        }

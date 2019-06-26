@@ -72,6 +72,8 @@ public class PeerClient {
         log.debug("getFileInfo() resp = {}", resp.toJSONString());
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+        }else{
+            log.debug("getFileInfo() resp = {}", resp.toJSONString());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
         log.debug("getFileInfo() FInfoResp = {}", res);

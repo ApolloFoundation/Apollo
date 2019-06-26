@@ -160,7 +160,7 @@ public class ShardDownloader {
             Collections.sort(shardIds);
             Long lastShard = shardIds.get(shardIds.size() - 1);
             log.debug("Last known ShardId '{}'", lastShard);            
-            String fileID = shardNameHelper.getShardNameByShardId(lastShard, myChainId);
+            String fileID = shardNameHelper.getFullShardId(lastShard, myChainId);
             log.debug("fileID = '{}'", fileID);
             fileDownloader.setFileId(fileID);
             // check if zip file exists on local node

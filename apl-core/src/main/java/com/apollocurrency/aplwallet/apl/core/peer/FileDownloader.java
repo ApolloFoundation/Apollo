@@ -146,7 +146,7 @@ public class FileDownloader {
         goodPeers = pvdm.getValidPeers();
         badPeers = pvdm.getInvalidPeers();
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
-        if(pvdm.isNetworkUsable()){
+        if(pvdm.isNetworkUsable()){ // we have nough good peers and can start downloadinig
             PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
             downloadInfo = pfi.getFdi();
         }
