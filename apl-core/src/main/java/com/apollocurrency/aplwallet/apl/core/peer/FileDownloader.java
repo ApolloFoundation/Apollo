@@ -36,7 +36,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -168,7 +167,7 @@ public class FileDownloader {
             this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
             //FIRE event when shard is PRESENT + ZIP is downloaded
             ShardPresentData shardPresentData = new ShardPresentData(fileID);
-            presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);
+            presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
         }
         return res;
     }
