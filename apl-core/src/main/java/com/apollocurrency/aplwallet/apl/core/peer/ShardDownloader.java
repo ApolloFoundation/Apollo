@@ -67,7 +67,7 @@ public class ShardDownloader {
         boolean haveShard = false;
         PeerClient pc = new PeerClient(p);
         ShardingInfo si = pc.getShardingInfo();
-        log.trace("{}", si);
+        log.trace("shardInfo = {}", si);
         if (si != null) {
             additionalPeers.addAll(si.knownPeers);
             for (ShardInfo s : si.shards) {
@@ -153,14 +153,14 @@ public class ShardDownloader {
             log.debug("result = {}, Fire = {}", result, "NO_SHARD");
             ShardPresentData shardPresentData = new ShardPresentData();
             presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
-
+            return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
             List<Long> shardIds = new ArrayList(sortedShards.keySet());
             Collections.sort(shardIds);
             Long lastShard = shardIds.get(shardIds.size() - 1);
             log.debug("Last known ShardId '{}'", lastShard);            
-            String fileID = shardNameHelper.getShardNameByShardId(lastShard, myChainId);
+            String fileID = shardNameHelper.getFullShardId(lastShard, myChainId);
             log.debug("fileID = '{}'", fileID);
             fileDownloader.setFileId(fileID);
             // check if zip file exists on local node

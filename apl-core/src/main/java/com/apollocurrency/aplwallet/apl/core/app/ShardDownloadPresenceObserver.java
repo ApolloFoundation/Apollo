@@ -63,7 +63,7 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
-    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.PRESENT) ShardPresentData shardPresentData) {
+    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
         String zipFileName = shardPresentData.getFileIdValue();
         Path zipInFolder = csvImporter.getDataExportPath().resolve(zipFileName + ".zip").toAbsolutePath();

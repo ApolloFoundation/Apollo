@@ -49,9 +49,12 @@ public class PeersList {
              if(p!=null && p.getHash()==null){
                  if(p.retreiveHash()!=null){
                    res.add(p);
-                 }else{
+                   
+                 }else{                                         
                    log.trace("Can not get hash from {}",p.getId());
                  }
+             } else{
+                   res.add(p);
              }
        }
        return res;
