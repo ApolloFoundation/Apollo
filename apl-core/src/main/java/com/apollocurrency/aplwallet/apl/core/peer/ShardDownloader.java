@@ -193,9 +193,9 @@ public class ShardDownloader {
                 //TODO: how to file event when file is downloaded and OK?
             } else {
                 log.error("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
-                // We CAN'T FIRE event here
-//                ShardPresentData shardPresentData = new ShardPresentData();
-//                presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
+                // We CAN'T download latest SHARD archive, start from the beginning - FIRE event here
+                ShardPresentData shardPresentData = new ShardPresentData();
+                presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
             }
         }
         return result;
