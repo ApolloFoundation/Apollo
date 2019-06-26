@@ -27,8 +27,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -49,7 +49,7 @@ public final class PrunableMessage {
 
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
-    private static AccountPublickKeyService accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
@@ -289,7 +289,7 @@ public final class PrunableMessage {
         }
         byte[] publicKey = senderId == AccountService.getId(Crypto.getPublicKey(keySeed))
                 ? accountService.getPublicKey(recipientId) : accountService.getPublicKey(senderId);
-        return accountPublickKeyService.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
+        return accountPublicKeyService.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }
 
     public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {

@@ -6,7 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
@@ -34,26 +34,26 @@ public class AccountObserver {
     @Inject @Setter
     private AccountLeaseService accountLeaseService;
     @Inject @Setter
-    private AccountPublickKeyService accountPublickKeyService;
+    private AccountPublicKeyService accountPublicKeyService;
 
     public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        if (accountPublickKeyService.getPublicKeyCache() != null) {
-            accountPublickKeyService.getPublicKeyCache().clear();
+        if (accountPublicKeyService.getPublicKeyCache() != null) {
+            accountPublicKeyService.getPublicKeyCache().clear();
         }
     }
 
     public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        if (accountPublickKeyService.getPublicKeyCache() != null) {
-            accountPublickKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
+        if (accountPublicKeyService.getPublicKeyCache() != null) {
+            accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
             block.getTransactions().forEach(transaction -> {
-                accountPublickKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getSenderId()));
+                accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getSenderId()));
                 if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                    accountPublickKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getRecipientId()));
+                    accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getRecipientId()));
                 }
                 if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
                     ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
                     for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                        accountPublickKeyService.getPublicKeyCache().remove(AccountTable.newKey(AccountService.getId(publicKey)));
+                        accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(AccountService.getId(publicKey)));
                     }
                 }
             });

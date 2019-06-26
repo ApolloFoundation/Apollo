@@ -53,7 +53,7 @@ public final class AccountFactory {
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
     private static AccountPropertyService accountPropertyService;
-    private static AccountPublickKeyService accountPublickKeyService;
+    private static AccountPublicKeyService accountPublicKeyService;
 
     public static AccountOld createAccount(AccountEntity entity){
         if (entity == null)
@@ -65,7 +65,7 @@ public final class AccountFactory {
                 blockchain, blockchainConfig,
                 accountService, accountInfoService,
                 accountLeaseService, accountAssetService, accountCurrencyService,
-                accountPropertyService, accountPublickKeyService);
+                accountPropertyService, accountPublicKeyService);
         return account;
     }
 
@@ -79,7 +79,7 @@ public final class AccountFactory {
             accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
             accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
             accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
-            accountPublickKeyService = CDI.current().select(AccountPublickKeyService.class).get();
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
         }
     }
 
@@ -96,7 +96,7 @@ public final class AccountFactory {
         private AccountAssetService accountAssetService;
         private AccountCurrencyService accountCurrencyService;
         private AccountPropertyService accountPropertyService;
-        private AccountPublickKeyService accountPublickKeyService;
+        private AccountPublicKeyService accountPublicKeyService;
 
         private AccountWrapper(AccountEntity account) {
             this.account = account;
@@ -111,7 +111,7 @@ public final class AccountFactory {
                        AccountAssetService accountAssetService,
                        AccountCurrencyService accountCurrencyService,
                        AccountPropertyService accountPropertyService,
-                       AccountPublickKeyService accountPublickKeyService) {
+                       AccountPublicKeyService accountPublicKeyService) {
             this(account);
 
             this.blockchain = blockchain;
@@ -123,7 +123,7 @@ public final class AccountFactory {
             this.accountAssetService = accountAssetService;
             this.accountCurrencyService = accountCurrencyService;
             this.accountPropertyService = accountPropertyService;
-            this.accountPublickKeyService = accountPublickKeyService;
+            this.accountPublicKeyService = accountPublicKeyService;
 
         }
 
@@ -193,12 +193,12 @@ public final class AccountFactory {
 
         @Override
         public EncryptedData encryptTo(byte[] data, byte[] keySeed, boolean compress) {
-            return accountPublickKeyService.encryptTo(account.getId(), data, keySeed, compress);
+            return accountPublicKeyService.encryptTo(account.getId(), data, keySeed, compress);
         }
 
         @Override
         public byte[] decryptFrom(EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
-            return accountPublickKeyService.decryptFrom(account.getId(), encryptedData, recipientKeySeed, uncompress);
+            return accountPublicKeyService.decryptFrom(account.getId(), encryptedData, recipientKeySeed, uncompress);
         }
 
         @Override
@@ -348,7 +348,7 @@ public final class AccountFactory {
 
         @Override
         public void apply(byte[] key, boolean isGenesis) {
-            accountPublickKeyService.apply(account, key, isGenesis);
+            accountPublicKeyService.apply(account, key, isGenesis);
         }
 
         @Override

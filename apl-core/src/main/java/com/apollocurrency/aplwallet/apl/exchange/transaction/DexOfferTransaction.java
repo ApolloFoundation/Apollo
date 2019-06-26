@@ -38,7 +38,6 @@ public class DexOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
     private EpochTime epochTime = CDI.current().select(EpochTime.class).get();
-    private AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     @Override
     public byte getSubtype() {
@@ -108,7 +107,7 @@ public class DexOfferTransaction extends DEX {
 
         if (DexCurrencyValidator.haveFreezeOrRefundApl(offerType, offerCurrency, pairCurrency)) {
             Long amountATM = attachment.getOfferAmount();
-            AccountEntity sender = accountService.getAccountEntity(transaction.getSenderId());
+            AccountEntity sender = lookupAccountService().getAccountEntity(transaction.getSenderId());
 
             if (sender.getUnconfirmedBalanceATM() < amountATM) {
                 throw new AplException.NotValidException("Not enough money.");
@@ -142,7 +141,7 @@ public class DexOfferTransaction extends DEX {
         DexOfferAttachment dexOfferAttachment = (DexOfferAttachment) transaction.getAttachment();
         long amountATM = dexOfferAttachment.getOfferAmount();
 
-        accountService.addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -amountATM);
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -amountATM);
     }
 
     @Override

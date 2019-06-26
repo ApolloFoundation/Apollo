@@ -45,8 +45,8 @@ import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -180,7 +180,7 @@ public final class Shuffling {
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
     private static AccountService accountService;
-    private static AccountPublickKeyService accountPublickKeyService;
+    private static AccountPublicKeyService accountPublicKeyService;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
@@ -992,10 +992,10 @@ public final class Shuffling {
         }
         return accountService;
     }
-    private AccountPublickKeyService lookupAccountPublickKeyService(){
-        if ( accountPublickKeyService == null) {
-            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    private AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
         }
-        return accountPublickKeyService;
+        return accountPublicKeyService;
     }
 }

@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public interface AccountPublickKeyService {
+public interface AccountPublicKeyService {
 
 
     int getCount();

@@ -35,10 +35,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -70,7 +69,7 @@ public final class Genesis {
 //    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
     private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
     private static AccountService accountService = CDI.current().select(AccountServiceImpl .class).get();
-    private static AccountPublickKeyService accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
     private static String genesisTaskId;
@@ -138,7 +137,7 @@ public final class Genesis {
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
         AccountEntity creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
-        accountPublickKeyService.apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
+        accountPublicKeyService.apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
@@ -176,7 +175,7 @@ public final class Genesis {
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             AccountEntity account = accountService.addOrGetAccount(AccountService.getId(publicKey), true);
-            accountPublickKeyService.apply(account, publicKey, true);
+            accountPublicKeyService.apply(account, publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }

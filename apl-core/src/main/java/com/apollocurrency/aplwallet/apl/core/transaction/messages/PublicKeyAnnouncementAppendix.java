@@ -8,8 +8,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -31,7 +31,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         return new PublicKeyAnnouncementAppendix(attachmentData);
     }
     private static AccountService accountService;
-    private static AccountPublickKeyService accountPublickKeyService;
+    private static AccountPublicKeyService accountPublicKeyService;
 
     protected AccountService lookupAccountService(){
         if ( accountService == null) {
@@ -40,11 +40,11 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         return accountService;
     }
 
-    protected AccountPublickKeyService lookupAccountPublickKeyService(){
-        if ( accountPublickKeyService == null) {
-            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    protected AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
         }
-        return accountPublickKeyService;
+        return accountPublicKeyService;
     }
 
     private final byte[] publicKey;

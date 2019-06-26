@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -19,15 +19,15 @@ public class TransactionApplier {
     private BlockchainConfig blockchainConfig;
     private ReferencedTransactionDaoImpl referencedTransactionDao;
     private AccountService accountService;
-    private AccountPublickKeyService accountPublickKeyService;
+    private AccountPublicKeyService accountPublicKeyService;
 
 
     @Inject
-    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDaoImpl referencedTransactionDao, AccountService accountService, AccountPublickKeyService accountPublickKeyService) {
+    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDaoImpl referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService) {
         this.blockchainConfig = blockchainConfig;
         this.referencedTransactionDao = referencedTransactionDao;
         this.accountService = accountService;
-        this.accountPublickKeyService = accountPublickKeyService;
+        this.accountPublicKeyService = accountPublicKeyService;
     }
 
     // returns false iff double spending
@@ -38,7 +38,7 @@ public class TransactionApplier {
 
     public void apply(Transaction transaction) {
         AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
-        accountPublickKeyService.apply(senderAccount, transaction.getSenderPublicKey());
+        accountPublicKeyService.apply(senderAccount, transaction.getSenderPublicKey());
         AccountEntity recipientAccount = null;
         if (transaction.getRecipientId() != 0) {
             recipientAccount = accountService.getAccountEntity(transaction.getRecipientId());

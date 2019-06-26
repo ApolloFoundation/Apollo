@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -34,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -70,7 +69,7 @@ public class TransactionImpl implements Transaction {
     private static BlockchainImpl blockchain;
 
     @Inject
-    private static AccountPublickKeyService accountPublickKeyService;
+    private static AccountPublicKeyService accountPublicKeyService;
 
     public static final class BuilderImpl implements Builder {
 
@@ -138,11 +137,11 @@ public class TransactionImpl implements Transaction {
             return blockchain;
         }
 
-        private AccountPublickKeyService lookupAndInjectAccountService() {
-            if (accountPublickKeyService == null) {
-                accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+        private AccountPublicKeyService lookupAndInjectAccountService() {
+            if (accountPublicKeyService == null) {
+                accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
             }
-            return accountPublickKeyService;
+            return accountPublicKeyService;
         }
 
         @Override
@@ -410,11 +409,11 @@ public class TransactionImpl implements Transaction {
         return blockchain;
     }
 
-    private AccountPublickKeyService lookupAndInjectAccountService() {
-        if (accountPublickKeyService == null) {
-            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    private AccountPublicKeyService lookupAndInjectAccountService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
         }
-        return accountPublickKeyService;
+        return accountPublicKeyService;
     }
 
     @Override

@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author andrew.zinchenko@gmail.com
  */
 @Singleton
-public class AccountPublickKeyServiceImpl implements AccountPublickKeyService {
+public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     private static ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
 

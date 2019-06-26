@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -30,11 +30,11 @@ public class BlockApplier {
     private AccountService accountService;
 
     @Inject @Setter
-    private AccountPublickKeyService accountPublickKeyService;
+    private AccountPublicKeyService accountPublicKeyService;
 
     public void apply(Block block) {
         AccountEntity generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
-        accountPublickKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
+        accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         long totalBackFees = 0;
         int height = block.getHeight();
         if (height > 3) {

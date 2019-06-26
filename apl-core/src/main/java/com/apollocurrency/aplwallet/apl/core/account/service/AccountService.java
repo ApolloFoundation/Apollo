@@ -104,7 +104,7 @@ public interface AccountService {
 
     long getTotalSupply();
 
-    //Delegated from  AccountPublickKeyService
+    //Delegated from  AccountPublicKeyService
     boolean setOrVerify(long accountId, byte[] key);
     byte[] getPublicKey(long id);
 }

@@ -47,7 +47,7 @@ public class AccountServiceImpl implements AccountService {
     private DatabaseManager databaseManager;
 
     @Inject @Setter
-    private AccountPublickKeyService accountPublickKeyService;
+    private AccountPublicKeyService accountPublicKeyService;
 
     @Override
     public int getActiveLeaseCount() {
@@ -67,7 +67,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         AccountEntity account = accountTable.get(dbKey);
         if (account == null) {
-            PublicKey publicKey = accountPublickKeyService.getPublicKey(dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey != null) {
                 account = accountTable.newEntity(dbKey);
                 account.setPublicKey(publicKey);
@@ -81,7 +81,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         AccountEntity account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublickKeyService.getPublicKey(dbKey, height);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey, height);
             if (publicKey != null) {
                 account = new AccountEntity(id, dbKey);
                 account.setPublicKey(publicKey);
@@ -98,7 +98,7 @@ public class AccountServiceImpl implements AccountService {
             return null;
         }
         if (account.getPublicKey() == null) {
-            account.setPublicKey(accountPublickKeyService.getPublicKey(AccountTable.newKey(account)));
+            account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account)));
         }
         if (account.getPublicKey() == null || account.getPublicKey().publicKey == null || Arrays.equals(account.getPublicKey().publicKey, publicKey)) {
             return account;
@@ -121,9 +121,9 @@ public class AccountServiceImpl implements AccountService {
         AccountEntity accountEntity = accountTable.get(dbKey);
         if (accountEntity == null) {
             accountEntity = accountTable.newEntity(dbKey);
-            PublicKey publicKey = accountPublickKeyService.getPublicKey(dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
-                accountPublickKeyService.insertNewPublicKey(dbKey, isGenesis);
+                accountPublicKeyService.insertNewPublicKey(dbKey, isGenesis);
             }
             accountEntity.setPublicKey(publicKey);
         }
@@ -150,7 +150,7 @@ public class AccountServiceImpl implements AccountService {
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (account.getPublicKey() == null) {
-            account.setPublicKey(accountPublickKeyService.getPublicKey(AccountTable.newKey(account.getId())));
+            account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= 1440) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
@@ -455,15 +455,15 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
-    //Delegated from  AccountPublickKeyService
+    //Delegated from  AccountPublicKeyService
     @Override
     public boolean setOrVerify(long accountId, byte[] key) {
-        return accountPublickKeyService.setOrVerify(accountId, key);
+        return accountPublicKeyService.setOrVerify(accountId, key);
     }
 
     @Override
     public byte[] getPublicKey(long id) {
-        return accountPublickKeyService.getPublicKey(id);
+        return accountPublicKeyService.getPublicKey(id);
     }
 }
 

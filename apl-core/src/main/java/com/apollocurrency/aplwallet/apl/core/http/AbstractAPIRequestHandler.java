@@ -14,10 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -47,7 +46,7 @@ public abstract class AbstractAPIRequestHandler {
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static AccountService accountService;
-    private static AccountPublickKeyService accountPublickKeyService;
+    private static AccountPublicKeyService accountPublicKeyService;
 
     protected AccountService lookupAccountService(){
         if ( accountService == null) {
@@ -56,11 +55,11 @@ public abstract class AbstractAPIRequestHandler {
         return accountService;
     }
 
-    protected AccountPublickKeyService lookupAccountPublickKeyService(){
-        if ( accountPublickKeyService == null) {
-            accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    protected AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
         }
-        return accountPublickKeyService;
+        return accountPublicKeyService;
     }
 
     protected Blockchain lookupBlockchain() {

@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublickKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -123,7 +123,7 @@ public final class ParameterParser {
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();;
 
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
-    private static AccountPublickKeyService accountPublickKeyService = CDI.current().select(AccountPublickKeyServiceImpl.class).get();
+    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
 
     private static final int DEFAULT_LAST_INDEX = 250;
 
@@ -470,7 +470,7 @@ public final class ParameterParser {
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
-                encryptedData = accountPublickKeyService.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = accountPublicKeyService.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -889,7 +889,7 @@ public final class ParameterParser {
             }
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
-                encryptedData = accountPublickKeyService.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = accountPublicKeyService.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
