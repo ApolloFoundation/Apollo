@@ -136,7 +136,7 @@ public final class Account {
         publicKeyTable = pkTable;
         sync = globalSync;
         accountTable = accTable;
-        CDI.current().select(AccountGuaranteedBalanceTable.class).get();
+        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
         accountAssetTable = AccountAssetTable.getInstance();
         accountInfoTable = AccountInfoTable.getInstance();
         accountCurrencyTable = AccountCurrencyTable.getInstance();

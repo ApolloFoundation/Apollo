@@ -78,7 +78,7 @@ public final class Shuffling {
      * Cache, which contains all active shufflings required for processing on each block push
      * Purpose: getActiveShufflings db call require at least 50-100ms, with cache we can shorten time to 10-20ms
      */
-    private static final Map<Long, Shuffling> activeShufflingsCache = new HashMap<>();
+    private static Map<Long, Shuffling> activeShufflingsCache = new HashMap<>();
     private static final Logger LOG = getLogger(Shuffling.class);
 
 
@@ -235,11 +235,7 @@ public final class Shuffling {
     }
 
     public static Shuffling getShuffling(long shufflingId) {
-        Shuffling shuffling = activeShufflingsCache.get(shufflingId);
-        if (shuffling == null) {
-            shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
-        }
-        return shuffling;
+        return shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
     }
 
     public static Shuffling getShuffling(byte[] fullHash) {
@@ -305,7 +301,7 @@ public final class Shuffling {
     }
 
     static void init() {
-        activeShufflingsCache.clear();
+        activeShufflingsCache = new HashMap<>();
         List<Shuffling> allActiveShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
         activeShufflingsCache.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
     }
@@ -319,6 +315,9 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
+            if (activeShufflingsCache == null) {
+                Shuffling.init();
+            }
             List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
 
             for (Shuffling shuffling : sortedShufflings) {
@@ -337,11 +336,11 @@ public final class Shuffling {
         }
 
         public void onBlockPopOff(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-            Shuffling.init();
+            activeShufflingsCache = null;
         }
 
         public void onRescanBegin(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-            Shuffling.init();
+            activeShufflingsCache = null;
         }
     }
 
