@@ -41,7 +41,7 @@ public class GetShardingInfo extends PeerRequestHandler{
         ShardingInfoRequest rq  = mapper.convertValue(request, ShardingInfoRequest.class);
         log.debug("ShardingInfoRequest = {}", rq);
 
-        List<Shard> allShards = shardDao.getAllShard();
+        List<Shard> allShards = shardDao.getAllCompletedShards();
         log.debug("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
         for (Shard shard: allShards) {
             // create shardInfo from Shard record

@@ -17,6 +17,10 @@ public class ShardService {
     @Setter
     private ShardDao shardDao;
 
+    public List<Shard> getAllCompletedShards() {
+        return shardDao.getAllCompletedShards();
+    }
+
     public List<Shard> getAllShards() {
         return shardDao.getAllShard();
     }
