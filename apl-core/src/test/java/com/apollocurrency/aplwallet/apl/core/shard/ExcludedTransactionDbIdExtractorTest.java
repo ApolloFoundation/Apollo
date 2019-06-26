@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
@@ -26,17 +27,22 @@ class ExcludedTransactionDbIdExtractorTest {
 
     @Test
     void testGetExcludeInfo() {
-        doReturn(List.of(new TransactionDbInfo(1, 2), new TransactionDbInfo(2, 3))).when(blockchain).getTransactionsBeforeHeight(100);
-        doReturn(List.of(new TransactionDbInfo(2, 3), new TransactionDbInfo(3, 4))).when(phasingPollService).getActivePhasedTransactionDbInfoAtHeight(100);
+        doReturn(List.of(new TransactionDbInfo(1, 2), new TransactionDbInfo(2, 3), new TransactionDbInfo(5, 10))).when(blockchain).getTransactionsBeforeHeight(100);
+        doReturn(List.of(new TransactionDbInfo(2, 3), new TransactionDbInfo(3, 4))).when(phasingPollService).getActivePhasedTransactionDbInfoAtHeight(120);
 
-        ExcludeInfo excludeInfo = extractor.getExcludeInfo(100);
+        ExcludeInfo excludeInfo = extractor.getExcludeInfo(100, 120);
 
         assertEquals(Set.of(3L, 2L), excludeInfo.getExportDbIds());
-        assertEquals(Set.of(1L, 2L), excludeInfo.getNotCopyDbIds());
+        assertEquals(Set.of(1L, 2L,5L), excludeInfo.getNotCopyDbIds());
         assertEquals(Set.of(2L, 3L), excludeInfo.getNotDeleteDbIds());
 
         verify(blockchain, only()).getTransactionsBeforeHeight(100);
-        verify(phasingPollService, only()).getActivePhasedTransactionDbInfoAtHeight(100);
+        verify(phasingPollService, only()).getActivePhasedTransactionDbInfoAtHeight(120);
 
+    }
+
+    @Test
+    void testGetExcludeInfoWhenStartHeightEqualToFinishHeight() {
+        assertThrows(IllegalArgumentException.class, () -> extractor.getExcludeInfo(100, 100));
     }
 }

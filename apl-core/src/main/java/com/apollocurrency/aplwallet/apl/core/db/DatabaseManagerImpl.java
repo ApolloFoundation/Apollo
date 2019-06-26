@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -45,7 +44,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
-    private ChainsConfigHolder chainsConfig;
 //    @Inject @Setter
 //    private ShardNameHelper shardNameHelper;
     /**
@@ -67,13 +65,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * @param propertiesHolderParam the rest global properties in holder from CDI
      */
     @Inject
-    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, ChainsConfigHolder chainsConfig) {
+    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
         // init internal data source stuff only one time till next shutdown() will be called
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         jdbi = currentTransactionalDataSource.init(new AplDbVersion());
-        this.chainsConfig=chainsConfig;
 //        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
     }
 //not used yet
@@ -193,9 +190,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     @Override
     public List<TransactionalDataSource> getFullDatasources() {
         Set<Long> allFullShards = findAllFullShards();
-        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::createAndAddShard).collect(Collectors.toList());
+        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::getOrCreateShardDataSourceById).collect(Collectors.toList());
         return dataSources;
     }
+
+
     /**
      * {@inheritDoc}
      */
@@ -222,6 +221,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         connectedShardDataSourceMap.put(TEMP_DB_IDENTITY, temporaryDataSource); // put temporary DS with special ID
         log.debug("new temporaryDataSource '{}' is CREATED", temporaryDatabaseName);
         return temporaryDataSource;
+    }
+
+    @Override
+    public TransactionalDataSource getShardDataSourceById(long shardId) {
+        return connectedShardDataSourceMap.get(shardId);
     }
 
     /**
@@ -302,6 +306,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         dataSource.shutdown();
     }
 
+    @Override
+    public UUID getChainId() {
+        return baseDbProperties.getChainId();
+    }
+
     public DatabaseManagerImpl() {} // never use it directly
 
 //    /**
@@ -325,11 +334,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         sb.append(", connectedShardDataSourceMap=[{}]").append(connectedShardDataSourceMap != null ? connectedShardDataSourceMap.size() : -1);
         sb.append('}');
         return sb.toString();
-    }
-
-    @Override
-    public UUID getChainId() {
-        return chainsConfig.getActiveChain().getChainId();
     }
 
 }

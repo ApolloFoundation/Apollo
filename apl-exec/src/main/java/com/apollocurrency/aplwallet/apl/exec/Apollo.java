@@ -17,14 +17,13 @@ import java.util.UUID;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import com.apollocurrency.aplwallet.api.dto.Account;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -55,21 +54,11 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFa
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
+import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Main Apollo startup class
@@ -126,7 +115,7 @@ public class Apollo {
             cmdline = cmdline + s + " ";
         }
         Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
-        String home = hp.toString()+File.separator;
+        String home = hp.toString()+ File.separator;
         File dir = new File(home);
         if(!dir.exists()){
             dir.mkdirs();
@@ -250,7 +239,8 @@ public class Apollo {
          */
 
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
-        runtimeMode.init();
+        runtimeMode.init(); // instance is NOT PROXIED by CDI !!
+
         //save command line params and PID
         if(!saveStartParams(argv, args.pidFile,configDirProvider)){
             System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
@@ -274,7 +264,6 @@ public class Apollo {
                 .recursiveScanPackages(DirProvider.class)
                 .annotatedDiscoveryMode()
 // we already have it in beans.xml in core
-//                .interceptors(JdbiTransactionalInterceptor.class)
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
@@ -288,13 +277,18 @@ public class Apollo {
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
+        dirProvider = CDI.current().select(DirProvider.class).get();
+        // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
+        SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
-        
+
         try {
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+            // updated shutdown hook explicitly created with instances
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
+//            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
-            app.initUpdater(args.updateAttachmentFile, args.debug > 2);
+            app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
             /*            if(unzipRes.get()!=true){
                 System.err.println("Error! WebUI is not installed!");
             }

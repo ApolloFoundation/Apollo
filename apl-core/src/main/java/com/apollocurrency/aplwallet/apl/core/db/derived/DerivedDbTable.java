@@ -208,6 +208,10 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
+    public boolean isScanSafe() {
+        return true; // by default derived table can be safely rolled back to any height without block popOff
+    }
+    @Override
     public final String toString() {
         return table;
     }

@@ -3,21 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
-import com.apollocurrency.aplwallet.apl.core.chainid.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
@@ -29,33 +26,36 @@ import org.json.simple.JSONStreamAware;
  */
 @Slf4j
 public class GetShardingInfo extends PeerRequestHandler{
-    @Inject
-    DownloadableFilesManager fm;
-    @Inject @Setter
+
     private ShardDao shardDao;
-    @Inject @Setter
-    private ChainsConfigHolder chainsConfig;
+    private BlockchainConfig blockchainConfig;
+
+    public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig) {
+        this.shardDao = shardDao;
+        this.blockchainConfig = blockchainConfig;
+    }
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         ShardingInfoResponse res = new ShardingInfoResponse();
         ShardingInfoRequest rq  = mapper.convertValue(request, ShardingInfoRequest.class);
-        log.trace("ShardingInfoRequest = {}", rq);
+        log.debug("ShardingInfoRequest = {}", rq);
 
-        List<Shard> allShards = shardDao.getAllShard(); //TODO: we can thing to use only - shardDao.getLastShard()
-        log.trace("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
+        List<Shard> allShards = shardDao.getAllShard();
+        log.debug("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
         for (Shard shard: allShards) {
             // create shardInfo from Shard record
             ShardInfo shardInfo = new ShardInfo(
                     shard.getShardId(),
-                    chainsConfig.getActiveChain().getChainId().toString() /* no chainId in db */,
+                    blockchainConfig.getChain().getChainId().toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
                     Convert.toHexString(shard.getZipHashCrc()),
                     shard.getShardHeight().longValue()
             );
             res.shardingInfo.shards.add(shardInfo);
         }
-        if(rq.full){ //add list of known peers
+        log.debug("allShardInfo = [{}], rq.full? = {}", res.shardingInfo.shards.size(), rq.full) ;
+        if( rq.full ){ //add list of known peers
             for(Peer p: Peers.getAllPeers()){
                 String address = p.getAnnouncedAddress();
                 if(StringUtils.isBlank(address)){
@@ -65,7 +65,8 @@ public class GetShardingInfo extends PeerRequestHandler{
             }
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
-        return response;        
+        log.debug("ShardingInfoResponse = {}", response);
+        return response;
     }
 
     @Override

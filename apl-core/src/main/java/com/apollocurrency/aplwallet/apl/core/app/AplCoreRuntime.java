@@ -5,19 +5,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Singleton;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +25,7 @@ import org.slf4j.LoggerFactory;
  * TODO: make it injectable singleton
  * @author alukin@gmail.com
  */
+
 @Singleton
 public class AplCoreRuntime {
     //probably it is temprary solution, we should move WebUI serving out of core
@@ -34,7 +33,7 @@ public class AplCoreRuntime {
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
  
-    private RuntimeMode runtimeMode;
+    private  RuntimeMode runtimeMode;
 
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
@@ -45,7 +44,8 @@ public class AplCoreRuntime {
     private MintWorker mintworker;
     private Thread mintworkerThread;
 
-    public AplCoreRuntime() {
+    // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
+    public AplCoreRuntime( ) {
     }
 
     public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder) {

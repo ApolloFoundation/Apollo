@@ -82,7 +82,7 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
     @Override
     public byte[] calculateHash(int shardStartHeight, int shardEndHeight) {
         if (shardStartHeight >= shardEndHeight) {
-            throw new IllegalArgumentException("shard start height should be less than shard end height");
+            throw new IllegalArgumentException("shard start height should be less than shard end height " + String.format("start - %d, finish - %d", shardStartHeight, shardEndHeight));
         }
         long startTime = System.currentTimeMillis();
         List<byte[]> blockSignatures = retrieveBlockSignatures(shardStartHeight, shardEndHeight);

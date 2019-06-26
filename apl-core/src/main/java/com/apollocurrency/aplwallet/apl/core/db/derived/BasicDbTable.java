@@ -270,4 +270,9 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.clearCache(table);
     }
+
+
+    public void rollbackOnScan(int height) {
+        rollback(height);
+    }
 }

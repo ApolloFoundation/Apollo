@@ -30,23 +30,26 @@ public class CopyDataCommand implements DataMigrateOperation {
     private int commitBatchSize;
     private int snapshotBlockHeight;
     private ExcludeInfo excludeInfo;
+    private long shardId;
 
-    public CopyDataCommand(ShardEngine shardEngine,
+    public CopyDataCommand(long shardId, ShardEngine shardEngine,
                            int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludeInfo) {
-        this(shardEngine, null, commitBatchSize, snapshotBlockHeight, excludeInfo);
+        this(shardId, shardEngine, null, commitBatchSize, snapshotBlockHeight, excludeInfo);
     }
 
-    public CopyDataCommand(ShardEngine shardEngine,
+    public CopyDataCommand(long shardId, ShardEngine shardEngine,
                            int snapshotBlockHeight, ExcludeInfo excludeInfo) {
-        this(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, excludeInfo);
+        this(shardId, shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, excludeInfo);
         tableNameList.add(ShardConstants.BLOCK_TABLE_NAME);
         tableNameList.add(ShardConstants.TRANSACTION_TABLE_NAME);
     }
 
     public CopyDataCommand(
+            long shardId,
             ShardEngine shardEngine,
             List<String> tableNameList,
             int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludeInfo) {
+        this.shardId = shardId;
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.tableNameList = tableNameList == null ? new ArrayList<>() :tableNameList;
         this.commitBatchSize = commitBatchSize;
@@ -65,8 +68,13 @@ public class CopyDataCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Copy Shard Data Command execute...");
-        CommandParamInfo paramInfo = new CommandParamInfoImpl(
-                this.tableNameList, this.commitBatchSize, this.snapshotBlockHeight, this.excludeInfo);
+        CommandParamInfo paramInfo = CommandParamInfo.builder()
+                .tableNameList(this.tableNameList)
+                .commitBatchSize(this.commitBatchSize)
+                .snapshotBlockHeight(this.snapshotBlockHeight)
+                .excludeInfo(this.excludeInfo)
+                .shardId(shardId)
+                .build();
         return shardEngine.copyDataToShard(paramInfo);
     }
 

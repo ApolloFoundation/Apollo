@@ -15,11 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
@@ -43,6 +38,11 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class ShardDaoTest {
@@ -172,5 +172,11 @@ class ShardDaoTest {
     void testGetShardAtHeight() {
         Shard shardAtHeight = dao.getShardAtHeight(SHARD_1.getShardHeight());
         assertEquals(shardAtHeight, SHARD_1);
+    }
+
+    @Test
+    void testGetLastCompletedShard() {
+        Shard shard = dao.getLastCompletedShard();
+        assertEquals(SHARD_1, shard);
     }
 }

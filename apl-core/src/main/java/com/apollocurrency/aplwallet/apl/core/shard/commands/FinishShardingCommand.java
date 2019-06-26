@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
+
+import java.util.Objects;
 
 /**
  * Command for updating Shard table in main database. Inserts record about just created shard.
@@ -21,11 +21,13 @@ public class FinishShardingCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(FinishShardingCommand.class);
 
     private ShardEngine shardEngine;
+    private long shardId;
 
 
-    public FinishShardingCommand(ShardEngine shardEngine) {
+    public FinishShardingCommand(ShardEngine shardEngine, long shardId) {
         this.shardEngine = Objects.requireNonNull(
                 shardEngine, "shardEngine is NULL");
+        this.shardId = shardId;
     }
 
     /**
@@ -35,14 +37,14 @@ public class FinishShardingCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Finish Sharding Command execute...");
 
-        CommandParamInfo paramInfo = new CommandParamInfoImpl();
+        CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(shardId).build();
 
         return shardEngine.finishShardProcess(paramInfo);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FinishShardingCommand");
-        return sb.toString();
+        return "FinishShardingCommand-" + shardId;
+
     }
 }

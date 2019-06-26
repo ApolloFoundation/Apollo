@@ -6,12 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
+
+import java.util.Objects;
 
 /**
  * Command for creating initial Shard Schema in shard database/file.
@@ -25,8 +25,10 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     private DbVersion dbVersion;
     private byte[] shardHash; // shardHash can be NULL in one case
     private Long[] generatorIds;
+    private long shardId;
 
     public CreateShardSchemaCommand(
+            long shardId,
             ShardEngine shardEngine,
             DbVersion dbVersion,
             byte[] shardHash, Long[] generatorIds) { // shardHash can be NULL
@@ -35,6 +37,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
         this.dbVersion = Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         this.shardHash = shardHash;
         this.generatorIds = generatorIds;
+        this.shardId = shardId;
     }
 
     /**
@@ -43,14 +46,16 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Create Shard Schema Command execute...");
-        return shardEngine.addOrCreateShard(dbVersion, shardHash, generatorIds); // shardHash can be NULL or value
+        return shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder()
+                .shardHash(shardHash)
+                .generatorIds(generatorIds)
+                .shardId(shardId)
+                .build()); // shardHash can be NULL or value
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("CreateShardSchemaCommand{");
-        sb.append("dbVersion=").append(dbVersion);
-        sb.append('}');
-        return sb.toString();
+        return "CreateShardSchemaCommand{" + "dbVersion=" + dbVersion +
+                '}';
     }
 }

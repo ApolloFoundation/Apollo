@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRowMapper;
@@ -12,6 +10,8 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.List;
 
 /**
  * Shard management + retrieving interface
@@ -73,5 +73,11 @@ public interface ShardDao {
     @SqlQuery("SELECT * FROM shard WHERE shard_height = (SELECT MAX(shard_height) FROM shard)")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getLastShard();
+
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 ORDER BY shard_height DESC LIMIT 1")
+    @RegisterRowMapper(ShardRowMapper.class)
+    Shard getLastCompletedShard();
 
 }

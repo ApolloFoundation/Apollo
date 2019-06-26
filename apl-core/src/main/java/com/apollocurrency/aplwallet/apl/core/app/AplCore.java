@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -60,7 +61,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
@@ -75,6 +75,13 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
 import org.slf4j.Logger;
+
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -221,6 +228,7 @@ public final class AplCore {
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 GlobalSync sync = CDI.current().select(GlobalSync.class).get();
+                Peers.init();
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
@@ -253,7 +261,6 @@ public final class AplCore {
                 PrunableMessage.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");
-                Peers.init();
                 APIProxy.init();
                 Generator.init();
                 AddOns.init();
@@ -279,11 +286,6 @@ public final class AplCore {
                 catch (InterruptedException ignore) {}
                 testSecureRandom();
 
-                // run shard file downloading component
-                ShardDownloader shardDownloader = CDI.current().select(ShardDownloader.class).get();
-                CDI.current().select(ShardDownloadPresenceObserver.class).get();
-                shardDownloader.prepareAndStartDownload(); // ignore result
-
                 long currentTime = System.currentTimeMillis();
                 LOG.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";
@@ -307,6 +309,7 @@ public final class AplCore {
                         throw e; //re-throw non-db exception
                     }
                 }
+                aplAppStatus.durableTaskFinished(initCoreTaskID, true, "AplCore init failed (DB)");
                 LOG.error("Database initialization failed ", e);
                 //TODO: move DB operations to proper place
                 // AplCoreRuntime.getInstance().getRuntimeMode().recoverDb();
@@ -326,7 +329,8 @@ public final class AplCore {
             ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
             blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
-            executor.createAllCommands(shardDao.getLastShard().getShardHeight());
+            Shard lastShard = shardDao.getLastShard();
+            executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
             executor.executeAllOperations();
             aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
         }

@@ -60,7 +60,6 @@ public class EthereumWalletService {
     private final DexEthService dexEthService = CDI.current().select(DexEthService.class).get();
 
     private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
-    private String smartContract = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
 
     /**
      * Get balances for Eth/tokens.
