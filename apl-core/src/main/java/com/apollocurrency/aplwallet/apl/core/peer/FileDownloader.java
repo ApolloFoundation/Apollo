@@ -73,7 +73,7 @@ public class FileDownloader {
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
     private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
-
+    private CompletableFuture<Boolean> download;
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
@@ -95,21 +95,18 @@ public class FileDownloader {
     public void startDownload() {
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
-        CompletableFuture<Boolean> prepare;
-        prepare = CompletableFuture.supplyAsync(() -> {
-            status.decision = prepareForDownloading(null);
-            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
-            return res;
-        });
-        
-        prepare.thenAccept( r->{
-            if (r) {
+//        CompletableFuture<Boolean> prepare;
+//        prepare = CompletableFuture.supplyAsync(() -> {
+//            status.decision = prepareForDownloading(null);
+//            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
+//            return res;
+//        });
+
+        download = CompletableFuture.supplyAsync(() -> {
                 status.chunksTotal = downloadInfo.chunks.size();
-                log.debug("Decision is OK: {}, starting chunks downloading", status.decision.name());
-                download();
-            } else {
-                log.warn("Decision is not OK: {}, Chunks downloading is not started",status.decision.name());
-            }                
+                log.debug("Starting file chunks downloading");
+                Status s = download();
+                return status.isComplete();
         });
     }
 
