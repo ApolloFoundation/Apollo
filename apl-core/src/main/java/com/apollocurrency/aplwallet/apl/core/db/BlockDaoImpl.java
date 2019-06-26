@@ -550,7 +550,6 @@ public class BlockDaoImpl implements BlockDao {
             Block lastBlock;
             try {
                 dataSource.begin();
-                // TODO: Recursion, check if safe...
                 lastBlock = deleteBlocksFrom(blockId);
                 dataSource.commit();
             }

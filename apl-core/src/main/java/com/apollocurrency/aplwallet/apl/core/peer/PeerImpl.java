@@ -748,7 +748,7 @@ public final class PeerImpl implements Peer {
             LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
             PeerInfo newPi;
             if (response != null) {
-                //TODO: parse in new_pi
+                // parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
                 LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
                 if(newPi.error != null && newPi.error.equalsIgnoreCase(Errors.BLACKLISTED)){

@@ -96,7 +96,7 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        DbKey dbKey = keyFactory.newKey(values.get(0)); // TODO: YL review and fix
+        DbKey dbKey = keyFactory.newKey(values.get(0));
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
@@ -111,8 +111,7 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
                 }
             }
             for (T v : values) {
-//                save(con, t, v);
-                save(con, v); // TODO: YL review and fix
+                save(con, v);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
