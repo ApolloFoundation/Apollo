@@ -41,7 +41,7 @@ class ShardControllerTest {
 
     @Test
     void testGetAllShards() throws URISyntaxException, IOException {
-        doReturn(ShardTestData.SHARDS).when(shardService).getAllShards();
+        doReturn(ShardTestData.SHARDS).when(shardService).getAllCompletedShards();
 
         MockHttpRequest request = MockHttpRequest.get("/shards").contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();
