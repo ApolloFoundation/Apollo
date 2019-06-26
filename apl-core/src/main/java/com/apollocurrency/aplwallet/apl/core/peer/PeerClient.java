@@ -69,7 +69,6 @@ public class PeerClient {
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         log.debug("getFileInfo() resp = {}", req.toJSONString());
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
-        log.debug("getFileInfo() resp = {}", resp.toJSONString());
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
         }else{
