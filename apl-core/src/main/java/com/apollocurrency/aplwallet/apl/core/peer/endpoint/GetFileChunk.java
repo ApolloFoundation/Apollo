@@ -38,15 +38,16 @@ public class GetFileChunk extends PeerRequestHandler {
         Path filePath = downloadableFilesManager.mapFileIdToLocalPath(fcr.fileId);
         try {
             ChunkedFileOps ops = new ChunkedFileOps(filePath.toAbsolutePath());
-            byte[] dataBuf = new byte[fcr.size];
+            byte[] dataBuf = new byte[fcr.size.intValue()];
             Integer rres = ops.readChunk(fcr.offset, fcr.size, dataBuf);
-            if (rres != fcr.size) {
+            if (rres != fcr.size.intValue()) {
                 res.errorCode = -1;
             }
             FileChunk fc = new FileChunk();
             fc.info.crc=ops.getLastRDChunkCrc();
             fc.info.fileId=fcr.fileId;
-            fc.info.size=rres.longValue();
+            fc.info.size=rres.longValue();            
+            fc.info.offset=fcr.offset;
             fc.mime64data=Base64.getEncoder().encodeToString(dataBuf);
             res.chunk = fc;
         } catch (IOException ex) {
