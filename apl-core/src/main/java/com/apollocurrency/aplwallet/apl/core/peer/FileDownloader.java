@@ -36,7 +36,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -73,7 +72,7 @@ public class FileDownloader {
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
     private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
-
+    private CompletableFuture<Boolean> download;
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
@@ -95,21 +94,18 @@ public class FileDownloader {
     public void startDownload() {
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
-        CompletableFuture<Boolean> prepare;
-        prepare = CompletableFuture.supplyAsync(() -> {
-            status.decision = prepareForDownloading(null);
-            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
-            return res;
-        });
-        
-        prepare.thenAccept( r->{
-            if (r) {
+//        CompletableFuture<Boolean> prepare;
+//        prepare = CompletableFuture.supplyAsync(() -> {
+//            status.decision = prepareForDownloading(null);
+//            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
+//            return res;
+//        });
+
+        download = CompletableFuture.supplyAsync(() -> {
                 status.chunksTotal = downloadInfo.chunks.size();
-                log.debug("Decision is OK: {}, starting chunks downloading", status.decision.name());
-                download();
-            } else {
-                log.warn("Decision is not OK: {}, Chunks downloading is not started",status.decision.name());
-            }                
+                log.debug("Starting file chunks downloading");
+                Status s = download();
+                return status.isComplete();
         });
     }
 
@@ -136,7 +132,9 @@ public class FileDownloader {
         PeersList pl = new PeersList();
         allPeers.forEach((pi) -> {
             PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
-            pl.add(pfi);
+            if(pfi.retreiveHash()!=null){
+              pl.add(pfi);
+            }
         });
         log.debug("prepareForDownloading(), pl = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
@@ -144,7 +142,7 @@ public class FileDownloader {
         goodPeers = pvdm.getValidPeers();
         badPeers = pvdm.getInvalidPeers();
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
-        if(pvdm.isNetworkUsable()){
+        if(pvdm.isNetworkUsable()){ // we have nough good peers and can start downloadinig
             PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
             downloadInfo = pfi.getFdi();
         }
@@ -169,7 +167,7 @@ public class FileDownloader {
             this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
             //FIRE event when shard is PRESENT + ZIP is downloaded
             ShardPresentData shardPresentData = new ShardPresentData(fileID);
-            presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);
+            presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
         }
         return res;
     }

@@ -72,6 +72,8 @@ public class PeerClient {
         log.debug("getFileInfo() resp = {}", resp.toJSONString());
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+        }else{
+            log.debug("getFileInfo() resp = {}", resp.toJSONString());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
         log.debug("getFileInfo() FInfoResp = {}", res);
@@ -124,14 +126,13 @@ public class PeerClient {
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
-        log.trace("{}", resp);
+        log.trace("shardInfo respond = {}", resp);
         if(resp==null){
             log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
         ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
-        log.trace("{}", res);
-        log.debug("getShardingInfo() = {}", res);
+        log.trace("getShardingInfo() = {}", res);
         return res.shardingInfo;
     }     
 }

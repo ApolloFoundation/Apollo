@@ -12,7 +12,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -22,9 +29,10 @@ public class TrimService {
     private final int maxRollback;
     private final DatabaseManager dbManager;
     private final DerivedTablesRegistry dbTablesRegistry;
+    private ScheduledExecutorService executor;
     private final GlobalSync globalSync;
     private volatile int lastTrimHeight;
-
+    private final List<Integer> trimHeights = new ArrayList<>();
 
     @Inject
     public TrimService(DatabaseManager databaseManager,
@@ -36,6 +44,32 @@ public class TrimService {
         this.dbManager = Objects.requireNonNull(databaseManager, "Database manager cannot be null");
         this.dbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "Db tables registry cannot be null");
         this.globalSync = Objects.requireNonNull(globalSync, "Synchronization service cannot be null");
+    }
+    @PostConstruct
+    public void init() {
+        executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleWithFixedDelay(this::processTrimEvent, 0, 500, TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdown();
+    }
+
+    public void scheduleTrim(int height) {
+        synchronized (trimHeights) {
+            trimHeights.add(height);
+        }
+    }
+
+    private void processTrimEvent() {
+        synchronized (trimHeights) {
+            if (!trimHeights.isEmpty()) {
+                Integer height = trimHeights.remove(0);
+                log.debug("Perform trim on height " + height);
+                trimDerivedTables(height);
+            }
+        }
     }
 
     public int getLastTrimHeight() {

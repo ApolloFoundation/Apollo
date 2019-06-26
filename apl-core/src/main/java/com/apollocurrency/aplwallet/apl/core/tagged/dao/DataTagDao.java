@@ -32,10 +32,7 @@ import javax.inject.Singleton;
 public class DataTagDao extends EntityDbTable<DataTag> {
     private static Logger logger = LoggerFactory.getLogger(DataTagDao.class);
 
-    private Blockchain blockchain;
-
     private static final String DB_TABLE = "data_tag";
-    private static final DataTagMapper MAPPER = new DataTagMapper();
 
     private static final StringKeyFactory<DataTag> tagDbKeyFactory = new StringKeyFactory<>("tag") {
         @Override
@@ -43,11 +40,11 @@ public class DataTagDao extends EntityDbTable<DataTag> {
            return newKey(dataTag.getTag());
         }
     };
+    private static final DataTagMapper MAPPER = new DataTagMapper(tagDbKeyFactory);
 
     @Inject
-    public DataTagDao(Blockchain blockchain) {
+    public DataTagDao() {
         super(DB_TABLE, tagDbKeyFactory, true, null, false);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is null");
     }
 
     public DbKey newDbKey(DataTag dataTag) {
@@ -58,9 +55,12 @@ public class DataTagDao extends EntityDbTable<DataTag> {
         for (String tagValue : taggedData.getParsedTags()) {
             DataTag dataTag = get(tagDbKeyFactory.newKey(tagValue));
             if (dataTag == null) {
-                dataTag = new DataTag(tagValue, blockchain.getHeight());
+                logger.debug("Add new tag value {}", tagValue);
+                dataTag = new DataTag(tagValue);
             }
+            dataTag.setHeight(taggedData.getHeight());
             dataTag.setCount(dataTag.getCount() + 1);
+            logger.debug("New quantity for tag value {} - {}", tagValue, dataTag.getCount());
             insert(dataTag);
         }
     }
@@ -71,6 +71,7 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     }
 
     public void add(TaggedData taggedData, int height) {
+        logger.trace("Restore tagged data");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count + 1 WHERE tag = ? AND height >= ?")) {

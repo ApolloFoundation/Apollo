@@ -1,14 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -19,12 +15,14 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import jnr.ffi.Struct;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -101,6 +99,34 @@ class DataTagDaoTest {
         DbUtils.inTransaction(extension, (con) -> dataTagDao.rollback(tagtd.dataTag_4.getHeight()));
         assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4),
                 dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+    }
+
+    @Test
+    void testAdd() {
+        TaggedData taggedData = mock(TaggedData.class);
+        doReturn(1_000_000).when(taggedData).getHeight();
+        doReturn(new String[]{tagtd.dataTag_1.getTag(), "newTag"}).when(taggedData).getParsedTags();
+
+        DbUtils.inTransaction(extension, (con) -> dataTagDao.add(taggedData));
+
+        List<DataTag> dataTags = CollectionUtil.toList(dataTagDao.getAllTags(0, 4));
+
+        DataTag updatedDataTag = new DataTag(tagtd.dataTag_1.getTag(), 1_000_000, tagtd.dataTag_1.getCount() + 1);
+        updatedDataTag.setLatest(true);
+        updatedDataTag.setDbId(41);
+
+        DataTag newTag = new DataTag("newTag", 1_000_000, 1);
+        newTag.setLatest(true);
+        newTag.setDbId(42);
+        tagtd.dataTag_4.setDbId(40);
+
+        List<DataTag> expected = List.of(
+                updatedDataTag,
+                newTag,
+                tagtd.dataTag_4
+        );
+
+        assertEquals(expected, dataTags);
     }
 
 }

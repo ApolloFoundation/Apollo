@@ -71,7 +71,7 @@ class PeerLoaderThread implements Runnable {
             });
             unresolvedPeers.add(unresolvedAddress);
         });
-        LOG.trace("'Peer loader': thread finished. Peers [{}]", Peers.getAllPeers().size());
+        LOG.trace("'Peer loader': thread finished. Peers [{}]", entries.size());
         Peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
     }
     

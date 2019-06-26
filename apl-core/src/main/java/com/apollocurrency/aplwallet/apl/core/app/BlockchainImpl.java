@@ -266,19 +266,15 @@ public class BlockchainImpl implements Blockchain {
         if (blockIdList.isEmpty()) {
             return Collections.emptyList();
         }
-        log.debug("Block ids {}", blockIdList);
-        log.debug("Has block {} - {}", blockId, hasBlockInShards(blockId));
         List<Block> result = new ArrayList<>();
         TransactionalDataSource dataSource;
         Integer fromBlockHeight = getBlockHeight(blockId);
-        log.debug("Found block height {}", fromBlockHeight);
         if (fromBlockHeight != null) {
             int prevSize;
             do {
                 dataSource = getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
                 prevSize = result.size();
                 blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, dataSource, prevSize);
-                log.debug("Got {} blocks from data_source {}", result.size(), dataSource.getUrl());
                 for (int i = prevSize; i < result.size(); i++) {
                     Block block = result.get(i);
                     List<Transaction> blockTransactions = transactionDao.findBlockTransactions(block.getId(), dataSource);
@@ -609,7 +605,6 @@ public class BlockchainImpl implements Blockchain {
 
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
         Long shardId = blockIndexDao.getShardIdByBlockHeight(blockHeight);
-        log.trace("Found shardId {} for block height {}", shardId, blockHeight);
         return getShardDataSourceOrDefault(shardId);
     }
 

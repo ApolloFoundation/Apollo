@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *
  * @author al
  */
+@Slf4j
 public class PeersList {
 
     private final List<HasHashSum> allPeers = new ArrayList<>();
@@ -44,8 +46,15 @@ public class PeersList {
        //TODO: what to do if we have less? Just request bigger numbers?
        for(int idx: idxSet) {
              HasHashSum p = allPeers.get(idx);
-             if(p!=null && p.retreiveHash()!=null){
-               res.add(p);
+             if(p!=null && p.getHash()==null){
+                 if(p.retreiveHash()!=null){
+                   res.add(p);
+                   
+                 }else{                                         
+                   log.trace("Can not get hash from {}",p.getId());
+                 }
+             } else{
+                   res.add(p);
              }
        }
        return res;

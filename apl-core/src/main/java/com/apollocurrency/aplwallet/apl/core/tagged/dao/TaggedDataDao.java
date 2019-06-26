@@ -27,15 +27,14 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Singleton
 /**
  * We will not store files in transaction attachment, alternatively we will store it only in tagged_data table
  * and change default behavior for rollback on scan to do not clear values, which cannot be restored
  */
+@Singleton
 public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
-    protected DatabaseManager databaseManager;
     private BlockchainConfig blockchainConfig;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
@@ -51,20 +50,13 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     };
 
     @Inject
-    public TaggedDataDao(DataTagDao dataTagDao, DatabaseManager databaseManager,
+    public TaggedDataDao(DataTagDao dataTagDao,
                          BlockchainConfig blockchainConfig) {
         super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, false);
         this.dataTagDao = dataTagDao;
-        this.databaseManager = databaseManager;
         this.blockchainConfig = blockchainConfig;
     }
 
-    private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
-    }
 
     @Override
     public TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -85,7 +77,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     @Override
     protected void prune() {
         if (blockchainConfig.isEnablePruning()) {
-            try (Connection con = lookupDataSource().getConnection();
+            try (Connection con = getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                          + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
                 int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
@@ -176,7 +168,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     }
 
     public boolean isPruned(long transactionId) {
-        try (Connection con = lookupDataSource().getConnection();
+        try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {

@@ -70,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -632,8 +633,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
-        log.warn("NODE IS WAITING FOR 'shard/(no shard) decision' and proceeding with necessary data by ShardPresentEventType....");
-        shardDownloader.prepareAndStartDownload(); // ignore result
+        long timeDelay = 10000L;
+        try {
+            log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
+                    "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
+            // try make delay before Peers are up and running
+            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for Peers initialization
+            // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
+            FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
+            log.debug("NO_SHARD/SHARD_PRESENT decision was = '{}'", downloadDecision);
+        } catch (InterruptedException e) {
+            log.error("main BlockchainProcessorImpl thread was interrupted, EXITING...");
+            System.exit(-1);
+        }
 
 /*
         // PREVIOUS start-up LOGIC
