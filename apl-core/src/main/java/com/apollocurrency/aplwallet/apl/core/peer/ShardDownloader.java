@@ -190,7 +190,7 @@ public class ShardDownloader {
                     || result == FileDownloadDecision.Risky) {
                 log.debug("Starting shard downloading: '{}'", fileID);
                 fileDownloader.startDownload();
-                //TODO: how to file event when file is downloaded and OK?
+                //see FileDownloader::getNextEmptyChunk() for sucess event
             } else {
                 log.error("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
                 // We CAN'T download latest SHARD archive, start from the beginning - FIRE event here
