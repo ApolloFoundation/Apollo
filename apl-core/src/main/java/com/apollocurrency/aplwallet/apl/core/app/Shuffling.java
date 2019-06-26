@@ -324,7 +324,7 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().filter(s-> !s.removed).sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
+            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().filter(s-> !s.isRemoved()).sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
 
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
