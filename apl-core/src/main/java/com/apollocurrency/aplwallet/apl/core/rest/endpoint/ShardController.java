@@ -34,8 +34,8 @@ public class ShardController {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"shards"}, summary = "Retrieve all shards", description = "Get all shard entries from database")
+    @Operation(tags = {"shards"}, summary = "Retrieve all completed only shards", description = "Get all 'completed' shard entries from database")
     public Response getAllShards() {
-        return Response.ok(shardService.getAllShards()).build();
+        return Response.ok(shardService.getAllCompletedShards()).build();
     }
 }
