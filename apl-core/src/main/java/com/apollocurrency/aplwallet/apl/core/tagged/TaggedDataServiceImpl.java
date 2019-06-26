@@ -124,7 +124,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             }
             taggedData.setTransactionTimestamp(timestamp);
             taggedData.setBlockTimestamp(extendTransaction.getBlockTimestamp());
-            taggedData.setHeight(blockchain.getHeight());
+            taggedData.setHeight(extendTransaction.getHeight());
             taggedDataDao.insert(taggedData);
         }
     }
