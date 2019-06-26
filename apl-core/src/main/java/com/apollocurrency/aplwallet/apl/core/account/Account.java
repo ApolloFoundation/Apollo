@@ -100,6 +100,7 @@ public final class Account {
     private static AccountAssetTable accountAssetTable;
     private static AccountCurrencyTable accountCurrencyTable;
     private static AccountLeaseTable accountLeaseTable;
+    private static AccountGuaranteedBalanceTable guaranteedBalanceTable;
     private static AccountPropertyTable accountPropertyTable;
 
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
@@ -127,7 +128,8 @@ public final class Account {
                             Blockchain blockchainParam,
                             GlobalSync globalSync,
                             PublicKeyTable pkTable,
-                            AccountTable accTable
+                            AccountTable accTable,
+                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -136,7 +138,7 @@ public final class Account {
         publicKeyTable = pkTable;
         sync = globalSync;
         accountTable = accTable;
-        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
+        guaranteedBalanceTable = accountGuaranteedBalanceTable;
         accountAssetTable = AccountAssetTable.getInstance();
         accountInfoTable = AccountInfoTable.getInstance();
         accountCurrencyTable = AccountCurrencyTable.getInstance();

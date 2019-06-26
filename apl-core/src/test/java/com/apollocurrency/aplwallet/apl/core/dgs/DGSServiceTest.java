@@ -1153,7 +1153,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseForDelistedGoods() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1169,7 +1169,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceNotMatch() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1183,7 +1183,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1197,7 +1197,7 @@ public class DGSServiceTest {
 
     @Test
     void testDeliver() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction deliverTransaction = mock(Transaction.class);
         int height = 1_000_000;
         long txId = 100L;
@@ -1227,7 +1227,7 @@ public class DGSServiceTest {
 
     @Test
     void testRefund() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
         doReturn(1_500_000).when(blockchain).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
