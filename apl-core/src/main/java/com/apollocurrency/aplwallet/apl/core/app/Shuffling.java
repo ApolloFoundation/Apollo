@@ -478,12 +478,14 @@ public final class Shuffling {
     private static void insert(Shuffling shuffling) {
         long id = shuffling.getId();
         shuffling.height = blockchain.getHeight();
-        if (shuffling.getBlocksRemaining() <= 0) {
-            if (activeShufflingsCache.get(id) != null) {
-                activeShufflingsCache.remove(id);
+        if (activeShufflingsCache != null) {
+            if (shuffling.getBlocksRemaining() <= 0) {
+                if (activeShufflingsCache.get(id) != null) {
+                    activeShufflingsCache.remove(id);
+                }
+            } else { // add new or replace
+                activeShufflingsCache.put(id, shuffling);
             }
-        } else { // add new or replace
-            activeShufflingsCache.put(id, shuffling);
         }
         shufflingTable.insert(shuffling);
     }
