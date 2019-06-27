@@ -31,6 +31,22 @@ public class TrimObserver {
     private int trimFrequency;
     private final List<Integer> trimHeights = new ArrayList<>();
 
+    public void scheduleTrim(int height) {
+        synchronized (trimHeights) {
+            trimHeights.add(height);
+        }
+    }
+
+    private void processTrimEvent() {
+        synchronized (trimHeights) {
+            if (!trimHeights.isEmpty()) {
+                Integer height = trimHeights.remove(0);
+                log.debug("Perform trim on height " + height);
+                trimService.trimDerivedTables(height);
+            }
+        }
+    }
+
     @Inject
     public TrimObserver(TrimService trimService,
                         @Property("apl.trimDerivedTables") boolean trimDerivedTables,
@@ -57,7 +73,8 @@ public class TrimObserver {
     // async
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
-            trimService.scheduleTrim(block.getHeight());
+            scheduleTrim(block.getHeight());
         }
+        processTrimEvent();
     }
 }

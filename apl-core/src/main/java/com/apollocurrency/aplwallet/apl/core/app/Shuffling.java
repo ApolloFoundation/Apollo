@@ -301,9 +301,9 @@ public final class Shuffling {
     }
 
     static void init() {
-        activeShufflingsCache = new HashMap<>();
-        List<Shuffling> allActiveShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-        activeShufflingsCache.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
+//        activeShufflingsCache = new HashMap<>();
+//        List<Shuffling> allActiveShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
+//        activeShufflingsCache.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
     }
 
     @Singleton
@@ -315,10 +315,10 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-            if (activeShufflingsCache == null) {
-                Shuffling.init();
-            }
-            List<Shuffling> sortedShufflings = activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
+//            if (activeShufflingsCache == null) {
+//                Shuffling.init();
+//            }
+            List<Shuffling> sortedShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));//activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
 
             for (Shuffling shuffling : sortedShufflings) {
                     if (!shuffling.isFull(block)) {
