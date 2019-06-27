@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -127,16 +127,16 @@ class MonetarySystemCurrIssuance extends MonetarySystem {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return true;
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
         long transactionId = transaction.getId();
         Currency.addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);

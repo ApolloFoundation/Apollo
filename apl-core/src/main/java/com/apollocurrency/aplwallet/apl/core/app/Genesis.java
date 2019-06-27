@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
@@ -136,7 +136,7 @@ public final class Genesis {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        AccountEntity creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
+        Account creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
         accountPublicKeyService.apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         genesisAccountsJSON = null;
@@ -151,7 +151,7 @@ public final class Genesis {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
         long total = 0;
         for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
-            AccountEntity account = accountService.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
+            Account account = accountService.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
             accountService.addToBalanceAndUnconfirmedBalanceATM(account, null, 0, entry.getValue());
             total += entry.getValue();
             if (count++ % 100 == 0) {
@@ -174,7 +174,7 @@ public final class Genesis {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
-            AccountEntity account = accountService.addOrGetAccount(AccountService.getId(publicKey), true);
+            Account account = accountService.addOrGetAccount(AccountService.getId(publicKey), true);
             accountPublicKeyService.apply(account, publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);

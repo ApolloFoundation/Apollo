@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -87,7 +87,7 @@ public final class DGSListing extends CreateTransaction {
             }
         }
 
-        AccountEntity account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new DigitalGoodsListing(name, description, tags, quantity, priceATM);
         return createTransaction(req, account, attachment);
 

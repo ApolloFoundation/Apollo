@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
@@ -127,7 +127,7 @@ public class BlockEventSourceProcessor implements Runnable {
     }
 
     private JSONObject putAccount(long accountId) {
-        AccountEntity account = accountService.getAccountEntity(accountId);
+        Account account = accountService.getAccount(accountId);
         JSONObject response = JSONData.accountBalance(account, false);
         JSONData.putAccount(response, "account", account.getId());
 

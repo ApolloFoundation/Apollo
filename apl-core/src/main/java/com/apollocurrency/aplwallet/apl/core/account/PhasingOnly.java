@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
@@ -50,7 +50,7 @@ public final class PhasingOnly {
         return AccountRestrictions.phasingControlTable.getAll(from, to);
     }
 
-    public static void set(AccountEntity senderAccount, SetPhasingOnly attachment) {
+    public static void set(Account senderAccount, SetPhasingOnly attachment) {
         PhasingParams phasingParams = attachment.getPhasingParams();
         if (phasingParams.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.NONE) {
             //no voting - remove the control
@@ -74,7 +74,7 @@ public final class PhasingOnly {
         }
     }
 
-    static void unset(AccountEntity account) {
+    static void unset(Account account) {
         account.removeControl(AccountControlType.PHASING_ONLY);
         PhasingOnly phasingOnly = get(account.getId());
         AccountRestrictions.phasingControlTable.delete(phasingOnly);

@@ -60,7 +60,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atmBalance = lookupAccountService().getAccountEntity(voterId, height).getBalanceATM();
+                long atmBalance = lookupAccountService().getAccount(voterId, height).getBalanceATM();
                 return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
             }
             @Override
@@ -153,7 +153,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return lookupAccountService().getAccountEntity(voterId, height).getBalanceATM();
+                return lookupAccountService().getAccount(voterId, height).getBalanceATM();
             }
         },
         ASSET(2) {

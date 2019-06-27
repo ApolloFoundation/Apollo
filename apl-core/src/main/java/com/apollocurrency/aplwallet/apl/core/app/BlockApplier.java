@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
@@ -33,7 +33,7 @@ public class BlockApplier {
     private AccountPublicKeyService accountPublicKeyService;
 
     public void apply(Block block) {
-        AccountEntity generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
+        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
         accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         long totalBackFees = 0;
         int height = block.getHeight();
@@ -56,12 +56,12 @@ public class BlockApplier {
                 if (generators == null && shardHeight > blockHeight) {
                     generators = shardDao.getLastShard().getGeneratorIds();
                 }
-                AccountEntity previousGeneratorAccount;
+                Account previousGeneratorAccount;
                 if (shardHeight > blockHeight) {
                     int index = shardHeight - blockHeight - 1;
-                    previousGeneratorAccount = accountService.getAccountEntity(generators[index]);
+                    previousGeneratorAccount = accountService.getAccount(generators[index]);
                 } else {
-                    previousGeneratorAccount = accountService.getAccountEntity(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                    previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
                 log.trace("Back fees {} to forger at height {}", ((double)backFees[i])/ Constants.ONE_APL,
                         height - i - 1);

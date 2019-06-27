@@ -57,7 +57,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        AccountEntity account = ParameterParser.getAccount(req);
+        Account account = ParameterParser.getAccount(req);
         boolean includeLessors = "true".equalsIgnoreCase(req.getParameter("includeLessors"));
         boolean includeAssets = "true".equalsIgnoreCase(req.getParameter("includeAssets"));
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
@@ -96,13 +96,13 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeLessors) {
-            try (DbIterator<AccountEntity> lessors = lookupAccountService().getLessorsIterator(account)) {
+            try (DbIterator<Account> lessors = lookupAccountService().getLessorsIterator(account)) {
                 if (lessors.hasNext()) {
                     JSONArray lessorIds = new JSONArray();
                     JSONArray lessorIdsRS = new JSONArray();
                     JSONArray lessorInfo = new JSONArray();
                     while (lessors.hasNext()) {
-                        AccountEntity lessor = lessors.next();
+                        Account lessor = lessors.next();
                         lessorIds.add(Long.toUnsignedString(lessor.getId()));
                         lessorIdsRS.add(Convert2.rsAccount(lessor.getId()));
                         lessorInfo.add(JSONData.lessor(lessor, includeEffectiveBalance));

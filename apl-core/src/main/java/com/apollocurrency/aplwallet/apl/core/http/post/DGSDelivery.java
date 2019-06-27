@@ -25,7 +25,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
@@ -55,7 +55,7 @@ public final class DGSDelivery extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        AccountEntity sellerAccount = ParameterParser.getSenderAccount(req);
+        Account sellerAccount = ParameterParser.getSenderAccount(req);
         DGSPurchase purchase = ParameterParser.getPurchase(service, req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
@@ -79,7 +79,7 @@ public final class DGSDelivery extends CreateTransaction {
             return INCORRECT_DGS_DISCOUNT;
         }
 
-        AccountEntity buyerAccount = accountService.getAccountEntity(purchase.getBuyerId());
+        Account buyerAccount = accountService.getAccount(purchase.getBuyerId());
         boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
         EncryptedData encryptedGoods = ParameterParser.getEncryptedData(req, "goods");
         byte[] goodsBytes = null;

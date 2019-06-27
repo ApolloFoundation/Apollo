@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
@@ -53,7 +53,7 @@ class MSExchangeBuy extends MonetarySystemExchange {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateATM())) {
             lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
@@ -63,13 +63,13 @@ class MSExchangeBuy extends MonetarySystemExchange {
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
         ExchangeRequest.addExchangeRequest(transaction, attachment);
         CurrencyExchangeOffer.exchangeAPLForCurrency(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());

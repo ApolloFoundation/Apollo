@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
@@ -47,7 +47,7 @@ class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
         long unconfirmedAssetBalance = lookupAccountAssetService().getUnconfirmedAssetBalanceATU(senderAccount, attachment.getAssetId());
         if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
@@ -58,13 +58,13 @@ class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
         Order.Ask.addOrder(transaction, attachment);
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
         lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
     }

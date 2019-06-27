@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -77,7 +77,7 @@ public final class AccountRestrictions {
     }
 
     public static void checkTransaction(Transaction transaction) throws AplException.NotCurrentlyValidException {
-        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
+        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
         if (senderAccount == null) {
             throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
         }
@@ -88,7 +88,7 @@ public final class AccountRestrictions {
     }
 
     public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
+        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
         return
                 senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)
                 && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0

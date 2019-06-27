@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 
 import java.util.List;
@@ -16,9 +16,9 @@ public interface AccountInfoService {
 
     void save(AccountInfo accountInfo);
 
-    AccountInfo getAccountInfo(AccountEntity account);
+    AccountInfo getAccountInfo(Account account);
 
-    void updateAccountInfo(AccountEntity account, String name, String description);
+    void updateAccountInfo(Account account, String name, String description);
 
     List<AccountInfo> searchAccounts(String query, int from, int to);
 }

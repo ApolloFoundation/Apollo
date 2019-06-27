@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
@@ -90,7 +90,7 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
         return buyOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
-    public static CurrencyBuyOffer getOffer(Currency currency, AccountEntity account) {
+    public static CurrencyBuyOffer getOffer(Currency currency, Account account) {
         return getOffer(currency.getId(), account.getId());
     }
 

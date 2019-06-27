@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -44,7 +44,7 @@ public final class CancelBidOrder extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long orderId = ParameterParser.getUnsignedLong(req, "order", true);
-        AccountEntity account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req);
         Order.Bid orderData = Order.Bid.getBidOrder(orderId);
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;

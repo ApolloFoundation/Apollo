@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -175,7 +175,7 @@ public class DexController {
 
         Integer currentTime = epochTime.getEpochTime();
         try {
-            AccountEntity account = ParameterParser.getSenderAccount(req);
+            Account account = ParameterParser.getSenderAccount(req);
             DexOffer offer = new DexOffer();
             OfferType type = OfferType.getType(offerType);
 
@@ -336,7 +336,7 @@ public class DexController {
                                          @Context HttpServletRequest req) throws NotFoundException {
         try{
             Long transactionId;
-            AccountEntity account = ParameterParser.getSenderAccount(req);
+            Account account = ParameterParser.getSenderAccount(req);
 
             if (StringUtils.isBlank(transactionIdStr)) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("transactionId", "Can't be null."))).build();
@@ -407,7 +407,7 @@ public class DexController {
                                     @Context HttpServletRequest req) {
         DexCurrencies currencies = null;
         String passphrase;
-        AccountEntity sender;
+        Account sender;
         try{
             passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
             sender = ParameterParser.getSenderAccount(req);

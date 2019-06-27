@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
@@ -47,7 +47,7 @@ public final class PlaceBidOrder extends CreateTransaction {
         Asset asset = ParameterParser.getAsset(req);
         long priceATM = ParameterParser.getPriceATM(req);
         long quantityATU = ParameterParser.getQuantityATU(req);
-        AccountEntity account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
         try {

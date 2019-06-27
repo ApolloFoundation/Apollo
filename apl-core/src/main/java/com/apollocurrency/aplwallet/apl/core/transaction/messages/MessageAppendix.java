@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -112,7 +112,7 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {}
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
 
     public byte[] getMessage() {
         return message;

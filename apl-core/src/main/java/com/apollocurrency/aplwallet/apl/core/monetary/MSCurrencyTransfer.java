@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
@@ -63,7 +63,7 @@ class MSCurrencyTransfer extends MonetarySystem {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
         if (attachment.getUnits() > lookupAccountCurrencyService().getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId())) {
             return false;
@@ -73,7 +73,7 @@ class MSCurrencyTransfer extends MonetarySystem {
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
@@ -82,7 +82,7 @@ class MSCurrencyTransfer extends MonetarySystem {
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
         Currency.transferCurrency(getLedgerEvent(), transaction.getId(), senderAccount, recipientAccount, attachment.getCurrencyId(), attachment.getUnits());
         CurrencyTransfer.addTransfer(transaction, attachment);

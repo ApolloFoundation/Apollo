@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionScheduler;
@@ -83,7 +83,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 Currency currency = ParameterParser.getCurrency(req);
                 long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
                 long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-                AccountEntity account = ParameterParser.getSenderAccount(req);
+                Account account = ParameterParser.getSenderAccount(req);
                 byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));

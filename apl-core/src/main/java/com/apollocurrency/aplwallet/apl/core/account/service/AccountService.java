@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -27,33 +27,33 @@ public interface AccountService {
 
     int getActiveLeaseCount();
 
-    AccountEntity getAccountEntity(long id);
+    Account getAccount(long id);
 
-    AccountEntity getAccountEntity(long id, int height);
+    Account getAccount(long id, int height);
 
-    AccountEntity getAccountEntity(byte[] publicKey);
+    Account getAccount(byte[] publicKey);
 
-    AccountEntity addOrGetAccount(long id);
+    Account addOrGetAccount(long id);
 
-    AccountEntity addOrGetAccount(long id, boolean isGenesis);
+    Account addOrGetAccount(long id, boolean isGenesis);
 
-    void save(AccountEntity account);
+    void save(Account account);
 
-    long getEffectiveBalanceAPL(AccountEntity account, int height, boolean lock);
+    long getEffectiveBalanceAPL(Account account, int height, boolean lock);
 
-    long getGuaranteedBalanceATM(AccountEntity account);
+    long getGuaranteedBalanceATM(Account account);
 
-    long getGuaranteedBalanceATM(AccountEntity account, int numberOfConfirmations, int currentHeight);
+    long getGuaranteedBalanceATM(Account account, int numberOfConfirmations, int currentHeight);
 
-    long getLessorsGuaranteedBalanceATM(AccountEntity account, int height);
+    long getLessorsGuaranteedBalanceATM(Account account, int height);
 
-    DbIterator<AccountEntity> getLessorsIterator(AccountEntity account);
+    DbIterator<Account> getLessorsIterator(Account account);
 
-    DbIterator<AccountEntity> getLessorsIterator(AccountEntity account, int height);
+    DbIterator<Account> getLessorsIterator(Account account, int height);
 
-    List<AccountEntity> getLessors(AccountEntity account);
+    List<Account> getLessors(Account account);
 
-    List<AccountEntity> getLessors(AccountEntity account, int height);
+    List<Account> getLessors(Account account, int height);
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
         if (accountId == Genesis.CREATOR_ID) {
@@ -70,17 +70,17 @@ public interface AccountService {
         }
     }
 
-    void addToBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM, long feeATM);
+    void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToBalanceAndUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM);
+    void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
 
-    void addToUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM, long feeATM);
+    void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM);
+    void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
 
-    void addToBalanceAndUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM, long feeATM);
+    void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM);
+    void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
 
     long getTotalAmountOnTopAccounts(int numberOfTopAccounts);
 
@@ -88,7 +88,7 @@ public interface AccountService {
 
     long getTotalNumberOfAccounts();
 
-    DbIterator<AccountEntity> getTopHolders(Connection con, int numberOfTopAccounts);
+    DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts);
 
     long getTotalSupply();
 

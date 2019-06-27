@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -42,7 +42,7 @@ public class DGSObserver {
             }
         }
         for (DGSPurchase purchase : expiredPurchases) {
-            AccountEntity buyer = accountService.getAccountEntity(purchase.getBuyerId());
+            Account buyer = accountService.getAccount(purchase.getBuyerId());
             accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
                     Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM()));
             DGSGoods goods = service.getGoods(purchase.getGoodsId());

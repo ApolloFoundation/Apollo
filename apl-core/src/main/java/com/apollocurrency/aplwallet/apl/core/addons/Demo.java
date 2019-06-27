@@ -51,7 +51,7 @@ public final class Demo implements AddOn {
 
         LOG.info("Block " + block.getStringId()
                 + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
-                + accountService.getEffectiveBalanceAPL(accountService.getAccountEntity(block.getGeneratorId()), BlockchainHelper.getBlockchainHeight(), true));
+                + accountService.getEffectiveBalanceAPL(accountService.getAccount(block.getGeneratorId()), BlockchainHelper.getBlockchainHeight(), true));
     }
 
 

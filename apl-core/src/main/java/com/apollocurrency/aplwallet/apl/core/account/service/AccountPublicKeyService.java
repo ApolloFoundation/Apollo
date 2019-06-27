@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -36,9 +36,9 @@ public interface AccountPublicKeyService {
 
     boolean setOrVerify(long accountId, byte[] key);
 
-    void apply(AccountEntity account, byte[] key);
+    void apply(Account account, byte[] key);
 
-    void apply(AccountEntity account, byte[] key, boolean isGenesis);
+    void apply(Account account, byte[] key, boolean isGenesis);
 
     void insertNewPublicKey(DbKey dbKey, boolean isGenesis);
 

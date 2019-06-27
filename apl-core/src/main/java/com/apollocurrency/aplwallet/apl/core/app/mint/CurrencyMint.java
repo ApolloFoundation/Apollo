@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -176,7 +176,7 @@ public final class CurrencyMint {
         return counter;
     }
 
-    public static void mintCurrency(LedgerEvent event, long eventId, final AccountEntity account,
+    public static void mintCurrency(LedgerEvent event, long eventId, final Account account,
                              final MonetarySystemCurrencyMinting attachment) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
         if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {

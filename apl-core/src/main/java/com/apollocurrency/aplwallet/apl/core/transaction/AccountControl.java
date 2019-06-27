@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -35,12 +35,12 @@ public abstract class AccountControl extends TransactionType {
     }
 
     @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return true;
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
     }
 
     public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
@@ -70,9 +70,9 @@ public abstract class AccountControl extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
-            AccountEntity sender = lookupAccountService().getAccountEntity(transaction.getSenderId());
+            Account sender = lookupAccountService().getAccount(transaction.getSenderId());
             lookupAccountLeaseService().leaseEffectiveBalance(sender, transaction.getRecipientId(), attachment.getPeriod());
         }
 
@@ -134,7 +134,7 @@ public abstract class AccountControl extends TransactionType {
             VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
             attachment.getPhasingParams().validate();
             if (votingModel == VoteWeighting.VotingModel.NONE) {
-                AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
+                Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
                 if (senderAccount == null || !senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)) {
                     throw new AplException.NotCurrentlyValidException("Phasing only account control is not currently enabled");
                 }
@@ -165,7 +165,7 @@ public abstract class AccountControl extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
             PhasingOnly.set(senderAccount, attachment);
         }

@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -143,7 +143,7 @@ public abstract class CurrencyExchangeOffer {
         return currencyExchangeOffers;
     }
 
-    static void exchangeCurrencyForAPL(Transaction transaction, AccountEntity account, final long currencyId, final long rateATM, final long units) {
+    static void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateATM);
 
         long totalAmountATM = 0;
@@ -161,7 +161,7 @@ public abstract class CurrencyExchangeOffer {
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
-            AccountEntity counterAccount = accountService.getAccountEntity(offer.getAccountId());
+            Account counterAccount = accountService.getAccount(offer.getAccountId());
             accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountATM);
             accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
             accountCurrencyService.addToUnconfirmedCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
@@ -193,7 +193,7 @@ public abstract class CurrencyExchangeOffer {
         return currencySellOffers;
     }
 
-    static void exchangeAPLForCurrency(Transaction transaction, AccountEntity account, final long currencyId, final long rateATM, final long units) {
+    static void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
         long totalAmountATM = 0;
         long remainingUnits = units;
@@ -211,7 +211,7 @@ public abstract class CurrencyExchangeOffer {
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
-            AccountEntity counterAccount = accountService.getAccountEntity(offer.getAccountId());
+            Account counterAccount = accountService.getAccount(offer.getAccountId());
             accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountATM);
             accountService.addToUnconfirmedBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
                     Math.addExact(
@@ -236,7 +236,7 @@ public abstract class CurrencyExchangeOffer {
         CurrencyBuyOffer.remove(buyOffer);
         CurrencySellOffer.remove(sellOffer);
 
-        AccountEntity account = accountService.getAccountEntity(buyOffer.getAccountId());
+        Account account = accountService.getAccount(buyOffer.getAccountId());
         accountService.addToUnconfirmedBalanceATM(account, event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateATM()));
         accountCurrencyService.addToUnconfirmedCurrencyUnits(account, event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }

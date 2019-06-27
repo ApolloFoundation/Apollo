@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import java.nio.ByteBuffer;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -64,7 +64,7 @@ public class UnencryptedEncryptedMessageAppendix extends EncryptedMessageAppendi
     }
 
     @Override
-    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (getEncryptedData() == null) {
             throw new AplException.NotYetEncryptedException("Message not yet encrypted");
         }

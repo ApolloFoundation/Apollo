@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
@@ -54,12 +54,12 @@ public abstract class DigitalGoods extends TransactionType {
     }
 
     @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return true;
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
     }
 
     @Override
@@ -111,7 +111,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
             lookupDGService().listGoods(transaction, attachment);
         }
@@ -183,7 +183,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsDelisting attachment = (DigitalGoodsDelisting) transaction.getAttachment();
             lookupDGService().delistGoods(attachment.getGoodsId());
         }
@@ -243,7 +243,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
             lookupDGService().changePrice(attachment.getGoodsId(), attachment.getPriceATM());
         }
@@ -304,7 +304,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
             lookupDGService().changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
         }
@@ -365,7 +365,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
             if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
                 lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
@@ -375,13 +375,13 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
             lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
             lookupDGService().purchase(transaction, attachment);
         }
@@ -467,7 +467,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
             lookupDGService().deliver(transaction, attachment);
         }
@@ -535,7 +535,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsFeedback attachment = (DigitalGoodsFeedback) transaction.getAttachment();
             lookupDGService().feedback(attachment.getPurchaseId(), transaction.getEncryptedMessage(), transaction.getMessage());
         }
@@ -598,7 +598,7 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+        public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
             if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getRefundATM()) {
                 lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -attachment.getRefundATM());
@@ -608,13 +608,13 @@ public abstract class DigitalGoods extends TransactionType {
         }
 
         @Override
-        public void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+        public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
             lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getRefundATM());
         }
 
         @Override
-        public void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
             lookupDGService().refund(getLedgerEvent(), transaction.getId(), transaction.getSenderId(), attachment.getPurchaseId(), attachment.getRefundATM(), transaction.getEncryptedMessage());
         }

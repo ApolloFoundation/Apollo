@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 
 import javax.enterprise.inject.spi.CDI;
@@ -30,7 +30,7 @@ public enum HoldingType {
 
     APL((byte) 0) {
         @Override
-        public long getBalance(AccountEntity account, long holdingId) {
+        public long getBalance(Account account, long holdingId) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
@@ -38,7 +38,7 @@ public enum HoldingType {
         }
 
         @Override
-        public long getUnconfirmedBalance(AccountEntity account, long holdingId) {
+        public long getUnconfirmedBalance(Account account, long holdingId) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
@@ -46,7 +46,7 @@ public enum HoldingType {
         }
 
         @Override
-        public void addToBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
@@ -54,7 +54,7 @@ public enum HoldingType {
         }
 
         @Override
-        public void addToUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
@@ -62,7 +62,7 @@ public enum HoldingType {
         }
 
         @Override
-        public void addToBalanceAndUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             if (holdingId != 0) {
                 throw new IllegalArgumentException("holdingId must be 0");
             }
@@ -73,27 +73,27 @@ public enum HoldingType {
 
     ASSET((byte) 1) {
         @Override
-        public long getBalance(AccountEntity account, long holdingId) {
+        public long getBalance(Account account, long holdingId) {
             return HoldingType.lookupAccountAssetService().getAssetBalanceATU(account, holdingId);
         }
 
         @Override
-        public long getUnconfirmedBalance(AccountEntity account, long holdingId) {
+        public long getUnconfirmedBalance(Account account, long holdingId) {
             return HoldingType.lookupAccountAssetService().getUnconfirmedAssetBalanceATU(account, holdingId);
         }
 
         @Override
-        public void addToBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             HoldingType.lookupAccountAssetService().addToAssetBalanceATU(account, event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             HoldingType.lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(account, event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToBalanceAndUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             HoldingType.lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(account, event, eventId, holdingId, amount);
         }
 
@@ -101,27 +101,27 @@ public enum HoldingType {
 
     CURRENCY((byte) 2) {
         @Override
-        public long getBalance(AccountEntity account, long holdingId) {
+        public long getBalance(Account account, long holdingId) {
             return HoldingType.lookupAccountCurrencyService().getCurrencyUnits(account, holdingId);
         }
 
         @Override
-        public long getUnconfirmedBalance(AccountEntity account, long holdingId) {
+        public long getUnconfirmedBalance(Account account, long holdingId) {
             return HoldingType.lookupAccountCurrencyService().getUnconfirmedCurrencyUnits(account, holdingId);
         }
 
         @Override
-        public void addToBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             HoldingType.lookupAccountCurrencyService().addToCurrencyUnits(account, event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             HoldingType.lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(account, event, eventId, holdingId, amount);
         }
 
         @Override
-        public void addToBalanceAndUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount) {
+        public void addToBalanceAndUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount) {
             HoldingType.lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(account, event, eventId, holdingId, amount);
         }
 
@@ -175,14 +175,14 @@ public enum HoldingType {
         return code;
     }
 
-    public abstract long getBalance(AccountEntity account, long holdingId);
+    public abstract long getBalance(Account account, long holdingId);
 
-    public abstract long getUnconfirmedBalance(AccountEntity account, long holdingId);
+    public abstract long getUnconfirmedBalance(Account account, long holdingId);
 
-    public abstract void addToBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount);
+    public abstract void addToBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount);
 
-    public abstract void addToUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount);
+    public abstract void addToUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount);
 
-    public abstract void addToBalanceAndUnconfirmedBalance(AccountEntity account, LedgerEvent event, long eventId, long holdingId, long amount);
+    public abstract void addToBalanceAndUnconfirmedBalance(Account account, LedgerEvent event, long eventId, long holdingId, long amount);
 
 }

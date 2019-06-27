@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
@@ -140,7 +140,7 @@ public class DexService {
         DexCurrencyValidator.checkHaveFreezeOrRefundApl(offer);
 
         //Return APL.
-        AccountEntity account = accountService.getAccountEntity(offer.getAccountId());
+        Account account = accountService.getAccount(offer.getAccountId());
         accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
     }
 

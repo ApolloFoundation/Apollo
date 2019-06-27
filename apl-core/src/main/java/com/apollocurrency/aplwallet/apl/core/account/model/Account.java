@@ -40,7 +40,7 @@ import java.util.Set;
 @Getter
 @ToString
 @NoArgsConstructor
-public final class AccountEntity {
+public final class Account {
 
     private long id;
     private DbKey dbKey;
@@ -58,7 +58,7 @@ public final class AccountEntity {
     @Setter
     private Set<AccountControlType> controls;
 
-    public AccountEntity(long id) {
+    public Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
             log.info("CRITICAL ERROR: Reed-Solomon encoding fails for " + id);
         }
@@ -66,12 +66,12 @@ public final class AccountEntity {
         this.controls = Collections.emptySet();
     }
 
-    public AccountEntity(long id, DbKey dbKey) {
+    public Account(long id, DbKey dbKey) {
         this(id);
         this.dbKey = dbKey;
     }
 
-    public AccountEntity(long id, DbKey dbKey, long balanceATM, long unconfirmedBalanceATM, long forgedBalanceATM, long activeLesseeId) {
+    public Account(long id, DbKey dbKey, long balanceATM, long unconfirmedBalanceATM, long forgedBalanceATM, long activeLesseeId) {
         this(id, dbKey);
 
         this.balanceATM = balanceATM;

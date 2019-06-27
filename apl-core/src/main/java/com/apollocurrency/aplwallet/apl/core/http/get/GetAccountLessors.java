@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -46,7 +46,7 @@ public final class GetAccountLessors extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        AccountEntity account = ParameterParser.getAccount(req);
+        Account account = ParameterParser.getAccount(req);
         int height = ParameterParser.getHeight(req);
         if (height < 0) {
             height = lookupBlockchain().getHeight();
@@ -57,10 +57,10 @@ public final class GetAccountLessors extends AbstractAPIRequestHandler {
         response.put("height", height);
         JSONArray lessorsJSON = new JSONArray();
 
-        try (DbIterator<AccountEntity> lessors = lookupAccountService().getLessorsIterator(account,height)) {
+        try (DbIterator<Account> lessors = lookupAccountService().getLessorsIterator(account,height)) {
             if (lessors.hasNext()) {
                 while (lessors.hasNext()) {
-                    AccountEntity lessor = lessors.next();
+                    Account lessor = lessors.next();
                     JSONObject lessorJSON = new JSONObject();
                     JSONData.putAccount(lessorJSON, "lessor", lessor.getId());
                     lessorJSON.put("guaranteedBalanceATM"

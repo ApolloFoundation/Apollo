@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
@@ -46,7 +46,7 @@ public class DividendPayment extends CreateTransaction {
     {
         final int height = ParameterParser.getHeight(request);
         final long amountATMPerATU = ParameterParser.getAmountATMPerATU(request);
-        final AccountEntity account = ParameterParser.getSenderAccount(request);
+        final Account account = ParameterParser.getSenderAccount(request);
         final Asset asset = ParameterParser.getAsset(request);
         if (Asset.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;

@@ -410,7 +410,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testAddVote() throws SQLException {
-        inTransaction(con -> service.addVote(ptd.NEW_VOTE_TX, accountService.getAccountEntity(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId()));
+        inTransaction(con -> service.addVote(ptd.NEW_VOTE_TX, accountService.getAccount(ptd.NEW_VOTE_TX.getSenderId()), ptd.POLL_1.getId()));
         long voteCount = service.getVoteCount(ptd.POLL_1.getId());
 
         assertEquals(voteCount, 3);

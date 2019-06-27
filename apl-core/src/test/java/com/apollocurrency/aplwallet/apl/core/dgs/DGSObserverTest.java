@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mock;
 import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -163,7 +163,7 @@ public class DGSObserverTest {
         };
     }
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
-        AccountEntity account = accountService.getAccountEntity(accountId);
+        Account account = accountService.getAccount(accountId);
         if (balance != null) {
             assertEquals(balance, account.getBalanceATM());
         }

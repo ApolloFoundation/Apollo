@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -586,32 +586,32 @@ public final class ParameterParser {
     }
 
 
-    public static AccountEntity getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
+    public static Account getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
         if (publicKey == null) {
             throw new ParameterException(UNKNOWN_PUBLIC_KEY);
         }
-        AccountEntity account = accountService.getAccountEntity(publicKey);
+        Account account = accountService.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
         return account;
     }
-    public static AccountEntity getSenderAccount(HttpServletRequest req) throws ParameterException {
+    public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
         return getSenderAccount(req, null);
     }
-    public static AccountEntity getAccount(HttpServletRequest req) throws ParameterException {
+    public static Account getAccount(HttpServletRequest req) throws ParameterException {
         return getAccount(req, true);
     }
 
-    public static AccountEntity getAccount(HttpServletRequest req, boolean isMandatory) throws ParameterException {
+    public static Account getAccount(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         long accountId = getAccountId(req, "account", isMandatory);
         if (accountId == 0 && !isMandatory) {
             return null;
         }
-        AccountEntity account = accountService.getAccountEntity(accountId);
+        Account account = accountService.getAccount(accountId);
         if (account == null) {
             throw new ParameterException(JSONResponses.unknownAccount(accountId));
         }
@@ -654,18 +654,18 @@ public final class ParameterParser {
         return keySeed;
     }
 
-    public static List<AccountEntity> getAccounts(HttpServletRequest req) throws ParameterException {
+    public static List<Account> getAccounts(HttpServletRequest req) throws ParameterException {
         String[] accountValues = req.getParameterValues("account");
         if (accountValues == null || accountValues.length == 0) {
             throw new ParameterException(MISSING_ACCOUNT);
         }
-        List<AccountEntity> result = new ArrayList<>();
+        List<Account> result = new ArrayList<>();
         for (String accountValue : accountValues) {
             if (accountValue == null || accountValue.equals("")) {
                 continue;
             }
             try {
-                AccountEntity account = accountService.getAccountEntity(Convert.parseAccountId(accountValue));
+                Account account = accountService.getAccount(Convert.parseAccountId(accountValue));
                 if (account == null) {
                     throw new ParameterException(UNKNOWN_ACCOUNT);
                 }
@@ -841,7 +841,7 @@ public final class ParameterParser {
         }
     }
 
-    public static Appendix getEncryptedMessage(HttpServletRequest req, AccountEntity recipient, long senderId, boolean prunable) throws ParameterException {
+    public static Appendix getEncryptedMessage(HttpServletRequest req, Account recipient, long senderId, boolean prunable) throws ParameterException {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
         byte[] plainMessageBytes = null;

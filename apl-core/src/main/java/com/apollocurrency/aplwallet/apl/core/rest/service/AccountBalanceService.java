@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -30,11 +30,11 @@ public class AccountBalanceService {
         this.blockchainConfig = blockchainConfig;
     }
 
-    public Balances getAccountBalances(AccountEntity account, boolean includeEffectiveBalance){
+    public Balances getAccountBalances(Account account, boolean includeEffectiveBalance){
         return getAccountBalances(account, includeEffectiveBalance, blockchain.getHeight());
     }
 
-    public Balances getAccountBalances(AccountEntity account, boolean includeEffectiveBalance, int height) {
+    public Balances getAccountBalances(Account account, boolean includeEffectiveBalance, int height) {
         if(account == null){
             return null;
         }

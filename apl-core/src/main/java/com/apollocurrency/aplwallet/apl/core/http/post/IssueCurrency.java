@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -150,7 +150,7 @@ public final class IssueCurrency extends CreateTransaction {
         byte ruleset = ParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
         byte algorithm = ParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
         byte decimals = ParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
-        AccountEntity account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req);
         Attachment attachment = new MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
                 reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 

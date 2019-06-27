@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.account.observer;
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
@@ -77,7 +77,7 @@ public class AccountObserver {
         int height = block.getHeight();
         List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccounts(height);
         for (AccountLease lease : changingLeases) {
-            AccountEntity lessor = accountService.getAccountEntity(lease.lessorId);
+            Account lessor = accountService.getAccount(lease.lessorId);
             if (height == lease.currentLeasingHeightFrom) {
                 lessor.setActiveLesseeId(lease.currentLesseeId);
                 //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);

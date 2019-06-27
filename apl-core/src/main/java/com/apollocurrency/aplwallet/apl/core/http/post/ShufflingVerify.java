@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -50,7 +50,7 @@ public final class ShufflingVerify extends CreateTransaction {
         }
         Attachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shufflingStateHash);
 
-        AccountEntity account = ParameterParser.getSenderAccount(req);
+        Account account = ParameterParser.getSenderAccount(req);
         return createTransaction(req, account, attachment);
     }
 }

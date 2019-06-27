@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -22,17 +22,17 @@ import java.util.EnumSet;
  * @author al
  */
 @Singleton
-public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity> {
-    private static final LongKeyFactory<AccountEntity> accountDbKeyFactory = new LongKeyFactory<AccountEntity>("id") {
+public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
+    private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
 
         @Override
-        public DbKey newKey(AccountEntity account) {
+        public DbKey newKey(Account account) {
             return account.getDbKey() == null ? newKey(account.getId()) : account.getDbKey();
         }
 
         @Override
-        public AccountEntity newEntity(DbKey dbKey) {
-            return new AccountEntity(((LongKey) dbKey).getId(), dbKey);
+        public Account newEntity(DbKey dbKey) {
+            return new Account(((LongKey) dbKey).getId(), dbKey);
         }
 
     };
@@ -41,7 +41,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity>
         return accountDbKeyFactory.newKey(id);
     }
     
-    public static DbKey newKey(AccountEntity a){
+    public static DbKey newKey(Account a){
         return accountDbKeyFactory.newKey(a);
     }
 
@@ -56,9 +56,9 @@ public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity>
     }
 
     @Override
-    public AccountEntity load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         long id = rs.getLong("id");
-        AccountEntity res = new AccountEntity(id, dbKey,
+        Account res = new Account(id, dbKey,
                                       rs.getLong("balance"),
                                       rs.getLong("unconfirmed_balance"),
                                       rs.getLong("forged_balance"),
@@ -73,7 +73,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity>
     }
 
     @Override
-    public void save(Connection con, AccountEntity account) throws SQLException {
+    public void save(Connection con, Account account) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
@@ -122,7 +122,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<AccountEntity>
         }
     }
 
-    public  DbIterator<AccountEntity> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+    public  DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
                             " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
             int i = 0;

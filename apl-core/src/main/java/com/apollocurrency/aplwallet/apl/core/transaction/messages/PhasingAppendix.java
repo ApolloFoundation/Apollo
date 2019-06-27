@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -285,7 +285,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         phasingPollService.addPoll(transaction, this);
     }
 
@@ -300,8 +300,8 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     private void release(Transaction transaction) {
-        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
-        AccountEntity recipientAccount = transaction.getRecipientId() == 0 ? null : lookupAccountService().getAccountEntity(transaction.getRecipientId());
+        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
+        Account recipientAccount = transaction.getRecipientId() == 0 ? null : lookupAccountService().getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
             if (appendage.isPhasable()) {
                 appendage.apply(transaction, senderAccount, recipientAccount);
@@ -315,7 +315,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void reject(Transaction transaction) {
-        AccountEntity senderAccount = lookupAccountService().getAccountEntity(transaction.getSenderId());
+        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
 
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),

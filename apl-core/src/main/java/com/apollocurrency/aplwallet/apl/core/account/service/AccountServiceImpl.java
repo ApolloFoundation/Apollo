@@ -6,14 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
-import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.*;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -22,7 +17,6 @@ import lombok.Setter;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -59,7 +53,7 @@ public class AccountServiceImpl implements AccountService {
     private AccountPublicKeyService accountPublicKeyService;
 
     @Inject @Setter
-    private Event<AccountEntity> accountEvent;
+    private Event<Account> accountEvent;
 
     @Override
     public int getActiveLeaseCount() {
@@ -75,9 +69,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountEntity getAccountEntity(long id) {
+    public Account getAccount(long id) {
         DbKey dbKey = AccountTable.newKey(id);
-        AccountEntity account = accountTable.get(dbKey);
+        Account account = accountTable.get(dbKey);
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey != null) {
@@ -89,13 +83,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountEntity getAccountEntity(long id, int height) {
+    public Account getAccount(long id, int height) {
         DbKey dbKey = AccountTable.newKey(id);
-        AccountEntity account = accountTable.get(dbKey, height);
+        Account account = accountTable.get(dbKey, height);
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey, height);
             if (publicKey != null) {
-                account = new AccountEntity(id, dbKey);
+                account = new Account(id, dbKey);
                 account.setPublicKey(publicKey);
             }
         }
@@ -103,9 +97,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountEntity getAccountEntity(byte[] publicKey) {
+    public Account getAccount(byte[] publicKey) {
         long accountId = AccountService.getId(publicKey);
-        AccountEntity account = getAccountEntity(accountId);
+        Account account = getAccount(accountId);
         if (account == null) {
             return null;
         }
@@ -120,30 +114,30 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountEntity addOrGetAccount(long id) {
+    public Account addOrGetAccount(long id) {
         return addOrGetAccount(id, false);
     }
 
     @Override
-    public AccountEntity addOrGetAccount(long id, boolean isGenesis) {
+    public Account addOrGetAccount(long id, boolean isGenesis) {
         if (id == 0) {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
         DbKey dbKey = AccountTable.newKey(id);
-        AccountEntity accountEntity = accountTable.get(dbKey);
-        if (accountEntity == null) {
-            accountEntity = accountTable.newEntity(dbKey);
+        Account account = accountTable.get(dbKey);
+        if (account == null) {
+            account = accountTable.newEntity(dbKey);
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
                 accountPublicKeyService.insertNewPublicKey(dbKey, isGenesis);
             }
-            accountEntity.setPublicKey(publicKey);
+            account.setPublicKey(publicKey);
         }
-        return accountEntity;
+        return account;
     }
 
     @Override
-    public void save(AccountEntity account) {
+    public void save(Account account) {
         if (account.getBalanceATM() == 0
                 && account.getUnconfirmedBalanceATM() == 0
                 && account.getForgedBalanceATM() == 0
@@ -156,9 +150,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public long getEffectiveBalanceAPL(AccountEntity account, int height, boolean lock) {
+    public long getEffectiveBalanceAPL(Account account, int height, boolean lock) {
         if (height <= 1440) {
-            AccountEntity genesisAccount = getAccountEntity(account.getId(), 0);
+            Account genesisAccount = getAccount(account.getId(), 0);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (account.getPublicKey() == null) {
@@ -185,12 +179,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public long getGuaranteedBalanceATM(AccountEntity account) {
+    public long getGuaranteedBalanceATM(Account account) {
         return getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), blockchain.getHeight());
     }
 
     @Override
-    public long getGuaranteedBalanceATM(AccountEntity account, final int numberOfConfirmations, final int currentHeight) {
+    public long getGuaranteedBalanceATM(Account account, final int numberOfConfirmations, final int currentHeight) {
         lookupAnInjectBlockchainProcessor();
         sync.readLock();
         try {
@@ -223,8 +217,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public long getLessorsGuaranteedBalanceATM(AccountEntity account, int height) {
-        List<AccountEntity> lessors = getLessors(account, height);
+    public long getLessorsGuaranteedBalanceATM(Account account, int height) {
+        List<Account> lessors = getLessors(account, height);
         Long[] lessorIds = new Long[lessors.size()];
         long[] balances = new long[lessors.size()];
         for (int i = 0; i < lessors.size(); i++) {
@@ -268,37 +262,37 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public DbIterator<AccountEntity> getLessorsIterator(AccountEntity account) {
-        DbIterator<AccountEntity> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), 0, -1, " ORDER BY id ASC ");
+    public DbIterator<Account> getLessorsIterator(Account account) {
+        DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), 0, -1, " ORDER BY id ASC ");
         return iterator;
     }
 
     @Override
-    public DbIterator<AccountEntity> getLessorsIterator(AccountEntity account, int height) {
-        DbIterator<AccountEntity> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), height, 0, -1, " ORDER BY id ASC ");
+    public DbIterator<Account> getLessorsIterator(Account account, int height) {
+        DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), height, 0, -1, " ORDER BY id ASC ");
         return iterator;
     }
 
 
     @Override
-    public List<AccountEntity> getLessors(AccountEntity account) {
-        List<AccountEntity> result = new ArrayList<>();
-        try(DbIterator<AccountEntity> iterator = getLessorsIterator(account)) {
+    public List<Account> getLessors(Account account) {
+        List<Account> result = new ArrayList<>();
+        try(DbIterator<Account> iterator = getLessorsIterator(account)) {
             iterator.forEachRemaining(result::add);
         }
         return result;
     }
 
     @Override
-    public List<AccountEntity> getLessors(AccountEntity account, int height) {
-        List<AccountEntity> result = new ArrayList<>();
-        try(DbIterator<AccountEntity> iterator = getLessorsIterator(account, height)) {
+    public List<Account> getLessors(Account account, int height) {
+        List<Account> result = new ArrayList<>();
+        try(DbIterator<Account> iterator = getLessorsIterator(account, height)) {
             iterator.forEachRemaining(result::add);
         }
         return result;
     }
 
-    private void logEntryConfirmed(AccountEntity account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    private void logEntryConfirmed(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (AccountLedger.mustLogEntry(account.getId(), false)) {
             if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
@@ -311,7 +305,7 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
-    private void logEntryUnconfirmed(AccountEntity account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    private void logEntryUnconfirmed(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (AccountLedger.mustLogEntry(account.getId(), true)) {
             if (feeATM != 0) {
                 AccountLedger.logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
@@ -325,53 +319,53 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void addToBalanceATM(AccountEntity accountEntity, LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    public void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
-        accountEntity.setBalanceATM(Math.addExact(accountEntity.getBalanceATM(), totalAmountATM));
-        addToGuaranteedBalanceATM(accountEntity, totalAmountATM);
-        AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
-        save(accountEntity);
+        account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
+        addToGuaranteedBalanceATM(account, totalAmountATM);
+        AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
+        save(account);
 
-        accountEvent.select(literal(AccountEventType.BALANCE)).fire(accountEntity);
-        logEntryConfirmed(accountEntity, event, eventId, amountATM, feeATM);
+        accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
+        logEntryConfirmed(account, event, eventId, amountATM, feeATM);
     }
 
     @Override
-    public  void addToBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM) {
+    public  void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToBalanceATM(account, event, eventId, amountATM, 0);
     }
 
     @Override
-    public void addToBalanceAndUnconfirmedBalanceATM(AccountEntity accountEntity, LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
-        accountEntity.setBalanceATM(Math.addExact(accountEntity.getBalanceATM(), totalAmountATM));
-        accountEntity.setUnconfirmedBalanceATM(Math.addExact(accountEntity.getUnconfirmedBalanceATM(), totalAmountATM));
-        addToGuaranteedBalanceATM(accountEntity, totalAmountATM);
-        AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
-        save(accountEntity);
+        account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
+        account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
+        addToGuaranteedBalanceATM(account, totalAmountATM);
+        AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
+        save(account);
 
-        accountEvent.select(literal(AccountEventType.BALANCE)).fire(accountEntity);
-        accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(accountEntity);
+        accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
 
         if (event == null) {
             return;
         }
-        logEntryUnconfirmed(accountEntity, event, eventId, amountATM, feeATM);
-        logEntryConfirmed(accountEntity, event, eventId, amountATM, feeATM);
+        logEntryUnconfirmed(account, event, eventId, amountATM, feeATM);
+        logEntryConfirmed(account, event, eventId, amountATM, feeATM);
     }
 
     @Override
-    public void addToBalanceAndUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM) {
+    public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
 
-    private void addToGuaranteedBalanceATM(AccountEntity account, long amountATM) {
+    private void addToGuaranteedBalanceATM(Account account, long amountATM) {
         if (amountATM <= 0) {
             return;
         }
@@ -401,25 +395,25 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void addToUnconfirmedBalanceATM(AccountEntity accountEntity, LedgerEvent event, long eventId, long amountATM, long feeATM) {
+    public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
-        accountEntity.setUnconfirmedBalanceATM(Math.addExact(accountEntity.getUnconfirmedBalanceATM(), totalAmountATM));
-        AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
-        save(accountEntity);
+        account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
+        AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
+        save(account);
 
-        accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(accountEntity);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
 
         if (event == null) {
             return;
         }
-        logEntryUnconfirmed(accountEntity, event, eventId, amountATM, feeATM);
+        logEntryUnconfirmed(account, event, eventId, amountATM, feeATM);
     }
 
     @Override
-    public void addToUnconfirmedBalanceATM(AccountEntity account, LedgerEvent event, long eventId, long amountATM) {
+    public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
 
@@ -452,7 +446,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public DbIterator<AccountEntity> getTopHolders(Connection con, int numberOfTopAccounts) {
+    public DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
         try {
             return accountTable.getTopHolders(con, numberOfTopAccounts);
         }

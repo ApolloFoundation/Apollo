@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -32,16 +32,16 @@ public class TransactionApplier {
 
     // returns false iff double spending
     public boolean applyUnconfirmed(Transaction transaction) {
-        AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
+        Account senderAccount = accountService.getAccount(transaction.getSenderId());
         return senderAccount != null && transaction.getType().applyUnconfirmed(transaction, senderAccount);
     }
 
     public void apply(Transaction transaction) {
-        AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
+        Account senderAccount = accountService.getAccount(transaction.getSenderId());
         accountPublicKeyService.apply(senderAccount, transaction.getSenderPublicKey());
-        AccountEntity recipientAccount = null;
+        Account recipientAccount = null;
         if (transaction.getRecipientId() != 0) {
-            recipientAccount = accountService.getAccountEntity(transaction.getRecipientId());
+            recipientAccount = accountService.getAccount(transaction.getRecipientId());
             if (recipientAccount == null) {
                 recipientAccount = accountService.addOrGetAccount(transaction.getRecipientId());
             }
@@ -64,7 +64,7 @@ public class TransactionApplier {
     }
 
     public void undoUnconfirmed(Transaction transaction) {
-        AccountEntity senderAccount = accountService.getAccountEntity(transaction.getSenderId());
+        Account senderAccount = accountService.getAccount(transaction.getSenderId());
         transaction.getType().undoUnconfirmed(transaction, senderAccount);
     }
 }

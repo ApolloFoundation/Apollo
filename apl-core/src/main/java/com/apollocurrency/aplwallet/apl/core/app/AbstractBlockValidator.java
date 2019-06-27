@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -52,7 +52,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
         if (!block.verifyGenerationSignature()) {
-            AccountEntity generatorAccount = accountService.getAccountEntity(block.getGeneratorId());
+            Account generatorAccount = accountService.getAccount(block.getGeneratorId());
             long generatorBalance = generatorAccount == null ? 0 : accountService.getEffectiveBalanceAPL(generatorAccount, blockchain.getHeight(), true);
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
         }

@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -103,7 +103,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (lookupAccountService().setOrVerify(recipientAccount.getId(), publicKey)) {
             lookupAccountPublickKeyService().apply(recipientAccount, this.publicKey);
         }

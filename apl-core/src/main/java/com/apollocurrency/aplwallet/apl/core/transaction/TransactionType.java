@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -305,7 +305,7 @@ public abstract class TransactionType {
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
-    public final boolean applyUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
@@ -323,9 +323,9 @@ public abstract class TransactionType {
         return true;
     }
 
-    public abstract boolean applyAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount);
+    public abstract boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
-    public void apply(TransactionImpl transaction, AccountEntity senderAccount, AccountEntity recipientAccount) {
+    public void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
@@ -339,9 +339,9 @@ public abstract class TransactionType {
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
 
-    public abstract void applyAttachment(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount);
+    public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
-    public final void undoUnconfirmed(Transaction transaction, AccountEntity senderAccount) {
+    public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
                 transaction.getAmountATM(), transaction.getFeeATM());
@@ -351,7 +351,7 @@ public abstract class TransactionType {
         }
     }
 
-    public abstract void undoAttachmentUnconfirmed(Transaction transaction, AccountEntity senderAccount);
+    public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         return false;

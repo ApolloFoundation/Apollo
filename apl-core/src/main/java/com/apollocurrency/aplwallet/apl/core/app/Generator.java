@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -350,7 +350,7 @@ public final class Generator implements Comparable<Generator> {
 
     private void setLastBlock(Block lastBlock) {
         int height = lastBlock.getHeight();
-        AccountEntity account = accountService.getAccountEntity(accountId, height);
+        Account account = accountService.getAccount(accountId, height);
         if (account == null) {
             effectiveBalance = BigInteger.ZERO;
         } else {

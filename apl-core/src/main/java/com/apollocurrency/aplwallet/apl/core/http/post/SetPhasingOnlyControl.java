@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -78,7 +78,7 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        AccountEntity account = ParameterParser.getSenderAccount(request);
+        Account account = ParameterParser.getSenderAccount(request);
         PhasingParams phasingParams = parsePhasingParams(request, "control");
         long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), false);
         short minDuration = (short)ParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 
 import java.util.List;
@@ -14,10 +14,10 @@ import java.util.List;
  */
 public interface AccountLeaseService {
 
-    AccountLease getAccountLease(AccountEntity account);
+    AccountLease getAccountLease(Account account);
 
 
     List<AccountLease> getLeaseChangingAccounts(int height);
 
-    void leaseEffectiveBalance(AccountEntity account, long lesseeId, int period);
+    void leaseEffectiveBalance(Account account, long lesseeId, int period);
 }

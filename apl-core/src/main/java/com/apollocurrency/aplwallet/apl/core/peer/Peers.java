@@ -43,7 +43,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
@@ -281,7 +281,7 @@ public final class Peers {
 
     @Singleton
     static class AccountEventHandler {
-        public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) AccountEntity account){
+        public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account){
             peers.values().forEach(peer -> {
                 if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                     listeners.notify(peer, Event.WEIGHT);

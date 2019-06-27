@@ -136,7 +136,7 @@ public final class JSONData {
         return json;
     }
 
-    static void putAccountBalancePercentage(JSONObject json, AccountEntity account, long totalAmount) {
+    static void putAccountBalancePercentage(JSONObject json, Account account, long totalAmount) {
         json.put("percentage", String.format("%.4f%%", 100D * account.getBalanceATM() / totalAmount));
     }
 
@@ -144,7 +144,7 @@ public final class JSONData {
      * Use com.apollocurrency.aplwallet.apl.core.rest.service.AccountService#getAccountBalances(com.apollocurrency.aplwallet.apl.core.account.Account, boolean, java.lang.String, java.lang.String)
      */
     @Deprecated
-    public static JSONObject accountBalance(AccountEntity account, boolean includeEffectiveBalance) {
+    public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance) {
         return accountBalance(account, includeEffectiveBalance, blockchain.getHeight());
     }
 
@@ -152,7 +152,7 @@ public final class JSONData {
      * Use com.apollocurrency.aplwallet.apl.core.rest.service.AccountService#getAccountBalances(com.apollocurrency.aplwallet.apl.core.account.Account, boolean, java.lang.String, java.lang.String)
      */
     @Deprecated
-    public static JSONObject accountBalance(AccountEntity account, boolean includeEffectiveBalance, int height) {
+    public static JSONObject accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         JSONObject json = new JSONObject();
         if (account == null) {
             json.put("balanceATM", "0");
@@ -174,7 +174,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject lessor(AccountEntity account, boolean includeEffectiveBalance) {
+    public static JSONObject lessor(Account account, boolean includeEffectiveBalance) {
         JSONObject json = new JSONObject();
         AccountLease accountLease = accountLeaseService.getAccountLease(account);
         if (accountLease.getCurrentLesseeId() != 0) {
@@ -418,7 +418,7 @@ public final class JSONData {
             long totalSupply = AccountTable.getTotalSupply(con);
             long totalAccounts = AccountTable.getTotalNumberOfAccounts(con);
             long totalAmountOnTopAccounts = AccountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            try(DbIterator<AccountEntity> topHolders = accountService.getTopHolders(con, numberOfAccounts)) {
+            try(DbIterator<Account> topHolders = accountService.getTopHolders(con, numberOfAccounts)) {
                 return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
             }
         }
@@ -430,7 +430,7 @@ public final class JSONData {
         }
     }
 
-    private static JSONObject accounts(DbIterator<AccountEntity> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
+    private static JSONObject accounts(DbIterator<Account> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
                                        int numberOfAccounts) {
         JSONObject result = new JSONObject();
         result.put("totalSupply", totalSupply);
@@ -439,7 +439,7 @@ public final class JSONData {
         result.put("totalAmountOnTopAccounts", totalAmountOnTopAccounts);
         JSONArray holders = new JSONArray();
         while (topAccountsIterator.hasNext()) {
-            AccountEntity account = topAccountsIterator.next();
+            Account account = topAccountsIterator.next();
             JSONObject accountJson = JSONData.accountBalance(account, false);
             JSONData.putAccount(accountJson, "account", account.getId());
             holders.add(accountJson);

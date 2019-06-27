@@ -761,7 +761,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (! transaction.verifySignature()) {
-                    if (lookupAccountService().getAccountEntity(transaction.getSenderId()) != null) {
+                    if (lookupAccountService().getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");

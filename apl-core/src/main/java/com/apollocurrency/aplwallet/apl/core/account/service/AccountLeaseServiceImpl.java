@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -41,7 +41,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     private Event<AccountLease> accountLeaseEvent;
 
     @Override
-    public AccountLease getAccountLease(AccountEntity account) {
+    public AccountLease getAccountLease(Account account) {
         return accountLeaseTable.get(AccountTable.newKey(account));
     }
 
@@ -55,7 +55,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     }
 
     @Override
-    public void leaseEffectiveBalance(AccountEntity account, long lesseeId, int period) {
+    public void leaseEffectiveBalance(Account account, long lesseeId, int period) {
         int height = blockchain.getHeight();
         AccountLease accountLease = AccountLeaseTable.getInstance().get(AccountTable.newKey(account));
         int leasingDelay = blockchainConfig.getLeasingDelay();

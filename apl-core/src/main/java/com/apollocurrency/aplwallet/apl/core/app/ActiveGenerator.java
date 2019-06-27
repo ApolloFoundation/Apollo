@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 
@@ -56,7 +56,7 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
             }
         }
         int height = lastBlock.getHeight();
-        AccountEntity account = lookupAccountService().getAccountEntity(accountId, height);
+        Account account = lookupAccountService().getAccount(accountId, height);
         if (account == null) {
             hitTime = Long.MAX_VALUE;
             return;

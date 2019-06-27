@@ -44,7 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -725,7 +725,7 @@ public final class Shuffling {
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             long recipientId = AccountService.getId(recipientPublicKey);
             if (lookupAccountService().setOrVerify(recipientId, recipientPublicKey)) {
-                AccountEntity account = lookupAccountService().addOrGetAccount(recipientId);
+                Account account = lookupAccountService().addOrGetAccount(recipientId);
                 lookupAccountPublickKeyService().apply(account, recipientPublicKey);
             }
         }
@@ -773,7 +773,7 @@ public final class Shuffling {
         LedgerEvent event = LedgerEvent.SHUFFLING_DISTRIBUTION;
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             for (ShufflingParticipant participant : participants) {
-                AccountEntity participantAccount = lookupAccountService().getAccountEntity(participant.getAccountId());
+                Account participantAccount = lookupAccountService().getAccount(participant.getAccountId());
                 holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                 if (holdingType != HoldingType.APL) {
                     lookupAccountService().addToBalanceATM(participantAccount, event, this.id, -blockchainConfig.getShufflingDepositAtm());
@@ -782,7 +782,7 @@ public final class Shuffling {
         }
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             long recipientId = AccountService.getId(recipientPublicKey);
-            AccountEntity recipientAccount = lookupAccountService().addOrGetAccount(recipientId);
+            Account recipientAccount = lookupAccountService().addOrGetAccount(recipientId);
             lookupAccountPublickKeyService().apply(recipientAccount, recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
@@ -803,7 +803,7 @@ public final class Shuffling {
         long blamedAccountId = blame();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             for (ShufflingParticipant participant : participants) {
-                AccountEntity participantAccount = lookupAccountService().getAccountEntity(participant.getAccountId());
+                Account participantAccount = lookupAccountService().getAccount(participant.getAccountId());
                 holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                 if (participantAccount.getId() != blamedAccountId) {
                     if (holdingType != HoldingType.APL) {
@@ -828,12 +828,12 @@ public final class Shuffling {
                     generators = shardDao.getLastShard().getGeneratorIds();
 
                 }
-                AccountEntity previousGeneratorAccount;
+                Account previousGeneratorAccount;
                 if (shardHeight > blockHeight) {
                     int diff = shardHeight - blockHeight - 1;
-                    previousGeneratorAccount = lookupAccountService().getAccountEntity(generators[diff]);
+                    previousGeneratorAccount = lookupAccountService().getAccount(generators[diff]);
                 } else {
-                    previousGeneratorAccount = lookupAccountService().getAccountEntity(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                    previousGeneratorAccount = lookupAccountService().getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
                 lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 previousGeneratorAccount.addToForgedBalanceATM(fee);
@@ -841,7 +841,7 @@ public final class Shuffling {
                         block.getHeight() - i - 1);
             }
             fee = blockchainConfig.getShufflingDepositAtm() - 3 * fee;
-            AccountEntity blockGeneratorAccount = lookupAccountService().getAccountEntity(block.getGeneratorId());
+            Account blockGeneratorAccount = lookupAccountService().getAccount(block.getGeneratorId());
             lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(blockGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             blockGeneratorAccount.addToForgedBalanceATM(fee);
             LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -104,16 +104,16 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         }
     }
 
-    public JSONStreamAware createTransaction(HttpServletRequest req, AccountEntity senderAccount, Attachment attachment)
+    public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment)
             throws AplException {
         return createTransaction(req, senderAccount, 0, 0, attachment);
     }
 
-    public JSONStreamAware createTransaction(HttpServletRequest req, AccountEntity senderAccount, long recipientId, long amountATM)
+    public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
             throws AplException {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.ORDINARY_PAYMENT);
     }
-    public JSONStreamAware createPrivateTransaction(HttpServletRequest req, AccountEntity senderAccount, long recipientId, long amountATM)
+    public JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
             throws AplException {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
     }
@@ -185,7 +185,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return new PhasingParams(votingModel, holdingId, quorum, minBalance, minBalanceModel, whitelist);
     }
 
-    public JSONStreamAware createTransaction(HttpServletRequest req, AccountEntity senderAccount, long recipientId,
+    public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
                                              long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
@@ -196,7 +196,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
-            AccountEntity recipient = accountService.getAccountEntity(recipientId);
+            Account recipient = accountService.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient,
                         senderAccount.getId(),true);

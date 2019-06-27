@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -103,7 +103,7 @@ public final class Shuffler {
             }
             if (shuffler == null) {
                 Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
-                if (shuffling == null && lookupAccountService().getAccountEntity(recipientPublicKey) != null) {
+                if (shuffling == null && lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
                 if (getRecipientShuffler(AccountService.getId(recipientPublicKey)) != null) {
@@ -112,7 +112,7 @@ public final class Shuffler {
                 if (map.size() >= (shuffling == null ? Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS : shuffling.getParticipantCount())) {
                     throw new ShufflerLimitException("Cannot run shufflers for more than " + map.size() + " accounts for this shuffling");
                 }
-                AccountEntity account = lookupAccountService().getAccountEntity(accountId);
+                Account account = lookupAccountService().getAccount(accountId);
                 if (account != null && account.getControls().contains(AccountControlType.PHASING_ONLY)) {
                     throw new ControlledAccountException("Cannot run a shuffler for an account under phasing only control");
                 }
@@ -392,7 +392,7 @@ public final class Shuffler {
         ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
         switch (shuffling.getStage()) {
             case REGISTRATION:
-                if (lookupAccountService().getAccountEntity(recipientPublicKey) != null) {
+                if (lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
                 if (shufflingParticipant == null) {
@@ -403,7 +403,7 @@ public final class Shuffler {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (lookupAccountService().getAccountEntity(recipientPublicKey) != null) {
+                if (lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
                 if (accountId == shuffling.getAssigneeAccountId()) {
@@ -518,7 +518,7 @@ public final class Shuffler {
             transaction.sign(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;
-            AccountEntity participantAccount = lookupAccountService().getAccountEntity(this.accountId);
+            Account participantAccount = lookupAccountService().getAccount(this.accountId);
             if (participantAccount == null || transaction.getFeeATM() > participantAccount.getUnconfirmedBalanceATM()) {
                 failedTransaction = transaction;
                 failureCause = new AplException.NotCurrentlyValidException("Insufficient balance");

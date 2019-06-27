@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import java.nio.ByteBuffer;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -41,7 +41,7 @@ public interface Appendix {
     Fee getNextFee(Transaction transaction);
     default boolean isPhasable() {return false;}
     boolean isPhased(Transaction transaction);
-    void apply(Transaction transaction, AccountEntity senderAccount, AccountEntity recipientAccount);
+    void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
     void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
     void validate(Transaction transaction, int blockHeight ) throws AplException.ValidationException;
 
