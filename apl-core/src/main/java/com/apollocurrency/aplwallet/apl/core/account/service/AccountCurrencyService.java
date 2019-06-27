@@ -4,28 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountCurrencyService {
-
-    Listeners<AccountCurrency, AccountEvent> currencyListeners = new Listeners<>();
-
-    static boolean addCurrencyListener(Listener<AccountCurrency> listener, AccountEvent eventType) {
-        return currencyListeners.addListener(listener, eventType);
-    }
-
-    static boolean removeCurrencyListener(Listener<AccountCurrency> listener, AccountEvent eventType) {
-        return currencyListeners.removeListener(listener, eventType);
-    }
 
     void save(AccountCurrency currency);
 

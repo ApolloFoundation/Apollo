@@ -12,10 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import lombok.Setter;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -28,6 +31,12 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Inject @Setter
     private AccountService accountService;
+
+    @Inject @Setter
+    private Event<AccountEntity> accountEvent;
+
+    @Inject @Setter
+    private Event<AccountAsset> accountAssetEvent;
 
     @Override
     public DbIterator<AccountAsset> getAssets(AccountEntity account, int from, int to) {
@@ -43,9 +52,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     public List<AccountAsset> getAssetAccounts(long assetId, int height) {
         List<AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, 0, -1)) {
-            while (iterator.hasNext()) {
-                accountAssets.add(iterator.next());
-            }
+            iterator.forEachRemaining(accountAssets::add);
         }
         return accountAssets;
     }
@@ -89,8 +96,10 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.quantityATU = assetBalance;
         }
         AccountAssetTable.getInstance().save(accountAsset);
-        accountService.listeners.notify(accountEntity, AccountEvent.ASSET_BALANCE);
-        assetListeners.notify(accountAsset, AccountEvent.ASSET_BALANCE);
+        //accountService.listeners.notify(accountEntity, AccountEventType.ASSET_BALANCE);
+        accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountEntity);
+        //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
+        accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), false)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(), LedgerHolding.ASSET_BALANCE, assetId,
                     quantityATU, assetBalance));
@@ -111,8 +120,11 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
         accountAssetTable.save(accountAsset);
-        accountService.listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_ASSET_BALANCE);
-        assetListeners.notify(accountAsset, AccountEvent.UNCONFIRMED_ASSET_BALANCE);
+        //accountService.listeners.notify(accountEntity, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountEntity);
+        //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
+        accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
+
         if (event == null) {
             return;
         }
@@ -141,10 +153,16 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
         AccountAssetTable.getInstance().save(accountAsset);
-        accountService.listeners.notify(accountEntity, AccountEvent.ASSET_BALANCE);
-        accountService.listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_ASSET_BALANCE);
-        assetListeners.notify(accountAsset, AccountEvent.ASSET_BALANCE);
-        assetListeners.notify(accountAsset, AccountEvent.UNCONFIRMED_ASSET_BALANCE);
+        //accountService.listeners.notify(accountEntity, AccountEventType.ASSET_BALANCE);
+        accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountEntity);
+        //accountService.listeners.notify(accountEntity, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountEntity);
+
+        //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
+        accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
+        //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
+        accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
+
         if (AccountLedger.mustLogEntry(accountEntity.getId(), true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(),
                     LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,

@@ -4,14 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 
 import java.util.List;
 
@@ -19,15 +16,6 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountAssetService {
-    Listeners<AccountAsset, AccountEvent> assetListeners = new Listeners<>();
-
-    static boolean addAssetListener(Listener<AccountAsset> listener, AccountEvent eventType) {
-        return assetListeners.addListener(listener, eventType);
-    }
-
-    static boolean removeAssetListener(Listener<AccountAsset> listener, AccountEvent eventType) {
-        return assetListeners.removeListener(listener, eventType);
-    }
 
     DbIterator<AccountAsset> getAssets(AccountEntity account, int from, int to);
 

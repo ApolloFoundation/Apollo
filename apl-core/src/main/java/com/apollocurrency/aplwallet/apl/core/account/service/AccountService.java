@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
@@ -12,8 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 
 import java.sql.Connection;
 import java.util.List;
@@ -22,15 +19,6 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountService {
-    Listeners<AccountEntity, AccountEvent> listeners = new Listeners<>();
-
-    static boolean addListener(Listener<AccountEntity> listener, AccountEvent eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    static boolean removeListener(Listener<AccountEntity> listener, AccountEvent eventType) {
-        return listeners.removeListener(listener, eventType);
-    }
 
     static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);

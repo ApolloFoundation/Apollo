@@ -8,14 +8,21 @@ import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -23,6 +30,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+
+import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -49,13 +58,16 @@ public class AccountServiceImpl implements AccountService {
     @Inject @Setter
     private AccountPublicKeyService accountPublicKeyService;
 
+    @Inject @Setter
+    private Event<AccountEntity> accountEvent;
+
     @Override
     public int getActiveLeaseCount() {
         return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
     }
 
     private BlockchainProcessor blockchainProcessor;
-    //need to prevent the cyclic dependencies
+    //TODO this lookup-method prevents the cyclic dependencies, need to be removed after refactoring the BlockchainProcessor class
     private void lookupAnInjectBlockchainProcessor() {
         if (this.blockchainProcessor == null) {
             this.blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
@@ -322,7 +334,8 @@ public class AccountServiceImpl implements AccountService {
         addToGuaranteedBalanceATM(accountEntity, totalAmountATM);
         AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
         save(accountEntity);
-        listeners.notify(accountEntity, AccountEvent.BALANCE);
+
+        accountEvent.select(literal(AccountEventType.BALANCE)).fire(accountEntity);
         logEntryConfirmed(accountEntity, event, eventId, amountATM, feeATM);
     }
 
@@ -342,8 +355,10 @@ public class AccountServiceImpl implements AccountService {
         addToGuaranteedBalanceATM(accountEntity, totalAmountATM);
         AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
         save(accountEntity);
-        listeners.notify(accountEntity, AccountEvent.BALANCE);
-        listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_BALANCE);
+
+        accountEvent.select(literal(AccountEventType.BALANCE)).fire(accountEntity);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(accountEntity);
+
         if (event == null) {
             return;
         }
@@ -394,7 +409,9 @@ public class AccountServiceImpl implements AccountService {
         accountEntity.setUnconfirmedBalanceATM(Math.addExact(accountEntity.getUnconfirmedBalanceATM(), totalAmountATM));
         AccountService.checkBalance(accountEntity.getId(), accountEntity.getBalanceATM(), accountEntity.getUnconfirmedBalanceATM());
         save(accountEntity);
-        listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_BALANCE);
+
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(accountEntity);
+
         if (event == null) {
             return;
         }

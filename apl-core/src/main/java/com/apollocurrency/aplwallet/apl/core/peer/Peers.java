@@ -19,7 +19,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -40,7 +42,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
+import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -72,26 +76,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
-import javax.enterprise.inject.spi.CDI;
 
 public final class Peers {
 
@@ -278,11 +262,12 @@ public final class Peers {
             }
         }), Peers.Event.CHANGED_SERVICES);
 
-        AccountService.addListener(account -> peers.values().forEach(peer -> {
+        // moved to Weld Event
+        /*AccountService.addListener(account -> peers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 listeners.notify(peer, Event.WEIGHT);
             }
-        }), AccountEvent.BALANCE);
+        }), AccountEventType.BALANCE);*/
 
         if (!propertiesHolder.isOffline()) {
             ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(timeService), 20);
@@ -292,6 +277,17 @@ public final class Peers {
             }
         }
         peerHttpServer.start();
+    }
+
+    @Singleton
+    static class AccountEventHandler {
+        public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) AccountEntity account){
+            peers.values().forEach(peer -> {
+                if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
+                    listeners.notify(peer, Event.WEIGHT);
+                }
+            });
+        }
     }
 
     private static void fillMyPeerInfo() {

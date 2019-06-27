@@ -16,7 +16,6 @@ import java.util.Map;
  */
 public interface AccountPublicKeyService {
 
-
     int getCount();
 
     Map<DbKey, byte[]> getPublicKeyCache();

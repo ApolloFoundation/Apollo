@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.observer;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
@@ -14,27 +14,40 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
-import lombok.Setter;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService.leaseListeners;
+import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 
 /**
+ * @author al
  * @author andrew.zinchenko@gmail.com
  */
 @Singleton
 public class AccountObserver {
 
-    @Inject @Setter
     private AccountService accountService;
-    @Inject @Setter
+
     private AccountLeaseService accountLeaseService;
-    @Inject @Setter
+
     private AccountPublicKeyService accountPublicKeyService;
+
+    private Event<AccountLease> accountLeaseEvent;
+
+    @Inject
+    public AccountObserver(AccountService accountService,
+                           AccountLeaseService accountLeaseService,
+                           AccountPublicKeyService accountPublicKeyService,
+                           Event<AccountLease> accountLeaseEvent) {
+        this.accountService = accountService;
+        this.accountLeaseService = accountLeaseService;
+        this.accountPublicKeyService = accountPublicKeyService;
+        this.accountLeaseEvent = accountLeaseEvent;
+    }
 
     public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
         if (accountPublicKeyService.getPublicKeyCache() != null) {
@@ -67,9 +80,11 @@ public class AccountObserver {
             AccountEntity lessor = accountService.getAccountEntity(lease.lessorId);
             if (height == lease.currentLeasingHeightFrom) {
                 lessor.setActiveLesseeId(lease.currentLesseeId);
-                leaseListeners.notify(lease, AccountEvent.LEASE_STARTED);
+                //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
+                accountLeaseEvent.select(literal(AccountEventType.LEASE_STARTED)).fire(lease);
             } else if (height == lease.currentLeasingHeightTo) {
-                leaseListeners.notify(lease, AccountEvent.LEASE_ENDED);
+                //leaseListeners.notify(lease, AccountEventType.LEASE_ENDED);
+                accountLeaseEvent.select(literal(AccountEventType.LEASE_ENDED)).fire(lease);
                 lessor.setActiveLesseeId(0);
                 if (lease.nextLeasingHeightFrom == 0) {
                     lease.currentLeasingHeightFrom = 0;
@@ -86,7 +101,8 @@ public class AccountObserver {
                     AccountLeaseTable.getInstance().insert(lease);
                     if (height == lease.currentLeasingHeightFrom) {
                         lessor.setActiveLesseeId(lease.currentLesseeId);
-                        leaseListeners.notify(lease, AccountEvent.LEASE_STARTED);
+                        //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
+                        accountLeaseEvent.select(literal(AccountEventType.LEASE_STARTED)).fire(lease);
                     }
                 }
             }

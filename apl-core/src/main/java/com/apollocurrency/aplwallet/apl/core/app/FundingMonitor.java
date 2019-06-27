@@ -20,26 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -54,12 +45,22 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Monitor account balances based on account properties
@@ -530,13 +531,19 @@ public class FundingMonitor {
             Thread processingThread = new ProcessEvents();
             processingThread.start();
             //
+            //All listeners logic was moved to the Weld Event:
+            //              AccountEventHandler,
+            //              AssetEventHandler,
+            //              CurrencyEventHandler,
+            //              AccountPropertyEventHandler
+            //
             // Register our event listeners
             //
-            AccountService.addListener(new AccountEventHandler(), AccountEvent.BALANCE);
-            AccountAssetService.addAssetListener(new AssetEventHandler(), AccountEvent.ASSET_BALANCE);
-            AccountCurrencyService.addCurrencyListener(new CurrencyEventHandler(), AccountEvent.CURRENCY_BALANCE);
-            AccountPropertyService.addPropertyListener(new SetPropertyEventHandler(), AccountEvent.SET_PROPERTY);
-            AccountPropertyService.addPropertyListener(new DeletePropertyEventHandler(), AccountEvent.DELETE_PROPERTY);
+            //AccountService.addListener(new AccountEventHandler(), AccountEventType.BALANCE);
+            //AccountAssetService.addAssetListener(new AssetEventHandler(), AccountEventType.ASSET_BALANCE);
+            //AccountCurrencyService.addCurrencyListener(new CurrencyEventHandler(), AccountEventType.CURRENCY_BALANCE);
+            //AccountPropertyService.addPropertyListener(new SetPropertyEventHandler(), AccountEventType.SET_PROPERTY);
+            //AccountPropertyService.addPropertyListener(new DeletePropertyEventHandler(), AccountEventType.DELETE_PROPERTY);
             //
             // All done
             //
@@ -873,15 +880,15 @@ public class FundingMonitor {
     /**
      * Account event handler (BALANCE event)
      */
-    private static final class AccountEventHandler implements Listener<AccountEntity> {
+    @Singleton
+    static class AccountEventHandler{
 
         /**
          * Account event notification
          *
          * @param   account                 Account
          */
-        @Override
-        public void notify(AccountEntity account) {
+        public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) AccountEntity account) {
             if (stopped) {
                 return;
             }
@@ -906,15 +913,15 @@ public class FundingMonitor {
     /**
      * Asset event handler (ASSET_BALANCE event)
      */
-    private static final class AssetEventHandler implements Listener<AccountAsset> {
+    @Singleton
+    static class AssetEventHandler{
 
         /**
          * Asset event notification
          *
          * @param   asset                   Account asset
          */
-        @Override
-        public void notify(AccountAsset asset) {
+        public void noAccountAssetBalance(@Observes @AccountEvent(AccountEventType.ASSET_BALANCE) AccountAsset asset) {
             if (stopped) {
                 return;
             }
@@ -942,15 +949,15 @@ public class FundingMonitor {
     /**
      * Currency event handler (CURRENCY_BALANCE event)
      */
-    private static final class CurrencyEventHandler implements Listener<AccountCurrency> {
+    @Singleton
+    static class CurrencyEventHandler{
 
         /**
          * Currency event notification
          *
          * @param   currency                Account currency
          */
-        @Override
-        public void notify(AccountCurrency currency) {
+        public void onAccountCurrencyBalance(@Observes @AccountEvent(AccountEventType.CURRENCY_BALANCE) AccountCurrency currency) {
             if (stopped) {
                 return;
             }
@@ -976,17 +983,17 @@ public class FundingMonitor {
     }
 
     /**
-     * Property event handler (SET_PROPERTY event)
+     * Property event handler
      */
-    private static final class SetPropertyEventHandler implements Listener<AccountProperty> {
+    @Singleton
+    static class AccountPropertyEventHandler{
 
         /**
          * Property event notification
          *
          * @param   property                Account property
          */
-        @Override
-        public void notify(AccountProperty property) {
+        public void onAccountSetProperty(@Observes @AccountEvent(AccountEventType.SET_PROPERTY) AccountProperty property) {
             if (stopped) {
                 return;
             }
@@ -1045,20 +1052,8 @@ public class FundingMonitor {
                 LOG.error("Unable to process SET_PROPERTY event for account " + Convert2.rsAccount(accountId), exc);
             }
         }
-    }
 
-    /**
-     * Property event handler (DELETE_PROPERTY event)
-     */
-    private static final class DeletePropertyEventHandler implements Listener<AccountProperty> {
-
-        /**
-         * Property event notification
-         *
-         * @param   property                Account property
-         */
-        @Override
-        public void notify(AccountProperty property) {
+        public void onAccountDeleteProperty(@Observes @AccountEvent(AccountEventType.DELETE_PROPERTY) AccountProperty property) {
             if (stopped) {
                 return;
             }

@@ -16,7 +16,6 @@ import lombok.Setter;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -61,7 +60,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
     public List<AccountInfo> searchAccounts(String query, int from, int to) {
         List<AccountInfo> result = new ArrayList<>();
         try(DbIterator<AccountInfo> rs = accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to)) {
-            rs.forEach(accountInfo -> result.add(accountInfo));
+            rs.forEach(result::add);
         }
         return result;
     }

@@ -11,9 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import lombok.Setter;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.account.service.AccountService.checkBalance;
 
 /**
@@ -27,6 +29,12 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Inject @Setter
     private AccountService accountService;
+
+    @Inject @Setter
+    private Event<AccountEntity> accountEvent;
+
+    @Inject @Setter
+    private Event<AccountCurrency> accountCurrencyEvent;
 
     @Override
     public void save(AccountCurrency currency) {
@@ -88,8 +96,10 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.units = currencyUnits;
         }
         save(accountCurrency);
-        accountService.listeners.notify(accountEntity, AccountEvent.CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, AccountEvent.CURRENCY_BALANCE);
+        //accountService.listeners.notify(accountEntity, AccountEventType.CURRENCY_BALANCE);
+        accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountEntity);
+        //currencyListeners.notify(accountCurrency, AccountEventType.CURRENCY_BALANCE);
+        accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), false)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
                     units, currencyUnits));
@@ -110,8 +120,10 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
         }
         save(accountCurrency);
-        accountService.listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
+        //accountService.listeners.notify(accountEntity, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountEntity);
+        //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
+        accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(),
                     LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
@@ -137,10 +149,14 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
         }
         save(accountCurrency);
-        accountService.listeners.notify(accountEntity, AccountEvent.CURRENCY_BALANCE);
-        accountService.listeners.notify(accountEntity, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, AccountEvent.CURRENCY_BALANCE);
-        currencyListeners.notify(accountCurrency, AccountEvent.UNCONFIRMED_CURRENCY_BALANCE);
+        //accountService.listeners.notify(accountEntity, AccountEventType.CURRENCY_BALANCE);
+        accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountEntity);
+        //accountService.listeners.notify(accountEntity, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
+        accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountEntity);
+        //currencyListeners.notify(accountCurrency, AccountEventType.CURRENCY_BALANCE);
+        accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
+        //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
+        accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
         if (AccountLedger.mustLogEntry(accountEntity.getId(), true)) {
             AccountLedger.logEntry(new LedgerEntry(event, eventId, accountEntity.getId(),
                     LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,

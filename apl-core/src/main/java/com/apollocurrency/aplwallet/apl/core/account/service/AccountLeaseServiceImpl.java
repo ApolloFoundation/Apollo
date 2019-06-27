@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountEntity;
@@ -14,10 +14,13 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import lombok.Setter;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -34,6 +37,9 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     @Inject @Setter
     private BlockchainConfig blockchainConfig;
 
+    @Inject @Setter
+    private Event<AccountLease> accountLeaseEvent;
+
     @Override
     public AccountLease getAccountLease(AccountEntity account) {
         return accountLeaseTable.get(AccountTable.newKey(account));
@@ -42,9 +48,9 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     @Override
     public List<AccountLease> getLeaseChangingAccounts(int height) {
         List<AccountLease> result = new ArrayList<>();
-        DbIterator<AccountLease> leases = accountLeaseTable.getLeaseChangingAccounts(height);
-        leases.forEachRemaining(result::add);
-
+        try(DbIterator<AccountLease> leases = accountLeaseTable.getLeaseChangingAccounts(height)) {
+            leases.forEachRemaining(result::add);
+        }
         return result;
     }
 
@@ -71,7 +77,8 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
             accountLease.setNextLesseeId(lesseeId);
         }
         accountLeaseTable.insert(accountLease);
-        leaseListeners.notify(accountLease, AccountEvent.LEASE_SCHEDULED);
+        //leaseListeners.notify(accountLease, AccountEventType.LEASE_SCHEDULED);
+        accountLeaseEvent.select(literal(AccountEventType.LEASE_SCHEDULED)).fire(accountLease);
     }
 
 
