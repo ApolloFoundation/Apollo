@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
@@ -139,7 +140,8 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         Integer currentTime = epochTime.getEpochTime();        
         BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
         Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
-        BigDecimal pairRate = createdOffer.getPairRate(); 
+        
+        BigDecimal pairRate = new BigDecimal( EthUtil.ethToGwei( createdOffer.getPairRate()) ); 
         
         log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", type, currentTime, offerAmount, pairCurrency, pairRate );
                 

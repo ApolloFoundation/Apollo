@@ -15,6 +15,7 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.List;
+import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 
 public interface DexOfferDao {
 
@@ -42,7 +43,8 @@ public interface DexOfferDao {
     )
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffers(@BindBean DexOfferDBRequest dexOfferDBRequest);
-    
+
+    @AllowUnusedBindings    
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             " WHERE latest = true" +

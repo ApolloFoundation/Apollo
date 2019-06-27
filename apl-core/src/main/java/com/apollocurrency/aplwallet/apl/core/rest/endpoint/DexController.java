@@ -367,7 +367,7 @@ public class DexController {
                                     @Parameter(description = "Pair rate") @QueryParam("pairRate") BigDecimal pairRate,
                                     @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getOfoffersMatchfers:  orderType: {}, offerCurrency: {}, offerAmount: {}, pairCurrency: {}, pairRate: {} ",orderType, offerCurrency, offerAmount, pairCurrency, pairRate );
+        log.debug("getOffersMatch,  orderType: {}, offerCurrency: {}, offerAmount: {}, pairCurrency: {}, pairRate: {} ",orderType, offerCurrency, offerAmount, pairCurrency, pairRate );
 
         OfferType type = null;
         DexCurrencies pairCurr = null, offerCurr = null;
@@ -385,7 +385,6 @@ public class DexController {
         }
 
         DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(type, currentTime, offerCurrency, offerAmount, pairCurrency, pairRate );
-
         List<DexOffer> offers = service.getOffersForMatching(dexOfferDBMatchingRequest);
 
         return Response.ok(offers.stream()
