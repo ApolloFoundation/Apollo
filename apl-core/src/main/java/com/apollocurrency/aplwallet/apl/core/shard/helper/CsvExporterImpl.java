@@ -91,7 +91,7 @@ public class CsvExporterImpl implements CsvExporter {
         try (Connection con = this.databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement(
                      "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? order by db_id limit ?");
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID", "LATEST"))
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"/*, "LATEST"  temporary included into CSV */  ))
         ) {
 
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
