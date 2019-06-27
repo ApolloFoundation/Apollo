@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -64,7 +65,7 @@ public class FileDownloader {
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
     private final Status status = new Status();
-
+    private AtomicBoolean finishSignalSent = new AtomicBoolean(false);
     private DownloadableFilesManager manager;
     private AplAppStatus aplAppStatus;
     private String taskId;
@@ -100,7 +101,7 @@ public class FileDownloader {
 //            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
 //            return res;
 //        });
-
+        finishSignalSent.set(false);
         download = CompletableFuture.supplyAsync(() -> {
                 status.chunksTotal = downloadInfo.chunks.size();
                 log.debug("Starting file chunks downloading");
@@ -163,11 +164,14 @@ public class FileDownloader {
                     (double) (downloadInfo.chunks.size() / Math.max (fci.chunkId, 1) ), "File downloading...");
         }
         if (res == null) { //NO more empty chunks. File is ready
-            log.debug("getNextEmptyChunk() fileID = {}", fileID);
-            this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
+            if(! finishSignalSent.get()){
+              log.debug("getNextEmptyChunk() fileID = {}", fileID);
+               this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
             //FIRE event when shard is PRESENT + ZIP is downloaded
-            ShardPresentData shardPresentData = new ShardPresentData(fileID);
-            presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
+               ShardPresentData shardPresentData = new ShardPresentData(fileID);
+               presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
+               finishSignalSent.set(true);
+            }
         }
         return res;
     }
