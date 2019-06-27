@@ -189,12 +189,11 @@ public class FileDownloader {
                 status.chunksReady++;
                 fci.present = FileChunkState.SAVED;
             }else{
-//              fci.present=FileChunkState.PRESENT;
-              fci.present=FileChunkState.NOT_PRESENT; // no info, no connect ??
+              fci.present=FileChunkState.PRESENT_IN_PEER; //well, it exists anyway on seome peer
             }
             fci = getNextEmptyChunk();
         }
-        log.debug("doPeerDownload() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
+        log.debug("doPeerDownload() for peer {} finished", p.gePeer().getAnnouncedAddress());
         return res;
     }
 
@@ -211,7 +210,7 @@ public class FileDownloader {
             runningDownloaders.add(dn_res);
             peerCount++;
             if (peerCount > DOWNLOAD_THREADS) {
-                break;
+                break; 
             }
         }
         return status;
