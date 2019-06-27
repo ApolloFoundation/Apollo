@@ -1,15 +1,16 @@
 package com.apollocurrency.aplwallet.apl.eth.utils;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.ethereum.util.blockchain.EtherUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Convert;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class EthUtil {
 
@@ -33,9 +34,14 @@ public class EthUtil {
         return Convert.fromWei(wei.toString(), Convert.Unit.ETHER);
     }
 
+    public static Long ethToGwei(BigDecimal ether) {
+        return Convert.fromWei(etherToWei(ether).toString(), Convert.Unit.GWEI).longValue();
+    }
+
     public static BigInteger etherToWei(BigDecimal ether) {
         return Convert.toWei(ether, Convert.Unit.ETHER).toBigInteger();
     }
+
     public static BigInteger gweiToWei(Long gwei) {
         return EtherUtil.convert(gwei, EtherUtil.Unit.GWEI);
     }
@@ -44,15 +50,24 @@ public class EthUtil {
         return weiToEther(gweiToWei(gwei));
     }
 
+    public static BigDecimal aplToEth(Long apl) {
+        return weiToEther(gweiToWei(aplToGwei(apl)));
+    }
+
+    public static Long aplToGwei(Long apl) {
+        return apl * 10;
+    }
+
+    public static Long gweiToApl(Long gwei) {
+        return weiToEther(gweiToWei(gwei)).multiply(BigDecimal.valueOf(Constants.ONE_APL)).longValue();
+    }
+
+
 
     public static boolean isAddressValid(String address){
         String regex = "^0x[0-9a-f]{40}$";
 
-        if(StringUtils.isBlank(address)){
-            return false;
-        }
-
-        return address.toLowerCase().matches(regex);
+        return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(regex);
     }
 
 }

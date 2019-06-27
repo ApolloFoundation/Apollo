@@ -149,7 +149,7 @@ public class DexService {
     public String refundEthPaxFrozenMoney(String passphrase, DexOffer offer) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
-        BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+        BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
         String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
         if(txHash==null){
@@ -163,7 +163,7 @@ public class DexService {
 
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
-        BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+        BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
         txHash = dexSmartContractService.deposit(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
 

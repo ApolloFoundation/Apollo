@@ -199,12 +199,14 @@ public class DexController {
             try {
                 offer.setAccountId(account.getId());
                 offer.setType(type);
-                offer.setOfferAmount(offerAmount);
+                //TODO refactoring it. Use Long (apollo unit of measurement)
+                offer.setOfferAmount(EthUtil.gweiToApl(offerAmount));
                 offer.setFromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress);
                 offer.setToAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()));
                 offer.setOfferCurrency(DexCurrencies.APL);
                 offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
-                offer.setPairRate(pairRate);
+                //TODO refactoring it. Use Long (apollo unit of measurement)
+                offer.setPairRate(EthUtil.gweiToEth(pairRate));
                 offer.setStatus(OfferStatus.OPEN);
                 offer.setFinishTime(currentTime + amountOfTime);
             } catch (Exception ex) {
@@ -240,13 +242,12 @@ public class DexController {
 
             //If we should freeze APL
             if (offer.getType().isSell()) {
-                Long amountATM = offer.getOfferAmount();
-                if (account.getUnconfirmedBalanceATM() < amountATM) {
+                if (account.getUnconfirmedBalanceATM() < offer.getOfferAmount()) {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
             } else if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()){
                 BigInteger amount = ethereumWalletService.getBalanceWei(offer.getFromAddress(), offer.getPairCurrency());
-                BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+                BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
 
                 if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
