@@ -2,22 +2,22 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
@@ -65,7 +65,8 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
             pstmt.setByte(++i, (byte) offer.getOfferCurrency().ordinal());
             pstmt.setLong(++i, offer.getOfferAmount());
             pstmt.setByte(++i, (byte) offer.getPairCurrency().ordinal());
-            pstmt.setLong(++i, offer.getPairRate());
+            //TODO change type in the db
+            pstmt.setLong(++i, EthUtil.ethToGwei(offer.getPairRate()));
             pstmt.setInt(++i, offer.getFinishTime());
             pstmt.setByte(++i, (byte) offer.getStatus().ordinal());
             pstmt.setInt(++i, blockchain.getHeight());
