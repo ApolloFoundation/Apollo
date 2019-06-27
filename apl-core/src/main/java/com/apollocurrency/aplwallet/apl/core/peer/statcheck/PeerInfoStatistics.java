@@ -20,6 +20,7 @@ public class PeerInfoStatistics {
     private final Map<BigInteger,PeerInfoGroup> sorted = new HashMap<>();
     
     public void add(HasHashSum pi){
+      if(pi!=null)  {
         BigInteger hash = pi.getHash();
         PeerInfoGroup pg = sorted.get(hash);
         if(pg==null){
@@ -27,6 +28,7 @@ public class PeerInfoStatistics {
             sorted.put(hash,pg);
         }
         pg.add(pi);
+      }
     }
     
     /**
