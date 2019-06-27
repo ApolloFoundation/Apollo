@@ -107,6 +107,8 @@ public class TransportInteractionWebSocket {
 
         this.closeLatch = new CountDownLatch(1);
         client = new WebSocketClient();
+        client.setMaxIdleTimeout(Long.MAX_VALUE);
+
         client.start();
         ClientUpgradeRequest request = new ClientUpgradeRequest();
         client.connect(this, endpointURI, request);

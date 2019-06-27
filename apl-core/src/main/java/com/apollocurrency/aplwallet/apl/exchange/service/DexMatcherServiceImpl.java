@@ -140,7 +140,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         Integer currentTime = epochTime.getEpochTime();        
         BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
         Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
-        BigDecimal pairRate = new BigDecimal(createdOffer.getPairRate()); 
+        BigDecimal pairRate = createdOffer.getPairRate(); 
         
         log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", type, currentTime, offerAmount, pairCurrency, pairRate );
                 
