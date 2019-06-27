@@ -78,7 +78,7 @@ public final class Shuffling {
      * Cache, which contains all active shufflings required for processing on each block push
      * Purpose: getActiveShufflings db call require at least 50-100ms, with cache we can shorten time to 10-20ms
      */
-    private static Map<Long, Shuffling> activeShufflingsCache = new HashMap<>();
+//    private static Map<Long, Shuffling> activeShufflingsCache = new HashMap<>();
     private static final Logger LOG = getLogger(Shuffling.class);
 
 
@@ -189,12 +189,13 @@ public final class Shuffling {
 
         @Override
         public DbKey newKey(Shuffling shuffling) {
-            return Objects.requireNonNullElseGet(shuffling.dbKey, () -> new LongKey(shuffling.id));
+            return shuffling.dbKey;
         }
 
     };
 
-    private static final VersionedDeletableEntityDbTable<Shuffling> shufflingTable = new VersionedDeletableEntityDbTable<>("shuffling", shufflingDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<Shuffling> shufflingTable = new VersionedDeletableEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
+
         @Override
         public Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Shuffling(rs, dbKey);
@@ -240,7 +241,7 @@ public final class Shuffling {
 
     public static Shuffling getShuffling(byte[] fullHash) {
         long shufflingId = Convert.fullHashToId(fullHash);
-        Shuffling shuffling = getShuffling(shufflingId);
+        Shuffling shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
         if (shuffling != null && !Arrays.equals(shuffling.getFullHash(), fullHash)) {
             LOG.debug("Shuffling with different hash {} but same id found for hash {}",
                     Convert.toHexString(shuffling.getFullHash()), Convert.toHexString(fullHash));
@@ -301,9 +302,7 @@ public final class Shuffling {
     }
 
     static void init() {
-//        activeShufflingsCache = new HashMap<>();
-//        List<Shuffling> allActiveShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-//        activeShufflingsCache.putAll(allActiveShufflings.stream().collect(Collectors.toMap(Shuffling::getId, Function.identity())));
+
     }
 
     @Singleton
@@ -315,26 +314,24 @@ public final class Shuffling {
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-//            if (activeShufflingsCache == null) {
-//                Shuffling.init();
-//            }
-            List<Shuffling> sortedShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));//activeShufflingsCache.values().stream().sorted(Comparator.comparing(Shuffling::getBlocksRemaining).thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())).collect(Collectors.toList());
-
-            for (Shuffling shuffling : sortedShufflings) {
+            try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
+                for (Shuffling shuffling : iterator) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
                     }
                 }
+            }
             shufflings.forEach(shuffling -> {
                 if (--shuffling.blocksRemaining <= 0) {
                     shuffling.cancel(block);
                 } else {
-                    insert(shuffling);
+                    shufflingTable.insert(shuffling);
                 }
             });
             LOG.trace("Shuffling observer time: {}", System.currentTimeMillis() - startTime);
         }
 
+/*
         public void onBlockPopOff(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
             activeShufflingsCache = null;
         }
@@ -342,6 +339,7 @@ public final class Shuffling {
         public void onRescanBegin(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
             activeShufflingsCache = null;
         }
+*/
     }
 
     private final long id;
@@ -478,6 +476,7 @@ public final class Shuffling {
     private static void insert(Shuffling shuffling) {
         long id = shuffling.getId();
         shuffling.height = blockchain.getHeight();
+/*
         if (activeShufflingsCache != null) {
             if (shuffling.getBlocksRemaining() <= 0) {
                 if (activeShufflingsCache.get(id) != null) {
@@ -487,6 +486,7 @@ public final class Shuffling {
                 activeShufflingsCache.put(id, shuffling);
             }
         }
+*/
         shufflingTable.insert(shuffling);
     }
 
