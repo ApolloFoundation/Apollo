@@ -38,8 +38,8 @@ public final class GetCumulativeDifficulty extends PeerRequestHandler {
         JSONObject response = new JSONObject();
 
         Block lastBlock = lookupBlockchain().getLastBlock();
-        response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
-        response.put("blockchainHeight", lastBlock.getHeight());
+        response.put("cumulativeDifficulty", lastBlock != null ? lastBlock.getCumulativeDifficulty().toString() : "-1");
+        response.put("blockchainHeight", lastBlock != null ? lastBlock.getHeight() : "-1");
         return response;
     }
 
