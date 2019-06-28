@@ -101,7 +101,16 @@ public class PeerDb {
         }
         return peers;
     }
-
+    public static void deletePeer(Entry peer){        
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()){
+            PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
+            pstmt.setString(1, peer.getAddress());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
     static void deletePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();

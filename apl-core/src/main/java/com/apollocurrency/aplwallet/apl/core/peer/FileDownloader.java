@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -50,12 +51,12 @@ public class FileDownloader {
     @Vetoed
     public class Status {
         double completed = 0.0;
-        int chunksTotal = 1; //init to 1 to avoid zero division
-        int chunksReady = 0;
+        AtomicInteger chunksTotal = new AtomicInteger(1); //init to 1 to avoid zero division
+         AtomicInteger chunksReady = new AtomicInteger(0);
         List<String> peers = new ArrayList<>();
         FileDownloadDecision decision = FileDownloadDecision.NotReady;
         boolean isComplete(){
-            return chunksReady==chunksTotal;
+            return chunksReady.get()>=chunksTotal.get();
         }
     }
 
@@ -95,15 +96,11 @@ public class FileDownloader {
     public void startDownload() {
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
-//        CompletableFuture<Boolean> prepare;
-//        prepare = CompletableFuture.supplyAsync(() -> {
-//            status.decision = prepareForDownloading(null);
-//            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
-//            return res;
-//        });
+
         finishSignalSent.set(false);
         download = CompletableFuture.supplyAsync(() -> {
-                status.chunksTotal = downloadInfo.chunks.size();
+                status.chunksTotal.set(downloadInfo.chunks.size());
+                status.chunksReady.set(0);
                 log.debug("Starting file chunks downloading");
                 Status s = download();
                 return status.isComplete();
@@ -111,7 +108,7 @@ public class FileDownloader {
     }
 
     public Status getDownloadStatus() {
-        status.completed = ((1.0D * status.chunksReady) / (1.0 * status.chunksTotal)) * 100.0;
+        status.completed = ((1.0D * status.chunksReady.get()) / (1.0D * status.chunksTotal.get())) * 100.0D;
         return status;
     }
 
@@ -130,7 +127,7 @@ public class FileDownloader {
            allPeers.addAll(onlyPeers);
         }
         log.debug("prepareForDownloading(), allPeers = {}", allPeers);
-        PeersList pl = new PeersList();
+        PeersList<PeerFileInfo> pl = new PeersList<>();
         allPeers.forEach((pi) -> {
             PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
             if(pfi.retreiveHash()!=null){
@@ -160,8 +157,7 @@ public class FileDownloader {
                 log.debug("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
                 break;
             }
-            this.aplAppStatus.durableTaskUpdate(this.taskId,
-                    (double) (downloadInfo.chunks.size() / Math.max (fci.chunkId, 1) ), "File downloading...");
+            this.aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading...");
         }
         if (res == null) { //NO more empty chunks. File is ready
             if(! finishSignalSent.get()){
@@ -186,7 +182,7 @@ public class FileDownloader {
             if(fc!=null){
                 byte[] data = Base64.getDecoder().decode(fc.mime64data);
                 fops.writeChunk(fc.info.offset, data, fc.info.crc);
-                status.chunksReady++;
+                status.chunksReady.incrementAndGet();
                 fci.present = FileChunkState.SAVED;
             }else{
               fci.present=FileChunkState.PRESENT_IN_PEER; //well, it exists anyway on seome peer
