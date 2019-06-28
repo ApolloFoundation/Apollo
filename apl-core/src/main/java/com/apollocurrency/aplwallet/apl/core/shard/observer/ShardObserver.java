@@ -39,7 +39,6 @@ public class ShardObserver {
     private ShardRecoveryDao shardRecoveryDao;
     private ShardDao shardDao;
     private Event<Boolean> trimEvent;
-    private boolean trimDerivedTables;
     private volatile boolean isSharding;
     private volatile int shardHeight;
 
@@ -47,7 +46,6 @@ public class ShardObserver {
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
                          ShardMigrationExecutor shardMigrationExecutor,
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
-                         @Property("apl.trimDerivedTables") boolean trimDerivedTables,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -55,7 +53,6 @@ public class ShardObserver {
         this.shardRecoveryDao = Objects.requireNonNull(recoveryDao, "shard recovery dao cannot be null");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
-        this.trimDerivedTables = trimDerivedTables;
     }
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
@@ -101,9 +98,7 @@ public class ShardObserver {
     }
 
     private void updateTrimConfig(boolean enableTrim) {
-        if (trimDerivedTables) {
-            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
-        }
+         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
 
     public boolean performSharding(int minRollbackHeight, long shardId) {

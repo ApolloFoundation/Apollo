@@ -65,20 +65,17 @@ public class ShardObserverTest {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
 
-    private void prepare(boolean withMockEvent, boolean trim) {
+    private void prepare() {
         firedEvent = mock(Event.class);
-        if (withMockEvent) {
-            doReturn(firedEvent).when(firedEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
-        }
         shardObserver = new ShardObserver(
                 blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
-                shardDao, recoveryDao, trim, firedEvent);
+                shardDao, recoveryDao, firedEvent);
     }
 
     @Test
     void testSkipShardingWhenShardingIsDisabled() throws ExecutionException, InterruptedException {
-        prepare(false, true);
+        prepare();
         doReturn(false).when(heightConfig).isShardingEnabled();
 
         CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
@@ -89,7 +86,7 @@ public class ShardObserverTest {
 
     @Test
     void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() throws ExecutionException, InterruptedException {
-        prepare(false, true);
+        prepare();
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -102,7 +99,7 @@ public class ShardObserverTest {
 
     @Test
     void testDoNotShardWhenMinRollbackHeightIsZero() throws ExecutionException, InterruptedException {
-        prepare(false, true);
+        prepare();
         doReturn(0).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
 
@@ -114,7 +111,7 @@ public class ShardObserverTest {
     @Disabled // 2 times call to ShardObserver.performSharding() line 117
     @Test
     void testShardSuccessful() throws ExecutionException, InterruptedException {
-        prepare(true, true);
+        prepare();
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -130,7 +127,8 @@ public class ShardObserverTest {
 
     @Test
     void testShardWhenShardExecutorThrowAnyException() throws ExecutionException, InterruptedException {
-        prepare(true, true);
+        prepare();
+        doReturn(firedEvent).when(firedEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -145,23 +143,8 @@ public class ShardObserverTest {
     }
 
     @Test
-    void testShardWhenShardTrimWasNotEnabled() throws ExecutionException, InterruptedException {
-        prepare(false, false);
-        doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-
-        CompletableFuture<Boolean> c = shardObserver.tryCreateShardAsync();
-
-        assertTrue(c.get());
-        verify(shardMigrationExecutor, times(1)).executeAllOperations();
-        verify(firedEvent, never()).fire(true);
-        verify(firedEvent, never()).fire(false);
-    }
-
-    @Test
     void testSkipShardingDuringBlockchainScan() {
-        prepare(false, false);
+        prepare();
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -178,7 +161,8 @@ public class ShardObserverTest {
 
     @Test
     void testSkipSharding() throws InterruptedException, ExecutionException {
-        prepare(false, false);
+        prepare();
+        doReturn(firedEvent).when(firedEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -209,7 +193,8 @@ public class ShardObserverTest {
 
     @Test
     void testSkipShardingWhenMigHeightRollbackIsEqualToPrevMinRollbackHeight() throws InterruptedException, ExecutionException {
-        prepare(false, false);
+        prepare();
+        doReturn(firedEvent).when(firedEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         doReturn(DEFAULT_MIN_ROLLBACK_HEIGHT).when(blockchainProcessor).getMinRollbackHeight();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
