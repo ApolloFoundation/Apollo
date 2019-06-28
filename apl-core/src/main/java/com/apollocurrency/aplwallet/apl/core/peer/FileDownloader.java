@@ -55,7 +55,7 @@ public class FileDownloader {
         List<String> peers = new ArrayList<>();
         FileDownloadDecision decision = FileDownloadDecision.NotReady;
         boolean isComplete(){
-            return chunksReady==chunksTotal;
+            return chunksReady>=chunksTotal;
         }
     }
 
