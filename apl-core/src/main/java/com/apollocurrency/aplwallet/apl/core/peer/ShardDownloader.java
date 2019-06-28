@@ -24,9 +24,15 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerShardInfo;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -40,13 +46,13 @@ public class ShardDownloader {
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
     private final FileDownloader fileDownloader;
-    private Set<String> additionalPeers;
-    private UUID myChainId;
-    private Map<Long, Set<ShardInfo>> sortedShards;
-    private Map<Long, Set<Peer>> shardsPeers;
-    private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
-    private ShardNameHelper shardNameHelper = new ShardNameHelper();
-    private DirProvider dirProvider;
+    private final Set<String> additionalPeers;
+    private final UUID myChainId;
+    private final Map<Long, Set<ShardInfo>> sortedShards;
+    private final Map<Long, Set<Peer>> shardsPeers;
+    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private final ShardNameHelper shardNameHelper = new ShardNameHelper();
+    private final DirProvider dirProvider;
 
     @Inject
     public ShardDownloader(FileDownloader fileDownloader,
@@ -69,11 +75,12 @@ public class ShardDownloader {
         ShardingInfo si = pc.getShardingInfo();
         log.trace("shardInfo = {}", si);
         if (si != null) {
+            si.source = p.getHostWithPort();
             additionalPeers.addAll(si.knownPeers);
             for (ShardInfo s : si.shards) {
                 if (myChainId.equals(UUID.fromString(s.chainId))) {
                     haveShard = true;
-                    si.source = p.getAnnouncedAddress();
+                    s.peerAddress = si.source;
                     synchronized (this) {
                         Set<Peer> ps = shardsPeers.get(s.shardId);
                         if (ps == null) {
@@ -100,7 +107,7 @@ public class ShardDownloader {
         int counterWinShardInfo = 0;
         int counterTotal = 0;
         Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
-        log.debug("ShardInfo knownPeers {}", knownPeers);
+        log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
             if (processPeerShardInfo(p)) {
@@ -140,7 +147,71 @@ public class ShardDownloader {
         return sortedShards;
     }
 
+    private void fireNoShardEvent() {
+        ShardPresentData shardPresentData = new ShardPresentData();
+        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored      
+    }
+
+    private void fireShardPresnetEvent(Long shardId) {
+        ShardPresentData shardPresentData = new ShardPresentData(shardId.toString());
+        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is ignored      
+    }
+
+    private BigInteger getHash(Long shardId, String peerAddr) {
+        BigInteger res = null;
+        Set<ShardInfo> rs = sortedShards.get(shardId);
+        for (ShardInfo s : rs) {
+            if (peerAddr.equalsIgnoreCase(s.peerAddress)) {
+                String zipCrcHash = s.hash;
+                res = new BigInteger(Convert.parseHexString(zipCrcHash));
+                break;
+            }
+        }
+        return res;
+    }
+
+    private FileDownloadDecision checkShard(Long shardId, Set<Peer> shardPeers) {
+        FileDownloadDecision res = FileDownloadDecision.NotReady;
+
+        //do statistical analysys of shard's hashes
+        PeersList<PeerShardInfo> shardPeerList = new PeersList<>();
+        for (Peer p : shardPeers) {
+            PeerShardInfo psi = new PeerShardInfo(new PeerClient(p), shardId, myChainId);
+            psi.setHash(getHash(shardId, p.getHostWithPort()));
+            shardPeerList.add(psi);
+        }
+        PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
+        res = pvdm.calcualteNetworkState();
+        List<HasHashSum> goodPeers = pvdm.getValidPeers();
+        List<HasHashSum> badPeers = pvdm.getInvalidPeers();
+        log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
+
+        return res;
+    }
+
+    private boolean checkShardDownloadedAlready(Long shardId, BigInteger hash) {
+        boolean res = false;
+        // check if zip file exists on local node
+        String zipFileName = shardNameHelper.getShardArchiveNameByShardId(shardId, myChainId);
+        File zipInExportedFolder = dirProvider.getDataExportDir().resolve(zipFileName).toFile();
+        log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
+        if (zipInExportedFolder.exists()) {
+            log.info("No need to download '{}'  as it is found in folder = '{}'", zipFileName, dirProvider.getDataExportDir());
+            //TODO: check integrity
+            res = true;
+        }
+        return res;
+    }
+
+    private boolean isAcceptable(FileDownloadDecision d) {
+        boolean res = (d == FileDownloadDecision.AbsOK
+                || d == FileDownloadDecision.OK
+                || d == FileDownloadDecision.Risky);
+        return res;
+    }
+
     public FileDownloadDecision prepareAndStartDownload() {
+        boolean goodShardFound=false;
         log.debug("prepareAndStartDownload...");
         FileDownloadDecision result = FileDownloadDecision.NotReady;
         if (sortedShards.isEmpty()) { //???
@@ -151,51 +222,51 @@ public class ShardDownloader {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
             log.debug("result = {}, Fire = {}", result, "NO_SHARD");
-            ShardPresentData shardPresentData = new ShardPresentData();
-            presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
+            fireNoShardEvent();
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
             List<Long> shardIds = new ArrayList(sortedShards.keySet());
-            Collections.sort(shardIds);
-            Long lastShard = shardIds.get(shardIds.size() - 1);
-            log.debug("Last known ShardId '{}'", lastShard);            
-            String fileID = shardNameHelper.getFullShardId(lastShard, myChainId);
-            log.debug("fileID = '{}'", fileID);
-            fileDownloader.setFileId(fileID);
-            // check if zip file exists on local node
-            String zipFileName = shardNameHelper.getShardArchiveNameByShardId(lastShard, myChainId);
-            File zipInExportedFolder = dirProvider.getDataExportDir().resolve(zipFileName).toFile();
-            log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
-            if (zipInExportedFolder.exists()) {
-                log.info("No need to download '{}'  as it is found in folder = '{}'", zipFileName,
-                        dirProvider.getDataExportDir());
-                result = FileDownloadDecision.OK;
-                return result;
+            Collections.sort(shardIds,Collections.reverseOrder());
+            for (Long shardId : shardIds) {
+                log.debug("Processing last known ShardId '{}'", shardId);
+                String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
+                log.debug("fileID = '{}'", fileID);
+                fileDownloader.setFileId(fileID);
+                // check if zip file exists on local node
+                if (checkShardDownloadedAlready(shardId, getShardHash(shardId))) {
+                    fireShardPresnetEvent(shardId);
+                    result = FileDownloadDecision.OK;
+                    return result;
+                }
+                // chek before downloading
+                Set<Peer> lastShardPeers = shardsPeers.get(shardId);
+                if (lastShardPeers.size() < 2) { //we cannot use Student's T distribution with 1 sample
+                    result = FileDownloadDecision.NoPeers;
+                    //FIRE event when shard is NOT PRESENT
+                    log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
+                    continue;
+                }
+                result = checkShard(shardId, lastShardPeers);
+                if (!isAcceptable(result)) {
+                    log.warn("Shard {} can not be loaded from peers", shardId);
+                    continue;
+                }
+                log.debug("Start preparation to downloading...");
+                result = fileDownloader.prepareForDownloading(lastShardPeers);
+                if (isAcceptable(result)) {
+                    log.debug("Starting shard downloading: '{}'", fileID);
+                    fileDownloader.startDownload();
+                    goodShardFound=true;
+                    break;
+                    //see FileDownloader::getNextEmptyChunk() for sucess event emition
+                } else {
+                    log.warn("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
+                    // We CAN'T download latest SHARD archive, start from the beginning - FIRE event here
+                }
             }
-            // prepare downloading
-            Set<Peer> lastShardPeers = shardsPeers.get(lastShard);
-            if(lastShardPeers.size()<2){ //we cannot useStudent's distribution with 1
-              result = FileDownloadDecision.NoPeers;
-             //FIRE event when shard is NOT PRESENT
-              log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
-              ShardPresentData shardPresentData = new ShardPresentData();
-              presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
-              return result;
-            }
-            log.debug("Start preparation to downloading...");
-            result = fileDownloader.prepareForDownloading(lastShardPeers);
-            if (result == FileDownloadDecision.AbsOK
-                    || result == FileDownloadDecision.OK
-                    || result == FileDownloadDecision.Risky) {
-                log.debug("Starting shard downloading: '{}'", fileID);
-                fileDownloader.startDownload();
-                //see FileDownloader::getNextEmptyChunk() for sucess event
-            } else {
-                log.error("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
-                // We CAN'T download latest SHARD archive, start from the beginning - FIRE event here
-                ShardPresentData shardPresentData = new ShardPresentData();
-                presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored
+            if(!goodShardFound){
+                fireNoShardEvent();
             }
         }
         return result;
@@ -208,5 +279,9 @@ public class ShardDownloader {
                 return shardPresentEventType;
             }
         };
+    }
+
+    private BigInteger getShardHash(Long shardId) {
+        return null;
     }
 }
