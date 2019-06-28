@@ -69,9 +69,10 @@ public class TrimService {
     }
 
     public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight) {
-        lastTrimHeight = Math.max(blockchainHeight - maxRollback, 0);
-        if (lastTrimHeight > 0) {
-            doTrimDerivedTablesOnHeight(lastTrimHeight);
+        int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
+        if (trimHeight > 0) {
+            doTrimDerivedTablesOnHeight(trimHeight);
+            lastTrimHeight = trimHeight;
         }
     }
 
