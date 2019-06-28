@@ -21,7 +21,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -45,17 +47,19 @@ public class ShardDownloadPresenceObserver {
     private DerivedTablesRegistry derivedTablesRegistry;
     private CsvImporter csvImporter;
     private Zip zipComponent;
-
+    private DownloadableFilesManager downloadableFilesManager;
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
-                                         Zip zipComponent, CsvImporter csvImporter) {
+                                         Zip zipComponent, CsvImporter csvImporter,
+                                         DownloadableFilesManager downloadableFilesManager) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
         this.csvImporter = Objects.requireNonNull(csvImporter, "csvImporter is NULL");
+        this.downloadableFilesManager = downloadableFilesManager;
     }
 
     /**
@@ -65,10 +69,10 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
-        String zipFileName = shardPresentData.getFileIdValue();
-        Path zipInFolder = csvImporter.getDataExportPath().resolve(zipFileName + ".zip").toAbsolutePath();
+        String shardFileId = shardPresentData.getFileIdValue();        
+        Path zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(shardFileId).toAbsolutePath();
         log.debug("Try unpack file name '{}'", zipInFolder);
-        boolean unpackResult = zipComponent.extract(zipFileName + ".zip", csvImporter.getDataExportPath().toString());
+        boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
         log.debug("Zip is unpacked = {}", unpackResult);
         Genesis.apply(true); // import genesis public Keys ONLY (NO balances)
 

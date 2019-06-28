@@ -572,6 +572,8 @@ public final class Peers {
     }
 
     public static PeerImpl removePeer(Peer peer) {
+        PeerDb.Entry entry = new PeerDb.Entry(peer.getHostWithPort(), 0, 0);
+        PeerDb.deletePeer(entry);
         return peers.remove(peer.getHostWithPort());
     }
 
