@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,7 +41,6 @@ public class ShardObserver {
     private ShardDao shardDao;
     private Event<Boolean> trimEvent;
     private volatile boolean isSharding;
-    private volatile int shardHeight;
 
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
@@ -55,42 +55,46 @@ public class ShardObserver {
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
     }
 
-    public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-        tryCreateShardAsync();
+    public void onTrimDone(@Observes Integer height) {
+        tryCreateShardAsync(height);
     }
 
-    public CompletableFuture<Boolean> tryCreateShardAsync() {
+    public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         CompletableFuture<Boolean> completableFuture = null;
         if (currentConfig.isShardingEnabled()) {
-            int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
-            if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0 && shardHeight != minRollbackHeight) {
+            log.debug("LastTrimHeight-{}, isSharding={}", lastTrimBlockHeight, isSharding);
+            if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
                 if (!blockchainProcessor.isScanning()) {
                     if (!isSharding) {
-                        isSharding = true;
-                        shardHeight = minRollbackHeight;
-                        updateTrimConfig(false);
-                        // quick create records for new Shard and Recovery process for later use
-                        shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
-                        long nextShardId = shardDao.getNextShardId();
-                        Shard newShard = new Shard(nextShardId, minRollbackHeight);
-                        shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+                        Shard lastShard = shardDao.getLastShard();
+                        if (lastShard == null || lastTrimBlockHeight > lastShard.getShardHeight()) {
+                            isSharding = true;
+                            updateTrimConfig(false);
+                            // quick create records for new Shard and Recovery process for later use
+                            shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
+                            long nextShardId = shardDao.getNextShardId();
+                            Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
+                            shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
-                        completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight, nextShardId))
-                                .thenApply((result) -> {
-                                    blockchainProcessor.updateInitialBlockId();
-                                    return result;
-                                })
-                                .handle((result, ex) -> {
-                                    updateTrimConfig(true);
-                                    isSharding = false;
-                                    return result;
-                                });
+                            completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId))
+                                    .thenApply((result) -> {
+                                        blockchainProcessor.updateInitialBlockId();
+                                        return result;
+                                    })
+                                    .handle((result, ex) -> {
+                                        updateTrimConfig(true);
+                                        isSharding = false;
+                                        return result;
+                                    });
+                        } else {
+                            log.warn("Last trim height {} less than last shard height {}", lastTrimBlockHeight, lastShard.getShardHeight());
+                        }
                     } else {
-                        log.warn("Unable to start sharding at height {}, previous sharding process was not finished", minRollbackHeight);
+                        log.warn("Unable to start sharding at height {}, previous sharding process was not finished", lastTrimBlockHeight);
                     }
                 } else {
-                    log.warn("Will skip sharding at height {} due to blokchain scan ", minRollbackHeight);
+                    log.warn("Will skip sharding at height {} due to blokchain scan ", lastTrimBlockHeight);
                 }
             }
         }
