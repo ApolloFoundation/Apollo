@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import org.junit.jupiter.api.BeforeEach;
@@ -184,7 +185,7 @@ public class ShardObserverTest {
     }
 
     @Test
-    void testSkipShardingWhenMigHeightRollbackIsEqualToPrevMinRollbackHeight() throws InterruptedException, ExecutionException {
+    void testSkipShardingWhenLastShardHaveSameHeight() throws InterruptedException, ExecutionException {
         prepare();
         doReturn(firedEvent).when(firedEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         doReturn(true).when(heightConfig).isShardingEnabled();
@@ -195,6 +196,8 @@ public class ShardObserverTest {
         assertNotNull(shardFuture1);
 
         shardFuture1.get();
+
+        doReturn(new Shard(100, DEFAULT_TRIM_HEIGHT)).when(shardDao).getLastShard();
 
         CompletableFuture<Boolean> shardFuture2 = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT);
         CompletableFuture<Boolean> shardFuture3 = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT);
