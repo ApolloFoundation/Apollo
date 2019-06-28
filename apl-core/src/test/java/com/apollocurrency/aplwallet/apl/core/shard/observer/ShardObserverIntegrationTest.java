@@ -55,14 +55,14 @@ public class ShardObserverIntegrationTest {
             .addBeans(MockBean.of(holder, PropertiesHolder.class))
             .build();
     @Inject
-    Event<Block> blockEvent;
+    Event<Integer> trimEvent;
     @Inject
     ShardObserver shardObserver;
 
     @Test
     void testDoShardByEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(mock(Block.class));
+        trimEvent.fire(100);
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
 
