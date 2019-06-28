@@ -68,6 +68,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -751,15 +752,15 @@ public final class PeerImpl implements Peer {
                 // parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
                 LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
-                if(newPi.error != null && newPi.error.equalsIgnoreCase(Errors.BLACKLISTED)){
-                    LOG.debug("We are blacklisted by host: {} reason: {}", getHostWithPort(), newPi.getCause());
-                    return;
-                }
-                if (newPi.errorCode != null && newPi.errorCode!=0) {
+                if( ! StringUtils.isBlank(newPi.error) || newPi.errorCode!=0){
+                    LOG.debug("We've got error from peer: {}. Error: {}  cause: {} code: {} ", getHostWithPort(), newPi.error, newPi.getCause(), newPi.getErrorCode());
+                    if(Errors.BLACKLISTED.equalsIgnoreCase(newPi.error) || newPi.getBlacklisted()){
+                       LOG.warn("We are blacklisted! Cause: {}", newPi.getBlacklistingCause());
+                    }
                     setState(PeerState.NON_CONNECTED);
-                    LOG.debug("NULL or error response from {}",host);
                     return;
                 }
+
                 if(!setApplication(newPi.getApplication())){
                     LOG.debug("Peer: {} has different Application value '{}', removing",
                             getHost(), newPi.getApplication());
