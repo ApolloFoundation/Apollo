@@ -95,15 +95,11 @@ public class FileDownloader {
     public void startDownload() {
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
-//        CompletableFuture<Boolean> prepare;
-//        prepare = CompletableFuture.supplyAsync(() -> {
-//            status.decision = prepareForDownloading(null);
-//            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
-//            return res;
-//        });
+
         finishSignalSent.set(false);
         download = CompletableFuture.supplyAsync(() -> {
                 status.chunksTotal = downloadInfo.chunks.size();
+                status.chunksReady = 0;
                 log.debug("Starting file chunks downloading");
                 Status s = download();
                 return status.isComplete();
@@ -111,7 +107,7 @@ public class FileDownloader {
     }
 
     public Status getDownloadStatus() {
-        status.completed = ((1.0D * status.chunksReady) / (1.0 * status.chunksTotal)) * 100.0;
+        status.completed = ((1.0D * status.chunksReady) / (1.0D * status.chunksTotal)) * 100.0D;
         return status;
     }
 
@@ -160,8 +156,7 @@ public class FileDownloader {
                 log.debug("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
                 break;
             }
-            this.aplAppStatus.durableTaskUpdate(this.taskId,
-                    (double) (downloadInfo.chunks.size() / Math.max (fci.chunkId, 1) ), "File downloading...");
+            this.aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading...");
         }
         if (res == null) { //NO more empty chunks. File is ready
             if(! finishSignalSent.get()){
