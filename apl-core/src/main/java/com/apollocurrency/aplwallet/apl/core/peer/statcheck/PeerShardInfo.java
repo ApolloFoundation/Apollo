@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -16,7 +15,7 @@ import java.util.UUID;
  */
 public class PeerShardInfo implements HasHashSum {
 
-    private BigInteger hash;
+    private byte[] hash;
     private final PeerClient peerClient;
     private final Long shardId;
     private UUID chainId;
@@ -30,11 +29,11 @@ public class PeerShardInfo implements HasHashSum {
     }
     
     @Override
-    public BigInteger getHash() {
+    public byte[] getHash() {
         return hash;
     }
 
-    public void setHash(BigInteger hash) {
+    public void setHash(byte[] hash) {
         this.hash = hash;
     }
     
@@ -44,14 +43,14 @@ public class PeerShardInfo implements HasHashSum {
     }
     
     @Override
-    public BigInteger retreiveHash() {
+    public byte[] retreiveHash() {
        si = peerClient.getShardingInfo();
        if(si==null || si.shards==null || si.shards.isEmpty()){
           hash=null;
        }else{
           for(ShardInfo s: si.shards){
              if(chainId.equals(UUID.fromString(s.chainId)) && shardId.equals(s.shardId)){                      
-              hash=new BigInteger(Convert.parseHexString(s.zipCrcHash)); 
+              hash=Convert.parseHexString(s.zipCrcHash); 
               break;
              }
           } 

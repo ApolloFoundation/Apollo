@@ -166,13 +166,13 @@ public class ShardDownloader {
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is ignored      
     }
 
-    private BigInteger getHash(Long shardId, String peerAddr) {
-        BigInteger res = null;
+    private byte[] getHash(Long shardId, String peerAddr) {
+        byte[] res = null;
         Set<ShardInfo> rs = sortedShards.get(shardId);
         for (ShardInfo s : rs) {
             if (peerAddr.equalsIgnoreCase(s.peerAddress)) {
                 String zipCrcHash = s.hash;
-                res = new BigInteger(Convert.parseHexString(zipCrcHash));
+                res = Convert.parseHexString(zipCrcHash);
                 break;
             }
         }
@@ -242,8 +242,8 @@ public class ShardDownloader {
             return result;
         }
         // check if zip file exists on local node
-        BigInteger goodHash = goodPeersMap.get(shardId).get(0).getHash();
-        if (checkShardDownloadedAlready(shardId, goodHash.toByteArray())) {
+        byte[] goodHash = goodPeersMap.get(shardId).get(0).getHash();
+        if (checkShardDownloadedAlready(shardId, goodHash)) {
             fireShardPresnetEvent(shardId);
             result = FileDownloadDecision.OK;
             return result;
