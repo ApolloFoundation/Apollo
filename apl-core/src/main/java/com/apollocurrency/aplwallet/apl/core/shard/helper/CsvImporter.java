@@ -33,4 +33,17 @@ public interface CsvImporter {
      */
     long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws Exception;
 
+    /**
+     * Import one specified table and returns number of imported rows
+     * The CSV file should exist in folder specified by implementation component.
+     * If file was not found it's skipped from processing
+     *
+     * @param tableName table to import from csv into database
+     * @param batchLimit rows in batch to process
+     * @param cleanTarget true if we want to cleanup target table
+     * @param stateIncrease progress increase value
+     * @return imported quantity
+     */
+    long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease) throws Exception;
+
 }
