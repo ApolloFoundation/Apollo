@@ -114,8 +114,8 @@ public class ShardDownloadPresenceObserver {
         // start adding old Genesis Data
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        Connection con = dataSource.begin();
-        try {
+//        Connection con = dataSource.begin();
+        try (Connection con = dataSource.begin()) {
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(dataSource, genesisBlock);
             long initialBlockId = genesisBlock.getId();
