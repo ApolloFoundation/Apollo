@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
 import java.math.BigInteger;
+import org.spongycastle.util.Arrays;
 
 /**
  * Entity that have hash and could be sorted by it
@@ -14,15 +15,15 @@ public interface HasHashSum {
      * Get already retreived hash
      * @return hash bytes
      */
-    public BigInteger getHash();
+    public byte[] getHash();
     public String getId();
     default public boolean hasSameHash(HasHashSum other){
         if(other==null) return false;
-        return getHash().compareTo(other.getHash())==0;
+        return Arrays.areEqual(getHash(),other.getHash());
     }
     /**
      * get hash rom remote or other subsystem
      * @return hash bytes
      */
-    public BigInteger retreiveHash();
+    public byte[] retreiveHash();
 }

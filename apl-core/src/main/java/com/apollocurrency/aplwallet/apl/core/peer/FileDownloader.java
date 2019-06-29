@@ -66,14 +66,14 @@ public class FileDownloader {
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
     private final Status status = new Status();
-    private AtomicBoolean finishSignalSent = new AtomicBoolean(false);
-    private DownloadableFilesManager manager;
-    private AplAppStatus aplAppStatus;
+    private final AtomicBoolean finishSignalSent = new AtomicBoolean(false);
+    private final DownloadableFilesManager manager;
+    private final AplAppStatus aplAppStatus;
     private String taskId;
 
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
-    private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private CompletableFuture<Boolean> download;
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
