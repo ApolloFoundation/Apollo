@@ -212,7 +212,7 @@ public class FileDownloader {
         return status;
     }
 
-    public Set<Peer> getAllAvailablePeers() {
+    public static Set<Peer> getAllAvailablePeers() {
         Set<Peer> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
         res.addAll(knownPeers);

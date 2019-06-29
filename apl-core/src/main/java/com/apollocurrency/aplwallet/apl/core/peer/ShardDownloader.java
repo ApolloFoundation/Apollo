@@ -32,8 +32,8 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import java.math.BigInteger;
+import javax.enterprise.inject.Instance;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -46,7 +46,6 @@ public class ShardDownloader {
 
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
-    private final FileDownloader fileDownloader;
     private final Set<String> additionalPeers;
     private final UUID myChainId;
     private final Map<Long, Set<ShardInfo>> sortedShards;
@@ -54,22 +53,24 @@ public class ShardDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final DownloadableFilesManager downloadableFilesManager;
-    List<HasHashSum> goodPeers;
-    List<HasHashSum> badPeers;
+    Map<Long,List<HasHashSum>> goodPeersMap;
+    Map<Long,List<HasHashSum>> badPeersMap;
+
+    private final Instance<FileDownloader> fileDownloaders;
 
     @Inject
-    public ShardDownloader(FileDownloader fileDownloader,
+    public ShardDownloader(Instance<FileDownloader> fileDownloaders,
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent) {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
         this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
-        this.fileDownloader = Objects.requireNonNull(fileDownloader, "fileDownloader is NULL");
         this.sortedShards = Collections.synchronizedMap(new HashMap<>());
         this.shardsPeers = Collections.synchronizedMap(new HashMap<>());
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
+        this.fileDownloaders=fileDownloaders;
     }
 
     private boolean processPeerShardInfo(Peer p) {
@@ -109,7 +110,7 @@ public class ShardDownloader {
         log.debug("Request ShardInfo from Peers...");
         int counterWinShardInfo = 0;
         int counterTotal = 0;
-        Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
+        Set<Peer> knownPeers = FileDownloader.getAllAvailablePeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
@@ -183,9 +184,9 @@ public class ShardDownloader {
         }
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
         FileDownloadDecision res = pvdm.calcualteNetworkState();
-        goodPeers = pvdm.getValidPeers();
-        badPeers = pvdm.getInvalidPeers();
-        log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
+        goodPeersMap.put(shardId,pvdm.getValidPeers());
+        badPeersMap.put(shardId,pvdm.getInvalidPeers());
+        log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
 
         return res;
     }
@@ -222,7 +223,7 @@ public class ShardDownloader {
     public FileDownloadDecision tryDownloadShard(Long shardId) {
         FileDownloadDecision result;
         log.debug("Processing shardId '{}'", shardId);
-
+        FileDownloader fileDownloader = fileDownloaders.get();
         // chek before downloading
         Set<Peer> thisShardPeers = shardsPeers.get(shardId);
         if (thisShardPeers.size() < 2) { //we cannot use Student's T distribution with 1 sample
@@ -237,7 +238,7 @@ public class ShardDownloader {
             return result;
         }
         // check if zip file exists on local node
-        BigInteger goodHash = goodPeers.get(0).getHash();
+        BigInteger goodHash = goodPeersMap.get(shardId).get(0).getHash();
         if (checkShardDownloadedAlready(shardId, goodHash)) {
             fireShardPresnetEvent(shardId);
             result = FileDownloadDecision.OK;
