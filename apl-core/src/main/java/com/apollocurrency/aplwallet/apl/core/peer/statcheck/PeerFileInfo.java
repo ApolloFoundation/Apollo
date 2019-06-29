@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.math.BigInteger;
 
 /**
  * Download File info together with PeerClient and Peer
@@ -14,7 +13,7 @@ import java.math.BigInteger;
  */
 public class PeerFileInfo implements HasHashSum {
 
-    private BigInteger hash;
+    private byte[] hash;
     private final PeerClient peerClient;
     private final String fileId;
     private FileDownloadInfo fdi;
@@ -25,7 +24,7 @@ public class PeerFileInfo implements HasHashSum {
     }
     
     @Override
-    public BigInteger getHash() {
+    public byte[] getHash() {
         return hash;
     }
 
@@ -40,12 +39,12 @@ public class PeerFileInfo implements HasHashSum {
 
 
     @Override
-    public BigInteger retreiveHash() {
+    public byte[] retreiveHash() {
        fdi = peerClient.getFileInfo(fileId);
        if(fdi==null || fdi.fileInfo==null || fdi.fileInfo.hash==null){
           hash=null;
        }else{
-          hash=new BigInteger(Convert.parseHexString(fdi.fileInfo.hash)); 
+          hash=Convert.parseHexString(fdi.fileInfo.hash); 
        }
        return hash;
     }
