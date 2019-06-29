@@ -206,11 +206,12 @@ public class ShardDownloader {
             log.info("No need to download '{}'  as it is found in path = '{}'", shardFileId, zipInExportedFolder.toString());
             //check integrity
             FileInfo fi = downloadableFilesManager.getFileInfo(shardFileId);
-            byte[] fileHashActual = Convert.parseHexString(fi.hash);
-            if (Arrays.areEqual(fileHashActual,hash)) {
+            String fileHashActual = fi.hash;
+            String receivedHash=Convert.toHexString(hash);
+            if (fileHashActual.equalsIgnoreCase(receivedHash)) {
                 res = true;
             } else {
-                log.debug("bad shard file: {}, deleting", zipInExportedFolder.getAbsolutePath());
+                log.debug("bad shard file: {}, received hash: {}. deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
                 zipInExportedFolder.delete();
                 res = false;
             }
