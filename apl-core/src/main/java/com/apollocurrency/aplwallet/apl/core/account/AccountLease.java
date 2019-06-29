@@ -41,6 +41,7 @@ public final class AccountLease {
         this.nextLesseeId = rs.getLong("next_lessee_id");
     }
 
+
     public long getLessorId() {
         return lessorId;
     }

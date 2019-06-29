@@ -37,7 +37,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         }
     } 
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
-    private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
+    private static final AccountAssetTable accountAssetTable = new AccountAssetTable();
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     
     public static DbKey newKey(long idA, long idB){
@@ -77,11 +77,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
             accountAssetTable.delete(accountAsset);
         }
     }
-    
-    @Override
-    public void trim(int height) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
-    }
+
 
     @Override
     public void checkAvailable(int height) {
