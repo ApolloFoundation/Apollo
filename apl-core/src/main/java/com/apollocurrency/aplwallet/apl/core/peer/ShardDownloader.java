@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.math.BigInteger;
 import javax.enterprise.inject.Instance;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.Arrays;
 
 /**
  *
@@ -53,8 +54,8 @@ public class ShardDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final DownloadableFilesManager downloadableFilesManager;
-    Map<Long,List<HasHashSum>> goodPeersMap;
-    Map<Long,List<HasHashSum>> badPeersMap;
+    Map<Long,List<HasHashSum>> goodPeersMap=new HashMap<>();
+    Map<Long,List<HasHashSum>> badPeersMap=new HashMap<>();
 
     private final Instance<FileDownloader> fileDownloaders;
 
@@ -191,7 +192,7 @@ public class ShardDownloader {
         return res;
     }
 
-    private boolean checkShardDownloadedAlready(Long shardId, BigInteger hash) {
+    private boolean checkShardDownloadedAlready(Long shardId, byte[] hash) {
         boolean res = false;
         // check if zip file exists on local node
         String shardFileId = shardNameHelper.getFullShardId(shardId, myChainId);
@@ -201,8 +202,8 @@ public class ShardDownloader {
             log.info("No need to download '{}'  as it is found in path = '{}'", shardFileId, zipInExportedFolder.toString());
             //check integrity
             FileInfo fi = downloadableFilesManager.getFileInfo(shardFileId);
-            BigInteger fileHash = new BigInteger(Convert.parseHexString(fi.hash));
-            if (fileHash.equals(hash)) {
+            byte[] fileHashActual = Convert.parseHexString(fi.hash);
+            if (Arrays.areEqual(fileHashActual,hash)) {
                 res = true;
             } else {
                 log.debug("bad shard file: {}, deleting", zipInExportedFolder.getAbsolutePath());
@@ -223,7 +224,6 @@ public class ShardDownloader {
     public FileDownloadDecision tryDownloadShard(Long shardId) {
         FileDownloadDecision result;
         log.debug("Processing shardId '{}'", shardId);
-        FileDownloader fileDownloader = fileDownloaders.get();
         // chek before downloading
         Set<Peer> thisShardPeers = shardsPeers.get(shardId);
         if (thisShardPeers.size() < 2) { //we cannot use Student's T distribution with 1 sample
@@ -239,12 +239,13 @@ public class ShardDownloader {
         }
         // check if zip file exists on local node
         BigInteger goodHash = goodPeersMap.get(shardId).get(0).getHash();
-        if (checkShardDownloadedAlready(shardId, goodHash)) {
+        if (checkShardDownloadedAlready(shardId, goodHash.toByteArray())) {
             fireShardPresnetEvent(shardId);
             result = FileDownloadDecision.OK;
             return result;
         }
         log.debug("Start preparation to downloading...");
+        FileDownloader fileDownloader = fileDownloaders.get();
         String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
         log.debug("fileID = '{}'", fileID);
         fileDownloader.setFileId(fileID);

@@ -119,7 +119,11 @@ public final class Genesis {
         blockchainConfigUpdater.reset();
         TransactionalDataSource dataSource = lookupDataSource();
         // load 'public Keys' from JSON only
+        if(!dataSource.isInTransaction()){
+            dataSource.begin();
+        }
         JSONArray publicKeys = loadPublicKeys(dataSource);
+        dataSource.commit(false); //TODO: YL, is it right?
         if (loadOnlyPublicKeys) {
             aplAppStatus.durableTaskFinished(genesisTaskId, false, "Loading public keys");
             return;
