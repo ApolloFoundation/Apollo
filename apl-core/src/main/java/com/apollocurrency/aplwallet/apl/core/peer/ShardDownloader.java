@@ -274,6 +274,7 @@ public class ShardDownloader {
         if(doNotShardImport){
             fireNoShardEvent();
             result=FileDownloadDecision.NoPeers;
+            log.warn("prepareAndStartDownload: skiping shard import due to config/command-line option");
             return result;        
         }
         if (sortedShards.isEmpty()) { //???

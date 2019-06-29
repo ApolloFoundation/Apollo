@@ -123,7 +123,7 @@ public final class Genesis {
             dataSource.begin();
         }
         JSONArray publicKeys = loadPublicKeys(dataSource);
-        dataSource.commit(false); //TODO: YL, is it right?
+        dataSource.commit(false); 
         if (loadOnlyPublicKeys) {
             aplAppStatus.durableTaskFinished(genesisTaskId, false, "Loading public keys");
             return;

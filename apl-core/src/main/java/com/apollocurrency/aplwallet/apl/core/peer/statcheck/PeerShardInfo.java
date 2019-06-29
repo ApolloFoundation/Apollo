@@ -62,5 +62,11 @@ public class PeerShardInfo implements HasHashSum {
     public PeerClient getPeerClient() {
         return peerClient;
     }
+
+    @Override
+    public String toString() {
+        String res = "Peer Id:"+getId()+" shardId:"+shardId+" chain:"+chainId.toString();
+        return res;
+    }
     
 }
