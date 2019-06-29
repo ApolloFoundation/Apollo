@@ -327,6 +327,7 @@ public class BlockchainImpl implements Blockchain {
 
     private int getGenesisHeight() {
         Integer lastShardHeight = blockIndexDao.getLastHeight();
+        log.trace("lastShardHeight = {}", lastShardHeight);
         return lastShardHeight != null ? lastShardHeight + 1 : 0;
     }
 

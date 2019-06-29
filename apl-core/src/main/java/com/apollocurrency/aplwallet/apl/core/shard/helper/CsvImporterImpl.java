@@ -21,8 +21,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
@@ -41,14 +44,18 @@ public class CsvImporterImpl implements CsvImporter {
 
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
-    private Set<String> excludeTables; // skipped tables
+    private Set<String> excludeTables; // skipped tables,
+    private  AplAppStatus aplAppStatus;
 
     @Inject
-    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath, DatabaseManager databaseManager) {
+    public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath,
+                           DatabaseManager databaseManager,
+                           AplAppStatus aplAppStatus) {
         Objects.requireNonNull(dataExportPath, "dataExport path is NULL");
         this.dataExportPath = dataExportPath;
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of("genesis_public_key");
+        this.aplAppStatus = aplAppStatus;
     }
 
     /**
@@ -64,6 +71,15 @@ public class CsvImporterImpl implements CsvImporter {
      */
     @Override
     public long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws Exception {
+        return this.importCsv(tableName, batchLimit, cleanTarget, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease) throws Exception {
+
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
         if (!tableName.isEmpty() && excludeTables.contains(tableName.toLowerCase())) {
@@ -181,9 +197,17 @@ public class CsvImporterImpl implements CsvImporter {
 
                 if (batchLimit % importedCount == 0) {
                     con.commit();
+                    // update state only for ACCOUNT table during LONG running import
+                    if (aplAppStatus != null && stateIncrease != null && tableName.equalsIgnoreCase("account")) {
+                        Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
+                        task.ifPresent(durableTaskInfo -> aplAppStatus.durableTaskUpdate(durableTaskInfo.id, "importing " + tableName, 0.01));
+                    }
                 }
             }
             con.commit(); // final commit
+        } catch (Exception e) {
+            log.error("Error during importing " + tableName, e);
+            throw new RuntimeException(e);
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);

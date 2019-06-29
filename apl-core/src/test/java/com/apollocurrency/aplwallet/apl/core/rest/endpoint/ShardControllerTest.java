@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.ShardToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.data.ShardTestData;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,14 +47,12 @@ class ShardControllerTest {
 
         MockHttpRequest request = MockHttpRequest.get("/shards").contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();
-
-
         dispatcher.invoke(request, response);
 
         assertEquals(200, response.getStatus());
 
         String shardJson = response.getContentAsString();
-        List<Shard> shards = mapper.readValue(shardJson, new TypeReference<List<Shard>>(){});
-        assertEquals(ShardTestData.SHARDS, shards);
+        List<ShardDTO> shards = mapper.readValue(shardJson, new TypeReference<List<ShardDTO>>(){});
+        assertEquals(ShardTestData.SHARD_DTO_LIST, shards);
     }
 }
