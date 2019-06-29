@@ -56,7 +56,8 @@ public class GetShardingInfo extends PeerRequestHandler{
         }
         log.debug("allShardInfo = [{}], rq.full? = {}", res.shardingInfo.shards.size(), rq.full) ;
         if( rq.full ){ //add list of known peers
-            for(Peer p: Peers.getAllPeers()){
+//            for(Peer p: Peers.getAllPeers()){ too many peers that we can't connect
+            for(Peer p: Peers.getActivePeers()){
                 String address = p.getAnnouncedAddress();
                 if(StringUtils.isBlank(address)){
                     address=p.getHostWithPort();

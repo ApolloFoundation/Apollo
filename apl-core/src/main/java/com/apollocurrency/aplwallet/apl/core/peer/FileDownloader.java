@@ -154,15 +154,15 @@ public class FileDownloader {
         for (FileChunkInfo fci : downloadInfo.chunks) {
             if (fci.present.ordinal() < FileChunkState.DOWNLOAD_IN_PROGRESS.ordinal()) {
                 res = fci;
-                log.debug("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
+                log.trace("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{} id: {}", fci.present.ordinal(),fileID);
                 break;
             }
-            this.aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading...");
+            this.aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading: "+this.fileID+"...");
         }
         if (res == null) { //NO more empty chunks. File is ready
             if(! finishSignalSent.get()){
               log.debug("getNextEmptyChunk() fileID = {}", fileID);
-               this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
+               this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: "+fileID);
             //FIRE event when shard is PRESENT + ZIP is downloaded
                ShardPresentData shardPresentData = new ShardPresentData(fileID);
                presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
@@ -212,7 +212,7 @@ public class FileDownloader {
         return status;
     }
 
-    public Set<Peer> getAllAvailablePeers() {
+    public static Set<Peer> getAllAvailablePeers() {
         Set<Peer> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
         res.addAll(knownPeers);

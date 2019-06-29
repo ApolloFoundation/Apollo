@@ -53,5 +53,9 @@ public class PeerFileInfo implements HasHashSum {
     public PeerClient getPeerClient() {
         return peerClient;
     }
-    
+      @Override
+    public String toString() {
+        String res = "Peer Id:"+getId()+" fileId:"+fileId;
+        return res;
+    }  
 }

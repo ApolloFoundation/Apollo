@@ -54,8 +54,8 @@ public class GetFileChunk extends PeerRequestHandler {
             log.error("Error reading file with id: " + fcr.fileId, ex);
             res.errorCode = -2;
         }
+        log.trace("FileChunkResponse = {}", res.chunk.info);
         JSONObject response = mapper.convertValue(res, JSONObject.class);
-        log.debug("FileChunkResponse = {}", response);
         return response;
 
     }
