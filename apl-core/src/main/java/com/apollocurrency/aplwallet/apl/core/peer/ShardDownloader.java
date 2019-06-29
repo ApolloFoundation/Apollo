@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.math.BigInteger;
 import javax.enterprise.inject.Instance;
 import lombok.extern.slf4j.Slf4j;
@@ -58,12 +59,14 @@ public class ShardDownloader {
     Map<Long,List<HasHashSum>> badPeersMap=new HashMap<>();
 
     private final Instance<FileDownloader> fileDownloaders;
-
+    private final PropertiesHolder propertiesHolder;
+    
     @Inject
     public ShardDownloader(Instance<FileDownloader> fileDownloaders,
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
-            javax.enterprise.event.Event<ShardPresentData> presentDataEvent) {
+            javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
+            PropertiesHolder propertiesHolder) {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
         this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
@@ -72,6 +75,7 @@ public class ShardDownloader {
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.fileDownloaders=fileDownloaders;
+        this.propertiesHolder=propertiesHolder;
     }
 
     private boolean processPeerShardInfo(Peer p) {
@@ -265,7 +269,13 @@ public class ShardDownloader {
     public FileDownloadDecision prepareAndStartDownload() {
         boolean goodShardFound = false;
         log.debug("prepareAndStartDownload...");
+        boolean doNotShardImport = propertiesHolder.getBooleanProperty("apl.noshardimport", false);
         FileDownloadDecision result = FileDownloadDecision.NotReady;
+        if(doNotShardImport){
+            fireNoShardEvent();
+            result=FileDownloadDecision.NoPeers;
+            return result;        
+        }
         if (sortedShards.isEmpty()) { //???
             getShardInfoFromPeers();
             log.debug("Shards received from Peers '{}'", sortedShards);

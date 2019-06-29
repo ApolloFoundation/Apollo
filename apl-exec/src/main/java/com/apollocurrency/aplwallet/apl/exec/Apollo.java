@@ -219,6 +219,9 @@ public class Apollo {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
+        if(args.noShardImport){
+            props.setProperty("apl.noshardimport", "true");
+        }
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();
