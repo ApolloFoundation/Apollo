@@ -61,7 +61,7 @@ public class ShardObserver {
 
     public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
         CompletableFuture<Boolean> completableFuture = null;
-        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",true);
         if(!doSharding){
             log.warn("Sharding is prohibited by commad line or properties");
             return completableFuture;
@@ -121,7 +121,7 @@ public class ShardObserver {
     }
     
     public boolean performSharding(int minRollbackHeight, long shardId) {
-        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",true);
         if(!doSharding){
             log.warn("Sharding is prohibited by commad line or properties");
             return false;

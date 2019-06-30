@@ -25,6 +25,7 @@ import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,11 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -86,12 +83,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -381,12 +375,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void updateInitialBlockId() {
-        globalSync.updateLock();
-        try {
-            initialBlock = blockchain.getShardInitialBlock().getId();
-        } finally {
-            globalSync.updateUnlock();
-        }
+        initialBlock = blockchain.getShardInitialBlock().getId();
     }
 
     @Override
@@ -462,7 +451,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     blockchain.deleteAll();
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
+                    ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
+                    DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
+                    Path dataExportDir = dirProvider.getDataExportDir();
+                    FileUtils.clearDirectorySilently(dataExportDir);
+                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
+
                     dataSource.commit(false);
+                    blockchainConfigUpdater.rollback(0);
                 }
                 catch (Exception e) {
                     dataSource.rollback(false);

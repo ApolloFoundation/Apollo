@@ -128,30 +128,34 @@ public class ShardDownloadPresenceObserver {
      */
     public void onNoShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.NO_SHARD) ShardPresentData shardPresentData) {
         // start adding old Genesis Data
-        log.info("Genesis block not in database, starting from scratch");
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            log.info("Genesis block not in database, starting from scratch");
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
 //        Connection con = dataSource.begin();
-        try (Connection con = dataSource.begin()) {
-            Block genesisBlock = Genesis.newGenesisBlock();
-            addBlock(dataSource, genesisBlock);
-            long initialBlockId = genesisBlock.getId();
-            log.debug("Generated Genesis block with Id = {}", initialBlockId);
-            Genesis.apply(false);
-            for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-                table.createSearchIndex(con);
+            try (Connection con = dataSource.begin()) {
+                Block genesisBlock = Genesis.newGenesisBlock();
+                addBlock(dataSource, genesisBlock);
+                long initialBlockId = genesisBlock.getId();
+                log.debug("Generated Genesis block with Id = {}", initialBlockId);
+                Genesis.apply(false);
+                for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+                    table.createSearchIndex(con);
+                }
+                blockchain.commit(genesisBlock);
+                dataSource.commit();
+                log.debug("Saved Genesis block = {}", genesisBlock);
+            } catch (SQLException e) {
+                dataSource.rollback();
+                log.info(e.getMessage());
+                throw new RuntimeException(e.toString(), e);
             }
-            blockchain.commit(genesisBlock);
-            dataSource.commit();
-            log.debug("Saved Genesis block = {}", genesisBlock);
-        } catch (SQLException e) {
-            dataSource.rollback();
-            log.info(e.getMessage());
-            throw new RuntimeException(e.toString(), e);
+            // set to start work block download thread (starting from Genesis block here)
+            log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
+            blockchainProcessor.updateInitialBlockId();
+            blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
+        } catch (Exception e) {
+            log.error(e.toString(), e);
         }
-        // set to start work block download thread (starting from Genesis block here)
-        log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
-        blockchainProcessor.updateInitialBlockId();
-        blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
     }
 
     private void addBlock(TransactionalDataSource dataSource, Block block) {
