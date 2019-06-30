@@ -31,7 +31,7 @@
     <logger name="org.eclipse.jetty" level="off" additivity="false"/>
     <logger name="javax.servlet.level" level="off" additivity="false"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
-    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/>
+<!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>
