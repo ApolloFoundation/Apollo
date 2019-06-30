@@ -1509,7 +1509,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (response.get("blockchainHeight") != null) {
                     lastBlockchainFeeder = peer;
-                    lastBlockchainFeederHeight = ((Long) response.get("blockchainHeight")).intValue();
+                    Long bh = Long.parseLong((String)response.get("blockchainHeight"));
+                    lastBlockchainFeederHeight = bh.intValue();
                 }
                 if (betterCumulativeDifficulty.equals(curCumulativeDifficulty)) {
                     return;
