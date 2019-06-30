@@ -253,7 +253,9 @@
       "51.15.228.126",
       "51.15.228.171",
       "51.15.46.25",
-      "51.15.72.23"
+      "51.15.72.23",
+      "51.15.100.44",
+      "51.15.233.93"
     ],
     "name": "Apollo development testnet",
     "description": "Apollo development test chain, running on latest development version",
@@ -265,13 +267,13 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
-        "blockTime": 10,
-        "maxBlockTimeLimit": 12,
-        "minBlockTimeLimit": 8,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
         "maxBalance": 30000000000
       },
       {
-        "height": 10,
+        "height": 1,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
@@ -282,15 +284,11 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 2000
         }
-      },
-{
-        "height": 7000,
-        "maxNumberOfTransactions": 255,
-        "blockTime": 60,
-        "maxBlockTimeLimit": 70,
-        "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000
       }
     ]
   },
