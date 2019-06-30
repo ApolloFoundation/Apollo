@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -21,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
@@ -32,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -52,8 +55,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -94,10 +95,13 @@ class TaggedDataServiceTest {
 
     @Inject
     TaggedDataService taggedDataService;
+    @Inject
+    Blockchain blockchain;
     TaggedTestData tagTd;
     TransactionTestData ttd;
     BlockTestData btd;
-
+    @Inject
+    TaggedDataTimestampDao timestampDao;
     @BeforeEach
     void setUp() throws Exception {
         ttd = new TransactionTestData();
@@ -144,6 +148,7 @@ class TaggedDataServiceTest {
 
     @Test
     void addDataUploadAttach() {
+        blockchain.setLastBlock(btd.LAST_BLOCK);
         DbUtils.inTransaction(extension, (con) -> {
             taggedDataService.add(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT);
         });
@@ -155,6 +160,9 @@ class TaggedDataServiceTest {
             count++;
         }
         assertEquals(5, count);
+        TaggedDataTimestamp dataTimestamp = timestampDao.get(new LongKey(ttd.TRANSACTION_8.getId()));
+        assertNotNull(dataTimestamp);
+        assertEquals(new TaggedDataTimestamp(ttd.TRANSACTION_8.getId(), ttd.TRANSACTION_8.getTimestamp(), btd.LAST_BLOCK.getHeight()), dataTimestamp);
     }
 
     @Test
@@ -174,9 +182,8 @@ class TaggedDataServiceTest {
 
     @Test
     void extend() {
-        DbUtils.inTransaction(extension, (con) -> {
-            taggedDataService.extend(ttd.NOT_SAVED_TRANSACTION, tagTd.NOT_SAVED_TagExtend_ATTACHMENT);
-        });
+        blockchain.setLastBlock(btd.LAST_BLOCK);
+        DbUtils.inTransaction(extension, (con) -> taggedDataService.extend(ttd.NOT_SAVED_TRANSACTION, tagTd.NOT_SAVED_TagExtend_ATTACHMENT));
         DbIterator<TaggedData> result = taggedDataService.getAll(0, 10);
         int count = 0;
         while (result.hasNext()) {
@@ -185,6 +192,10 @@ class TaggedDataServiceTest {
             count++;
         }
         assertEquals(5, count);
+
+        TaggedDataTimestamp dataTimestamp = timestampDao.get(new LongKey(tagTd.NOT_SAVED_TagExtend_ATTACHMENT.getTaggedDataId()));
+        assertNotNull(dataTimestamp);
+        assertEquals(new TaggedDataTimestamp(tagTd.NOT_SAVED_TagExtend_ATTACHMENT.getTaggedDataId(), tagTd.TagDTsmp_1.getTimestamp(), btd.LAST_BLOCK.getHeight()), dataTimestamp);
     }
 
 }

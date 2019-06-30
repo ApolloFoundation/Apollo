@@ -70,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
+import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -102,11 +103,10 @@ import org.json.simple.JSONValue;
 @Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
 
-   private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-   private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-   private DexService dexService;
-   private BlockchainConfigUpdater blockchainConfigUpdater;
-
+    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private DexService dexService;
+    private BlockchainConfigUpdater blockchainConfigUpdater;
 
     private FullTextSearchService fullTextSearchProvider;
 
@@ -118,7 +118,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
 
 
-    private final boolean trimDerivedTables = propertiesHolder.getBooleanProperty("apl.trimDerivedTables");
     private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
     private final boolean simulateEndlessDownload = propertiesHolder.getBooleanProperty("apl.simulateEndlessDownload");
 
@@ -148,7 +147,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isRestoring;
     private volatile boolean alreadyInitialized = false;
     private volatile long initialBlock;
-
 
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
@@ -360,12 +358,25 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public int getMinRollbackHeight() {
-        return trimDerivedTables ? (trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight() : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0)) : 0;
+        return trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight() : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
     }
 
     @Override
     public long getInitialBlock() {
         return initialBlock;
+    }
+
+    @Override
+    public void updateInitialSnapshotBlock() {
+        globalSync.updateLock();
+        try {
+            Block snapshotBlock = blockchain.findLastBlock(); // that block will be latest and first/single ONLY in db
+            log.debug("snapshotBlock imported = {}", snapshotBlock);
+            blockchain.setLastBlock(snapshotBlock);
+            initialBlock = snapshotBlock.getId();
+        } finally {
+            globalSync.updateUnlock();
+        }
     }
 
     @Override
@@ -632,8 +643,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
-        log.warn("NODE IS WAITING FOR 'shard/(no shard) decision' and proceeding with necessary data by ShardPresentEventType....");
-        shardDownloader.prepareAndStartDownload(); // ignore result
+        long timeDelay = 4000L;
+        try {
+            log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
+                    "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
+            // try make delay before Peers are up and running
+            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for Peers initialization
+            // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
+            FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
+            log.debug("NO_SHARD/SHARD_PRESENT decision was = '{}'", downloadDecision);
+        } catch (InterruptedException e) {
+            log.error("main BlockchainProcessorImpl thread was interrupted, EXITING...");
+            System.exit(-1);
+        }
 
 /*
         // PREVIOUS start-up LOGIC
@@ -1025,7 +1047,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 lookupBlockhain().setLastBlock(lastBLock);
 
                 lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
-                log.debug("Deleted blocks starting from height %s", height);
+                log.debug("Deleted blocks starting from height {}", height);
             } finally {
                 scan(0, false);
             }

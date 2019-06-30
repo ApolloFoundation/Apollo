@@ -70,7 +70,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                 dataTagDao.add(taggedData);
             }
         }
-        TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp());
+        TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp(), blockchain.getHeight());
         taggedDataTimestampDao.insert(timestamp);
     }
 
@@ -113,11 +113,10 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         taggedData.setDbKey(taggedDataDao.newKey(transaction.getId()));
         taggedDataDao.insert(taggedData);
         dataTagDao.add(taggedData, height);
-        int timestamp = transaction.getTimestamp();// TODO: YL review
-//        for (long extendTransactionId : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
+        int timestamp = transaction.getTimestamp();
         for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
             Transaction extendTransaction = blockchain.getTransaction(taggedDataForTransaction.getExtendId());
-            // TODO: NPE is possible here if 'extendTransaction' not found
+            // NPE is possible here if 'extendTransaction' not found
             if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
             } else {
@@ -125,8 +124,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             }
             taggedData.setTransactionTimestamp(timestamp);
             taggedData.setBlockTimestamp(extendTransaction.getBlockTimestamp());
-//            taggedData.setHeight(extendTransaction.getHeight());
-            taggedData.setHeight(blockchain.getHeight()); // TODO: YL review
+            taggedData.setHeight(extendTransaction.getHeight());
             taggedDataDao.insert(taggedData);
         }
     }

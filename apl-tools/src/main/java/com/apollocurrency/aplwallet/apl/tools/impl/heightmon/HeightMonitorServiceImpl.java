@@ -259,11 +259,12 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         ContentResponse response;
         try {
             response = request.send();
-            JsonNode jsonNode  = objectMapper.readTree(response.getContentAsString());
+            JsonNode jsonNode = objectMapper.readTree(response.getContentAsString());
             height = jsonNode.get("height").asInt();
-        }
-        catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+        } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
             log.error("Unable to get or parse response from {} - {}", peerUrl, e.toString());
+        } catch (Exception e) {
+            log.error("Unknown exception:", e);
         }
         return height;
     }

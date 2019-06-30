@@ -13,28 +13,63 @@ import com.apollocurrency.aplwallet.apl.core.config.Property;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Singleton
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
-
     private TrimService trimService;
-    private volatile boolean isTrimming;
-    private boolean trimDerivedTables;
+    private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
+    private Event<Integer> trimEvent;
+    private final Object lock = new Object();
+    private List<Integer> trimHeights = new ArrayList<>();
+
+    public void scheduleTrim(int height) {
+        synchronized (lock) {
+            trimHeights.add(height);
+            trimHeights = trimHeights.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+        }
+    }
+
+    private boolean processTrimEvent() {
+        if (trimDerivedTables) {
+            synchronized (lock) {
+                if (trimDerivedTables) {
+                    if (!trimHeights.isEmpty()) {
+                        Integer height = trimHeights.remove(0);
+                        log.debug("Perform trim on height " + height);
+                        trimService.trimDerivedTables(height);
+                        trimEvent.fire(trimService.getLastTrimHeight());
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     @Inject
     public TrimObserver(TrimService trimService,
-                        @Property("apl.trimDerivedTables") boolean trimDerivedTables,
-                        @Property("apl.trimFrequency") int trimFrequency) {
+                        @Property("apl.trimFrequency") int trimFrequency,
+                        Event<Integer> trimEvent) {
         this.trimService = trimService;
-        this.trimDerivedTables = trimDerivedTables;
         this.trimFrequency = trimFrequency;
+        this.trimEvent = trimEvent;
     }
+
 
     public void onTrimConfigUpdated(@Observes @TrimConfigUpdated Boolean trimDerivedTables) {
         this.trimDerivedTables = trimDerivedTables;
@@ -51,10 +86,10 @@ public class TrimObserver {
 
     // async
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
-        if (trimDerivedTables && block.getHeight() % trimFrequency == 0 && !isTrimming) {
-            isTrimming = true;
-            trimService.trimDerivedTables(block.getHeight());
-            isTrimming = false;
+        if (block.getHeight() % trimFrequency == 0) {
+
+            scheduleTrim(block.getHeight());
         }
+        processTrimEvent();
     }
 }

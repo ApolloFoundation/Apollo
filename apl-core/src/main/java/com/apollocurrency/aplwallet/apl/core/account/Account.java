@@ -96,6 +96,12 @@ public final class Account {
     private static PublicKeyTable publicKeyTable;
     private static GenesisPublicKeyTable genesisPublicKeyTable;
     private static AccountTable accountTable;
+    private static AccountInfoTable accountInfoTable;
+    private static AccountAssetTable accountAssetTable;
+    private static AccountCurrencyTable accountCurrencyTable;
+    private static AccountLeaseTable accountLeaseTable;
+    private static AccountGuaranteedBalanceTable guaranteedBalanceTable;
+    private static AccountPropertyTable accountPropertyTable;
 
     private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
            
@@ -122,7 +128,8 @@ public final class Account {
                             Blockchain blockchainParam,
                             GlobalSync globalSync,
                             PublicKeyTable pkTable,
-                            AccountTable accTable
+                            AccountTable accTable,
+                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -131,7 +138,12 @@ public final class Account {
         publicKeyTable = pkTable;
         sync = globalSync;
         accountTable = accTable;
-        CDI.current().select(AccountGuaranteedBalanceTable.class).get();
+        guaranteedBalanceTable = accountGuaranteedBalanceTable;
+        accountAssetTable = AccountAssetTable.getInstance();
+        accountInfoTable = AccountInfoTable.getInstance();
+        accountCurrencyTable = AccountCurrencyTable.getInstance();
+        accountLeaseTable = AccountLeaseTable.getInstance();
+        accountPropertyTable = AccountPropertyTable.getInstance();
         genesisPublicKeyTable = GenesisPublicKeyTable.getInstance();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
@@ -170,7 +182,7 @@ public final class Account {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
-            try (DbIterator<AccountLease> leases = AccountLeaseTable.getInstance().getLeaseChangingAccounts(height)) {
+            try (DbIterator<AccountLease> leases =accountLeaseTable.getLeaseChangingAccounts(height)) {
                 while (leases.hasNext()) {
                     changingLeases.add(leases.next());
                 }
@@ -187,7 +199,7 @@ public final class Account {
                         lease.currentLeasingHeightFrom = 0;
                         lease.currentLeasingHeightTo = 0;
                         lease.currentLesseeId = 0;
-                        AccountLeaseTable.getInstance().delete(lease);
+                       accountLeaseTable.delete(lease);
                     } else {
                         lease.currentLeasingHeightFrom = lease.nextLeasingHeightFrom;
                         lease.currentLeasingHeightTo = lease.nextLeasingHeightTo;
@@ -195,7 +207,7 @@ public final class Account {
                         lease.nextLeasingHeightFrom = 0;
                         lease.nextLeasingHeightTo = 0;
                         lease.nextLesseeId = 0;
-                        AccountLeaseTable.getInstance().insert(lease);
+                       accountLeaseTable.insert(lease);
                         if (height == lease.currentLeasingHeightFrom) {
                             lessor.activeLesseeId = lease.currentLesseeId;
                             leaseListeners.notify(lease, Event.LEASE_STARTED);
@@ -481,7 +493,7 @@ public final class Account {
     }
 
     public AccountInfo getAccountInfo() {
-        return AccountInfoTable.getInstance().get(AccountTable.newKey(this));
+        return accountInfoTable.get(AccountTable.newKey(this));
     }
 
     public void setAccountInfo(String name, String description) {
@@ -498,7 +510,7 @@ public final class Account {
     }
 
     public AccountLease getAccountLease() {
-        return AccountLeaseTable.getInstance().get(AccountTable.newKey(this));
+        return accountLeaseTable.get(AccountTable.newKey(this));
     }
 
     public EncryptedData encryptTo(byte[] data, byte[] keySeed, boolean compress) {
@@ -653,11 +665,11 @@ public final class Account {
     }
 
     public DbIterator<AccountAsset> getAssets(int from, int to) {
-        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), from, to);
     }
 
     public DbIterator<AccountAsset> getAssets(int height, int from, int to) {
-        return AccountAssetTable.getInstance().getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
+        return accountAssetTable.getManyBy(new DbClause.LongClause("account_id", this.id), height, from, to);
     }
 
     public DbIterator<Trade> getTrades(int from, int to) {
@@ -677,11 +689,11 @@ public final class Account {
     }
 
     public AccountAsset getAsset(long assetId) {
-        return AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        return accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
     }
 
     public AccountAsset getAsset(long assetId, int height) {
-        return AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId), height);
+        return accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId), height);
     }
 
     public long getAssetBalanceATU(long assetId) {
@@ -730,7 +742,7 @@ public final class Account {
 
     public void leaseEffectiveBalance(long lesseeId, int period) {
         int height = blockchain.getHeight();
-        AccountLease accountLease = AccountLeaseTable.getInstance().get(AccountTable.newKey(this));
+        AccountLease accountLease =accountLeaseTable.get(AccountTable.newKey(this));
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
@@ -749,7 +761,7 @@ public final class Account {
             accountLease.nextLeasingHeightTo = accountLease.nextLeasingHeightFrom + period;
             accountLease.nextLesseeId = lesseeId;
         }
-        AccountLeaseTable.getInstance().insert(accountLease);
+       accountLeaseTable.insert(accountLease);
         leaseListeners.notify(accountLease, Event.LEASE_SCHEDULED);
     }
 
@@ -781,20 +793,20 @@ public final class Account {
         } else {
             accountProperty.value = value;
         }
-        AccountPropertyTable.getInstance().insert(accountProperty);
+        accountPropertyTable.insert(accountProperty);
         listeners.notify(this, Event.SET_PROPERTY);
         propertyListeners.notify(accountProperty, Event.SET_PROPERTY);
     }
 
    public  void deleteProperty(long propertyId) {
-        AccountProperty accountProperty = AccountPropertyTable.getInstance().get(AccountPropertyTable.newKey(propertyId));
+        AccountProperty accountProperty = accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
         if (accountProperty == null) {
             return;
         }
         if (accountProperty.getSetterId() != this.id && accountProperty.getRecipientId() != this.id) {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(this.id));
         }
-        AccountPropertyTable.getInstance().delete(accountProperty);
+        accountPropertyTable.delete(accountProperty);
         listeners.notify(this, Event.DELETE_PROPERTY);
         propertyListeners.notify(accountProperty, Event.DELETE_PROPERTY);
     }
@@ -834,7 +846,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
@@ -842,7 +854,7 @@ public final class Account {
         } else {
             accountAsset.quantityATU = assetBalance;
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
         if (AccountLedger.mustLogEntry(this.id, false)) {
@@ -856,7 +868,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
@@ -864,7 +876,7 @@ public final class Account {
         } else {
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.UNCONFIRMED_ASSET_BALANCE);
         if (event == null) {
@@ -882,7 +894,7 @@ public final class Account {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(this.id, assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(this.id, assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
         assetBalance = Math.addExact(assetBalance, quantityATU);
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
@@ -893,7 +905,7 @@ public final class Account {
             accountAsset.quantityATU = assetBalance;
             accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         listeners.notify(this, Event.ASSET_BALANCE);
         listeners.notify(this, Event.UNCONFIRMED_ASSET_BALANCE);
         assetListeners.notify(accountAsset, Event.ASSET_BALANCE);
@@ -915,7 +927,7 @@ public final class Account {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
         currencyUnits = Math.addExact(currencyUnits, units);
         if (accountCurrency == null) {
@@ -936,7 +948,7 @@ public final class Account {
         if (units == 0) {
             return;
         }
-        AccountCurrency accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {
@@ -959,7 +971,7 @@ public final class Account {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(this.id, currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(this.id, currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
         currencyUnits = Math.addExact(currencyUnits, units);
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
@@ -989,11 +1001,15 @@ public final class Account {
 
    public  void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToBalanceATM(event, eventId, amountATM, 0);
+       LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + balanceATM, blockchain.getHeight());
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
+        }
+        if (feeATM != 0) {
+            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height- {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + balanceATM, blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         this.balanceATM = Math.addExact(this.balanceATM, totalAmountATM);
@@ -1006,11 +1022,15 @@ public final class Account {
 
     public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToUnconfirmedBalanceATM(event, eventId, amountATM, 0);
+        LOG.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
     }
 
     public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
+        }
+        if (feeATM != 0) {
+            LOG.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         this.unconfirmedBalanceATM = Math.addExact(this.unconfirmedBalanceATM, totalAmountATM);
@@ -1038,6 +1058,7 @@ public final class Account {
 
     public void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
         addToBalanceAndUnconfirmedBalanceATM(event, eventId, amountATM, 0);
+        LOG.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + balanceATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
     }
 
     public void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {

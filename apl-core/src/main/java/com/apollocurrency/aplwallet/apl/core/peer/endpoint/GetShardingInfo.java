@@ -41,7 +41,7 @@ public class GetShardingInfo extends PeerRequestHandler{
         ShardingInfoRequest rq  = mapper.convertValue(request, ShardingInfoRequest.class);
         log.debug("ShardingInfoRequest = {}", rq);
 
-        List<Shard> allShards = shardDao.getAllShard();
+        List<Shard> allShards = shardDao.getAllCompletedShards();
         log.debug("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
         for (Shard shard: allShards) {
             // create shardInfo from Shard record
@@ -50,13 +50,14 @@ public class GetShardingInfo extends PeerRequestHandler{
                     blockchainConfig.getChain().getChainId().toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
                     Convert.toHexString(shard.getZipHashCrc()),
-                    shard.getShardHeight().longValue()
+                    shard.getShardHeight().longValue(),""
             );
             res.shardingInfo.shards.add(shardInfo);
         }
         log.debug("allShardInfo = [{}], rq.full? = {}", res.shardingInfo.shards.size(), rq.full) ;
         if( rq.full ){ //add list of known peers
-            for(Peer p: Peers.getAllPeers()){
+//            for(Peer p: Peers.getAllPeers()){ too many peers that we can't connect
+            for(Peer p: Peers.getActivePeers()){
                 String address = p.getAnnouncedAddress();
                 if(StringUtils.isBlank(address)){
                     address=p.getHostWithPort();

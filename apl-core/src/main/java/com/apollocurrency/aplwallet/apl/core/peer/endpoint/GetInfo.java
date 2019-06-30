@@ -66,29 +66,29 @@ public final class GetInfo extends PeerRequestHandler {
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
-        log.debug("GetInfo - PeerInfo = {}", pi);
+        log.trace("GetInfo - PeerInfo from request = {}", pi);
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
-        String servicesString = pi.services;
+        String servicesString = pi.getServices();
         String announcedAddress = null;
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
-        peerImpl.analyzeHallmark(pi.hallmark);
+        peerImpl.analyzeHallmark(pi.getHallmark());
         if (!Peers.ignorePeerAnnouncedAddress) {
-           announcedAddress = Convert.emptyToNull(pi.announcedAddress);
+           announcedAddress = Convert.emptyToNull(pi.getAnnouncedAddress());
             if (announcedAddress != null) {
                 announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
                     if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
-                        log.debug("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
+                        log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
-                            log.debug("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
+                            log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             Peers.setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate();
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
-                        log.debug("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
+                        log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
                         if (peerImpl.getPort() != oldPort) {
@@ -101,39 +101,41 @@ public final class GetInfo extends PeerRequestHandler {
                 }
             }
         }
-        if (pi.application == null) {
-            pi.application = "?";
+        if (pi.getApplication() == null) {
+            log.warn("Setting application = '?' instead of AppValue...");
+            pi.setApplication("?");
         }
 
-        if(!peerImpl.setApplication(pi.application.trim())){
-//            log.debug("Invalid application. IP: {}, application: {}, removing", peerImpl.getHost(), pi.application);
-            log.debug("Peer = {} Received Invalid App in PI = \n{}", peerImpl, pi);
+        if(!peerImpl.setApplication(pi.getApplication().trim())){
+            log.debug("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHost(), pi.getApplication());
+//            log.debug("Peer = {} Received Invalid App in PI = \n{}", peerImpl, pi);
             peerImpl.remove();
         }
 
         Version version = null;
         try {
-            version = new Version(pi.version);
+            version = new Version(pi.getVersion());
         }
         catch (Exception e) {
-            log.error("Cannot parse version.", e);
+            log.error("Cannot parse version = '{}'", pi.getVersion(), e);
             version = new Version(1, 0, 0);
         }
-        log.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.application, version);
+        log.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.getApplication(), version);
         peerImpl.setVersion(version);
 
-        if (pi.platform == null) {
-            pi.platform = "?";
+        if (pi.getPlatform() == null) {
+            log.warn("Setting Platform = '?' instead of Platform Value...");
+            pi.setPlatform("?");
         }
-        peerImpl.setPlatform(pi.platform.trim());
+        peerImpl.setPlatform(pi.getPlatform().trim());
 
-        peerImpl.setShareAddress(pi.shareAddress);
+        peerImpl.setShareAddress(pi.getShareAddress());
 
-        peerImpl.setApiPort(pi.apiPort);
-        peerImpl.setApiSSLPort(pi.apiSSLPort);
-        peerImpl.setDisabledAPIs(pi.disabledAPIs);
-        peerImpl.setApiServerIdleTimeout(pi.apiServerIdleTimeout);
-        peerImpl.setBlockchainState(pi.blockchainState);
+        peerImpl.setApiPort(pi.getApiPort());
+        peerImpl.setApiSSLPort(pi.getApiSSLPort());
+        peerImpl.setDisabledAPIs(pi.getDisabledAPIs());
+        peerImpl.setApiServerIdleTimeout(pi.getApiServerIdleTimeout());
+        peerImpl.setBlockchainState(pi.getBlockchainState());
 
         if (peerImpl.getServices() != origServices) {
             Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);

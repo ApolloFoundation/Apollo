@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.net.Inet6Address;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -235,6 +236,7 @@ public class PeerHttpServer {
                  ||a.isSiteLocalAddress()
                  ||a.isLoopbackAddress()
                  ||a.isMulticastAddress()
+                 ||a instanceof Inet6Address  // it is not completely right, but some nodes have wrong IPv6 settings   
               ))
             {
                res=a.getHostAddress();

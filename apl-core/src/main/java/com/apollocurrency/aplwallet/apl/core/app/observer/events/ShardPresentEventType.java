@@ -9,5 +9,5 @@ package com.apollocurrency.aplwallet.apl.core.app.observer.events;
  */
 public enum ShardPresentEventType {
     NO_SHARD, // it's definitely NO shards present in network
-    PRESENT // network contains some nodes with shard, so shard is present actually
+    SHARD_PRESENT // network contains some nodes with shard, so shard is present actually
 }

@@ -32,8 +32,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
@@ -92,7 +94,15 @@ public final class Genesis {
     private static JSONObject genesisAccountsJSON = null;
 
     private static byte[] loadGenesisAccountsJSON() {
-        genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances",true);
+        if (genesisTaskId == null) {
+            Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
+            if (task.isPresent()) {
+                genesisTaskId  = task.get().getId();
+            } else {
+                genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances",true);
+            }
+        }
+
         MessageDigest digest = Crypto.sha256();
         String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
@@ -119,9 +129,13 @@ public final class Genesis {
         blockchainConfigUpdater.reset();
         TransactionalDataSource dataSource = lookupDataSource();
         // load 'public Keys' from JSON only
+        if(!dataSource.isInTransaction()){
+            dataSource.begin();
+        }
         JSONArray publicKeys = loadPublicKeys(dataSource);
+        dataSource.commit(false); 
         if (loadOnlyPublicKeys) {
-            aplAppStatus.durableTaskFinished(genesisTaskId, false, "Loading public keys");
+            LOG.debug("The rest of GENESIS is skipped, shard info will be loaded...");
             return;
         }
         // load 'balances' from JSON only
@@ -137,6 +151,7 @@ public final class Genesis {
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
+        genesisTaskId = null;
     }
 
     private static long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {

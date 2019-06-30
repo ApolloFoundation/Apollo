@@ -12,7 +12,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -62,9 +69,10 @@ public class TrimService {
     }
 
     public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight) {
-        lastTrimHeight = Math.max(blockchainHeight - maxRollback, 0);
-        if (lastTrimHeight > 0) {
-            doTrimDerivedTablesOnHeight(lastTrimHeight);
+        int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
+        if (trimHeight > 0) {
+            doTrimDerivedTablesOnHeight(trimHeight);
+            lastTrimHeight = trimHeight;
         }
     }
 
