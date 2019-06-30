@@ -142,7 +142,7 @@ public class CsvImporterImpl implements CsvImporter {
             log.debug("SQL = {}", sqlInsert.toString()); // composed insert
             // precompile insert SQL
             preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
-            int rsCounter=0;
+            int rsCounter=1; //start from 1 for "a%b==0" operations
             // loop over CSV data reading line by line, column by column
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
@@ -195,7 +195,7 @@ public class CsvImporterImpl implements CsvImporter {
                 log.trace("sql = {}", sqlInsert.toString());
                 importedCount += preparedInsertStatement.executeUpdate();
 
-                if (batchLimit % rsCounter == 0) {
+                if (rsCounter % batchLimit == 0) {
                     con.commit();
                     // update state only for ACCOUNT table during LONG running import
                     if (aplAppStatus != null && stateIncrease != null && tableName.equalsIgnoreCase("account")) {
