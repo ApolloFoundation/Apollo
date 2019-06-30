@@ -1509,7 +1509,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (response.get("blockchainHeight") != null) {
                     lastBlockchainFeeder = peer;
-                    lastBlockchainFeederHeight = ((Long) response.get("blockchainHeight")).intValue();
+                    //we can get sometimes string and sometimes long from different peers, and yes it's strange
+                    Long bhl =0L;
+                    Object bh = response.get("blockchainHeight");
+                    if(bh instanceof String){
+                       bhl = Long.parseLong((String)bh);
+                    }else{
+                       bhl = (Long)bh;
+                    }
+                    lastBlockchainFeederHeight = bhl.intValue();
                 }
                 if (betterCumulativeDifficulty.equals(curCumulativeDifficulty)) {
                     return;
