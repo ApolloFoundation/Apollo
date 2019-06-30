@@ -4,14 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -26,7 +22,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
-import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,14 +30,15 @@ import javax.inject.Singleton;
 public class ShardObserver {
     private static final Logger log = LoggerFactory.getLogger(ShardObserver.class);
 
-    private BlockchainProcessor blockchainProcessor;
-    private BlockchainConfig blockchainConfig;
-    private ShardMigrationExecutor shardMigrationExecutor;
-    private ShardRecoveryDao shardRecoveryDao;
-    private ShardDao shardDao;
-    private Event<Boolean> trimEvent;
+    private final BlockchainProcessor blockchainProcessor;
+    private final BlockchainConfig blockchainConfig;
+    private final ShardMigrationExecutor shardMigrationExecutor;
+    private final ShardRecoveryDao shardRecoveryDao;
+    private final ShardDao shardDao;
+    private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
     private final PropertiesHolder propertiesHolder;
+    public final static long LOWER_SHARDING_MEMORY_LIMIT=3072*1024*1024; //3GB
     
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
@@ -70,6 +66,11 @@ public class ShardObserver {
             log.warn("Sharding is prohibited by commad line or properties");
             return completableFuture;
         }
+        if(!isEnoughMemory()){
+            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
+            return completableFuture;            
+        }
+        
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
 
         if (currentConfig.isShardingEnabled()) {
@@ -114,13 +115,21 @@ public class ShardObserver {
     private void updateTrimConfig(boolean enableTrim) {
          trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
-
+    private boolean isEnoughMemory(){
+        long memoryTotal = Runtime.getRuntime().totalMemory();
+        return (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+    }
+    
     public boolean performSharding(int minRollbackHeight, long shardId) {
         boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){
             log.warn("Sharding is prohibited by commad line or properties");
             return false;
-        }        
+        } 
+        if(!isEnoughMemory()){
+            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
+            return false;            
+        }
         boolean result = false;
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();
