@@ -222,6 +222,9 @@ public class Apollo {
         if(args.noShardImport){
             props.setProperty("apl.noshardimport", "true");
         }
+        if(args.noShardCreate){
+            props.setProperty("apl.noshardcreate", "true");
+        }        
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();

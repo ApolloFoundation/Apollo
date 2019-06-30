@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +42,13 @@ public class ShardObserver {
     private ShardDao shardDao;
     private Event<Boolean> trimEvent;
     private volatile boolean isSharding;
-
+    private final PropertiesHolder propertiesHolder;
+    
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
                          ShardMigrationExecutor shardMigrationExecutor,
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
+                         PropertiesHolder propertiesHolder,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -53,6 +56,7 @@ public class ShardObserver {
         this.shardRecoveryDao = Objects.requireNonNull(recoveryDao, "shard recovery dao cannot be null");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
     }
 
     public void onTrimDone(@Observes Integer height) {
@@ -60,8 +64,14 @@ public class ShardObserver {
     }
 
     public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
-        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         CompletableFuture<Boolean> completableFuture = null;
+        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        if(!doSharding){
+            log.warn("Sharding is prohibited by commad line or properties");
+            return completableFuture;
+        }
+        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+
         if (currentConfig.isShardingEnabled()) {
             log.debug("LastTrimHeight-{}, isSharding={}", lastTrimBlockHeight, isSharding);
             if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
@@ -106,6 +116,11 @@ public class ShardObserver {
     }
 
     public boolean performSharding(int minRollbackHeight, long shardId) {
+        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        if(!doSharding){
+            log.warn("Sharding is prohibited by commad line or properties");
+            return false;
+        }        
         boolean result = false;
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();

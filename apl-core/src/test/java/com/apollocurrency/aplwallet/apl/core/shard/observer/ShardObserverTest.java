@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,6 +59,9 @@ public class ShardObserverTest {
     ShardDao shardDao;
     @Mock
     ShardRecoveryDao recoveryDao;
+    @Mock
+    PropertiesHolder propertiesHolder;
+    
     private ShardObserver shardObserver;
     private Event firedEvent;
 
@@ -70,7 +74,7 @@ public class ShardObserverTest {
         firedEvent = mock(Event.class);
         shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
-                shardDao, recoveryDao, firedEvent);
+                shardDao, recoveryDao, propertiesHolder, firedEvent);
     }
 
     @Test
