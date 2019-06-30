@@ -34,6 +34,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,8 +60,12 @@ public class ShardObserverTest {
     ShardDao shardDao;
     @Mock
     ShardRecoveryDao recoveryDao;
-    @Mock
-    PropertiesHolder propertiesHolder;
+    PropertiesHolder propertiesHolder = new PropertiesHolder();
+    {
+        Properties properties = new Properties();
+        properties.put("apl.noshardcreate", "true");
+        propertiesHolder.init(properties);
+    }
     
     private ShardObserver shardObserver;
     private Event firedEvent;
@@ -68,10 +73,12 @@ public class ShardObserverTest {
     @BeforeEach
     void setUp() {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+//        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
     }
 
     private void prepare() {
         firedEvent = mock(Event.class);
+
         shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
                 shardDao, recoveryDao, propertiesHolder, firedEvent);

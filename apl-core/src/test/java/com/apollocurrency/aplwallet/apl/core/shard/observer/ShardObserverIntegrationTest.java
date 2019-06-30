@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -42,6 +41,7 @@ public class ShardObserverIntegrationTest {
     {
         Properties properties = new Properties();
         properties.put("apl.trimDerivedTables", "true");
+        properties.put("apl.noshardcreate", "true");
         holder.init(properties);
     }
 
@@ -62,11 +62,13 @@ public class ShardObserverIntegrationTest {
     @Test
     void testDoShardByEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
         trimEvent.fire(100);
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
 
     }
+
     private AnnotationLiteral literal(BlockEventType blockEvent) {
         return new BlockEventBinding() {
             @Override
