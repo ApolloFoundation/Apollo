@@ -117,7 +117,12 @@ public class ShardObserver {
     }
     private boolean isEnoughMemory(){
         long memoryTotal = Runtime.getRuntime().totalMemory();
-        return (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+        boolean res = (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+        if(!res){
+            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
+            log.debug("Required memory: {}, Available: {} ",LOWER_SHARDING_MEMORY_LIMIT,memoryTotal);
+        }
+        return res;
     }
     
     public boolean performSharding(int minRollbackHeight, long shardId) {
@@ -127,7 +132,6 @@ public class ShardObserver {
             return false;
         } 
         if(!isEnoughMemory()){
-            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
             return false;            
         }
         boolean result = false;

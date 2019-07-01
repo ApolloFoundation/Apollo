@@ -268,6 +268,11 @@ public final class AplCore {
                 ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
                         () -> {
                           LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
+                          LOG.debug("Memory Info. Total:{} Free: {} Max: {}",
+                                  Runtime.getRuntime().totalMemory(),
+                                  Runtime.getRuntime().freeMemory(),
+                                  Runtime.getRuntime().maxMemory()
+                          );
                           aplAppStatus.clearFinished(10*60L); //10 min
                         },
                    20,
