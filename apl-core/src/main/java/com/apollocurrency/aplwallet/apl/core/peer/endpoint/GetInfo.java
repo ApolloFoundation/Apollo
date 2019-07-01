@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -40,7 +39,6 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Vetoed
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();

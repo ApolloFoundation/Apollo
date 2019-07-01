@@ -27,9 +27,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
-@Vetoed
 public final class GetNextBlockIds extends PeerRequestHandler {
 
     public GetNextBlockIds() {}
