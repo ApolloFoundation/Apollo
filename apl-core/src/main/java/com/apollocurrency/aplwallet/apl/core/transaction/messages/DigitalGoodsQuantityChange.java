@@ -36,18 +36,18 @@ public final class DigitalGoodsQuantityChange extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 4;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(goodsId);
         buffer.putInt(deltaQuantity);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("goods", Long.toUnsignedString(goodsId));
         attachment.put("deltaQuantity", deltaQuantity);
     }

@@ -4,6 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Properties;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
@@ -20,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -42,14 +51,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Properties;
-import javax.inject.Inject;
-
 @EnableWeld
 public class DbMigrationExecutorTest {
 
@@ -71,7 +72,8 @@ public class DbMigrationExecutorTest {
             BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
             FullTextConfigImpl.class, EpochTime.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
+            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+            .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchService.class))
             .build();
@@ -98,7 +100,7 @@ public class DbMigrationExecutorTest {
     void setUp() throws IOException {
         this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(
             "migrationDb-1");
-        manipulator = new DbManipulator(pathToDbForMigration);
+        manipulator = new DbManipulator(DbTestData.getDbFileProperties(pathToDbForMigration.toAbsolutePath().toString()));
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();
@@ -160,7 +162,7 @@ public class DbMigrationExecutorTest {
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor.getHeight(targetDbPath.toAbsolutePath().toString());
         BlockTestData btd = new BlockTestData();
-        Assertions.assertEquals(btd.BLOCK_11.getHeight(), migratedHeight);
+        Assertions.assertEquals(btd.LAST_BLOCK.getHeight(), migratedHeight);
 
     }
 }

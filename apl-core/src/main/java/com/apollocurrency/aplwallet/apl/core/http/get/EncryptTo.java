@@ -26,7 +26,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_M
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -49,7 +48,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long senderAccountId = ParameterParser.getAccountId(req, "account", false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", true);
-        byte[] recipientPublicKey = Account.getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountService().getPublicKey(recipientId);
         if (recipientPublicKey == null) {
             return INCORRECT_RECIPIENT;
         }
@@ -66,7 +65,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
         byte[] keySeed = ParameterParser.getKeySeed(req, senderAccountId, true);
-        EncryptedData encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+        EncryptedData encryptedData = lookupAccountPublickKeyService().encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 
     }

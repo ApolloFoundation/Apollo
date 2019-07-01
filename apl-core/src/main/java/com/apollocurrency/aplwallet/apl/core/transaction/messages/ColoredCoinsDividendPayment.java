@@ -40,19 +40,19 @@ public final class ColoredCoinsDividendPayment extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 4 + 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(assetId);
         buffer.putInt(height);
         buffer.putLong(amountATMPerATU);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("asset", Long.toUnsignedString(assetId));
         attachment.put("height", height);
         attachment.put("amountATMPerATU", amountATMPerATU);

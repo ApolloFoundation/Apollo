@@ -6,6 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,10 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
-import org.slf4j.Logger;
 
 /**
  * Common fields and methods used by inherited classes.
@@ -48,6 +48,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     String sqlToExecuteWithPaging;
     String sqlSelectUpperBound;
     String sqlSelectBottomBound;
+    String sqlDeleteFromBottomBound;
+
     Long upperBoundIdValue;
     Long lowerBoundIdValue;
     ShardRecovery recoveryValue; // updated on every loop
@@ -83,11 +85,6 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Objects.requireNonNull(sourceConnect, "sourceConnect is NULL");
         Objects.requireNonNull(operationParams.tableName, "tableName is NULL");
         Objects.requireNonNull(operationParams.snapshotBlockHeight, "snapshotBlockHeight is NULL");
-        if (!operationParams.shardId.isPresent()) {
-            String error = "Error, Optional shardId is not present";
-            log.error(error);
-            throw new IllegalArgumentException(error);
-        }
         currentTableName = operationParams.tableName;
     }
 
@@ -114,7 +111,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Objects.requireNonNull(snapshotBlockHeight, "snapshot Block Height is NULL");
         Objects.requireNonNull(selectValueSql, "selectValueSql is NULL");
         // select DB_ID for target HEIGHT
-        Long highDbIdValue = null;
+        Long highDbIdValue = 0L;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectValueSql)) {
             selectStatement.setInt(1, snapshotBlockHeight);
             ResultSet rs = selectStatement.executeQuery();

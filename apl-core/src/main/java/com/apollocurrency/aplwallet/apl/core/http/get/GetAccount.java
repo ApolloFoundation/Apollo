@@ -20,23 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.model.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
-import com.apollocurrency.aplwallet.apl.core.rest.service.BalanceService;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
@@ -48,7 +49,11 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
     }
 
-    private BalanceService balanceService = CDI.current().select(BalanceService.class).get();
+    private AccountBalanceService accountBalanceService = CDI.current().select(AccountBalanceService.class).get();
+    private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+    private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+    private AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+    private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -59,21 +64,21 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
-        Balances balances = balanceService.getAccountBalances(account, includeEffectiveBalance);
+        Balances balances = accountBalanceService.getAccountBalances(account, includeEffectiveBalance);
 
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
         response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
-        byte[] publicKey = Account.getPublicKey(account.getId());
+        byte[] publicKey = lookupAccountService().getPublicKey(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }
-        AccountInfo accountInfo = account.getAccountInfo();
+        AccountInfo accountInfo = accountInfoService.getAccountInfo(account);
         if (accountInfo != null) {
             response.put("name", Convert.nullToEmpty(accountInfo.getName()));
             response.put("description", Convert.nullToEmpty(accountInfo.getDescription()));
         }
-        AccountLease accountLease = account.getAccountLease();
+        AccountLease accountLease = accountLeaseService.getAccountLease(account);
         if (accountLease != null) {
             JSONData.putAccount(response, "currentLessee", accountLease.getCurrentLesseeId());
             response.put("currentLeasingHeightFrom", accountLease.getCurrentLeasingHeightFrom());
@@ -92,7 +97,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeLessors) {
-            try (DbIterator<Account> lessors = account.getLessors()) {
+            try (DbIterator<Account> lessors = lookupAccountService().getLessorsIterator(account)) {
                 if (lessors.hasNext()) {
                     JSONArray lessorIds = new JSONArray();
                     JSONArray lessorIdsRS = new JSONArray();
@@ -111,7 +116,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeAssets) {
-            try (DbIterator<AccountAsset> accountAssets = account.getAssets(0, -1)) {
+            try (DbIterator<AccountAsset> accountAssets = accountAssetService.getAssets(account, 0, -1)) {
                 JSONArray assetBalances = new JSONArray();
                 JSONArray unconfirmedAssetBalances = new JSONArray();
                 while (accountAssets.hasNext()) {
@@ -135,7 +140,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeCurrencies) {
-            try (DbIterator<AccountCurrency> accountCurrencies = account.getCurrencies(0, -1)) {
+            try (DbIterator<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(account, 0, -1)) {
                 JSONArray currencyJSON = new JSONArray();
                 while (accountCurrencies.hasNext()) {
                     currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));

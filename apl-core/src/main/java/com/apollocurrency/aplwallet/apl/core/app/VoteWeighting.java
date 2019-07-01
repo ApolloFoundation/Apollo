@@ -20,12 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+
+import javax.enterprise.inject.spi.CDI;
 
 public final class VoteWeighting {
 
@@ -57,7 +60,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atmBalance = Account.getAccount(voterId, height).getBalanceATM();
+                long atmBalance = lookupAccountService().getAccount(voterId, height).getBalanceATM();
                 return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
             }
             @Override
@@ -150,7 +153,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAccount(voterId, height).getBalanceATM();
+                return lookupAccountService().getAccount(voterId, height).getBalanceATM();
             }
         },
         ASSET(2) {
@@ -186,6 +189,14 @@ public final class VoteWeighting {
             }
             throw new IllegalArgumentException("Invalid minBalanceModel " + code);
         }
+    }
+    private static AccountService accountService;
+
+    private static AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
     }
 
     private final VotingModel votingModel;

@@ -5,13 +5,19 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.model.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import lombok.Setter;
 
+import javax.inject.Inject;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,13 +26,26 @@ import java.util.stream.Collectors;
  * @author <andrew.zinchenko@gmail.com>
  */
 public class AccountConverter implements Converter<Account, AccountDTO> {
+
+    @Inject @Setter
+    private AccountService accountService;
+
+    @Inject @Setter
+    private AccountInfoService accountInfoService;
+
+    @Inject @Setter
+    private AccountLeaseService accountLeaseService;
+
+    @Inject @Setter
+    private Blockchain blockchain;
+
     @Override
     public AccountDTO apply(Account account) {
         AccountDTO dto = new AccountDTO();
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
         dto.set2FA(Helper2FA.isEnabled2FA(account.getId()));
-        byte[] publicKey = Account.getPublicKey(account.getId());
+        byte[] publicKey = account.getPublicKey().publicKey;
         if (publicKey != null) {
             dto.setPublicKey(Convert.toHexString(publicKey));
         }
@@ -40,12 +59,12 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
                     .collect(Collectors.toSet()));
         }
 
-        AccountInfo accountInfo = account.getAccountInfo();
+        AccountInfo accountInfo = accountInfoService.getAccountInfo(account);
         if ( accountInfo != null){
             addAccountInfo(dto, accountInfo);
         }
 
-        AccountLease accountLease = account.getAccountLease();
+        AccountLease accountLease = accountLeaseService.getAccountLease(account);
         if (accountLease != null){
             addAccountLease(dto, accountLease);
         }
@@ -53,10 +72,10 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         return dto;
     }
 
-    public void addEffectiveBalances(AccountDTO o, Account model){
-        if (o != null && model != null) {
-            o.setEffectiveBalanceAPL(model.getEffectiveBalanceAPL());
-            o.setGuaranteedBalanceATM(model.getGuaranteedBalanceATM());
+    public void addEffectiveBalances(AccountDTO o, Account account){
+        if (o != null && account != null) {
+            o.setEffectiveBalanceAPL(accountService.getEffectiveBalanceAPL(account, blockchain.getHeight(), true));
+            o.setGuaranteedBalanceATM(accountService.getGuaranteedBalanceATM(account));
         }
     }
 
@@ -67,14 +86,14 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
                         AccountLeaseDTO dto = new AccountLeaseDTO();
                         dto.setAccount(Long.toUnsignedString(lessor.getId()));
                         dto.setAccountRS(Convert2.rsAccount(lessor.getId()));
-                        AccountLease accountLease = lessor.getAccountLease();
+                        AccountLease accountLease = accountLeaseService.getAccountLease(lessor);
                         if (accountLease.getCurrentLesseeId() != 0) {
                             dto.setCurrentLessee(Long.toUnsignedString(accountLease.getCurrentLesseeId()));
                             dto.setCurrentLesseeRS(Convert2.rsAccount(accountLease.getCurrentLesseeId()));
                             dto.setCurrentHeightFrom(accountLease.getCurrentLeasingHeightFrom());
                             dto.setCurrentHeightTo(accountLease.getCurrentLeasingHeightTo());
                             if (includeEffectiveBalance) {
-                                dto.setEffectiveBalanceAPL(lessor.getGuaranteedBalanceATM() / Constants.ONE_APL);
+                                dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / Constants.ONE_APL);
                             }
                         }
                         if (accountLease.getNextLesseeId() != 0) {

@@ -1,7 +1,11 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -9,12 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancel
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
-
-import javax.enterprise.inject.spi.CDI;
-import java.nio.ByteBuffer;
-import java.util.Map;
 
 public class DexCancelOfferTransaction extends DEX {
 
@@ -72,7 +73,7 @@ public class DexCancelOfferTransaction extends DEX {
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getTransactionId());
 
         try {
-            if(offer.getType().isSell()) {
+            if(DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
                 dexService.refundAPLFrozenMoney(offer);
             }
 

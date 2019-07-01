@@ -20,11 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
@@ -33,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,6 +47,8 @@ import java.sql.SQLException;
 public abstract class Order {
 
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private static DatabaseManager databaseManager;
 
     private final long id;
@@ -90,18 +96,18 @@ public abstract class Order {
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
 
             askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account askAccount = Account.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+            Account askAccount = accountService.getAccount(askOrder.getAccountId());
+            accountService.addToBalanceAndUnconfirmedBalanceATM(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
+            accountAssetService.addToAssetBalanceATU(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
             bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            Account bidAccount = accountService.getAccount(bidOrder.getAccountId());
+            accountAssetService.addToAssetAndUnconfirmedAssetBalanceATU(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     assetId, trade.getQuantityATU());
-            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            accountService.addToBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            accountService.addToUnconfirmedBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 
@@ -130,7 +136,7 @@ public abstract class Order {
 
     }
     */
-    static <T extends Order> void insertOrDeleteOrder(VersionedEntityDbTable<T> table, long quantityATU, T order) {
+    static <T extends Order> void insertOrDeleteOrder(VersionedDeletableEntityDbTable<T> table, long quantityATU, T order) {
         if (quantityATU > 0) {
             table.insert(order);
         } else if (quantityATU == 0) {
@@ -219,15 +225,15 @@ public abstract class Order {
 
         };
 
-        private static final VersionedEntityDbTable<Ask> askOrderTable = new VersionedEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
+        private static final VersionedDeletableEntityDbTable<Ask> askOrderTable = new VersionedDeletableEntityDbTable<Ask>("ask_order", askOrderDbKeyFactory) {
 
             @Override
-            protected Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Ask load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Ask(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Ask ask) throws SQLException {
+            public void save(Connection con, Ask ask) throws SQLException {
                 ask.save(con, table);
             }
 
@@ -340,15 +346,15 @@ public abstract class Order {
 
         };
 
-        private static final VersionedEntityDbTable<Bid> bidOrderTable = new VersionedEntityDbTable<Bid>("bid_order", bidOrderDbKeyFactory) {
+        private static final VersionedDeletableEntityDbTable<Bid> bidOrderTable = new VersionedDeletableEntityDbTable<Bid>("bid_order", bidOrderDbKeyFactory) {
 
             @Override
-            protected Bid load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+            public Bid load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                 return new Bid(rs, dbKey);
             }
 
             @Override
-            protected void save(Connection con, Bid bid) throws SQLException {
+            public void save(Connection con, Bid bid) throws SQLException {
                 bid.save(con, table);
             }
 

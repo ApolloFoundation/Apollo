@@ -28,12 +28,12 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
      */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
-    private static DatabaseManager databaseManager;
+    private DatabaseManager databaseManager;
     /**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
      */
-    private static FullTextSearchEngine ftl = CDI.current().select(FullTextSearchEngine.class).get();
+    private FullTextSearchEngine ftl;
     private TableData tableData;
 
 
@@ -90,7 +90,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         TransactionalDataSource dataSource = lookupDatabaseManager().getDataSource();
         if (!dataSource.isInTransaction()) {
             try {
-                ftl.commitRow(oldRow, newRow, tableData);
+                lookupFullTextSearchEngine().commitRow(oldRow, newRow, tableData);
                 ftl.commitIndex();
             } catch (SQLException exc) {
                 LOG.error("Unable to update the Lucene index", exc);
@@ -117,6 +117,13 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         return databaseManager;
     }
 
+    private FullTextSearchEngine  lookupFullTextSearchEngine() {
+        if (ftl == null) {
+            ftl = CDI.current().select(FullTextSearchEngine.class).get();
+        }
+        return ftl;
+    }
+
     /**
      * Commit the table changes for the current transaction (TransactionCallback interface)
      */
@@ -135,7 +142,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
                 while (updateIt.hasNext()) {
                     TableUpdate update = updateIt.next();
                     if (update.getThread() == thread) {
-                        ftl.commitRow(update.getOldRow(), update.getNewRow(), tableData);
+                        lookupFullTextSearchEngine().commitRow(update.getOldRow(), update.getNewRow(), tableData);
                         updateIt.remove();
                         commit = true;
                     }
@@ -145,7 +152,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
             // Commit the index updates
             //
             if (commit) {
-                ftl.commitIndex();
+                lookupFullTextSearchEngine().commitIndex();
             }
         } catch (SQLException exc) {
             LOG.error("Unable to update the Lucene index", exc);

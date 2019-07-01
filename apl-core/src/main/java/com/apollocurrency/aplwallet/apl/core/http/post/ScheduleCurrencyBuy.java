@@ -22,12 +22,11 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionScheduler;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -130,7 +129,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                         }
                     }
                 }
-                if (API.checkPassword(req)) {
+                if (apw.checkPassword(req)) {
                     LOG.debug("Scheduling transaction " + transaction.getStringId());
                     TransactionScheduler.schedule(filter, transaction);
                     response.put("scheduled", true);

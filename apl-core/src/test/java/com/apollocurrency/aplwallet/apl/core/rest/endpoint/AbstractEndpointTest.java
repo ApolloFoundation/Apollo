@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.core.Dispatcher;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
@@ -44,7 +45,9 @@ public class AbstractEndpointTest {
         MockHttpRequest request = post(uri);
         request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-        request.content(body.getBytes());
+        if (StringUtils.isNoneEmpty(body)) {
+            request.content(body.getBytes());
+        }
 
         MockHttpResponse response = new MockHttpResponse();
 

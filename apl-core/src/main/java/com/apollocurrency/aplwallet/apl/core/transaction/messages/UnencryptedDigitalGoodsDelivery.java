@@ -33,7 +33,7 @@ public final class UnencryptedDigitalGoodsDelivery extends DigitalGoodsDelivery 
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         if (getGoods() == null) {
             return 8 + 4 + EncryptedData.getEncryptedSize(getPlaintext()) + 8;
         }
@@ -41,7 +41,7 @@ public final class UnencryptedDigitalGoodsDelivery extends DigitalGoodsDelivery 
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         if (getGoods() == null) {
             throw new AplException.NotYetEncryptedException("Goods not yet encrypted");
         }
@@ -49,7 +49,7 @@ public final class UnencryptedDigitalGoodsDelivery extends DigitalGoodsDelivery 
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         if (getGoods() == null) {
             attachment.put("goodsToEncrypt", goodsIsText() ? Convert.toString(goodsToEncrypt) : Convert.toHexString(goodsToEncrypt));
             attachment.put("recipientPublicKey", Convert.toHexString(recipientPublicKey));

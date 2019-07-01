@@ -24,17 +24,41 @@ import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -54,28 +78,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 @Singleton
 public class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
@@ -89,9 +91,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
+    private static AccountService accountService;
 
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static final boolean testUnconfirmedTransactions = propertiesHolder.getBooleanProperty("apl.testUnconfirmedTransactions");
     private static int maxUnconfirmedTransactions;
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -106,6 +108,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
         return databaseManager.getDataSource();
+    }
+
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
     }
 
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
@@ -124,15 +133,15 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
         return
-                new EntityDbTable<UnconfirmedTransaction>("unconfirmed_transaction", keyFactory) {
+                new EntityDbTable<>("unconfirmed_transaction", keyFactory) {
 
                     @Override
-                    protected UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+                    public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
                         return new UnconfirmedTransaction(rs);
                     }
 
                     @Override
-                    protected void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
+                    public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
                         unconfirmedTransaction.save(con);
                         if (transactionCache.size() < maxUnconfirmedTransactions) {
                             DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
@@ -218,7 +227,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return () -> {
             try {
                 try {
-                    if (lookupBlockchainProcessor().isDownloading() && !testUnconfirmedTransactions) {
+                    if (lookupBlockchainProcessor().isDownloading()) {
                         return;
                     }
                     List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
@@ -263,7 +272,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 List<Transaction> transactionList = new ArrayList<>();
@@ -295,10 +304,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                Peer peer = Peers.getAnyPeer(Peer.State.CONNECTED, true);
+                Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
                 if (peer == null) {
                     return;
                 }
@@ -309,8 +318,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 Collections.sort(exclude);
                 request.put("exclude", exclude);
                 request.put("chainId", blockchainConfig.getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId(),
-                        10 * 1024 * 1024, false);
+                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return;
                 }
@@ -338,7 +346,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading() && ! testUnconfirmedTransactions) {
+                if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
                 processWaitingTransactions();
@@ -367,7 +375,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
-        blockchain = CDI.current().select(BlockchainImpl.class).get();
+        blockchain = CDI.current().select(Blockchain.class).get();
     }
 
     @Override
@@ -631,7 +639,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         globalSync.writeLock();
         try {
             for (Transaction transaction : transactions) {
-                blockchain.getTransactionCache().remove(transaction.getId());
+//                blockchain.getTransactionCache().remove(transaction.getId());
                 if (blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
@@ -678,7 +686,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
-        if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
+        if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock()) {
             return;
         }
         if (transactionsData == null || transactionsData.isEmpty()) {
@@ -744,7 +752,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         try {
             try {
                 dataSource.begin();
-                if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock() && !testUnconfirmedTransactions) {
+                if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock()) {
                     throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
                 }
                 DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
@@ -753,7 +761,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (! transaction.verifySignature()) {
-                    if (Account.getAccount(transaction.getSenderId()) != null) {
+                    if (lookupAccountService().getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");

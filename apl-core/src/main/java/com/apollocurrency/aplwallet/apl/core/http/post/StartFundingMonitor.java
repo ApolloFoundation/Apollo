@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
@@ -113,7 +113,7 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
                 }
                 break;
         }
-        Account account = Account.getAccount(Crypto.getPublicKey(keySeed));
+        Account account = lookupAccountService().getAccount(Crypto.getPublicKey(keySeed));
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }

@@ -38,6 +38,7 @@ public class NewApiRegistry {
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
         apis.put("getAccount", "/rest/accounts/account"); //GET
+        apis.put("generateAccount", "/rest/accounts/account"); //POST
 
 
         //TODO: add new implemented endpoints

@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 public class Block {
     private long id;
     private int height;
@@ -48,8 +51,10 @@ public class Block {
         return id;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    @JsonSetter
+    @JsonAlias("block")
+    public void setId(String id) {
+        this.id = Long.parseUnsignedLong(id);
     }
 
     public int getHeight() {

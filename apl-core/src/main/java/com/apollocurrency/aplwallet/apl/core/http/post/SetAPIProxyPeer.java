@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
@@ -61,7 +62,7 @@ public class SetAPIProxyPeer extends AbstractAPIRequestHandler {
         if (peer == null) {
             return UNKNOWN_PEER;
         }
-        if (peer.getState() != Peer.State.CONNECTED ) {
+        if (peer.getState() != PeerState.CONNECTED ) {
             return PEER_NOT_CONNECTED;
         }
         if (!peer.isOpenAPI()) {

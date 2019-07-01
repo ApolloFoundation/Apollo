@@ -39,9 +39,9 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS transaction (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "deadline SMALLINT NOT NULL, recipient_id BIGINT, transaction_index SMALLINT NOT NULL, "
                         + "amount BIGINT NOT NULL, fee BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
-                        + "height INT NOT NULL, block_id BIGINT NOT NULL, FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
+                        + "height INT NOT NULL, block_id BIGINT NOT NULL, "
                         + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
-                        + "sender_id BIGINT NOT NULL, block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
+                        + "sender_id BIGINT NOT NULL, sender_public_key BINARY(32), block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
                         + "phased BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "attachment_bytes VARBINARY, version TINYINT NOT NULL, has_message BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "has_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, has_public_key_announcement BOOLEAN NOT NULL DEFAULT FALSE, "
@@ -313,8 +313,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_supply_id_height_idx ON currency_supply (id, height DESC)");
             case 101:
                 apply("CREATE TABLE IF NOT EXISTS public_key (db_id IDENTITY, account_id BIGINT NOT NULL, "
-                        + "public_key BINARY(32), height INT NOT NULL, FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, "
-                        + "latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "public_key BINARY(32), height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 102:
                 apply("CREATE INDEX IF NOT EXISTS account_guaranteed_balance_height_idx ON account_guaranteed_balance(height)");
             case 103:
@@ -408,8 +407,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS prunable_message (db_id IDENTITY, id BIGINT NOT NULL, sender_id BIGINT NOT NULL, "
                         + "recipient_id BIGINT, message VARBINARY, message_is_text BOOLEAN NOT NULL, is_compressed BOOLEAN NOT NULL, "
                         + "encrypted_message VARBINARY, encrypted_is_text BOOLEAN DEFAULT FALSE, "
-                        + "block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, height INT NOT NULL, "
-                        + "FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE)");
+                        + "block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, height INT NOT NULL)");
             case 139:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS prunable_message_id_idx ON prunable_message (id)");
             case 140:
@@ -424,7 +422,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS tagged_data (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, description VARCHAR, tags VARCHAR, parsed_tags ARRAY, type VARCHAR, data VARBINARY NOT NULL, "
                         + "is_text BOOLEAN NOT NULL, channel VARCHAR, filename VARCHAR, block_timestamp INT NOT NULL, transaction_timestamp INT NOT NULL, "
-                        + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 145:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS tagged_data_id_height_idx ON tagged_data (id, height DESC)");
             case 146:
@@ -435,7 +433,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS tagged_data_block_timestamp_height_db_id_idx ON tagged_data (block_timestamp DESC, height DESC, db_id DESC)");
             case 149:
                 apply("CREATE TABLE IF NOT EXISTS data_tag (db_id IDENTITY, tag VARCHAR NOT NULL, tag_count INT NOT NULL, "
-                        + "height INT NOT NULL, FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 150:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS data_tag_tag_height_idx ON data_tag (tag, height DESC)");
             case 151:
@@ -566,7 +564,7 @@ public class AplDbVersion extends DbVersion {
             case 207:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_participant (db_id IDENTITY, shuffling_id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, next_account_id BIGINT NULL, participant_index TINYINT NOT NULL, "
-                        + "state TINYINT NOT NULL, blame_data ARRAY, key_seeds ARRAY, data_transaction_full_hash BINARY(32), "
+                        + "state TINYINT NOT NULL, blame_data ARRAY, key_seeds ARRAY, data_transaction_full_hash BINARY(32), data_hash BINARY(32), "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 208:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shuffling_participant_shuffling_id_account_id_idx ON shuffling_participant "
@@ -575,8 +573,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS shuffling_participant_height_idx ON shuffling_participant (height, shuffling_id, account_id)");
             case 210:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_data (db_id IDENTITY, shuffling_id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
-                        + "data ARRAY, transaction_timestamp INT NOT NULL, height INT NOT NULL, "
-                        + "FOREIGN KEY (height) REFERENCES block (height) ON DELETE CASCADE)");
+                        + "data ARRAY, transaction_timestamp INT NOT NULL, height INT NOT NULL)");
             case 211:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shuffling_data_id_height_idx ON shuffling_data (shuffling_id, height DESC)");
             case 212:
@@ -690,25 +687,24 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE update_status DROP CONSTRAINT IF EXISTS CONSTRAINT_660");
             case 252:
                 // SHARDING meta-info inside main database
-                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT AUTO_INCREMENT NOT NULL, shard_hash VARBINARY, " +
-                        "shard_height INT not null, shard_state BIGINT)");
+                apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT NOT NULL, shard_hash VARBINARY, " +
+                        "shard_height INT not null default 0, shard_state BIGINT default 0, zip_hash_crc VARBINARY, generator_ids ARRAY DEFAULT NULL)");
             case 253:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 254:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shard_height_index on shard (shard_height DESC, shard_id)");
             case 255:
-                apply("CREATE TABLE IF NOT EXISTS block_index (shard_id BIGINT NOT NULL, block_id BIGINT NOT NULL, block_height INT NOT NULL)");
+                apply("CREATE TABLE IF NOT EXISTS block_index (block_id BIGINT NOT NULL, block_height INT NOT NULL)");
             case 256:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_shard_id_idx ON block_index (block_id, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
             case 257:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_shard_id_idx ON block_index (block_height, shard_id DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
             case 258:
-                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, block_id BIGINT NOT NULL)");
+                apply("CREATE TABLE IF NOT EXISTS transaction_shard_index (transaction_id BIGINT NOT NULL, partial_transaction_hash VARBINARY NOT NULL, transaction_index SMALLINT NOT NULL, height INT NOT NULL)");
             case 259:
-                apply("ALTER TABLE transaction_shard_index ADD CONSTRAINT IF NOT EXISTS fk_transaction_shard_index_block_id " +
-                        "FOREIGN KEY (block_id) REFERENCES block_index(block_id) ON DELETE CASCADE");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_height_transaction_index_idx ON transaction_shard_index (height, transaction_index)");
             case 260:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_index_shard_1_idx ON transaction_shard_index (transaction_id, block_id)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
             case 261:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
@@ -737,9 +733,56 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE dex_offer ADD IF NOT EXISTS from_address VARCHAR(120)");
             case 272 :
                 apply("ALTER TABLE dex_offer ADD IF NOT EXISTS to_address VARCHAR(120)");
-
-                case 273 :
-                return 273;
+            case 273:
+                apply("ALTER TABLE prunable_message DROP CONSTRAINT IF EXISTS CONSTRAINT_B40");
+            case 274:
+                apply("ALTER TABLE tagged_data DROP CONSTRAINT IF EXISTS CONSTRAINT_8B9");
+            case 275:
+                apply("ALTER TABLE public_key DROP CONSTRAINT IF EXISTS CONSTRAINT_8E8");
+            case 276:
+                apply("ALTER TABLE shuffling_data DROP CONSTRAINT IF EXISTS CONSTRAINT_A08");
+            case 277:
+                apply("ALTER TABLE data_tag DROP CONSTRAINT IF EXISTS CONSTRAINT_995");
+            case 278:
+                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS CONSTRAINT_FF");
+            case 279:
+                apply("CREATE INDEX IF NOT EXISTS transaction_block_id_idx ON transaction(block_id)");
+            case 280:
+                apply("CREATE INDEX IF NOT EXISTS public_key_height_idx on public_key(height)");
+            case 281:
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS zip_hash_crc VARBINARY");
+            case 282:
+                apply("ALTER TABLE transaction_shard_index DROP CONSTRAINT IF EXISTS fk_transaction_shard_index_block_id");
+            case 283:
+                apply("DROP INDEX IF EXISTS transaction_index_shard_1_idx");
+            case 284:
+                apply("ALTER TABLE transaction_shard_index DROP COLUMN IF EXISTS block_id");
+            case 285:
+                apply("ALTER TABLE transaction_shard_index ADD COLUMN IF NOT EXISTS height INT NOT NULL");
+            case 286:
+                apply("ALTER TABLE transaction_shard_index ADD COLUMN IF NOT EXISTS transaction_index SMALLINT NOT NULL");
+            case 287:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_height_transaction_index_idx ON transaction_shard_index (height, transaction_index)");
+            case 288:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
+            case 289:
+                apply("DROP INDEX IF EXISTS block_index_block_id_shard_id_idx");
+            case 290:
+                apply("DROP INDEX IF EXISTS block_index_block_height_shard_id_idx");
+            case 291:
+                apply("ALTER TABLE block_index DROP COLUMN IF EXISTS shard_id");
+            case 292:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_height_idx ON block_index (block_height)");
+            case 293:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
+            case 294:
+                apply("ALTER TABLE shard ALTER COLUMN shard_id BIGINT NOT NULL");
+            case 295:
+                apply("ALTER TABLE shuffling_participant ADD COLUMN IF NOT EXISTS data_hash BINARY(32)");
+            case 296:
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS generator_ids ARRAY DEFAULT NULL");
+            case 297:
+                return 297;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

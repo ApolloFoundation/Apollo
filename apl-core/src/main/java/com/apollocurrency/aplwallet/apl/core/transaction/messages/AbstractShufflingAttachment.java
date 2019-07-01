@@ -35,18 +35,18 @@ public abstract class AbstractShufflingAttachment extends AbstractAttachment imp
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 32;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(shufflingId);
         buffer.put(shufflingStateHash);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("shuffling", Long.toUnsignedString(shufflingId));
         attachment.put("shufflingStateHash", Convert.toHexString(shufflingStateHash));
     }

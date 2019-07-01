@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +20,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public class AccountCurrencyTable extends VersionedEntityDbTable<AccountCurrency> {
+public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<AccountCurrency> {
 
     private static final LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
     
@@ -43,19 +45,19 @@ public class AccountCurrencyTable extends VersionedEntityDbTable<AccountCurrency
     }
 
     @Override
-    protected AccountCurrency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountCurrency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountCurrency(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
+    public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountCurrency.accountId);
             pstmt.setLong(++i, accountCurrency.currencyId);
             pstmt.setLong(++i, accountCurrency.units);
             pstmt.setLong(++i, accountCurrency.unconfirmedUnits);
-            pstmt.setInt(++i, Account.blockchain.getHeight());
+            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
             pstmt.executeUpdate();
         }
     }

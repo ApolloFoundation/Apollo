@@ -585,7 +585,7 @@ public enum APIEnum {
     GET_CHAT_HISTORY("getChatHistory", new GetChatHistory()),
     GET_TOTAL_SUPPLY("getTotalSupply", new GetTotalSupply()),
     GET_ACCOUNTS("getAccounts", new GetAccounts()),
-    GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
+    @Obsolete GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
     EXPORT_KEY("exportKey", new ExportKey()),
     IMPORT_KEY("importKey", new ImportKey()),
     ENABLE_2FA("enable2FA", new Enable2FA()),

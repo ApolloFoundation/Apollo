@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.crypto;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 public final class EncryptedData {
 
@@ -115,6 +116,22 @@ public final class EncryptedData {
         buffer.put(data);
         buffer.put(nonce);
         return buffer.array();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EncryptedData)) return false;
+        EncryptedData that = (EncryptedData) o;
+        return Arrays.equals(data, that.data) &&
+                Arrays.equals(nonce, that.nonce);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(data);
+        result = 31 * result + Arrays.hashCode(nonce);
+        return result;
     }
 
     @Override

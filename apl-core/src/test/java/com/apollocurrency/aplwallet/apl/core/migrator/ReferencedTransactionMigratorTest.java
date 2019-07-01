@@ -6,6 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import javax.inject.Inject;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
@@ -19,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -29,22 +38,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-
 @EnableWeld
 public class ReferencedTransactionMigratorTest {
     @RegisterExtension
     DbExtension dbExtension = new DbExtension();
 
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class, BlockchainConfig.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class)
-            .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
+    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class, 
+             BlockchainConfig.class, FullTextConfigImpl.class,
+             DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+             ChainsConfigHolder.class)
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
             .addBeans(MockBean.of(Mockito.mock(EpochTime.class), EpochTime.class))
             .build();
@@ -56,14 +60,14 @@ public class ReferencedTransactionMigratorTest {
 
     @BeforeEach
     void setUp() {
-        migrator = new ReferencedTransactionMigrator(dbExtension.getDatabaseManger());
+        migrator = new ReferencedTransactionMigrator(dbExtension.getDatabaseManager());
         td = new TransactionTestData();
     }
 
     @Test
     public void testMigrate() throws SQLException {
 
-        try (Connection connection = dbExtension.getDatabaseManger().getDataSource().getConnection();
+        try (Connection connection = dbExtension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = connection.createStatement()) {
             stmt.executeUpdate("update referenced_transaction set height = -1 where db_id >= 40");
         }

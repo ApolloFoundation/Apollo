@@ -28,7 +28,15 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
     @Override
     public Transaction map(ResultSet rs, StatementContext ctx) throws SQLException {
         try {
+            return mapWithException(rs, ctx);
+        }
+        catch (AplException.NotValidException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
+    public Transaction mapWithException(ResultSet rs, StatementContext ctx) throws AplException.NotValidException {
+        try {
             byte type = rs.getByte("type");
             byte subtype = rs.getByte("subtype");
             int timestamp = rs.getInt("timestamp");
@@ -49,6 +57,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             byte version = rs.getByte("version");
             short transactionIndex = rs.getShort("transaction_index");
             long dbId = rs.getLong("db_id");
+            byte[] senderPublicKey = rs.getBytes("sender_public_key"); // will be null for already registered public keys, which exist in public_key table
 
             ByteBuffer buffer = null;
             if (attachmentBytes != null) {
@@ -56,7 +65,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
+            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
                     amountATM, feeATM, deadline, transactionType.parseAttachment(buffer), timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
@@ -68,12 +77,11 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                     .fullHash(fullHash)
                     .ecBlockHeight(ecBlockHeight)
                     .ecBlockId(ecBlockId)
-                    .index(transactionIndex)
                     .dbId(dbId)
-                    ;
+                    .index(transactionIndex);
             if (transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
-                if (! rs.wasNull()) {
+                if (!rs.wasNull()) {
                     builder.recipientId(recipientId);
                 }
             }
@@ -101,7 +109,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
 
             return builder.build();
 
-        } catch (SQLException | AplException.NotValidException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

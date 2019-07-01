@@ -14,6 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -24,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
@@ -38,6 +42,25 @@ public abstract class AbstractAPIRequestHandler {
     private TransactionProcessor transactionProcessor;
     protected static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private DatabaseManager databaseManager;
+    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static AccountService accountService;
+    private static AccountPublicKeyService accountPublicKeyService;
+
+    protected AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    protected AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
+    }
 
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -68,7 +91,7 @@ public abstract class AbstractAPIRequestHandler {
     public AbstractAPIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
         List<String> parameters = new ArrayList<>();
         Collections.addAll(parameters, origParameters);
-        if ((requirePassword() || parameters.contains("lastIndex")) && ! API.disableAdminPassword) {
+        if ((requirePassword() || parameters.contains("lastIndex")) && ! apw.disableAdminPassword) {
             parameters.add("adminPassword");
         }
         if (allowRequiredBlockParameters()) {

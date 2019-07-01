@@ -20,7 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -79,6 +81,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
             "ecBlockId", "ecBlockHeight"};
+
+    protected static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
@@ -182,7 +186,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     }
 
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
-                                            long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
+                                             long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
         String deadlineValue = req.getParameter("deadline");
         String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
@@ -192,7 +196,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
-            Account recipient = Account.getAccount(recipientId);
+            Account recipient = accountService.getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient,
                         senderAccount.getId(),true);

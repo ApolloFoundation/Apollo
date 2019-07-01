@@ -96,6 +96,8 @@ public interface Transaction {
 
     void setFeeATM(long feeATM);
 
+    void sign(byte[] keySeed) throws AplException.NotValidException;
+
     long getId();
 
     long getDbId();
@@ -105,6 +107,8 @@ public interface Transaction {
     long getSenderId();
 
     byte[] getSenderPublicKey();
+
+    boolean shouldSavePublicKey();
 
     long getRecipientId();
 

@@ -4,14 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +25,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
+public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
     
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
@@ -52,25 +54,25 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     }
 
     @Override
-    protected AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountAsset(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountAsset accountAsset) throws SQLException {
+    public void save(Connection con, AccountAsset accountAsset) throws SQLException {
          try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.accountId);
             pstmt.setLong(++i, accountAsset.assetId);
             pstmt.setLong(++i, accountAsset.quantityATU);
             pstmt.setLong(++i, accountAsset.unconfirmedQuantityATU);
-            pstmt.setInt(++i, Account.blockchain.getHeight());
+            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
             pstmt.executeUpdate();
         }       
     }
     
     public void save(AccountAsset accountAsset) {
-        Account.checkBalance(accountAsset.accountId, accountAsset.quantityATU, accountAsset.unconfirmedQuantityATU);
+        AccountService.checkBalance(accountAsset.accountId, accountAsset.quantityATU, accountAsset.unconfirmedQuantityATU);
         if (accountAsset.quantityATU > 0 || accountAsset.unconfirmedQuantityATU > 0) {
             accountAssetTable.insert(accountAsset);
         } else {
@@ -79,8 +81,8 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     }
     
     @Override
-    public void trim(int height, TransactionalDataSource dataSource) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK), dataSource);
+    public void trim(int height) {
+        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
     }
 
     @Override
@@ -88,8 +90,8 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
             throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
         }
-        if (height > Account.blockchain.getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Account.blockchain.getHeight());
+        if (height > BlockchainHelper.getBlockchainHeight()) {
+            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + BlockchainHelper.getBlockchainHeight());
         }
     }
 
@@ -134,6 +136,9 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to, " ORDER BY quantity DESC, account_id ");
     }
 
+    public static DbIterator<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
+        return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id ");
+    }
   
     public static long getAssetBalanceATU(long accountId, long assetId, int height) {
         AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
@@ -150,8 +155,4 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
     }
 
-    public static DbIterator<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
-        return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id ");
-    }
-  
 }

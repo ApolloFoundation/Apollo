@@ -117,6 +117,7 @@ public class PeerDb {
 
     static void updatePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.begin();   
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
@@ -126,13 +127,16 @@ public class PeerDb {
                 pstmt.setInt(3, peer.getLastUpdated());
                 pstmt.executeUpdate();
             }
+            dataSource.commit();
         } catch (SQLException e) {
+            dataSource.rollback();
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     static void updatePeer(PeerImpl peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.begin();        
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
@@ -140,7 +144,9 @@ public class PeerDb {
             pstmt.setLong(2, peer.getServices());
             pstmt.setInt(3, peer.getLastUpdated());
             pstmt.executeUpdate();
+            dataSource.commit();
         } catch (SQLException e) {
+            dataSource.rollback();
             throw new RuntimeException(e.toString(), e);
         }
     }

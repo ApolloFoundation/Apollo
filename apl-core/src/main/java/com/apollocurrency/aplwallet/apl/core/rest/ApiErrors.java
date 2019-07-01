@@ -6,6 +6,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest;
 
+import com.apollocurrency.aplwallet.apl.util.JSON;
+
 public enum ApiErrors implements ErrorInfo {
 
     JSON_SERIALIZATION_EXCEPTION(1,1001,"Exception encountered during generating JSON content, root cause: %s"),
@@ -16,6 +18,8 @@ public enum ApiErrors implements ErrorInfo {
     UNKNOWN_VALUE(5, 2005, "Unknown {0} : {1}"),
     PEER_NOT_CONNECTED(5, 2006, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2007, "Peer is not providing open API."),
+
+    ACCOUNT_GENERATION_ERROR(6, 2008, "Error occurred during account generation"),
 
     FAILED_TO_ADD(8, 2008, "Failed to add peer %s")
     ;

@@ -28,7 +28,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -114,11 +113,11 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
                     byte[] decrypted = null;
                     if (keySeed != null) {
                         byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
-                        byte[] senderPublicKey = Account.getPublicKey(transaction.getSenderId());
-                        byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
+                        byte[] senderPublicKey = lookupAccountService().getPublicKey(transaction.getSenderId());
+                        byte[] recipientPublicKey = lookupAccountService().getPublicKey(transaction.getRecipientId());
                         byte[] publicKey = Arrays.equals(senderPublicKey, readerPublicKey) ? recipientPublicKey : senderPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
+                            decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptedData, keySeed, uncompress);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(encryptedData.getData(), sharedKey);
@@ -135,7 +134,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
             if (encryptToSelfMessage != null && keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
                 try {
-                    byte[] decrypted = Account.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
+                    byte[] decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
                             encryptToSelfMessage.isCompressed());
                     response.put("decryptedMessageToSelf", Convert.toString(decrypted, encryptToSelfMessage.isText()));
                 } catch (RuntimeException e) {

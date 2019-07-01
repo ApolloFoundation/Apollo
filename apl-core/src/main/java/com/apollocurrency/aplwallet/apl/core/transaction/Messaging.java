@@ -3,8 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
@@ -33,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -45,6 +48,8 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 public abstract class Messaging extends TransactionType {
+    private static final Logger log = getLogger(Messaging.class);
+
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
@@ -690,7 +695,7 @@ public abstract class Messaging extends TransactionType {
                     if (algorithm != 0 && algorithm != poll.getAlgorithm()) {
                         throw new AplException.NotValidException("Phased transaction " + Long.toUnsignedString(phasedTransactionId) + " is using a different hashedSecretAlgorithm");
                     }
-                    if (hashedSecret == null && !poll.verifySecret(revealedSecret)) {
+                    if (hashedSecret == null && !phasingPollService.verifySecret(poll, revealedSecret)) {
                         throw new AplException.NotValidException("Revealed secret does not match phased transaction hashed secret");
                     }
                     hashedSecret = poll.getHashedSecret();
@@ -771,7 +776,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
-            senderAccount.setAccountInfo(attachment.getName(), attachment.getDescription());
+            lookupAccountInfoService().updateAccountInfo(senderAccount, attachment.getName(), attachment.getDescription());
         }
 
         @Override
@@ -845,7 +850,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
-            recipientAccount.setProperty(transaction, senderAccount, attachment.getProperty(), attachment.getValue());
+            lookupAccountPropertyService().setProperty(recipientAccount, transaction, senderAccount, attachment.getProperty(), attachment.getValue());
         }
 
         @Override
@@ -908,7 +913,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
-            senderAccount.deleteProperty(attachment.getPropertyId());
+            lookupAccountPropertyService().deleteProperty(senderAccount, attachment.getPropertyId());
         }
 
         @Override

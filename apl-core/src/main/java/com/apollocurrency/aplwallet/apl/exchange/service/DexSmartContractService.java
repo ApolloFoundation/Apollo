@@ -1,5 +1,13 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_DEFAULT_ADDRESS;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.concurrent.ExecutionException;
+
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
@@ -21,14 +29,6 @@ import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.ExecutionException;
-
-import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_DEFAULT_ADDRESS;
 
 @Singleton
 public class DexSmartContractService {
@@ -58,6 +58,11 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String deposit(String passphrase, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
+       //TODO mock for production, till we don't finish smart contract.
+        if(true){
+            return "Mock response.(transaction hash)";
+        }
+
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         if(keyStore==null){
             throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
@@ -90,6 +95,11 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger weiValue, Long gas, DexCurrencies currency) throws AplException.ExecutiveProcessException {
+        //TODO mock for production, till we don't finish smart contract.
+        if(true){
+            return "Mock response.(transaction hash)";
+        }
+
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
 
         if(keyStore==null){

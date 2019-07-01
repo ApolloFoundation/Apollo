@@ -20,35 +20,36 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.TypeLiteral;
-
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
-import java.lang.annotation.Annotation;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 
 public final class PrunableMessage {
 
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static LongKeyFactory<UnconfirmedTransaction> keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
@@ -69,14 +70,18 @@ public final class PrunableMessage {
     };
 
     private static final PrunableDbTable<PrunableMessage> prunableMessageTable = new PrunableDbTable<PrunableMessage>("prunable_message", prunableMessageKeyFactory) {
+        @Override
+        public boolean isScanSafe() {
+            return false; // all messages cannot be recovered from transaction attachment data, so that should not be reverted without block popOff
+        }
 
         @Override
-        protected PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public PrunableMessage load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new PrunableMessage(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, PrunableMessage prunableMessage) throws SQLException {
+        public void save(Connection con, PrunableMessage prunableMessage) throws SQLException {
             prunableMessage.save(con);
         }
 
@@ -195,16 +200,6 @@ public final class PrunableMessage {
         this.height = rs.getInt("height");
     }
 
-    private PrunableMessage(long id, DbKey dbKey, long senderId, long recipientId, int transactionTimestamp, int blockTimestamp, int height) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.senderId = senderId;
-        this.recipientId = recipientId;
-        this.transactionTimestamp = transactionTimestamp;
-        this.blockTimestamp = blockTimestamp;
-        this.height = height;
-    }
-
     private void save(Connection con) throws SQLException {
         if (message == null && encryptedData == null) {
             throw new IllegalStateException("Prunable message not fully initialized");
@@ -292,9 +287,9 @@ public final class PrunableMessage {
         if (encryptedData == null) {
             return null;
         }
-        byte[] publicKey = senderId == Account.getId(Crypto.getPublicKey(keySeed))
-                ? Account.getPublicKey(recipientId) : Account.getPublicKey(senderId);
-        return Account.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
+        byte[] publicKey = senderId == AccountService.getId(Crypto.getPublicKey(keySeed))
+                ? accountService.getPublicKey(recipientId) : accountService.getPublicKey(senderId);
+        return accountPublicKeyService.decryptFrom(publicKey, encryptedData, keySeed, isCompressed);
     }
 
     public static void add(TransactionImpl transaction, PrunablePlainMessageAppendix appendix) {

@@ -22,7 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -61,10 +63,9 @@ public final class Generator implements Comparable<Generator> {
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
-    private static final byte[] fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
-            Account.getPublicKey(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
+    private static final byte[] fakeForgingPublicKey;
     private static volatile boolean suspendForging = false;
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
@@ -73,6 +74,12 @@ public final class Generator implements Comparable<Generator> {
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;
     private static int delayTime = propertiesHolder.FORGING_DELAY();
+
+    static{
+
+        fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
+                accountService.getPublicKey(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
+    }
 
     private static final Runnable generateBlocksThread = new Runnable() {
 
@@ -299,7 +306,7 @@ public final class Generator implements Comparable<Generator> {
     private Generator(byte[] keySeed) {
         this.keySeed = keySeed;
         this.publicKey = Crypto.getPublicKey(keySeed);
-        this.accountId = Account.getId(publicKey);
+        this.accountId = AccountService.getId(publicKey);
         globalSync.updateLock();
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
@@ -343,11 +350,11 @@ public final class Generator implements Comparable<Generator> {
 
     private void setLastBlock(Block lastBlock) {
         int height = lastBlock.getHeight();
-        Account account = Account.getAccount(accountId, height);
+        Account account = accountService.getAccount(accountId, height);
         if (account == null) {
             effectiveBalance = BigInteger.ZERO;
         } else {
-            effectiveBalance = BigInteger.valueOf(Math.max(account.getEffectiveBalanceAPL(height), 0));
+            effectiveBalance = BigInteger.valueOf(Math.max(accountService.getEffectiveBalanceAPL(account, height, true), 0));
         }
         if (effectiveBalance.signum() == 0) {
             hitTime = 0;

@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -64,12 +64,12 @@ public final class AssetTransfer {
     private static final EntityDbTable<AssetTransfer> assetTransferTable = new EntityDbTable<AssetTransfer>("asset_transfer", transferDbKeyFactory) {
 
         @Override
-        protected AssetTransfer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public AssetTransfer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new AssetTransfer(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, AssetTransfer assetTransfer) throws SQLException {
+        public void save(Connection con, AssetTransfer assetTransfer) throws SQLException {
             assetTransfer.save(con);
         }
 

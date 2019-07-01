@@ -22,10 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -61,7 +65,16 @@ public final class Shuffler {
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private static FeeCalculator feeCalculator = new FeeCalculator();
     private static BlockchainProcessor blockchainProcessor;
+    private static AccountService accountService;
+
+    private static AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
 
     private static BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
@@ -72,7 +85,7 @@ public final class Shuffler {
 
     public static Shuffler addOrGetShuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) throws ShufflerException {
         String hash = Convert.toHexString(shufflingFullHash);
-        long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
+        long accountId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
         globalSync.writeLock();
         try {
             Map<Long, Shuffler> map = shufflingsMap.get(hash);
@@ -90,17 +103,17 @@ public final class Shuffler {
             }
             if (shuffler == null) {
                 Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
-                if (shuffling == null && Account.getAccount(recipientPublicKey) != null) {
+                if (shuffling == null && lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
-                if (getRecipientShuffler(Account.getId(recipientPublicKey)) != null) {
+                if (getRecipientShuffler(AccountService.getId(recipientPublicKey)) != null) {
                     throw new InvalidRecipientException("Another shuffler with the same recipient account already running");
                 }
                 if (map.size() >= (shuffling == null ? Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS : shuffling.getParticipantCount())) {
                     throw new ShufflerLimitException("Cannot run shufflers for more than " + map.size() + " accounts for this shuffling");
                 }
-                Account account = Account.getAccount(accountId);
-                if (account != null && account.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+                Account account = lookupAccountService().getAccount(accountId);
+                if (account != null && account.getControls().contains(AccountControlType.PHASING_ONLY)) {
                     throw new ControlledAccountException("Cannot run a shuffler for an account under phasing only control");
                 }
                 shuffler = new Shuffler(secretBytes, recipientPublicKey, shufflingFullHash);
@@ -205,7 +218,7 @@ public final class Shuffler {
         try {
             for (Map<Long,Shuffler> shufflerMap : shufflingsMap.values()) {
                 for (Shuffler shuffler : shufflerMap.values()) {
-                    if (Account.getId(shuffler.recipientPublicKey) == recipientId) {
+                    if (AccountService.getId(shuffler.recipientPublicKey) == recipientId) {
                         return shuffler;
                     }
                 }
@@ -343,7 +356,7 @@ public final class Shuffler {
 
     private Shuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
         this.secretBytes = secretBytes;
-        this.accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
+        this.accountId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
         this.recipientPublicKey = recipientPublicKey;
         this.shufflingFullHash = shufflingFullHash;
     }
@@ -379,7 +392,7 @@ public final class Shuffler {
         ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
         switch (shuffling.getStage()) {
             case REGISTRATION:
-                if (Account.getAccount(recipientPublicKey) != null) {
+                if (lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
                 if (shufflingParticipant == null) {
@@ -390,7 +403,7 @@ public final class Shuffler {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (Account.getAccount(recipientPublicKey) != null) {
+                if (lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
                 if (accountId == shuffling.getAssigneeAccountId()) {
@@ -499,10 +512,13 @@ public final class Shuffler {
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
                     (short) 1440, attachment, blockchain.getLastBlockTimestamp());
-            Transaction transaction = builder.build(Crypto.getKeySeed(secretBytes));
+
+            Transaction transaction = builder.build(null);
+            transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
+            transaction.sign(Crypto.getKeySeed(secretBytes));
             failedTransaction = null;
             failureCause = null;
-            Account participantAccount = Account.getAccount(this.accountId);
+            Account participantAccount = lookupAccountService().getAccount(this.accountId);
             if (participantAccount == null || transaction.getFeeATM() > participantAccount.getUnconfirmedBalanceATM()) {
                 failedTransaction = transaction;
                 failureCause = new AplException.NotCurrentlyValidException("Insufficient balance");

@@ -26,7 +26,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -50,7 +49,7 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        byte[] publicKey = Account.getPublicKey(ParameterParser.getAccountId(req, "participantAccount",true));
+        byte[] publicKey = lookupAccountService().getPublicKey(ParameterParser.getAccountId(req, "participantAccount",true));
         if (publicKey == null) {
             return INCORRECT_ACCOUNT;
         }
@@ -62,7 +61,7 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("decryptedMessageIsText"));
         boolean uncompress = !"false".equalsIgnoreCase(req.getParameter("uncompressDecryptedMessage"));
         try {
-            byte[] decrypted = Account.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
+            byte[] decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptedData, keySeed, uncompress);
             JSONObject response = new JSONObject();
             response.put("decryptedMessage", isText ? Convert.toString(decrypted) : Convert.toHexString(decrypted));
             return response;

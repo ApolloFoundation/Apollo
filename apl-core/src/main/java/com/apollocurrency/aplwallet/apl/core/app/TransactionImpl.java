@@ -20,9 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -38,8 +54,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -48,23 +62,14 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
     @Inject
     private static BlockchainImpl blockchain;
+
+    @Inject
+    private static AccountPublicKeyService accountPublicKeyService;
 
     public static final class BuilderImpl implements Builder {
 
@@ -99,9 +104,6 @@ public class TransactionImpl implements Transaction {
         private short index = -1;
         private long dbId = 0;
 
-        public BuilderImpl() { // for weld
-        }
-
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp) {
             this.version = version;
@@ -121,7 +123,7 @@ public class TransactionImpl implements Transaction {
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
                 lookupAndInjectBlockchain();
-                Block ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
+                EcBlockData ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
@@ -133,6 +135,13 @@ public class TransactionImpl implements Transaction {
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
             }
             return blockchain;
+        }
+
+        private AccountPublicKeyService lookupAndInjectAccountService() {
+            if (accountPublicKeyService == null) {
+                accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+            }
+            return accountPublicKeyService;
         }
 
         @Override
@@ -275,14 +284,14 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] senderPublicKey;
     private final long recipientId;
     private final long amountATM;
-    private volatile long feeATM; // remove final modifier to set fee outside the class TODO should return
+    private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
     private final byte[] referencedTransactionFullHash;
     private final TransactionType type;
     private final int ecBlockHeight;
     private final long ecBlockId;
     private final byte version;
     private final int timestamp;
-    private final byte[] signature;
+    private volatile byte[] signature;
     private final AbstractAttachment attachment;
     private final MessageAppendix message;
     private final EncryptedMessageAppendix encryptedMessage;
@@ -327,9 +336,10 @@ public class TransactionImpl implements Transaction {
 		this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
         this.dbId = builder.dbId;
-        if (builder.feeATM <= 0) {
-            throw new IllegalArgumentException("Fee should be positive");
-        }
+        // set fee later
+        //        if (builder.feeATM <= 0) {
+//            throw new IllegalArgumentException("Fee should be positive");
+//        }
         this.feeATM = builder.feeATM;
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
@@ -382,11 +392,28 @@ public class TransactionImpl implements Transaction {
 
     }
 
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+
+        if (getSenderPublicKey() != null && ! Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
+            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
+        }
+        signature = Crypto.sign(bytes(), keySeed);
+        bytes = null;
+
+    }
+
     private Blockchain lookupAndInjectBlockchain() {
         if (this.blockchain == null) {
             this.blockchain = CDI.current().select(BlockchainImpl.class).get();
         }
         return blockchain;
+    }
+
+    private AccountPublicKeyService lookupAndInjectAccountService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
     }
 
     @Override
@@ -397,9 +424,16 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         if (senderPublicKey == null) {
-            senderPublicKey = Account.getPublicKey(senderId);
+            lookupAndInjectAccountService();
+            senderPublicKey = lookupAndInjectAccountService().getPublicKey(senderId);
         }
         return senderPublicKey;
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return true;
+        //        return Account.getPublicKey(senderId) == null;
     }
 
     @Override
@@ -596,9 +630,14 @@ public class TransactionImpl implements Transaction {
     @Override
     public long getSenderId() {
         if (senderId == 0) {
-            senderId = Account.getId(getSenderPublicKey());
+            senderId = AccountService.getId(getSenderPublicKey());
         }
         return senderId;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(getId());
     }
 
     @Override
@@ -778,13 +817,13 @@ public class TransactionImpl implements Transaction {
             if (shufflingProcessing != null) {
                 builder.appendix(shufflingProcessing);
             }
-            TaggedDataUpload taggedDataUpload = TaggedDataUpload.parse(prunableAttachments);
-            if (taggedDataUpload != null) {
-                builder.appendix(taggedDataUpload);
+            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
+            if (taggedDataUploadAttachment != null) {
+                builder.appendix(taggedDataUploadAttachment);
             }
-            TaggedDataExtend taggedDataExtend = TaggedDataExtend.parse(prunableAttachments);
-            if (taggedDataExtend != null) {
-                builder.appendix(taggedDataExtend);
+            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
+            if (taggedDataExtendAttachment != null) {
+                builder.appendix(taggedDataExtendAttachment);
             }
             PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
             if (prunablePlainMessage != null) {
@@ -936,7 +975,8 @@ public class TransactionImpl implements Transaction {
     }
 
     public boolean verifySignature() {
-        return checkSignature() && Account.setOrVerify(getSenderId(), getSenderPublicKey());
+        lookupAndInjectAccountService();
+        return checkSignature() && lookupAndInjectAccountService().setOrVerify(getSenderId(), getSenderPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;
@@ -1005,7 +1045,6 @@ public class TransactionImpl implements Transaction {
         }
         return flags;
     }
-
 
     public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {

@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -64,6 +65,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+
+    }
+
+    @Override
     public long getId() {
         return id;
     }
@@ -86,6 +92,11 @@ public class SimpleTransaction implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         return new byte[0];
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return false;
     }
 
     @Override

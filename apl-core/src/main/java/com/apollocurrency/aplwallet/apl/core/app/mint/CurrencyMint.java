@@ -20,18 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.slf4j.Logger;
@@ -53,7 +54,6 @@ import javax.enterprise.inject.spi.CDI;
  */
 public final class CurrencyMint {
     private static final Logger LOG = getLogger(CurrencyMint.class);
-
 
     public enum Event {
         CURRENCY_MINT
@@ -97,19 +97,27 @@ public final class CurrencyMint {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencyMint> currencyMintTable = new VersionedEntityDbTable<CurrencyMint>("currency_mint", currencyMintDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<CurrencyMint> currencyMintTable = new VersionedDeletableEntityDbTable<CurrencyMint>("currency_mint", currencyMintDbKeyFactory) {
 
         @Override
-        protected CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyMint load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyMint(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyMint currencyMint) throws SQLException {
+        public void save(Connection con, CurrencyMint currencyMint) throws SQLException {
             currencyMint.save(con);
         }
 
     };
+
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountCurrencyService lookupAccountCurrencyService(){
+        if ( accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
 
     private static final Listeners<Mint,Event> listeners = new Listeners<>();
 
@@ -183,7 +191,7 @@ public final class CurrencyMint {
             }
             currencyMintTable.insert(currencyMint);
             long units = Math.min(attachment.getUnits(), currency.getMaxSupply() - currency.getCurrentSupply());
-            account.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currency.getId(), units);
+            lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(account, event, eventId, currency.getId(), units);
             currency.increaseSupply(units);
             listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
         } else {
