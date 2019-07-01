@@ -41,7 +41,7 @@ public class ShardObserverIntegrationTest {
     {
         Properties properties = new Properties();
         properties.put("apl.trimDerivedTables", "true");
-        properties.put("apl.noshardcreate", "true");
+        properties.put("apl.noshardcreate", "false");
         holder.init(properties);
     }
 
