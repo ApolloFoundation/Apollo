@@ -55,12 +55,10 @@ public class DataTagDao extends EntityDbTable<DataTag> {
         for (String tagValue : taggedData.getParsedTags()) {
             DataTag dataTag = get(tagDbKeyFactory.newKey(tagValue));
             if (dataTag == null) {
-                logger.debug("Add new tag value {}", tagValue);
                 dataTag = new DataTag(tagValue);
             }
             dataTag.setHeight(taggedData.getHeight());
             dataTag.setCount(dataTag.getCount() + 1);
-            logger.debug("New quantity for tag value {} - {}", tagValue, dataTag.getCount());
             insert(dataTag);
         }
     }

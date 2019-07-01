@@ -33,12 +33,11 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
@@ -65,11 +64,13 @@ public class BlockchainImpl implements Blockchain {
     private TransactionIndexDao transactionIndexDao;
     private BlockIndexDao blockIndexDao;
     private DatabaseManager databaseManager;
-
+    private ShardDao shardDao;
+    private ShardRecoveryDao shardRecoveryDao;
 
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
-                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexDao blockIndexDao, DatabaseManager databaseManager) {
+                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexDao blockIndexDao,
+                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
@@ -78,6 +79,8 @@ public class BlockchainImpl implements Blockchain {
         this.transactionIndexDao = transactionIndexDao;
         this.blockIndexDao = blockIndexDao;
         this.databaseManager = databaseManager;
+        this.shardDao = shardDao;
+        this.shardRecoveryDao = shardRecoveryDao;
     }
 
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
@@ -354,8 +357,13 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    @Transactional
     public void deleteAll() {
         blockDao.deleteAll();
+        shardRecoveryDao.hardDeleteAllShardRecovery();
+        shardDao.hardDeleteAllShards();
+        transactionIndexDao.hardDeleteAllTransactionIndex();
+        blockIndexDao.hardDeleteAllBlockIndex();
     }
 
     @Override

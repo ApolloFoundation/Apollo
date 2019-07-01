@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -40,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
-import org.junit.jupiter.api.Disabled;
 
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
@@ -63,7 +63,7 @@ public class ShardObserverTest {
     PropertiesHolder propertiesHolder = new PropertiesHolder();
     {
         Properties properties = new Properties();
-        properties.put("apl.noshardcreate", "true");
+        properties.put("apl.noshardcreate", "false");
         propertiesHolder.init(properties);
     }
     
