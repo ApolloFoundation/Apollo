@@ -462,6 +462,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
                 catch (Exception e) {
+                    log.error(e.toString(), e);
                     dataSource.rollback(false);
                 }
                 finally {
