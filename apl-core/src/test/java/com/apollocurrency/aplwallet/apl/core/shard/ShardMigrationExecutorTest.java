@@ -142,13 +142,14 @@ class ShardMigrationExecutorTest {
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
             ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class, AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, ShardMigrationExecutor.class,
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
             AplAppStatus.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
+            .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))

@@ -1,4 +1,5 @@
 DELETE FROM PUBLIC.UPDATE_STATUS;
+delete from trim;
 DELETE FROM PUBLIC.TRANSACTION;
 DELETE FROM PUBLIC.BLOCK;
 DELETE FROM PUBLIC.TWO_FACTOR_AUTH;
@@ -329,3 +330,7 @@ INSERT into shuffling_data
 (DB_ID  	,SHUFFLING_ID  	,ACCOUNT_ID  	,DATA  	                                            ,TRANSACTION_TIMESTAMP  	,HEIGHT ) VALUES
 (1          ,100            ,105            ,(X'ff112385a1f832bc', X'ffffff', X'1234567890')    ,150                        ,1),
 (2          ,101            ,110            ,(X'75849274935438',)                               ,250                        ,5);
+
+INSERT into trim
+(DB_ID,     HEIGHT,   DONE ) VALUES
+(1    ,      1000,    true);

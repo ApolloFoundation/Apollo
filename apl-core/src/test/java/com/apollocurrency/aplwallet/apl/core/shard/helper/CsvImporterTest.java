@@ -112,7 +112,6 @@ class CsvImporterTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            TrimService.class,
             JdbiHandleFactory.class, ShardDaoJdbcImpl.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -132,6 +131,7 @@ class CsvImporterTest {
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+            .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();

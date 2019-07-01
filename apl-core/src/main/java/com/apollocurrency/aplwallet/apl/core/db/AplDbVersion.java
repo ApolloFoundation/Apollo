@@ -782,7 +782,9 @@ public class AplDbVersion extends DbVersion {
             case 296:
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS generator_ids ARRAY DEFAULT NULL");
             case 297:
-                return 297;
+                apply("CREATE TABLE IF NOT EXISTS trim(db_id IDENTITY, height INT NOT NULL, done BOOLEAN NOT NULL DEFAULT FALSE)");
+            case 298:
+                return 298;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
