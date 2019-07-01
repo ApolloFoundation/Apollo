@@ -17,17 +17,26 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.lang.management.ManagementFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
 
 @Singleton
 public class ShardObserver {
@@ -130,10 +139,23 @@ public class ShardObserver {
     private void updateTrimConfig(boolean enableTrim) {
          trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
+    
 
     private boolean isEnoughMemory(){
-        long memoryTotal = Runtime.getRuntime().totalMemory();
-        boolean res = (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+        long memoryTotal = 0;
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        try {
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
+            memoryTotal = (Long)attribute;
+        } catch (Exception ex) {
+        }
+        boolean res = false;
+        if(memoryTotal==0){
+            log.warn("Can not calculate physical RAM size, continuing sharding though it is risky");
+            res = true;
+        }else{
+            res = (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+        }
         if(!res){
             log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
             log.debug("Required memory: {}, Available: {} ", LOWER_SHARDING_MEMORY_LIMIT, memoryTotal);
