@@ -1000,18 +1000,26 @@ public final class Account {
     }
 
    public  void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
-        addToBalanceATM(event, eventId, amountATM, 0);
-       if (LOG.isTraceEnabled()) {
-           LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + balanceATM, blockchain.getHeight());
-       }
+       LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
+       addToBalanceATM(event, eventId, amountATM, 0);
+    }
+
+    private String last3Stacktrace() {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+    }
+
+    private String getStacktraceSpec(StackTraceElement element) {
+        String className = element.getClassName();
+        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM != 0 && LOG.isTraceEnabled()) {
-            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height- {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + balanceATM, blockchain.getHeight());
+        if (feeATM != 0) {
+            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height- {}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         this.balanceATM = Math.addExact(this.balanceATM, totalAmountATM);
@@ -1023,18 +1031,16 @@ public final class Account {
     }
 
     public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+        LOG.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}", id, last3Stacktrace(), amountATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
         addToUnconfirmedBalanceATM(event, eventId, amountATM, 0);
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
-        }
     }
 
     public void addToUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM != 0 && LOG.isTraceEnabled()) {
-            LOG.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
+        if (feeATM != 0) {
+            LOG.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}", id, last3Stacktrace(), amountATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         this.unconfirmedBalanceATM = Math.addExact(this.unconfirmedBalanceATM, totalAmountATM);
@@ -1061,10 +1067,8 @@ public final class Account {
     }
 
     public void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+        LOG.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
         addToBalanceAndUnconfirmedBalanceATM(event, eventId, amountATM, 0);
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}", id, Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + balanceATM, amountATM + unconfirmedBalanceATM, blockchain.getHeight());
-        }
     }
 
     public void addToBalanceAndUnconfirmedBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
