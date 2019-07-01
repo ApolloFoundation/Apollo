@@ -507,10 +507,10 @@ public final class Peers {
         }
 
         PeerAddress pa = new PeerAddress(host);
-
-        if (isMyAddress(pa)) {
-            return null;
-        }
+//TODO: we should honor port here, in other case we can not connect from the same pvt network
+//        if (isMyAddress(pa)) {
+//            return null;
+//        }
 
         PeerImpl peer;
         if ((peer = peers.get(pa.getAddrWithPort())) != null) {
