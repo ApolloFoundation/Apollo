@@ -452,13 +452,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     blockchain.deleteAll();
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
                     ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
+                    trimService.trimDerivedTables(0);
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
                     FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
 
                     dataSource.commit(false);
-                    blockchainConfigUpdater.rollback(0);
+                    lookupBlockhainConfigUpdater().rollback(0);
                 }
                 catch (Exception e) {
                     dataSource.rollback(false);
@@ -691,7 +692,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
 
         int curTime = timeService.getEpochTime();
-
         globalSync.writeLock();
         try {
             Block previousLastBlock = null;
