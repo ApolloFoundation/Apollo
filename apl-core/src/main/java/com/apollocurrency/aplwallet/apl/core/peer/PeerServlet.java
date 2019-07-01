@@ -89,46 +89,46 @@ public final class PeerServlet extends WebSocketServlet {
         PeerRequestHandler res = null;
         switch (rtype) {
             case "addPeers":
-                res = new AddPeers();
+                res = CDI.current().select(AddPeers.class).get();
                 break;
             case "getCumulativeDifficulty":
-                res = new GetCumulativeDifficulty();
+                res = CDI.current().select(GetCumulativeDifficulty.class).get();
                 break;
             case "getInfo":
-                res = new GetInfo();
+                res = CDI.current().select(GetInfo.class).get();
                 break;
             case "getMilestoneBlockIds":
-                res = new GetMilestoneBlockIds();
+                res = CDI.current().select(GetMilestoneBlockIds.class).get();
                 break;
             case "getNextBlockIds":
-                res = new GetNextBlockIds();
+                res = CDI.current().select(GetNextBlockIds.class).get();
                 break;
             case "getNextBlocks":
-                res = new GetNextBlocks();
+                res = CDI.current().select(GetNextBlocks.class).get();
                 break;
             case "getPeers":
-                res = new GetPeers();
+                res = CDI.current().select(GetPeers.class).get();
                 break;
             case "getTransactions":
-                res = new GetTransactions();
+                res = CDI.current().select(GetTransactions.class).get();
                 break;
             case "getUnconfirmedTransactions":
-                res = new GetUnconfirmedTransactions();
+                res = CDI.current().select(GetUnconfirmedTransactions.class).get();
                 break;
             case "processBlock":
-                res = new ProcessBlock();
+                res = CDI.current().select(ProcessBlock.class).get();
                 break;
             case "processTransactions":
-                res = new ProcessTransactions();
+                res = CDI.current().select(ProcessTransactions.class).get();
                 break;
             case "getFileDownloadInfo":
-                res = new GetFileDownloadInfo(downloadableFilesManager);
+                res = CDI.current().select(GetFileDownloadInfo.class).get();
                 break;
             case "getFileChunk":
-                res = new GetFileChunk(downloadableFilesManager);
+                res = CDI.current().select(GetFileChunk.class).get();
                 break; 
             case "getShardingInfo":
-                res = new GetShardingInfo(shardDao, blockchainConfig);
+                res = CDI.current().select(GetShardingInfo.class).get();
                 break;                
         }
         return res;

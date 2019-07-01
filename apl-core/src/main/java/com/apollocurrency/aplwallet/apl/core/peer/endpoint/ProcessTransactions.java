@@ -23,14 +23,12 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Vetoed
 public final class ProcessTransactions extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessTransactions.class);
 

@@ -29,9 +29,7 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.List;
 import java.util.SortedSet;
-import javax.enterprise.inject.Vetoed;
 
-@Vetoed
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     public GetUnconfirmedTransactions() {}
