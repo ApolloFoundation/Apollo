@@ -136,7 +136,7 @@ public class ShardObserver {
         boolean res = (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
         if(!res){
             log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
-            log.debug("Required memory: {}, Available: {} ",LOWER_SHARDING_MEMORY_LIMIT,memoryTotal);
+            log.debug("Required memory: {}, Available: {} ", LOWER_SHARDING_MEMORY_LIMIT, memoryTotal);
         }
         return res;
     }
