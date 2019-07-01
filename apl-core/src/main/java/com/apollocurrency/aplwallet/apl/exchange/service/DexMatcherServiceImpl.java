@@ -32,8 +32,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
-    private static volatile EpochTime epochTime;
-    private DexOffer lastMatchedOffer; 
+    private EpochTime epochTime;
         
 
     @Inject
@@ -48,8 +47,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     @Override
     public void initialize() {
-        log.debug("DexMatcherService : initialization routine");
-        this.lastMatchedOffer = null;
+        log.debug("DexMatcherService : initialization routine");        
     }
 
     /**
@@ -153,8 +151,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
                 DexOffer currentOffer = offers.get(i);                
                 if (validateOffer(currentOffer)) {
                     // matched...
-                    log.debug("match found: {}", currentOffer.getId() );
-                    this.lastMatchedOffer = currentOffer;
+                    log.debug("match found: {}", currentOffer.getId() );                    
                     onOfferMatch(createdOffer, currentOffer); 
                     
                     return;
