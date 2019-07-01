@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.util.AnnotationLiteral;
@@ -55,8 +58,20 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
     }
 
-    public void onTrimDone(@Observes Integer height) {
+    public void onTrimDoneAsync(@Observes @Async Integer height) {
         tryCreateShardAsync(height);
+    }
+
+    public void onTrimDone(@Observes @Sync Integer height) {
+        try {
+            CompletableFuture<Boolean> future = tryCreateShardAsync(height);
+            if (future != null) {
+                future.get();
+            }
+        }
+        catch (InterruptedException | ExecutionException e) {
+            log.error(e.toString(), e);
+        }
     }
 
     public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
@@ -115,6 +130,7 @@ public class ShardObserver {
     private void updateTrimConfig(boolean enableTrim) {
          trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
+
     private boolean isEnoughMemory(){
         long memoryTotal = Runtime.getRuntime().totalMemory();
         boolean res = (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);

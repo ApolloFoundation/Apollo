@@ -20,37 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
@@ -59,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
@@ -88,16 +58,51 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.ThreadFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
+
+import java.math.BigInteger;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -289,8 +294,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
-            continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
 
+            continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
+            trimService.init(blockchain.getHeight()); // try to perform all not performed trims
             if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
                 scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
             } else {
@@ -381,12 +387,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void updateInitialBlockId() {
-        globalSync.updateLock();
-        try {
-            initialBlock = blockchain.getShardInitialBlock().getId();
-        } finally {
-            globalSync.updateUnlock();
-        }
+        initialBlock = blockchain.getShardInitialBlock().getId();
     }
 
     @Override
@@ -462,9 +463,18 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     blockchain.deleteAll();
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
+                    ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
+                    trimService.trimDerivedTables(0, false);
+                    DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
+                    Path dataExportDir = dirProvider.getDataExportDir();
+                    FileUtils.clearDirectorySilently(dataExportDir);
+                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
+
                     dataSource.commit(false);
+                    lookupBlockhainConfigUpdater().rollback(0);
                 }
                 catch (Exception e) {
+                    log.error(e.toString(), e);
                     dataSource.rollback(false);
                 }
                 finally {
@@ -695,7 +705,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
 
         int curTime = timeService.getEpochTime();
-
         globalSync.writeLock();
         try {
             Block previousLastBlock = null;
