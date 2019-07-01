@@ -353,48 +353,6 @@ public class DexController {
         ).build();
     }
 
-    @GET
-    @Path("/offersMatch")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getOffersMatch( @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
-                                    @Parameter(description = "Offer currency. (APL=0, ETH=1, PAX=2)") @QueryParam("offerCurrency") Integer offerCurrency,
-                                    @Parameter(description = "The amount of offer") @QueryParam("offerAmount") BigDecimal offerAmount,
-                                    @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Integer pairCurrency,
-                                    @Parameter(description = "Pair rate") @QueryParam("pairRate") BigDecimal pairRate,
-                                    @Context HttpServletRequest req) throws NotFoundException {
-
-        log.debug("getOffersMatch,  orderType: {}, offerCurrency: {}, offerAmount: {}, pairCurrency: {}, pairRate: {} ",orderType, offerCurrency, offerAmount, pairCurrency, pairRate );
-
-        OfferType type = null;
-        DexCurrencies pairCurr = null, offerCurr = null;
-        Integer currentTime = epochTime.getEpochTime();
-
-
-        //Validate
-
-        try {
-            if (orderType != null) {
-                type = OfferType.getType(orderType);
-            }
-        } catch (Exception ex){
-            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
-        }
-
-        DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(type, currentTime, offerCurrency, offerAmount, pairCurrency, pairRate );
-        List<DexOffer> offers = service.getOffersForMatching(dexOfferDBMatchingRequest);
-
-        return Response.ok(offers.stream()
-                .map(o -> o.toDto())
-                .collect(Collectors.toList())
-        ).build();
-    }
-
-
-
     @POST
     @Path("/offer/cancel")
     @Produces(MediaType.APPLICATION_JSON)

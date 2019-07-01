@@ -32,7 +32,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
-    private EpochTime epochTime;
+    private static volatile EpochTime epochTime;
     private DexOffer lastMatchedOffer; 
         
 
@@ -130,22 +130,18 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     public void onCreateOffer( DexOffer createdOffer ) {
         
         log.debug("DexMatcherServiceImpl:onCreateOffer()");
-        
-        OfferType type = null;
     
-        // vice versa - if we create buy offer we need to look up sell             
-        if ( createdOffer.getType().equals(OfferType.SELL)) type = OfferType.BUY;
-                else type = OfferType.SELL;        
-                
+        OfferType counterOfferType = createdOffer.getType().isSell() ? OfferType.BUY : OfferType.SELL;
+
         Integer currentTime = epochTime.getEpochTime();        
         BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
         Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
         
         BigDecimal pairRate = new BigDecimal( EthUtil.ethToGwei( createdOffer.getPairRate()) ); 
         
-        log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", type, currentTime, offerAmount, pairCurrency, pairRate );
+        log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", counterOfferType, currentTime, offerAmount, pairCurrency, pairRate );
                 
-        DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(type, currentTime,  0 , offerAmount, pairCurrency.intValue(), pairRate );        
+        DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(counterOfferType, currentTime,  0 , offerAmount, pairCurrency.intValue(), pairRate );        
         List<DexOffer> offers = dexService.getOffersForMatching(dexOfferDBMatchingRequest);
                        
         // DexOffer match = offers.
