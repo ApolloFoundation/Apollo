@@ -38,7 +38,7 @@ public class ShardObserver {
     private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
     private final PropertiesHolder propertiesHolder;
-    public final static long LOWER_SHARDING_MEMORY_LIMIT=3072*1024*1024; //3GB
+    public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
     
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
