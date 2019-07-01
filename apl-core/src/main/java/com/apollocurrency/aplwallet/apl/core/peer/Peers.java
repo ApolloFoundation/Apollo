@@ -541,7 +541,8 @@ public final class Peers {
 //                selfAnnouncedAddresses.remove(newPa.getAddrWithPort());
                 try {
                     peer.setAnnouncedAddress(newAnnouncedAddress);
-                    oldPeer = peers.remove(oldPeer);
+                    removePeer(oldPeer);
+                    oldPeer = peers.remove(oldPeer.getHostWithPort());
                     if (oldPeer != null) {
                        notifyListeners(oldPeer, Event.REMOVE);
                     }

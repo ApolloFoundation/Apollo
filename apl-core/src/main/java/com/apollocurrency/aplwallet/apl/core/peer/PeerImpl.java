@@ -167,8 +167,13 @@ public final class PeerImpl implements Peer {
     }
 
     private void setState(PeerState state) {
-        if (state != PeerState.CONNECTED)
+        if (state != PeerState.CONNECTED) {
             webSocket.close();
+            if (inboundSocket != null && inboundSocket.isOpen()) {
+                LOG.trace("inboundSocket will be closed too");
+                inboundSocket.close();
+            }
+        }
         if (this.state == state) {
             return;
         }
