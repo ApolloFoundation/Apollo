@@ -754,7 +754,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
                 if( ! StringUtils.isBlank(newPi.error) || (newPi.errorCode!=null && newPi.errorCode!=0)){
                     LOG.debug("We've got error from peer: {}. Error: {}  cause: {} code: {} ", getHostWithPort(), newPi.error, newPi.getCause(), newPi.getErrorCode());
-                    if(Errors.BLACKLISTED.equalsIgnoreCase(newPi.error) || newPi.getBlacklisted()){
+                    if(Errors.BLACKLISTED.equalsIgnoreCase(newPi.error) || (newPi.getBlacklisted()!=null && newPi.getBlacklisted())){
                        LOG.warn("We are blacklisted! Cause: {}", newPi.getBlacklistingCause());
                     }
                     setState(PeerState.NON_CONNECTED);
