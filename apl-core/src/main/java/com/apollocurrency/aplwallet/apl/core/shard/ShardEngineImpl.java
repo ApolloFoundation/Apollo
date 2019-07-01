@@ -132,7 +132,7 @@ public class ShardEngineImpl implements ShardEngine {
                 state = FAILED;
                 durableTaskUpdateByState(state, null, null);
             }
-            log.debug("BACKUP by SQL={} was successful", sql);
+            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
             state = MigrateState.MAIN_DB_BACKUPED;
             durableTaskUpdateByState(state, 3.0, "Backed up");
             loadAndRefreshRecovery(sourceDataSource);
@@ -628,7 +628,8 @@ public class ShardEngineImpl implements ShardEngine {
         state = COMPLETED;
         // complete sharding
         updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL);
-        log.debug("Shard record is created with Hash in {} ms", System.currentTimeMillis() - startAllTables);
+        log.debug("Shard record '{}' is created with Hash in {} ms", paramInfo.getShardId(),
+                System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
         return state;
     }

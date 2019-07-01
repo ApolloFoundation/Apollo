@@ -42,6 +42,9 @@ public final class ProcessBlock extends PeerRequestHandler {
     public JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
         String previousBlockId = (String)request.get("previousBlock");
         Block lastBlock = lookupBlockchain().getLastBlock();
+        if (lastBlock == null) {
+            return JSON.emptyJSON; // probably node is not loaded with any block
+        }
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
         Object timeoutJsonValue = request.get("timeout");
         int peerBlockTimeout =  timeoutJsonValue == null ? 0 : ((Long)timeoutJsonValue).intValue();
