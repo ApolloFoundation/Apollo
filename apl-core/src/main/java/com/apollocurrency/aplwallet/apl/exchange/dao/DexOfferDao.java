@@ -65,6 +65,11 @@ public interface DexOfferDao {
     DexOffer getByTransactionId(@Bind("transactionId") long blockId);
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer where latest = true AND db_id = :id")
+    @RegisterRowMapper(DexOfferMapper.class)
+    DexOffer getById(@Bind("id") long id);
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             " where latest = true " +
             " AND offer.finish_time < :currentTime" +

@@ -14,12 +14,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancel
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
@@ -45,19 +47,21 @@ public class DexService {
     private DexSmartContractService dexSmartContractService;
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
+    private DexContractTable dexContractTable;
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
 
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
-                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService) {
+                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
+        this.dexContractTable = dexContractTable;
     }
 
 
@@ -66,11 +70,20 @@ public class DexService {
         return dexOfferDao.getByTransactionId(transactionId);
     }
 
+    @Transactional
+    public DexOffer getOfferById(Long id){
+        return dexOfferDao.getById(id);
+    }
+
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
     public void saveOffer (DexOffer offer){
         dexOfferTable.insert(offer);
+    }
+
+    public void saveDexContract(ExchangeContract exchangeContract){
+        dexContractTable.insert(exchangeContract);
     }
 
     @Transactional
