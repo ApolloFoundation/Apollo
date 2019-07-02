@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Inject;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -69,11 +70,17 @@ import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
+    @Inject
     private PropertiesHolder propertiesHolder;
+    @Inject
     private BlockchainProcessor blockchainProcessor;
+    @Inject
     private volatile EpochTime timeService;   
+    @Inject
     private ShardDao shardDao;
+    @Inject
     private BlockchainConfig blockchainConfig;
+    @Inject
     private DownloadableFilesManager downloadableFilesManager;
 
     protected void lookupComponents() {
