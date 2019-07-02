@@ -83,8 +83,8 @@ public class ApiSplitFilter implements Filter{
     private void logRequest(HttpServletRequest rq){
         logger.trace("Request from: "+rq.getRemoteAddr()+" Method: "+rq.getMethod()
                 +" User: "+rq.getRemoteUser()
-                +"/n/t Request URI: "+rq.getRequestURI()
-                +"/n/t Request session ID: "+rq.getRequestedSessionId()
+                +"\n\t Request URI: "+rq.getRequestURI()
+                +"\n\t Request session ID: "+rq.getRequestedSessionId()
         );
         //print all headers
         Enumeration<String> hdre = rq.getHeaderNames();

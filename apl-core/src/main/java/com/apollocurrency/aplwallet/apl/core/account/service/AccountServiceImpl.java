@@ -500,6 +500,11 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Override
+    public int getBlockchainHeight() {
+        return blockchain.getHeight();
+    }
+
     //Delegated from  AccountPublicKeyService
     @Override
     public boolean setOrVerify(long accountId, byte[] key) {

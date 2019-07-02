@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -58,7 +57,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getNextLeasingHeightFrom());
             DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getNextLeasingHeightTo());
             DbUtils.setLongZeroToNull(pstmt, ++i, accountLease.getNextLesseeId());
-            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
+            pstmt.setInt(++i, accountLease.getHeight());
             pstmt.executeUpdate();
         }
     }
