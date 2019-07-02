@@ -102,8 +102,6 @@ public class TrimService {
         int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
         if (trimHeight > 0) {
 
-            doTrimDerivedTablesOnHeight(trimHeight, blockchainHeight);
-
             TrimEntry trimEntry = new TrimEntry(null, blockchainHeight, false);
             trimDao.clear();
             trimEntry = trimDao.save(trimEntry);

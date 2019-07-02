@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import javax.enterprise.inject.spi.CDI;
@@ -71,7 +72,7 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     }
 
     public void add(TaggedData taggedData, int height) {
-        logger.trace("Restore tagged data");
+        logger.trace("Restore tagged data {} - {}", Arrays.toString(taggedData.getParsedTags()), height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count + 1 WHERE tag = ? AND height >= ?")) {
@@ -91,6 +92,7 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     }
 
     public void delete(Map<String, Integer> expiredTags) {
+        logger.debug("Delete expired tags {} ", expiredTags);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count - ? WHERE tag = ?");
