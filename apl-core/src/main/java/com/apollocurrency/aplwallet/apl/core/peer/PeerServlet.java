@@ -56,6 +56,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.inject.Inject;
+import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -82,6 +83,12 @@ public final class PeerServlet extends WebSocketServlet {
     private BlockchainConfig blockchainConfig;
     @Inject
     private DownloadableFilesManager downloadableFilesManager;
+
+    @Override
+    public void init() throws ServletException {
+        super.init(); 
+        lookupComponents();
+    }
 
     protected void lookupComponents() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.nio.file.Path;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -24,7 +25,8 @@ import org.json.simple.JSONStreamAware;
 @Slf4j
 public class GetFileChunk extends PeerRequestHandler {
     private DownloadableFilesManager downloadableFilesManager;
-
+    
+    @Inject
     public GetFileChunk(DownloadableFilesManager downloadableFilesManager) {
         this.downloadableFilesManager = downloadableFilesManager;
     }
