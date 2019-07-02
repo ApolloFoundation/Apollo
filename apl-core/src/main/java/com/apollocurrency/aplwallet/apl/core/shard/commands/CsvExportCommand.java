@@ -27,14 +27,16 @@ public class CsvExportCommand implements DataMigrateOperation {
     private int commitBatchSize;
     private int snapshotBlockHeight;
     private ExcludeInfo excludeInfo;
+    private int blockchainHeight;
 
     public CsvExportCommand(ShardEngine shardEngine,
-                            int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, ExcludeInfo excludeInfo) {
+                            int commitBatchSize, int snapshotBlockHeight, List<String> tableNameList, ExcludeInfo excludeInfo, int blockchainHeight) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.commitBatchSize = commitBatchSize <= 0 ? ShardConstants.DEFAULT_COMMIT_BATCH_SIZE : commitBatchSize;
         this.excludeInfo = excludeInfo;
         this.tableNameList = tableNameList == null ? new ArrayList<>() : tableNameList;
+        this.blockchainHeight = blockchainHeight;
     }
 
 
@@ -49,6 +51,7 @@ public class CsvExportCommand implements DataMigrateOperation {
                 .commitBatchSize(this.commitBatchSize)
                 .snapshotBlockHeight(this.snapshotBlockHeight)
                 .excludeInfo(this.excludeInfo)
+                .blockchainHeight(blockchainHeight)
                 .build();
         return shardEngine.exportCsv(paramInfo);
     }

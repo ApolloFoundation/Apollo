@@ -76,9 +76,10 @@ import org.slf4j.Logger;
  * TODO Required massive refactoring
  */
 public final class Account {
-    
+
     private static final Logger LOG = getLogger(Account.class);
-    
+    public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
+
     public enum Event {
         BALANCE, UNCONFIRMED_BALANCE, ASSET_BALANCE, UNCONFIRMED_ASSET_BALANCE, CURRENCY_BALANCE, UNCONFIRMED_CURRENCY_BALANCE,
         LEASE_SCHEDULED, LEASE_STARTED, LEASE_ENDED, SET_PROPERTY, DELETE_PROPERTY
@@ -546,14 +547,15 @@ public final class Account {
     }
 
     public long getEffectiveBalanceAPL(int height, boolean lock) {
-        if (height <= 1440) {
-            Account genesisAccount = getAccount(id, 0);
+        int shardHeight = blockchain.getShardInitialBlock().getHeight();
+        if (shardHeight <= height - EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            Account genesisAccount = getAccount(id, shardHeight);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (this.publicKey == null) {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
-        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= 1440) {
+        if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {

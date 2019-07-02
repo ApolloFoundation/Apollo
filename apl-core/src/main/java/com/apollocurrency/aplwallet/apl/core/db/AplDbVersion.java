@@ -708,7 +708,7 @@ public class AplDbVersion extends DbVersion {
             case 261:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
-                        "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
+                        "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL, height INT NOT NULL)");
             case 262:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
             case 263:
@@ -784,7 +784,9 @@ public class AplDbVersion extends DbVersion {
             case 297:
                 apply("CREATE TABLE IF NOT EXISTS trim(db_id IDENTITY, height INT NOT NULL, done BOOLEAN NOT NULL DEFAULT FALSE)");
             case 298:
-                return 298;
+                apply("ALTER TABLE IF EXISTS shard_recovery ADD COLUMN IF NOT EXISTS height INT NOT NULL");
+            case 299:
+                return 299;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

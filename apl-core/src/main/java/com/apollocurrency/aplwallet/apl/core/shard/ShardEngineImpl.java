@@ -59,6 +59,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.inject.Inject;
@@ -399,7 +400,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
-            trimDerivedTables(paramInfo.getSnapshotBlockHeight());
+            trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1, paramInfo.getBlockchainHeight());
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 Files.list(csvExporter.getDataExportPath())
                         .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
@@ -418,6 +419,8 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        case ShardConstants.ACCOUNT_TABLE_NAME:
+                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "balance desc, account_id");
                         default:
                             return exportDerivedTable(tableName, paramInfo);
                     }
@@ -436,10 +439,10 @@ public class ShardEngineImpl implements ShardEngine {
         return state;
     }
 
-    private void trimDerivedTables(int height) {
+    private void trimDerivedTables(int height, int blockchainHeight) {
         databaseManager.getDataSource().begin();
         try {
-            trimService.doTrimDerivedTablesOnHeight(height);
+            trimService.doTrimDerivedTablesOnHeight(height, blockchainHeight);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
         } finally {
@@ -459,14 +462,22 @@ public class ShardEngineImpl implements ShardEngine {
         return recovery;
     }
 
-    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(tableName);
         if (derivedTable != null) {
-            return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            if (excludedColumns == null && sort == null) {
+                return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            } else {
+                return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+            }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + tableName + " in derived table registry");
         }
+    }
+
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+        return exportDerivedTable(tableName, paramInfo, null, null);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {

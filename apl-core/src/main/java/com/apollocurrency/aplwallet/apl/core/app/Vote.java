@@ -55,8 +55,8 @@ public final class Vote {
         }
 
         @Override
-        public void trim(int height) {
-            super.trim(height);
+        public void trim(int height, int maxHeight) {
+            super.trim(height, maxHeight);
             try (Connection con = databaseManager.getDataSource().getConnection();
                  DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {

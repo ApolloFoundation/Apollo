@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,17 +30,20 @@ public class TrimService {
     private final DerivedTablesRegistry dbTablesRegistry;
     private final TrimDao trimDao;
     private final GlobalSync globalSync;
-    private Event<Integer> trimEvent;
+
+    private Event<TrimData> trimEvent;
+
 
 
     @Inject
     public TrimService(DatabaseManager databaseManager,
                        DerivedTablesRegistry derivedDbTablesRegistry,
                        GlobalSync globalSync,
-                       Event<Integer> trimEvent,
+                       Event<TrimData> trimEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback,
                        @Property(value="apl.trimFrequency", defaultValue="1000") int trimFrequency
+
     ) {
         this.maxRollback = maxRollback;
         this.trimDao = trimDao;
@@ -55,8 +59,8 @@ public class TrimService {
         return trimEntry == null ? 0 : trimEntry.getHeight();
     }
 
+
     public void init(int height) {
-        int maxTrimHeight = height - maxRollback;
         TrimEntry trimEntry = trimDao.get();
         int lastTrimHeight = trimEntry == null ? 0 : trimEntry.getHeight();
         log.info("Min rollback height is {}", lastTrimHeight);
@@ -66,7 +70,7 @@ public class TrimService {
                 trimDerivedTables(lastTrimHeight, false);
             }
         }
-        for (int i = lastTrimHeight + trimFrequency; i <= maxTrimHeight; i += trimFrequency) {
+        for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
             log.debug("Perform trim on height {}", trimFrequency);
             trimDerivedTables(i, false);
         }
@@ -75,6 +79,7 @@ public class TrimService {
 
 
     public void trimDerivedTables(int height, boolean async) {
+
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         try {
@@ -82,14 +87,10 @@ public class TrimService {
                 dataSource.begin();
             }
             long startTime = System.currentTimeMillis();
-            doTrimDerivedTablesOnBlockchainHeight(height);
+            doTrimDerivedTablesOnBlockchainHeight(height, async);
             log.debug("Total trim time: " + (System.currentTimeMillis() - startTime));
             dataSource.commit(!inTransaction);
-            if (async) {
-                trimEvent.select(new AnnotationLiteral<Async>() {}).fire(getLastTrimHeight());
-            } else {
-                trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(getLastTrimHeight());
-            }
+
         }
         catch (Exception e) {
             log.info(e.toString(), e);
@@ -98,29 +99,37 @@ public class TrimService {
         }
     }
 
-    public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight) {
+    public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight, boolean async) {
         int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
         if (trimHeight > 0) {
-            TrimEntry trimEntry = new TrimEntry(null, trimHeight, false);
+
+            doTrimDerivedTablesOnHeight(trimHeight, blockchainHeight);
+
+            TrimEntry trimEntry = new TrimEntry(null, blockchainHeight, false);
             trimDao.clear();
             trimEntry = trimDao.save(trimEntry);
             dbManager.getDataSource().commit(false);
 
-            doTrimDerivedTablesOnHeight(trimHeight);
-
+            doTrimDerivedTablesOnHeight(trimHeight, blockchainHeight);
+            if (async) {
+                trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight));
+            } else {
+                trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight));
+            }
             trimEntry.setDone(true);
             trimDao.save(trimEntry);
+
         }
     }
 
-    public void doTrimDerivedTablesOnHeight(int height) {
+    public void doTrimDerivedTablesOnHeight(int height, int maxHeight) {
         TransactionalDataSource dataSource = dbManager.getDataSource();
         long onlyTrimTime = 0;
         for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
             globalSync.readLock();
             try {
                 long startTime = System.currentTimeMillis();
-                table.trim(height);
+                table.trim(height, maxHeight);
                 dataSource.commit(false);
                 onlyTrimTime += (System.currentTimeMillis() - startTime);
             }

@@ -6,9 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,16 +29,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
-import org.slf4j.Logger;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 /**
  * {@inheritDoc}
@@ -39,6 +39,8 @@ import org.slf4j.Logger;
 @Singleton
 public class CsvExporterImpl implements CsvExporter {
     private static final Logger log = getLogger(CsvExporterImpl.class);
+    public static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("DB_ID", "LATEST");
+    private static final String DEFAULT_SORT_COLUMN = "db_id";
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private ShardDaoJdbc shardDaoJdbc;
@@ -75,7 +77,7 @@ public class CsvExporterImpl implements CsvExporter {
      * {@inheritDoc}
      */
     @Override
-    public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit) {
+    public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
         Objects.requireNonNull(derivedTableInterface, "derivedTableInterface is NULL");
         // skip hard coded table
         if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
@@ -90,8 +92,8 @@ public class CsvExporterImpl implements CsvExporter {
         // prepare connection + statement + writer
         try (Connection con = this.databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? order by db_id limit ?");
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID", "LATEST"))
+                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? order by " + sortColumn + " limit ?");
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
         ) {
 
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
@@ -121,6 +123,11 @@ public class CsvExporterImpl implements CsvExporter {
         }
 
         return totalCount;
+    }
+
+    @Override
+    public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit) {
+        return exportDerivedTable(derivedTableInterface, targetHeight, batchLimit, DEFAULT_EXCLUDED_COLUMNS, DEFAULT_SORT_COLUMN);
     }
 
     /**
