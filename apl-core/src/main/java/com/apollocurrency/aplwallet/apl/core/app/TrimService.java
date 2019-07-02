@@ -63,7 +63,7 @@ public class TrimService {
     public void init(int height) {
         TrimEntry trimEntry = trimDao.get();
         int lastTrimHeight = trimEntry == null ? 0 : trimEntry.getHeight();
-        log.info("Min rollback height is {}", lastTrimHeight);
+        log.info("Last trim height was {}", lastTrimHeight);
         if (trimEntry != null) {
             if (!trimEntry.isDone()) {
                 log.info("Finish trim at height {}", lastTrimHeight);
@@ -71,7 +71,7 @@ public class TrimService {
             }
         }
         for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
-            log.debug("Perform trim on height {}", trimFrequency);
+            log.debug("Perform trim on height {}", i);
             trimDerivedTables(i, false);
         }
     }

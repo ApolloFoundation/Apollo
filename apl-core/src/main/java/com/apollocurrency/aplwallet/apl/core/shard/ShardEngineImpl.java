@@ -420,7 +420,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "balance desc, account_id");
+                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "balance desc, id");
                         default:
                             return exportDerivedTable(tableName, paramInfo);
                     }
