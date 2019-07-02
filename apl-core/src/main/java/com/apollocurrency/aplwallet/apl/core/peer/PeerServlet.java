@@ -69,19 +69,20 @@ import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static BlockchainProcessor blockchainProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private PropertiesHolder propertiesHolder;
+    private BlockchainProcessor blockchainProcessor;
+    private volatile EpochTime timeService;   
     private ShardDao shardDao;
     private BlockchainConfig blockchainConfig;
     private DownloadableFilesManager downloadableFilesManager;
 
-    protected BlockchainProcessor lookupComponents() {
+    protected void lookupComponents() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        return blockchainProcessor;
+        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
+        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     }  
     
     public PeerRequestHandler getHandler(String rtype) {
@@ -155,6 +156,7 @@ public final class PeerServlet extends WebSocketServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JSONStreamAware jsonResponse;
+        lookupComponents();
         //
         // Process the peer request
         //
@@ -206,6 +208,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   request             Request message
      */
     void doPost(PeerWebSocket webSocket, long requestId, String request) {
+        lookupComponents();
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
@@ -250,6 +253,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @return                      JSON response
      */
     private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
+        lookupComponents();
         //
         // Check for blacklisted peer
         //
@@ -294,7 +298,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
-                if (lookupComponents().isDownloading()) {
+                if (blockchainProcessor.isDownloading()) {
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
