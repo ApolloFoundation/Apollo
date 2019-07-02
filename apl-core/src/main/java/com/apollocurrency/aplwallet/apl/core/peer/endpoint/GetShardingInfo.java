@@ -28,8 +28,8 @@ import org.json.simple.JSONStreamAware;
 @Slf4j
 public class GetShardingInfo extends PeerRequestHandler{
 
-    private ShardDao shardDao;
-    private BlockchainConfig blockchainConfig;
+    private final ShardDao shardDao;
+    private final BlockchainConfig blockchainConfig;
     
     @Inject
     public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig) {
