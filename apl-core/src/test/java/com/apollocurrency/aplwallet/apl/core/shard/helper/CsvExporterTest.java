@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
@@ -234,7 +235,7 @@ class CsvExporterTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
-        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountInfoTable.getInstance().init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!

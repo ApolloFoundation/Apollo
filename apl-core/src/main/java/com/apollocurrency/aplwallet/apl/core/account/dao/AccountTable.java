@@ -14,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.*;
-import java.util.Collections;
-import java.util.EnumSet;
 
 /**
  *
@@ -32,7 +30,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
         @Override
         public Account newEntity(DbKey dbKey) {
-            return new Account(((LongKey) dbKey).getId(), dbKey);
+            return new Account(((LongKey) dbKey).getId());
         }
 
     };
@@ -57,19 +55,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        long id = rs.getLong("id");
-        Account res = new Account(id, dbKey,
-                                      rs.getLong("balance"),
-                                      rs.getLong("unconfirmed_balance"),
-                                      rs.getLong("forged_balance"),
-                                      rs.getLong("active_lessee_id"));
-
-        if (rs.getBoolean("has_control_phasing")) {
-            res.setControls(Collections.unmodifiableSet(EnumSet.of(AccountControlType.PHASING_ONLY)));
-        } else {
-            res.setControls(Collections.emptySet());
-        }
-        return res;
+        return new Account(rs, dbKey);
     }
 
     @Override
@@ -82,7 +68,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             pstmt.setLong(++i, account.getForgedBalanceATM());
             DbUtils.setLongZeroToNull(pstmt, ++i, account.getActiveLesseeId());
             pstmt.setBoolean(++i, account.getControls().contains(AccountControlType.PHASING_ONLY));
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, account.getHeight()<0?blockchain.getHeight():account.getHeight());
             pstmt.executeUpdate();
         }
     }

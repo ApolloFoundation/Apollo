@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -35,11 +34,11 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
         @Override
         public DbKey newKey(AccountAsset accountAsset) {
-            return accountAsset.dbKey;
+            return accountAsset.getDbKey();
         }
     } 
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
-    private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
+    private static final AccountAssetTable accountAssetTable = new AccountAssetTable();
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     
     public static DbKey newKey(long idA, long idB){
@@ -62,27 +61,22 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
          try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, accountAsset.accountId);
-            pstmt.setLong(++i, accountAsset.assetId);
-            pstmt.setLong(++i, accountAsset.quantityATU);
-            pstmt.setLong(++i, accountAsset.unconfirmedQuantityATU);
-            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
+            pstmt.setLong(++i, accountAsset.getAccountId());
+            pstmt.setLong(++i, accountAsset.getAssetId());
+            pstmt.setLong(++i, accountAsset.getQuantityATU());
+            pstmt.setLong(++i, accountAsset.getUnconfirmedQuantityATU());
+            pstmt.setInt(++i, accountAsset.getHeight());
             pstmt.executeUpdate();
         }       
     }
     
     public void save(AccountAsset accountAsset) {
-        AccountService.checkBalance(accountAsset.accountId, accountAsset.quantityATU, accountAsset.unconfirmedQuantityATU);
-        if (accountAsset.quantityATU > 0 || accountAsset.unconfirmedQuantityATU > 0) {
+        AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
+        if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
             accountAssetTable.insert(accountAsset);
         } else {
             accountAssetTable.delete(accountAsset);
         }
-    }
-    
-    @Override
-    public void trim(int height) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
     }
 
     @Override
@@ -90,8 +84,8 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
             throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
         }
-        if (height > BlockchainHelper.getBlockchainHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + BlockchainHelper.getBlockchainHeight());
+        if (height > lookupBlockchain().getHeight()) {
+            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + lookupBlockchain().getHeight());
         }
     }
 
@@ -142,17 +136,17 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
   
     public static long getAssetBalanceATU(long accountId, long assetId, int height) {
         AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
-        return accountAsset == null ? 0 : accountAsset.quantityATU;
+        return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
     public static long getAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
-        return accountAsset == null ? 0 : accountAsset.quantityATU;
+        return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
     public static long getUnconfirmedAssetBalanceATU(long accountId, long assetId) {
         AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId));
-        return accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
+        return accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
     }
 
 }

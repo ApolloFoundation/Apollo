@@ -27,7 +27,7 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
 
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
-            return accountInfo.dbKey;
+            return accountInfo.getDbKey();
         }
 
     };
@@ -55,9 +55,9 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
     public void save(Connection con, AccountInfo accountInfo) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info " + "(account_id, name, description, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, accountInfo.accountId);
-            DbUtils.setString(pstmt, ++i, accountInfo.name);
-            DbUtils.setString(pstmt, ++i, accountInfo.description);
+            pstmt.setLong(++i, accountInfo.getAccountId());
+            DbUtils.setString(pstmt, ++i, accountInfo.getName());
+            DbUtils.setString(pstmt, ++i, accountInfo.getDescription());
             pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
             pstmt.executeUpdate();
         }

@@ -8,9 +8,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -55,7 +54,7 @@ public class GetPrivateAccountLedgerEntry extends AbstractAPIRequestHandler {
         //
         // Get the ledger entry
         //
-        LedgerEntry ledgerEntry = AccountLedger.getEntry(ledgerId, true);
+        LedgerEntry ledgerEntry = lookupAccountLedgerService().getEntry(ledgerId, true);
         if (ledgerEntry == null || ledgerEntry.getAccountId() != data.getAccountId())
             return JSONResponses.UNKNOWN_ENTRY;
         //

@@ -19,9 +19,9 @@ import java.util.Objects;
  */
 @Getter @Setter
 public final class PublicKey extends VersionedDerivedEntity {
-    //TODO remove the unneeded public scope
-    public final long accountId;
-    public byte[] publicKey;
+
+    final long accountId;
+    byte[] publicKey;
 
     public PublicKey(long accountId, byte[] publicKey, int height) {
         super(null, height);

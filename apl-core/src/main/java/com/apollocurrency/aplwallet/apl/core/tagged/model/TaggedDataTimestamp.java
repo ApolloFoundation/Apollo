@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
 public class TaggedDataTimestamp {
 
@@ -76,6 +76,16 @@ public class TaggedDataTimestamp {
                 timestamp == that.timestamp &&
                 height == that.height &&
                 Objects.equals(dbKey, that.dbKey);
+    }
+
+    @Override
+    public String toString() {
+        return "TaggedDataTimestamp{" +
+                "id=" + id +
+                ", dbKey=" + dbKey +
+                ", timestamp=" + timestamp +
+                ", height=" + height +
+                '}';
     }
 
     @Override

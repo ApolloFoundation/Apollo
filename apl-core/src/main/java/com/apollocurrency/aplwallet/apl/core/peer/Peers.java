@@ -149,10 +149,6 @@ public final class Peers {
 
     // used by threads so shoudl be ConcurrentMap
     static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
-//
-//    private static final ConcurrentMap<String, String> selfAnnouncedAddresses = new ConcurrentHashMap<>();
-//
-//    static final Collection<PeerImpl> allPeers = Collections.unmodifiableCollection(peers.values());
 
     public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
 
@@ -293,39 +289,41 @@ public final class Peers {
     private static void fillMyPeerInfo() {
         myPeerInfo = new JSONObject();
         PeerInfo pi = new PeerInfo();
+        LOG.debug("Start filling 'MyPeerInfo'...");
         List<Peer.Service> servicesList = new ArrayList<>();
         PeerAddress myExtAddress = peerHttpServer.getMyExtAddress();
 
-        if ( myExtAddress!= null) {
+        if ( myExtAddress != null) {
             String host = myExtAddress.getHost();
             int port = myExtAddress.getPort();
             String  announcedAddress = myExtAddress.getAddrWithPort();
+            LOG.debug("Peer external address  = {} : {} + {}", host, port, announcedAddress);
             if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                  throw new RuntimeException("Invalid announced address length: " + announcedAddress);
             }
-            pi.announcedAddress = announcedAddress;
+            pi.setAnnouncedAddress(announcedAddress);
         }else{
             LOG.debug("Peer external address is NOT SET");
         }
 
         if (myHallmark != null && myHallmark.length() > 0) {
-            pi.hallmark = myHallmark;
+            pi.setHallmark(myHallmark);
             servicesList.add(Peer.Service.HALLMARK);
         }
-        pi.application = Constants.APPLICATION;
-        pi.version = Constants.VERSION.toString();
-        pi.platform = peerHttpServer.getMyPlatform();
-        pi.chainId = blockchainConfig.getChain().getChainId().toString();
-        pi.shareAddress = peerHttpServer.shareMyAddress;
+        pi.setApplication(Constants.APPLICATION);
+        pi.setVersion(Constants.VERSION.toString());
+        pi.setPlatform(peerHttpServer.getMyPlatform());
+        pi.setChainId(blockchainConfig.getChain().getChainId().toString());
+        pi.setShareAddress(peerHttpServer.shareMyAddress);
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
         if (API.openAPIPort > 0) {
-            pi.apiPort = API.openAPIPort;
+            pi.setApiPort(API.openAPIPort);
             servicesList.add(Peer.Service.API);
         }
         if (API.openAPISSLPort > 0) {
-            pi.apiSSLPort = API.openAPISSLPort;
+            pi.setApiSSLPort(API.openAPISSLPort);
             servicesList.add(Peer.Service.API_SSL);
         }
 
@@ -345,9 +343,9 @@ public final class Peers {
                     }
                 }
             });
-            pi.disabledAPIs = APIEnum.enumSetToBase64String(disabledAPISet);
+            pi.setDisabledAPIs(APIEnum.enumSetToBase64String(disabledAPISet));
 
-            pi.apiServerIdleTimeout = API.apiServerIdleTimeout;
+            pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
 
             if (API.apiServerCORS) {
                 servicesList.add(Peer.Service.CORS);
@@ -358,7 +356,7 @@ public final class Peers {
         for (Peer.Service service : servicesList) {
             services |= service.getCode();
         }
-        pi.services = Long.toUnsignedString(services);
+        pi.setServices(Long.toUnsignedString(services));
         myServices = Collections.unmodifiableList(servicesList);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -366,6 +364,7 @@ public final class Peers {
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
+        LOG.debug("Finished filling 'MyPeerInfo'");
     }
 
     public static void shutdown() {
@@ -591,6 +590,8 @@ public final class Peers {
     }
 
     public static PeerImpl removePeer(Peer peer) {
+        PeerDb.Entry entry = new PeerDb.Entry(peer.getHostWithPort(), 0, 0);
+        PeerDb.deletePeer(entry);
         return peers.remove(peer.getHostWithPort());
     }
 

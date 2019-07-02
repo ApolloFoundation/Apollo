@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +9,10 @@ import java.util.List;
  * @author al
  */
 public class PeerInfoGroup {
-    private BigInteger hash;
+    private String hash;
     List<HasHashSum> pl = new ArrayList<>();    
 
-    public PeerInfoGroup(BigInteger hash) {
+    public PeerInfoGroup(String hash) {
         this.hash = hash;
     }
     

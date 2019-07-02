@@ -70,8 +70,8 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
         publicKey.setHeight(blockchain.getHeight());
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, publicKey.accountId);
-            DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
+            pstmt.setLong(++i, publicKey.getAccountId());
+            DbUtils.setBytes(pstmt, ++i, publicKey.getPublicKey());
             pstmt.setInt(++i, publicKey.getHeight());
             pstmt.executeUpdate();
         }

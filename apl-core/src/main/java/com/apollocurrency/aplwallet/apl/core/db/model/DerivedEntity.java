@@ -14,7 +14,7 @@ import java.util.Objects;
 public abstract class DerivedEntity implements Comparable {
     private DbKey dbKey;
     private static final long DEFAULT_DB_ID = 0L;
-    private static final int DEFAULT_HEIGHT = -1;
+    protected static final int DEFAULT_HEIGHT = -1;
 
     private long dbId;
     private int height;

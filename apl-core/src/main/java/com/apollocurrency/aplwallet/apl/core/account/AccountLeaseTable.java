@@ -26,7 +26,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
 
         @Override
         public DbKey newKey(AccountLease accountLease) {
-            return accountLease.dbKey;
+            return accountLease.getDbKey();
         }
 
     };
@@ -51,13 +51,13 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
     public void save(Connection con, AccountLease accountLease) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_lease " + "(lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, " + "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest) " + "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, accountLease.lessorId);
-            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.currentLeasingHeightFrom);
-            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.currentLeasingHeightTo);
-            DbUtils.setLongZeroToNull(pstmt, ++i, accountLease.currentLesseeId);
-            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.nextLeasingHeightFrom);
-            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.nextLeasingHeightTo);
-            DbUtils.setLongZeroToNull(pstmt, ++i, accountLease.nextLesseeId);
+            pstmt.setLong(++i, accountLease.getLessorId());
+            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getCurrentLeasingHeightFrom());
+            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getCurrentLeasingHeightTo());
+            DbUtils.setLongZeroToNull(pstmt, ++i, accountLease.getCurrentLesseeId());
+            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getNextLeasingHeightFrom());
+            DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getNextLeasingHeightTo());
+            DbUtils.setLongZeroToNull(pstmt, ++i, accountLease.getNextLesseeId());
             pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
             pstmt.executeUpdate();
         }

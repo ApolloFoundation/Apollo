@@ -30,15 +30,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         }
         return new PublicKeyAnnouncementAppendix(attachmentData);
     }
-    private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
-
-    protected AccountService lookupAccountService(){
-        if ( accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
-    }
 
     protected AccountPublicKeyService lookupAccountPublickKeyService(){
         if ( accountPublicKeyService == null) {
@@ -96,7 +88,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         if (AccountService.getId(this.publicKey) != recipientId) {
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
         }
-        byte[] recipientPublicKey = lookupAccountService().getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountPublickKeyService().getPublicKey(recipientId);
         if (recipientPublicKey != null && ! Arrays.equals(publicKey, recipientPublicKey)) {
             throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
         }
@@ -104,7 +96,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (lookupAccountService().setOrVerify(recipientAccount.getId(), publicKey)) {
+        if (lookupAccountPublickKeyService().setOrVerify(recipientAccount.getId(), publicKey)) {
             lookupAccountPublickKeyService().apply(recipientAccount, this.publicKey);
         }
     }

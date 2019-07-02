@@ -69,7 +69,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         }
         if (key == null) {
             PublicKey publicKey = getPublicKey(dbKey);
-            if (publicKey == null || (key = publicKey.publicKey) == null) {
+            if (publicKey == null || (key = publicKey.getPublicKey()) == null) {
                 return null;
             }
             if (publicKeyCache != null) {
@@ -147,12 +147,12 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
         }
-        if (publicKey.publicKey == null) {
-            publicKey.publicKey = key;
+        if (publicKey.getPublicKey() == null) {
+            publicKey.setPublicKey(key);
             publicKey.setHeight(blockchain.getHeight());
             return true;
         }
-        return Arrays.equals(publicKey.publicKey, key);
+        return Arrays.equals(publicKey.getPublicKey(), key);
     }
 
     @Override
@@ -166,18 +166,18 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(account.getDbKey());
         }
-        if (publicKey.publicKey == null) {
-            publicKey.publicKey = key;
+        if (publicKey.getPublicKey() == null) {
+            publicKey.setPublicKey(key);
             if (isGenesis) {
                 GenesisPublicKeyTable.getInstance().insert(publicKey);
             } else {
                 publicKeyTable.insert(publicKey);
             }
-        } else if (!Arrays.equals(publicKey.publicKey, key)) {
+        } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(account.getDbKey(), false);
-            if (dbPublicKey == null || dbPublicKey.publicKey == null) {
+            if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 publicKeyTable.insert(publicKey);
             }
         }

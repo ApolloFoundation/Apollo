@@ -70,14 +70,9 @@ public final class Asset {
         }
 
         @Override
-        public void trim(int height) {
-            super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
-        }
-
-        @Override
         public void checkAvailable(int height) {
             if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
+            if (height < blockchainProcessor.getMinRollbackHeight()) {
                 throw new IllegalArgumentException("Historical data as of height " + height +" not available.");
             }
             if (height > blockchain.getHeight()) {

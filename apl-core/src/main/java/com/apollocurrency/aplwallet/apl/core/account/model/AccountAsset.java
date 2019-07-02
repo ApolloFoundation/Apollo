@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,30 +16,29 @@ import java.sql.SQLException;
  * @author al
  */
 @Getter @Setter
-public final class AccountAsset {
+public final class AccountAsset extends VersionedDerivedEntity {
 
-    //TODO remove the unneeded public scope
-    public final long accountId;
-    public final long assetId;
-    public final DbKey dbKey;
-    public long quantityATU;
-    public long unconfirmedQuantityATU;
+    final long accountId;
+    final long assetId;
+    long quantityATU;
+    long unconfirmedQuantityATU;
 
     
-    public AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU) {
+    public AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height) {
+        super(null, height);
         this.accountId = accountId;
         this.assetId = assetId;
-        this.dbKey = AccountAssetTable.newKey(this.accountId, this.assetId);
         this.quantityATU = quantityATU;
         this.unconfirmedQuantityATU = unconfirmedQuantityATU;
     }
 
     public AccountAsset(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
         this.accountId = rs.getLong("account_id");
         this.assetId = rs.getLong("asset_id");
-        this.dbKey = dbKey;
         this.quantityATU = rs.getLong("quantity");
         this.unconfirmedQuantityATU = rs.getLong("unconfirmed_quantity");
+        setDbKey(dbKey);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Setter;
@@ -25,6 +26,9 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 public class AccountPropertyServiceImpl implements AccountPropertyService {
 
     @Inject @Setter
+    private Blockchain blockchain;
+
+    @Inject @Setter
     private AccountPropertyTable accountPropertyTable;
 
     @Inject @Setter
@@ -38,7 +42,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
         value = Convert.emptyToNull(value);
         AccountProperty accountProperty = AccountPropertyTable.getProperty(account.getId(), property, setterAccount.getId());
         if (accountProperty == null) {
-            accountProperty = new AccountProperty(transaction.getId(), account.getId(), setterAccount.getId(), property, value);
+            accountProperty = new AccountProperty(transaction.getId(), account.getId(), setterAccount.getId(), property, value, blockchain.getHeight());
         } else {
             accountProperty.setValue(value);
         }

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -23,6 +24,9 @@ import java.util.List;
  */
 @Singleton
 public class AccountInfoServiceImpl implements AccountInfoService {
+
+    @Inject @Setter
+    private Blockchain blockchain;
 
     @Inject @Setter
     private AccountInfoTable accountInfoTable;
@@ -47,12 +51,12 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         description = Convert.emptyToNull(description.trim());
         AccountInfo accountInfo = getAccountInfo(account);
         if (accountInfo == null) {
-            accountInfo = new AccountInfo(account.getId(), name, description);
+            accountInfo = new AccountInfo(account.getId(), name, description, blockchain.getHeight());
         } else {
             accountInfo.setName(name);
             accountInfo.setDescription(description);
         }
-        accountInfo.save();
+        save(accountInfo);
     }
 
 

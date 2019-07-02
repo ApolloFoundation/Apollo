@@ -63,7 +63,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
             accountLease = new AccountLease(account.getId(),
                     height + leasingDelay,
                     height + leasingDelay + period,
-                    lesseeId);
+                    lesseeId, blockchain.getHeight());
         } else if (accountLease.getCurrentLesseeId() == 0) {
             accountLease.setCurrentLeasingHeightFrom(height + leasingDelay);
             accountLease.setCurrentLeasingHeightTo(height + leasingDelay + period);

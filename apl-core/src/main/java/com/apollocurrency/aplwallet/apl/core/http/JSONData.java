@@ -29,7 +29,7 @@ import java.util.*;
 import com.apollocurrency.aplwallet.apl.core.account.model.*;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
@@ -116,6 +116,7 @@ public final class JSONData {
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+    private static DGSService dgsService = CDI.current().select(DGSService.class).get();
 
     private JSONData() {} // never
 
@@ -606,9 +607,8 @@ public final class JSONData {
         json.put("timestamp", goods.getTimestamp());
         json.put("hasImage", goods.hasImage());
         if (includeCounts) {
-            // TODO: YL review
-//            json.put("numberOfPurchases", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), false, true));
-//            json.put("numberOfPublicFeedbacks", DigitalGoodsStore.Purchase.getGoodsPurchaseCount(goods.getId(), true, true));
+            json.put("numberOfPurchases", dgsService.getGoodsPurchaseCount(goods.getId(), false, true));
+            json.put("numberOfPublicFeedbacks", dgsService.getGoodsPurchaseCount(goods.getId(), true, true));
         }
         return json;
     }

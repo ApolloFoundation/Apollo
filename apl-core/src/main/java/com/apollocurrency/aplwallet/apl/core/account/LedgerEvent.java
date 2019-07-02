@@ -36,7 +36,7 @@ public enum LedgerEvent {
         }
     }
     /** Event code */
-    final int code;
+    public final int code;
     /** Event identifier is a transaction */
     private final boolean isTransaction;
 

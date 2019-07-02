@@ -36,7 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -50,12 +51,12 @@ public class FileDownloader {
     @Vetoed
     public static class Status {
         double completed = 0.0;
-        int chunksTotal = 1; //init to 1 to avoid zero division
-        int chunksReady = 0;
+        AtomicInteger chunksTotal = new AtomicInteger(1); //init to 1 to avoid zero division
+         AtomicInteger chunksReady = new AtomicInteger(0);
         List<String> peers = new ArrayList<>();
         FileDownloadDecision decision = FileDownloadDecision.NotReady;
         boolean isComplete(){
-            return chunksReady==chunksTotal;
+            return chunksReady.get()>=chunksTotal.get();
         }
     }
 
@@ -65,15 +66,15 @@ public class FileDownloader {
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
     private final Status status = new Status();
-
-    private DownloadableFilesManager manager;
-    private AplAppStatus aplAppStatus;
+    private final AtomicBoolean finishSignalSent = new AtomicBoolean(false);
+    private final DownloadableFilesManager manager;
+    private final AplAppStatus aplAppStatus;
     private String taskId;
 
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
-    private javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
-
+    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private CompletableFuture<Boolean> download;
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
@@ -95,26 +96,19 @@ public class FileDownloader {
     public void startDownload() {
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
-        CompletableFuture<Boolean> prepare;
-        prepare = CompletableFuture.supplyAsync(() -> {
-            status.decision = prepareForDownloading(null);
-            Boolean res = (status.decision == FileDownloadDecision.AbsOK || status.decision == FileDownloadDecision.OK);
-            return res;
-        });
-        
-        prepare.thenAccept( r->{
-            if (r) {
-                status.chunksTotal = downloadInfo.chunks.size();
-                log.debug("Decision is OK: {}, starting chunks downloading", status.decision.name());
-                download();
-            } else {
-                log.warn("Decision is not OK: {}, Chunks downloading is not started",status.decision.name());
-            }                
+
+        finishSignalSent.set(false);
+        download = CompletableFuture.supplyAsync(() -> {
+                status.chunksTotal.set(downloadInfo.chunks.size());
+                status.chunksReady.set(0);
+                log.debug("Starting file chunks downloading");
+                Status s = download();
+                return status.isComplete();
         });
     }
 
     public Status getDownloadStatus() {
-        status.completed = ((1.0D * status.chunksReady) / (1.0 * status.chunksTotal)) * 100.0;
+        status.completed = ((1.0D * status.chunksReady.get()) / (1.0D * status.chunksTotal.get())) * 100.0D;
         return status;
     }
 
@@ -133,10 +127,12 @@ public class FileDownloader {
            allPeers.addAll(onlyPeers);
         }
         log.debug("prepareForDownloading(), allPeers = {}", allPeers);
-        PeersList pl = new PeersList();
+        PeersList<PeerFileInfo> pl = new PeersList<>();
         allPeers.forEach((pi) -> {
             PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
-            pl.add(pfi);
+            if(pfi.retreiveHash()!=null){
+              pl.add(pfi);
+            }
         });
         log.debug("prepareForDownloading(), pl = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
@@ -144,7 +140,7 @@ public class FileDownloader {
         goodPeers = pvdm.getValidPeers();
         badPeers = pvdm.getInvalidPeers();
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
-        if(pvdm.isNetworkUsable()){
+        if(pvdm.isNetworkUsable()){ // we have nough good peers and can start downloadinig
             PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
             downloadInfo = pfi.getFdi();
         }
@@ -158,18 +154,20 @@ public class FileDownloader {
         for (FileChunkInfo fci : downloadInfo.chunks) {
             if (fci.present.ordinal() < FileChunkState.DOWNLOAD_IN_PROGRESS.ordinal()) {
                 res = fci;
-                log.debug("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
+                log.trace("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{} id: {}", fci.present.ordinal(),fileID);
                 break;
             }
-            this.aplAppStatus.durableTaskUpdate(this.taskId,
-                    (double) (downloadInfo.chunks.size() / Math.max (fci.chunkId, 1) ), "File downloading...");
+            this.aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading: "+this.fileID+"...");
         }
         if (res == null) { //NO more empty chunks. File is ready
-            log.debug("getNextEmptyChunk() fileID = {}", fileID);
-            this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished");
+            if(! finishSignalSent.get()){
+              log.debug("getNextEmptyChunk() fileID = {}", fileID);
+               this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: "+fileID);
             //FIRE event when shard is PRESENT + ZIP is downloaded
-            ShardPresentData shardPresentData = new ShardPresentData(fileID);
-            presentDataEvent.select(literal(ShardPresentEventType.PRESENT)).fireAsync(shardPresentData);
+               ShardPresentData shardPresentData = new ShardPresentData(fileID);
+               presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
+               finishSignalSent.set(true);
+            }
         }
         return res;
     }
@@ -184,15 +182,14 @@ public class FileDownloader {
             if(fc!=null){
                 byte[] data = Base64.getDecoder().decode(fc.mime64data);
                 fops.writeChunk(fc.info.offset, data, fc.info.crc);
-                status.chunksReady++;
+                status.chunksReady.incrementAndGet();
                 fci.present = FileChunkState.SAVED;
             }else{
-//              fci.present=FileChunkState.PRESENT;
-              fci.present=FileChunkState.NOT_PRESENT; // no info, no connect ??
+              fci.present=FileChunkState.PRESENT_IN_PEER; //well, it exists anyway on seome peer
             }
             fci = getNextEmptyChunk();
         }
-        log.debug("doPeerDownload() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{}", fci.present.ordinal());
+        log.debug("doPeerDownload() for peer {} finished", p.gePeer().getAnnouncedAddress());
         return res;
     }
 
@@ -209,13 +206,13 @@ public class FileDownloader {
             runningDownloaders.add(dn_res);
             peerCount++;
             if (peerCount > DOWNLOAD_THREADS) {
-                break;
+                break; 
             }
         }
         return status;
     }
 
-    public Set<Peer> getAllAvailablePeers() {
+    public static Set<Peer> getAllAvailablePeers() {
         Set<Peer> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = Peers.getAllPeers();
         res.addAll(knownPeers);

@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainHelper;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,7 +26,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
-            return accountCurrency.dbKey;
+            return accountCurrency.getDbKey();
         }
 
     };  
@@ -53,11 +53,11 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, accountCurrency.accountId);
-            pstmt.setLong(++i, accountCurrency.currencyId);
-            pstmt.setLong(++i, accountCurrency.units);
-            pstmt.setLong(++i, accountCurrency.unconfirmedUnits);
-            pstmt.setInt(++i, BlockchainHelper.getBlockchainHeight());
+            pstmt.setLong(++i, accountCurrency.getAccountId());
+            pstmt.setLong(++i, accountCurrency.getCurrencyId());
+            pstmt.setLong(++i, accountCurrency.getUnits());
+            pstmt.setLong(++i, accountCurrency.getUnconfirmedUnits());
+            pstmt.setInt(++i, accountCurrency.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -107,16 +107,16 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
 
     public static long getCurrencyUnits(long accountId, long currencyId, int height) {
         AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId), height);
-        return accountCurrency == null ? 0 : accountCurrency.units;
+        return accountCurrency == null ? 0 : accountCurrency.getUnits();
     }
 
     public static long getCurrencyUnits(long accountId, long currencyId) {
         AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId));
-        return accountCurrency == null ? 0 : accountCurrency.units;
+        return accountCurrency == null ? 0 : accountCurrency.getUnits();
     }
 
     public static long getUnconfirmedCurrencyUnits(long accountId, long currencyId) {
         AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId));
-        return accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
+        return accountCurrency == null ? 0 : accountCurrency.getUnconfirmedUnits();
     }    
 }

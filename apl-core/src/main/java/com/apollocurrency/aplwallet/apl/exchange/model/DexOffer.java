@@ -7,6 +7,9 @@ import com.apollocurrency.aplwallet.api.dto.DexOfferDto;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+
+import java.math.BigDecimal;
 
 public class DexOffer{
     private Long id;
@@ -21,7 +24,7 @@ public class DexOffer{
     private Long offerAmount;
 
     private DexCurrencies pairCurrency;
-    private Long pairRate;
+    private BigDecimal pairRate;
     private Integer finishTime;
 
     public DexOffer() {
@@ -34,7 +37,7 @@ public class DexOffer{
         this.offerCurrency = DexCurrencies.getType(dexOfferAttachment.getOfferCurrency());
         this.offerAmount = dexOfferAttachment.getOfferAmount();
         this.pairCurrency = DexCurrencies.getType(dexOfferAttachment.getPairCurrency());
-        this.pairRate = dexOfferAttachment.getPairRate();
+        this.pairRate = EthUtil.gweiToEth(dexOfferAttachment.getPairRate());
         this.status = OfferStatus.getType(dexOfferAttachment.getStatus());
         this.finishTime = dexOfferAttachment.getFinishTime();
 
@@ -54,11 +57,13 @@ public class DexOffer{
         dexOfferDto.toAddress = this.getToAddress();
         dexOfferDto.type = this.getType().ordinal();
         dexOfferDto.offerCurrency = this.getOfferCurrency().ordinal();
-        dexOfferDto.offerAmount = this.getOfferAmount();
+        //TODO make changes on UI. Send Apl as apl.
+        dexOfferDto.offerAmount = EthUtil.aplToGwei(this.getOfferAmount());
         dexOfferDto.pairCurrency = this.getPairCurrency().ordinal();
         dexOfferDto.finishTime = this.getFinishTime();
         dexOfferDto.status = this.getStatus().ordinal();
-        dexOfferDto.pairRate = this.getPairRate();
+        //TODO make changes on UI. Send BigDecimal.
+        dexOfferDto.pairRate = EthUtil.ethToGwei(this.getPairRate());
 
         return dexOfferDto;
     }
@@ -128,11 +133,11 @@ public class DexOffer{
         this.pairCurrency = pairCurrency;
     }
 
-    public Long getPairRate() {
+    public BigDecimal getPairRate() {
         return pairRate;
     }
 
-    public void setPairRate(Long pairRate) {
+    public void setPairRate(BigDecimal pairRate) {
         this.pairRate = pairRate;
     }
 

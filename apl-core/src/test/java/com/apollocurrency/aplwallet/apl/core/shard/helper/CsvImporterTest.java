@@ -134,6 +134,8 @@ class CsvImporterTest {
 
     @Inject
     private ShardDaoJdbc daoJdbc;
+    @Inject
+    private AplAppStatus aplAppStatus;
     CsvImporter csvImporter;
 
     private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
@@ -158,7 +160,7 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager());
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -167,7 +169,7 @@ class CsvImporterTest {
     @Test
     void importCsv() throws Exception {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager());
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
         assertNotNull(csvImporter);
 
         for (String tableName : tables) {
@@ -194,7 +196,7 @@ class CsvImporterTest {
     @Test
     void testImportAccountControlPhasingCsvWithArrayOfLongs() throws Exception {
         ResourceFileLoader fileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager(), null);
         long result = csvImporter.importCsv("account_control_phasing", 1, true);
         assertEquals(4, result);
         try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
@@ -217,7 +219,7 @@ class CsvImporterTest {
     @Test
     void testImportShufflingDataCsvWithArrayOfByteArrays() throws Exception {
         ResourceFileLoader fileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager(), null);
         long result = csvImporter.importCsv("shuffling_data", 1, true);
         assertEquals(2, result);
         try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
@@ -245,7 +247,7 @@ class CsvImporterTest {
     @Test
     void testImportGoodsCsvWithArrayOfStrings() throws Exception {
         ResourceFileLoader fileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager());
+        csvImporter = new CsvImporterImpl(fileLoader.getResourcePath(), extension.getDatabaseManager(), null);
         long result = csvImporter.importCsv("goods", 1, true);
         assertEquals(14, result);
         try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
@@ -269,4 +271,35 @@ class CsvImporterTest {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    void importBigAccountCsvList() throws Exception {
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+        assertNotNull(csvImporter);
+
+        String taskId = aplAppStatus.durableTaskStart("Shard data import", "data import", true);
+
+        String tableName = "account"; // 85000 records is prepared
+        long result = csvImporter.importCsv(tableName, 10, true, 0.001);
+        assertTrue(result > 0, "incorrect '" + tableName + "'");
+        log.debug("Imported '{}' rows for table '{}'", result, tableName);
+
+        try (Connection con = extension.getDatabaseManager().getDataSource().begin();
+             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+        ) {
+            long count = -1;
+            ResultSet rs = preparedCount.executeQuery();
+            if (rs.next()) {
+                count = rs.getLong("count");
+            }
+            assertTrue(count > 0);
+            assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
+        } catch (Exception e) {
+            log.error("Error", e);
+        }
+        aplAppStatus.durableTaskFinished( taskId, false, "data import finished");
+    }
+
+
 }

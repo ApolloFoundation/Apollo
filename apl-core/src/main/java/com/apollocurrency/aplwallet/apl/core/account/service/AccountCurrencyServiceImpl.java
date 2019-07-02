@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.*;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import lombok.Setter;
@@ -25,10 +27,13 @@ import static com.apollocurrency.aplwallet.apl.core.account.service.AccountServi
 public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Inject @Setter
+    private Blockchain blockchain;
+
+    @Inject @Setter
     private AccountCurrencyTable accountCurrencyTable;
 
     @Inject @Setter
-    private AccountService accountService;
+    private AccountLedgerService accountLedgerService;
 
     @Inject @Setter
     private Event<Account> accountEvent;
@@ -38,10 +43,10 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Override
     public void save(AccountCurrency currency) {
-        checkBalance(currency.accountId, currency.units, currency.unconfirmedUnits);
-        if (currency.units > 0 || currency.unconfirmedUnits > 0) {
+        checkBalance(currency.getAccountId(), currency.getUnits(), currency.getUnconfirmedUnits());
+        if (currency.getUnits() > 0 || currency.getUnconfirmedUnits() > 0) {
             accountCurrencyTable.insert(currency);
-        } else if (currency.units == 0 && currency.unconfirmedUnits == 0) {
+        } else if (currency.getUnits() == 0 && currency.getUnconfirmedUnits() == 0) {
             accountCurrencyTable.delete(currency);
         }
     }
@@ -88,21 +93,21 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         }
         AccountCurrency accountCurrency;
         accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
-        long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
+        long currencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnits();
         currencyUnits = Math.addExact(currencyUnits, units);
         if (accountCurrency == null) {
-            accountCurrency = new AccountCurrency(account.getId(), currencyId, currencyUnits, 0);
+            accountCurrency = new AccountCurrency(account.getId(), currencyId, currencyUnits, 0, blockchain.getHeight());
         } else {
-            accountCurrency.units = currencyUnits;
+            accountCurrency.setUnits(currencyUnits);
         }
         save(accountCurrency);
         //accountService.listeners.notify(account, AccountEventType.CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
         //currencyListeners.notify(accountCurrency, AccountEventType.CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
-        if (AccountLedger.mustLogEntry(account.getId(), false)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
-                    units, currencyUnits));
+        if (accountLedgerService.mustLogEntry(account.getId(), false)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
+                    units, currencyUnits, blockchain.getLastBlock()));
         }
     }
 
@@ -112,22 +117,22 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             return;
         }
         AccountCurrency accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
-        long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
+        long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnconfirmedUnits();
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {
-            accountCurrency = new AccountCurrency(account.getId(), currencyId, 0, unconfirmedCurrencyUnits);
+            accountCurrency = new AccountCurrency(account.getId(), currencyId, 0, unconfirmedCurrencyUnits, blockchain.getHeight());
         } else {
-            accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
+            accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
         }
         save(accountCurrency);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(account);
         //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
-        if (AccountLedger.mustLogEntry(account.getId(), true)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(),
+        if (accountLedgerService.mustLogEntry(account.getId(), true)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
-                    units, unconfirmedCurrencyUnits));
+                    units, unconfirmedCurrencyUnits, blockchain.getLastBlock()));
         }
     }
 
@@ -138,15 +143,15 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         }
         AccountCurrency accountCurrency;
         accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
-        long currencyUnits = accountCurrency == null ? 0 : accountCurrency.units;
+        long currencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnits();
         currencyUnits = Math.addExact(currencyUnits, units);
-        long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
+        long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnconfirmedUnits();
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {
-            accountCurrency = new AccountCurrency(account.getId(), currencyId, currencyUnits, unconfirmedCurrencyUnits);
+            accountCurrency = new AccountCurrency(account.getId(), currencyId, currencyUnits, unconfirmedCurrencyUnits, blockchain.getHeight());
         } else {
-            accountCurrency.units = currencyUnits;
-            accountCurrency.unconfirmedUnits = unconfirmedCurrencyUnits;
+            accountCurrency.setUnits(currencyUnits);
+            accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
         }
         save(accountCurrency);
         //accountService.listeners.notify(account, AccountEventType.CURRENCY_BALANCE);
@@ -157,15 +162,15 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
         //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
-        if (AccountLedger.mustLogEntry(account.getId(), true)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(),
+        if (accountLedgerService.mustLogEntry(account.getId(), true)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
-                    units, unconfirmedCurrencyUnits));
+                    units, unconfirmedCurrencyUnits, blockchain.getLastBlock()));
         }
-        if (AccountLedger.mustLogEntry(account.getId(), false)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(),
+        if (accountLedgerService.mustLogEntry(account.getId(), false)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.CURRENCY_BALANCE, currencyId,
-                    units, currencyUnits));
+                    units, currencyUnits, blockchain.getLastBlock()));
         }
     }
 }

@@ -5,13 +5,15 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.*;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 
@@ -20,8 +22,6 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-
-import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 
 /**
  * @author al
@@ -38,15 +38,19 @@ public class AccountObserver {
 
     private Event<AccountLease> accountLeaseEvent;
 
+    private AccountLedgerService accountLedgerService;
+
     @Inject
     public AccountObserver(AccountService accountService,
                            AccountLeaseService accountLeaseService,
                            AccountPublicKeyService accountPublicKeyService,
-                           Event<AccountLease> accountLeaseEvent) {
+                           Event<AccountLease> accountLeaseEvent,
+                           AccountLedgerService accountLedgerService) {
         this.accountService = accountService;
         this.accountLeaseService = accountLeaseService;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountLeaseEvent = accountLeaseEvent;
+        this.accountLedgerService = accountLedgerService;
     }
 
     public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
@@ -77,37 +81,45 @@ public class AccountObserver {
         int height = block.getHeight();
         List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccounts(height);
         for (AccountLease lease : changingLeases) {
-            Account lessor = accountService.getAccount(lease.lessorId);
-            if (height == lease.currentLeasingHeightFrom) {
-                lessor.setActiveLesseeId(lease.currentLesseeId);
+            Account lessor = accountService.getAccount(lease.getLessorId());
+            if (height == lease.getCurrentLeasingHeightFrom()) {
+                lessor.setActiveLesseeId(lease.getCurrentLesseeId());
                 //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
-                accountLeaseEvent.select(literal(AccountEventType.LEASE_STARTED)).fire(lease);
-            } else if (height == lease.currentLeasingHeightTo) {
+                accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
+            } else if (height == lease.getCurrentLeasingHeightTo()) {
                 //leaseListeners.notify(lease, AccountEventType.LEASE_ENDED);
-                accountLeaseEvent.select(literal(AccountEventType.LEASE_ENDED)).fire(lease);
+                accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_ENDED)).fire(lease);
                 lessor.setActiveLesseeId(0);
-                if (lease.nextLeasingHeightFrom == 0) {
-                    lease.currentLeasingHeightFrom = 0;
-                    lease.currentLeasingHeightTo = 0;
-                    lease.currentLesseeId = 0;
+                if (lease.getNextLeasingHeightFrom() == 0) {
+                    lease.setCurrentLeasingHeightFrom(0);
+                    lease.setCurrentLeasingHeightTo(0);
+                    lease.setCurrentLesseeId(0);
                     AccountLeaseTable.getInstance().delete(lease);
                 } else {
-                    lease.currentLeasingHeightFrom = lease.nextLeasingHeightFrom;
-                    lease.currentLeasingHeightTo = lease.nextLeasingHeightTo;
-                    lease.currentLesseeId = lease.nextLesseeId;
-                    lease.nextLeasingHeightFrom = 0;
-                    lease.nextLeasingHeightTo = 0;
-                    lease.nextLesseeId = 0;
+                    lease.setCurrentLeasingHeightFrom(lease.getNextLeasingHeightFrom());
+                    lease.setCurrentLeasingHeightTo(lease.getNextLeasingHeightTo());
+                    lease.setCurrentLesseeId(lease.getNextLesseeId());
+                    lease.setNextLeasingHeightFrom(0);
+                    lease.setNextLeasingHeightTo(0);
+                    lease.setNextLesseeId(0);
                     AccountLeaseTable.getInstance().insert(lease);
-                    if (height == lease.currentLeasingHeightFrom) {
-                        lessor.setActiveLesseeId(lease.currentLesseeId);
+                    if (height == lease.getCurrentLeasingHeightFrom()) {
+                        lessor.setActiveLesseeId(lease.getCurrentLesseeId());
                         //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
-                        accountLeaseEvent.select(literal(AccountEventType.LEASE_STARTED)).fire(lease);
+                        accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
                     }
                 }
             }
             accountService.save(lessor);
         }
+    }
+
+    public void onLedgerCommitEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.COMMIT_ENTRIES) AccountLedgerEventType event ){
+        accountLedgerService.commitEntries();
+    }
+
+    public void onLedgerClearEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.CLEAR_ENTRIES) AccountLedgerEventType event){
+        accountLedgerService.clearEntries();
     }
 
 }

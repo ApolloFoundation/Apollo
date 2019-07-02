@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
@@ -26,7 +27,8 @@ public class DexOfferMapper implements RowMapper<DexOffer> {
         dexOffer.setOfferCurrency(DexCurrencies.getType(rs.getInt("offer_currency")));
         dexOffer.setOfferAmount(rs.getLong("offer_amount"));
         dexOffer.setPairCurrency(DexCurrencies.getType(rs.getInt("pair_currency")));
-        dexOffer.setPairRate(rs.getLong("pair_rate"));
+        //TODO change type in the db (migrate existing data).
+        dexOffer.setPairRate(EthUtil.gweiToEth(rs.getLong("pair_rate")));
         dexOffer.setFinishTime(rs.getInt("finish_time"));
         dexOffer.setStatus(OfferStatus.getType(rs.getInt("status")));
         dexOffer.setFromAddress(rs.getString("from_address"));

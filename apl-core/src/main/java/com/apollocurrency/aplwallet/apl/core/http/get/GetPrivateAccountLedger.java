@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -88,7 +87,7 @@ public class GetPrivateAccountLedger extends AbstractAPIRequestHandler {
         //
         // Get the ledger entries
         //
-        List<LedgerEntry> ledgerEntries = AccountLedger.getEntries(data.getAccountId(), event, eventId,
+        List<LedgerEntry> ledgerEntries = lookupAccountLedgerService().getEntries(data.getAccountId(), event, eventId,
                 holding, holdingId, firstIndex, lastIndex, true);
         //
         // Return the response

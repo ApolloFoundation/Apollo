@@ -31,10 +31,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -75,13 +76,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
 import org.slf4j.Logger;
-
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -232,11 +226,12 @@ public final class AplCore {
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
-                //Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable);
+                AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
+//                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
-                AccountLedger.init(databaseManager);
+//                AccountLedgerService.init(databaseManager);
                 Alias.init();
                 Asset.init();
 //                DigitalGoodsStore.init();
@@ -324,7 +319,7 @@ public final class AplCore {
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
-        if (recovery != null && recovery.getState() != MigrateState.COMPLETED) {
+        if (blockchainConfig.getCurrentConfig().isShardingEnabled() && recovery != null && recovery.getState() != MigrateState.COMPLETED) {
             aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
             ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();

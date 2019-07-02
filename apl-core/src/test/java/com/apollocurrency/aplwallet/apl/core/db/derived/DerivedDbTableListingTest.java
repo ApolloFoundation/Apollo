@@ -16,25 +16,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -142,6 +128,8 @@ class DerivedDbTableListingTest {
             .build();
 
     @Inject
+    GlobalSync globalSync;
+    @Inject
     PropertiesHolder propertiesHolder;
     @Inject
     private Blockchain blockchain;
@@ -172,14 +160,14 @@ class DerivedDbTableListingTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         AccountCurrencyTable.getInstance().init();
-        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountInfoTable.getInstance().init();
         Alias.init();
         AccountAssetTable.getInstance().init();
         GenesisPublicKeyTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
-        AccountLedgerTable accountLedgerTable = new AccountLedgerTable();
+        AccountLedgerTable accountLedgerTable = new AccountLedgerTable(blockchain, propertiesHolder, globalSync);
         accountLedgerTable.init();
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();

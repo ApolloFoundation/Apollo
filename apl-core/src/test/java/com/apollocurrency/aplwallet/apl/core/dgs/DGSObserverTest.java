@@ -118,7 +118,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEvent() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable, null);
         Block lastBlock = mock(Block.class);
         Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline()).when(prevBlock).getTimestamp();
@@ -144,7 +144,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEventOnBlockWithZeroHeight() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable);
+        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable, null);
         DbUtils.inTransaction(extension, (con)-> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(mock(Block.class));
         });

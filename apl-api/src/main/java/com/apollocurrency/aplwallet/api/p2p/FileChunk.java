@@ -20,6 +20,6 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FileChunk {
-    public FileChunkInfo info;
+    public FileChunkInfo info=new FileChunkInfo();
     public String mime64data;
 }
