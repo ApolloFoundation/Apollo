@@ -140,7 +140,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testTrimOutsideTransaction() {
         if (table.isMultiversion()) {
-            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0, Integer.MAX_VALUE));
+            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0));
         }
     }
 
@@ -234,7 +234,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
             expected.remove(t);
         }
         expected = sortByHeightAsc(expected);
-        DbUtils.inTransaction(extension, (con)-> table.trim(height, blockchainHeight));
+        DbUtils.inTransaction(extension, (con)-> table.trim(height));
         List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }

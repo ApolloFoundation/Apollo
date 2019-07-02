@@ -24,7 +24,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     private int batchCommitSize;
 
     @Override
-    public void trim(int height, int maxHeight) {
+    public void trim(int height) {
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "

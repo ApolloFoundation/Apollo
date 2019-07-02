@@ -400,7 +400,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
-            trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1, paramInfo.getBlockchainHeight());
+            trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 Files.list(csvExporter.getDataExportPath())
                         .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
@@ -439,10 +439,10 @@ public class ShardEngineImpl implements ShardEngine {
         return state;
     }
 
-    private void trimDerivedTables(int height, int blockchainHeight) {
+    private void trimDerivedTables(int height) {
         databaseManager.getDataSource().begin();
         try {
-            trimService.doTrimDerivedTablesOnHeight(height, blockchainHeight);
+            trimService.doTrimDerivedTablesOnHeight(height);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
         } finally {
