@@ -59,16 +59,16 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testTrimForZeroHeight() throws SQLException {
-        testTrim(0);
+        testTrim(0, Integer.MAX_VALUE);
     }
 
     @Test
     public void testTrimForMaxHeight() throws SQLException {
-        testTrim(sortByHeightDesc(getAll()).get(0).getHeight());
+        testTrim(sortByHeightDesc(getAll()).get(0).getHeight(), Integer.MAX_VALUE);
     }
 
-    public void testTrim(int height) throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height));
+    public void testTrim(int height, int blockchainHeight) throws SQLException {
+        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height, blockchainHeight));
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();

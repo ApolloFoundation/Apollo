@@ -89,7 +89,7 @@ public class ShardMigrationExecutor {
     }
 
     @Transactional
-    public void createAllCommands(int height, long shardId, MigrateState state) {
+    public void createAllCommands(int height, long shardId, MigrateState state, int blockchainHeight) {
         int shardStartHeight = getShardStartHeight();
         log.info("Create commands for shard between heights[{},{}]", shardStartHeight, height);
         switch (state) {
@@ -130,7 +130,7 @@ public class ShardMigrationExecutor {
                 List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
                 tablesToExport.remove(ACCOUNT_LEDGER);
                 tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
-                CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo);
+                CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo, blockchainHeight);
 
                 this.addOperation(csvExportCommand);
             case CSV_EXPORT_FINISHED:

@@ -27,7 +27,7 @@ public interface DerivedTableInterface<T> {
 
     void truncate();
 
-    void trim(int height);
+    void trim(int height, int maxHeight);
 
     void createSearchIndex(Connection con) throws SQLException;
 

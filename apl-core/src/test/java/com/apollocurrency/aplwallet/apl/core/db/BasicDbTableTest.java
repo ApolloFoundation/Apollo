@@ -59,9 +59,9 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
 
     public void testOrdinaryOrMultiversionTrim(int height) throws SQLException {
         if (table.isMultiversion()) {
-            testMultiversionTrim(height);
+            testMultiversionTrim(height, Integer.MAX_VALUE);
         } else {
-            testTrim(height);
+            testTrim(height, Integer.MAX_VALUE);
         }
     }
 
@@ -84,7 +84,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         if (table.isMultiversion()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight() + 1;
-            testMultiversionTrim(height);
+            testMultiversionTrim(height, Integer.MAX_VALUE);
         }
     }
 
@@ -93,7 +93,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         if (table.isMultiversion()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight();
-            testMultiversionTrim(height);
+            testMultiversionTrim(height, Integer.MAX_VALUE);
         }
     }
     @Test
@@ -101,7 +101,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         if (table.isMultiversion()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight() - 1;
-            testMultiversionTrim(height);
+            testMultiversionTrim(height, Integer.MAX_VALUE);
         }
     }
 
@@ -140,7 +140,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testTrimOutsideTransaction() {
         if (table.isMultiversion()) {
-            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0));
+            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0, Integer.MAX_VALUE));
         }
     }
 
@@ -213,7 +213,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         assertEquals(expected, values);
     }
 
-    public void testMultiversionTrim(int height) throws SQLException {
+    public void testMultiversionTrim(int height, int blockchainHeight) throws SQLException {
         List<T> all = getAll();
         Map<DbKey, List<T>> dbKeyListMap = groupByDbKey();
         List<T> trimmed = new ArrayList<>();
@@ -234,7 +234,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
             expected.remove(t);
         }
         expected = sortByHeightAsc(expected);
-        DbUtils.inTransaction(extension, (con)-> table.trim(height));
+        DbUtils.inTransaction(extension, (con)-> table.trim(height, blockchainHeight));
         List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }

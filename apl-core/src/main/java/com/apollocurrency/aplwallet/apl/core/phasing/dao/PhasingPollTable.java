@@ -259,8 +259,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    public void trim(int height) {
-        super.trim(height);
+    public void trim(int height, int maxHeight) {
+        super.trim(height, maxHeight);
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              DbIterator<PhasingPoll> pollsToTrim = getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);

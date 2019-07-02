@@ -75,7 +75,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public void trim(int height) {}
+    public void trim(int height, int maxHeight) {}
 
     @PostConstruct
     public void init() {

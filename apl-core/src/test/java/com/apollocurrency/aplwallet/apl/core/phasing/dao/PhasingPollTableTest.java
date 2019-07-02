@@ -128,12 +128,12 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     @Override
     public void testTrimForZeroHeight() {
-        testTrim(ptd.POLL_1.getFinishHeight() + 1);
+        testTrim(ptd.POLL_1.getFinishHeight() + 1, Integer.MAX_VALUE);
     }
 
     @Override
-    public void testTrim(int height) {
-        table.trim(height);
+    public void testTrim(int height, int blockchainHeight) {
+        table.trim(height, Integer.MAX_VALUE);
         List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
         List<PhasingPoll> expected = sortByHeightDesc(getAll().stream().filter(p -> p.getFinishHeight() >= height).collect(Collectors.toList()));
         Assertions.assertEquals(expected, actual);

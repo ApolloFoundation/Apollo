@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -23,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.enterprise.event.Event;
@@ -67,13 +70,14 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
     }
 
-    public void onTrimDoneAsync(@Observes @Async Integer height) {
-        tryCreateShardAsync(height);
+
+    public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
 
-    public void onTrimDone(@Observes @Sync Integer height) {
+    public void onTrimDone(@Observes @Sync TrimData trimData) {
         try {
-            CompletableFuture<Boolean> future = tryCreateShardAsync(height);
+            CompletableFuture<Boolean> future = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
             if (future != null) {
                 future.get();
             }
@@ -83,7 +87,7 @@ public class ShardObserver {
         }
     }
 
-    public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
+    public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<Boolean> completableFuture = null;
         boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){
@@ -107,12 +111,12 @@ public class ShardObserver {
                             isSharding = true;
                             updateTrimConfig(false);
                             // quick create records for new Shard and Recovery process for later use
-                            shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
+                            shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
                             long nextShardId = shardDao.getNextShardId();
                             Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
                             shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
-                            completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId))
+                            completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, blockchainHeight))
                                     .thenApply((result) -> {
                                         blockchainProcessor.updateInitialBlockId();
                                         return result;
@@ -139,7 +143,7 @@ public class ShardObserver {
     private void updateTrimConfig(boolean enableTrim) {
          trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
-    
+
 
     private boolean isEnoughMemory(){
         long memoryTotal = 0;
@@ -163,7 +167,7 @@ public class ShardObserver {
         return res;
     }
     
-    public boolean performSharding(int minRollbackHeight, long shardId) {
+    public boolean performSharding(int minRollbackHeight, long shardId, int blockchainHeight) {
         boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){
             log.warn("Sharding is prohibited by commad line or properties");
@@ -181,7 +185,7 @@ public class ShardObserver {
             log.debug("Clean commands....");
             shardMigrationExecutor.cleanCommands();
             log.debug("Create all commands....");
-            shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, MigrateState.INIT);
+            shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, MigrateState.INIT, blockchainHeight);
             log.debug("Start all commands....");
             state = shardMigrationExecutor.executeAllOperations();
             result = true;

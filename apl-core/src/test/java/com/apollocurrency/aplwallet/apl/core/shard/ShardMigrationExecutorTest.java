@@ -295,7 +295,7 @@ class ShardMigrationExecutorTest {
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
         List<String> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME);
 
-        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, excludeInfo);
+        CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, excludeInfo, Integer.MAX_VALUE);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);
             assertEquals(CSV_EXPORT_FINISHED, state);
 
@@ -339,7 +339,7 @@ class ShardMigrationExecutorTest {
     }
 
     private void executeFrom(int height, long shardId, MigrateState state) {
-        shardMigrationExecutor.createAllCommands(height, shardId, state);
+        shardMigrationExecutor.createAllCommands(height, shardId, state, Integer.MAX_VALUE);
         MigrateState result = shardMigrationExecutor.executeAllOperations();
         assertEquals(COMPLETED, result);
     }
@@ -352,7 +352,6 @@ class ShardMigrationExecutorTest {
     private static PropertiesHolder initPropertyHolder() {
         PropertiesHolder propertiesHolder = new PropertiesHolder();
         Properties properties = new Properties();
-        properties.put("apl.trimFrequency", 1000);
         properties.put("apl.trimDerivedTables", true);
         properties.put("apl.maxRollback", 21600);
 

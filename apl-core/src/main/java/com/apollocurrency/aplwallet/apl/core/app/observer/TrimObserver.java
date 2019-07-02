@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,11 +54,15 @@ public class TrimObserver {
         return false;
     }
 
-    @Inject
     public TrimObserver(TrimService trimService,
-                        @Property("apl.trimFrequency") int trimFrequency) {
+                         int trimFrequency) {
         this.trimService = trimService;
         this.trimFrequency = trimFrequency;
+    }
+    @Inject
+    public TrimObserver(TrimService trimService) {
+        this.trimService = trimService;
+        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
     }
 
 
@@ -71,7 +75,7 @@ public class TrimObserver {
             log.info("processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
-            trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight());
+            trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight(), false);
         }
     }
 

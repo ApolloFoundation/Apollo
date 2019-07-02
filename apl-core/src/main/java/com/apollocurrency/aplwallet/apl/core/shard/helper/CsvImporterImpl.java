@@ -6,9 +6,17 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import org.slf4j.Logger;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -20,20 +28,13 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import org.slf4j.Logger;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 /**
  * {@inheritDoc}
@@ -71,14 +72,14 @@ public class CsvImporterImpl implements CsvImporter {
      */
     @Override
     public long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws Exception {
-        return this.importCsv(tableName, batchLimit, cleanTarget, null);
+        return this.importCsv(tableName, batchLimit, cleanTarget, null, Map.of());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease) throws Exception {
+    public long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease, Map<String, Object> defaultParams) throws Exception {
 
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
@@ -133,10 +134,14 @@ public class CsvImporterImpl implements CsvImporter {
             for (int i = 0; i < columnsCount; i++) {
                 columnNames.append( meta.getColumnLabel(i + 1));
                 columnsValues.append("?");
-                if (i != columnsCount - 1) {
+                if (!defaultParams.isEmpty() || i != columnsCount - 1) {
                     columnNames.append(",");
                     columnsValues.append(",");
                 }
+            }
+            if (!defaultParams.isEmpty()) {
+                columnNames.append(String.join(",", defaultParams.keySet()));
+                columnsValues.append(String.join(",", "?"));
             }
             sqlInsert.append(columnNames).append(") VALUES").append(" (").append(columnsValues).append(")");
             log.debug("SQL = {}", sqlInsert.toString()); // composed insert
@@ -190,6 +195,10 @@ public class CsvImporterImpl implements CsvImporter {
                     } else {
                         preparedInsertStatement.setObject(i + 1, object);
                     }
+                }
+                int i = columnsCount + 1;
+                for (Object value : defaultParams.values()) {
+                    preparedInsertStatement.setObject(i++, value);
                 }
 
                 log.trace("sql = {}", sqlInsert.toString());

@@ -14,7 +14,9 @@ import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -74,6 +76,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -285,12 +288,14 @@ class CsvImporterTest {
         String taskId = aplAppStatus.durableTaskStart("Shard data import", "data import", true);
 
         String tableName = "account"; // 85000 records is prepared
-        long result = csvImporter.importCsv(tableName, 10, true, 0.001);
+        long result = csvImporter.importCsv(tableName, 10, true, 0.001, Map.of("height", 100));
         assertTrue(result > 0, "incorrect '" + tableName + "'");
         log.debug("Imported '{}' rows for table '{}'", result, tableName);
 
-        try (Connection con = extension.getDatabaseManager().getDataSource().begin();
-             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+        DbUtils.inTransaction(extension, (con)-> {
+
+
+        try (PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
         ) {
             long count = -1;
             ResultSet rs = preparedCount.executeQuery();
@@ -302,6 +307,17 @@ class CsvImporterTest {
         } catch (Exception e) {
             log.error("Error", e);
         }
+        });
+        DbUtils.inTransaction(extension, (con)-> {
+            try (PreparedStatement pstmt = con.prepareStatement("select avg(height) from account")) {
+                ResultSet rs = pstmt.executeQuery();
+                rs.next();
+                assertEquals(rs.getDouble(1), 100.0, 0.01);
+            }
+            catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        });
         aplAppStatus.durableTaskFinished( taskId, false, "data import finished");
     }
 
