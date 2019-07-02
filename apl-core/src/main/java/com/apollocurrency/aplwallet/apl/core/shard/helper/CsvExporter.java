@@ -57,15 +57,28 @@ public interface CsvExporter {
      * @param targetHeight target blockchain height
      * @param batchLimit rows in batch to commit
      * @param excludedColumns set of columns to exclude during export
+     * @return number of exported rows
+     */
+    long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns);
+
+
+    /**
+     * Export derived table entries ordered by custom sort
+     * Will exclude columns specified in excludeColumns parameter
+     * @param derivedTableInterface table to export
+     * @param targetHeight target blockchain height
+     * @param batchLimit rows in batch to commit
+     * @param excludedColumns set of columns to exclude during export
      * @param sortColumn sort expression to order rows
      * @return number of exported rows
      */
-    long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn);
+    long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn);
 
     /**
      * Export transactions specified by db_id list and return number of exported transactions
      * @param dbIds collection of transaction db_ids
      * @return number of exported transactions
+
      */
     long exportTransactions(Collection<Long> dbIds);
 

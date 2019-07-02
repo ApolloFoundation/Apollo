@@ -77,7 +77,7 @@ public class CsvExporterImpl implements CsvExporter {
      * {@inheritDoc}
      */
     @Override
-    public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
+    public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns) {
         Objects.requireNonNull(derivedTableInterface, "derivedTableInterface is NULL");
         // skip hard coded table
         if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
@@ -92,7 +92,7 @@ public class CsvExporterImpl implements CsvExporter {
         // prepare connection + statement + writer
         try (Connection con = this.databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? order by " + sortColumn + " limit ?");
+                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? order by " + DEFAULT_SORT_COLUMN + " limit ?");
              CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
         ) {
 
@@ -126,8 +126,58 @@ public class CsvExporterImpl implements CsvExporter {
     }
 
     @Override
+    public long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
+        Objects.requireNonNull(derivedTableInterface, "derivedTableInterface is NULL");
+        // skip hard coded table
+        if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
+            // skip not needed table
+            log.debug("Skipped excluded Table = {}", derivedTableInterface.toString());
+            return -1;
+        }
+
+        long start = System.currentTimeMillis();
+        int processedCount;
+        int totalCount = 0;
+        // prepare connection + statement + writer
+        try (Connection con = this.databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+                     "select * from " + derivedTableInterface.toString() + " WHERE height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?");
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
+        ) {
+
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
+            MinMaxDbId minMaxDbId = derivedTableInterface.getMinMaxDbId(targetHeight);
+            log.debug("Table = {}, Min/Max = {} at height = {}", derivedTableInterface.toString(), minMaxDbId, targetHeight);
+
+            // process non empty tables only
+            if (minMaxDbId.getCount() > 0) {
+                do { // do exporting into csv with pagination
+                    pstmt.setInt(1, targetHeight);
+                    pstmt.setInt(2,  batchLimit);
+                    pstmt.setInt(3, totalCount);
+
+                    CsvExportData csvExportData = csvWriter.append(derivedTableInterface.toString(),
+                            pstmt.executeQuery());
+                    processedCount = csvExportData.getProcessCount();
+                    totalCount += processedCount;
+                } while (processedCount > 0); //keep processing while not found more rows
+                log.trace("Table = {}, exported rows = {} in {} sec", derivedTableInterface.toString(), totalCount,
+                        (System.currentTimeMillis() - start) / 1000);
+            } else {
+                // skipped empty table
+                log.debug("Skipped exporting Table = {}", derivedTableInterface.toString());
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Exporting derived table exception " + derivedTableInterface.toString(), e);
+        }
+
+        return totalCount;
+    }
+
+    @Override
     public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit) {
-        return exportDerivedTable(derivedTableInterface, targetHeight, batchLimit, DEFAULT_EXCLUDED_COLUMNS, DEFAULT_SORT_COLUMN);
+        return exportDerivedTable(derivedTableInterface, targetHeight, batchLimit, DEFAULT_EXCLUDED_COLUMNS);
     }
 
     /**

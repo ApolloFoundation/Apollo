@@ -108,6 +108,7 @@ import java.sql.ResultSetMetaData;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.inject.Inject;
 
@@ -371,6 +372,16 @@ class CsvExporterTest {
 
         List<String> exportedBlock = Files.readAllLines(dataExportPath.resolve("block.csv"));
         assertEquals(blockExportContent, exportedBlock);
+    }
+
+    @Test
+    void testExportGoodsSortedByName() throws IOException {
+        csvExporter.exportDerivedTableCustomSort(goodsTable, 542100, 2, Set.of("DB_ID", "LATEST", "ID", "SELLER_ID"), "name");
+        List<String> allLines = Files.readAllLines(dataExportPath.resolve("goods.csv"));
+        assertEquals(7, allLines.size());
+        assertTrue(allLines.get(1).startsWith("\'1"));
+        assertTrue(allLines.get(2).startsWith("\'Some product"));
+        assertTrue(allLines.get(6).startsWith("\'Test product"));
     }
 
     @Test

@@ -420,7 +420,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "balance desc, id");
+                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id");
                         default:
                             return exportDerivedTable(tableName, paramInfo);
                     }
@@ -468,7 +468,7 @@ public class ShardEngineImpl implements ShardEngine {
             if (excludedColumns == null && sort == null) {
                 return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
             } else {
-                return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+                return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
             }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
