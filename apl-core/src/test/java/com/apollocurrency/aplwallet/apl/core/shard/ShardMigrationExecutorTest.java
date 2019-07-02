@@ -352,7 +352,6 @@ class ShardMigrationExecutorTest {
     private static PropertiesHolder initPropertyHolder() {
         PropertiesHolder propertiesHolder = new PropertiesHolder();
         Properties properties = new Properties();
-        properties.put("apl.trimFrequency", 1000);
         properties.put("apl.trimDerivedTables", true);
         properties.put("apl.maxRollback", 21600);
 

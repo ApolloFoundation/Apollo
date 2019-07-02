@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,16 +42,14 @@ public class TrimService {
                        GlobalSync globalSync,
                        Event<TrimData> trimEvent,
                        TrimDao trimDao,
-                       @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback,
-                       @Property(value="apl.trimFrequency", defaultValue="1000") int trimFrequency
-
+                       @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
     ) {
         this.maxRollback = maxRollback;
         this.trimDao = trimDao;
         this.dbManager = Objects.requireNonNull(databaseManager, "Database manager cannot be null");
         this.dbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "Db tables registry cannot be null");
         this.globalSync = Objects.requireNonNull(globalSync, "Synchronization service cannot be null");
-        this.trimFrequency = trimFrequency;
+        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
     }
 
