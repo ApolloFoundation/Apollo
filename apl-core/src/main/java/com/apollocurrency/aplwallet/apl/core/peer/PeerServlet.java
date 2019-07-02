@@ -55,6 +55,8 @@ import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -69,19 +71,32 @@ import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static BlockchainProcessor blockchainProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    @Inject
+    private PropertiesHolder propertiesHolder;
+    @Inject
+    private BlockchainProcessor blockchainProcessor;
+    @Inject
+    private volatile EpochTime timeService;   
+    @Inject
     private ShardDao shardDao;
+    @Inject
     private BlockchainConfig blockchainConfig;
+    @Inject
     private DownloadableFilesManager downloadableFilesManager;
 
-    protected BlockchainProcessor lookupComponents() {
+    @Override
+    public void init() throws ServletException {
+        super.init(); 
+        lookupComponents();
+    }
+
+    protected void lookupComponents() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        return blockchainProcessor;
+        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
+        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     }  
     
     public PeerRequestHandler getHandler(String rtype) {
@@ -155,6 +170,7 @@ public final class PeerServlet extends WebSocketServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JSONStreamAware jsonResponse;
+        lookupComponents();
         //
         // Process the peer request
         //
@@ -206,6 +222,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   request             Request message
      */
     void doPost(PeerWebSocket webSocket, long requestId, String request) {
+        lookupComponents();
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
@@ -250,6 +267,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @return                      JSON response
      */
     private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
+        lookupComponents();
         //
         // Check for blacklisted peer
         //
@@ -294,7 +312,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
-                if (lookupComponents().isDownloading()) {
+                if (blockchainProcessor.isDownloading()) {
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
