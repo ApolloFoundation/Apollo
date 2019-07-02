@@ -185,7 +185,7 @@ public class ShardObserver {
             log.debug("Clean commands....");
             shardMigrationExecutor.cleanCommands();
             log.debug("Create all commands....");
-            shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, MigrateState.INIT, blockchainHeight);
+            shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, MigrateState.INIT);
             log.debug("Start all commands....");
             state = shardMigrationExecutor.executeAllOperations();
             result = true;

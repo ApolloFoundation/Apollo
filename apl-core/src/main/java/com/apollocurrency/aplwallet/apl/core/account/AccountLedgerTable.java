@@ -52,12 +52,11 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
     /**
          * Trim the account ledger table
+         *  @param   height                  Trim height
          *
-     * @param   height                  Trim height
-     * @param maxHeight
      */
         @Override
-        public void trim(int height, int maxHeight) {
+        public void trim(int height) {
             if (trimKeep <= 0)
                 return;
             TransactionalDataSource dataSource = getDatabaseManager().getDataSource();

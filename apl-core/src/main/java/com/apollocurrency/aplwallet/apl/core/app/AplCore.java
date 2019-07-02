@@ -332,7 +332,7 @@ public final class AplCore {
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
             blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
             Shard lastShard = shardDao.getLastShard();
-            executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState(), recovery.getHeight());
+            executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
             executor.executeAllOperations();
             aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
         }

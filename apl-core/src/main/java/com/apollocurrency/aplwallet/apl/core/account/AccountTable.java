@@ -85,11 +85,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     }
 
     @Override
-    public void trim(int height, int maxHeight) {
+    public void trim(int height) {
         if (height <= Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height, maxHeight);
+        super.trim(height);
     }
 
     @Override

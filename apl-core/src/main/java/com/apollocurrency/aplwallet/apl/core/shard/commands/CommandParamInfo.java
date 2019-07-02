@@ -27,5 +27,4 @@ public class CommandParamInfo {
     private boolean isZipCrcStored = false; // either ZIP or merkle tree hash
     private Long[] generatorIds; // 3 generator ids before snapshot block with height offset (-1, -2, -3)
     private Long shardId; // id of shard to create
-    private int blockchainHeight; //height of blockchain when sharding was triggered
 }
