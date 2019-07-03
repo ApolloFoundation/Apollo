@@ -58,8 +58,9 @@ public final class Account extends VersionedDerivedEntity {
     @Setter
     private Set<AccountControlType> controls;
 
-    public Account(long id) {
+    public Account(long id, DbKey dbKey) {
         this(id, DEFAULT_HEIGHT);
+        setDbKey(dbKey);
     }
 
     public Account(long id, int height) {

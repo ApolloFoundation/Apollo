@@ -26,7 +26,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
-            return accountCurrency.getDbKey();
+            return accountCurrency.getDbKey() == null ? newKey(accountCurrency.getAccountId(), accountCurrency.getCurrencyId()) : accountCurrency.getDbKey();
         }
 
     };  

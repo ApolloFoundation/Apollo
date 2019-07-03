@@ -25,7 +25,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
 
         @Override
         public DbKey newKey(AccountLease accountLease) {
-            return accountLease.getDbKey();
+            return accountLease.getDbKey() == null ? newKey(accountLease.getLessorId()) : accountLease.getDbKey();
         }
 
     };

@@ -34,7 +34,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
         @Override
         public DbKey newKey(AccountAsset accountAsset) {
-            return accountAsset.getDbKey();
+            return accountAsset.getDbKey() == null ? newKey(accountAsset.getAccountId(), accountAsset.getAssetId()) : accountAsset.getDbKey();
         }
     } 
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");

@@ -21,7 +21,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
 
         @Override
         public DbKey newKey(AccountProperty accountProperty) {
-            return accountProperty.getDbKey();
+            return accountProperty.getDbKey() == null ? newKey(accountProperty.getId()) : accountProperty.getDbKey();
         }
 
     };

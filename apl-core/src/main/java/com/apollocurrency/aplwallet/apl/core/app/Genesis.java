@@ -71,7 +71,7 @@ public final class Genesis {
 //    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
     private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
     private static AccountService accountService = CDI.current().select(AccountServiceImpl .class).get();
-    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+    private static AccountPublicKeyService accountPublicKeyService;// = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
     private static String genesisTaskId;
@@ -93,6 +93,13 @@ public final class Genesis {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
         return databaseManager.getDataSource();
+    }
+
+    private static AccountPublicKeyService lookupAccountPublicKeyService() {
+        if ( accountPublicKeyService == null ) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
     }
 
     private static JSONObject genesisAccountsJSON = null;
@@ -151,7 +158,7 @@ public final class Genesis {
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
         Account creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
-        accountPublicKeyService.apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
+        lookupAccountPublicKeyService().apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
@@ -190,7 +197,7 @@ public final class Genesis {
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = accountService.addOrGetAccount(AccountService.getId(publicKey), true);
-            accountPublicKeyService.apply(account, publicKey, true);
+            lookupAccountPublicKeyService().apply(account, publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }

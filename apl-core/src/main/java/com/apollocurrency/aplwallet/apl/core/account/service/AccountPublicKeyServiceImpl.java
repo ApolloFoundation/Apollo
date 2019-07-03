@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
@@ -188,7 +190,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public void insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
+    public PublicKey insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
         PublicKey publicKey;
         if (isGenesis) {
                 publicKey = genesisPublicKeyTable.newEntity(dbKey);
@@ -197,5 +199,6 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
                 publicKey = publicKeyTable.newEntity(dbKey);
                 publicKeyTable.insert(publicKey);
         }
+        return publicKey;
     }
 }

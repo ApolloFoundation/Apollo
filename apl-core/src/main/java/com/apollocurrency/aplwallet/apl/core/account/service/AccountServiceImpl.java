@@ -141,7 +141,7 @@ public class AccountServiceImpl implements AccountService {
             account = accountTable.newEntity(dbKey);
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
-                accountPublicKeyService.insertNewPublicKey(dbKey, isGenesis);
+                publicKey = accountPublicKeyService.insertNewPublicKey(dbKey, isGenesis);
             }
             account.setPublicKey(publicKey);
         }

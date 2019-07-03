@@ -127,10 +127,12 @@ public class ShardDownloadPresenceObserver {
      * @param shardPresentData not used actually
      */
     public void onNoShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.NO_SHARD) ShardPresentData shardPresentData) {
+        log.trace("Catch event NO_SHARD {}", shardPresentData);
         // start adding old Genesis Data
         log.info("Genesis block not in database, starting from scratch");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 //        Connection con = dataSource.begin();
+
         try (Connection con = dataSource.begin()) {
             Block genesisBlock = Genesis.newGenesisBlock();
             addBlock(dataSource, genesisBlock);

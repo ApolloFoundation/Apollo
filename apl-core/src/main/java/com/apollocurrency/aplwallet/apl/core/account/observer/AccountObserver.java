@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.*;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
@@ -27,6 +28,7 @@ import java.util.List;
  * @author al
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class AccountObserver {
 
@@ -60,6 +62,7 @@ public class AccountObserver {
     }
 
     public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        log.trace("Catch event (BLOCK_POPPED) {}", block);
         if (accountPublicKeyService.getPublicKeyCache() != null) {
             accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
             block.getTransactions().forEach(transaction -> {
@@ -78,6 +81,7 @@ public class AccountObserver {
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+        log.trace("Catch event (AFTER_BLOCK_APPLY) {}", block);
         int height = block.getHeight();
         List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccounts(height);
         for (AccountLease lease : changingLeases) {
@@ -115,10 +119,12 @@ public class AccountObserver {
     }
 
     public void onLedgerCommitEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.COMMIT_ENTRIES) AccountLedgerEventType event ){
+        log.trace("Catch event (COMMIT_ENTRIES) {}", event);
         accountLedgerService.commitEntries();
     }
 
     public void onLedgerClearEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.CLEAR_ENTRIES) AccountLedgerEventType event){
+        log.trace("Catch event (CLEAR_ENTRIES) {}", event);
         accountLedgerService.clearEntries();
     }
 

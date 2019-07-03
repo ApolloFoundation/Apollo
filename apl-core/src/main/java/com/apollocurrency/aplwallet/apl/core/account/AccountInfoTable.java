@@ -26,7 +26,7 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
 
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
-            return accountInfo.getDbKey();
+            return accountInfo.getDbKey() == null ? newKey(accountInfo.getAccountId()) : accountInfo.getDbKey();
         }
 
     };

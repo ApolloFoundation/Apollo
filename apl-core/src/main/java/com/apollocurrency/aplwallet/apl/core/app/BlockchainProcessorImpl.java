@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
@@ -106,6 +107,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
+    private AccountLedgerService accountLedgerService;
 
     private FullTextSearchService fullTextSearchProvider;
 
@@ -127,7 +129,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
-    private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
+    //private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -161,6 +163,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private BlockchainConfigUpdater lookupBlockhainConfigUpdater() {
         if (blockchainConfigUpdater == null) blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         return blockchainConfigUpdater;
+    }
+
+    private AccountLedgerService lookupAccountLedgerService() {
+        if ( accountLedgerService == null){
+            accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
+        }
+        return accountLedgerService;
     }
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
@@ -274,7 +283,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardDownloader shardDownloader) {
         this.validator = validator;
         this.blockEvent = blockEvent;
-        this.ledgerEvent = ledgerEvent;
+        //this.ledgerEvent = ledgerEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
         this.trimService = trimService;
@@ -724,6 +733,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
                 block.setPrevious(previousLastBlock);
+                //log.trace("Fire event BEFORE_BLOCK_ACCEPT {}", block);
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                 lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
                 addBlock(block);
@@ -741,6 +751,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 dataSource.commit(); // finally close transaction
             }
+            //log.trace("Fire event AFTER_BLOCK_ACCEPT {}", block);
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
         } finally {
             globalSync.writeUnlock();
@@ -751,6 +762,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Convert2.rsAccount(block.getGeneratorId()));
             Peers.sendToSomePeers(block);
         }
+        //log.trace("Fire event BLOCK_PUSHED {}", block);
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
     }
 
@@ -866,13 +878,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         long processStart = System.currentTimeMillis();
         try {
-            log.trace("Accepting block: {} height: {} systime: {}",block.getId(),block.getHeight(),processStart);
+            //log.trace("Accepting block: {} height: {} systime: {}",block.getId(),block.getHeight(),processStart);
             isProcessingBlock = true;
             for (Transaction transaction : block.getTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
+            //log.trace("Fire event BEFORE_BLOCK_APPLY {}", block);
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
 
@@ -943,19 +956,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
 
             dexService.closeOverdueOrders(block.getTimestamp());
-
+            //log.trace("Fire event AFTER_BLOCK_APPLY {}", block);
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 
             if (block.getTransactions().size() > 0) {
                 lookupTransactionProcessor().notifyListeners(block.getTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
-            //AccountLedgerService.commitEntries();
-            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.COMMIT_ENTRIES)).fire(AccountLedgerEventType.COMMIT_ENTRIES);
+            lookupAccountLedgerService().commitEntries();
+            log.trace("Fire event COMMIT_ENTRIES");
+            //ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.COMMIT_ENTRIES)).fire(AccountLedgerEventType.COMMIT_ENTRIES);
 
         } finally {
             isProcessingBlock = false;
-            //AccountLedgerService.clearEntries();
-            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.CLEAR_ENTRIES)).fire(AccountLedgerEventType.CLEAR_ENTRIES);
+            lookupAccountLedgerService().clearEntries();
+            log.trace("Fire event CLEAR_ENTRIES");
+            //ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.CLEAR_ENTRIES)).fire(AccountLedgerEventType.CLEAR_ENTRIES);
             log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-processStart );
         }
     }
@@ -1031,6 +1046,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Block previousBlock = blockchain.deleteBlocksFrom(block.getId());
         ((BlockImpl)previousBlock).loadTransactions();
         lookupBlockhain().setLastBlock(previousBlock);
+        //log.trace("Fire event BLOCK_POPPED {}", block);
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
         return previousBlock;
     }
@@ -1175,6 +1191,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         try {
             pushBlock(block);
+            //log.trace("Fire event BLOCK_GENERATED {}", block);
             blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
             log.debug("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
                     + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeATM())/Constants.ONE_APL);
@@ -1285,6 +1302,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
+                //log.trace("Fire event RESCAN_BEGIN {}", currentBlock);
                 blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(currentBlock);
                 long currentBlockId = currentBlock.getId();
                 if (height == 0) {
@@ -1353,11 +1371,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             }
                                         }
                                     }
+                                    //log.trace("Fire event BEFORE_BLOCK_ACCEPT {}", currentBlock);
                                     blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(currentBlock);
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                     dataSource.clearCache();
                                     dataSource.commit(false);
+                                    //log.trace("Fire event AFTER_BLOCK_ACCEPT {}", currentBlock);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
                                 if (++blockCounter % 1000 == 0) {
@@ -1376,8 +1396,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                 break outer;
                             }
                             if (validate) {
+                                //log.trace("Fire event AFTER_BLOCK_ACCEPT, ScanValidate {}", currentBlock);
                                 blockEvent.select(literal(BlockEventType.BLOCK_SCANNED), new AnnotationLiteral<ScanValidate>() {}).fire(currentBlock);
                             } else {
+                                //log.trace("Fire event BLOCK_SCANNED {}", currentBlock);
                                 blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(currentBlock);
                             }
                             hasMore = true;
@@ -1397,6 +1419,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
                 pstmtDone.executeUpdate();
                 dataSource.commit(false);
+                //log.trace("Fire event RESCAN_END {}", currentBlock);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
                 log.info("Scan done at height " + blockchain.getHeight());
                 if (height == 0 && validate) {

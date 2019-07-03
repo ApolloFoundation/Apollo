@@ -30,7 +30,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
         @Override
         public Account newEntity(DbKey dbKey) {
-            return new Account(((LongKey) dbKey).getId());
+            return new Account(((LongKey) dbKey).getId(), dbKey);
         }
 
     };
