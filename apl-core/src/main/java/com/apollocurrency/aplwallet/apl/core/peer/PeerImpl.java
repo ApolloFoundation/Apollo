@@ -667,7 +667,7 @@ public final class PeerImpl implements Peer {
             // Check for an error response
             //
             if (response != null && response.get("error") != null) {
-                LOG.error("Peer: {} RESPONSE = {}", getAnnouncedAddress(), response);
+                LOG.error("Peer: {} RESPONSE = {}", getHostWithPort(), response);
                 deactivate();
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error")) && request != Peers.getMyPeerInfoRequest()) {
                     LOG.debug("Sequence error, reconnecting to " + host);
@@ -849,26 +849,28 @@ public final class PeerImpl implements Peer {
         if (newAnnouncedAddress == null || newAnnouncedAddress.isEmpty()) {
             return true;
         }
-        try {
+//       try {
 
             PeerAddress pa = new PeerAddress(newAnnouncedAddress);
             int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
                 unsetHallmark();
+                return false;
             }            
-            InetAddress address = InetAddress.getByName(host);
-            for (InetAddress inetAddress : InetAddress.getAllByName(pa.getHostName())) {
-                if (inetAddress.equals(address)) {
-                    return true;
-                }
-            }
-            LOG.debug("Announced address " + newAnnouncedAddress + " does not match: " + host);
-        } catch (RuntimeException|UnknownHostException e) {
-            LOG.trace("Unresolved announced address: {}",newAnnouncedAddress);
-            blacklist(e);
-        }
-        return false;
+//We have  to accept unresolveble by DNS  hosts because we have a lot of such hosts         
+//            InetAddress address = InetAddress.getByName(host);
+//            for (InetAddress inetAddress : InetAddress.getAllByName(pa.getHostName())) {
+//                if (inetAddress.equals(address)) {
+//                    return true;
+//                }
+//            }
+//            LOG.debug("Announced address " + newAnnouncedAddress + " does not match: " + host);
+//        } catch (RuntimeException|UnknownHostException e) {
+//            LOG.trace("Unresolved announced address: {}",newAnnouncedAddress);
+//            blacklist(e);
+//        }
+        return true;
     }
 
     public boolean analyzeHallmark(final String hallmarkString) {
