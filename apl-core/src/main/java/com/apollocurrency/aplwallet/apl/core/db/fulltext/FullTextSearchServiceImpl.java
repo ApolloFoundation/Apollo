@@ -30,9 +30,10 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     private DatabaseManager databaseManager;
 
     @Inject
-    public FullTextSearchServiceImpl(FullTextSearchEngine ftl,
-                                     @Named("fullTextTables") Set<String> indexTables,
-                                     @Named("tablesSchema") String schemaName) {
+    public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine ftl,
+                                     @Named(value = "fullTextTables") Set<String> indexTables,
+                                     @Named(value = "tablesSchema") String schemaName) {
+        this.databaseManager = databaseManager;
         this.ftl = ftl;
         this.indexTables = indexTables;
         this.schemaName = schemaName;
@@ -71,7 +72,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         // Index the table
         //
         try {
-                reindex(conn, tableName, schemaName);
+                reindex(conn, upperTable, schemaName);
                 LOG.info("Lucene search index created for table " + tableName);
             } catch (SQLException exc) {
                 LOG.error("Unable to create Lucene search index for table " + tableName);
@@ -124,9 +125,6 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     public void init() {
         try {
             ftl.init();
-            if (databaseManager  == null) {
-                databaseManager = CDI.current().select(DatabaseManager.class).get();
-            }
         } catch (IOException e) {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
@@ -241,6 +239,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         return ftl.search(schema, table, queryText, limit, offset);
     }
 
+    @Override
     public void shutdown() {
         try {
             ftl.shutdown();

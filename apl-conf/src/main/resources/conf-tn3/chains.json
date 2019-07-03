@@ -170,7 +170,7 @@
         }
       },
       {
-        "height": 2249999,
+        "height": 2231999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
@@ -239,6 +239,54 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        }
+      },
+      {
+        "height": 42300,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500000
+        }        
+      },
+      {
+        "height": 552500,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 70,
+        "minBlockTimeLimit": 50,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500000
+        }
+      },
+      {
+        "height": 624999,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
         }
       }
     ]
@@ -319,24 +367,10 @@
         "maxBalance": 30000000000
       },
       {
-        "height": 2000,
-        "maxNumberOfTransactions": 300,
+        "height": 1,
+        "maxNumberOfTransactions": 255,
         "blockTime": 2,
-        "maxBlockTimeLimit": 4,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 60
-          }
-        }
-      },
-      {
-        "height": 42300,
-        "maxNumberOfTransactions": 300,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 4,
+        "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
         "consensusSettings": {
@@ -344,6 +378,10 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 2000
         }
       }
     ]

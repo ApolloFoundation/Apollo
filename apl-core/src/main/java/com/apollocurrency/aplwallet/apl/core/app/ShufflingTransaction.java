@@ -438,6 +438,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         public boolean isPruned(long transactionId) {
             Transaction transaction = blockchain.getTransaction(transactionId);
+
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -701,13 +702,13 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = blockchain.findTransactionByFullHash(participant.getDataTransactionFullHash(),
-                    blockchain.getHeight());
-            if (dataProcessingTransaction == null) {
+
+            if (!blockchain.hasTransactionByFullHash(participant.getDataTransactionFullHash(),
+                    blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }
-            ShufflingProcessingAttachment shufflingProcessing = (ShufflingProcessingAttachment) dataProcessingTransaction.getAttachment();
-            if (!Arrays.equals(shufflingProcessing.getHash(), attachment.getHash())) {
+            byte[] dataHash = participant.getDataHash();
+            if (dataHash == null || !Arrays.equals(dataHash, attachment.getHash())) {
                 throw new AplException.NotValidException("Blame data hash doesn't match processing data hash");
             }
             byte[][] keySeeds = attachment.getKeySeeds();

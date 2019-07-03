@@ -9,11 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 /**
  *
@@ -29,6 +30,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         }
         return new ShufflingProcessingAttachment(attachmentData);
     }
+
     volatile byte[][] data;
     final byte[] hash;
 
@@ -61,7 +63,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    int getMyFullSize() {
+    public int getMyFullSize() {
         int size = super.getMySize();
         if (data != null) {
             size += 1;
@@ -74,18 +76,18 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return super.getMySize() + 32;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         super.putMyBytes(buffer);
         buffer.put(getHash());
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
         if (data != null) {
             JSONArray jsonArray = new JSONArray();

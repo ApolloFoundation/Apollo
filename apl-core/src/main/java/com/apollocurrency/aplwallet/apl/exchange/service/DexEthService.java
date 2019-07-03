@@ -1,15 +1,15 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class DexEthService {

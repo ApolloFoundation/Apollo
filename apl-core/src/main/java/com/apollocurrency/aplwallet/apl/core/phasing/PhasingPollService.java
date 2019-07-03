@@ -69,13 +69,15 @@ public interface PhasingPollService {
 
     PhasingVote getVote(long phasedTransactionId, long voterId);
 
-    List<Long> getActivePhasedTransactionDbIdsAtHeight(int height);
+    List<TransactionDbInfo> getActivePhasedTransactionDbInfoAtHeight(int height);
 
     long getVoteCount(long phasedTransactionId);
 
     void addVote(Transaction transaction, Account voter, long phasedTransactionId);
 
     int getAllPhasedTransactionsCount();
+
+    boolean verifySecret(PhasingPoll poll, byte[] revealedSecret);
 
     boolean isTransactionPhased(long id);
 }

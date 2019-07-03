@@ -132,6 +132,11 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+        throw new UnsupportedOperationException("Transaction should be already signed");
+    }
+
+    @Override
     public long getId() {
         return transaction.getId();
     }
@@ -154,6 +159,11 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         return transaction.getSenderPublicKey();
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return transaction.shouldSavePublicKey();
     }
 
     @Override

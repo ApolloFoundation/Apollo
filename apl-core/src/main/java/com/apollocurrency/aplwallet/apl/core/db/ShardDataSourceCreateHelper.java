@@ -6,14 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import org.slf4j.Logger;
+import java.util.UUID;
 
 /**
  * Helper class for creating shard data source.
@@ -22,12 +23,16 @@ import org.slf4j.Logger;
  */
 public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
+    public static final int MAX_CACHE_SIZE = 16384; // 16mb
+    public static final int MAX_CONNECTIONS = 30;
+    public static final int MAX_MEMORY_ROWS = 10_000;
 
-    private DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
     private Long shardId;
     private String shardName;
     private TransactionalDataSource shardDb;
 
+    
     public ShardDataSourceCreateHelper(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
     }
@@ -65,6 +70,9 @@ public class ShardDataSourceCreateHelper {
         try {
             shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
                     .dbFileName(shardName) // change file name
+                    .maxCacheSize(MAX_CACHE_SIZE)
+                    .maxConnections(MAX_CONNECTIONS)
+                    .maxMemoryRows(MAX_MEMORY_ROWS)
                     .dbUrl(null)  // nullify dbUrl intentionally!;
                     .dbIdentity(shardId); // put shard related info
         } catch (CloneNotSupportedException e) {
@@ -90,7 +98,8 @@ public class ShardDataSourceCreateHelper {
             }
             log.debug("Selected SHARD_ID = {} from DB", shardId);
         }
-        shardName = ShardNameHelper.getShardNameByShardId(shardId);
+        UUID chainId = databaseManager.getChainId();
+        shardName = new ShardNameHelper().getShardNameByShardId(shardId, chainId);
         return shardName;
     }
 }

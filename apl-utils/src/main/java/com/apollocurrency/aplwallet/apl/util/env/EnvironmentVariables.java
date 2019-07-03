@@ -14,6 +14,7 @@ public class EnvironmentVariables {
     public String pidFile = "";
     private String applicationName;
     public String configDir ="";
+    public String dataExportDir = ""; // path to keep exported CSV files
     
     public EnvironmentVariables(String applicationName) {
         if (StringUtils.isBlank(applicationName)) {
@@ -30,6 +31,7 @@ public class EnvironmentVariables {
         pidFile = System.getenv(applicationName + "_PID_FILE");
         twoFactorAuthDir = System.getenv(applicationName + "_2FA_DIR");
         configDir = System.getenv(applicationName + "_CONFIG_DIR");
+        dataExportDir = System.getenv(applicationName + "_DATA_EXPORT_DIR"); //
     }
 
 }

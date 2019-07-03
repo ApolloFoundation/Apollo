@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRecoveryRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
@@ -15,6 +13,8 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.List;
 
 /**
  * Shard Recovery information management + retrieving interface
@@ -42,8 +42,8 @@ public interface ShardRecoveryDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO shard_recovery(" +
-            "shard_recovery_id, state, object_name, column_name, last_column_value, processed_object, updated) " +
-            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :processedObject, CURRENT_TIMESTAMP())")
+            "shard_recovery_id, state, object_name, column_name, last_column_value, processed_object, updated, height) " +
+            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :processedObject, CURRENT_TIMESTAMP(), :height)")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     @GetGeneratedKeys
     long saveShardRecovery(@BindBean ShardRecovery shard);

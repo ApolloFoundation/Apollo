@@ -48,19 +48,19 @@ public final class MessagingVoteCasting extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 1 + this.pollVote.length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(this.pollId);
         buffer.put((byte) this.pollVote.length);
         buffer.put(this.pollVote);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("poll", Long.toUnsignedString(this.pollId));
         JSONArray vote = new JSONArray();
         if (this.pollVote != null) {

@@ -22,12 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -44,15 +44,15 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
 
     };
 
-    private static final VersionedEntityDbTable<CurrencyBuyOffer> buyOfferTable = new VersionedEntityDbTable<CurrencyBuyOffer>("buy_offer", buyOfferDbKeyFactory) {
+    private static final VersionedDeletableEntityDbTable<CurrencyBuyOffer> buyOfferTable = new VersionedDeletableEntityDbTable<CurrencyBuyOffer>("buy_offer", buyOfferDbKeyFactory) {
 
         @Override
-        protected CurrencyBuyOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyBuyOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyBuyOffer(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyBuyOffer buy) throws SQLException {
+        public void save(Connection con, CurrencyBuyOffer buy) throws SQLException {
             buy.save(con, table);
         }
 

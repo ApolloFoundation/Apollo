@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,12 +17,24 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class DerivedDbTablesRegistryImpl implements DerivedTablesRegistry {
-    private final Map<String, DerivedDbTable> derivedTables = new ConcurrentHashMap<>();
-    public void registerDerivedTable(DerivedDbTable table) {
+    private final Map<String, DerivedTableInterface> derivedTables = new ConcurrentHashMap<>();
+
+    public void registerDerivedTable(DerivedTableInterface table) {
         derivedTables.putIfAbsent(table.toString(), table);
-    } 
-    public Collection<DerivedDbTable> getDerivedTables() {
+    }
+
+    @Override
+    public Collection<String> getDerivedTableNames() {
+        return derivedTables.keySet();
+    }
+
+    public Collection<DerivedTableInterface> getDerivedTables() {
         return derivedTables.values();
+    }
+
+    @Override
+    public DerivedTableInterface getDerivedTable(String derivedTableName) {
+        return derivedTables.get(derivedTableName);
     }
 
     public DerivedDbTablesRegistryImpl() {

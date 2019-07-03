@@ -4,12 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
-import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.net.URI;
-import java.net.URISyntaxException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

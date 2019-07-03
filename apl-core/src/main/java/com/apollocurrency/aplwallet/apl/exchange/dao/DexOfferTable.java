@@ -2,10 +2,11 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,12 +49,12 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
     }
 
     @Override
-    protected DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return dexOfferMapper.map(rs, null);
     }
 
     @Override
-    protected void save(Connection con, DexOffer offer) throws SQLException {
+    public void save(Connection con, DexOffer offer) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (transaction_id, account_id, type, " +
                 "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")){
@@ -64,7 +65,8 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
             pstmt.setByte(++i, (byte) offer.getOfferCurrency().ordinal());
             pstmt.setLong(++i, offer.getOfferAmount());
             pstmt.setByte(++i, (byte) offer.getPairCurrency().ordinal());
-            pstmt.setLong(++i, offer.getPairRate());
+            //TODO change type in the db
+            pstmt.setLong(++i, EthUtil.ethToGwei(offer.getPairRate()));
             pstmt.setInt(++i, offer.getFinishTime());
             pstmt.setByte(++i, (byte) offer.getStatus().ordinal());
             pstmt.setInt(++i, blockchain.getHeight());

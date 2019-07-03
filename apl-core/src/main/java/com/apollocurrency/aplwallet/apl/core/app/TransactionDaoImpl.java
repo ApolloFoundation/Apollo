@@ -20,33 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -58,55 +33,44 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
-
+    private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
     private final DatabaseManager databaseManager;
-    private final BlockDao blockDao;
-    private TransactionIndexDao transactionIndexDao;
-    private BlockIndexDao blockIndexDao;
 
     @Inject
-    public TransactionDaoImpl(BlockDao blockDao, DatabaseManager databaseManager) {
-        Objects.requireNonNull(blockDao);
-        this.blockDao = blockDao;
+    public TransactionDaoImpl(DatabaseManager databaseManager) {
+        Objects.requireNonNull(databaseManager);
         this.databaseManager = databaseManager;
     }
 
-    private TransactionIndexDao lookupTransactionIndexDao() {
-        if (transactionIndexDao == null) {
-            this.transactionIndexDao = CDI.current().select(TransactionIndexDao.class).get();
-        }
-        return transactionIndexDao;
-    }
-
-    private BlockIndexDao lookupBlockIndexDao() {
-        if (blockIndexDao == null) {
-            this.blockIndexDao = CDI.current().select(BlockIndexDao.class).get();
-        }
-        return blockIndexDao;
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public Transaction findTransaction(long transactionId) {
-        return findTransaction(transactionId, Integer.MAX_VALUE);
+    public Transaction findTransaction(long transactionId, TransactionalDataSource dataSource) {
+        return findTransaction(transactionId, Integer.MAX_VALUE,dataSource );
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Transaction findTransaction(long transactionId, int height) {
+    public Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return transaction.getHeight() <= height ? transaction : null;
-            }
-        }
         // Search the database
-        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -123,39 +87,18 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
-    private TransactionalDataSource getDataSourceWithSharding(long transactionId) {
-        TransactionalDataSource dataSource;
-        Long shardId = lookupTransactionIndexDao().getShardIdByTransactionId(transactionId);
-        if (shardId != null) {
-            // shard data source
-            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
-        } else {
-            // default data source
-            dataSource = databaseManager.getDataSource();
-        }
-        return dataSource;
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public Transaction findTransactionByFullHash(byte[] fullHash) {
-        return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
+    public Transaction findTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
+        return findTransactionByFullHash(fullHash, Integer.MAX_VALUE, dataSource);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
+    public Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.getFullHash(), fullHash) ? transaction : null);
-            }
-        }
         // Search the database
-        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -175,22 +118,15 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasTransaction(long transactionId) {
-        return hasTransaction(transactionId, Integer.MAX_VALUE);
+    public boolean hasTransaction(long transactionId, TransactionalDataSource dataSource) {
+        return hasTransaction(transactionId, Integer.MAX_VALUE, dataSource);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public boolean hasTransaction(long transactionId, int height) {
+    public boolean hasTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height);
-            }
-        }
         // Search the database
-        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -204,24 +140,16 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasTransactionByFullHash(byte[] fullHash) {
-        return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash)));
+    public boolean hasTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
+        return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash), dataSource));
     }
 
     @Transactional(readOnly = true)
     @Override
-    public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
+    public boolean hasTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return (transaction.getHeight() <= height &&
-                        Arrays.equals(transaction.getFullHash(), fullHash));
-            }
-        }
         // Search the database
-        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash, height FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -235,16 +163,9 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Transactional(readOnly = true)
     @Override
-    public byte[] getFullHash(long transactionId) {
+    public byte[] getFullHash(long transactionId, TransactionalDataSource dataSource) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Transaction transaction = blockDao.getTransactionCache().get(transactionId);
-            if (transaction != null) {
-                return transaction.getFullHash();
-            }
-        }
         // Search the database
-        TransactionalDataSource dataSource = getDataSourceWithSharding(transactionId);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT full_hash FROM transaction WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
@@ -258,109 +179,15 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        try {
-
-            byte type = rs.getByte("type");
-            byte subtype = rs.getByte("subtype");
-            int timestamp = rs.getInt("timestamp");
-            short deadline = rs.getShort("deadline");
-            long amountATM = rs.getLong("amount");
-            long feeATM = rs.getLong("fee");
-            byte[] referencedTransactionFullHash = rs.getBytes("referenced_transaction_full_hash");
-            int ecBlockHeight = rs.getInt("ec_block_height");
-            long ecBlockId = rs.getLong("ec_block_id");
-            byte[] signature = rs.getBytes("signature");
-            long blockId = rs.getLong("block_id");
-            int height = rs.getInt("height");
-            long id = rs.getLong("id");
-            long senderId = rs.getLong("sender_id");
-            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
-            int blockTimestamp = rs.getInt("block_timestamp");
-            byte[] fullHash = rs.getBytes("full_hash");
-            byte version = rs.getByte("version");
-            short transactionIndex = rs.getShort("transaction_index");
-            long dbId = rs.getLong("db_id");
-
-            ByteBuffer buffer = null;
-            if (attachmentBytes != null) {
-                buffer = ByteBuffer.wrap(attachmentBytes);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-            }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, null,
-                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer), timestamp)
-                    .referencedTransactionFullHash(referencedTransactionFullHash)
-                    .signature(signature)
-                    .blockId(blockId)
-                    .height(height)
-                    .id(id)
-                    .senderId(senderId)
-                    .blockTimestamp(blockTimestamp)
-                    .fullHash(fullHash)
-                    .ecBlockHeight(ecBlockHeight)
-                    .ecBlockId(ecBlockId)
-                    .dbId(dbId)
-                    .index(transactionIndex);
-            if (transactionType.canHaveRecipient()) {
-                long recipientId = rs.getLong("recipient_id");
-                if (!rs.wasNull()) {
-                    builder.recipientId(recipientId);
-                }
-            }
-            if (rs.getBoolean("has_message")) {
-                builder.appendix(new MessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_encrypted_message")) {
-                builder.appendix(new EncryptedMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_public_key_announcement")) {
-                builder.appendix(new PublicKeyAnnouncementAppendix(buffer));
-            }
-            if (rs.getBoolean("has_encrypttoself_message")) {
-                builder.appendix(new EncryptToSelfMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("phased")) {
-                builder.appendix(PhasingAppendixFactory.build(buffer));
-            }
-            if (rs.getBoolean("has_prunable_message")) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            if (rs.getBoolean("has_prunable_encrypted_message")) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-
-            return builder.build();
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return MAPPER.mapWithException(rs, null);
     }
 
-    private TransactionalDataSource getDataSourceWithShardingByBlockId(long blockId) {
-        TransactionalDataSource dataSource;
-        Long shardId = lookupBlockIndexDao().getShardIdByBlockId(blockId);
-        if (shardId != null) {
-            // shard data source
-            dataSource = ((ShardManagement)databaseManager).getOrCreateShardDataSourceById(shardId);
-        } else {
-            // default data source
-            dataSource = databaseManager.getDataSource();
-        }
-        return dataSource;
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> findBlockTransactions(long blockId) {
+    public List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource) {
         // Check the block cache
-        synchronized (blockDao.getBlockCache()) {
-            Block block = blockDao.getBlockCache().get(blockId);
-            if (block != null) {
-                return block.getTransactions();
-            }
-        }
         // Search the database
-        TransactionalDataSource dataSource = getDataSourceWithShardingByBlockId(blockId);
         try (Connection con = dataSource.getConnection()) {
             return findBlockTransactions(con, blockId);
         } catch (SQLException e) {
@@ -424,11 +251,11 @@ public class TransactionDaoImpl implements TransactionDao {
             for (Transaction transaction : transactions) {
                 try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
                         + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
-                        + "block_id, signature, timestamp, type, subtype, sender_id, attachment_bytes, "
+                        + "block_id, signature, timestamp, type, subtype, sender_id, sender_public_key, attachment_bytes, "
                         + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                         + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
                         + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
@@ -443,6 +270,11 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setByte(++i, transaction.getType().getType());
                     pstmt.setByte(++i, transaction.getType().getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());
+                    if (!transaction.shouldSavePublicKey()) {
+                        pstmt.setNull(++i, Types.BINARY);
+                    } else {
+                        pstmt.setBytes(++i, transaction.getSenderPublicKey());
+                    }
                     int bytesLength = 0;
                     for (Appendix appendage : transaction.getAppendages()) {
                         bytesLength += appendage.getSize();
@@ -492,6 +324,28 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
+    @Override
+    public Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
+        if (dataSource == null) {
+            // select from main db
+            dataSource = databaseManager.getDataSource();
+        }
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM transaction WHERE height >= ? AND height < ?");
+            pstmt.setInt(1, from);
+            pstmt.setInt(2, to);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return 0L;
+    }
+
+
 /*
     @Override
     public DbIterator<Transaction> getAllTransactions() {
@@ -509,17 +363,32 @@ public class TransactionDaoImpl implements TransactionDao {
 */
 
     @Override
-    public DbIterator<Transaction> getTransactions(
+    public List<Transaction> getTransactions(TransactionalDataSource dataSource,
             long accountId, int numberOfConfirmations, byte type, byte subtype,
             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
             int height, int prunableExpiration) {
-        if (phasedOnly && nonPhasedOnly) {
-            throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
-        }
+        validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
 
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT transaction.* FROM transaction ");
+        createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        buf.append(DbUtils.limitsClause(from, to));
+        Connection con = null;
+        try {
+            con = dataSource.getConnection();
+            PreparedStatement pstmt = con.prepareStatement(buf.toString());
+            int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return CollectionUtil.toList(getTransactions(con, pstmt));
+        }
+        catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private StringBuilder createTransactionSelectSql(StringBuilder buf, String selectString, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
         if (executedOnly && !nonPhasedOnly) {
             buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
         }
@@ -555,7 +424,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (executedOnly && !nonPhasedOnly) {
             buf.append("AND (phased = FALSE OR approved = TRUE) ");
         }
-        buf.append("UNION ALL SELECT transaction.* FROM transaction ");
+        buf.append("UNION ALL SELECT ").append(selectString).append(" FROM transaction ");
         if (executedOnly && !nonPhasedOnly) {
             buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
         }
@@ -588,63 +457,80 @@ public class TransactionDaoImpl implements TransactionDao {
         if (executedOnly && !nonPhasedOnly) {
             buf.append("AND (phased = FALSE OR approved = TRUE) ");
         }
-
         buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
-        buf.append(DbUtils.limitsClause(from, to));
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement(buf.toString());
-            int i = 0;
-            pstmt.setLong(++i, accountId);
-            pstmt.setLong(++i, accountId);
-            if (blockTimestamp > 0) {
-                pstmt.setInt(++i, blockTimestamp);
+        return buf;
+    }
+
+    private void validatePhaseAndNonPhasedTransactions(boolean phasedOnly, boolean nonPhasedOnly) {
+        if (phasedOnly && nonPhasedOnly) {
+            throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
+        }
+    }
+
+    @Override
+    public int getTransactionCountByFilter(TransactionalDataSource dataSource, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
+        validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
+        StringBuilder buf = new StringBuilder();
+        buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
+        createTransactionSelectSql(buf, "transaction.id", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        buf.append(")");
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(buf.toString())) {
+            setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
             }
-            if (type >= 0) {
-                pstmt.setByte(++i, type);
-                if (subtype >= 0) {
-                    pstmt.setByte(++i, subtype);
-                }
-            }
-            if (!includePrivate) {
-                pstmt.setByte(++i, Payment.PRIVATE.getType());
-                pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
-            }
-            if (height < Integer.MAX_VALUE) {
-                pstmt.setInt(++i, height);
-            }
-            if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
-            }
-            pstmt.setLong(++i, accountId);
-            if (blockTimestamp > 0) {
-                pstmt.setInt(++i, blockTimestamp);
-            }
-            if (type >= 0) {
-                pstmt.setByte(++i, type);
-                if (subtype >= 0) {
-                    pstmt.setByte(++i, subtype);
-                }
-            }
-            if (!includePrivate) {
-                pstmt.setByte(++i, Payment.PRIVATE.getType());
-                pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
-            }
-            if (height < Integer.MAX_VALUE) {
-                pstmt.setInt(++i, height);
-            }
-            if (withMessage) {
-                pstmt.setInt(++i, prunableExpiration);
-            }
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getTransactions(con, pstmt);
         }
         catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    private int setStatement(PreparedStatement pstmt, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) throws SQLException {
+        int i = 0;
+        pstmt.setLong(++i, accountId);
+        pstmt.setLong(++i, accountId);
+        if (blockTimestamp > 0) {
+            pstmt.setInt(++i, blockTimestamp);
+        }
+        if (type >= 0) {
+            pstmt.setByte(++i, type);
+            if (subtype >= 0) {
+                pstmt.setByte(++i, subtype);
+            }
+        }
+        if (!includePrivate) {
+            pstmt.setByte(++i, Payment.PRIVATE.getType());
+            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+        }
+        if (height < Integer.MAX_VALUE) {
+            pstmt.setInt(++i, height);
+        }
+        if (withMessage) {
+            pstmt.setInt(++i, prunableExpiration);
+        }
+        pstmt.setLong(++i, accountId);
+        if (blockTimestamp > 0) {
+            pstmt.setInt(++i, blockTimestamp);
+        }
+        if (type >= 0) {
+            pstmt.setByte(++i, type);
+            if (subtype >= 0) {
+                pstmt.setByte(++i, subtype);
+            }
+        }
+        if (!includePrivate) {
+            pstmt.setByte(++i, Payment.PRIVATE.getType());
+            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+        }
+        if (height < Integer.MAX_VALUE) {
+            pstmt.setInt(++i, height);
+        }
+        if (withMessage) {
+            pstmt.setInt(++i, prunableExpiration);
+        }
+        return i;
     }
 
     @Override
@@ -685,7 +571,7 @@ public class TransactionDaoImpl implements TransactionDao {
     public List<Transaction> getTransactions(int fromDbId, int toDbId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM transaction where DB_ID >= ? and DB_ID < ?")) {
+             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM transaction where DB_ID >= ? and DB_ID < ? order by height asc, transaction_index asc")) {
             pstmt.setLong(1, fromDbId);
             pstmt.setLong(2, toDbId);
             return loadTransactionList(conn, pstmt);
@@ -693,6 +579,24 @@ public class TransactionDaoImpl implements TransactionDao {
         catch (AplException.NotValidException | SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    @Override
+    public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
+        List<TransactionDbInfo> result = new ArrayList<>();
+        try(Connection con = databaseManager.getDataSource().getConnection();
+        PreparedStatement pstmt = con.prepareStatement("SELECT db_id, id FROM transaction WHERE height < ? ORDER BY db_id")) {
+            pstmt.setInt(1, height);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new TransactionDbInfo(rs.getLong("db_id"), rs.getLong("id")));
+                }
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return result;
     }
 
 

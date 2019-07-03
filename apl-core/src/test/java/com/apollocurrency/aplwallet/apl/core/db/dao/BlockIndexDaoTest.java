@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -34,7 +33,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -48,8 +46,6 @@ public class BlockIndexDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
-    @Inject
-    private  JdbiHandleFactory jdbiHandleFactory;
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
@@ -57,21 +53,15 @@ public class BlockIndexDaoTest {
             GlobalSync.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            JdbiHandleFactory.class, BlockIndexDao.class, TransactionIndexDao.class,
+            JdbiHandleFactory.class, BlockIndexDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(dbExtension.getDatabaseManger().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .build();
 
     @Inject
     private BlockIndexDao blockIndexDao;
-    @Inject
-    private TransactionIndexDao transactionIndexDao;
 
-    @AfterEach
-    void shutdown() {
-        jdbiHandleFactory.close();
-    }
 
     @Test
     void testGetAll() {
@@ -93,7 +83,7 @@ public class BlockIndexDaoTest {
     void testGetShardIdByBlockId() {
         Long shardId = blockIndexDao.getShardIdByBlockId(BLOCK_INDEX_1.getBlockId());
         assertNotNull(shardId);
-        assertEquals(BLOCK_INDEX_1.getShardId(), shardId);
+        assertEquals(1, shardId);
     }
 
     @Test
@@ -121,9 +111,6 @@ public class BlockIndexDaoTest {
         assertEquals(3, deleteCount);
         List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
         assertEquals(0, allBlockIndex.size());
-        // test cascade delete
-        List<TransactionIndex> allTransactionIndex = transactionIndexDao.getAllTransactionIndex();
-        assertEquals(0, allTransactionIndex.size());
     }
 
     @Test
@@ -173,7 +160,7 @@ public class BlockIndexDaoTest {
         BlockIndex blockIndex = blockIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId());
         assertEquals(blockIndex, copy);
         List<BlockIndex> allBlockIndex = blockIndexDao.getAllBlockIndex();
-        assertEquals(Arrays.asList(BLOCK_INDEX_0, copy, BLOCK_INDEX_2), allBlockIndex);
+        assertEquals(Arrays.asList(BLOCK_INDEX_2, BLOCK_INDEX_0, copy), allBlockIndex);
     }
 
     @Test
@@ -218,9 +205,36 @@ public class BlockIndexDaoTest {
     void testDelete() {
         int deleteCount = blockIndexDao.hardBlockIndex(BLOCK_INDEX_1);
         assertEquals(1, deleteCount);
-        assertEquals(Arrays.asList(BLOCK_INDEX_0, BLOCK_INDEX_2), blockIndexDao.getAllBlockIndex());
-        // test cascade delete
-        List<TransactionIndex> transactionIndexList = transactionIndexDao.getByBlockId(BLOCK_INDEX_1.getBlockId(), Integer.MAX_VALUE);
-        assertEquals(0, transactionIndexList.size());
+        assertEquals(Arrays.asList(BLOCK_INDEX_2, BLOCK_INDEX_0), blockIndexDao.getAllBlockIndex());
     }
+
+    @Test
+    void testGetBlockIdsAfterHeight() {
+        List<Long> blockIdsAfter = blockIndexDao.getBlockIdsAfter(BLOCK_INDEX_1.getBlockHeight(), 2);
+
+        assertEquals(List.of(BLOCK_INDEX_2.getBlockId(), BLOCK_INDEX_0.getBlockId()), blockIdsAfter);
+    }
+
+    @Test
+    void testGetHeight() {
+        Integer height = blockIndexDao.getHeight(BLOCK_INDEX_0.getBlockId());
+
+        assertEquals(BLOCK_INDEX_0.getBlockHeight(), height);
+    }
+
+    @Test
+    void testCountByShardId() {
+            long count = blockIndexDao.countBlockIndexByShard(3L);
+
+            assertEquals(1, count);
+
+            count = blockIndexDao.countBlockIndexByShard(1L);
+
+            assertEquals(1, count);
+
+            count = blockIndexDao.countBlockIndexByShard(2L);
+
+            assertEquals(1, count);
+    }
+
 }

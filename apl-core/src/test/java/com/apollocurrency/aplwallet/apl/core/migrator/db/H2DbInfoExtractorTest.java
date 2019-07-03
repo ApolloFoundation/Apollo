@@ -5,19 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class H2DbInfoExtractorTest {
     public static final String DB_SUFFIX = ".h2.db";
@@ -26,7 +25,7 @@ public class H2DbInfoExtractorTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        DbManipulator manipulator = new DbManipulator(path);
+        DbManipulator manipulator = new DbManipulator(DbTestData.getDbFileProperties(path.toAbsolutePath().toString()));
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();
@@ -40,8 +39,7 @@ public class H2DbInfoExtractorTest {
     @Test
     public void testGetHeight() {
         int height = h2DbInfoExtractor.getHeight(path.toString());
-        BlockTestData btd = new BlockTestData();
-        Assertions.assertEquals(btd.BLOCK_11.getHeight(), height);
+        Assertions.assertEquals(BlockTestData.BLOCK_13_HEIGHT, height);
 
     }
 

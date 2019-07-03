@@ -6,21 +6,20 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -78,24 +77,22 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
                 }
             });
         } else {
-            try (DbIterator<? extends Transaction> iterator = blockchain.getTransactions(
+            List<Transaction> transactionList = blockchain.getTransactions(
                     data.getAccountId(), 0, type, subtype, 0, false, false,
-                    false, firstIndex, lastIndex, false, false, true)) {
-                while (iterator.hasNext()) {
-                    Transaction transaction = iterator.next();
+                    false, firstIndex, lastIndex, false, false, true);
+                transactionList.forEach(tx-> {
 
-                    if (Payment.PRIVATE == transaction.getType() && data.isEncrypt()) {
-                        transactions.add(JSONData.encryptedTransaction(transaction, data.getSharedKey()));
+                    if (Payment.PRIVATE == tx.getType() && data.isEncrypt()) {
+                        transactions.add(JSONData.encryptedTransaction(tx, data.getSharedKey()));
 
                     } else {
-                        transactions.add(JSONData.transaction(false, transaction));
+                        transactions.add(JSONData.transaction(false, tx));
                     }
-                }
+                });
             }
-        }
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

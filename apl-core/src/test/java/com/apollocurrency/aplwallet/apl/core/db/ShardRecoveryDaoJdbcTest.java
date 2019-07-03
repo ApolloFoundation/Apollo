@@ -38,7 +38,7 @@ class ShardRecoveryDaoJdbcTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, ShardRecoveryDaoJdbcImpl.class, EpochTime.class)
-            .addBeans(MockBean.of(extension.getDatabaseManger(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
@@ -49,7 +49,7 @@ class ShardRecoveryDaoJdbcTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        connection = extension.getDatabaseManger().getDataSource().getConnection();
+        connection = extension.getDatabaseManager().getDataSource().getConnection();
     }
 
     @Test
@@ -79,7 +79,7 @@ class ShardRecoveryDaoJdbcTest {
     @Test
     void getLatestShardRecoveryDataSource() {
         assertNotNull(daoJdbc);
-        ShardRecovery recovery = daoJdbc.getLatestShardRecovery(extension.getDatabaseManger().getDataSource());
+        ShardRecovery recovery = daoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertNotNull(recovery);
     }
 
@@ -128,7 +128,7 @@ class ShardRecoveryDaoJdbcTest {
         ShardRecovery recovery = new ShardRecovery(
                 MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
                 "BLOCK");
-        long result = daoJdbc.saveShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
+        long result = daoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         assertTrue(result > 1);
 
         long deleteResult = daoJdbc.hardDeleteShardRecovery(connection, result);
@@ -165,7 +165,7 @@ class ShardRecoveryDaoJdbcTest {
         recovery.setObjectName("Object");
         recovery.setLastColumnValue(10L);
         recovery.setProcessedObject("TRANSACTION");
-        int updated = daoJdbc.updateShardRecovery(extension.getDatabaseManger().getDataSource(), recovery);
+        int updated = daoJdbc.updateShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         assertEquals(1, updated);
 
         ShardRecovery result = daoJdbc.getLatestShardRecovery(connection);

@@ -28,7 +28,7 @@ import javax.enterprise.inject.spi.CDI;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -58,12 +58,12 @@ public final class AssetDelete {
     private static final EntityDbTable<AssetDelete> assetDeleteTable = new EntityDbTable<AssetDelete>("asset_delete", deleteDbKeyFactory) {
 
         @Override
-        protected AssetDelete load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public AssetDelete load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new AssetDelete(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, AssetDelete assetDelete) throws SQLException {
+        public void save(Connection con, AssetDelete assetDelete) throws SQLException {
             assetDelete.save(con);
         }
 

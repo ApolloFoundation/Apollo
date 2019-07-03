@@ -4,6 +4,33 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -12,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.rest.request.GetBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
@@ -45,32 +71,6 @@ import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
 @OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
@@ -119,7 +119,7 @@ public class DexController {
             }
         }
 
-        WalletsBalance customerWalletsBalance = service.getBalances(new GetBalancesRequest(ethAddresses));
+        WalletsBalance customerWalletsBalance = service.getBalances(new GetEthBalancesRequest(ethAddresses));
 
         try {
             return Response.ok(mapper.writeValueAsString(customerWalletsBalance)).build();
@@ -182,12 +182,14 @@ public class DexController {
             try {
                 offer.setAccountId(account.getId());
                 offer.setType(type);
-                offer.setOfferAmount(offerAmount);
+                //TODO refactoring it. Use Long (apollo unit of measurement)
+                offer.setOfferAmount(EthUtil.gweiToApl(offerAmount));
                 offer.setFromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress);
                 offer.setToAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()));
                 offer.setOfferCurrency(DexCurrencies.APL);
                 offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
-                offer.setPairRate(pairRate);
+                //TODO refactoring it. Use Long (apollo unit of measurement)
+                offer.setPairRate(EthUtil.gweiToEth(pairRate));
                 offer.setStatus(OfferStatus.OPEN);
                 offer.setFinishTime(currentTime + amountOfTime);
             } catch (Exception ex) {
@@ -223,13 +225,12 @@ public class DexController {
 
             //If we should freeze APL
             if (offer.getType().isSell()) {
-                Long amountATM = offer.getOfferAmount();
-                if (account.getUnconfirmedBalanceATM() < amountATM) {
+                if (account.getUnconfirmedBalanceATM() < offer.getOfferAmount()) {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
             } else if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()){
                 BigInteger amount = ethereumWalletService.getBalanceWei(offer.getFromAddress(), offer.getPairCurrency());
-                BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+                BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
 
                 if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();

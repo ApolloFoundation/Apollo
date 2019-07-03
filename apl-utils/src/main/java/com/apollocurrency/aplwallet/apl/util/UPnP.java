@@ -42,7 +42,6 @@ public class UPnP {
 
     private static final Logger LOG = getLogger(UPnP.class);
     public static final int MAX_PORTS_TO_TRY=999;
-    private boolean isShutdown = false;
 
     /**
      * UPnP gateway device
@@ -67,10 +66,6 @@ public class UPnP {
     public UPnP() {
     }
 
-    public boolean isInited() {
-        return inited;
-    }
-
     public int getFreePort(int desiredExternalPort) throws IOException, SAXException {
         int port = desiredExternalPort;
         PortMappingEntry portMappingEntry = new PortMappingEntry();
@@ -84,7 +79,7 @@ public class UPnP {
              if(mapAddr.equalsIgnoreCase(myAddr)){
                  //it is my mapping lost somehow
                  break;
-             }             
+             }
              port++;
              count++;
              if(count>MAX_PORTS_TO_TRY){
@@ -104,6 +99,9 @@ public class UPnP {
      * @return assigned external port number or -1 if no success
      */
     public synchronized int addPort(int localPort, String description) {
+        if(!inited){
+            init();
+        }
         int externalPort = -1;
         //
         // Ignore the request if we didn't find a gateway device
@@ -140,7 +138,9 @@ public class UPnP {
      * @param externalPort EXTERNAL port to delete
      */
     public synchronized void deletePort(int externalPort) {
-
+        if(!inited){
+            init();
+        }
         try {
             if (gateway != null && gateway.deletePortMapping(externalPort, "TCP")) {
                 LOG.debug("Mapping deleted for port " + externalPort);
@@ -170,7 +170,12 @@ public class UPnP {
         //TODO: set externalAddress from properties if we unable to do UPnP
         return externalAddress;
     }
-
+    public boolean isAvailable(){
+        if(!inited){
+            init();
+        }
+        return (gateway!=null);
+    }
     /**
      * Initialize the UPnP support
      */

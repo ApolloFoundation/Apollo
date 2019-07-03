@@ -5,10 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.commands.DataMigrateOperation.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -16,6 +16,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Set;
 
 /**
  * Helper class for selecting Table data from one Db and inserting those data into another DB.
@@ -24,8 +25,6 @@ import java.sql.Types;
  */
 public class BlockTransactionInsertHelper extends AbstractHelper {
     private static final Logger log = getLogger(BlockTransactionInsertHelper.class);
-
-    private String sqlDeleteFromBottomBound;
 
     @Override
     public long processOperation(Connection sourceConnect, Connection targetConnect,
@@ -48,7 +47,7 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
         // do selection and insertion process
         long startSelect = doStartSelectAndInsert(sourceConnect, targetConnect, operationParams);
 
-        log.debug("'{}' inserted records [{}] in {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
+        log.debug("'{}' inserted records [{} / {}] in {} secs", operationParams.tableName, totalProcessedCount, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
         return totalSelectedRows;
     }
 
@@ -70,25 +69,27 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             }
         }
 
+
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
         paginateResultWrapper.lowerBoundColumnValue = lowerBoundIdValue;
         paginateResultWrapper.upperBoundColumnValue = upperBoundIdValue;
-
         long startSelect = System.currentTimeMillis();
-
+        Set<Long> exludeDbIds = operationParams.excludeInfo != null ? operationParams.excludeInfo.getNotCopyDbIds() : Set.of();
         try (PreparedStatement ps = sourceConnect.prepareStatement(sqlToExecuteWithPaging)) {
             // select loop
             do {
                 ps.setLong(1, paginateResultWrapper.lowerBoundColumnValue);
                 ps.setLong(2, paginateResultWrapper.upperBoundColumnValue);
                 ps.setLong(3, operationParams.batchCommitSize);
-            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, targetConnect, operationParams));
+            } while (handleResultSet(ps, paginateResultWrapper, sourceConnect, targetConnect, operationParams, exludeDbIds));
         } catch (Exception e) {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
         } finally {
-            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
-                this.preparedInsertStatement.close();
+            if (this.preparedInsertStatement != null /*&& !this.preparedInsertStatement.isClosed()*/) {
+                log.trace("preparedInsertStatement will be CLOSED!");
+                DbUtils.close(this.preparedInsertStatement);
+//                this.preparedInsertStatement.close();
             }
         }
         return startSelect;
@@ -96,11 +97,10 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
 
     protected boolean handleResultSet(PreparedStatement ps, PaginateResultWrapper paginateResultWrapper,
                                       Connection sourceConnect, Connection targetConnect,
-                                      TableOperationParams operationParams)
+                                      TableOperationParams operationParams, Set<Long> exludeDbIds)
             throws SQLException {
         int rows = 0;
         int processedRows = 0;
-        boolean excludeRows = operationParams.dbIdsExclusionSet.isPresent();
         try (ResultSet rs = ps.executeQuery()) {
             log.trace("SELECT...from {} where DB_ID > {} AND DB_ID < {} LIMIT {}",
                     operationParams.tableName,
@@ -111,13 +111,14 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
                 extractMetaDataCreateInsert(targetConnect, rs);
                 rows++;
                 paginateResultWrapper.lowerBoundColumnValue = rs.getLong(BASE_COLUMN_NAME); // assign latest value for usage outside method
-                if (excludeRows && operationParams.dbIdsExclusionSet.get().contains(rs.getLong(BASE_COLUMN_NAME))) {
+                if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) && exludeDbIds.contains(paginateResultWrapper.lowerBoundColumnValue)) {
+                    log.debug("Will skip row with db_id = {}", paginateResultWrapper.lowerBoundColumnValue);
                     continue;
                 }
                 try {
                     for (int i = 0; i < numColumns; i++) {
                         Object object = rs.getObject(i + 1);
-                        formatBindValues(rs, i);// format readable values inside 'columnValues'
+//                        formatBindValues(rs, i);// format readable values in 'columnValues' buffer
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                     processedRows += preparedInsertStatement.executeUpdate();
@@ -177,62 +178,60 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
     }
 
     private void formatBindValues(ResultSet rs, int i) throws SQLException {
-//        for (int i = 0; i < numColumns; i++) {
-            java.util.Date d = null;
-            switch (columnTypes[i]) {
-                case Types.BIGINT:
-                case Types.BIT:
-                case Types.BOOLEAN:
-                case Types.DECIMAL:
-                case Types.DOUBLE:
-                case Types.FLOAT:
-                case Types.INTEGER:
-                case Types.SMALLINT:
-                case Types.TINYINT:
-                    String v = rs.getString(i + 1);
-                    columnValues.append(v);
-                    break;
+        java.util.Date d = null;
+        switch (columnTypes[i]) {
+            case Types.BIGINT:
+            case Types.BIT:
+            case Types.BOOLEAN:
+            case Types.DECIMAL:
+            case Types.DOUBLE:
+            case Types.FLOAT:
+            case Types.INTEGER:
+            case Types.SMALLINT:
+            case Types.TINYINT:
+                String v = rs.getString(i + 1);
+                columnValues.append(v);
+                break;
 
-                case Types.DATE:
-                    d = rs.getDate(i + 1);
-                case Types.TIME:
-                    if (d == null) d = rs.getTime(i + 1);
-                case Types.TIMESTAMP:
-                    if (d == null) d = rs.getTimestamp(i + 1);
+            case Types.DATE:
+                d = rs.getDate(i + 1);
+            case Types.TIME:
+                if (d == null) d = rs.getTime(i + 1);
+            case Types.TIMESTAMP:
+                if (d == null) d = rs.getTimestamp(i + 1);
 
-                    if (d == null) {
-                        columnValues.append("null");
-                    } else {
-                        columnValues.append("TO_DATE('").append(super.dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
-                    }
-                    break;
+                if (d == null) {
+                    columnValues.append("null");
+                } else {
+                    columnValues.append("TO_DATE('").append(super.dateFormat.format(d)).append("', 'YYYY/MM/DD HH24:MI:SS')");
+                }
+                break;
 
-                default:
-                    v = rs.getString(i + 1);
-                    if (v != null) {
-                        columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
-                    } else {
-                        columnValues.append("null");
-                    }
-                    break;
-            }
-            if (i != columnTypes.length - 1) {
-                columnValues.append(",");
-            }
-//        }
+            default:
+                v = rs.getString(i + 1);
+                if (v != null) {
+                    columnValues.append("'").append( v.replaceAll("'", "''")).append("'");
+                } else {
+                    columnValues.append("null");
+                }
+                break;
+        }
+        if (i != columnTypes.length - 1) {
+            columnValues.append(",");
+        }
     }
 
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {
-        if (BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "SELECT * FROM BLOCK WHERE DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(DB_ID, 0) as DB_ID from BLOCK where HEIGHT = ?";
+            sqlSelectUpperBound = "SELECT IFNULL(max(DB_ID), 0) as DB_ID from BLOCK where HEIGHT = ?";
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
             log.trace(sqlSelectBottomBound);
             sqlDeleteFromBottomBound = "DELETE from BLOCK WHERE DB_ID > ? AND DB_ID < ?";
             log.trace(sqlDeleteFromBottomBound);
-        } else if (TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
+        } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =

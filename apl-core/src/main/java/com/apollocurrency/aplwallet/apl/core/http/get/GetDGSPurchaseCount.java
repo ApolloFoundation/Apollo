@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -29,10 +29,13 @@ import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetDGSPurchaseCount extends AbstractAPIRequestHandler {
+
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public GetDGSPurchaseCount() {
         super(new APITag[] {APITag.DGS}, "seller", "buyer", "withPublicFeedbacksOnly", "completed");
@@ -49,13 +52,13 @@ public final class GetDGSPurchaseCount extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         int count;
         if (sellerId != 0 && buyerId == 0) {
-            count = DigitalGoodsStore.Purchase.getSellerPurchaseCount(sellerId, withPublicFeedbacksOnly, completed);
+            count = service.getSellerPurchaseCount(sellerId, withPublicFeedbacksOnly, completed);
         } else if (sellerId == 0 && buyerId != 0) {
-            count = DigitalGoodsStore.Purchase.getBuyerPurchaseCount(buyerId, withPublicFeedbacksOnly, completed);
+            count = service.getBuyerPurchaseCount(buyerId, withPublicFeedbacksOnly, completed);
         } else if (sellerId == 0 && buyerId == 0) {
-            count = DigitalGoodsStore.Purchase.getCount(withPublicFeedbacksOnly, completed);
+            count = service.getPurchaseCount(withPublicFeedbacksOnly, completed);
         } else {
-            count = DigitalGoodsStore.Purchase.getSellerBuyerPurchaseCount(sellerId, buyerId, withPublicFeedbacksOnly, completed);
+            count = service.getSellerBuyerPurchaseCount(sellerId, buyerId, withPublicFeedbacksOnly, completed);
         }
         response.put("numberOfPurchases", count);
         return response;
