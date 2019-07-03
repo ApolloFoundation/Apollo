@@ -1267,6 +1267,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 if (height == 0) {
+                    trimService.resetTrim();
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");

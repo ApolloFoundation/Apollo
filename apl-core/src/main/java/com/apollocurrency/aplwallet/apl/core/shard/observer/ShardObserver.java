@@ -81,7 +81,7 @@ public class ShardObserver {
     public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<Boolean> completableFuture = null;
         boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
-        if(!doSharding){
+        if(!doSharding) {
             log.warn("Sharding is prohibited by commad line or properties");
             return completableFuture;
         }

@@ -65,12 +65,7 @@
         "blockTime": 10,
         "maxBlockTimeLimit": 60,
         "minBlockTimeLimit": 7,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "false"
-          }
-        }
+        "maxBalance": 30000000000
       },
       {
         "height": 355000,
@@ -134,12 +129,7 @@
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
-        "maxBalance": 10000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "false"
-          }
-        }
+        "maxBalance": 10000000000
       },
       {
         "height": 1250000,
@@ -178,7 +168,7 @@
         "maxBalance": 30000000000
       },
       {
-        "height": 2249999,
+        "height": 2231999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
@@ -248,7 +238,11 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
-        }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500000
+        }        
       },
       {
         "height": 552500,
@@ -256,7 +250,29 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500000
+        }
+      },
+      {
+        "height": 624999,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
+        }
       }
     ]
   },
