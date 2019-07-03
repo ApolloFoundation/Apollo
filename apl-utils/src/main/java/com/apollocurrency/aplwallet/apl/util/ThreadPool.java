@@ -25,7 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,7 @@ public final class ThreadPool {
     private static final Logger LOG = getLogger(ThreadPool.class);
 
     private static volatile ScheduledExecutorService scheduledThreadPool;
-    private static Map<Runnable, Long> backgroundJobs = new HashMap<>();
+    private static List<BackgroundJob> backgroundJobs = new ArrayList<>();
     private static Map<Runnable, String> beforeStartJobs = new LinkedHashMap<>();
     private static Map<Runnable, String> lastBeforeStartJobs = new LinkedHashMap<>();
     private static Map<Runnable, String> afterStartJobs = new LinkedHashMap<>();
@@ -74,7 +73,7 @@ public final class ThreadPool {
         }
         if (! aplGlobalObjects.getBooleanProperty("apl.disable" + name + "Thread")) {
         */
-            backgroundJobs.put(runnable, timeUnit.toMillis(delay));
+            backgroundJobs.add(new BackgroundJob(name, timeUnit.toMillis(delay), runnable));
         /*
         } else {
             LOG.info("Will not run " + name + " thread");
@@ -97,9 +96,7 @@ public final class ThreadPool {
 
         LOG.debug("Starting " + backgroundJobs.size() + " background jobs");
         scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("scheduled background pool"));
-        for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
-            scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, entry.getValue(), TimeUnit.MILLISECONDS);
-        }
+        backgroundJobs.forEach(job-> scheduledThreadPool.scheduleWithFixedDelay(job.getJob(), 0, job.getDelay(), TimeUnit.MILLISECONDS));
         backgroundJobs = null;
 
         LOG.debug("Starting " + afterStartJobs.size() + " delayed tasks");
