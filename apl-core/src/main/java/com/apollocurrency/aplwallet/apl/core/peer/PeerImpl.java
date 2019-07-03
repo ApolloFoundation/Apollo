@@ -73,6 +73,7 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import java.nio.channels.ClosedChannelException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -406,6 +407,9 @@ public final class PeerImpl implements Peer {
             return;
         }
         if (cause instanceof ParseException && Errors.END_OF_FILE.equals(cause.toString())) {
+            return;
+        }
+        if(cause instanceof ClosedChannelException){ //debug mode of jetty
             return;
         }
         if (! isBlacklisted()) {
