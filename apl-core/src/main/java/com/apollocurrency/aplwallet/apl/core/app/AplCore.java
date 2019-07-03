@@ -267,14 +267,19 @@ public final class AplCore {
 
                 ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
                         () -> {
-                            Runtime runtime = Runtime.getRuntime();
-                            LOG.debug("Used connections - '{}', Memory Info. Total: {} Kb, Free: {} Kb, Max: {} Kb",
-                                  databaseManager.getDataSource().getJmxBean().getActiveConnections(),
-                                  runtime.totalMemory() / 1024,
-                                  runtime.freeMemory() / 1024,
-                                  runtime.maxMemory() / 1024
-                          );
-                          aplAppStatus.clearFinished(1*60L); //10 min
+                            try {
+                                Runtime runtime = Runtime.getRuntime();
+                                LOG.debug("Used connections - '{}', Memory Info. Total: {} Kb, Free: {} Kb, Max: {} Kb",
+                                        databaseManager.getDataSource().getJmxBean().getActiveConnections(),
+                                        runtime.totalMemory() / 1024,
+                                        runtime.freeMemory() / 1024,
+                                        runtime.maxMemory() / 1024
+                                );
+                                aplAppStatus.clearFinished(1 * 60L); //10 min
+                            }
+                            catch (Exception e) {
+                                LOG.error("Unexpected error", e);
+                            }
                         },
                    20,
                    TimeUnit.SECONDS);

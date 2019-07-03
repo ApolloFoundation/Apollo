@@ -42,7 +42,6 @@ public class ZipArchiveCommand implements DataMigrateOperation {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FinishShardingCommand");
-        return sb.toString();
+        return "ZipArchiveCommand";
     }
 }

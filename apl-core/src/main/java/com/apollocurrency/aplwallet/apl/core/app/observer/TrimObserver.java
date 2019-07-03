@@ -67,6 +67,7 @@ public class TrimObserver {
 
 
     public void onTrimConfigUpdated(@Observes @TrimConfigUpdated Boolean trimDerivedTables) {
+        log.info("Set trim to {} ", trimDerivedTables);
         this.trimDerivedTables = trimDerivedTables;
     }
 
