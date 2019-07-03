@@ -55,7 +55,7 @@ public class TrimService {
 
     public int getLastTrimHeight() {
         TrimEntry trimEntry = trimDao.get();
-        return trimEntry == null ? 0 : trimEntry.getHeight();
+        return trimEntry == null ? 0 : Math.max(trimEntry.getHeight() - maxRollback, 0);
     }
 
 
@@ -117,6 +117,10 @@ public class TrimService {
             trimDao.save(trimEntry);
 
         }
+    }
+
+    public void resetTrim() {
+        trimDao.clear();
     }
 
     public void doTrimDerivedTablesOnHeight(int height) {
