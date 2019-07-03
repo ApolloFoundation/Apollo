@@ -104,11 +104,11 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
 
 
     @Override
-    public void trim(int height, int maxHeight) {
+    public void trim(int height) {
         if (multiversion) {
-            doMultiversionTrim(height, maxHeight);
+            doMultiversionTrim(height);
         } else {
-            super.trim(height, maxHeight);
+            super.trim(height);
         }
     }
 
@@ -145,9 +145,8 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
      *                     10        500        100       240       true
      *                     }</pre>
      * </p>
-     * @param maxHeight
      */
-    private void doMultiversionTrim(final int height, int maxHeight) {
+    private void doMultiversionTrim(final int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -186,7 +185,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
                 long startDeleteDeletedTime = System.currentTimeMillis();
-                int totalDeleteDeleted = deleteDeletedNewAlgo(height, maxHeight);
+                int totalDeleteDeleted = deleteDeletedNewAlgo(height);
                 LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
@@ -217,11 +216,11 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
 
     // changed algo - select all dbkeys from query and insert to hashset, create index for height and latest and select db_key and
     // db_id from table using index. Next filter each account_id from set and delete it.
-    private int deleteDeletedNewAlgo(int height, int maxHeight) throws SQLException {
+    private int deleteDeletedNewAlgo(int height) throws SQLException {
         int deleted = 0;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
-            Set<DbKey> dbKeys = selectExistingDbKeys(con, height, maxHeight);
+            Set<DbKey> dbKeys = selectExistingDbKeys(con, height);
             try (
                     PreparedStatement pstmtSelectDeleteCandidates =
                             con.prepareStatement("SELECT DB_ID, " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height < ? AND height >= 0 " +
@@ -254,11 +253,10 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
 
     }
 
-    private Set<DbKey> selectExistingDbKeys(Connection con, int height, int maxHeight) throws SQLException {
+    private Set<DbKey> selectExistingDbKeys(Connection con, int height) throws SQLException {
         Set<DbKey> dbKeys = new HashSet<>();
-        try (PreparedStatement pstmtSelectExistingIds = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height >= ? AND height <= ?")) {
+        try (PreparedStatement pstmtSelectExistingIds = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height >= ?")) {
             pstmtSelectExistingIds.setInt(1, height);
-            pstmtSelectExistingIds.setInt(2, maxHeight);
             try (ResultSet idsRs = pstmtSelectExistingIds.executeQuery()) {
                 while (idsRs.next()) {
                     dbKeys.add(keyFactory.newKey(idsRs));
