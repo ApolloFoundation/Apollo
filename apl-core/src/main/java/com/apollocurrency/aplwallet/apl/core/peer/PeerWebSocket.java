@@ -400,9 +400,9 @@ public class PeerWebSocket {
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
 //TODO: check it, this causes problems            
-//            if(clientPeer!=null){
-//                clientPeer.deactivate();
-//            }
+            if(clientPeer!=null){
+                clientPeer.deactivate();
+            }
         } finally {
             lock.unlock();
         }
