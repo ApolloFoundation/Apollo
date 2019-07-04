@@ -399,9 +399,10 @@ public class PeerWebSocket {
             Set<Map.Entry<Long, PostRequest>> requests = requestMap.entrySet();
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
-            if(clientPeer!=null){
-                clientPeer.deactivate();
-            }
+//TODO: check it, this causes problems            
+//            if(clientPeer!=null){
+//                clientPeer.deactivate();
+//            }
         } finally {
             lock.unlock();
         }
