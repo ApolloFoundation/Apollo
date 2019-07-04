@@ -83,7 +83,9 @@ public class PeerWebSocket {
             peerClient = null;
         }
     }
-
+    
+    private Peer clientPeer = null;
+    
     /** Negotiated WebSocket message version */
     private int version = WS_VERSION;
 
@@ -130,13 +132,15 @@ public class PeerWebSocket {
      * Start a client session
      *
      * @param   uri                 Server URI
+     * @param p                     Peer reference to siganl onClose
      * @return                      TRUE if the WebSocket connection was completed
      * @throws  IOException         I/O error occurred
      */
-    public boolean startClient(URI uri) throws IOException {
+    public boolean startClient(URI uri, Peer p) throws IOException {
         if (peerClient == null) {
             return false;
         }
+        clientPeer = p;
         String address = String.format("%s:%d", uri.getHost(), uri.getPort());
         boolean useWebSocket = false;
         //
@@ -395,6 +399,9 @@ public class PeerWebSocket {
             Set<Map.Entry<Long, PostRequest>> requests = requestMap.entrySet();
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
+            if(clientPeer!=null){
+                clientPeer.deactivate();
+            }
         } finally {
             lock.unlock();
         }
