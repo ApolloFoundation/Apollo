@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.nio.channels.ClosedChannelException;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -206,7 +207,10 @@ public final class PeerServlet extends WebSocketServlet {
                         peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
                 }
             }
-            peer.blacklist(e);
+//jetty misused this, ignore            
+            if(!(e instanceof ClosedChannelException )){
+                peer.blacklist(e);
+            }
         }
     }
 
