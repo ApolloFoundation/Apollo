@@ -317,7 +317,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(height, validate);
                 }
             }
-//            scheduleOneScan();
         }, false);
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
@@ -649,6 +648,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             initialBlock = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
             setGetMoreBlocks(true); // turn ON blockchain downloading
+            scheduleOneScan();
             return;
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
@@ -661,6 +661,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for Peers initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
+            disableScheduleOneScan();
             log.debug("NO_SHARD/SHARD_PRESENT decision was = '{}'", downloadDecision);
         } catch (InterruptedException e) {
             log.error("main BlockchainProcessorImpl thread was interrupted, EXITING...");
@@ -700,6 +701,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             optionDAO.set("require-scan", "false");
             scheduleScan(0, false);
         }
+    }
+
+    private void disableScheduleOneScan() {
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        optionDAO.set("require-scan", "false");
     }
 
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
