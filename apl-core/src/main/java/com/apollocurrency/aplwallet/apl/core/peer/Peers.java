@@ -96,6 +96,7 @@ public final class Peers {
     static int readTimeout;
     static int blacklistingPeriod;
     public static boolean getMorePeers;
+    //TODO:  hardcode in Constants and use from there
     public static int MAX_REQUEST_SIZE;
     public static int MAX_RESPONSE_SIZE;
     public static int MAX_MESSAGE_SIZE;
@@ -162,9 +163,11 @@ public final class Peers {
     } // never
 
     public static void init() {
-        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
-        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
-        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 15 * 1024 * 1024);
+        int max_size = 40 * 1024 * 1024;
+        //TODO: hardcode in constants
+        MAX_REQUEST_SIZE = max_size; //propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
+        MAX_RESPONSE_SIZE =  max_size; //propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
+        MAX_MESSAGE_SIZE =  max_size; // propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 40 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails", true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS", true);
