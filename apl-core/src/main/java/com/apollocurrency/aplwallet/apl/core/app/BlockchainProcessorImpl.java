@@ -129,7 +129,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
-    //private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
+    private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -283,7 +283,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardDownloader shardDownloader) {
         this.validator = validator;
         this.blockEvent = blockEvent;
-        //this.ledgerEvent = ledgerEvent;
+        this.ledgerEvent = ledgerEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
         this.trimService = trimService;
@@ -962,15 +962,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (block.getTransactions().size() > 0) {
                 lookupTransactionProcessor().notifyListeners(block.getTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
-            lookupAccountLedgerService().commitEntries();
+            //lookupAccountLedgerService().commitEntries();
             log.trace("Fire event COMMIT_ENTRIES");
-            //ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.COMMIT_ENTRIES)).fire(AccountLedgerEventType.COMMIT_ENTRIES);
+            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.COMMIT_ENTRIES)).fire(AccountLedgerEventType.COMMIT_ENTRIES);
 
         } finally {
             isProcessingBlock = false;
-            lookupAccountLedgerService().clearEntries();
+            //lookupAccountLedgerService().clearEntries();
             log.trace("Fire event CLEAR_ENTRIES");
-            //ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.CLEAR_ENTRIES)).fire(AccountLedgerEventType.CLEAR_ENTRIES);
+            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.CLEAR_ENTRIES)).fire(AccountLedgerEventType.CLEAR_ENTRIES);
             log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-processStart );
         }
     }

@@ -278,6 +278,7 @@ public final class Peers {
     @Singleton
     static class AccountEventHandler {
         public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account){
+            LOG.trace("Catch event {} accaount={}" ,AccountEventType.BALANCE, account);
             peers.values().forEach(peer -> {
                 if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                     listeners.notify(peer, Event.WEIGHT);

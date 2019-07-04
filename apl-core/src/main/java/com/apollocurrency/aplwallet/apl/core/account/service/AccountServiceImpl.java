@@ -346,6 +346,7 @@ public class AccountServiceImpl implements AccountService {
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         save(account);
 
+        log.trace("Fire event {} account={}", AccountEventType.BALANCE, account);
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
         logEntryConfirmed(account, event, eventId, amountATM, feeATM);
     }
@@ -373,7 +374,9 @@ public class AccountServiceImpl implements AccountService {
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         save(account);
 
+        log.trace("Fire event {} account={}", AccountEventType.BALANCE, account);
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
+        log.trace("Fire event {} account={}", AccountEventType.UNCONFIRMED_BALANCE, account);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
 
         if (event == null) {
@@ -435,6 +438,7 @@ public class AccountServiceImpl implements AccountService {
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         save(account);
 
+        log.trace("Fire event {} account={}", AccountEventType.UNCONFIRMED_BALANCE, account);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
 
         if (event == null) {

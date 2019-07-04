@@ -68,7 +68,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             pstmt.setLong(++i, account.getForgedBalanceATM());
             DbUtils.setLongZeroToNull(pstmt, ++i, account.getActiveLesseeId());
             pstmt.setBoolean(++i, account.getControls().contains(AccountControlType.PHASING_ONLY));
-            pstmt.setInt(++i, account.getHeight()<0?blockchain.getHeight():account.getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
     }

@@ -889,6 +889,7 @@ public class FundingMonitor {
          * @param   account                 Account
          */
         public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account) {
+            LOG.trace("Catch event {} account={}", AccountEventType.BALANCE, account);
             if (stopped) {
                 return;
             }
@@ -922,6 +923,7 @@ public class FundingMonitor {
          * @param   asset                   Account asset
          */
         public void noAccountAssetBalance(@Observes @AccountEvent(AccountEventType.ASSET_BALANCE) AccountAsset asset) {
+            LOG.trace("Catch event {} asset={}", AccountEventType.ASSET_BALANCE, asset);
             if (stopped) {
                 return;
             }
@@ -958,6 +960,7 @@ public class FundingMonitor {
          * @param   currency                Account currency
          */
         public void onAccountCurrencyBalance(@Observes @AccountEvent(AccountEventType.CURRENCY_BALANCE) AccountCurrency currency) {
+            LOG.trace("Catch event {} currency={}", AccountEventType.CURRENCY_BALANCE, currency);
             if (stopped) {
                 return;
             }
@@ -994,6 +997,7 @@ public class FundingMonitor {
          * @param   property                Account property
          */
         public void onAccountSetProperty(@Observes @AccountEvent(AccountEventType.SET_PROPERTY) AccountProperty property) {
+            LOG.trace("Catch event {} property={}", AccountEventType.SET_PROPERTY, property);
             if (stopped) {
                 return;
             }
@@ -1054,6 +1058,7 @@ public class FundingMonitor {
         }
 
         public void onAccountDeleteProperty(@Observes @AccountEvent(AccountEventType.DELETE_PROPERTY) AccountProperty property) {
+            LOG.trace("Catch event {} property={}", AccountEventType.DELETE_PROPERTY, property);
             if (stopped) {
                 return;
             }
@@ -1093,6 +1098,7 @@ public class FundingMonitor {
          * Block event notification
          */
         public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+            LOG.trace("Catch event {} block={}", BlockEventType.BLOCK_PUSHED, block);
             if (!stopped && !pendingEvents.isEmpty()) {
                 processSemaphore.release();
             }
