@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.shuffling.dao.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -59,11 +60,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
-public final class ShufflingService {
+@Singleton
+public class ShufflingService {
     /**
      * Cache, which contains all active shufflings required for processing on each block push
      * Purpose: getActiveShufflings db call require at least 50-100ms, with cache we can shorten time to 10-20ms
@@ -86,7 +90,7 @@ public final class ShufflingService {
         PROCESSING((byte)1, new byte[]{2,3,4}) {
             @Override
             byte[] getHash(Shuffling shuffling) {
-                if (shuffling.assigneeAccountId == shuffling.issuerId) {
+                if (shuffling.getAssigneeAccountId() == shuffling.getIssuerId()) {
                     try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(shuffling.id)) {
                         return getParticipantsHash(participants);
                     }
@@ -154,23 +158,26 @@ public final class ShufflingService {
         }
 
         abstract byte[] getHash(Shuffling shuffling);
-
     }
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static final boolean deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    private static ShardDao shardDao = CDI.current().select(ShardDao.class).get();
-    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
-    private static DatabaseManager databaseManager;
+    private  PropertiesHolder propertiesLoader;
+    private BlockchainConfig blockchainConfig;
+    private final boolean deleteFinished;
+    private Blockchain blockchain;
+    private ShardDao shardDao;
+    private GlobalSync globalSync;
+    private ShufflingTable shufflingTable;
 
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
+    @Inject
+    public ShufflingService(PropertiesHolder propertiesLoader, BlockchainConfig blockchainConfig, Blockchain blockchain, ShardDao shardDao, GlobalSync globalSync, ShufflingTable shufflingTable) {
+        this.propertiesLoader = propertiesLoader;
+        this.blockchainConfig = blockchainConfig;
+        this.blockchain = blockchain;
+        this.deleteFinished = propertiesLoader.getBooleanProperty("apl.deleteFinishedShufflings");
+        this.shardDao = shardDao;
+        this.globalSync = globalSync;
+        this.shufflingTable = shufflingTable;
     }
 
     private static final Listeners<Shuffling, Event> listeners = new Listeners<>();
@@ -187,40 +194,32 @@ public final class ShufflingService {
     }
 
 
-    public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public static boolean removeListener(Listener<Shuffling> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
-    }
-
-    public static int getCount() {
+    public int getCount() {
         return shufflingTable.getCount();
     }
 
-    public static int getActiveCount() {
+    public int getActiveCount() {
         return shufflingTable.getCount(new DbClause.NotNullClause("blocks_remaining"));
     }
 
-    public static DbIterator<Shuffling> getAll(int from, int to) {
+    public DbIterator<Shuffling> getAll(int from, int to) {
         return shufflingTable.getAll(from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
-    public static DbIterator<Shuffling> getActiveShufflings(int from, int to) {
+    public DbIterator<Shuffling> getActiveShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC ");
     }
 
-    public static DbIterator<Shuffling> getFinishedShufflings(int from, int to) {
+    public DbIterator<Shuffling> getFinishedShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NullClause("blocks_remaining"), from, to, " ORDER BY height DESC ");
     }
 
-    public static Shuffling getShuffling(long shufflingId) {
+    public Shuffling getShuffling(long shufflingId) {
         return shufflingCache.getCopyById(shufflingId);
         //        return shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
     }
 
-    public static Shuffling getShuffling(byte[] fullHash) {
+    public Shuffling getShuffling(byte[] fullHash) {
         long shufflingId = Convert.fullHashToId(fullHash);
         Shuffling shuffling = shufflingCache.getCopyById(shufflingId);
         if (shuffling != null && !Arrays.equals(shuffling.getFullHash(), fullHash)) {
@@ -231,7 +230,7 @@ public final class ShufflingService {
         return shuffling;
     }
 
-    public static int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
+    public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
         DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
         if (!includeFinished) {
             clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
@@ -239,7 +238,7 @@ public final class ShufflingService {
         return shufflingTable.getCount(clause);
     }
 
-    public static DbIterator<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
+    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
         DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
         if (!includeFinished) {
             clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
@@ -250,26 +249,8 @@ public final class ShufflingService {
         return shufflingTable.getManyBy(clause, from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
-    public static DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
-        Connection con = null;
-        try {
-            con = lookupDataSource().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT shuffling.* FROM shuffling, shuffling_participant WHERE "
-                    + "shuffling_participant.account_id = ? AND shuffling.id = shuffling_participant.shuffling_id "
-                    + (includeFinished ? "" : "AND shuffling.blocks_remaining IS NOT NULL ")
-                    + "AND shuffling.latest = TRUE AND shuffling_participant.latest = TRUE ORDER BY blocks_remaining NULLS LAST, height DESC "
-                    + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setLong(++i, accountId);
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return shufflingTable.getManyBy(con, pstmt, false);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
     
-    public static DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
+    public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                         .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
                 " ORDER BY blocks_remaining NULLS LAST, height DESC ");
@@ -282,7 +263,8 @@ public final class ShufflingService {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    static void init() {
+    @PostConstruct
+    void init() {
         try {
             shufflingCache.putAll(shufflingTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues());
         }
@@ -291,8 +273,6 @@ public final class ShufflingService {
         }
     }
 
-    @Singleton
-    public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             LOG.trace("Call shuffling observer at height {} ", block.getHeight());
             long startTime = System.currentTimeMillis();
@@ -329,77 +309,11 @@ public final class ShufflingService {
             init();
         }
 
-    }
-
-
-
-    private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
-                + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
-                + "recipient_public_keys, registrant_count, height, latest) "
-                + "KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
-            int i = 0;
-            pstmt.setLong(++i, this.id);
-            DbUtils.setLongZeroToNull(pstmt, ++i, this.holdingId);
-            pstmt.setByte(++i, this.holdingType.getCode());
-            pstmt.setLong(++i, this.issuerId);
-            pstmt.setLong(++i, this.amount);
-            pstmt.setByte(++i, this.participantCount);
-            DbUtils.setShortZeroToNull(pstmt, ++i, this.blocksRemaining);
-            pstmt.setByte(++i, this.getStage().getCode());
-            DbUtils.setLongZeroToNull(pstmt, ++i, this.assigneeAccountId);
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.recipientPublicKeys);
-            pstmt.setByte(++i, this.registrantCount);
-            pstmt.setInt(++i, blockchain.getHeight());
-            pstmt.executeUpdate();
-        }
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getHoldingId() {
-        return holdingId;
-    }
-
-    public HoldingType getHoldingType() {
-        return holdingType;
-    }
-
-    public long getIssuerId() {
-        return issuerId;
-    }
-
-    public long getAmount() {
-        return amount;
-    }
-
-    public byte getParticipantCount() {
-        return participantCount;
-    }
-
-    public byte getRegistrantCount() {
-        return registrantCount;
-    }
-
-    public short getBlocksRemaining() {
-        return blocksRemaining;
-    }
-
-    public Stage getStage() {
-        return stage;
-    }
 
     // caller must update database
-    private void setStage(Stage stage, long assigneeAccountId, short blocksRemaining) {
-        if (!this.stage.canBecome(stage)) {
-            throw new IllegalStateException(String.format("Shuffling in stage %s cannot go to stage %s", this.stage, stage));
+    private void setStage(Shuffling shuffling, Stage stage, long assigneeAccountId, short blocksRemaining) {
+        if (!shuffling.getStage().canBecome(stage)) {
+            throw new IllegalStateException(String.format("Shuffling in stage %s cannot go to stage %s", shuffling.getStage(), stage));
         }
         if ((stage == Stage.VERIFICATION || stage == Stage.DONE) && assigneeAccountId != 0) {
             throw new IllegalArgumentException(String.format("Invalid assigneeAccountId %s for stage %s", Long.toUnsignedString(assigneeAccountId), stage));
@@ -410,15 +324,15 @@ public final class ShufflingService {
         if ((stage == Stage.DONE || stage == Stage.CANCELLED) && blocksRemaining != 0) {
             throw new IllegalArgumentException(String.format("For stage %s remaining blocks cannot be %s", stage, blocksRemaining));
         }
-        this.stage = stage;
-        this.assigneeAccountId = assigneeAccountId;
-        this.blocksRemaining = blocksRemaining;
+        shuffling.setStage(stage);
+        shuffling.setAssigneeAccountId(assigneeAccountId);
+        shuffling.setBlocksRemaining(blocksRemaining);
         LOG.debug("Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
-                Long.toUnsignedString(id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
+                Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
     }
 
-    private static void insert(Shuffling shuffling) {
-        shuffling.height = blockchain.getHeight();
+    private void insert(Shuffling shuffling) {
+        shuffling.setHeight(blockchain.getHeight());
         shufflingCache.put(shuffling);
         shufflingTable.insert(shuffling);
     }
@@ -432,14 +346,6 @@ public final class ShufflingService {
      *  CANCELLED: the participant who got blamed for the shuffling failure, if any
      *  DONE: 0, not assigned to anyone
      */
-    public long getAssigneeAccountId() {
-        return assigneeAccountId;
-    }
-
-    public byte[][] getRecipientPublicKeys() {
-        return recipientPublicKeys;
-    }
-
     public ShufflingParticipant getParticipant(long accountId) {
         return ShufflingParticipant.getParticipant(id, accountId);
     }

@@ -2,7 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.shuffling;
+package com.apollocurrency.aplwallet.apl.core.shuffling.mapper;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;

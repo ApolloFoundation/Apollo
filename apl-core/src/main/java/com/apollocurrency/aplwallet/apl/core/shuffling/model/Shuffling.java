@@ -10,9 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.Data;
 
-@Data
+import java.util.Arrays;
+import java.util.Objects;
+
 public class Shuffling extends VersionedDerivedEntity {
     private final long id;
     private final long holdingId;
@@ -68,4 +69,93 @@ public class Shuffling extends VersionedDerivedEntity {
         return copy;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public long getHoldingId() {
+        return holdingId;
+    }
+
+    public HoldingType getHoldingType() {
+        return holdingType;
+    }
+
+    public long getIssuerId() {
+        return issuerId;
+    }
+
+    public long getAmount() {
+        return amount;
+    }
+
+    public byte getParticipantCount() {
+        return participantCount;
+    }
+
+    public short getBlocksRemaining() {
+        return blocksRemaining;
+    }
+
+    public void setBlocksRemaining(short blocksRemaining) {
+        this.blocksRemaining = blocksRemaining;
+    }
+
+    public byte getRegistrantCount() {
+        return registrantCount;
+    }
+
+    public void setRegistrantCount(byte registrantCount) {
+        this.registrantCount = registrantCount;
+    }
+
+    public ShufflingService.Stage getStage() {
+        return stage;
+    }
+
+    public void setStage(ShufflingService.Stage stage) {
+        this.stage = stage;
+    }
+
+    public long getAssigneeAccountId() {
+        return assigneeAccountId;
+    }
+
+    public void setAssigneeAccountId(long assigneeAccountId) {
+        this.assigneeAccountId = assigneeAccountId;
+    }
+
+    public byte[][] getRecipientPublicKeys() {
+        return recipientPublicKeys;
+    }
+
+    public void setRecipientPublicKeys(byte[][] recipientPublicKeys) {
+        this.recipientPublicKeys = recipientPublicKeys;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Shuffling)) return false;
+        if (!super.equals(o)) return false;
+        Shuffling shuffling = (Shuffling) o;
+        return id == shuffling.id &&
+                holdingId == shuffling.holdingId &&
+                issuerId == shuffling.issuerId &&
+                amount == shuffling.amount &&
+                participantCount == shuffling.participantCount &&
+                blocksRemaining == shuffling.blocksRemaining &&
+                registrantCount == shuffling.registrantCount &&
+                assigneeAccountId == shuffling.assigneeAccountId &&
+                holdingType == shuffling.holdingType &&
+                stage == shuffling.stage &&
+                Arrays.equals(recipientPublicKeys, shuffling.recipientPublicKeys);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), id, holdingId, holdingType, issuerId, amount, participantCount, blocksRemaining, registrantCount, stage, assigneeAccountId);
+        result = 31 * result + Arrays.hashCode(recipientPublicKeys);
+        return result;
+    }
 }

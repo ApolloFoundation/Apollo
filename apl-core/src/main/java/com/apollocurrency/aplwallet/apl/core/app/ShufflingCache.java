@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
