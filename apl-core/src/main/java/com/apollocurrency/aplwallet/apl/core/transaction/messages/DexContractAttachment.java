@@ -20,7 +20,13 @@ public class DexContractAttachment extends AbstractAttachment {
     /**
      * Hash from secret key. sha256(key)
      */
-    private String secretHash;
+    private byte[] secretHash;
+
+    private String transferTxId;
+    /**
+     * Encrypted secret key to have able to restore secret.
+     */
+//    private byte[] encryptedSecret;
 
     public DexContractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -29,14 +35,14 @@ public class DexContractAttachment extends AbstractAttachment {
 
         byte hex[] = new byte[32];
         buffer.get(hex);
-        this.secretHash = Convert.toHexString(hex);
+        this.secretHash = hex;
     }
 
     public DexContractAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
         this.counterOrderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("counterOrderId")));
-        this.secretHash = String.valueOf(attachmentData.get("secretHash"));
+        this.secretHash = Convert.parseHexString(String.valueOf(attachmentData.get("secretHash")));
 
     }
 
@@ -50,14 +56,14 @@ public class DexContractAttachment extends AbstractAttachment {
     public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(this.orderId);
         buffer.putLong(this.counterOrderId);
-        buffer.put(Convert.parseHexString(this.secretHash));
+        buffer.put(this.secretHash);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
         json.put("orderId", this.getOrderId());
         json.put("counterOrderId", this.getCounterOrderId());
-        json.put("secretHash", this.secretHash);
+        json.put("secretHash",  Convert.toHexString(this.secretHash));
     }
 
     @Override

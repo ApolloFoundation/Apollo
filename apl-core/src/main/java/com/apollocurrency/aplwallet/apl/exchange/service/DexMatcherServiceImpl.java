@@ -124,10 +124,16 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * Core event for matcher - when offer is created, it is called back     
      * @param offerType  Type of the offer. (BUY/SELL) 0/1
      */
+    public void onCreateOffer(DexOffer createdOffer){
+        DexOffer pairOffer = findCounterOffer(createdOffer);
+        if(pairOffer != null) {
+            onOfferMatch(createdOffer, pairOffer);
+        }
+    }
 
-    public void onCreateOffer( DexOffer createdOffer ) {
-        
-        log.debug("DexMatcherServiceImpl:onCreateOffer()");
+
+    public DexOffer findCounterOffer(DexOffer createdOffer) {
+        log.debug("DexMatcherServiceImpl:findCounterOffer()");
     
         OfferType counterOfferType = createdOffer.getType().isSell() ? OfferType.BUY : OfferType.SELL;
 
@@ -152,15 +158,12 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
                 if (validateOffer(currentOffer)) {
                     // matched...
                     log.debug("match found: {}", currentOffer.getId() );                    
-                    onOfferMatch(createdOffer, currentOffer); 
-                    
-                    return;
-                } else {
-                    log.debug("Choosing between offers: {} was not validated", currentOffer.getId());
-                }                
+                    return currentOffer;
+                }
             }                     
-        }        
-        log.debug("Something went wrong: there's no matching for this offer");    
-    }    
+        }
+
+        return null;
+    }
     
 }

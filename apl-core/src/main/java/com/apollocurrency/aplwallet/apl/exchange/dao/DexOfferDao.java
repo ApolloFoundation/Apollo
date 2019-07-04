@@ -62,7 +62,7 @@ public interface DexOfferDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer where latest = true AND transaction_id = :transactionId")
     @RegisterRowMapper(DexOfferMapper.class)
-    DexOffer getByTransactionId(@Bind("transactionId") long blockId);
+    DexOffer getByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer where latest = true AND db_id = :id")

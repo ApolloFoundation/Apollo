@@ -139,6 +139,11 @@ public final class Constants {
 
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+    //DEX
+
+    //24 h
+    public static Integer TIME_OF_WAITING_TX_WITH_APPROVAL = 24 * 60 * 60;
+
     private Constants() {} // never
 
 }
