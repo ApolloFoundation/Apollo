@@ -674,11 +674,12 @@ public final class PeerImpl implements Peer {
                     handshake(targetChainId);
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
-                            response.toJSONString() + ", request was: " + JSON.toString(request) +
-                            ", disconnecting");
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
+                            response.toJSONString() + ", request was: " + JSON.toString(request));
+// Just log at the moment, we have to segregate errors                    
+//                            ", disconnecting");
+//                    if (connection != null) {
+//                        connection.disconnect();
+//                    }
                 }
             }
         } catch (AplException.AplIOException e) {
