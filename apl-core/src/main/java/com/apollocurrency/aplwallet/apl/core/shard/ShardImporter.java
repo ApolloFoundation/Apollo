@@ -122,6 +122,7 @@ public class ShardImporter {
                 return;
             }
         }
+
         // import derived tables
         Collection<String> tableNames = derivedTablesRegistry.getDerivedTables().stream().map(Object::toString).collect(Collectors.toList());
         log.debug("2. Will be imported [{}] tables...", tables.size());
@@ -131,7 +132,7 @@ public class ShardImporter {
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
                 if (table.equalsIgnoreCase(ShardConstants.ACCOUNT_TABLE_NAME)) {
-                    rowsImported = csvImporter.importCsv(table, 100, true, null, Map.of("height", blockchain.findLastBlock().getHeight()));
+                    rowsImported = csvImporter.importCsv(table, 100, true, null, Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else {
                     rowsImported = csvImporter.importCsv(table, 100, true);
                 }
