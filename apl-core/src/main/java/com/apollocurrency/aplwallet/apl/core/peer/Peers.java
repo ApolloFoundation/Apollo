@@ -567,6 +567,7 @@ public final class Peers {
                 peers.replace(peer.getHostWithPort(), (PeerImpl) peer);
             }
             listeners.notify(peer, Event.NEW_PEER);
+            connectPeer(peer);
             return true;
         }
         return false;
