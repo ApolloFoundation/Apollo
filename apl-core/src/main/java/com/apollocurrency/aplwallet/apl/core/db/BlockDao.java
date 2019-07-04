@@ -18,6 +18,8 @@ public interface BlockDao {
 
     boolean hasBlock(long blockId);
 
+    Block findFirstBlock();
+
     boolean hasBlock(long blockId, int height, TransactionalDataSource dataSource);
 
     long findBlockIdAtHeight(int height, TransactionalDataSource dataSource);
