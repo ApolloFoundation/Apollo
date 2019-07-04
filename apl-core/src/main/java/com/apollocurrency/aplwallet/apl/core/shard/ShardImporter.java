@@ -56,7 +56,7 @@ public class ShardImporter {
     }
 
     public void importShardByFileId(String fileId) {
-        importShard(fileId);
+        importShard(fileId, List.of());
         // set to start work block download thread (starting from shard's snapshot block here)
         log.debug("Before updating BlockchainProcessor from Shard data and RESUME block downloading...");
         BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
@@ -72,7 +72,7 @@ public class ShardImporter {
             Long shardId = completedShard.getShardId();
             ShardNameHelper nameHelper = new ShardNameHelper();
             String fileId = nameHelper.getFullShardId(shardId, blockchainConfig.getChain().getChainId());
-            importShard(fileId);
+            importShard(fileId, List.of("block", "transaction"));
         }
     }
 
@@ -90,7 +90,7 @@ public class ShardImporter {
         return true;
     }
 
-    public void importShard(String fileId) {
+    public void importShard(String fileId, List<String> excludedTables) {
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
         String genesisTaskId = aplAppStatus.durableTaskStart("Shard data import", "Loading Genesis public accounts", true);
         log.debug("genesisTaskId = {}", genesisTaskId);
@@ -108,6 +108,10 @@ public class ShardImporter {
                 ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME);
         log.debug("1. Will be imported [{}] tables...", tables.size());
         for (String table : tables) {
+            if (excludedTables.contains(table)) {
+                log.warn("Skip import {}", table);
+                continue;
+            }
             try {
                 log.debug("start importing '{}'...", table);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);

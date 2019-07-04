@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -71,7 +72,7 @@ public class ShardDownloadPresenceObserver {
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        shardImporter.importShard(shardPresentData.getFileIdValue());
+        shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
     }
 
     /**
