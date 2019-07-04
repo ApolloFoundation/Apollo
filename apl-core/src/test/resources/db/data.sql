@@ -334,3 +334,9 @@ INSERT into shuffling_data
 INSERT into trim
 (DB_ID,     HEIGHT,   DONE ) VALUES
 (1    ,      1000,    true);
+
+INSERT into option
+(NAME,     VALUE) VALUES
+('existingKey'    ,      'existingValue'),
+('existingNullKey'    ,      null),
+('existingEmptyKey'    ,      '');
