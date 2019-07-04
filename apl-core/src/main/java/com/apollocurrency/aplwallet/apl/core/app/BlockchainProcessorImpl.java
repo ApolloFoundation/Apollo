@@ -44,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
@@ -140,6 +141,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
     private final TrimService trimService;
+    private final ShardImporter shardImporter;
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardDownloader shardDownloader;
@@ -276,7 +278,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TransactionApplier transactionApplier,
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
-                                   ShardDownloader shardDownloader) {
+                                   ShardDownloader shardDownloader,
+                                   ShardImporter importer) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -291,6 +294,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
+        this.shardImporter = importer;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
             alreadyInitialized = true;
@@ -1246,13 +1250,22 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 return;
             }
+            int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
+            if (height < shardInitialHeight) {
+                log.warn("Scanning of blocks before last shard block is not supported");
+                return;
+            }
             scheduleScan(height, validate);
             if (height > 0 && height < getMinRollbackHeight()) {
                 log.info("Rollback to height less than " + getMinRollbackHeight() + " not supported, will do a full scan");
-                height = 0;
+                height = shardInitialHeight;
             }
             if (height < 0) {
-                height = 0;
+                height = shardInitialHeight;
+            }
+            if (!shardImporter.canImport(height)) {
+                log.info("Unable to import shard at height {}", height);
+                return;
             }
             log.info("Scanning blockchain starting from height " + height + "...");
             if (validate) {
@@ -1260,7 +1273,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
             try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > 0 ? "height >= ? AND " : "")
+                 PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > shardInitialHeight ? "height >= ? AND " : "")
                          + " db_id >= ? ORDER BY db_id ASC LIMIT 50000");
                  PreparedStatement pstmtDone = con.prepareStatement("UPDATE scan SET rescan = FALSE, height = 0, validate = FALSE")) {
                 isScanning = true;
@@ -1272,7 +1285,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.info(message);
                     return;
                 }
-                if (height == 0) {
+                if (height == shardInitialHeight) {
                     trimService.resetTrim();
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
@@ -1285,7 +1298,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     aplAppStatus.durableTaskUpdate(scanTaskId,
                             "Rollback table \'" + table.toString() + "\' to height " + height, 0.0);
                     if (table.isScanSafe()) {
-                        if (height == 0) {
+                        if (height == shardInitialHeight) {
                             table.truncate();
                         } else {
                             table.rollback(height - 1);
@@ -1299,10 +1312,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 Block currentBlock = blockchain.getBlockAtHeight(height);
                 blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(currentBlock);
                 long currentBlockId = currentBlock.getId();
-                if (height == 0) {
+                if (height == shardInitialHeight) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     aplAppStatus.durableTaskUpdate(scanTaskId, 20.5, "Apply genesis");
-                    Genesis.apply(false);
+                    shardImporter.importLastShard(height);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 24.5, "Genesis applied");
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
@@ -1314,7 +1327,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 int pstmtSelectIndex = 1;
-                if (height > 0) {
+                if (height > shardInitialHeight) {
                     pstmtSelect.setInt(pstmtSelectIndex++, height);
                 }
                 aplAppStatus.durableTaskUpdate(scanTaskId, 25.0, "Scanning blocks");
@@ -1399,7 +1412,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 aplAppStatus.durableTaskUpdate(scanTaskId, 95.0, "All blocks scanned");
                 double percentsPerTableIndex = getPercentsPerEvent(4.0, derivedTables.size());
-                if (height == 0) {
+                if (height == shardInitialHeight) {
                     for (DerivedTableInterface table : derivedTables) {
                         aplAppStatus.durableTaskUpdate(scanTaskId,
                                 "Create full text search index for table " + table.toString(), percentsPerTableIndex);
@@ -1411,7 +1424,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 dataSource.commit(false);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
                 log.info("Scan done at height " + blockchain.getHeight());
-                if (height == 0 && validate) {
+                if (height == shardInitialHeight && validate) {
                     log.info("SUCCESSFULLY PERFORMED FULL RESCAN WITH VALIDATION");
                 }
                 lastRestoreTime = 0;
