@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
 import javax.enterprise.inject.spi.CDI;
@@ -71,7 +72,7 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atuBalance = AccountAssetTable.getInstance().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                long atuBalance = lookupAccountAssetService().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
                 return atuBalance >= voteWeighting.minBalance ? atuBalance : 0;
             }
             @Override
@@ -159,7 +160,7 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return AccountAssetTable.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                return lookupAccountAssetService().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
             }
         },
         CURRENCY(3) {
@@ -197,6 +198,15 @@ public final class VoteWeighting {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
+    }
+
+    private static AccountAssetService accountAssetService;
+
+    private static AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null) {
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
     }
 
     private final VotingModel votingModel;

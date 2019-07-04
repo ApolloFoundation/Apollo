@@ -4,7 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
@@ -47,16 +50,6 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     private AccountLedgerService accountLedgerService;
 
     @Override
-    public DbIterator<AccountAsset> getAssets(Account account, int from, int to) {
-        return accountAssetTable.getAccountAssets(account.getId(), from, to);
-    }
-
-    @Override
-    public DbIterator<AccountAsset> getAssets(Account account, int height, int from, int to) {
-        return accountAssetTable.getAccountAssets(account.getId(), height, from, to);
-    }
-
-    @Override
     public List<AccountAsset> getAssetAccounts(long assetId, int height) {
         List<AccountAsset> accountAssets = new ArrayList<>();
         try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, 0, -1)) {
@@ -66,28 +59,84 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
+    public List<AccountAsset> getAssetAccounts(Account account, int from, int to) {
+        List<AccountAsset> result = new ArrayList<>();
+        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(account.getId(), from, to)) {
+            iterator.forEachRemaining(result::add);
+        }
+        return result;
+    }
+
+    @Override
+    public List<AccountAsset> getAssetAccounts(Account account, int height, int from, int to) {
+        return getAssetAccounts(account.getId(), height, from, to);
+    }
+
+    @Override
+    public List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to) {
+        List<AccountAsset> result = new ArrayList<>();
+        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(accountId, height, from, to)) {
+            iterator.forEachRemaining(result::add);
+        }
+        return result;
+    }
+
+    @Override
+    public int getAssetCount(long assetId) {
+        return accountAssetTable.getAssetCount(assetId);
+    }
+
+    @Override
+    public int getAssetCount(long assetId, int height) {
+        return accountAssetTable.getAssetCount(assetId, height);
+    }
+
+    @Override
+    public int getAccountAssetCount(long accountId) {
+        return accountAssetTable.getAccountAssetCount(accountId);
+    }
+
+    @Override
+    public int getAccountAssetCount(long accountId, int height) {
+        return accountAssetTable.getAccountAssetCount(accountId, height);
+    }
+
+    @Override
     public AccountAsset getAsset(Account account, long assetId) {
         return accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
     }
 
     @Override
     public AccountAsset getAsset(Account account, long assetId, int height) {
-        return accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId), height);
+        return getAsset(account.getId(), assetId, height);
+    }
+
+    @Override
+    public AccountAsset getAsset(long accountId, long assetId, int height) {
+        return accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
     }
 
     @Override
     public long getAssetBalanceATU(Account account, long assetId) {
-        return AccountAssetTable.getAssetBalanceATU(account.getId(), assetId);
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
     @Override
     public long getAssetBalanceATU(Account account, long assetId, int height) {
-        return AccountAssetTable.getAssetBalanceATU(account.getId(), assetId, height);
+        return  getAssetBalanceATU(account.getId(), assetId, height);
+    }
+
+    @Override
+    public long getAssetBalanceATU(long accountId, long assetId, int height) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
+        return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
     @Override
     public long getUnconfirmedAssetBalanceATU(Account account, long assetId) {
-        return AccountAssetTable.getUnconfirmedAssetBalanceATU(account.getId(), assetId);
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        return accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
     }
 
     @Override
@@ -95,7 +144,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (quantityATU == 0) {
             return;
         }
-        AccountAsset accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(account.getId(), assetId));
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.getQuantityATU();
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
@@ -103,7 +152,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setQuantityATU(assetBalance);
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
@@ -119,7 +168,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (quantityATU == 0) {
             return;
         }
-        AccountAsset accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(account.getId(), assetId));
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
@@ -149,7 +198,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(account.getId(), assetId));
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
         long assetBalance = accountAsset == null ? 0 : accountAsset.getQuantityATU();
         assetBalance = Math.addExact(assetBalance, quantityATU);
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
@@ -160,7 +209,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setQuantityATU(assetBalance);
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -200,5 +249,4 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         accountService.addToBalanceATM(account, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
-
 }

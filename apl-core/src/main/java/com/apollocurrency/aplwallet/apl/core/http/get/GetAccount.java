@@ -40,6 +40,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetAccount extends AbstractAPIRequestHandler {
@@ -115,26 +116,26 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeAssets) {
-            try (DbIterator<AccountAsset> accountAssets = accountAssetService.getAssets(account, 0, -1)) {
-                JSONArray assetBalances = new JSONArray();
-                JSONArray unconfirmedAssetBalances = new JSONArray();
-                while (accountAssets.hasNext()) {
-                    AccountAsset accountAsset = accountAssets.next();
-                    JSONObject assetBalance = new JSONObject();
-                    assetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
-                    assetBalance.put("balanceATU", String.valueOf(accountAsset.getQuantityATU()));
-                    assetBalances.add(assetBalance);
-                    JSONObject unconfirmedAssetBalance = new JSONObject();
-                    unconfirmedAssetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
-                    unconfirmedAssetBalance.put("unconfirmedBalanceATU", String.valueOf(accountAsset.getUnconfirmedQuantityATU()));
-                    unconfirmedAssetBalances.add(unconfirmedAssetBalance);
-                }
-                if (assetBalances.size() > 0) {
-                    response.put("assetBalances", assetBalances);
-                }
-                if (unconfirmedAssetBalances.size() > 0) {
-                    response.put("unconfirmedAssetBalances", unconfirmedAssetBalances);
-                }
+            List<AccountAsset> assets = accountAssetService.getAssetAccounts(account, 0, -1);
+
+            JSONArray assetBalances = new JSONArray();
+            JSONArray unconfirmedAssetBalances = new JSONArray();
+            assets.forEach( accountAsset -> {
+                JSONObject assetBalance = new JSONObject();
+                assetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
+                assetBalance.put("balanceATU", String.valueOf(accountAsset.getQuantityATU()));
+                assetBalances.add(assetBalance);
+                JSONObject unconfirmedAssetBalance = new JSONObject();
+                unconfirmedAssetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
+                unconfirmedAssetBalance.put("unconfirmedBalanceATU", String.valueOf(accountAsset.getUnconfirmedQuantityATU()));
+                unconfirmedAssetBalances.add(unconfirmedAssetBalance);
+            });
+
+            if (assetBalances.size() > 0) {
+                response.put("assetBalances", assetBalances);
+            }
+            if (unconfirmedAssetBalances.size() > 0) {
+                response.put("unconfirmedAssetBalances", unconfirmedAssetBalances);
             }
         }
 

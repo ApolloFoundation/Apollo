@@ -48,6 +48,14 @@ public abstract class AbstractAPIRequestHandler {
     private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
     private static AccountLedgerService accountLedgerService;
+    private static AccountAssetService accountAssetService;
+
+    protected AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null){
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
 
     protected AccountLedgerService lookupAccountLedgerService(){
         if ( accountLedgerService == null){

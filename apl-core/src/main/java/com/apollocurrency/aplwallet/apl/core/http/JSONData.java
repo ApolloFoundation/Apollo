@@ -27,15 +27,12 @@ import java.sql.SQLException;
 import java.util.*;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.*;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -116,6 +113,7 @@ public final class JSONData {
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+    private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
 
     private JSONData() {} // never
@@ -206,7 +204,7 @@ public final class JSONData {
         if (includeCounts) {
             json.put("numberOfTrades", Trade.getTradeCount(asset.getId()));
             json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
-            json.put("numberOfAccounts", AccountAssetTable.getAssetAccountCount(asset.getId()));
+            json.put("numberOfAccounts", accountAssetService.getAssetCount(asset.getId()));
         }
         return json;
     }

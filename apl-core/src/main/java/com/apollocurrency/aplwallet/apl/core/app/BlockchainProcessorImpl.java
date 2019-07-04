@@ -107,7 +107,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
-    private AccountLedgerService accountLedgerService;
+    //private AccountLedgerService accountLedgerService;
 
     private FullTextSearchService fullTextSearchProvider;
 
@@ -165,12 +165,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return blockchainConfigUpdater;
     }
 
-    private AccountLedgerService lookupAccountLedgerService() {
+    /*private AccountLedgerService lookupAccountLedgerService() {
         if ( accountLedgerService == null){
             accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
         }
         return accountLedgerService;
-    }
+    }*/
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }

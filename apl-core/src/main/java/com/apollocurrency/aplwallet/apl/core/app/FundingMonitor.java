@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
@@ -29,6 +29,8 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -90,6 +92,7 @@ public class FundingMonitor {
     private static TransactionProcessor transactionProcessor;
     private static GlobalSync globalSync; // prevent fail on node shutdown
     private static AccountService accountService;
+    private static AccountAssetService accountAssetService;
 
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
@@ -277,6 +280,7 @@ public class FundingMonitor {
         blockchain = CDI.current().select(Blockchain.class).get();
         transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         accountService = CDI.current().select(AccountServiceImpl.class).get();
+        accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -713,8 +717,8 @@ public class FundingMonitor {
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        AccountAsset targetAsset = AccountAssetTable.getAccountAsset(targetAccount.getId(), monitor.holdingId);
-        AccountAsset fundingAsset = AccountAssetTable.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
+        AccountAsset targetAsset = accountAssetService.getAsset(targetAccount, monitor.holdingId);
+        AccountAsset fundingAsset = accountAssetService.getAsset(fundingAccount, monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
