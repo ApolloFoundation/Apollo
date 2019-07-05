@@ -270,6 +270,7 @@ public class DexController {
             DexOffer counterOffer = dexMatcherService.findCounterOffer(offer);
 
             try {
+                //TODO move it in to service.
                 if (counterOffer != null) {
                     byte[] secretX = new byte[32];
                     Crypto.getSecureRandom().nextBytes(secretX);
@@ -289,7 +290,7 @@ public class DexController {
                         DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX);
                         response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
                     } else if (offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()) {
-                        //TODO Implement it
+                        //TODO Implement it for ETH/PAX
                     }
 
                 } else {
