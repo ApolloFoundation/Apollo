@@ -80,10 +80,11 @@ public class DexService {
         return dexOfferDao.getById(id);
     }
     
-//    @Transactional
-//    public List<DexTradeEntry> getTradeInfoForPeriod() {
-//        
-//    }
+    @Transactional
+    public List<DexTradeEntry> getTradeInfoForPeriod( Integer start, Integer finish, 
+            Integer offset, Integer limit) {
+        return dexTradeDao.getDexEntriesForInterval(start, finish, offset, limit);        
+    }
 
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
