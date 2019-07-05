@@ -55,6 +55,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import lombok.Getter;
 
 /**
  * PeerWebSocket represents an HTTP/HTTPS upgraded connection
@@ -83,7 +84,7 @@ public class PeerWebSocket {
             peerClient = null;
         }
     }
-    
+    @Getter
     private Peer clientPeer = null;
     
     /** Negotiated WebSocket message version */
@@ -115,7 +116,8 @@ public class PeerWebSocket {
     /**
      * Create a client socket
      */
-    public PeerWebSocket() {
+    public PeerWebSocket(Peer p) {
+        clientPeer = p;
         peerServlet = null;
     }
 

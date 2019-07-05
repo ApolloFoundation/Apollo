@@ -74,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
+import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -84,7 +85,9 @@ public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
     
     private final String host;
+    @Getter
     private final PeerWebSocket webSocket;
+    @Getter
     private volatile PeerWebSocket inboundSocket;
     private volatile boolean useWebSocket;
     private volatile int port;
@@ -140,7 +143,7 @@ public final class PeerImpl implements Peer {
         }
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
-        this.webSocket = new PeerWebSocket();
+        this.webSocket = new PeerWebSocket(this);
         this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
@@ -492,10 +495,10 @@ public final class PeerImpl implements Peer {
     void setLastInboundRequest(int now) {
         lastInboundRequest = now;
     }
-
-    void setInboundWebSocket(PeerWebSocket inboundSocket) {
-        this.inboundSocket = inboundSocket;
-    }
+//
+//    void setInboundWebSocket(PeerWebSocket inboundSocket) {
+//        this.inboundSocket = inboundSocket;
+//    }
 
     @Override
     public boolean isInboundWebSocket() {

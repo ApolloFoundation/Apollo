@@ -56,6 +56,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.channels.ClosedChannelException;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -199,14 +200,15 @@ public final class PeerServlet extends WebSocketServlet {
 
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
-            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                if (e instanceof RuntimeException) {
-                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
-                } else {
-                    LOG.debug(String.format("Error sending response to peer %s: %s",
-                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-                }
-            }
+//            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
+//                if (e instanceof RuntimeException) {
+//                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
+//                } else {
+//                    LOG.debug(String.format("Error sending response to peer %s: %s",
+//                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
+//                }
+//            }
+             LOG.debug("Error sending response to peer " + peer.getHost(), e);
 //jetty misused this, ignore            
             if(!(e instanceof ClosedChannelException )){
                 peer.blacklist(e);
@@ -236,11 +238,18 @@ public final class PeerServlet extends WebSocketServlet {
             return;
         }
         String remoteAddress = socketAddress.getHostString();
-        PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
+//That's  jsut wrong after fix of port honoring
+//        PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
+
+        PeerImpl peer = (PeerImpl)webSocket.getClientPeer();
         if (peer == null) {
+            //try to find peer, but that's a dirty fix, we need port
+            peer = Peers.findOrCreatePeer(remoteAddress);
+        }
+        if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            peer.setInboundWebSocket(webSocket);
+            // peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
             if (chainIdProtected()) {
 
