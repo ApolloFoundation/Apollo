@@ -232,12 +232,18 @@ class CsvExporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
+        accountCurrencyTable.init();
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
+        AccountInfoTable accountInfoTable = new AccountInfoTable();
+        accountInfoTable.init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
         PhasingOnly.get(2728325718715804811L); // check 1
         PhasingOnly.get(-8446384352342482748L); // check 2
         PhasingOnly.get(-4013722529644937202L); // works OK!
+        AccountAssetTable accountAssetTable = new AccountAssetTable();
+        accountAssetTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         dataExportPath = createPath("csvExportDir");

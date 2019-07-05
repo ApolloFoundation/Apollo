@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -64,7 +64,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public byte[] getPublicKey(long id) {
-        DbKey dbKey = PublicKeyTable.newKey(id);
+        DbKey dbKey = publicKeyTable.newKey(id);
         byte[] key = null;
         if (publicKeyCache != null) {
             key = publicKeyCache.get(dbKey);
@@ -144,7 +144,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public boolean setOrVerify(long accountId, byte[] key) {
-        DbKey dbKey = PublicKeyTable.newKey(accountId);
+        DbKey dbKey = publicKeyTable.newKey(accountId);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);

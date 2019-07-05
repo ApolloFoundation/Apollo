@@ -17,13 +17,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * @author al
  */
 @Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
-    private Blockchain blockchain;
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
 
@@ -46,13 +46,14 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
         public PublicKey newEntity(DbKey dbKey) {
             return new PublicKey(((LongKey) dbKey).getId(), null, blockchain.getHeight());
         }
-
     }
 
+    private Blockchain blockchain;
+
     @Inject
-    protected GenesisPublicKeyTable(Blockchain blockchain) {
+    public GenesisPublicKeyTable(Blockchain blockchain) {
         super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, false);
-        this.blockchain = blockchain;
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
     @Override

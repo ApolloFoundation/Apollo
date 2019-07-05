@@ -37,7 +37,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
         return accountCurrencyDbKeyFactory.newKey(idA,idB);
     } 
 
-    private AccountCurrencyTable() {
+    public AccountCurrencyTable() {
         super("account_currency", accountCurrencyDbKeyFactory);
     }
 

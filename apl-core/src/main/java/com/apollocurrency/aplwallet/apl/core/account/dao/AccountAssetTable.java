@@ -43,7 +43,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }
 
-    private AccountAssetTable() {
+    public AccountAssetTable() {
         super("account_asset",accountAssetDbKeyFactory);
     }
 

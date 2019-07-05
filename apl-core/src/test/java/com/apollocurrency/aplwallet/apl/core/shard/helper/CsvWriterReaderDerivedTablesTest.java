@@ -187,8 +187,13 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
+        accountCurrencyTable.init();
         PhasingOnly.get(Long.parseLong("-8446384352342482748"));
-        GenesisPublicKeyTable.getInstance().init();
+        AccountAssetTable accountAssetTable = new AccountAssetTable();
+        accountAssetTable.init();
+        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
+        genesisPublicKeyTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
