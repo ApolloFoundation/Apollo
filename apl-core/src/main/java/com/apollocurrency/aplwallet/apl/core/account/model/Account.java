@@ -41,7 +41,7 @@ import java.util.Set;
 @Slf4j
 @Getter
 @ToString
-public final class Account extends VersionedDerivedEntity {
+public class Account extends VersionedDerivedEntity {
 
     private long id;
 

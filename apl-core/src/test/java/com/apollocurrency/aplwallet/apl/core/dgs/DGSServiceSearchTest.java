@@ -53,15 +53,11 @@ public class DGSServiceSearchTest {
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            AccountServiceImpl.class, AccountTable.class, GlobalSyncImpl.class,
             BlockchainConfig.class,
             PropertiesHolder.class,
-            AccountInfoServiceImpl.class, AccountInfoTable.class,
-            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
-            AccountAssetServiceImpl.class, AccountAssetTable.class,
-            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
-            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class)
+            AccountServiceImpl.class, AccountTable.class, GlobalSyncImpl.class,
+            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class
+    )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))

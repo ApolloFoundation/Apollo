@@ -171,14 +171,7 @@ class CsvExporterTest {
             PhasingVoteTable.class, PhasingPollTable.class,
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            AccountServiceImpl.class,
-            AccountInfoServiceImpl.class, AccountInfoTable.class,
-            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
-            AccountAssetServiceImpl.class, AccountAssetTable.class,
-            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
-            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -192,12 +185,10 @@ class CsvExporterTest {
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
             .build();
 
-    @Inject
-    AccountTable accountTable;
-    @Inject
-    PropertiesHolder propertiesHolder;
     @Inject
     DGSGoodsTable goodsTable;
     @Inject

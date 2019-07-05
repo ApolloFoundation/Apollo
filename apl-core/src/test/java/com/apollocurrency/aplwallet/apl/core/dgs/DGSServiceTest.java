@@ -71,7 +71,6 @@ import javax.inject.Inject;
 @EnableWeld
 public class DGSServiceTest {
 
-
     @RegisterExtension
     DbExtension extension = new DbExtension();
     Blockchain blockchain = mock(Blockchain.class);
@@ -88,14 +87,9 @@ public class DGSServiceTest {
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            AccountServiceImpl.class, AccountTable.class,
             BlockchainConfig.class,
-            AccountInfoServiceImpl.class, AccountInfoTable.class,
-            AccountLeaseServiceImpl.class, AccountLeaseTable.class,
-            AccountAssetServiceImpl.class, AccountAssetTable.class,
-            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
-            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class
+            AccountServiceImpl.class, AccountTable.class,
+            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -107,6 +101,7 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+            .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .build();
     @Inject
     DGSService service;

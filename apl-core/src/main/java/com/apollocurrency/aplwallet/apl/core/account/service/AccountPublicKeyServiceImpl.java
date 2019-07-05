@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
+    //TODO: make cache nonstatic and injectable
     private static ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
 
     @Inject @Setter
