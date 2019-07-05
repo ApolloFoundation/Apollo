@@ -1,11 +1,13 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation.
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,6 +17,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@Singleton
 public class AccountPropertyTable extends VersionedDeletableEntityDbTable<AccountProperty> {
     
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
@@ -25,12 +28,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
         }
 
     };
-    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable(); 
-    
-    public static AccountPropertyTable getInstance(){
-        return accountPropertyTable;
-    }
-    
+
     public static DbKey newKey(long id){
         return accountPropertyDbKeyFactory.newKey(id);
     }
@@ -57,12 +55,8 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
             pstmt.executeUpdate();
         }
     }
-    
-    public static AccountProperty getProperty(long propertyId) {
-        return accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
-    }
 
-    public static DbIterator<AccountProperty> getProperties(long recipientId, long setterId, String property, int from, int to) {
+    public DbIterator<AccountProperty> getProperties(long recipientId, long setterId, String property, int from, int to) {
         if (recipientId == 0 && setterId == 0) {
             throw new IllegalArgumentException("At least one of recipientId and setterId must be specified");
         }
@@ -82,14 +76,10 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
         if (property != null) {
             dbClause = dbClause.and(new DbClause.StringClause("property", property));
         }
-        return accountPropertyTable.getManyBy(dbClause, from, to, " ORDER BY property ");
+        return getManyBy(dbClause, from, to, " ORDER BY property ");
     }
 
-    public static AccountProperty getProperty(long recipientId, String property) {
-        return getProperty(recipientId, property, recipientId);
-    }
-
-    public static AccountProperty getProperty(long recipientId, String property, long setterId) {
+    public AccountProperty getProperty(long recipientId, String property, long setterId) {
         if (recipientId == 0 || setterId == 0) {
             throw new IllegalArgumentException("Both recipientId and setterId must be specified");
         }
@@ -100,7 +90,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
         } else {
             dbClause = dbClause.and(new DbClause.NullClause("setter_id"));
         }
-        return accountPropertyTable.getBy(dbClause);
+        return getBy(dbClause);
     }
 
     

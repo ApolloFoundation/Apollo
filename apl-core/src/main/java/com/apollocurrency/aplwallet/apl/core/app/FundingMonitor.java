@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
@@ -31,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -89,6 +87,7 @@ public class FundingMonitor {
     private static AccountService accountService;
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
+    private static AccountPropertyService accountPropertyService;
 
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
@@ -278,6 +277,7 @@ public class FundingMonitor {
         accountService = CDI.current().select(AccountServiceImpl.class).get();
         accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -302,14 +302,13 @@ public class FundingMonitor {
             // Locate monitored accounts based on the account property and the setter identifier
             //
             List<MonitoredAccount> accountList = new ArrayList<>();
-            try (DbIterator<AccountProperty> it = AccountPropertyTable.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
-                while (it.hasNext()) {
-                    AccountProperty accountProperty = it.next();
-                    MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
-                            monitor, accountProperty.getValue());
-                    accountList.add(account);
-                }
-            }
+            List<AccountProperty> properties = accountPropertyService.getProperties(0, accountId, property,
+                    0, Integer.MAX_VALUE);
+            properties.forEach(accountProperty -> {
+                MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
+                        monitor, accountProperty.getValue());
+                accountList.add(account);
+            });
             //
             // Activate the monitor and check each monitored account to see if we need to submit
             // an initial fund transaction
