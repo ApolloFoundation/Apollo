@@ -838,6 +838,7 @@ public final class PeerImpl implements Peer {
                   if (services != origServices) {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                   }
+                  LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
             } else {
                 LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                 setState(PeerState.NON_CONNECTED);
