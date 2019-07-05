@@ -50,9 +50,14 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     private AccountLedgerService accountLedgerService;
 
     @Override
-    public List<AccountAsset> getAssetAccounts(long assetId, int height) {
+    public List<AccountAsset> getAssets(long assetId, int height) {
+        return getAssets(assetId, height, 0, -1);
+    }
+
+    @Override
+    public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
         List<AccountAsset> accountAssets = new ArrayList<>();
-        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, 0, -1)) {
+        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, from, to)) {
             iterator.forEachRemaining(accountAssets::add);
         }
         return accountAssets;
@@ -235,7 +240,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     @Override
     public void payDividends(Account account, final long transactionId, ColoredCoinsDividendPayment attachment) {
         long totalDividend = 0;
-        List<AccountAsset> accountAssets = getAssetAccounts(attachment.getAssetId(), attachment.getHeight());
+        List<AccountAsset> accountAssets = getAssets(attachment.getAssetId(), attachment.getHeight());
         final long amountATMPerATU = attachment.getAmountATMPerATU();
         long numAccounts = 0;
         for (final AccountAsset accountAsset : accountAssets) {

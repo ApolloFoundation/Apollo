@@ -26,7 +26,9 @@ public interface AccountAssetService {
 
     int getAssetCount(long assetId, int height);
 
-    List<AccountAsset> getAssetAccounts(long assetId, int height);
+    List<AccountAsset> getAssets(long assetId, int height, int from, int to);
+
+    List<AccountAsset> getAssets(long assetId, int height);
 
     int getAccountAssetCount(long accountId);
 
