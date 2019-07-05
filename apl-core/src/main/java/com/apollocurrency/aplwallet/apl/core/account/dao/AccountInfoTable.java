@@ -1,7 +1,7 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation.
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,6 +21,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@Singleton
 public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInfo> {
 
     private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
@@ -31,15 +33,10 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
 
     };
        
-    private  static final AccountInfoTable accountInfoTable = new AccountInfoTable();  
     public static DbKey newKey(long id){
         return accountInfoDbKeyFactory.newKey(id);
     }
-    
-    public static AccountInfoTable getInstance(){
-        return accountInfoTable;
-    }
-    
+
     public AccountInfoTable() {
         super("account_info",
             accountInfoDbKeyFactory, "name,description");
@@ -61,9 +58,8 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
             pstmt.executeUpdate();
         }
     }
-   
 
-    public static DbIterator<AccountInfo> searchAccounts(String query, int from, int to) {
-        return accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to);
+    public DbIterator<AccountInfo> searchAccounts(String query, int from, int to) {
+        return search(query, DbClause.EMPTY_CLAUSE, from, to);
     }
 }

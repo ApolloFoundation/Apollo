@@ -50,6 +50,14 @@ public abstract class AbstractAPIRequestHandler {
     private static AccountLedgerService accountLedgerService;
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
+    private static AccountInfoService accountInfoService;
+
+    protected AccountInfoService lookupAccountInfoService(){
+        if (accountInfoService == null){
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+        }
+        return accountInfoService;
+    }
 
     protected AccountCurrencyService lookupAccountCurrencyService(){
         if (accountCurrencyService == null){

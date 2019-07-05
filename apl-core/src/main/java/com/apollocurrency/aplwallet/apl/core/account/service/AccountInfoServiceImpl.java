@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
@@ -63,7 +63,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
     @Override
     public List<AccountInfo> searchAccounts(String query, int from, int to) {
         List<AccountInfo> result = new ArrayList<>();
-        try(DbIterator<AccountInfo> rs = accountInfoTable.search(query, DbClause.EMPTY_CLAUSE, from, to)) {
+        try(DbIterator<AccountInfo> rs = accountInfoTable.searchAccounts(query, from, to)) {
             rs.forEach(result::add);
         }
         return result;
