@@ -5,11 +5,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -18,6 +13,11 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 
 /**
@@ -77,6 +77,8 @@ public class AplCoreRuntime {
         }
         runtimeMode.shutdown();
     }
+
+
 
     public static void logSystemProperties() {
         String[] loggedProperties = new String[] {

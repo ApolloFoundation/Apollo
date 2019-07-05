@@ -18,6 +18,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -123,7 +124,7 @@ public class ShardEngineImpl implements ShardEngine {
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
         Path dbDir = dirProvider.getDbDir();
-        String backupName = String.format("BACKUP-BEFORE-%s.zip", nextShardName);
+        String backupName = String.format(DB_BACKUP_FORMAT, nextShardName);
         Path backupPath = dbDir.resolve(backupName);
         String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
         try (Connection con = sourceDataSource.getConnection();

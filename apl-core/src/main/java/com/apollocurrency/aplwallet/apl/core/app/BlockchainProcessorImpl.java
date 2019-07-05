@@ -44,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
@@ -465,6 +466,42 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
                     ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
                     trimService.trimDerivedTables(0, false);
+                    DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
+                    Path dataExportDir = dirProvider.getDataExportDir();
+                    FileUtils.clearDirectorySilently(dataExportDir);
+                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
+
+                    dataSource.commit(false);
+                    lookupBlockhainConfigUpdater().rollback(0);
+                }
+                catch (Exception e) {
+                    log.error(e.toString(), e);
+                    dataSource.rollback(false);
+                }
+                finally {
+                    dataSource.commit();
+                }
+                continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
+            } finally {
+                setGetMoreBlocks(true);
+            }
+        } finally {
+            globalSync.writeUnlock();
+        }
+    }
+
+    private void clean() {
+        globalSync.writeLock();
+        try {
+            setGetMoreBlocks(false);
+            try {
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
+                dataSource.begin();
+                try {
+                    blockchain.deleteAll();
+                    dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
+                    ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
+                    trimService.resetTrim();
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
@@ -1252,6 +1289,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (validate) {
                 log.debug("Also verifying signatures and validating transactions...");
             }
+
             String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > 0 ? "height >= ? AND " : "")
@@ -1296,7 +1334,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height == 0) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     aplAppStatus.durableTaskUpdate(scanTaskId, 20.5, "Apply genesis");
-                    Genesis.apply(false);
+//                    shardImporter.importLastShard(height);
+                    dataSource.clearCache();
                     aplAppStatus.durableTaskUpdate(scanTaskId, 24.5, "Genesis applied");
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));

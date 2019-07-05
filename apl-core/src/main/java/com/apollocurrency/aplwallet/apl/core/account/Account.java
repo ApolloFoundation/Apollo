@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
@@ -815,6 +816,16 @@ public final class Account {
 
     public void apply(byte[] key) {
         apply(key, false);
+    }
+
+    public static void addGenesisPublicKey(byte[] key) {
+        long accountId = Convert.getId(key);
+        PublicKey t = new PublicKey(accountId, key, 0);
+        t.setDbKey(new LongKey(accountId));
+        GenesisPublicKeyTable.getInstance().insert(t);
+        if (publicKeyCache != null) {
+            publicKeyCache.put(t.getDbKey(), key);
+        }
     }
 
     public void apply(byte[] key, boolean isGenesis) {

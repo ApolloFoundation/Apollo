@@ -35,10 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -58,8 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -329,18 +324,7 @@ public final class AplCore {
         }
 
     private void recoverSharding() {
-        ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
-        if (blockchainConfig.getCurrentConfig().isShardingEnabled() && recovery != null && recovery.getState() != MigrateState.COMPLETED) {
-            aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
-            ShardDao shardDao = CDI.current().select(ShardDao.class).get();
-            ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
-            blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
-            Shard lastShard = shardDao.getLastShard();
-            executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
-            executor.executeAllOperations();
-            aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
-        }
+        CDI.current().select(ShardService.class).get().recoverSharding();
     }
 
     void checkPorts() {

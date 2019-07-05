@@ -132,25 +132,28 @@ public final class Genesis {
         if(!dataSource.isInTransaction()){
             dataSource.begin();
         }
-        JSONArray publicKeys = loadPublicKeys(dataSource);
+        JSONArray publicKeys = loadPublicKeys(dataSource, loadOnlyPublicKeys);
         dataSource.commit(false); 
         if (loadOnlyPublicKeys) {
             LOG.debug("The rest of GENESIS is skipped, shard info will be loaded...");
-            return;
-        }
-        // load 'balances' from JSON only
-        long total = loadBalances(dataSource, publicKeys);
 
-        long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
-        if (total > maxBalanceATM) {
-            throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
+        } else {
+            // load 'balances' from JSON only
+            long total = loadBalances(dataSource, publicKeys);
+
+            long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+            if (total > maxBalanceATM) {
+                throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
+            }
+            String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
+            Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
+            creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
+            creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
+            LOG.info(message);
         }
-        String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
-        creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
-        creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
+
         genesisAccountsJSON = null;
-        aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
+        aplAppStatus.durableTaskFinished(genesisTaskId, false, "Genesis loaded " + (loadOnlyPublicKeys ? "ONLY KEYS" : "FULL"));
         genesisTaskId = null;
     }
 
@@ -177,23 +180,28 @@ public final class Genesis {
         return total;
     }
 
-    private static JSONArray loadPublicKeys(TransactionalDataSource dataSource) {
+    private static JSONArray loadPublicKeys(TransactionalDataSource dataSource, boolean onlyKeys) {
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
 
         LOG.debug("Loading public keys [{}]...", publicKeys.size());
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
+
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
-            Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
-            account.apply(publicKey, true);
-            if (count++ % 100 == 0) {
-                dataSource.commit(false);
+            if (onlyKeys) {
+                Account.addGenesisPublicKey(publicKey);
+            } else {
+                Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
+                account.apply(publicKey, true);
             }
-            if (publicKeys.size() > 20000 && count % 10000 == 0) {
-                String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
-                aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/publicKeys.size()*1.0)*50, message);
-            }
+                if (count++ % 100 == 0) {
+                    dataSource.commit(false);
+                }
+                if (publicKeys.size() > 20000 && count % 10000 == 0) {
+                    String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
+                    aplAppStatus.durableTaskUpdate(genesisTaskId, (count * 1.0 / publicKeys.size() * 1.0) * 50, message);
+                }
         }
         return publicKeys;
     }
