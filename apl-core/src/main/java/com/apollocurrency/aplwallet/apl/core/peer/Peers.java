@@ -459,7 +459,7 @@ public final class Peers {
             }
 
             InetAddress inetAddress = InetAddress.getByName(pAnnouncedAddress.getHost());
-            return findOrCreatePeer(inetAddress, announcedAddress, create);
+            return findOrCreatePeer(inetAddress.getHostAddress(), announcedAddress, create);
         } catch (UnknownHostException e) {
             //LOG.debug("Invalid peer address: " + announcedAddress + ", " + e.toString());
             return null;
@@ -467,12 +467,7 @@ public final class Peers {
     }
 
     public static PeerImpl findOrCreatePeer(String host) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(host);
-            return findOrCreatePeer(inetAddress, null, true);
-        } catch (UnknownHostException e) {
-            return null;
-        }
+        return findOrCreatePeer(host, null, true);
     }
 
     public static boolean isMyAddress(PeerAddress pa) {
@@ -497,9 +492,10 @@ public final class Peers {
         return false;
     }
 
-    public static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
-
-        String host = inetAddress.getHostAddress();
+    public static PeerImpl findOrCreatePeer(String addressWithPort, final String announcedAddress, final boolean create) {
+        
+        PeerAddress pa = new PeerAddress(addressWithPort);
+        String host = pa.getHost();
         if (cjdnsOnly && !host.substring(0, 2).equals("fc")) {
             return null;
         }
@@ -508,7 +504,6 @@ public final class Peers {
             host = "[" + host + "]";
         }
 
-        PeerAddress pa = new PeerAddress(host);
 //TODO: we should honor port here, in other case we can not connect from the same pvt network
 //        if (isMyAddress(pa)) {
 //            return null;
