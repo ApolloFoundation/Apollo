@@ -820,7 +820,7 @@ public final class PeerImpl implements Peer {
                                 return;
                             }
                             if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
-                                LOG.debug("Connect: peer '{}' has new announced address '{}', old is '{}'",
+                                LOG.debug("peer '{}' has new announced address '{}', old is '{}'",
                                         host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
                                 int oldPort = getPort();
                                 Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
