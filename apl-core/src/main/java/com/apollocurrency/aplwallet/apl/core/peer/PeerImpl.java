@@ -750,7 +750,7 @@ public final class PeerImpl implements Peer {
                         LOG.debug("Connect: announced address '{}' now points to '{}', replacing peer '{}'",
                                 pi.getAnnouncedAddress(),  inetAddress.getHostAddress(), host);
                         Peers.removePeer(this);
-                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, pi.getAnnouncedAddress(), true);
+                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress.getHostAddress(), pi.getAnnouncedAddress(), true);
                         if (newPeer != null) {
                             LOG.trace("Prepare Handshake with : {}", newPeer);
                             Peers.addPeer(newPeer);

@@ -176,7 +176,9 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Process the peer request
         //
-        PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
+        PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
+        PeerImpl peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+        //PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
