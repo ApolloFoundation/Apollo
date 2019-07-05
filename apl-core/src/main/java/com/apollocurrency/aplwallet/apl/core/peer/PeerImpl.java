@@ -839,7 +839,7 @@ public final class PeerImpl implements Peer {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                   }
             } else {
-                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getAnnouncedAddress());
+                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                 setState(PeerState.NON_CONNECTED);
             }
         } catch (RuntimeException e) {
