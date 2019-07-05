@@ -142,7 +142,7 @@ public final class Constants {
     //DEX
 
     //24 h
-    public static Integer TIME_OF_WAITING_TX_WITH_APPROVAL = 24 * 60 * 60;
+    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
 
     private Constants() {} // never
 

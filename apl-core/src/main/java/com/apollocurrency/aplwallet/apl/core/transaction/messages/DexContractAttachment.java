@@ -26,7 +26,7 @@ public class DexContractAttachment extends AbstractAttachment {
     /**
      * Encrypted secret key to have able to restore secret.
      */
-//    private byte[] encryptedSecret;
+    private byte[] encryptedSecret;
 
     public DexContractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -36,6 +36,10 @@ public class DexContractAttachment extends AbstractAttachment {
         byte hex[] = new byte[32];
         buffer.get(hex);
         this.secretHash = hex;
+
+        byte encryptedSecretX[] = new byte[64];
+        buffer.get(encryptedSecretX);
+        this.encryptedSecret = encryptedSecretX;
     }
 
     public DexContractAttachment(JSONObject attachmentData) {
@@ -43,13 +47,13 @@ public class DexContractAttachment extends AbstractAttachment {
         this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
         this.counterOrderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("counterOrderId")));
         this.secretHash = Convert.parseHexString(String.valueOf(attachmentData.get("secretHash")));
-
+        this.encryptedSecret = Convert.parseHexString(String.valueOf(attachmentData.get("encryptedSecret")));
     }
 
     @Override
     public int getMySize() {
         //secretHash fix size (hex(Sha256()) - 32 bites)
-        return 8 + 8 + 32;
+        return 8 + 8 + 32 + 64;
     }
 
     @Override
@@ -57,6 +61,7 @@ public class DexContractAttachment extends AbstractAttachment {
         buffer.putLong(this.orderId);
         buffer.putLong(this.counterOrderId);
         buffer.put(this.secretHash);
+        buffer.put(this.encryptedSecret);
     }
 
     @Override
@@ -64,6 +69,7 @@ public class DexContractAttachment extends AbstractAttachment {
         json.put("orderId", this.getOrderId());
         json.put("counterOrderId", this.getCounterOrderId());
         json.put("secretHash",  Convert.toHexString(this.secretHash));
+        json.put("encryptedSecret",  Convert.toHexString(this.encryptedSecret));
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
@@ -58,12 +59,13 @@ public class DexService {
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
+    private EpochTime timeService;
 
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable,
-                      DexOfferTransactionCreator dexOfferTransactionCreator) {
+                      DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime timeService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
@@ -72,6 +74,7 @@ public class DexService {
         this.secureStorageService = secureStorageService;
         this.dexContractTable = dexContractTable;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.timeService = timeService;
     }
 
 
@@ -233,7 +236,7 @@ public class DexService {
         createTransactionRequest.setDeadlineValue("1440");
         createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
         PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
-        PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, Constants.TIME_OF_WAITING_TX_WITH_APPROVAL, phasingParams, null, secretHash, (byte) 2);
+        PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1, phasingParams, null, secretHash, (byte) 2);
         createTransactionRequest.setPhased(true);
         createTransactionRequest.setPhasing(phasing);
 
