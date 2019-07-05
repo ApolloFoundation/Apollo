@@ -732,6 +732,10 @@ public final class PeerImpl implements Peer {
     
     @Override   
     public void handshake(UUID targetChainId) {
+        if(getState()==PeerState.CONNECTED){
+            LOG.trace("Peers {} is already connected.",getHostWithPort());
+            return;
+        }
         LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {

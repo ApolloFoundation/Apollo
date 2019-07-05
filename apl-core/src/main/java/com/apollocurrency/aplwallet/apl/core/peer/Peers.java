@@ -583,7 +583,6 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        peer.deactivate();
         peer.handshake(blockchainConfig.getChain().getChainId());
     }
 
