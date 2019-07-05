@@ -1,13 +1,7 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation.
  */
-package com.apollocurrency.aplwallet.apl.core.account;
-
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -17,17 +11,27 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 /**
  * @author al
  */
+@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
-
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private Blockchain blockchain;
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
 
-        public PublicKeyDbFactory(String idColumn) {
+        private Blockchain blockchain;
+
+        public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
             super(idColumn);
+            this.blockchain = blockchain;
         }
 
         @Override
@@ -45,19 +49,10 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
 
     }
 
-    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
-    private static final GenesisPublicKeyTable publicKeyTable = new GenesisPublicKeyTable();
-
-    public static GenesisPublicKeyTable getInstance() {
-        return publicKeyTable;
-    }
-
-    public static DbKey newKey(long id) {
-        return publicKeyDbKeyFactory.newKey(id);
-    }
-
-    protected GenesisPublicKeyTable() {
-        super("genesis_public_key", publicKeyDbKeyFactory, false, null, false);
+    @Inject
+    protected GenesisPublicKeyTable(Blockchain blockchain) {
+        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, false);
+        this.blockchain = blockchain;
     }
 
     @Override

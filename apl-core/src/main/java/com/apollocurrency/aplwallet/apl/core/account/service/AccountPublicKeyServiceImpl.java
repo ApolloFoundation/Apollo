@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
@@ -171,7 +171,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
             if (isGenesis) {
-                GenesisPublicKeyTable.getInstance().insert(publicKey);
+                genesisPublicKeyTable.insert(publicKey);
             } else {
                 publicKeyTable.insert(publicKey);
             }
