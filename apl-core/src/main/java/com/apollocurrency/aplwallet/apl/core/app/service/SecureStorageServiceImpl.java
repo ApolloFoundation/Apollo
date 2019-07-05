@@ -86,7 +86,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
             LOG.error(e.getMessage());
             return false;
         }
-        return secureStore.store(privateKey, secureStoragePath.toString());
+        return secureStore != null && secureStoragePath != null ?  // shutdown case
+                secureStore.store(privateKey, secureStoragePath.toString()) : false;
     }
 
     /**

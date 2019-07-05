@@ -195,7 +195,9 @@
       "51.15.69.39",
       "51.15.59.37",
       "51.15.114.68",
-      "51.15.140.80"
+      "51.15.140.80",
+      "51.15.100.44",
+      "51.15.233.93"
     ],
     "name": "Apollo public testnet",
     "description": "Apollo main test chain, running on last stable release",
@@ -242,7 +244,7 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 500000
-        }        
+        }
       },
       {
         "height": 552500,
