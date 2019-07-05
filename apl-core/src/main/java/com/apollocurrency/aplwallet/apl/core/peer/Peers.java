@@ -96,9 +96,10 @@ public final class Peers {
     static int readTimeout;
     static int blacklistingPeriod;
     public static boolean getMorePeers;
-    public static int MAX_REQUEST_SIZE;
-    public static int MAX_RESPONSE_SIZE;
-    public static int MAX_MESSAGE_SIZE;
+    //TODO:  hardcode in Constants and use from there
+    public static int MAX_REQUEST_SIZE= 10 * 1024 * 1024;
+    public static int MAX_RESPONSE_SIZE= 40 * 1024 * 1024;
+    public static int MAX_MESSAGE_SIZE= 40 * 1024 * 1024;
 
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
@@ -162,9 +163,10 @@ public final class Peers {
     } // never
 
     public static void init() {
-        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
-        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
-        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 15 * 1024 * 1024);
+
+//        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
+//        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
+//        MAX_MESSAGE_SIZE =  propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 40 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails", true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS", true);
@@ -457,7 +459,7 @@ public final class Peers {
             }
 
             InetAddress inetAddress = InetAddress.getByName(pAnnouncedAddress.getHost());
-            return findOrCreatePeer(inetAddress, announcedAddress, create);
+            return findOrCreatePeer(inetAddress.getHostAddress(), announcedAddress, create);
         } catch (UnknownHostException e) {
             //LOG.debug("Invalid peer address: " + announcedAddress + ", " + e.toString());
             return null;
@@ -465,12 +467,7 @@ public final class Peers {
     }
 
     public static PeerImpl findOrCreatePeer(String host) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(host);
-            return findOrCreatePeer(inetAddress, null, true);
-        } catch (UnknownHostException e) {
-            return null;
-        }
+        return findOrCreatePeer(host, null, true);
     }
 
     public static boolean isMyAddress(PeerAddress pa) {
@@ -495,9 +492,10 @@ public final class Peers {
         return false;
     }
 
-    public static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
-
-        String host = inetAddress.getHostAddress();
+    public static PeerImpl findOrCreatePeer(String addressWithPort, final String announcedAddress, final boolean create) {
+        
+        PeerAddress pa = new PeerAddress(addressWithPort);
+        String host = pa.getHost();
         if (cjdnsOnly && !host.substring(0, 2).equals("fc")) {
             return null;
         }
@@ -506,7 +504,6 @@ public final class Peers {
             host = "[" + host + "]";
         }
 
-        PeerAddress pa = new PeerAddress(host);
 //TODO: we should honor port here, in other case we can not connect from the same pvt network
 //        if (isMyAddress(pa)) {
 //            return null;
@@ -567,6 +564,7 @@ public final class Peers {
                 peers.replace(peer.getHostWithPort(), (PeerImpl) peer);
             }
             listeners.notify(peer, Event.NEW_PEER);
+            connectPeer(peer);
             return true;
         }
         return false;

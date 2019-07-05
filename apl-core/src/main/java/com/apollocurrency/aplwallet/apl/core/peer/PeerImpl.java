@@ -74,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
+import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -84,7 +85,9 @@ public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
     
     private final String host;
+    @Getter
     private final PeerWebSocket webSocket;
+    @Getter
     private volatile PeerWebSocket inboundSocket;
     private volatile boolean useWebSocket;
     private volatile int port;
@@ -140,7 +143,7 @@ public final class PeerImpl implements Peer {
         }
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
-        this.webSocket = new PeerWebSocket();
+        this.webSocket = new PeerWebSocket(this);
         this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
@@ -668,17 +671,19 @@ public final class PeerImpl implements Peer {
             //
             if (response != null && response.get("error") != null) {
                 LOG.error("Peer: {} RESPONSE = {}", getHostWithPort(), response);
-                deactivate();
-                if (Errors.SEQUENCE_ERROR.equals(response.get("error")) && request != Peers.getMyPeerInfoRequest()) {
-                    LOG.debug("Sequence error, reconnecting to " + host);
+ //               deactivate();
+                if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){ //&& request != Peers.getMyPeerInfoRequest()) {
+                    LOG.debug("Sequence error received, reconnecting to " + host);
+                    deactivate();
                     handshake(targetChainId);
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
-                            response.toJSONString() + ", request was: " + JSON.toString(request) +
-                            ", disconnecting");
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
+                            response.toJSONString() + ", request was: " + JSON.toString(request));
+// Just log at the moment, we have to segregate errors                    
+//                            ", disconnecting");
+//                    if (connection != null) {
+//                        connection.disconnect();
+//                    }
                 }
             }
         } catch (AplException.AplIOException e) {
@@ -730,6 +735,10 @@ public final class PeerImpl implements Peer {
     
     @Override   
     public void handshake(UUID targetChainId) {
+        if(getState()==PeerState.CONNECTED){
+            LOG.trace("Peers {} is already connected.",getHostWithPort());
+            return;
+        }
         LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
@@ -741,7 +750,7 @@ public final class PeerImpl implements Peer {
                         LOG.debug("Connect: announced address '{}' now points to '{}', replacing peer '{}'",
                                 pi.getAnnouncedAddress(),  inetAddress.getHostAddress(), host);
                         Peers.removePeer(this);
-                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, pi.getAnnouncedAddress(), true);
+                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress.getHostAddress(), pi.getAnnouncedAddress(), true);
                         if (newPeer != null) {
                             LOG.trace("Prepare Handshake with : {}", newPeer);
                             Peers.addPeer(newPeer);
@@ -760,7 +769,7 @@ public final class PeerImpl implements Peer {
             if (response != null) {
                 // parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
-                LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
+                LOG.trace("handshake, Parsed response 'newPi' = {}", newPi);
                 if( ! StringUtils.isBlank(newPi.error) || (newPi.errorCode!=null && newPi.errorCode!=0)){
                     LOG.debug("We've got error from peer: {}. Error: {}  cause: {} code: {} ", getHostWithPort(), newPi.error, newPi.getCause(), newPi.getErrorCode());
                     if(Errors.BLACKLISTED.equalsIgnoreCase(newPi.error) || (newPi.getBlacklisted()!=null && newPi.getBlacklisted())){
@@ -818,7 +827,7 @@ public final class PeerImpl implements Peer {
                                 return;
                             }
                             if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
-                                LOG.debug("Connect: peer '{}' has new announced address '{}', old is '{}'",
+                                LOG.debug("peer '{}' has new announced address '{}', old is '{}'",
                                         host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
                                 int oldPort = getPort();
                                 Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
@@ -836,8 +845,9 @@ public final class PeerImpl implements Peer {
                   if (services != origServices) {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                   }
+                  LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
             } else {
-                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getAnnouncedAddress());
+                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                 setState(PeerState.NON_CONNECTED);
             }
         } catch (RuntimeException e) {
