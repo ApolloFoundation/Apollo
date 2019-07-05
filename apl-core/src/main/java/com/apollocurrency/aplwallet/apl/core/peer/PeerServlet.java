@@ -326,7 +326,9 @@ public final class PeerServlet extends WebSocketServlet {
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException| ParseException |IOException e) {
             LOG.debug("Error processing POST request: " + e.toString());
-            peer.blacklist(e);
+            if(! (e instanceof  ClosedChannelException) ){
+              peer.blacklist(e);
+            }
             return PeerResponses.error(e);
         }
     }
