@@ -9,10 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.account.*;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.*;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;

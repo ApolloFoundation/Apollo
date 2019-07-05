@@ -17,6 +17,12 @@ public interface AccountLeaseService {
     AccountLease getAccountLease(Account account);
 
 
+    int getAccountLeaseCount();
+
+    void insertLease(AccountLease lease);
+
+    boolean deleteLease(AccountLease lease);
+
     List<AccountLease> getLeaseChangingAccounts(int height);
 
     void leaseEffectiveBalance(Account account, long lesseeId, int period);

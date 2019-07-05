@@ -1,7 +1,7 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation.
  */
-package com.apollocurrency.aplwallet.apl.core.account;
+package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,6 +21,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@Singleton
 public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLease> {
     private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
 
@@ -29,13 +31,9 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         }
 
     };
-    private static final AccountLeaseTable accountLeaseTable = new AccountLeaseTable();
-  
+
     public static DbKey newKey(long id){
         return accountLeaseDbKeyFactory.newKey(id);
-    } 
-    public static AccountLeaseTable getInstance(){
-        return accountLeaseTable;
     }
     public AccountLeaseTable() {
         super("account_lease", accountLeaseDbKeyFactory);
@@ -63,8 +61,8 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
     }
    
 
-    public static int getAccountLeaseCount() {
-        return accountLeaseTable.getCount();
+    public int getAccountLeaseCount() {
+        return getCount();
     }
 
     public DbIterator<AccountLease> getLeaseChangingAccounts(final int height) {
@@ -79,7 +77,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             int i = 0;
             pstmt.setInt(++i, height);
             pstmt.setInt(++i, height);
-            return accountLeaseTable.getManyBy(con, pstmt, true);
+            return getManyBy(con, pstmt, true);
         }
         catch (SQLException e) {
             DbUtils.close(con);

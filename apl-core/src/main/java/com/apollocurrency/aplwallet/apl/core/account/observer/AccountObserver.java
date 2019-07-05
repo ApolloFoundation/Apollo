@@ -1,11 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.account.observer;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
@@ -13,7 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeySer
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.*;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +99,7 @@ public class AccountObserver {
                     lease.setCurrentLeasingHeightFrom(0);
                     lease.setCurrentLeasingHeightTo(0);
                     lease.setCurrentLesseeId(0);
-                    AccountLeaseTable.getInstance().delete(lease);
+                    accountLeaseService.deleteLease(lease);
                 } else {
                     lease.setCurrentLeasingHeightFrom(lease.getNextLeasingHeightFrom());
                     lease.setCurrentLeasingHeightTo(lease.getNextLeasingHeightTo());
@@ -106,7 +107,7 @@ public class AccountObserver {
                     lease.setNextLeasingHeightFrom(0);
                     lease.setNextLeasingHeightTo(0);
                     lease.setNextLesseeId(0);
-                    AccountLeaseTable.getInstance().insert(lease);
+                    accountLeaseService.insertLease(lease);
                     if (height == lease.getCurrentLeasingHeightFrom()) {
                         lessor.setActiveLesseeId(lease.getCurrentLesseeId());
                         //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
