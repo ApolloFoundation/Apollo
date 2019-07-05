@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  */
 public class DexTradeEntry {
 
-    // private integer db_id
+    private long dbId;
     private long transactionID;
     private long senderOfferID; 
     private long receiverOfferID;
@@ -24,6 +24,14 @@ public class DexTradeEntry {
     private Integer finishTime;
     private Integer height; 
 
+    public long getDbId() {
+        return dbId;
+    }
+
+    public void setDbId(long dbId) {
+        this.dbId = dbId;
+    }
+    
     public long getTransactionID() {
         return transactionID;
     }
