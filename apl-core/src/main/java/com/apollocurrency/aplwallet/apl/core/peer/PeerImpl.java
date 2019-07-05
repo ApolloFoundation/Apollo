@@ -670,8 +670,8 @@ public final class PeerImpl implements Peer {
                 LOG.error("Peer: {} RESPONSE = {}", getHostWithPort(), response);
  //               deactivate();
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){ //&& request != Peers.getMyPeerInfoRequest()) {
-                    LOG.debug("Sequence error, reconnecting to " + host);
-//                    deactivate(); //actually we should deactivate but... we should fix other errors first
+                    LOG.debug("Sequence error received, reconnecting to " + host);
+                    deactivate();
                     handshake(targetChainId);
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
