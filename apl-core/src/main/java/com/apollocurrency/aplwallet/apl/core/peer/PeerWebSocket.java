@@ -55,6 +55,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import lombok.Getter;
 
 /**
  * PeerWebSocket represents an HTTP/HTTPS upgraded connection
@@ -83,7 +84,7 @@ public class PeerWebSocket {
             peerClient = null;
         }
     }
-    
+    @Getter
     private Peer clientPeer = null;
     
     /** Negotiated WebSocket message version */
@@ -115,7 +116,8 @@ public class PeerWebSocket {
     /**
      * Create a client socket
      */
-    public PeerWebSocket() {
+    public PeerWebSocket(Peer p) {
+        clientPeer = p;
         peerServlet = null;
     }
 
@@ -159,7 +161,10 @@ public class PeerWebSocket {
                 ClientUpgradeRequest req = new ClientUpgradeRequest();
                 Future<Session> conn = peerClient.connect(this, uri, req);
                 conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-                useWebSocket = true;
+                if(p!=null){
+                    ((PeerImpl) (p)).setInboundWebSocket(this);                
+                }
+                useWebSocket = true;                
             }
         } catch (ExecutionException exc) {
             if (exc.getCause() instanceof UpgradeException) {
@@ -198,11 +203,12 @@ public class PeerWebSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         this.session = session;
-        if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
+     //   if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
             LOG.debug(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
-        }
+                    
+     //   }
     }
 
     /**
