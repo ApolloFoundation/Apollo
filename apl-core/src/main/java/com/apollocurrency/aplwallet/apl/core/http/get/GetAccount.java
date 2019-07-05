@@ -140,14 +140,11 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeCurrencies) {
-            try (DbIterator<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(account, 0, -1)) {
-                JSONArray currencyJSON = new JSONArray();
-                while (accountCurrencies.hasNext()) {
-                    currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));
-                }
-                if (currencyJSON.size() > 0) {
-                    response.put("accountCurrencies", currencyJSON);
-                }
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(account, 0, -1);
+            JSONArray currencyJSON = new JSONArray();
+            accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
+            if (currencyJSON.size() > 0) {
+                response.put("accountCurrencies", currencyJSON);
             }
         }
 

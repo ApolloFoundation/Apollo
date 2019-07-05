@@ -20,11 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -83,7 +79,7 @@ public final class VoteWeighting {
         CURRENCY(3) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long units = AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                long units = lookupAccountCurrencyService().getCurrencyUnits(voterId, voteWeighting.holdingId, height);
                 return units >= voteWeighting.minBalance ? units : 0;
             }
             @Override
@@ -166,7 +162,7 @@ public final class VoteWeighting {
         CURRENCY(3) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                return lookupAccountCurrencyService().getCurrencyUnits(voterId, voteWeighting.holdingId, height);
             }
         };
 
@@ -207,6 +203,15 @@ public final class VoteWeighting {
             accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         }
         return accountAssetService;
+    }
+
+    private static AccountCurrencyService accountCurrencyService;
+
+    private static AccountCurrencyService lookupAccountCurrencyService(){
+        if (accountCurrencyService == null){
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
     }
 
     private final VotingModel votingModel;

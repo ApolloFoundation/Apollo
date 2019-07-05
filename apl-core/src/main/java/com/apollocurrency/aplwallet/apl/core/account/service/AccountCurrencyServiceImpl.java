@@ -4,18 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import lombok.Setter;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.account.service.AccountService.checkBalance;
@@ -52,38 +56,121 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
-    public AccountCurrency getCurrency(Account account, long currencyId) {
-        return AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
+    public AccountCurrency getAccountCurrency(Account account, long currencyId) {
+        return getAccountCurrency(account.getId(), currencyId);
     }
 
     @Override
-    public AccountCurrency getCurrency(Account account, long currencyId, int height) {
-        return AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId), height);
+    public AccountCurrency getAccountCurrency(long accountId, long currencyId) {
+        return accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId));
     }
 
     @Override
-    public DbIterator<AccountCurrency> getCurrencies(Account account, int from, int to) {
-        return AccountCurrencyTable.getInstance().getManyBy(new DbClause.LongClause("account_id", account.getId()), from, to);
+    public AccountCurrency getAccountCurrency(Account account, long currencyId, int height) {
+        return getAccountCurrency(account.getId(), currencyId, height);
     }
 
     @Override
-    public DbIterator<AccountCurrency> getCurrencies(Account account, int height, int from, int to) {
-        return AccountCurrencyTable.getInstance().getManyBy(new DbClause.LongClause("account_id", account.getId()), height, from, to);
+    public AccountCurrency getAccountCurrency(long accountId, long currencyId, int height) {
+        return accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId), height);
+    }
+
+    @Override
+    public int getCurrencyAccountCount(long currencyId) {
+        return accountCurrencyTable.getCurrencyAccountCount(currencyId);
+    }
+
+    @Override
+    public int getCurrencyAccountCount(long currencyId, int height) {
+        return accountCurrencyTable.getCurrencyAccountCount(currencyId, height);
+    }
+
+    @Override
+    public int getAccountCurrencyCount(long accountId) {
+        return accountCurrencyTable.getAccountCurrencyCount(accountId);
+    }
+
+    @Override
+    public int getAccountCurrencyCount(long accountId, int height) {
+        return accountCurrencyTable.getAccountCurrencyCount(accountId, height);
+    }
+
+    @Override
+    public List<AccountCurrency> getCurrencies(Account account, int from, int to) {
+        return getCurrencies(account.getId(), from, to);
+    }
+
+    @Override
+    public List<AccountCurrency> getCurrencies(long accountId, int from, int to) {
+        List<AccountCurrency> accountCurrencies = new ArrayList<>();
+        try (DbIterator<AccountCurrency> iterator = accountCurrencyTable.getAccountCurrencies(accountId, from, to)) {
+            iterator.forEachRemaining(accountCurrencies::add);
+        }
+        return accountCurrencies;
+    }
+
+    @Override
+    public List<AccountCurrency> getCurrencies(Account account, int height, int from, int to) {
+        return getCurrencies(account.getId(), height, from, to);
+    }
+
+    @Override
+    public List<AccountCurrency> getCurrencies(long accountId, int height, int from, int to) {
+        List<AccountCurrency> accountCurrencies = new ArrayList<>();
+        try (DbIterator<AccountCurrency> iterator = accountCurrencyTable.getAccountCurrencies(accountId, height, from, to)) {
+            iterator.forEachRemaining(accountCurrencies::add);
+        }
+        return accountCurrencies;
+    }
+
+    @Override
+    public List<AccountCurrency> getCurrencyAccounts(long currencyId, int from, int to) {
+        List<AccountCurrency> accountCurrencies = new ArrayList<>();
+        try (DbIterator<AccountCurrency> iterator = accountCurrencyTable.getCurrencyAccounts(currencyId, from, to)) {
+            iterator.forEachRemaining(accountCurrencies::add);
+        }
+        return accountCurrencies;
+    }
+
+    @Override
+    public List<AccountCurrency> getCurrencyAccounts(long currencyId, int height, int from, int to) {
+        List<AccountCurrency> accountCurrencies = new ArrayList<>();
+        try (DbIterator<AccountCurrency> iterator = accountCurrencyTable.getCurrencyAccounts(currencyId, height, from, to)) {
+            iterator.forEachRemaining(accountCurrencies::add);
+        }
+        return accountCurrencies;
     }
 
     @Override
     public long getCurrencyUnits(Account account, long currencyId) {
-        return AccountCurrencyTable.getCurrencyUnits(account.getId(), currencyId);
+        return getCurrencyUnits(account.getId(), currencyId);
+    }
+
+    @Override
+    public long getCurrencyUnits(long accountId, long currencyId) {
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId));
+        return accountCurrency == null ? 0 : accountCurrency.getUnits();
     }
 
     @Override
     public long getCurrencyUnits(Account account, long currencyId, int height) {
-        return AccountCurrencyTable.getCurrencyUnits(account.getId(), currencyId, height);
+        return getCurrencyUnits(account.getId(), currencyId, height);
+    }
+    @Override
+    public long getCurrencyUnits(long accountId, long currencyId, int height) {
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId), height);
+        return accountCurrency == null ? 0 : accountCurrency.getUnits();
     }
 
     @Override
     public long getUnconfirmedCurrencyUnits(Account account, long currencyId) {
-        return AccountCurrencyTable.getUnconfirmedCurrencyUnits(account.getId(), currencyId);
+        return getUnconfirmedCurrencyUnits(account.getId(), currencyId);
+    }
+
+    @Override
+    public long getUnconfirmedCurrencyUnits(long accountId, long currencyId) {
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId));
+        return accountCurrency == null ? 0 : accountCurrency.getUnconfirmedUnits();
     }
 
     @Override
@@ -92,7 +179,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(account.getId(), currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnits();
         currencyUnits = Math.addExact(currencyUnits, units);
         if (accountCurrency == null) {
@@ -116,7 +203,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         if (units == 0) {
             return;
         }
-        AccountCurrency accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
+        AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(account.getId(), currencyId));
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnconfirmedUnits();
         unconfirmedCurrencyUnits = Math.addExact(unconfirmedCurrencyUnits, units);
         if (accountCurrency == null) {
@@ -142,7 +229,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             return;
         }
         AccountCurrency accountCurrency;
-        accountCurrency = AccountCurrencyTable.getInstance().get(AccountCurrencyTable.newKey(account.getId(), currencyId));
+        accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(account.getId(), currencyId));
         long currencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnits();
         currencyUnits = Math.addExact(currencyUnits, units);
         long unconfirmedCurrencyUnits = accountCurrency == null ? 0 : accountCurrency.getUnconfirmedUnits();
