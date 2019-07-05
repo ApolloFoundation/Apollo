@@ -842,7 +842,6 @@ public final class PeerImpl implements Peer {
             } else {
                 LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                 setState(PeerState.NON_CONNECTED);
-                blacklist("Failed to connect");
             }
         } catch (RuntimeException e) {
             blacklist(e);
