@@ -495,10 +495,10 @@ public final class PeerImpl implements Peer {
     void setLastInboundRequest(int now) {
         lastInboundRequest = now;
     }
-//
-//    void setInboundWebSocket(PeerWebSocket inboundSocket) {
-//        this.inboundSocket = inboundSocket;
-//    }
+
+    void setInboundWebSocket(PeerWebSocket inboundSocket) {
+        this.inboundSocket = inboundSocket;
+    }
 
     @Override
     public boolean isInboundWebSocket() {

@@ -161,7 +161,10 @@ public class PeerWebSocket {
                 ClientUpgradeRequest req = new ClientUpgradeRequest();
                 Future<Session> conn = peerClient.connect(this, uri, req);
                 conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-                useWebSocket = true;
+                if(p!=null){
+                    ((PeerImpl) (p)).setInboundWebSocket(this);                
+                }
+                useWebSocket = true;                
             }
         } catch (ExecutionException exc) {
             if (exc.getCause() instanceof UpgradeException) {
@@ -200,11 +203,12 @@ public class PeerWebSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         this.session = session;
-        if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
+     //   if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
             LOG.debug(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
-        }
+                    
+     //   }
     }
 
     /**
