@@ -397,6 +397,7 @@ public class PeerWebSocket {
                 LOG.trace(String.format("%s WebSocket connection with %s closed",
                             peerServlet != null ? "Inbound" : "Outbound",
                             session.getRemoteAddress().getHostString()));
+                session.close();
                 session = null;
             }
             SocketException exc = new SocketException("WebSocket connection closed");
