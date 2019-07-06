@@ -633,10 +633,10 @@ public final class PeerImpl implements Peer {
 
                 if (!webSocketOK && !webSocket.isOpen()) {
                     String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
-                    LOG.debug("Connecting to websocket'{}'...", wsConnectString);
+                    LOG.trace("Connecting to websocket'{}'...", wsConnectString);
                     webSocketOK = webSocket.startClient(URI.create(wsConnectString),this);
                     if(webSocketOK){
-                      LOG.debug("Connected to {}: {}", wsConnectString, webSocketOK);
+                      LOG.trace("Connected to {}: {}", wsConnectString, webSocketOK);
                       socketToUse=webSocket;
                     }
                 }
@@ -823,7 +823,7 @@ public final class PeerImpl implements Peer {
                   }
                   LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
             } else {
-                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
+                LOG.trace("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                 setState(PeerState.NON_CONNECTED);
             }
         } catch (RuntimeException e) {
