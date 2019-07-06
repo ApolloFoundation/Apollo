@@ -125,7 +125,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
 
     private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
-    private final boolean simulateEndlessDownload = propertiesHolder.getBooleanProperty("apl.simulateEndlessDownload");
 
     private int initialScanHeight;
     private volatile int lastRestoreTime = 0;
@@ -152,7 +151,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
-    private volatile boolean alreadyInitialized = false;
     private volatile long initialBlock;
 
     private TransactionProcessor lookupTransactionProcessor() {
@@ -297,7 +295,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.shardImporter = importer;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
-            alreadyInitialized = true;
 
             continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
             trimService.init(blockchain.getHeight()); // try to perform all not performed trims
@@ -1483,7 +1480,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     int chainHeight = lookupBlockhain().getHeight();
                     downloadPeer();
                     if (lookupBlockhain().getHeight() == chainHeight) {
-                        if (isDownloading && !simulateEndlessDownload) {
+                        if (isDownloading) {
                             log.info("Finished blockchain download");
                             isDownloading = false;
                         }
@@ -1578,10 +1575,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     return;
                 }
-                if (simulateEndlessDownload) {
-                    isDownloading = true;
-                    return;
-                }
+
                 if (!isDownloading && lastBlockchainFeederHeight - commonBlock.getHeight() > 10) {
                     log.info("Blockchain download in progress");
                     isDownloading = true;
@@ -1645,6 +1639,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 } finally {
                     globalSync.updateUnlock();
+                    isDownloading = false;
                 }
                 
             } catch (AplException.StopException e) {
@@ -1836,7 +1831,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-                        nextBlocks.getPeer().deactivate();
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we                         
+//                        nextBlocks.getPeer().deactivate();
                         continue;
                     }
                     Peer peer = nextBlocks.getPeer();

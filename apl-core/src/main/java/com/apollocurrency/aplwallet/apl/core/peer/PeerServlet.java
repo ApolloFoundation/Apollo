@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.channels.ClosedChannelException;
 import java.util.UUID;
@@ -202,18 +203,13 @@ public final class PeerServlet extends WebSocketServlet {
 
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
-//            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-//                if (e instanceof RuntimeException) {
-//                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
-//                } else {
-//                    LOG.debug(String.format("Error sending response to peer %s: %s",
-//                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-//                }
-//            }
-             LOG.debug("Error sending response to peer " + peer.getHost(), e);
+
 //jetty misused this, ignore            
             if(!(e instanceof ClosedChannelException )){
+                LOG.debug("Error sending response to peer " + peer.getHost(), e);
                 peer.blacklist(e);
+            }else{
+                LOG.trace("Error sending response to peer " + peer.getHost(), e);
             }
         }
     }
@@ -235,27 +231,13 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Process the peer request
         //
-        InetSocketAddress socketAddress = webSocket.getRemoteAddress();
-        if (socketAddress == null) {
-            return;
-        }
-        String remoteAddress = socketAddress.getHostString();
-//That's  jsut wrong after fix of port honoring
-//        PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
 
         PeerImpl peer = (PeerImpl)webSocket.getClientPeer();
-        if (peer == null) {
-            //try to find peer, but that's a dirty fix, we need port
-            peer = Peers.findOrCreatePeer(remoteAddress);
-        }
         if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            // peer.setInboundWebSocket(webSocket);
+            peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
-            if (chainIdProtected()) {
-
-            }
         }
         //
         // Return the response
@@ -357,7 +339,21 @@ public final class PeerServlet extends WebSocketServlet {
          */
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-            return Peers.useWebSockets ? new PeerWebSocket(PeerServlet.this) : null;
+            Object res = null;
+            if (Peers.useWebSockets) {
+                String hostWithPort = req.getRequestURI().getAuthority();
+                if (StringUtils.isBlank(hostWithPort)) {
+                    hostWithPort = req.getRemoteAddress();
+                }
+                PeerAddress pa = new PeerAddress(hostWithPort);
+                Peer peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+                if (peer != null) {
+                    PeerWebSocket pws = new PeerWebSocket(PeerServlet.this, peer);
+                    ((PeerImpl) peer).setInboundWebSocket(pws);
+                    res = pws;
+                }
+            }
+            return res;
         }
     }
 }
