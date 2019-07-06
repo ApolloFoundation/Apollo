@@ -152,7 +152,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
-    private volatile boolean alreadyInitialized = false;
     private volatile long initialBlock;
 
     private TransactionProcessor lookupTransactionProcessor() {
@@ -1836,7 +1835,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-                        nextBlocks.getPeer().deactivate();
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we do                        
+//                        nextBlocks.getPeer().deactivate();
                         continue;
                     }
                     Peer peer = nextBlocks.getPeer();
