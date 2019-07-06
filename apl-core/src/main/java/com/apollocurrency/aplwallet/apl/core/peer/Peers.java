@@ -464,8 +464,8 @@ public final class Peers {
         }
     }
 
-    public static PeerImpl findOrCreatePeer(String host) {
-        return findOrCreatePeer(host, null, true);
+    public static PeerImpl findOrCreatePeer(String hostWithPort) {
+        return findOrCreatePeer(hostWithPort, null, true);
     }
 
     public static boolean isMyAddress(PeerAddress pa) {
@@ -502,10 +502,9 @@ public final class Peers {
             host = "[" + host + "]";
         }
 
-//TODO: we should honor port here, in other case we can not connect from the same pvt network
-//        if (isMyAddress(pa)) {
-//            return null;
-//        }
+        if (isMyAddress(pa)) {
+            return null;
+        }
 
         PeerImpl peer;
         if ((peer = peers.get(pa.getAddrWithPort())) != null) {
@@ -576,7 +575,10 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        peer.handshake(blockchainConfig.getChain().getChainId());
+        PeerAddress pa=new PeerAddress(peer.getPort(),peer.getHost());
+        if(!isMyAddress(pa)){
+           peer.handshake(blockchainConfig.getChain().getChainId());
+        }
     }
 
     public static void sendToSomePeers(Block block) {
