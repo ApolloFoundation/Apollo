@@ -575,8 +575,10 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        
-        peer.handshake(blockchainConfig.getChain().getChainId());
+        PeerAddress pa=new PeerAddress(peer.getPort(),peer.getHost());
+        if(!isMyAddress(pa)){
+           peer.handshake(blockchainConfig.getChain().getChainId());
+        }
     }
 
     public static void sendToSomePeers(Block block) {
