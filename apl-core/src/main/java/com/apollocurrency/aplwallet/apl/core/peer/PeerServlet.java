@@ -339,20 +339,21 @@ public final class PeerServlet extends WebSocketServlet {
          */
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-            if(Peers.useWebSockets) {
-            String hostWithPort = req.getRequestURI().getAuthority();
-            if(StringUtils.isBlank(hostWithPort)){
-                hostWithPort = req.getRemoteAddress();
+            Object res = null;
+            if (Peers.useWebSockets) {
+                String hostWithPort = req.getRequestURI().getAuthority();
+                if (StringUtils.isBlank(hostWithPort)) {
+                    hostWithPort = req.getRemoteAddress();
+                }
+                PeerAddress pa = new PeerAddress(hostWithPort);
+                Peer peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+                if (peer != null) {
+                    PeerWebSocket pws = new PeerWebSocket(PeerServlet.this, peer);
+                    ((PeerImpl) peer).setInboundWebSocket(pws);
+                    res = pws;
+                }
             }
-            PeerAddress pa = new PeerAddress(hostWithPort);
-            Peer peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
-            if(peer!=null){
-                PeerWebSocket pws = new PeerWebSocket(PeerServlet.this,peer);
-                ((PeerImpl)peer).setInboundWebSocket(pws);
-                return pws;
-            }else{
-                return null;
-            }
+            return res;
         }
     }
 }
