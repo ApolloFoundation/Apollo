@@ -563,7 +563,6 @@ public final class PeerImpl implements Peer {
         String log = "";
         boolean showLog = false;
         HttpURLConnection connection = null;
-        int communicationLoggingMask = Peers.communicationLoggingMask;
 
         try {
             //
@@ -571,9 +570,9 @@ public final class PeerImpl implements Peer {
             //
             if (useWebSocket && !webSocket.isOpen()) {
                 String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
-                LOG.debug("Connecting to '{}'...", wsConnectString);
+                LOG.debug("Connecting to websocket'{}'...", wsConnectString);
                 useWebSocket = webSocket.startClient(URI.create(wsConnectString),this);
-                LOG.trace("Connected '{}'... ? = {}", wsConnectString, useWebSocket);
+                LOG.debug("Connected to {}: {}", wsConnectString, useWebSocket);
             }
             //
             // Send the request and process the response
@@ -587,16 +586,11 @@ public final class PeerImpl implements Peer {
                 StringWriter wsWriter = new StringWriter(1000);
                 request.writeJSONString(wsWriter);
                 String wsRequest = wsWriter.toString();
-                if (communicationLoggingMask != 0)
-                    log = "WebSocket " + host + ": " + wsRequest;
+
                 String wsResponse = webSocket.doPost(wsRequest);
                 LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
                 updateUploadedVolume(wsRequest.length());
                 if (maxResponseSize > 0) {
-                    if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-                        log += " >>> " + wsResponse;
-                        showLog = true;
-                    }
                     if (wsResponse.length() > maxResponseSize)
                         throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
                     response = (JSONObject)JSONValue.parseWithException(wsResponse);
@@ -608,9 +602,6 @@ public final class PeerImpl implements Peer {
                 //
                 String urlString = "http://" + getHostWithPort() + "/apl";
                 URL url = new URL(urlString);
-                LOG.trace("Connecting to URL = {}...", urlString);
-                if (communicationLoggingMask != 0)
-                    log = "\"" + url.toString() + "\": " + JSON.toString(request);
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
@@ -625,27 +616,6 @@ public final class PeerImpl implements Peer {
                 }
                 if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     if (maxResponseSize > 0) {
-                        if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-                            CountingInputStream cis = new CountingInputStream(connection.getInputStream(), maxResponseSize);
-                            InputStream responseStream = cis;
-                            if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
-                                responseStream = new GZIPInputStream(cis);
-                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                            byte[] buffer = new byte[1024];
-                            int numberOfBytes;
-                            try (InputStream inputStream = responseStream) {
-                                while ((numberOfBytes = inputStream.read(buffer, 0, buffer.length)) > 0)
-                                    byteArrayOutputStream.write(buffer, 0, numberOfBytes);
-                            }
-                            String responseValue = byteArrayOutputStream.toString("UTF-8");
-                            if (responseValue.length() > 0 && responseStream instanceof GZIPInputStream)
-                                log += String.format("[length: %d, compression ratio: %.2f]",
-                                              cis.getCount(), (double)cis.getCount()/(double) responseValue.length());
-                            log += " >>> " + responseValue;
-                            showLog = true;
-                            response = (JSONObject) JSONValue.parseWithException(responseValue);
-                            updateDownloadedVolume(responseValue.length());
-                        } else {
                             InputStream responseStream = connection.getInputStream();
                             if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
                                 responseStream = new GZIPInputStream(responseStream);
@@ -654,13 +624,8 @@ public final class PeerImpl implements Peer {
                                 response = (JSONObject)JSONValue.parseWithException(cir);
                                 updateDownloadedVolume(cir.getCount());
                             }
-                        }
                     }
                 } else {
-                    if ((communicationLoggingMask & Peers.LOGGING_MASK_NON200_RESPONSES) != 0) {
-                        log += " >>> Peer responded with HTTP " + connection.getResponseCode() + " code!";
-                        showLog = true;
-                    }
                     LOG.debug("Peer " + host + " responded with HTTP " + connection.getResponseCode());
                     deactivate();
                     connection.disconnect();
@@ -697,10 +662,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug(String.format("Error sending request to peer %s: %s",
                                        host, e.getMessage()!=null ? e.getMessage() : e.toString()));
             }
-            if ((communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                log += " >>> " + e.toString();
-                showLog = true;
-            }
+            LOG.trace("Exception while sending request: {}",e);
             deactivate();
             if (connection != null) {
                 connection.disconnect();
