@@ -204,7 +204,7 @@ public class PeerWebSocket {
     public void onConnect(Session session) {
         this.session = session;
      //   if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-            LOG.debug(String.format("%s WebSocket connection with %s completed",
+            LOG.trace(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
                     
@@ -394,11 +394,10 @@ public class PeerWebSocket {
         lock.lock();
         try {
             if (session != null) {
-                if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-                    LOG.debug(String.format("%s WebSocket connection with %s closed",
+                LOG.trace(String.format("%s WebSocket connection with %s closed",
                             peerServlet != null ? "Inbound" : "Outbound",
                             session.getRemoteAddress().getHostString()));
-                }
+                session.close();
                 session = null;
             }
             SocketException exc = new SocketException("WebSocket connection closed");

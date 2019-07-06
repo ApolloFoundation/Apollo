@@ -87,7 +87,6 @@ public final class Peers {
     static final int LOGGING_MASK_EXCEPTIONS = 1;
     static final int LOGGING_MASK_NON200_RESPONSES = 2;
     static final int LOGGING_MASK_200_RESPONSES = 4;
-    static volatile int communicationLoggingMask;
 
     static List<String> wellKnownPeers;
     static Set<String> knownBlacklistedPeers;
@@ -222,7 +221,6 @@ public final class Peers {
         webSocketIdleTimeout = propertiesHolder.getIntProperty("apl.webSocketIdleTimeout");
         isGzipEnabled = propertiesHolder.getBooleanProperty("apl.enablePeerServerGZIPFilter");
         blacklistingPeriod = propertiesHolder.getIntProperty("apl.blacklistingPeriod") / 1000;
-        communicationLoggingMask = propertiesHolder.getIntProperty("apl.communicationLoggingMask");
         sendToPeersLimit = propertiesHolder.getIntProperty("apl.sendToPeersLimit");
         usePeersDb = propertiesHolder.getBooleanProperty("apl.usePeersDb") && !propertiesHolder.isOffline();
         savePeers = usePeersDb && propertiesHolder.getBooleanProperty("apl.savePeers");
@@ -699,44 +697,7 @@ public final class Peers {
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null
                 && (!enableHallmarkProtection || peer.getWeight() > 0), limit).size() >= limit;
     }
-
-    /**
-     * Set the communication logging mask
-     *
-     * @param events Communication event list or null to reset communications
-     * logging
-     * @return TRUE if the communication logging mask was updated
-     */
-    public static boolean setCommunicationLoggingMask(String[] events) {
-        boolean updated = true;
-        int mask = 0;
-        if (events != null) {
-            for (String event : events) {
-                switch (event) {
-                    case "EXCEPTION":
-                        mask |= LOGGING_MASK_EXCEPTIONS;
-                        break;
-                    case "HTTP-ERROR":
-                        mask |= LOGGING_MASK_NON200_RESPONSES;
-                        break;
-                    case "HTTP-OK":
-                        mask |= LOGGING_MASK_200_RESPONSES;
-                        break;
-                    default:
-                        updated = false;
-                }
-                if (!updated) {
-                    break;
-                }
-            }
-        }
-        if (updated) {
-            communicationLoggingMask = mask;
-        }
-        return updated;
-    }
-
-    /**
+  /**
      * Return local peer services
      *
      * @return List of local peer services

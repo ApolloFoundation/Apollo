@@ -202,18 +202,13 @@ public final class PeerServlet extends WebSocketServlet {
 
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
-//            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-//                if (e instanceof RuntimeException) {
-//                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
-//                } else {
-//                    LOG.debug(String.format("Error sending response to peer %s: %s",
-//                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-//                }
-//            }
-             LOG.debug("Error sending response to peer " + peer.getHost(), e);
+
 //jetty misused this, ignore            
             if(!(e instanceof ClosedChannelException )){
+                LOG.debug("Error sending response to peer " + peer.getHost(), e);
                 peer.blacklist(e);
+            }else{
+                LOG.trace("Error sending response to peer " + peer.getHost(), e);
             }
         }
     }
@@ -240,22 +235,18 @@ public final class PeerServlet extends WebSocketServlet {
             return;
         }
         String remoteAddress = socketAddress.getHostString();
-//That's  jsut wrong after fix of port honoring
-//        PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
 
         PeerImpl peer = (PeerImpl)webSocket.getClientPeer();
         if (peer == null) {
             //try to find peer, but that's a dirty fix, we need port
-            peer = Peers.findOrCreatePeer(remoteAddress);
+            PeerAddress pa = new PeerAddress(remoteAddress);
+            peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
         }
         if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            // peer.setInboundWebSocket(webSocket);
+            peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
-            if (chainIdProtected()) {
-
-            }
         }
         //
         // Return the response
