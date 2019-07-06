@@ -296,7 +296,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.shardImporter = importer;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
-            alreadyInitialized = true;
 
             continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
             trimService.init(blockchain.getHeight()); // try to perform all not performed trims
@@ -1835,7 +1834,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we do                        
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we                         
 //                        nextBlocks.getPeer().deactivate();
                         continue;
                     }
