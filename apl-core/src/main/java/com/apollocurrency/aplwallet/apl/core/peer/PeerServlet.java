@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.channels.ClosedChannelException;
 import java.util.UUID;
@@ -230,18 +231,8 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Process the peer request
         //
-        InetSocketAddress socketAddress = webSocket.getRemoteAddress();
-        if (socketAddress == null) {
-            return;
-        }
-        String remoteAddress = socketAddress.getHostString();
 
         PeerImpl peer = (PeerImpl)webSocket.getClientPeer();
-        if (peer == null) {
-            //try to find peer, but that's a dirty fix, we need port
-            PeerAddress pa = new PeerAddress(remoteAddress);
-            peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
-        }
         if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
@@ -348,7 +339,17 @@ public final class PeerServlet extends WebSocketServlet {
          */
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-            return Peers.useWebSockets ? new PeerWebSocket(PeerServlet.this) : null;
+            String hostWithPort = req.getRequestURI().getAuthority();
+            if(StringUtils.isBlank(hostWithPort)){
+                hostWithPort = req.getRemoteAddress();
+            }
+            PeerAddress pa = new PeerAddress(hostWithPort);
+            Peer peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+            if(peer!=null){
+                return Peers.useWebSockets ? new PeerWebSocket(PeerServlet.this,peer) : null;
+            }else{
+                return null;
+            }
         }
     }
 }

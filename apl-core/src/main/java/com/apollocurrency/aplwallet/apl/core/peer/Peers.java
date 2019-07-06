@@ -464,8 +464,8 @@ public final class Peers {
         }
     }
 
-    public static PeerImpl findOrCreatePeer(String host) {
-        return findOrCreatePeer(host, null, true);
+    public static PeerImpl findOrCreatePeer(String hostWithPort) {
+        return findOrCreatePeer(hostWithPort, null, true);
     }
 
     public static boolean isMyAddress(PeerAddress pa) {
@@ -502,10 +502,9 @@ public final class Peers {
             host = "[" + host + "]";
         }
 
-//TODO: we should honor port here, in other case we can not connect from the same pvt network
-//        if (isMyAddress(pa)) {
-//            return null;
-//        }
+        if (isMyAddress(pa)) {
+            return null;
+        }
 
         PeerImpl peer;
         if ((peer = peers.get(pa.getAddrWithPort())) != null) {
