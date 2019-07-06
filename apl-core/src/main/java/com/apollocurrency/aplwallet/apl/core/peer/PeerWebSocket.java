@@ -417,6 +417,7 @@ public class PeerWebSocket {
         try {
             if (session != null && session.isOpen()) {
                 session.close();
+                session=null;
             }
         } catch (Exception exc) {
             LOG.debug("Exception while closing WebSocket", exc);

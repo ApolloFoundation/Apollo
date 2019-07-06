@@ -568,11 +568,12 @@ public final class PeerImpl implements Peer {
             //
             // Create a new WebSocket session if we don't have one
             //
+            boolean webSocketOK = webSocket.isOpen();
             if (useWebSocket && !webSocket.isOpen()) {
                 String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
                 LOG.debug("Connecting to websocket'{}'...", wsConnectString);
-                useWebSocket = webSocket.startClient(URI.create(wsConnectString),this);
-                LOG.debug("Connected to {}: {}", wsConnectString, useWebSocket);
+                webSocketOK = webSocket.startClient(URI.create(wsConnectString),this);
+                LOG.debug("Connected to {}: {}", wsConnectString, webSocketOK);
             }
             //
             // Send the request and process the response
