@@ -719,28 +719,6 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-// TODO: decide how to handle announced address and re-write this            
-//            if (!Peers.ignorePeerAnnouncedAddress && pi.getAnnouncedAddress() != null) {
-//                try {
-//                    URI uri = getURI(false,pi.getAnnouncedAddress());
-//                    InetAddress inetAddress = InetAddress.getByName(uri.getHost());
-//                    if (!inetAddress.equals(InetAddress.getByName(host))) {
-//                        LOG.debug("Connect: announced address '{}' now points to '{}', replacing peer '{}'",
-//                                pi.getAnnouncedAddress(),  inetAddress.getHostAddress(), host);
-//                        Peers.removePeer(this);
-//                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress.getHostAddress(), pi.getAnnouncedAddress(), true);
-//                        if (newPeer != null) {
-//                            LOG.trace("Prepare Handshake with : {}", newPeer);
-//                            Peers.addPeer(newPeer);
-//                            newPeer.handshake(targetChainId);
-//                        }
-//                        return;
-//                    }
-//                } catch (URISyntaxException | UnknownHostException e) {
-//                    blacklist(e);
-//                    return;
-//                }
-//            }
             JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE);
             LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
             PeerInfo newPi;
