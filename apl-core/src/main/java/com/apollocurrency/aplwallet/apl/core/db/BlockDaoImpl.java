@@ -107,6 +107,23 @@ public class BlockDaoImpl implements BlockDao {
         return hasBlock(blockId, Integer.MAX_VALUE, databaseManager.getDataSource());
     }
 
+    @Override
+    public Block findFirstBlock() {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block order by db_id LIMIT 1")) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                Block block = null;
+                if (rs.next()) {
+                    block = loadBlock(con, rs);
+                }
+                return block;
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId, int height, TransactionalDataSource dataSource) {

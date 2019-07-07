@@ -152,4 +152,6 @@ public interface BlockchainProcessor {
     void resumeBlockchainDownloading();
 
     void shutdown();
+
+    void scheduleOneScan();
 }

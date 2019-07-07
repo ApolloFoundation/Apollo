@@ -184,7 +184,8 @@ public class ShardEngineImpl implements ShardEngine {
                     // update shard record by merkle tree hash value
                     // save prev generator ids to shard
                     // TODO: find better place
-                    savePrevGeneratorIds(commandParamInfo.getGeneratorIds(), commandParamInfo.getShardId());
+                    savePrevBlockData(commandParamInfo.getPrevBlockData(), commandParamInfo.getShardId());
+
                     // main goal is store merkle tree hash
                     updateShardRecord(commandParamInfo, databaseManager.getDataSource(), state, 1L);
                 }
@@ -645,11 +646,13 @@ public class ShardEngineImpl implements ShardEngine {
         return state;
     }
 
-    private void savePrevGeneratorIds(Long[] ids, long shardId) {
+    private void savePrevBlockData(PrevBlockData prevBlockData, long shardId) {
         try(Connection con = databaseManager.getDataSource().getConnection();
-        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ? WHERE shard_id = ?")) {
-            DbUtils.setArray(pstmt, 1, ids);
-            pstmt.setLong(2, shardId);
+        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ?, block_timestamps = ?, block_timeouts = ? WHERE shard_id = ?")) {
+            DbUtils.setArray(pstmt, 1, prevBlockData.getGeneratorIds());
+            DbUtils.setArray(pstmt, 2, prevBlockData.getPrevBlockTimestamps());
+            DbUtils.setArray(pstmt, 3, prevBlockData.getPrevBlockTimeouts());
+            pstmt.setLong(4, shardId);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
