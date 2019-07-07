@@ -47,6 +47,7 @@ public final class Convert {
     public static final long[] EMPTY_LONG = new long[0];
     public static final int[] EMPTY_INT = new int[0];
     public static final Long[] EMPTY_OBJECT_LONG = new Long[0];
+    public static final Integer[] EMPTY_OBJECT_INT = new Integer[0];
     public static final byte[] EMPTY_BYTE = new byte[0];
     public static final byte[][] EMPTY_BYTES = new byte[0][];
     public static final String[] EMPTY_STRING = new String[0];
@@ -255,9 +256,20 @@ public final class Convert {
         }
         return result;
     }
+    public static Integer[] toArray(int[] array) {
+        Integer[] result = new Integer[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
 
-    public static Long[] toObjectArray(List<Long> longs) {
+    public static Long[] toObjectLongArray(List<Long> longs) {
         return longs.toArray(EMPTY_OBJECT_LONG);
+    }
+
+    public static Integer[] toObjectIntArray(List<Integer> integers) {
+        return integers.toArray(EMPTY_OBJECT_INT);
     }
 
     public static long[] toArray(Long[] array) {
