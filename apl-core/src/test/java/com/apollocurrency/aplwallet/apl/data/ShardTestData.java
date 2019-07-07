@@ -23,7 +23,7 @@ public class ShardTestData {
                     0L, 31, null,
                     new long[]{57821792282L, 22116981092100L, 9211698109297098287L},
                     new int[]{1, 1},
-                    new int[]{45673250, 45673251});
+                    new int[]{45673251, 45673252});
     public static final Shard NOT_SAVED_SHARD =
             new Shard(5L, Convert.parseHexString("7a496e38973387732394ff257e73cd3e57165ed2f0ab1855d497ff6b14fd0678"),
                     100L, 4, Convert.parseHexString("7a496e38973387732394ff257e73cd3e57165ed2f0ab1855d497ff6b14fd0678"),

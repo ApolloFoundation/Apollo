@@ -41,7 +41,7 @@ public interface ShardDao {
     long getMaxShardId();
 
     @Transactional
-    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, generator_ids) " +
+    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, generator_ids, block_timeouts, block_timestamps) " +
             "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :zipHashCrc, :generatorIds, " +
             ":blockTimeouts, :blockTimestamps)")
     @RegisterRowMapper(ShardRowMapper.class)
