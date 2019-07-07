@@ -24,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -65,7 +64,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.CountingInputStream;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -74,7 +72,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
-import java.util.logging.Level;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -133,15 +130,16 @@ public final class PeerImpl implements Peer {
         
         this.host = host;
         this.propertiesHolder=propertiesHolder;
-        pi.setAnnouncedAddress(announcedAddress);
         pi.setShareAddress(true);
         PeerAddress pa;
         if(announcedAddress==null || announcedAddress.isEmpty()){
             LOG.trace("got empty announcedAddress from host {}",host);
             pa= new PeerAddress(host);
+            pi.setShareAddress(false);
         }else{
             pa = new PeerAddress(announcedAddress);
         }
+        pi.setAnnouncedAddress(pa.getAddrWithPort());
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
         this.webSocket = new PeerWebSocket(this);
@@ -599,7 +597,7 @@ public final class PeerImpl implements Peer {
                 updateDownloadedVolume(wsResponse.length());
             }
         } catch (IOException ex) {
-            LOG.debug("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
+            LOG.trace("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
             ws.close();
         } catch (ParseException ex) {
             LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
@@ -632,8 +630,12 @@ public final class PeerImpl implements Peer {
                     if(!webSocket.isOpen()) {
                     //
                     // Create a new WebSocket session if we don't have one
-                    // and do not have inbound
-                        String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
+                    // and do not have inbound, and we have announced address
+                    String addrWithPort=getAnnouncedAddress();
+                    if(StringUtils.isBlank(addrWithPort)){ // try to use addres with port, should be OK for default peers
+                        addrWithPort=getHostWithPort();
+                    }
+                        String wsConnectString = "ws://" + addrWithPort + "/apl";
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
                         webSocketOK = webSocket.startClient(URI.create(wsConnectString),this);
                         if(webSocketOK){
@@ -790,11 +792,13 @@ public final class PeerImpl implements Peer {
                                 Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                                 if (getPort() != oldPort) {
                                     // force checking connectivity to new announced port
-                                    setState(PeerState.NON_CONNECTED);
+                                    deactivate();
                                     return;
                                 }
                             }
                     } else {
+                        //we use here host only because port may be any for iblound peers
+                        //so in case we loose inbound connection we can try connect outbound
                         Peers.setAnnouncedAddress(this, host);
                     }
                 }
