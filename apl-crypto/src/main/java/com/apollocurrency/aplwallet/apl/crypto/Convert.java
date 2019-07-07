@@ -45,6 +45,7 @@ public final class Convert {
 
     public static final BigInteger two64 = new BigInteger("18446744073709551616");
     public static final long[] EMPTY_LONG = new long[0];
+    public static final int[] EMPTY_INT = new int[0];
     public static final Long[] EMPTY_OBJECT_LONG = new Long[0];
     public static final byte[] EMPTY_BYTE = new byte[0];
     public static final byte[][] EMPTY_BYTES = new byte[0][];
@@ -261,6 +262,14 @@ public final class Convert {
 
     public static long[] toArray(Long[] array) {
         long[] result = new long[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    public static int[] toArrayInt(Integer[] array) {
+        int[] result = new int[array.length];
         for (int i = 0; i < array.length; i++) {
             result[i] = array[i];
         }

@@ -77,17 +77,12 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
-        log.info("SNAPSHOT block should be READY already in database...");
-        Block lastBlock = blockchain.findLastBlock();
-        blockchain.setLastBlock(lastBlock);
-        blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
-        blockchainProcessor.popOffTo(lastBlock);
+        log.info("SNAPSHOT block should be READY in database...");
         blockchainProcessor.updateInitialSnapshotBlock();
-//        initialBlock = blockchain.getShardInitialBlock().getId();
+        Block lastBlock = blockchain.findLastBlock();
         log.debug("SNAPSHOT Last block height: " + lastBlock.getHeight());
         blockchainConfigUpdater.updateToLatestConfig();
         blockchainProcessor.setGetMoreBlocks(true); // turn ON blockchain downloading
-        blockchainProcessor.scheduleOneScan();
         log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
     }
 
