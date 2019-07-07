@@ -74,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
+import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -84,7 +85,9 @@ public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
     
     private final String host;
+    @Getter
     private final PeerWebSocket webSocket;
+    @Getter
     private volatile PeerWebSocket inboundSocket;
     private volatile boolean useWebSocket;
     private volatile int port;
@@ -140,7 +143,7 @@ public final class PeerImpl implements Peer {
         }
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
-        this.webSocket = new PeerWebSocket();
+        this.webSocket = new PeerWebSocket(this);
         this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
@@ -531,6 +534,61 @@ public final class PeerImpl implements Peer {
             return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
         }
     }
+    private JSONObject sendHttp(final JSONStreamAware request) throws IOException, ParseException{
+         JSONObject response = null;
+                 HttpURLConnection connection = null;
+
+                String urlString = "http://" + getHostWithPort() + "/apl";
+                URL url = new URL(urlString);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                connection.setConnectTimeout(Peers.connectTimeout);
+                connection.setReadTimeout(Peers.readTimeout);
+                connection.setRequestProperty("Accept-Encoding", "gzip");
+                connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
+                try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"))) {
+                    CountingOutputWriter cow = new CountingOutputWriter(writer);
+                    request.writeJSONString(cow);
+                    updateUploadedVolume(cow.getCount());
+                }
+                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            InputStream responseStream = connection.getInputStream();
+                            if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
+                                responseStream = new GZIPInputStream(responseStream);
+                            try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
+                                CountingInputReader cir = new CountingInputReader(reader, Peers.MAX_RESPONSE_SIZE);
+                                response = (JSONObject)JSONValue.parseWithException(cir);
+                                updateDownloadedVolume(cir.getCount());
+                            }
+                } else {
+                    LOG.debug("Peer " + host + " responded with HTTP " + connection.getResponseCode());
+                    connection.disconnect();
+                }
+         
+         return response;
+    }
+    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws) throws IOException, ParseException {
+        JSONObject response = null;
+        if(ws==null){
+            return response;
+        }
+        StringWriter wsWriter = new StringWriter(1000);
+        request.writeJSONString(wsWriter);
+        String wsRequest = wsWriter.toString();
+
+        String wsResponse = ws.doPost(wsRequest);
+        LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
+        if (wsResponse != null) {
+            updateUploadedVolume(wsRequest.length());
+            if (wsResponse.length() > Peers.MAX_MESSAGE_SIZE) {
+                throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
+            }
+            response = (JSONObject) JSONValue.parseWithException(wsResponse);
+            updateDownloadedVolume(wsResponse.length());
+        }
+        return response;
+    }
     
 //    //TODO: implement
 //    public HttpURLConnection connectMeHTTP(boolean useHTTPS){
@@ -559,147 +617,70 @@ public final class PeerImpl implements Peer {
         JSONObject response = null;
         String log = "";
         boolean showLog = false;
-        HttpURLConnection connection = null;
-        int communicationLoggingMask = Peers.communicationLoggingMask;
 
         try {
-            //
-            // Create a new WebSocket session if we don't have one
-            //
-            if (useWebSocket && !webSocket.isOpen()) {
-                String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
-                LOG.debug("Connecting to '{}'...", wsConnectString);
-                useWebSocket = webSocket.startClient(URI.create(wsConnectString));
-                LOG.trace("Connected '{}'... ? = {}", wsConnectString, useWebSocket);
+            boolean webSocketOK = false;
+            PeerWebSocket socketToUse = null;
+            if(useWebSocket){
+                if(isInboundWebSocket()){
+                    socketToUse = inboundSocket;
+                    webSocketOK = true;
+                    LOG.trace("Peer: {} Using inbound web socket: {}",getHostWithPort(), inboundSocket.getRemoteAddress().getHostString());                    
+                }
+                //
+                // Create a new WebSocket session if we don't have one
+                // and do not have inbound
+
+                if (!webSocketOK && !webSocket.isOpen()) {
+                    String wsConnectString = "ws://" + host + ":" + getPort() + "/apl";
+                    LOG.trace("Connecting to websocket'{}'...", wsConnectString);
+                    webSocketOK = webSocket.startClient(URI.create(wsConnectString),this);
+                    if(webSocketOK){
+                      LOG.trace("Connected to {}: {}", wsConnectString, webSocketOK);
+                      socketToUse=webSocket;
+                    }
+                }
             }
             //
             // Send the request and process the response
             //
-            if (useWebSocket) {
-                //
-                // Send the request using the WebSocket session
-                //
-                //TODO: check
-                maxResponseSize=Peers.MAX_MESSAGE_SIZE;
-                StringWriter wsWriter = new StringWriter(1000);
-                request.writeJSONString(wsWriter);
-                String wsRequest = wsWriter.toString();
-                if (communicationLoggingMask != 0)
-                    log = "WebSocket " + host + ": " + wsRequest;
-                String wsResponse = webSocket.doPost(wsRequest);
-                LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
-                updateUploadedVolume(wsRequest.length());
-                if (maxResponseSize > 0) {
-                    if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-                        log += " >>> " + wsResponse;
-                        showLog = true;
-                    }
-                    if (wsResponse.length() > maxResponseSize)
-                        throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
-                    response = (JSONObject)JSONValue.parseWithException(wsResponse);
-                    updateDownloadedVolume(wsResponse.length());
-                }
+            if (webSocketOK) {
+                // Send the request using the WebSocket session,inbound or outbound
+                response = sendToWebSocket(request, socketToUse);
             } else {
-                //
                 // Send the request using HTTP
-                //
-                String urlString = "http://" + getHostWithPort() + "/apl";
-                URL url = new URL(urlString);
-                LOG.trace("Connecting to URL = {}...", urlString);
-                if (communicationLoggingMask != 0)
-                    log = "\"" + url.toString() + "\": " + JSON.toString(request);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
-                connection.setConnectTimeout(Peers.connectTimeout);
-                connection.setReadTimeout(Peers.readTimeout);
-                connection.setRequestProperty("Accept-Encoding", "gzip");
-                connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
-                try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"))) {
-                    CountingOutputWriter cow = new CountingOutputWriter(writer);
-                    request.writeJSONString(cow);
-                    updateUploadedVolume(cow.getCount());
-                }
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    if (maxResponseSize > 0) {
-                        if ((communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-                            CountingInputStream cis = new CountingInputStream(connection.getInputStream(), maxResponseSize);
-                            InputStream responseStream = cis;
-                            if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
-                                responseStream = new GZIPInputStream(cis);
-                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                            byte[] buffer = new byte[1024];
-                            int numberOfBytes;
-                            try (InputStream inputStream = responseStream) {
-                                while ((numberOfBytes = inputStream.read(buffer, 0, buffer.length)) > 0)
-                                    byteArrayOutputStream.write(buffer, 0, numberOfBytes);
-                            }
-                            String responseValue = byteArrayOutputStream.toString("UTF-8");
-                            if (responseValue.length() > 0 && responseStream instanceof GZIPInputStream)
-                                log += String.format("[length: %d, compression ratio: %.2f]",
-                                              cis.getCount(), (double)cis.getCount()/(double) responseValue.length());
-                            log += " >>> " + responseValue;
-                            showLog = true;
-                            response = (JSONObject) JSONValue.parseWithException(responseValue);
-                            updateDownloadedVolume(responseValue.length());
-                        } else {
-                            InputStream responseStream = connection.getInputStream();
-                            if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
-                                responseStream = new GZIPInputStream(responseStream);
-                            try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
-                                CountingInputReader cir = new CountingInputReader(reader, maxResponseSize);
-                                response = (JSONObject)JSONValue.parseWithException(cir);
-                                updateDownloadedVolume(cir.getCount());
-                            }
-                        }
-                    }
-                } else {
-                    if ((communicationLoggingMask & Peers.LOGGING_MASK_NON200_RESPONSES) != 0) {
-                        log += " >>> Peer responded with HTTP " + connection.getResponseCode() + " code!";
-                        showLog = true;
-                    }
-                    LOG.debug("Peer " + host + " responded with HTTP " + connection.getResponseCode());
-                    deactivate();
-                    connection.disconnect();
-                }
+                response = sendHttp(request);
             }
             //
             // Check for an error response
             //
             if (response != null && response.get("error") != null) {
-                LOG.error("Peer: {} RESPONSE = {}", getHostWithPort(), response);
-                deactivate();
-                if (Errors.SEQUENCE_ERROR.equals(response.get("error")) && request != Peers.getMyPeerInfoRequest()) {
-                    LOG.debug("Sequence error, reconnecting to " + host);
+                LOG.debug("Peer: {} RESPONSE = {}", getHostWithPort(), response);
+ //               deactivate();
+                if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){ //&& request != Peers.getMyPeerInfoRequest()) {
+                    LOG.debug("Sequence error received, reconnecting to " + host);
+                    deactivate();
                     handshake(targetChainId);
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
-                            response.toJSONString() + ", request was: " + JSON.toString(request) +
-                            ", disconnecting");
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
+                            response.toJSONString() + ", request was: " + JSON.toString(request));
+// Just log at the moment, we have to segregate errors                    
+//                            ", disconnecting");
+//                    if (connection != null) {
+//                        connection.disconnect();
+//                    }
                 }
             }
         } catch (AplException.AplIOException e) {
             blacklist(e);
-            if (connection != null) {
-                connection.disconnect();
-            }
         } catch (RuntimeException|ParseException|IOException e) {
             if (!(e instanceof UnknownHostException || e instanceof SocketTimeoutException ||
                                         e instanceof SocketException || Errors.END_OF_FILE.equals(e.getMessage()))) {
                 LOG.debug(String.format("Error sending request to peer %s: %s",
                                        host, e.getMessage()!=null ? e.getMessage() : e.toString()));
             }
-            if ((communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                log += " >>> " + e.toString();
-                showLog = true;
-            }
+            LOG.trace("Exception while sending request: {}",e);
             deactivate();
-            if (connection != null) {
-                connection.disconnect();
-            }
         }
         if (showLog) {
             LOG.info(log);
@@ -730,6 +711,10 @@ public final class PeerImpl implements Peer {
     
     @Override   
     public void handshake(UUID targetChainId) {
+        if(getState()==PeerState.CONNECTED){
+            LOG.trace("Peers {} is already connected.",getHostWithPort());
+            return;
+        }
         LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
@@ -741,7 +726,7 @@ public final class PeerImpl implements Peer {
                         LOG.debug("Connect: announced address '{}' now points to '{}', replacing peer '{}'",
                                 pi.getAnnouncedAddress(),  inetAddress.getHostAddress(), host);
                         Peers.removePeer(this);
-                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress, pi.getAnnouncedAddress(), true);
+                        PeerImpl newPeer = Peers.findOrCreatePeer(inetAddress.getHostAddress(), pi.getAnnouncedAddress(), true);
                         if (newPeer != null) {
                             LOG.trace("Prepare Handshake with : {}", newPeer);
                             Peers.addPeer(newPeer);
@@ -760,7 +745,7 @@ public final class PeerImpl implements Peer {
             if (response != null) {
                 // parse in new_pi
                 newPi = mapper.convertValue(response, PeerInfo.class);
-                LOG.debug("handshake, Parsed response 'newPi' = {}", newPi);
+                LOG.trace("handshake, Parsed response 'newPi' = {}", newPi);
                 if( ! StringUtils.isBlank(newPi.error) || (newPi.errorCode!=null && newPi.errorCode!=0)){
                     LOG.debug("We've got error from peer: {}. Error: {}  cause: {} code: {} ", getHostWithPort(), newPi.error, newPi.getCause(), newPi.getErrorCode());
                     if(Errors.BLACKLISTED.equalsIgnoreCase(newPi.error) || (newPi.getBlacklisted()!=null && newPi.getBlacklisted())){
@@ -818,7 +803,7 @@ public final class PeerImpl implements Peer {
                                 return;
                             }
                             if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
-                                LOG.debug("Connect: peer '{}' has new announced address '{}', old is '{}'",
+                                LOG.debug("peer '{}' has new announced address '{}', old is '{}'",
                                         host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
                                 int oldPort = getPort();
                                 Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
@@ -836,8 +821,9 @@ public final class PeerImpl implements Peer {
                   if (services != origServices) {
                         Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                   }
+                  LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
             } else {
-                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getAnnouncedAddress());
+                LOG.trace("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                 setState(PeerState.NON_CONNECTED);
             }
         } catch (RuntimeException e) {

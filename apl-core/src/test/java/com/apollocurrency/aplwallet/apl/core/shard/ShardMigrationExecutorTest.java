@@ -136,7 +136,7 @@ class ShardMigrationExecutorTest {
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
             DGSGoodsTable.class,
-            GeneratorIdsExtractor.class,
+            PrevBlockInfoExtractor.class,
             PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
@@ -266,15 +266,16 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
             byte[] shardHash = "0123456780".getBytes(); // just an example
             createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
-                    new ShardAddConstraintsSchemaVersion(), shardHash, new Long[]{1L, 2L});
+                    new ShardAddConstraintsSchemaVersion(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[] {3, 4}).prevBlockTimestamps(new Integer[] {5, 6}).build());
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
-
 
             Shard shard = shardDao.getShardById(shardId);
             assertNotNull(shard);
             assertArrayEquals(shardHash, shard.getShardHash());
             assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
+            assertArrayEquals(new int[] {3, 4}, shard.getBlockTimeouts());
+            assertArrayEquals(new int[] {5, 6}, shard.getBlockTimestamps());
 
 
 //6-7.      // update secondary block + transaction indexes

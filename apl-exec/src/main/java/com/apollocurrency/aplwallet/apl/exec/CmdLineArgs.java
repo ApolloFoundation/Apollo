@@ -8,8 +8,9 @@ import com.beust.jcommander.Parameter;
  * @author alukin@gmail.com
  */
 public class CmdLineArgs {
+    public static int DEFAULT_DEBUG_LEVEL=2;
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
-    public int debug = 2;
+    public int debug = DEFAULT_DEBUG_LEVEL;
     @Parameter(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
     public boolean debugUpdater;
     @Parameter(names = {"--help", "-h"}, help = true, description = "Print help message")

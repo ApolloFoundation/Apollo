@@ -165,7 +165,7 @@ public class FileDownloader {
                this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: "+fileID);
             //FIRE event when shard is PRESENT + ZIP is downloaded
                ShardPresentData shardPresentData = new ShardPresentData(fileID);
-               presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
+               presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData);
                finishSignalSent.set(true);
             }
         }

@@ -139,16 +139,20 @@ public class ShardDownloader {
             for (String pa : additionalPeersCopy) {
 
                 Peer p = Peers.findOrCreatePeer(pa, true);
-                if (processPeerShardInfo(p)) {
-                    counterWinShardInfo++;
-                }
-                if (counterWinShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
-                    log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
-                    break;
-                }
-                counterTotal++;
-                if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
-                    break;
+                if(p!=null) {
+                    if (processPeerShardInfo(p)) {
+                        counterWinShardInfo++;
+                    }
+                    if (counterWinShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                        log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
+                        break;
+                    }
+                    counterTotal++;
+                    if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
+                        break;
+                    }
+                }else{
+                    log.debug("Can not create peer: {}",pa);
                 }
             }
         }
@@ -162,7 +166,9 @@ public class ShardDownloader {
     }
 
     private void fireShardPresentEvent(Long shardId) {
-        ShardPresentData shardPresentData = new ShardPresentData(shardId.toString());
+        ShardNameHelper snh = new ShardNameHelper();
+        String fileId = snh.getFullShardId(shardId, myChainId);
+        ShardPresentData shardPresentData = new ShardPresentData(fileId);
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is ignored
     }
 
@@ -171,7 +177,7 @@ public class ShardDownloader {
         Set<ShardInfo> rs = sortedShards.get(shardId);
         for (ShardInfo s : rs) {
             if (peerAddr.equalsIgnoreCase(s.peerAddress)) {
-                String zipCrcHash = s.hash;
+                String zipCrcHash = s.zipCrcHash;
                 res = Convert.parseHexString(zipCrcHash);
                 break;
             }
@@ -211,7 +217,7 @@ public class ShardDownloader {
             if (fileHashActual.equalsIgnoreCase(receivedHash)) {
                 res = true;
             } else {
-                log.debug("bad shard file: {}, received hash: {}. deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
+                log.debug("bad shard file: {}, received hash: {}. Calculated hash: {}. Deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
                 zipInExportedFolder.delete();
                 res = false;
             }
