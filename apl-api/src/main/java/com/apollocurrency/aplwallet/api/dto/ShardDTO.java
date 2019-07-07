@@ -20,5 +20,7 @@ public class ShardDTO {
     public Integer shardHeight;
     public String zipHashCrc;
     public String generatorIds;
+    public String blockTimeouts;
+    public String blockTimestamps;
 
 }

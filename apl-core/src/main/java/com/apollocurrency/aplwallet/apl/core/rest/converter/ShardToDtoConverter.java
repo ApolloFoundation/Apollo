@@ -21,6 +21,8 @@ public class ShardToDtoConverter implements Converter<Shard, ShardDTO> {
         dto.shardHeight = shard.getShardHeight();
         dto.zipHashCrc = Convert.toHexString(shard.getZipHashCrc());
         dto.generatorIds = Arrays.toString(shard.getGeneratorIds());
+        dto.blockTimeouts = Arrays.toString(shard.getBlockTimeouts());
+        dto.blockTimestamps = Arrays.toString(shard.getBlockTimestamps());
         return dto;
     }
 }

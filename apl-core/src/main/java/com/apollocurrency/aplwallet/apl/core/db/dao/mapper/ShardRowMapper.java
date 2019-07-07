@@ -18,13 +18,17 @@ public class ShardRowMapper implements RowMapper<Shard> {
     public Shard map(ResultSet rs, StatementContext ctx) throws SQLException {
 
         Long[] generatorIds = DbUtils.getArray(rs, "generator_ids", Long[].class);
+        Integer[] blockTimeouts = DbUtils.getArray(rs, "block_timeouts", Integer[].class);
+        Integer[] blockTimestamps = DbUtils.getArray(rs, "block_timestamps", Integer[].class);
         return Shard.builder()
                 .id(rs.getLong("shard_id"))
                 .shardHash(rs.getBytes("shard_hash"))
                 .shardState(rs.getLong("shard_state"))
                 .shardHeight(rs.getInt("shard_height"))
                 .zipHashCrc(rs.getBytes("zip_hash_crc"))
-                .generatorIds(  generatorIds == null ? null : Convert.toArray(generatorIds)) // should not be empty
+                .generatorIds( generatorIds == null ? null : Convert.toArray(generatorIds)) // should not be empty
+                .blockTimeouts( blockTimeouts == null ? null : Convert.toArrayInt(blockTimeouts)) // should not be empty
+                .blockTimestamps( blockTimestamps == null ? null : Convert.toArrayInt(blockTimestamps)) // should not be empty
                 .build();
     }
 }

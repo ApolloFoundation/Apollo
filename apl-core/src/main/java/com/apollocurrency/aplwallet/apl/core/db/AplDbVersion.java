@@ -786,7 +786,11 @@ public class AplDbVersion extends DbVersion {
             case 298:
                 apply("ALTER TABLE IF EXISTS shard_recovery ADD COLUMN IF NOT EXISTS height INT NOT NULL");
             case 299:
-                return 299;
+                apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timeouts ARRAY DEFAULT NULL");
+            case 300:
+                apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timestamps ARRAY DEFAULT NULL");
+            case 301:
+                return 301;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
