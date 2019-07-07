@@ -166,7 +166,9 @@ public class ShardDownloader {
     }
 
     private void fireShardPresentEvent(Long shardId) {
-        ShardPresentData shardPresentData = new ShardPresentData(shardId.toString());
+        ShardNameHelper snh = new ShardNameHelper();
+        String fileId = snh.getFullShardId(shardId, myChainId);
+        ShardPresentData shardPresentData = new ShardPresentData(fileId);
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is ignored
     }
 
