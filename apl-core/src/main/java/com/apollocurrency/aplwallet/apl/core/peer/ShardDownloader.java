@@ -175,7 +175,7 @@ public class ShardDownloader {
         Set<ShardInfo> rs = sortedShards.get(shardId);
         for (ShardInfo s : rs) {
             if (peerAddr.equalsIgnoreCase(s.peerAddress)) {
-                String zipCrcHash = s.hash;
+                String zipCrcHash = s.zipCrcHash;
                 res = Convert.parseHexString(zipCrcHash);
                 break;
             }
