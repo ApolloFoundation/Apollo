@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
@@ -86,6 +87,7 @@ public class ShardService {
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
 
     }
+
     public boolean reset(long shardId) {
         if (isSharding) {
             if (shardingProcess != null) {
@@ -118,7 +120,6 @@ public class ShardService {
 
                 zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString());
                 databaseManager.getDataSource();
-                CDI.current().select(JdbiHandleFactory.class).get().setJdbi(databaseManager.getJdbi());
                 blockchain.setLastBlock(blockchain.findLastBlock());
                 blockchainProcessor.updateInitialBlockId();
                 recoverSharding();
@@ -182,6 +183,7 @@ public class ShardService {
     }
 
 
+    @Transactional
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
         if (!blockchainProcessor.isScanning()) {

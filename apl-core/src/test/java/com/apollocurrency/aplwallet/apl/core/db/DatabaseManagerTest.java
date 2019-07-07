@@ -16,6 +16,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -42,7 +43,7 @@ class DatabaseManagerTest {
     public void setUp() throws IOException {
         Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
         baseDbProperties = DbTestData.getDbFileProperties(dbFilePath.toAbsolutePath().toString());
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
         DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/db-manager-data.sql");
         dbPopulator.initDb();
         dbPopulator.populateDb();

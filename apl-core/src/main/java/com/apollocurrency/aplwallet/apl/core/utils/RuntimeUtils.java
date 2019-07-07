@@ -7,10 +7,12 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.management.ManagementFactory;
+import javax.enterprise.inject.Vetoed;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 @Slf4j
+@Vetoed
 public class RuntimeUtils {
     public static boolean isEnoughMemory(long limit) {
         long memoryTotal = 0;

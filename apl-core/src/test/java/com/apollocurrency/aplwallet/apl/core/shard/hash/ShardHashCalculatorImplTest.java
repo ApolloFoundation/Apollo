@@ -63,11 +63,11 @@ public class ShardHashCalculatorImplTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, EpochTime.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class)
+    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, EpochTime.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class)
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
+                    MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class),
                     MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
                     MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
                     MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),

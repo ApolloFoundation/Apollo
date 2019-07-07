@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -44,6 +45,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
+    private JdbiHandleFactory jdbiHandleFactory;
 //    @Inject @Setter
 //    private ShardNameHelper shardNameHelper;
     /**
@@ -53,8 +55,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     @Override
     public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
-            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+            initDatasource();
         }
         return currentTransactionalDataSource;
     }
@@ -65,13 +66,20 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * @param propertiesHolderParam the rest global properties in holder from CDI
      */
     @Inject
-    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
+    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, JdbiHandleFactory jdbiHandleFactory) {
         baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
         propertiesHolder = propertiesHolderParam;
+        this.jdbiHandleFactory = jdbiHandleFactory;
+        initDatasource();
         // init internal data source stuff only one time till next shutdown() will be called
+
+        //        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
+    }
+
+    public void initDatasource() {
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         jdbi = currentTransactionalDataSource.init(new AplDbVersion());
-//        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
+        jdbiHandleFactory.setJdbi(jdbi);
     }
 //not used yet
     
@@ -109,6 +117,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
             jdbi = currentTransactionalDataSource.init(new AplDbVersion());
         }
         return jdbi;
+    }
+
+    @Override
+    public JdbiHandleFactory getJdbiHandleFactory() {
+        return jdbiHandleFactory;
     }
 
     /**

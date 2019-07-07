@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -49,7 +50,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder, new JdbiHandleFactory());
         folder = getTempFolder();
     }
 
