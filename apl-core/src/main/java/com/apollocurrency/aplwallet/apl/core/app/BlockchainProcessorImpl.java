@@ -695,7 +695,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 */
     }
 
-    private void scheduleOneScan() {
+    public void scheduleOneScan() {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         String scanProperty = optionDAO.get("require-scan");
         if (scanProperty == null) {
