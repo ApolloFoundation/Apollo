@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -47,13 +48,15 @@ public class ShardDownloadPresenceObserver {
     private AplAppStatus aplAppStatus;
     private GlobalSync globalSync;
     private ShardImporter shardImporter;
+    private BlockchainConfigUpdater blockchainConfigUpdater;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          Zip zipComponent, CsvImporter csvImporter,
                                          DownloadableFilesManager downloadableFilesManager,
-                                         AplAppStatus aplAppStatus, GlobalSync globalSync, ShardImporter shardImporter) {
+                                         AplAppStatus aplAppStatus, GlobalSync globalSync,
+                                         ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
@@ -62,8 +65,9 @@ public class ShardDownloadPresenceObserver {
         this.csvImporter = Objects.requireNonNull(csvImporter, "csvImporter is NULL");
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.globalSync = globalSync;
-        this.shardImporter = shardImporter;
+        this.globalSync = Objects.requireNonNull(globalSync, "globalSync is NULL");
+        this.shardImporter = Objects.requireNonNull(shardImporter, "shardImporter is NULL");
+        this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
     }
 
     /**
@@ -73,6 +77,18 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+        log.info("SNAPSHOT block should be READY already in database...");
+        Block lastBlock = blockchain.findLastBlock();
+        blockchain.setLastBlock(lastBlock);
+        blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
+        blockchainProcessor.popOffTo(lastBlock);
+        blockchainProcessor.updateInitialSnapshotBlock();
+//        initialBlock = blockchain.getShardInitialBlock().getId();
+        log.debug("SNAPSHOT Last block height: " + lastBlock.getHeight());
+        blockchainConfigUpdater.updateToLatestConfig();
+        blockchainProcessor.setGetMoreBlocks(true); // turn ON blockchain downloading
+        blockchainProcessor.scheduleOneScan();
+        log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
     }
 
     /**
