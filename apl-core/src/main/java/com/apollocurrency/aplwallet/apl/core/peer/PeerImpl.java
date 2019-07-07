@@ -74,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
+import java.util.logging.Level;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -502,8 +503,8 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInboundWebSocket() {
-        PeerWebSocket s;
-        return ((s=inboundSocket) != null && s.isOpen());
+        boolean res = inboundSocket!=null && inboundSocket.isOpen();
+        return res;
     }
 
     @Override
@@ -534,9 +535,11 @@ public final class PeerImpl implements Peer {
             return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
         }
     }
-    private JSONObject sendHttp(final JSONStreamAware request) throws IOException, ParseException{
+    
+    //we throw here because it is last resort method and we should decide deactivate peer or not
+    private JSONObject sendHttp(final JSONStreamAware request) throws MalformedURLException, IOException, ParseException{
          JSONObject response = null;
-                 HttpURLConnection connection = null;
+                HttpURLConnection connection = null;
 
                 String urlString = "http://" + getHostWithPort() + "/apl";
                 URL url = new URL(urlString);
@@ -568,39 +571,41 @@ public final class PeerImpl implements Peer {
          
          return response;
     }
-    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws) throws IOException, ParseException {
+    
+    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
         JSONObject response = null;
-        if(ws==null){
-            return response;
-        }
-        StringWriter wsWriter = new StringWriter(1000);
-        request.writeJSONString(wsWriter);
-        String wsRequest = wsWriter.toString();
-
-        String wsResponse = ws.doPost(wsRequest);
-        LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
-        if (wsResponse != null) {
-            updateUploadedVolume(wsRequest.length());
-            if (wsResponse.length() > Peers.MAX_MESSAGE_SIZE) {
-                throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
+        try {
+            if(ws==null){
+                LOG.trace("null websocket passed as argument");
+                return response;
             }
-            response = (JSONObject) JSONValue.parseWithException(wsResponse);
-            updateDownloadedVolume(wsResponse.length());
+            StringWriter wsWriter = new StringWriter(Peers.MAX_REQUEST_SIZE);
+            try {
+                request.writeJSONString(wsWriter);
+            } catch (IOException ex) {
+                LOG.trace("Can not deserialize request");
+                return response;
+            }
+            String wsRequest = wsWriter.toString();
+            
+            String wsResponse = ws.doPost(wsRequest);
+            LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
+            if (wsResponse != null) {
+                updateUploadedVolume(wsRequest.length());
+                if (wsResponse.length() > Peers.MAX_MESSAGE_SIZE) {
+                    throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
+                }
+                response = (JSONObject) JSONValue.parseWithException(wsResponse);
+                updateDownloadedVolume(wsResponse.length());
+            }
+        } catch (IOException ex) {
+            LOG.debug("Exception sending to {} using websocket. Closing it. Exception: {}",getHostWithPort(), ex);
+            ws.close();
+        } catch (ParseException ex) {
+            LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
         }
         return response;
     }
-    
-//    //TODO: implement
-//    public HttpURLConnection connectMeHTTP(boolean useHTTPS){
-//        HttpURLConnection connection = null;
-//        return connection;
-//    }
-//    //TODO: implement
-//    public boolean connectMeWS(boolean useHTTPS){
-//       boolean res = false; 
-//       return res; 
-//    }
-    
 
     private JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
         if (LOG.isTraceEnabled()) {
@@ -615,17 +620,14 @@ public final class PeerImpl implements Peer {
             LOG.trace("SEND() Request = '{}'\n, host='{}'", reqAsString, host);
         }
         JSONObject response = null;
-        String log = "";
-        boolean showLog = false;
-
         try {
             boolean webSocketOK = false;
             PeerWebSocket socketToUse = null;
             if(useWebSocket){
                 if(isInboundWebSocket()){
                     socketToUse = inboundSocket;
-                    webSocketOK = true;
-                    LOG.trace("Peer: {} Using inbound web socket: {}",getHostWithPort(), inboundSocket.getRemoteAddress().getHostString());                    
+                    webSocketOK = true;                    
+                    LOG.trace("Peer: {} Using inbound web socket",getHostWithPort());                    
                 }
                 //
                 // Create a new WebSocket session if we don't have one
@@ -648,7 +650,7 @@ public final class PeerImpl implements Peer {
                 // Send the request using the WebSocket session,inbound or outbound
                 response = sendToWebSocket(request, socketToUse);
             } else {
-                // Send the request using HTTP
+                // Send the request using HTTP as fallback
                 response = sendHttp(request);
             }
             //
@@ -674,16 +676,16 @@ public final class PeerImpl implements Peer {
         } catch (AplException.AplIOException e) {
             blacklist(e);
         } catch (RuntimeException|ParseException|IOException e) {
-            if (!(e instanceof UnknownHostException || e instanceof SocketTimeoutException ||
-                                        e instanceof SocketException || Errors.END_OF_FILE.equals(e.getMessage()))) {
+            if (!(e instanceof UnknownHostException 
+                    || e instanceof SocketTimeoutException 
+                    || e instanceof SocketException 
+                    || Errors.END_OF_FILE.equals(e.getMessage()))) {
+                
                 LOG.debug(String.format("Error sending request to peer %s: %s",
                                        host, e.getMessage()!=null ? e.getMessage() : e.toString()));
             }
-            LOG.trace("Exception while sending request: {}",e);
+            LOG.trace("Exception while sending request: {} to {}",e,getHostWithPort());
             deactivate();
-        }
-        if (showLog) {
-            LOG.info(log);
         }
 
         return response;
@@ -707,7 +709,7 @@ public final class PeerImpl implements Peer {
            prefix="https://";             
         }
         PeerAddress pa = new PeerAddress(hostWithPort);
-        return new URI(prefix + pa.getAddrWithPort());
+        return new URI(prefix + pa.getAddrWithPort()+"/apl");
     }
     
     @Override   
