@@ -41,7 +41,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 2000
+          "frequency": 8000
         }
       }
     ]
