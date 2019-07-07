@@ -655,7 +655,7 @@ public final class PeerImpl implements Peer {
             // Check for an error response
             //
             if (response != null && response.get("error") != null) {
-                LOG.error("Peer: {} RESPONSE = {}", getHostWithPort(), response);
+                LOG.debug("Peer: {} RESPONSE = {}", getHostWithPort(), response);
  //               deactivate();
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){ //&& request != Peers.getMyPeerInfoRequest()) {
                     LOG.debug("Sequence error received, reconnecting to " + host);
