@@ -468,19 +468,8 @@ public final class BlockImpl implements Block {
             transaction.getAppendages();
         }
     }
-    private boolean isJustAfterShardImport(Block previousBlock){
-        //TODO: implement ASAP
-        return false;
-    }
-    private void calculateBaseTargetAfterShardImport(Block previousBlock){
-        //TODO: implement ASAP
-    }
     
     private void calculateBaseTarget(Block previousBlock) {
-        if(isJustAfterShardImport(previousBlock)){
-            calculateBaseTargetAfterShardImport(previousBlock);
-        }
-        Block shardInitialBlock = blockchain.getShardInitialBlock();
         long prevBaseTarget = previousBlock.getBaseTarget();
         int blockchainHeight = previousBlock.getHeight();
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
