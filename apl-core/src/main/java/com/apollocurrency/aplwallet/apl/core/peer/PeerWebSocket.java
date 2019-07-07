@@ -168,9 +168,6 @@ public class PeerWebSocket {
                 ClientUpgradeRequest req = new ClientUpgradeRequest();
                 Future<Session> conn = peerClient.connect(this, uri, req);
                 conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-                if(p!=null){
-                    ((PeerImpl) (p)).setInboundWebSocket(this);                
-                }
                 useWebSocket = true;                
             }
         } catch (ExecutionException exc) {
