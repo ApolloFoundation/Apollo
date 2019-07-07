@@ -139,16 +139,20 @@ public class ShardDownloader {
             for (String pa : additionalPeersCopy) {
 
                 Peer p = Peers.findOrCreatePeer(pa, true);
-                if (processPeerShardInfo(p)) {
-                    counterWinShardInfo++;
-                }
-                if (counterWinShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
-                    log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
-                    break;
-                }
-                counterTotal++;
-                if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
-                    break;
+                if(p!=null) {
+                    if (processPeerShardInfo(p)) {
+                        counterWinShardInfo++;
+                    }
+                    if (counterWinShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                        log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
+                        break;
+                    }
+                    counterTotal++;
+                    if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
+                        break;
+                    }
+                }else{
+                    log.debug("Can not create peer: {}",pa);
                 }
             }
         }
@@ -211,7 +215,7 @@ public class ShardDownloader {
             if (fileHashActual.equalsIgnoreCase(receivedHash)) {
                 res = true;
             } else {
-                log.debug("bad shard file: {}, received hash: {}. deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
+                log.debug("bad shard file: {}, received hash: {}. Calculated hash: {}. Deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
                 zipInExportedFolder.delete();
                 res = false;
             }
