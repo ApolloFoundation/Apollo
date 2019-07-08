@@ -510,7 +510,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isOutboundWebSocket() {
-        return webSocket.isOpen();
+        return webSocket != null && webSocket.isOpen();
     }
 
     @Override
