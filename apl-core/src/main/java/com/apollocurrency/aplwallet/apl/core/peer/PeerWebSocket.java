@@ -413,6 +413,10 @@ public class PeerWebSocket {
             Set<Map.Entry<Long, PostRequest>> requests = requestMap.entrySet();
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
+            if(clientPeer!=null){
+                LOG.debug("Client socket is closed for peer: {}. Deactivating it",clientPeer);
+                clientPeer.deactivate();
+            }
         } finally {
             lock.unlock();
         }
