@@ -60,7 +60,7 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000,
+        "maxBalance": 30000000000
       },
       {
         "height": 624999,
