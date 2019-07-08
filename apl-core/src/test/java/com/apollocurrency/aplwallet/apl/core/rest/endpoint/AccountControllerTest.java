@@ -56,7 +56,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         endpoint.setAccountCurrencyService(accountCurrencyService);
         endpoint.setAccountBalanceService(accountBalanceService);
 
-        account = new Account(ACCOUNT_ID);
+        account = new Account(ACCOUNT_ID, 0);
         account.setPublicKey(new PublicKey(ACCOUNT_ID, Convert.parseHexString(PUBLIC_KEY_HEX), 0));
         account.setBalanceATM(1000L);
         account.setForgedBalanceATM(0L);

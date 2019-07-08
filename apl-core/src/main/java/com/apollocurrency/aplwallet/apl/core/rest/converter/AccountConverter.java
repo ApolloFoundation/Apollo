@@ -45,7 +45,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
         dto.set2FA(Helper2FA.isEnabled2FA(account.getId()));
-        byte[] publicKey = account.getPublicKey().publicKey;
+        byte[] publicKey = account.getPublicKey().getPublicKey();
         if (publicKey != null) {
             dto.setPublicKey(Convert.toHexString(publicKey));
         }

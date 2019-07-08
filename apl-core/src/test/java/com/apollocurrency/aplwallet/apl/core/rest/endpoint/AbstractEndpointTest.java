@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.core.Dispatcher;
@@ -16,10 +18,18 @@ import static org.jboss.resteasy.mock.MockHttpRequest.get;
 import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 public class AbstractEndpointTest {
     static ObjectMapper mapper = new ObjectMapper();
     Dispatcher dispatcher;
+
+    static{
+        BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
+        Convert2.init(blockchainConfig);
+    }
 
     void checkMandatoryParameterMissingErrorCode(MockHttpResponse response, int expectedErrorCode) throws IOException {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());

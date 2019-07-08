@@ -6,10 +6,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest;
 
-import com.apollocurrency.aplwallet.apl.util.JSON;
-
 public enum ApiErrors implements ErrorInfo {
 
+    INTERNAL_SERVER_EXCEPTION(0,1000,"Internal error, root cause: %s"),
     JSON_SERIALIZATION_EXCEPTION(1,1001,"Exception encountered during generating JSON content, root cause: %s"),
 
     MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified."),
@@ -18,10 +17,12 @@ public enum ApiErrors implements ErrorInfo {
     UNKNOWN_VALUE(5, 2005, "Unknown {0} : {1}"),
     PEER_NOT_CONNECTED(5, 2006, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2007, "Peer is not providing open API."),
+    FAILED_TO_ADD(8, 2008, "Failed to add peer %s"),
+    ACCOUNT_GENERATION_ERROR(6, 2009, "Error occurred during account generation."),
+    ONLY_ONE_OF_PARAM_LIST(6, 2010, "Not more than one of [%s] can be specified."),
+    INCORRECT_PARAM_VALUE(4, 2011, "Incorrect %s"),
+    ACCOUNT_2FA_ERROR(22, 2012, "%s")
 
-    ACCOUNT_GENERATION_ERROR(6, 2008, "Error occurred during account generation"),
-
-    FAILED_TO_ADD(8, 2008, "Failed to add peer %s")
     ;
 
     private int oldErrorCode;

@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
@@ -289,7 +290,9 @@ public class Apollo {
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        aplCoreRuntime.init(runtimeMode, blockchainConfig, app.propertiesHolder);
+        Convert2.init(blockchainConfig);
 
         try {
             // updated shutdown hook explicitly created with instances

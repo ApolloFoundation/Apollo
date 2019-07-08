@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.Account2FADTO;
+import com.apollocurrency.aplwallet.api.dto.Account2FADetailsDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.WalletKeysInfoDTO;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
@@ -12,14 +14,16 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,7 +47,7 @@ import java.util.List;
 public class AccountController {
 
     @Inject @Setter
-    Blockchain blockchain;
+    private Account2FAHelper account2FAHelper;
 
     @Inject @Setter
     private AccountService accountService;
@@ -62,6 +66,12 @@ public class AccountController {
 
     @Inject @Setter
     private WalletKeysConverter walletKeysConverter;
+
+    @Inject @Setter
+    private Account2FADetailsConverter faDetailsConverter;
+
+    @Inject @Setter
+    private Account2FAConverter faConverter;
 
     @Path("/account")
     @GET
@@ -106,11 +116,11 @@ public class AccountController {
             converter.addAccountLessors(dto, lessors, includeEffectiveBalance);
         }
         if(includeAssets){
-            List<AccountAsset> assets = accountAssetService.getAssetAccounts(account);
+            List<AccountAsset> assets = accountAssetService.getAssetAccounts(account, 0, -1);
             converter.addAccountAssets(dto, assets);
         }
         if(includeCurrencies){
-            List<AccountCurrency> currencies = accountCurrencyService.getCurrencyAccounts(account);
+            List<AccountCurrency> currencies = accountCurrencyService.getCurrencies(account);
             converter.addAccountCurrencies(dto, currencies);
         }
 
@@ -140,16 +150,105 @@ public class AccountController {
         if (StringUtils.isEmpty(passphrase)){
             return response.error( ApiErrors.MISSING_PARAM, "passphrase").build();
         }
-        WalletKeysInfo walletKeysInfo = null;
-        try {
-            walletKeysInfo = Helper2FA.generateUserWallet(passphrase);
-        } catch (ParameterException ignored) {}
+        WalletKeysInfo walletKeysInfo = account2FAHelper.generateUserWallet(passphrase);
 
         if (walletKeysInfo == null){
             return response.error( ApiErrors.ACCOUNT_GENERATION_ERROR).build();
         }
 
         WalletKeysInfoDTO dto = walletKeysConverter.convert(walletKeysInfo);
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/account/confirm2fa")
+    @POST
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+            summary = "Confirm two factor authentication",
+            description = "Confirm two factor authentication.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountDTO.class)))
+            })
+    public Response confirm2FA(
+            @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
+            @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
+            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The 2FA code.", required = true) @QueryParam("code2FA") Integer code2FA
+    ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+
+        TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
+
+        account2FAHelper.confirm2FA(params2FA, code2FA);
+        Account2FADTO dto = faConverter.convert(params2FA);
+
+        return response.bind(dto).build();
+    }
+
+
+    @Path("/account/disable2fa")
+    @POST
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+            summary = "Disable two factor authentication",
+            description = "Disable two factor authentication.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Account2FADetailsDTO.class)))
+            })
+    public Response disable2FA(
+            @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
+            @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
+            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The 2FA code.", required = true) @QueryParam("code2FA") Integer code2FA
+    ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+
+        TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
+
+        account2FAHelper.disable2FA(params2FA, code2FA);
+
+        Account2FADTO dto = faConverter.convert(params2FA);
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/account/enable2fa")
+    @POST
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+            summary = "Enable two factor authentication",
+            description = "Enable two factor authentication.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Account2FADetailsDTO.class)))
+            })
+    public Response enable2FA(
+            @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
+            @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
+            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr
+            ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        TwoFactorAuthParameters params2FA = account2FAHelper.parse2FARequestParams(accountStr, passphraseParam, secretPhraseParam);
+
+        TwoFactorAuthDetails twoFactorAuthDetails = account2FAHelper.enable2FA(params2FA);
+
+        Account2FADetailsDTO dto = faDetailsConverter.convert(twoFactorAuthDetails);
+        faDetailsConverter.addAccount(dto, params2FA.getAccountId());
 
         return response.bind(dto).build();
     }

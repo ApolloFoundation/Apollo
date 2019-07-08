@@ -152,7 +152,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
     @Test
     void addOrReplacePeer_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer", "");
+        MockHttpResponse response = sendPostRequest("/networking/peer", "missedParam=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
     }
@@ -214,7 +214,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
     @Test
     void addPeerInBlackList_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "");
+        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "missedParam=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
     }
@@ -236,7 +236,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
     @Test
     void addAPIProxyPeerInBlackList_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "");
+        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "missedParam=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
     }
@@ -271,7 +271,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
     @Test
     void setAPIProxyPeer_whenCallWithoutMandatoryParam_thenGetError_2003() throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "");
+        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "missedParam=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
     }

@@ -99,6 +99,11 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
+    public List<AccountCurrency> getCurrencies(Account account) {
+        return getCurrencies(account, 0, -1);
+    }
+
+    @Override
     public List<AccountCurrency> getCurrencies(Account account, int from, int to) {
         return getCurrencies(account.getId(), from, to);
     }
@@ -142,15 +147,6 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             iterator.forEachRemaining(accountCurrencies::add);
         }
         return accountCurrencies;
-    }
-
-    @Override
-    public List<AccountCurrency> getCurrencyAccounts(Account account) {
-        List<AccountCurrency> result = new ArrayList<>();
-        try(DbIterator<AccountCurrency> iterator = getCurrencies(account, 0, -1)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
     }
 
     @Override

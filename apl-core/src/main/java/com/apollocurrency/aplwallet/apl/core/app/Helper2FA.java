@@ -28,8 +28,10 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * This class is just static helper for 2FA. It should be removed later
  * and replaced by properly used CDI
+ * @deprecated Use Account2FAHelper class instead of this one.
  * @author al
  */
+@Deprecated
 public class Helper2FA {
    private static TwoFactorAuthService service2FA;
    private static final Logger LOG = LoggerFactory.getLogger(Helper2FA.class);

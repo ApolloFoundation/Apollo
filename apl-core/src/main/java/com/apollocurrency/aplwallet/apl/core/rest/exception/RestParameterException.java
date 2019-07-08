@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
+import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
+
 /**
  * Exception with dedicated mapper {@link RestParameterExceptionMapper}, can be thrown directly from REST endpoint
  *
@@ -9,41 +11,49 @@ public class RestParameterException extends RuntimeException {
 
     /**
      */
-    private final Long oldErrorCode;
+    private ErrorInfo errorInfo;
 
     /**
      */
-    private final Integer errorCode;
+    private Object[] args;
 
-    public RestParameterException(Long oldErrorCode, Integer errorCode, String message) {
+    public RestParameterException(Integer oldErrorCode, Integer errorCode, String message) {
         super(message);
-        this.oldErrorCode = oldErrorCode;
-        this.errorCode = errorCode;
+        this.errorInfo = new ErrorInfo() {
+            @Override
+            public int getErrorCode() {
+                return errorCode;
+            }
+
+            @Override
+            public int getOldErrorCode() {
+                return oldErrorCode;
+            }
+
+            @Override
+            public String getErrorDescription() {
+                return message;
+            }
+        };
     }
 
-    public RestParameterException(Integer errorCode, String message) {
-        super(message);
-        this.oldErrorCode = null;
-        this.errorCode = errorCode;
+    public RestParameterException(ErrorInfo errorInfo, Object ... args) {
+        super(errorInfo.getErrorDescription());
+        this.errorInfo = errorInfo;
+        this.args = args;
     }
 
-    public RestParameterException(Long oldErrorCode, Integer errorCode, String message, Throwable cause) {
-        super(message, cause);
-        this.oldErrorCode = oldErrorCode;
-        this.errorCode = errorCode;
+    public RestParameterException(Throwable cause, ErrorInfo errorInfo, Object ... args) {
+        super(errorInfo.getErrorDescription(), cause);
+        this.errorInfo = errorInfo;
+        this.args = args;
     }
 
-    public RestParameterException(Integer errorCode, String message, Throwable cause) {
-        super(message, cause);
-        this.oldErrorCode = null;
-        this.errorCode = errorCode;
+    public ErrorInfo getErrorInfo() {
+        return errorInfo;
     }
 
-    public Long getOldErrorCode() {
-        return oldErrorCode;
-    }
-
-    public Integer getErrorCode() {
-        return errorCode;
+    public Object[] getArgs() {
+        return args;
     }
 }

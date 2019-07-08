@@ -1,10 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+
 public class TwoFactorAuthParameters {
 
     long accountId;
     String passphrase;
     String secretPhrase;
+    Status2FA status2FA;
 
     public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
         if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
@@ -29,6 +32,14 @@ public class TwoFactorAuthParameters {
 
     public boolean isPassphrasePresent() {
         return passphrase != null;
+    }
+
+    public Status2FA getStatus2FA() {
+        return status2FA;
+    }
+
+    public void setStatus2FA(Status2FA status2FA) {
+        this.status2FA = status2FA;
     }
 
     public TwoFactorAuthParameters(long accountId, String passphrase, String secretPhrase) {

@@ -19,6 +19,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 @Vetoed
+@Deprecated
 public class Enable2FA extends AbstractAPIRequestHandler {
     public Enable2FA() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");

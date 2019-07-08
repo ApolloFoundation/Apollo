@@ -2,8 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.WalletKeysInfoDTO;
 import com.apollocurrency.aplwallet.apl.core.account.*;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.*;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -19,11 +18,15 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.*;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -96,15 +99,15 @@ class AccountEndpointTest extends AbstractEndpointTest{
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            ElGamalEncryptor.class, Account2FAHelper.class, Account2FAConverter.class, Account2FADetailsConverter.class,
             AccountController.class, AccountBalanceService.class, AccountConverter.class, WalletKeysConverter.class,
             AccountServiceImpl.class, AccountTable.class,
+            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
             AccountInfoServiceImpl.class, AccountInfoTable.class,
             AccountLeaseServiceImpl.class, AccountLeaseTable.class,
             AccountAssetServiceImpl.class, AccountAssetTable.class,
-            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
-            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class,
-            AccountPropertyServiceImpl.class, AccountPropertyTable.class
-    )
+            AccountCurrencyServiceImpl.class, AccountCurrencyTable.class
+            )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -116,6 +119,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .build();
 
 
@@ -138,11 +142,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
 
     @Test
     void createAccount() throws URISyntaxException, IOException {
-        //when(accountService.findOrCreatePeerByAddress(PEER_ADDRESS)).thenReturn(peer);
-
         MockHttpResponse response = sendPostRequest("/accounts/account", "passphrase="+PASSPHRASE);
-
-        //print("response=%s", response);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
