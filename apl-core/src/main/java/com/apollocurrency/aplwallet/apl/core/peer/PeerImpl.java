@@ -598,7 +598,7 @@ public final class PeerImpl implements Peer {
             }
         } catch (IOException ex) {
             LOG.trace("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
-            ws.close();
+            deactivate();
         } catch (ParseException ex) {
             LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
         }
@@ -626,7 +626,7 @@ public final class PeerImpl implements Peer {
                     webSocketOK = response !=null;
                     LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK); 
                 }
-                if (!webSocketOK){
+                if (!webSocketOK){ //no inbound connection or send failed 
                     if(!webSocket.isOpen()) {
                     //
                     // Create a new WebSocket session if we don't have one
@@ -641,8 +641,10 @@ public final class PeerImpl implements Peer {
                         if(webSocketOK){
                             LOG.trace("Connected as client to websocket {}", wsConnectString);
                         }
+                    }else{ //client socket is already open
+                        webSocketOK=true;
                     }
-                    if(webSocketOK){
+                    if(webSocketOK){ //send using client socket
                         response = sendToWebSocket(request, webSocket);
                         webSocketOK = response!=null;
                         LOG.trace("Peer: {} Using outbound web socket. Success: {}",getHostWithPort(),webSocketOK); 
@@ -739,14 +741,14 @@ public final class PeerImpl implements Peer {
                 }
 
                 if(!setApplication(newPi.getApplication())){
-                    LOG.debug("Peer: {} has different Application value '{}', removing",
+                    LOG.trace("Peer: {} has different Application value '{}', removing",
                             getHost(), newPi.getApplication());
                     remove();
                     return;
                 }
 
                 if (newPi.getChainId() == null || !targetChainId.equals(UUID.fromString(newPi.getChainId()))) {
-                    LOG.debug("Peer: {} has different chainId: '{}', removing",
+                    LOG.trace("Peer: {} has different chainId: '{}', removing",
                             getHost(), newPi.getChainId());
                     remove();
                     return;
