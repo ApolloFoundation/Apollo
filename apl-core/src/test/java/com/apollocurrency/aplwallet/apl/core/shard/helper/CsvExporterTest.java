@@ -90,7 +90,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -308,7 +307,11 @@ class CsvExporterTest {
             int readCount = importCsvAndCheckContent(fileName, dataExportPath);
             assertTrue(readCount > 0);
         }
-
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        List<String> lines = Files.readAllLines(shardExportedFile);
+        assertEquals(3, lines.size());
+        assertTrue(lines.get(0).contains("BLOCK_TIMEOUTS"));
+        assertTrue(lines.get(0).contains("BLOCK_TIMESTAMPS"));
         log.debug("Processed Table = [{}]", filesInFolder.size());
     }
 
