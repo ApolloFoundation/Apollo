@@ -330,7 +330,7 @@ public class PeerWebSocket {
                 }
                 session.getRemote().sendBytes(buf);
             }else{
-                LOG.debug("Session is not open");
+                LOG.debug("Session is not open for peer {}. inbound: {}",clientPeer.getHostWithPort(),peerServlet==null);
             }
         } catch (WebSocketException exc) {
             throw new SocketException(exc.getMessage());
