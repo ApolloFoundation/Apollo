@@ -207,12 +207,10 @@ public class PeerWebSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         this.session = session;
-     //   if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-            LOG.trace(String.format("%s WebSocket connection with %s completed",
+        LOG.debug(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
                     
-     //   }
     }
 
     /**
@@ -331,6 +329,8 @@ public class PeerWebSocket {
                     throw new ProtocolException("POST response length exceeds max message size");
                 }
                 session.getRemote().sendBytes(buf);
+            }else{
+                LOG.debug("Session is not open");
             }
         } catch (WebSocketException exc) {
             throw new SocketException(exc.getMessage());
