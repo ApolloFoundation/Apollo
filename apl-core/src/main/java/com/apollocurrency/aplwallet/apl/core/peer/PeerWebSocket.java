@@ -207,13 +207,13 @@ public class PeerWebSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         this.session = session;
-        LOG.debug(String.format("%s WebSocket connection with %s completed",
+        LOG.trace(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
         if(clientPeer==null){
             LOG.error("Client peer is not set!");
         }else{
-            LOG.debug("Client peer: {}", clientPeer.getHostWithPort());
+            LOG.trace("Client peer: {}", clientPeer.getHostWithPort());
         }
                     
     }
@@ -415,7 +415,7 @@ public class PeerWebSocket {
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
             if(clientPeer!=null){
-                LOG.debug("Client {} socket is closed for peer: {} statusCode: {}", 
+                LOG.trace("Client {} socket is closed for peer: {} statusCode: {}", 
                         direction, clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
             }
         } finally {
