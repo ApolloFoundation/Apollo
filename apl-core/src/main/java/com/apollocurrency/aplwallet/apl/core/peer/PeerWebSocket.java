@@ -414,8 +414,7 @@ public class PeerWebSocket {
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
             if(clientPeer!=null){
-                LOG.debug("Client socket is closed for peer: {} Reason: . Deactivating it",clientPeer.getHostWithPort(),reason);
-                clientPeer.deactivate();
+                LOG.debug("Client socket is closed for peer: {} Reason: ",clientPeer.getHostWithPort(),reason);
             }
         } finally {
             lock.unlock();
