@@ -811,7 +811,7 @@ public final class PeerImpl implements Peer {
                   LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
             } else {
                 LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
-                deactivate();
+               // deactivate();
             }
         } catch (RuntimeException e) {
             blacklist(e);
