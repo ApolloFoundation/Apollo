@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
 
-import java.math.BigInteger;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,16 +17,18 @@ public class PeerInfoStatistics {
      */
     public static final double BETA=0.90;
             
-    private final Map<BigInteger,PeerInfoGroup> sorted = new HashMap<>();
+    private final Map<String,PeerInfoGroup> sorted = new HashMap<>();
     
     public void add(HasHashSum pi){
-        BigInteger hash = pi.getHash();
+      if(pi!=null)  {
+        String hash = Convert.toHexString(pi.getHash());
         PeerInfoGroup pg = sorted.get(hash);
         if(pg==null){
             pg = new PeerInfoGroup(hash);
             sorted.put(hash,pg);
         }
         pg.add(pi);
+      }
     }
     
     /**
@@ -41,14 +43,17 @@ public class PeerInfoStatistics {
         return res;
     }
     
-    public Map<BigInteger,ProbabInfo> getFrequences(){
-        Map<BigInteger,ProbabInfo> res = new HashMap();
+    public Map<String,ProbabInfo> getFrequences() throws NotEnoughDataException{
+        Map<String,ProbabInfo> res = new HashMap();
         long all=0;
-        for(BigInteger hash: sorted.keySet()){
+        for(String hash: sorted.keySet()){
             all=all+sorted.get(hash).count();
         }
+        if(all<2){
+            throw new NotEnoughDataException("Count of samples is less then 2 and not enough for statistics");
+        }
         double t = StudentsT(BETA, all);
-        for(BigInteger hash: sorted.keySet()){
+        for(String hash: sorted.keySet()){
             ProbabInfo pri = new ProbabInfo();
             PeerInfoGroup pg = sorted.get(hash);
             pri.frequency = pg.count()*1.0D/all;
@@ -61,7 +66,7 @@ public class PeerInfoStatistics {
     
     boolean isAlreadyCounted(HasHashSum pi){
         boolean res = false;
-        for(BigInteger hash: sorted.keySet()){
+        for(String hash: sorted.keySet()){
             PeerInfoGroup pg = sorted.get(hash);
             if(pg!=null){
                 res = pg.contains(pi);
@@ -73,7 +78,7 @@ public class PeerInfoStatistics {
         return res;
     }
     
-    public List<HasHashSum> getByHash(BigInteger hash){
+    public List<HasHashSum> getByHash(String hash){
         List<HasHashSum> res = new ArrayList<>();
         PeerInfoGroup pg = sorted.get(hash);
         if(pg!=null){
@@ -82,11 +87,11 @@ public class PeerInfoStatistics {
         return res;
     }
 
-    List<HasHashSum> getAllExceptHash(BigInteger key) {
+    List<HasHashSum> getAllExceptHash(String key) {
         List<HasHashSum> res = new ArrayList<>();
-        for(BigInteger h: sorted.keySet()){
+        for(String h: sorted.keySet()){
             PeerInfoGroup pg = sorted.get(h);
-            if(h!=key){
+            if(h.equals(key)){
                 res.addAll(pg.pl);
             }
         }

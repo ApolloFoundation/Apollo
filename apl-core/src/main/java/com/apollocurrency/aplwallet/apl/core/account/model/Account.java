@@ -22,13 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.account.model;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -39,11 +41,9 @@ import java.util.Set;
 @Slf4j
 @Getter
 @ToString
-@NoArgsConstructor
-public final class Account {
+public class Account extends VersionedDerivedEntity {
 
     private long id;
-    private DbKey dbKey;
 
     @Setter
     private PublicKey publicKey;
@@ -58,7 +58,13 @@ public final class Account {
     @Setter
     private Set<AccountControlType> controls;
 
-    public Account(long id) {
+    public Account(long id, DbKey dbKey) {
+        this(id, DEFAULT_HEIGHT);
+        setDbKey(dbKey);
+    }
+
+    public Account(long id, int height) {
+        super(null, height);
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
             log.info("CRITICAL ERROR: Reed-Solomon encoding fails for " + id);
         }
@@ -66,14 +72,24 @@ public final class Account {
         this.controls = Collections.emptySet();
     }
 
-    public Account(long id, DbKey dbKey) {
-        this(id);
-        this.dbKey = dbKey;
+    public Account(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
+        this.id = rs.getLong("id");
+        this.balanceATM = rs.getLong("balance");
+        this.unconfirmedBalanceATM = rs.getLong("unconfirmed_balance");
+        this.forgedBalanceATM = rs.getLong("forged_balance");
+        this.activeLesseeId = rs.getLong("active_lessee_id");
+
+        if (rs.getBoolean("has_control_phasing")) {
+            this.setControls(Collections.unmodifiableSet(EnumSet.of(AccountControlType.PHASING_ONLY)));
+        } else {
+            this.setControls(Collections.emptySet());
+        }
+        setDbKey(dbKey);
     }
 
-    public Account(long id, DbKey dbKey, long balanceATM, long unconfirmedBalanceATM, long forgedBalanceATM, long activeLesseeId) {
-        this(id, dbKey);
-
+    public Account(long id, long balanceATM, long unconfirmedBalanceATM, long forgedBalanceATM, long activeLesseeId, int height) {
+        this(id, height);
         this.balanceATM = balanceATM;
         this.unconfirmedBalanceATM = unconfirmedBalanceATM;
         this.forgedBalanceATM = forgedBalanceATM;

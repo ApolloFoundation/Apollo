@@ -47,6 +47,54 @@ public abstract class AbstractAPIRequestHandler {
     protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
+    private static AccountLedgerService accountLedgerService;
+    private static AccountAssetService accountAssetService;
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountInfoService accountInfoService;
+    private static AccountLeaseService accountLeaseService;
+    private static AccountPropertyService accountPropertyService;
+
+    protected AccountPropertyService lookupAccountPropertyService(){
+        if (accountPropertyService == null){
+            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        }
+        return accountPropertyService;
+    }
+
+    protected AccountLeaseService lookupAccountLeaseService(){
+        if (accountLeaseService == null){
+            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+        }
+        return accountLeaseService;
+    }
+
+    protected AccountInfoService lookupAccountInfoService(){
+        if (accountInfoService == null){
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+        }
+        return accountInfoService;
+    }
+
+    protected AccountCurrencyService lookupAccountCurrencyService(){
+        if (accountCurrencyService == null){
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
+
+    protected AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null){
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    protected AccountLedgerService lookupAccountLedgerService(){
+        if ( accountLedgerService == null){
+            accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
+        }
+        return accountLedgerService;
+    }
 
     protected AccountService lookupAccountService(){
         if ( accountService == null) {

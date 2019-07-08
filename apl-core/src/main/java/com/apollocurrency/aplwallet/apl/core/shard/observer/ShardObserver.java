@@ -4,20 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,21 +30,21 @@ import javax.inject.Singleton;
 public class ShardObserver {
     private static final Logger log = LoggerFactory.getLogger(ShardObserver.class);
 
-    private BlockchainProcessor blockchainProcessor;
-    private BlockchainConfig blockchainConfig;
-    private ShardMigrationExecutor shardMigrationExecutor;
-    private ShardRecoveryDao shardRecoveryDao;
-    private ShardDao shardDao;
-    private Event<Boolean> trimEvent;
-    private boolean trimDerivedTables;
+    private final BlockchainProcessor blockchainProcessor;
+    private final BlockchainConfig blockchainConfig;
+    private final ShardMigrationExecutor shardMigrationExecutor;
+    private final ShardRecoveryDao shardRecoveryDao;
+    private final ShardDao shardDao;
+    private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
-    private volatile int shardHeight;
-
+    private final PropertiesHolder propertiesHolder;
+    public final static long LOWER_SHARDING_MEMORY_LIMIT=3072*1024*1024; //3GB
+    
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
                          ShardMigrationExecutor shardMigrationExecutor,
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
-                         @Property("apl.trimDerivedTables") boolean trimDerivedTables,
+                         PropertiesHolder propertiesHolder,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -55,45 +52,60 @@ public class ShardObserver {
         this.shardRecoveryDao = Objects.requireNonNull(recoveryDao, "shard recovery dao cannot be null");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
-        this.trimDerivedTables = trimDerivedTables;
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
     }
 
-    public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-        tryCreateShardAsync();
+    public void onTrimDone(@Observes Integer height) {
+        tryCreateShardAsync(height);
     }
 
-    public CompletableFuture<Boolean> tryCreateShardAsync() {
-        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+    public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
         CompletableFuture<Boolean> completableFuture = null;
+        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        if(!doSharding){
+            log.warn("Sharding is prohibited by commad line or properties");
+            return completableFuture;
+        }
+        if(!isEnoughMemory()){
+            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
+            return completableFuture;            
+        }
+        
+        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+
         if (currentConfig.isShardingEnabled()) {
-            int minRollbackHeight = blockchainProcessor.getMinRollbackHeight();
-            if (minRollbackHeight != 0 && minRollbackHeight % currentConfig.getShardingFrequency() == 0 && shardHeight != minRollbackHeight) {
+            log.debug("LastTrimHeight-{}, isSharding={}", lastTrimBlockHeight, isSharding);
+            if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
                 if (!blockchainProcessor.isScanning()) {
                     if (!isSharding) {
-                        isSharding = true;
-                        shardHeight = minRollbackHeight;
-                        updateTrimConfig(false);
-                        // quick create records for new Shard and Recovery process for later use
-                        shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
-                        long nextShardId = shardDao.getNextShardId();
-                        Shard newShard = new Shard(nextShardId, minRollbackHeight);
-                        shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+                        Shard lastShard = shardDao.getLastShard();
+                        if (lastShard == null || lastTrimBlockHeight > lastShard.getShardHeight()) {
+                            isSharding = true;
+                            updateTrimConfig(false);
+                            // quick create records for new Shard and Recovery process for later use
+                            shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
+                            long nextShardId = shardDao.getNextShardId();
+                            Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
+                            shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
-                        completableFuture = CompletableFuture.supplyAsync(() -> performSharding(minRollbackHeight, nextShardId))
-                                .thenApply((result) -> {
-                                    blockchainProcessor.updateInitialBlockId();
-                                    return result;
-                                })
-                                .handle((result, ex) -> {
-                                    updateTrimConfig(true);
-                                    isSharding = false;
-                                    return result;
-                                });
+                            completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId))
+                                    .thenApply((result) -> {
+                                        blockchainProcessor.updateInitialBlockId();
+                                        return result;
+                                    })
+                                    .handle((result, ex) -> {
+                                        updateTrimConfig(true);
+                                        isSharding = false;
+                                        return result;
+                                    });
+                        } else {
+                            log.warn("Last trim height {} less than last shard height {}", lastTrimBlockHeight, lastShard.getShardHeight());
+                        }
                     } else {
-                        log.warn("Unable to start sharding at height {}, previous sharding process was not finished", minRollbackHeight);
+                        log.warn("Unable to start sharding at height {}, previous sharding process was not finished", lastTrimBlockHeight);
                     }
                 } else {
-                    log.warn("Will skip sharding at height {} due to blokchain scan ", minRollbackHeight);
+                    log.warn("Will skip sharding at height {} due to blokchain scan ", lastTrimBlockHeight);
                 }
             }
         }
@@ -101,12 +113,23 @@ public class ShardObserver {
     }
 
     private void updateTrimConfig(boolean enableTrim) {
-        if (trimDerivedTables) {
-            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
-        }
+         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
-
+    private boolean isEnoughMemory(){
+        long memoryTotal = Runtime.getRuntime().totalMemory();
+        return (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+    }
+    
     public boolean performSharding(int minRollbackHeight, long shardId) {
+        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        if(!doSharding){
+            log.warn("Sharding is prohibited by commad line or properties");
+            return false;
+        } 
+        if(!isEnoughMemory()){
+            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
+            return false;            
+        }
         boolean result = false;
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();

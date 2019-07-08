@@ -77,6 +77,8 @@ public interface BlockchainProcessor {
 
     void updateInitialBlockId();
 
+    void updateInitialSnapshotBlock();
+
     class BlockNotAcceptedException extends AplException {
 
         private final Block block;

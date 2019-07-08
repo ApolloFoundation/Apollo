@@ -4,9 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
@@ -27,6 +32,9 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Inject @Setter
+    private Blockchain blockchain;
+
+    @Inject @Setter
     private AccountAssetTable accountAssetTable;
 
     @Inject @Setter
@@ -38,32 +46,64 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     @Inject @Setter
     private Event<AccountAsset> accountAssetEvent;
 
+    @Inject @Setter
+    private AccountLedgerService accountLedgerService;
+
     @Override
-    public DbIterator<AccountAsset> getAssets(Account account, int from, int to) {
-        return accountAssetTable.getAccountAssets(account.getId(), from, to);
+    public List<AccountAsset> getAssets(long assetId, int height) {
+        return getAssets(assetId, height, 0, -1);
     }
 
     @Override
-    public DbIterator<AccountAsset> getAssets(Account account, int height, int from, int to) {
-        return accountAssetTable.getAccountAssets(account.getId(), height, from, to);
-    }
-
-    @Override
-    public List<AccountAsset> getAssetAccounts(Account account) {
+    public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
         List<AccountAsset> accountAssets = new ArrayList<>();
-        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(account.getId(), 0, -1)) {
+        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, from, to)) {
             iterator.forEachRemaining(accountAssets::add);
         }
         return accountAssets;
     }
 
     @Override
-    public List<AccountAsset> getAssetAccounts(long assetId, int height) {
-        List<AccountAsset> accountAssets = new ArrayList<>();
-        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, 0, -1)) {
-            iterator.forEachRemaining(accountAssets::add);
+    public List<AccountAsset> getAssetAccounts(Account account, int from, int to) {
+        List<AccountAsset> result = new ArrayList<>();
+        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(account.getId(), from, to)) {
+            iterator.forEachRemaining(result::add);
         }
-        return accountAssets;
+        return result;
+    }
+
+    @Override
+    public List<AccountAsset> getAssetAccounts(Account account, int height, int from, int to) {
+        return getAssetAccounts(account.getId(), height, from, to);
+    }
+
+    @Override
+    public List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to) {
+        List<AccountAsset> result = new ArrayList<>();
+        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(accountId, height, from, to)) {
+            iterator.forEachRemaining(result::add);
+        }
+        return result;
+    }
+
+    @Override
+    public int getAssetCount(long assetId) {
+        return accountAssetTable.getAssetCount(assetId);
+    }
+
+    @Override
+    public int getAssetCount(long assetId, int height) {
+        return accountAssetTable.getAssetCount(assetId, height);
+    }
+
+    @Override
+    public int getAccountAssetCount(long accountId) {
+        return accountAssetTable.getAccountAssetCount(accountId);
+    }
+
+    @Override
+    public int getAccountAssetCount(long accountId, int height) {
+        return accountAssetTable.getAccountAssetCount(accountId, height);
     }
 
     @Override
@@ -73,22 +113,35 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public AccountAsset getAsset(Account account, long assetId, int height) {
-        return accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId), height);
+        return getAsset(account.getId(), assetId, height);
+    }
+
+    @Override
+    public AccountAsset getAsset(long accountId, long assetId, int height) {
+        return accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
     }
 
     @Override
     public long getAssetBalanceATU(Account account, long assetId) {
-        return AccountAssetTable.getAssetBalanceATU(account.getId(), assetId);
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
     @Override
     public long getAssetBalanceATU(Account account, long assetId, int height) {
-        return AccountAssetTable.getAssetBalanceATU(account.getId(), assetId, height);
+        return  getAssetBalanceATU(account.getId(), assetId, height);
+    }
+
+    @Override
+    public long getAssetBalanceATU(long accountId, long assetId, int height) {
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
+        return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
     @Override
     public long getUnconfirmedAssetBalanceATU(Account account, long assetId) {
-        return AccountAssetTable.getUnconfirmedAssetBalanceATU(account.getId(), assetId);
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        return accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
     }
 
     @Override
@@ -96,22 +149,22 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (quantityATU == 0) {
             return;
         }
-        AccountAsset accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(account.getId(), assetId));
-        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        long assetBalance = accountAsset == null ? 0 : accountAsset.getQuantityATU();
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, 0);
+            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, 0, blockchain.getHeight());
         } else {
-            accountAsset.quantityATU = assetBalance;
+            accountAsset.setQuantityATU(assetBalance);
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
-        if (AccountLedger.mustLogEntry(account.getId(), false)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
-                    quantityATU, assetBalance));
+        if (accountLedgerService.mustLogEntry(account.getId(), false)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
+                    quantityATU, assetBalance, blockchain.getLastBlock()));
         }
     }
 
@@ -120,13 +173,13 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (quantityATU == 0) {
             return;
         }
-        AccountAsset accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(account.getId(), assetId));
-        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
+        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(account.getId(), assetId, 0, unconfirmedAssetBalance);
+            accountAsset = new AccountAsset(account.getId(), assetId, 0, unconfirmedAssetBalance, blockchain.getHeight());
         } else {
-            accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
+            accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
         accountAssetTable.save(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -137,10 +190,10 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (event == null) {
             return;
         }
-        if (AccountLedger.mustLogEntry(account.getId(), true)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(),
+        if (accountLedgerService.mustLogEntry(account.getId(), true)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                    quantityATU, unconfirmedAssetBalance));
+                    quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock()));
         }
     }
 
@@ -150,18 +203,18 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             return;
         }
         AccountAsset accountAsset;
-        accountAsset = AccountAssetTable.getInstance().get(AccountAssetTable.newKey(account.getId(), assetId));
-        long assetBalance = accountAsset == null ? 0 : accountAsset.quantityATU;
+        accountAsset = accountAssetTable.get(AccountAssetTable.newKey(account.getId(), assetId));
+        long assetBalance = accountAsset == null ? 0 : accountAsset.getQuantityATU();
         assetBalance = Math.addExact(assetBalance, quantityATU);
-        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.unconfirmedQuantityATU;
+        long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, unconfirmedAssetBalance);
+            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, unconfirmedAssetBalance, blockchain.getHeight());
         } else {
-            accountAsset.quantityATU = assetBalance;
-            accountAsset.unconfirmedQuantityATU = unconfirmedAssetBalance;
+            accountAsset.setQuantityATU(assetBalance);
+            accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        AccountAssetTable.getInstance().save(accountAsset);
+        accountAssetTable.save(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -172,22 +225,22 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
 
-        if (AccountLedger.mustLogEntry(account.getId(), true)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(),
+        if (accountLedgerService.mustLogEntry(account.getId(), true)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                    quantityATU, unconfirmedAssetBalance));
+                    quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock()));
         }
-        if (AccountLedger.mustLogEntry(account.getId(), false)) {
-            AccountLedger.logEntry(new LedgerEntry(event, eventId, account.getId(),
+        if (accountLedgerService.mustLogEntry(account.getId(), false)) {
+            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.ASSET_BALANCE, assetId,
-                    quantityATU, assetBalance));
+                    quantityATU, assetBalance, blockchain.getLastBlock()));
         }
     }
 
     @Override
     public void payDividends(Account account, final long transactionId, ColoredCoinsDividendPayment attachment) {
         long totalDividend = 0;
-        List<AccountAsset> accountAssets = getAssetAccounts(attachment.getAssetId(), attachment.getHeight());
+        List<AccountAsset> accountAssets = getAssets(attachment.getAssetId(), attachment.getHeight());
         final long amountATMPerATU = attachment.getAmountATMPerATU();
         long numAccounts = 0;
         for (final AccountAsset accountAsset : accountAssets) {
@@ -201,5 +254,4 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         accountService.addToBalanceATM(account, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
         AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
-
 }

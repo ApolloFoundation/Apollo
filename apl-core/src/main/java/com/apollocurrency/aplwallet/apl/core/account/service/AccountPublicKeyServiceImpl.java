@@ -4,16 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -26,9 +27,11 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
+    //TODO: make cache nonstatic and injectable
     private static ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
 
     @Inject @Setter
@@ -62,14 +65,14 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public byte[] getPublicKey(long id) {
-        DbKey dbKey = PublicKeyTable.newKey(id);
+        DbKey dbKey = publicKeyTable.newKey(id);
         byte[] key = null;
         if (publicKeyCache != null) {
             key = publicKeyCache.get(dbKey);
         }
         if (key == null) {
             PublicKey publicKey = getPublicKey(dbKey);
-            if (publicKey == null || (key = publicKey.publicKey) == null) {
+            if (publicKey == null || (key = publicKey.getPublicKey()) == null) {
                 return null;
             }
             if (publicKeyCache != null) {
@@ -142,17 +145,17 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public boolean setOrVerify(long accountId, byte[] key) {
-        DbKey dbKey = PublicKeyTable.newKey(accountId);
+        DbKey dbKey = publicKeyTable.newKey(accountId);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
         }
-        if (publicKey.publicKey == null) {
-            publicKey.publicKey = key;
+        if (publicKey.getPublicKey() == null) {
+            publicKey.setPublicKey(key);
             publicKey.setHeight(blockchain.getHeight());
             return true;
         }
-        return Arrays.equals(publicKey.publicKey, key);
+        return Arrays.equals(publicKey.getPublicKey(), key);
     }
 
     @Override
@@ -166,18 +169,18 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(account.getDbKey());
         }
-        if (publicKey.publicKey == null) {
-            publicKey.publicKey = key;
+        if (publicKey.getPublicKey() == null) {
+            publicKey.setPublicKey(key);
             if (isGenesis) {
-                GenesisPublicKeyTable.getInstance().insert(publicKey);
+                genesisPublicKeyTable.insert(publicKey);
             } else {
                 publicKeyTable.insert(publicKey);
             }
-        } else if (!Arrays.equals(publicKey.publicKey, key)) {
+        } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(account.getDbKey(), false);
-            if (dbPublicKey == null || dbPublicKey.publicKey == null) {
+            if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 publicKeyTable.insert(publicKey);
             }
         }
@@ -188,7 +191,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public void insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
+    public PublicKey insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
         PublicKey publicKey;
         if (isGenesis) {
                 publicKey = genesisPublicKeyTable.newEntity(dbKey);
@@ -197,5 +200,6 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
                 publicKey = publicKeyTable.newEntity(dbKey);
                 publicKeyTable.insert(publicKey);
         }
+        return publicKey;
     }
 }

@@ -1,13 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
@@ -23,19 +15,23 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancel
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 @Singleton
 public class DexService {
@@ -45,6 +41,7 @@ public class DexService {
     private DexSmartContractService dexSmartContractService;
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
+    private DexContractTable dexContractTable;
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
     private AccountService accountService;
@@ -52,14 +49,14 @@ public class DexService {
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
-                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService,
-                      AccountService accountService) {
+                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable, AccountService accountService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
         this.transactionProcessor = transactionProcessor;
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
+        this.dexContractTable = dexContractTable;
         this.accountService = accountService;
     }
 
@@ -69,6 +66,11 @@ public class DexService {
         return dexOfferDao.getByTransactionId(transactionId);
     }
 
+    @Transactional
+    public DexOffer getOfferById(Long id){
+        return dexOfferDao.getById(id);
+    }
+
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
@@ -76,9 +78,18 @@ public class DexService {
         dexOfferTable.insert(offer);
     }
 
+    public void saveDexContract(ExchangeContract exchangeContract){
+        dexContractTable.insert(exchangeContract);
+    }
+
     @Transactional
     public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest){
         return dexOfferDao.getOffers(dexOfferDBRequest);
+    }
+
+    @Transactional
+    public List<DexOffer> getOffersForMatching(DexOfferDBMatchingRequest dexOfferDBMatchingRequest){
+        return dexOfferDao.getOffersForMatching(dexOfferDBMatchingRequest);
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest){
@@ -147,7 +158,7 @@ public class DexService {
     public String refundEthPaxFrozenMoney(String passphrase, DexOffer offer) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
-        BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+        BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
         String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
         if(txHash==null){
@@ -161,7 +172,7 @@ public class DexService {
 
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
-        BigDecimal haveToPay = EthUtil.gweiToEth(offer.getOfferAmount()).multiply(EthUtil.gweiToEth(offer.getPairRate()));
+        BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
         txHash = dexSmartContractService.deposit(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
 

@@ -9,8 +9,10 @@ import java.util.Base64;
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import java.nio.file.Path;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -21,32 +23,39 @@ import org.json.simple.JSONStreamAware;
  */
 @Slf4j
 public class GetFileChunk extends PeerRequestHandler {
+    private DownloadableFilesManager downloadableFilesManager;
 
+    public GetFileChunk(DownloadableFilesManager downloadableFilesManager) {
+        this.downloadableFilesManager = downloadableFilesManager;
+    }
+    
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         FileChunkResponse res = new FileChunkResponse();
 
         FileChunkRequest fcr = mapper.convertValue(request, FileChunkRequest.class);
         log.debug("FileChunkReq = {}", fcr);
+        Path filePath = downloadableFilesManager.mapFileIdToLocalPath(fcr.fileId);
         try {
-            ChunkedFileOps ops = new ChunkedFileOps(fcr.fileId);
-            byte[] dataBuf = new byte[fcr.size];
+            ChunkedFileOps ops = new ChunkedFileOps(filePath.toAbsolutePath());
+            byte[] dataBuf = new byte[fcr.size.intValue()];
             Integer rres = ops.readChunk(fcr.offset, fcr.size, dataBuf);
-            if (rres != fcr.size) {
+            if (rres != fcr.size.intValue()) {
                 res.errorCode = -1;
             }
             FileChunk fc = new FileChunk();
             fc.info.crc=ops.getLastRDChunkCrc();
             fc.info.fileId=fcr.fileId;
-            fc.info.size=rres.longValue();
+            fc.info.size=rres.longValue();            
+            fc.info.offset=fcr.offset;
             fc.mime64data=Base64.getEncoder().encodeToString(dataBuf);
             res.chunk = fc;
         } catch (IOException ex) {
             log.error("Error reading file with id: " + fcr.fileId, ex);
             res.errorCode = -2;
         }
+        log.trace("FileChunkResponse = {}", res.chunk.info);
         JSONObject response = mapper.convertValue(res, JSONObject.class);
-        log.debug("FileChunkResponse = {}", response);
         return response;
 
     }

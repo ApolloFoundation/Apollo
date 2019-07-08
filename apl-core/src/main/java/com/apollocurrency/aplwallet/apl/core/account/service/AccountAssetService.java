@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
 import java.util.List;
@@ -17,21 +16,35 @@ import java.util.List;
  */
 public interface AccountAssetService {
 
-    DbIterator<AccountAsset> getAssets(Account account, int from, int to);
+    List<AccountAsset> getAssetAccounts(Account account, int from, int to);
 
-    DbIterator<AccountAsset> getAssets(Account account, int height, int from, int to);
+    List<AccountAsset> getAssetAccounts(Account account, int height, int from, int to);
 
-    List<AccountAsset> getAssetAccounts(Account account);
+    List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to);
 
-    List<AccountAsset> getAssetAccounts(long assetId, int height);
+    int getAssetCount(long assetId);
+
+    int getAssetCount(long assetId, int height);
+
+    List<AccountAsset> getAssets(long assetId, int height, int from, int to);
+
+    List<AccountAsset> getAssets(long assetId, int height);
+
+    int getAccountAssetCount(long accountId);
+
+    int getAccountAssetCount(long accountId, int height);
 
     AccountAsset getAsset(Account account, long assetId);
 
     AccountAsset getAsset(Account account, long assetId, int height);
 
+    AccountAsset getAsset(long accountId, long assetId, int height);
+
     long getAssetBalanceATU(Account account, long assetId);
 
     long getAssetBalanceATU(Account account, long assetId, int height);
+
+    long getAssetBalanceATU(long accountId, long assetId, int height);
 
     long getUnconfirmedAssetBalanceATU(Account account, long assetId);
 

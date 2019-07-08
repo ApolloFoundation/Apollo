@@ -32,8 +32,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
@@ -69,7 +71,7 @@ public final class Genesis {
 //    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
     private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
     private static AccountService accountService = CDI.current().select(AccountServiceImpl .class).get();
-    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+    private static AccountPublicKeyService accountPublicKeyService;// = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
     private static String genesisTaskId;
@@ -93,10 +95,25 @@ public final class Genesis {
         return databaseManager.getDataSource();
     }
 
+    private static AccountPublicKeyService lookupAccountPublicKeyService() {
+        if ( accountPublicKeyService == null ) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
+    }
+
     private static JSONObject genesisAccountsJSON = null;
 
     private static byte[] loadGenesisAccountsJSON() {
-        genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances",true);
+        if (genesisTaskId == null) {
+            Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
+            if (task.isPresent()) {
+                genesisTaskId  = task.get().getId();
+            } else {
+                genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances",true);
+            }
+        }
+
         MessageDigest digest = Crypto.sha256();
         String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
@@ -123,9 +140,13 @@ public final class Genesis {
         blockchainConfigUpdater.reset();
         TransactionalDataSource dataSource = lookupDataSource();
         // load 'public Keys' from JSON only
+        if(!dataSource.isInTransaction()){
+            dataSource.begin();
+        }
         JSONArray publicKeys = loadPublicKeys(dataSource);
+        dataSource.commit(false);
         if (loadOnlyPublicKeys) {
-            aplAppStatus.durableTaskFinished(genesisTaskId, false, "Loading public keys");
+            LOG.debug("The rest of GENESIS is skipped, shard info will be loaded...");
             return;
         }
         // load 'balances' from JSON only
@@ -137,10 +158,11 @@ public final class Genesis {
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
         Account creatorAccount = accountService.addOrGetAccount(Genesis.CREATOR_ID, true);
-        accountPublicKeyService.apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
+        lookupAccountPublicKeyService().apply(creatorAccount, Genesis.CREATOR_PUBLIC_KEY, true);
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
+        genesisTaskId = null;
     }
 
     private static long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {
@@ -175,7 +197,7 @@ public final class Genesis {
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
             Account account = accountService.addOrGetAccount(AccountService.getId(publicKey), true);
-            accountPublicKeyService.apply(account, publicKey, true);
+            lookupAccountPublicKeyService().apply(account, publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }

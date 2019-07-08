@@ -3,45 +3,26 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.Vote;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountInfo;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasBuy;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasDelete;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.*;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
@@ -892,7 +873,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
-            AccountProperty accountProperty = AccountPropertyTable.getProperty(attachment.getPropertyId());
+            AccountProperty accountProperty = lookupAccountPropertyService().getProperty(attachment.getPropertyId());
             if (accountProperty == null) {
                 throw new AplException.NotCurrentlyValidException("No such property " + Long.toUnsignedString(attachment.getPropertyId()));
             }

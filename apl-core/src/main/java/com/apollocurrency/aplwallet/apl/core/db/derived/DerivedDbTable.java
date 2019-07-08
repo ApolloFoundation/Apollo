@@ -134,6 +134,13 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     /**
+     * @see TransactionalDataSource#isInTransaction()
+     */
+    public boolean isInTransaction(){
+        return databaseManager.getDataSource().isInTransaction();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

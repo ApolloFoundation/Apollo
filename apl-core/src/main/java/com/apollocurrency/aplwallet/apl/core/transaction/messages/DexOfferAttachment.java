@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import org.json.simple.JSONObject;
@@ -17,6 +18,7 @@ public class DexOfferAttachment extends AbstractAttachment {
     private long offerAmount;
     private byte pairCurrency;
     private byte status;
+    //TODO change it on double.
     private long pairRate;
     private int finishTime;
 
@@ -25,7 +27,8 @@ public class DexOfferAttachment extends AbstractAttachment {
         this.offerCurrency = Byte.valueOf(String.valueOf(offer.getOfferCurrency().ordinal()));
         this.offerAmount = offer.getOfferAmount();
         this.pairCurrency = Byte.valueOf(String.valueOf(offer.getPairCurrency().ordinal()));
-        this.pairRate = offer.getPairRate();
+        //TODO change on double.
+        this.pairRate = EthUtil.ethToGwei(offer.getPairRate());
         this.finishTime = offer.getFinishTime();
         this.status = Byte.valueOf(String.valueOf(offer.getStatus().ordinal()));
     }

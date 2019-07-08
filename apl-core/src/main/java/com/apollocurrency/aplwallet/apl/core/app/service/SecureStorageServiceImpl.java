@@ -1,9 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.model.SecureStorage;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -11,16 +12,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -30,29 +27,32 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     private Path secureStoragePath;
     private static final String SECURE_STORE_FILE_NAME = "secure_store";
-    private String privateKey;
+    private static final String SECURE_STORE_KEY = "secure_store_key";
     private Map<Long, String> store = new ConcurrentHashMap<>();
+    private OptionDAO optionDAO;
 
     @Inject
-    public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath) throws AplException.ExecutiveProcessException {
-        Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
+    public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath, PropertiesHolder propertiesHolder, OptionDAO optionDAO) {
+        this.optionDAO = optionDAO;
 
-        this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
-        this.privateKey = createPrivateKeyForStorage();
+        boolean restore = propertiesHolder.getBooleanProperty("apl.secureStorage.restore.isEnable");
 
-        if (!Files.exists(secureStorageDirPath)) {
-            try {
-                Files.createDirectories(secureStorageDirPath);
+        if(restore) {
+            Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
+            this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
+
+            if (!Files.exists(secureStorageDirPath)) {
+                try {
+                    Files.createDirectories(secureStorageDirPath);
+                } catch (IOException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
             }
-            catch (IOException e) {
-                throw new RuntimeException(e.toString(), e);
+
+            boolean isRestored = restoreSecretStorageIfExist();
+            if (isRestored) {
+                deleteSecretStorage();
             }
-        }
-
-        boolean isRestored = restoreSecretStorageIfExist();
-
-        if(isRestored){
-            deleteSecretStorage();
         }
     }
 
@@ -66,11 +66,18 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         return store.get(accountId);
     }
 
+    /**
+     * Store storage.
+     * @return true - stored successfully.
+     */
     @Override
     public boolean storeSecretStorage() {
-        if(StringUtils.isBlank(privateKey)){
+        String privateKey = createPrivateKeyForStorage();
+
+        if(privateKey == null){
             return false;
         }
+        optionDAO.set(SECURE_STORE_KEY, privateKey);
 
         SecureStorage secureStore;
         try {
@@ -82,13 +89,23 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         return secureStore.store(privateKey, secureStoragePath.toString());
     }
 
+    /**
+     * Restore storage.
+     * @return true - restored successfully.
+     */
     @Override
     public boolean restoreSecretStorage() {
-        if(StringUtils.isBlank(privateKey)){
+        String privateKey = optionDAO.get(SECURE_STORE_KEY);
+        if(privateKey == null){
             return false;
         }
 
         SecureStorage fbWallet = SecureStorage.get(privateKey, secureStoragePath.toString());
+
+        if(fbWallet == null){
+            return false;
+        }
+
         fbWallet.get(privateKey, secureStoragePath.toString());
 
         store.putAll(fbWallet.getDexKeys());
@@ -96,50 +113,33 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         return true;
     }
 
+    /**
+     * Delete storage and secret key.
+     * @return true deleted successfully.
+     */
     @Override
     public boolean deleteSecretStorage() {
         File file = new File(secureStoragePath.toString());
+        optionDAO.delete(SECURE_STORE_KEY);
+
         return file.delete();
     }
 
     @Override
-    public String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException {
-        String key;
-        Enumeration<NetworkInterface> macs;
-        try {
-            macs = NetworkInterface.getNetworkInterfaces();
-        } catch (SocketException e) {
-            LOG.error(e.getMessage(), e);
-            throw new AplException.ExecutiveProcessException("SocketException");
-        }
-        key = Collections.list(macs).stream()
-                .filter(m -> {
-                    try {
-                        return m.getHardwareAddress() != null;
-                    } catch (SocketException e) {
-                        return false;
-                    }
-                })
-                .map(m-> {
-                    try {
-                        return Convert.toHexString(m.getHardwareAddress());
-                    } catch (SocketException e) {
-                        LOG.error(e.getMessage(), e);
-                       return null;
-                    }
-                })
-                .filter(StringUtils::isNotBlank)
-                .sorted()
-                .collect(Collectors.joining());
+    public String createPrivateKeyForStorage() {
+        byte [] secretBytes = new byte[32];
+        Random random = new Random();
+        random.nextBytes(secretBytes);
+        String privateKey = Convert.toHexString(secretBytes);
 
-        if(key==null){
-            throw new AplException.ExecutiveProcessException("SecureStorageServiceImpl private key is null.");
-        }
-
-        return key;
+        return privateKey;
     }
 
 
+    /**
+     * Restore storage if it exist.
+     * @return true if file restored.
+     */
     public boolean restoreSecretStorageIfExist() {
         File tmpDir = new File(secureStoragePath.toString());
         if (tmpDir.exists()){

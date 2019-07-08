@@ -22,6 +22,11 @@ public class DataTag extends VersionedDerivedEntity {
         this.count = count;
     }
 
+    public DataTag(String tag) {
+        super(null, null);
+        this.tag = tag;
+    }
+
     public DataTag(String tag, int height) {
         super(null, height);
         this.tag = tag;

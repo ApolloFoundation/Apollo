@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -52,7 +53,8 @@ public class DownloadableFilesManager {
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;
     private final BlockchainConfig blockchainConfig;
-    
+
+    @ToString
     private class ParsedFileId {
         Integer key = -1;
         String fileId;
@@ -110,7 +112,7 @@ public class DownloadableFilesManager {
                 fci.crc = ci.crc;
                 fci.fileId = fileId;
                 fci.offset = ci.offset;
-                fci.present = FileChunkState.PRESENT;
+                fci.present = FileChunkState.PRESENT_IN_PEER;
                 fci.size = ci.size.longValue();
                 fci.chunkId = i;
                 downloadInfo.chunks.add(fci);
@@ -127,8 +129,10 @@ public class DownloadableFilesManager {
     private ParsedFileId parseFileId(String fileId) {
         ParsedFileId res = new ParsedFileId();
         String[] all = fileId.split(";");
+        log.trace("Split all parts = {}", all);
         for (String kv : all) {
             String[] kva = kv.split("::");
+            log.trace("Split kva parts = {}", kva);
             Integer key = LOCATION_KEYS.get(kva[0]);
             if (key != null) {
                 res.key = key;
@@ -148,6 +152,7 @@ public class DownloadableFilesManager {
                 }
             }
         }
+        log.trace("<< ParsedFileId = {}", res);
         return res;
     }
 
@@ -158,6 +163,7 @@ public class DownloadableFilesManager {
      * @return real path
      */
     public Path mapFileIdToLocalPath(String fileId) {
+        log.debug(">> mapFileIdToLocalPath( '{}' )... ", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         if (fileId.isEmpty()) {
             log.error("fileId is '{}' empty", fileId);
@@ -165,6 +171,7 @@ public class DownloadableFilesManager {
         }
 
         ParsedFileId parsed = parseFileId(fileId);
+        log.debug("ParsedFileId = '{}'", parsed);
 
         String absPath = "";
         switch (parsed.key) {
@@ -191,12 +198,12 @@ public class DownloadableFilesManager {
             break;
             case 1: //attachment
             {
-                 log.warn("Attachmednt  downloading is not implemented yet");
+                 log.warn("Attachment downloading is not implemented yet");
             };
             break;
             case 2: //file
             {
-                 log.warn("File  downloading is not implemented yet");
+                 log.warn("File downloading is not implemented yet");
             };
             break;
             case 3: //debug and tests
@@ -206,9 +213,10 @@ public class DownloadableFilesManager {
             };
             break;
             default:{
-                
+                log.warn("WHAT is the case ...??? ");
             };
         }
+        log.warn("absPath = {}", absPath);
         if(StringUtils.isBlank(absPath)){
             return null;
         }

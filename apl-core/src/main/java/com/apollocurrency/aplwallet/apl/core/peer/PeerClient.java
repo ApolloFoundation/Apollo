@@ -67,11 +67,12 @@ public class PeerClient {
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        log.debug("getFileInfo() resp = {}", req.toJSONString());
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
-        log.debug("getFileInfo() resp = {}", resp.toJSONString());
+        log.trace("getFileInfo() resp = {}", req.toJSONString());
+        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
+        }else{
+            log.trace("getFileInfo() resp = {}", resp.toJSONString());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
         log.debug("getFileInfo() FInfoResp = {}", res);
@@ -83,7 +84,7 @@ public class PeerClient {
         if (res.errorCode != 0 || res.error!=null) {
             log.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
-        log.debug("getFileInfo() result = {}", res);
+        log.trace("getFileInfo() result = {}", res);
         return res.downloadInfo;
     }
 
@@ -97,10 +98,10 @@ public class PeerClient {
        FileChunkRequest rq = new FileChunkRequest();
        rq.fileId=fci.fileId;
        rq.id = fci.chunkId;
-       rq.offset=fci.offset.intValue();
-       rq.size=fci.size.intValue();
+       rq.offset=fci.offset;
+       rq.size=fci.size;
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
+       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         if(resp==null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
@@ -111,7 +112,7 @@ public class PeerClient {
        }else{
            fc=null;
        }
-        log.debug("downloadChunk() result = {}", fc);
+        log.trace("downloadChunk() result = {}", fc.info);
         return fc;
     }
     
@@ -123,15 +124,14 @@ public class PeerClient {
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.chainId));
-        log.trace("{}", resp);
+        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        log.trace("shardInfo respond = {}", resp);
         if(resp==null){
             log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
         }
         ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
-        log.trace("{}", res);
-        log.debug("getShardingInfo() = {}", res);
+        log.trace("getShardingInfo() = {}", res);
         return res.shardingInfo;
     }     
 }

@@ -54,22 +54,22 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + getDbKeyFactory().getPKClause()
                      + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
-            pstmtCount.setInt(i, height); // TODO: YL review
+            pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
-                        pstmt.setInt(j, height); // TODO: YL review
+                        pstmt.setInt(j, height);
                         if (pstmt.executeUpdate() > 0) {
                             return true;
                         }
                     }
-                    List<T> values = get(dbKey); // TODO: YL review and fix
+                    List<T> values = get(dbKey);
                     if (values.isEmpty()) {
                         return false;
                     }
-                    for (T v : values) { // TODO: YL review and fix
+                    for (T v : values) {
                         v.setHeight(height);
                         save(con, v);
                     }

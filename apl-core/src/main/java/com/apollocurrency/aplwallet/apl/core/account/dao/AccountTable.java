@@ -14,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.*;
-import java.util.Collections;
-import java.util.EnumSet;
 
 /**
  *
@@ -57,19 +55,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public Account load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        long id = rs.getLong("id");
-        Account res = new Account(id, dbKey,
-                                      rs.getLong("balance"),
-                                      rs.getLong("unconfirmed_balance"),
-                                      rs.getLong("forged_balance"),
-                                      rs.getLong("active_lessee_id"));
-
-        if (rs.getBoolean("has_control_phasing")) {
-            res.setControls(Collections.unmodifiableSet(EnumSet.of(AccountControlType.PHASING_ONLY)));
-        } else {
-            res.setControls(Collections.emptySet());
-        }
-        return res;
+        return new Account(rs, dbKey);
     }
 
     @Override

@@ -56,7 +56,8 @@ public class DebugController {
     public Response startDownload(@PathParam(value = "id") String id, @QueryParam(value="password") String password){
         
         FileDownloadInfoResponse infoResponse = new FileDownloadInfoResponse();
-        FileDownloadInfo fi = debugService.startFileDownload(id,password);
+        FileDownloadInfo fdi = debugService.startFileDownload(id,password);
+        infoResponse.downloadInfo=fdi;
         return Response.status(Response.Status.OK).entity(infoResponse).build();
     }
 }

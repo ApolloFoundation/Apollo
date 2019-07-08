@@ -40,6 +40,6 @@ public interface AccountPublicKeyService {
 
     void apply(Account account, byte[] key, boolean isGenesis);
 
-    void insertNewPublicKey(DbKey dbKey, boolean isGenesis);
+    PublicKey insertNewPublicKey(DbKey dbKey, boolean isGenesis);
 
 }

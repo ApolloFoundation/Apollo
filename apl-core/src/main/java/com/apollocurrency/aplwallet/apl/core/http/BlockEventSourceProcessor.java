@@ -4,21 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -32,6 +22,11 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 public class BlockEventSourceProcessor implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(BlockEventSourceProcessor.class);
     private final BlockEventSource eventSource;
@@ -40,6 +35,8 @@ public class BlockEventSourceProcessor implements Runnable {
     private DGSService service = CDI.current().select(DGSService.class).get();
     private AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+    private AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+    private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -91,20 +88,16 @@ public class BlockEventSourceProcessor implements Runnable {
         int sellerPurchaseCount = service.getSellerPurchaseCount(accountId, false, false);
         int aliasCount = Alias.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
-        try (DbIterator<AccountAsset> accountAssets = AccountAssetTable.getAccountAssets(accountId, -1, 0, 2)) {
-            while (accountAssets.hasNext()) {
-                assetJson.add(JSONData.accountAsset(accountAssets.next(), false, true));
-            }
-        }
+        List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(accountId, -1, 0, 2);
+        accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));
+
         JSONArray currencyJSON = new JSONArray();
-        try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getAccountCurrencies(accountId, -1, 0, 2)) {
-            while (accountCurrencies.hasNext()) {
-                currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, true));
-            }
-        }
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(accountId, -1, 0, 2);
+        accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
+
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);
-        int currencyCount = AccountCurrencyTable.getAccountCurrencyCount(accountId, -1);
-        int assetCount = AccountAssetTable.getAccountAssetCount(accountId, -1);
+        int currencyCount = accountCurrencyService.getAccountCurrencyCount(accountId, -1);
+        int assetCount = accountAssetService.getAccountAssetCount(accountId, -1);
         JSONObject accountJson = putAccount(accountId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactions", transactionsArray);

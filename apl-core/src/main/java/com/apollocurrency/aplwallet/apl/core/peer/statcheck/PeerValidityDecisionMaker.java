@@ -9,11 +9,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+
 
 /**
  *
  * @author alukin@gmail.com
  */
+@Slf4j
 public class PeerValidityDecisionMaker {
 
     public final static int MAX_TRIES_TO_GET_NEW=30;
@@ -27,8 +30,8 @@ public class PeerValidityDecisionMaker {
     private final PeersList peers;
     PeerInfoStatistics stats = new PeerInfoStatistics();
 
-    private Map<BigInteger, ProbabInfo> initialProbabilities;
-    private Map<BigInteger, ProbabInfo> currentProbabilities = new HashMap<>();
+    private Map<String, ProbabInfo> initialProbabilities;
+    private Map<String, ProbabInfo> currentProbabilities = new HashMap<>();
     private static final double trasholdAbsOK=0.95D; 
     private static final double trasholdOK=0.8D; 
     private static final double trasholdRisky=0.6D;
@@ -43,8 +46,9 @@ public class PeerValidityDecisionMaker {
      *
      * @param n number of peers to get
      * @return map of hypotetic probabilities for each discovered hash value
+     * @throws com.apollocurrency.aplwallet.apl.core.peer.statcheck.NotEnoughDataException
      */
-    public Map<BigInteger, ProbabInfo> calculateInitialProb(int n) {
+    public Map<String, ProbabInfo> calculateInitialProb(int n) throws NotEnoughDataException {
         List<HasHashSum> first = new ArrayList<>();
         first.addAll(peers.getEnoughRandomPeers(MIN_PEERS, MIN_PEERS_PRCENT));
         //sort by hash
@@ -58,10 +62,10 @@ public class PeerValidityDecisionMaker {
         return initialProbabilities;
     }
 
-    public Map.Entry<BigInteger, ProbabInfo> getMostProbable() {
+    public Map.Entry<String, ProbabInfo> getMostProbable() {
         double pMax = -1.0D;
-        BigInteger hashMax = null;
-        for (BigInteger hash : currentProbabilities.keySet()) {
+        String hashMax = null;
+        for (String hash : currentProbabilities.keySet()) {
             double p = currentProbabilities.get(hash).frequency;
             if (p > pMax) {
                 pMax = p;
@@ -90,7 +94,7 @@ public class PeerValidityDecisionMaker {
         return pi;
     }
 
-    public Map<BigInteger, ProbabInfo> calculateByAddingPeers(int nPeers) {
+    public Map<String, ProbabInfo> calculateByAddingPeers(int nPeers) throws NotEnoughDataException{
         for (int i = 0; i < nPeers; i++) {
             HasHashSum pi = getOneMorePeer();
             //re-calculate frequencies/probabilities simply adding more peers.
@@ -105,7 +109,7 @@ public class PeerValidityDecisionMaker {
      * @return list of peers with most probable hash value
      */
     public List<HasHashSum> getValidPeers(){
-        Map.Entry<BigInteger, ProbabInfo> mp = getMostProbable();
+        Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getByHash(mp.getKey());
     }
     
@@ -114,7 +118,7 @@ public class PeerValidityDecisionMaker {
      * @return list of bad peers
      */
     public List<HasHashSum> getInvalidPeers(){
-        Map.Entry<BigInteger, ProbabInfo> mp = getMostProbable();
+        Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getAllExceptHash(mp.getKey());      
     }
     
@@ -143,15 +147,25 @@ public class PeerValidityDecisionMaker {
      */
     public FileDownloadDecision calcualteNetworkState(){
          stats.crlear();
-         calculateInitialProb(peersFirst);
-         Map.Entry<BigInteger, ProbabInfo> mp = getMostProbable();
+        try {
+            calculateInitialProb(peersFirst);
+        } catch (NotEnoughDataException ex) {
+            log.debug("Not enough statistics");
+            return FileDownloadDecision.NoPeers;
+        }
+         Map.Entry<String, ProbabInfo> mp = getMostProbable();
          //check most probable hash higher value
          double pMin=mp.getValue().frequency-mp.getValue().confidenceEpsilon;
          if(pMin>=trasholdAbsOK){
              return FileDownloadDecision.AbsOK;
          }
-         calculateByAddingPeers(peersAddedLater);
-         Map.Entry<BigInteger, ProbabInfo> mp2 = getMostProbable();
+        try {
+            calculateByAddingPeers(peersAddedLater);
+        } catch (NotEnoughDataException ex) {
+            log.debug("Not enough statistics");
+            return FileDownloadDecision.NoPeers;
+        }
+         Map.Entry<String, ProbabInfo> mp2 = getMostProbable();
          double pMin2=mp2.getValue().frequency-mp2.getValue().confidenceEpsilon;
          if(mp2.getKey()!=mp.getKey()){ //second portion of peers gives differrent most probable hash
              if(pMin2>trasholdInvestigation){

@@ -31,10 +31,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -67,6 +67,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -75,13 +76,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
 import org.slf4j.Logger;
-
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
@@ -97,14 +91,15 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
-    private API apiServer;
     private static TransportInteractionService transportInteractionService;
+    private API apiServer;
+    private DexMatcherServiceImpl tcs;
 
     @Inject @Setter
     private PropertiesHolder propertiesHolder;
     @Inject @Setter
     private DirProvider dirProvider;
-    @Inject  @Setter
+    @Inject @Setter
     private AplAppStatus aplAppStatus;
     private String initCoreTaskID;
     
@@ -158,6 +153,8 @@ public final class AplCore {
 
 
         AplCore.shutdown = true;
+
+        tcs.deinitialize();
     }
 
     private static volatile boolean initialized = false;
@@ -222,6 +219,13 @@ public final class AplCore {
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.1, "Apollo core cleaases initialization");
 
+
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  52.5, "Exchange matcher initialization");
+
+                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
+                tcs.initialize();
+
+
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
@@ -232,11 +236,12 @@ public final class AplCore {
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
-                //Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable);
+                AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
+//                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
-                AccountLedger.init(databaseManager);
+//                AccountLedgerService.init(databaseManager);
                 Alias.init();
                 Asset.init();
 //                DigitalGoodsStore.init();
@@ -324,7 +329,7 @@ public final class AplCore {
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
-        if (recovery != null && recovery.getState() != MigrateState.COMPLETED) {
+        if (blockchainConfig.getCurrentConfig().isShardingEnabled() && recovery != null && recovery.getState() != MigrateState.COMPLETED) {
             aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
             ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();

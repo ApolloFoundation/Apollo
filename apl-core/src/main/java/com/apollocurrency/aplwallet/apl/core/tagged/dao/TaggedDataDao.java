@@ -27,15 +27,14 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Singleton
 /**
  * We will not store files in transaction attachment, alternatively we will store it only in tagged_data table
  * and change default behavior for rollback on scan to do not clear values, which cannot be restored
  */
+@Singleton
 public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
-    protected DatabaseManager databaseManager;
     private BlockchainConfig blockchainConfig;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
@@ -51,20 +50,13 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     };
 
     @Inject
-    public TaggedDataDao(DataTagDao dataTagDao, DatabaseManager databaseManager,
+    public TaggedDataDao(DataTagDao dataTagDao,
                          BlockchainConfig blockchainConfig) {
         super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, false);
         this.dataTagDao = dataTagDao;
-        this.databaseManager = databaseManager;
         this.blockchainConfig = blockchainConfig;
     }
 
-    private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
-    }
 
     @Override
     public TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -72,12 +64,6 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
         taggedData.setDbKey(dbKey);
         return taggedData;
     }
-
-/*
-    public void save(TaggedData taggedData) throws SQLException {
-        save(lookupDataSource().getConnection(), taggedData);
-    }
-*/
 
     public DbKey newKey(long taggedDataId) {
         return taggedDataKeyFactory.newKey(taggedDataId);
@@ -91,7 +77,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     @Override
     protected void prune() {
         if (blockchainConfig.isEnablePruning()) {
-            try (Connection con = lookupDataSource().getConnection();
+            try (Connection con = getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                          + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
                 int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
@@ -176,92 +162,13 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
         }
     }
 
-
-/*
-    public void add(TransactionImpl transaction, TaggedDataUploadAttachment attachment) {
-        if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
-            DbKey dbKey = keyFactory.newKey(transaction.getId());
-            TaggedData taggedData = this.get(dbKey);
-            if (taggedData == null) {
-                taggedData = new TaggedData(transaction, attachment,
-                        blockchain.getLastBlockTimestamp(), blockchain.getHeight());
-                this.insert(taggedData);
-//                DataTag.add(taggedData); // TODO: YL review and change
-            }
-        }
-        TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp());
-        taggedDataTimestampDao.insert(timestamp);
-    }
-*/
-
-/*
-    public void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
-        long taggedDataId = attachment.getTaggedDataId();
-        DbKey dbKey = taggedDataKeyFactory.newKey(taggedDataId);
-        TaggedDataTimestamp timestamp = taggedDataTimestampDao.get(dbKey);
-        if (transaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp.getTimestamp()) {
-            timestamp.setTimestamp(transaction.getTimestamp() );
-        } else {
-            timestamp.setTimestamp(timestamp.getTimestamp()
-                    + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp.getTimestamp()));
-        }
-        taggedDataTimestampDao.insert(timestamp);
-
-//        List<Long> extendTransactionIds = taggedDataExtendDao.get(dbKey);
-        List<TaggedDataExtend> taggedDataExtendList = taggedDataExtendDao.get(dbKey);
-        List<Long> extendTransactionIds = taggedDataExtendList // TODO: YL review
-                .stream().map(TaggedDataExtend::getId).collect(Collectors.toList());
-        extendTransactionIds.add(transaction.getId());
-        taggedDataExtendDao.insert(taggedDataExtendList);
-        if (timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() < timestamp.getTimestamp()) {
-            TaggedData taggedData = this.get(dbKey);
-            if (taggedData == null && attachment.getData() != null) {
-                Transaction uploadTransaction = blockchain.getTransaction(taggedDataId);
-                taggedData = new TaggedData(uploadTransaction, attachment,
-                        blockchain.getLastBlockTimestamp(), blockchain.getHeight());
-                dataTagDao.add(taggedData);
-            }
-            if (taggedData != null) {
-                taggedData.setTransactionTimestamp(timestamp.getTimestamp());
-                taggedData.setBlockTimestamp(blockchain.getLastBlockTimestamp());
-                taggedData.setHeight(blockchain.getHeight());
-                this.insert(taggedData);
-            }
-        }
-    }
-*/
-
     @Override
     public boolean isScanSafe() {
         return false; // tagged data stored only in this table, taggedDataAttachment in transaction contains only hash, so we should not rollback it during scan
     }
 
-   /*
-    public void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
-        TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
-        this.insert(taggedData);
-        dataTagDao.add(taggedData, height);
-        int timestamp = transaction.getTimestamp();// TODO: YL review
-//        for (long extendTransactionId : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
-        for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
-//            Transaction extendTransaction = blockchain.getTransaction(extendTransactionId);
-            Transaction extendTransaction = blockchain.getTransaction(taggedDataForTransaction.getExtendId());
-            if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
-                timestamp = extendTransaction.getTimestamp();
-            } else {
-                timestamp = timestamp + Math.min(blockchainConfig.getMinPrunableLifetime(), Integer.MAX_VALUE - timestamp);
-            }
-            taggedData.setTransactionTimestamp(timestamp);
-            taggedData.setBlockTimestamp(extendTransaction.getBlockTimestamp());
-            taggedData.setHeight(extendTransaction.getHeight());
-            this.insert(taggedData);
-        }
-    }
-
-*/
-
     public boolean isPruned(long transactionId) {
-        try (Connection con = lookupDataSource().getConnection();
+        try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM tagged_data WHERE id = ?")) {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {

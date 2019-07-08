@@ -92,6 +92,8 @@ public interface AccountService {
 
     long getTotalSupply();
 
+    int getBlockchainHeight();
+
     //Delegated from  AccountPublicKeyService
     boolean setOrVerify(long accountId, byte[] key);
     byte[] getPublicKey(long id);

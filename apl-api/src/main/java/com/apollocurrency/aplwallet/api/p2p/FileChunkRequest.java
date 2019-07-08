@@ -22,8 +22,8 @@ import lombok.ToString;
 public class FileChunkRequest extends BaseP2PRequest{
     public String fileId;
     public int id;
-    public int offset;
-    public int size;   
+    public Long offset;
+    public Long size;   
 
     public FileChunkRequest() {
         requestType="getFileChunk";

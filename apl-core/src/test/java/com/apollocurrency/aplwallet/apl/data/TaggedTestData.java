@@ -77,10 +77,20 @@ public class TaggedTestData {
 
 
         dataTag_1 = new DataTag("abc", td.TRANSACTION_2.getHeight(), 1);
+        dataTag_1.setDbId(10);
+        dataTag_1.setLatest(true);
         dataTag_2 = new DataTag("efd", td.TRANSACTION_3.getHeight(), 1);
+        dataTag_2.setDbId(20);
+        dataTag_2.setLatest(false);
         dataTag_3 = new DataTag("xyz", td.TRANSACTION_4.getHeight(), 2);
+        dataTag_3.setDbId(30);
+        dataTag_3.setLatest(false);
         dataTag_4 = new DataTag("trw", td.TRANSACTION_5.getHeight(), 1);
+        dataTag_4.setDbId(40);
+        dataTag_4.setLatest(true);
         dataTag_NOT_SAVED = new DataTag("123", td.TRANSACTION_9.getHeight(), 1);
+        dataTag_NOT_SAVED.setLatest(true);
+        dataTag_NOT_SAVED.setDbId(dataTag_4.getDbId() + 1);
     }
 
 }

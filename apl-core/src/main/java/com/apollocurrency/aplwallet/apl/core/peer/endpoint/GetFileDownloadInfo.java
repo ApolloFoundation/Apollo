@@ -33,6 +33,7 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
         res.downloadInfo = downloadableFilesManager.getFileDownloadInfo(rq.fileId);
         if(res.downloadInfo == null || !res.downloadInfo.fileInfo.isPresent) {
             res.errorCode=-2;
+            log.debug("FileID: {} is not present", rq.fileId);
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
         log.debug("GetFileDownloadInfo response = {}", response);

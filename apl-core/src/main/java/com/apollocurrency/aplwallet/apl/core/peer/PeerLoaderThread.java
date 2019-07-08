@@ -38,10 +38,16 @@ class PeerLoaderThread implements Runnable {
             peerDb = CDI.current().select(PeerDb.class).get();
         }
         final int now = timeService.getEpochTime();
-        Peers.wellKnownPeers.forEach((address) -> entries.add(new PeerDb.Entry(address, 0, now)));
+        Peers.wellKnownPeers.forEach((address) -> {
+            PeerAddress pa = new PeerAddress(address);
+            entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
+        });
         if (Peers.usePeersDb) {
             LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
-            defaultPeers.forEach((address) -> entries.add(new PeerDb.Entry(address, 0, now)));
+            defaultPeers.forEach((address) -> {
+                PeerAddress pa = new PeerAddress(address);
+                entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
+            });
             if (Peers.savePeers) {
                 List<PeerDb.Entry> dbPeers = peerDb.loadPeers();
                 dbPeers.forEach((entry) -> {
@@ -71,7 +77,7 @@ class PeerLoaderThread implements Runnable {
             });
             unresolvedPeers.add(unresolvedAddress);
         });
-        LOG.trace("'Peer loader': thread finished. Peers [{}]", Peers.getAllPeers().size());
+        LOG.trace("'Peer loader': thread finished. Peers [{}]", entries.size());
         Peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
     }
     

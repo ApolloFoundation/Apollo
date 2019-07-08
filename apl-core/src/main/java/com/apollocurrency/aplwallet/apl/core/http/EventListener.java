@@ -22,12 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -149,9 +150,9 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     }
 
     /** Account ledger events - update API comments for EventRegister and EventWait if changed */
-    public static final List<AccountLedger.Event> ledgerEvents = new ArrayList<>();
+    public static final List<AccountLedgerEventType> ledgerEvents = new ArrayList<>();
     static {
-        ledgerEvents.add(AccountLedger.Event.ADD_ENTRY);
+        ledgerEvents.add(AccountLedgerEventType.ADD_ENTRY);
     }
 
     /** Application IP address */
@@ -654,7 +655,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
                 eventHandler = new BlockEventHandler(eventRegistration);
             } else if (event instanceof TransactionProcessor.Event) {
                 eventHandler = new TransactionEventHandler(eventRegistration);
-            } else if (event instanceof AccountLedger.Event) {
+            } else if (event instanceof AccountLedgerEventType) {
                 eventHandler = new LedgerEventHandler(eventRegistration);
             } else {
                 throw new EventListenerException("Unsupported listener event");
@@ -979,7 +980,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void addListener() {
-                AccountLedger.addListener(this, (AccountLedger.Event)event);
+                //AccountLedgerService.addListener(this, (AccountLedgerService.Event)event);
             }
 
             /**
@@ -987,7 +988,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void removeListener() {
-                AccountLedger.removeListener(this, (AccountLedger.Event)event);
+                //AccountLedgerService.removeListener(this, (AccountLedgerService.Event)event);
             }
 
             /**
