@@ -605,7 +605,7 @@ public final class PeerImpl implements Peer {
         return response;
     }
 
-    private JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
+    private synchronized JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
         if (LOG.isTraceEnabled()) {
             StringWriter out = new StringWriter();
             String reqAsString = null;
@@ -716,7 +716,7 @@ public final class PeerImpl implements Peer {
     }
     
     @Override   
-    public void handshake(UUID targetChainId) {
+    public synchronized void handshake(UUID targetChainId) {
         if(getState()==PeerState.CONNECTED){
             LOG.trace("Peers {} is already connected.",getHostWithPort());
             return;
