@@ -548,9 +548,8 @@ public final class Account {
     }
 
     public long getEffectiveBalanceAPL(int height, boolean lock) {
-        int shardHeight = blockchain.getShardInitialBlock().getHeight();
-        if (shardHeight >= height - EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            Account genesisAccount = getAccount(id, shardHeight);
+        if (height <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            Account genesisAccount = getAccount(id, 0);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (this.publicKey == null) {

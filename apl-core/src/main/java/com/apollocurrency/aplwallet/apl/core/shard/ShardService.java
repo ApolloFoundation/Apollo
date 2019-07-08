@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdat
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -29,10 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -129,7 +125,7 @@ public class ShardService {
                 databaseManager.getDataSource();
                 blockchain.setLastBlock(blockchain.findLastBlock());
                 blockchainProcessor.updateInitialBlockId();
-                new Thread(this::recoverSharding, "sharding thread").start();  // start new thread to
+                recoverSharding();
                 return true;
             }
             finally {
@@ -159,6 +155,8 @@ public class ShardService {
             } finally {
                 isSharding = false;
             }
+        } else {
+            log.info("Nothing to recover");
         }
     }
     public MigrateState performSharding(int minRollbackHeight, long shardId, MigrateState initialState) {
@@ -187,7 +185,7 @@ public class ShardService {
     }
 
 
-    @Transactional
+
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
         if (!blockchainProcessor.isScanning()) {
@@ -197,10 +195,9 @@ public class ShardService {
                     isSharding = true;
                     updateTrimConfig(false);
                     // quick create records for new Shard and Recovery process for later use
-                    shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
                     long nextShardId = shardDao.getNextShardId();
-                    Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
-                    shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+
+                    saveShardRecoveryAndShard(nextShardId, lastTrimBlockHeight, blockchainHeight);
 
                     this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT));
                     this.shardingProcess.handle((result, ex) -> {
@@ -217,9 +214,16 @@ public class ShardService {
                 log.warn("Unable to start sharding at height {}, previous sharding process was not finished", lastTrimBlockHeight);
             }
         } else {
-            log.warn("Will skip sharding at height {} due to blokchain scan ", lastTrimBlockHeight);
+            log.warn("Will skip sharding at height {} due to blockchain scan ", lastTrimBlockHeight);
         }
         return newShardingProcess;
+    }
+
+    @Transactional
+    public void saveShardRecoveryAndShard(long nextShardId, int lastTrimBlockHeight, int blockchainHeight) {
+        Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
+        shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
+        shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
     }
 
     private boolean shouldPerformSharding() {

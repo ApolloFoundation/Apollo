@@ -42,7 +42,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     private DbProperties baseDbProperties; // main database properties
     private PropertiesHolder propertiesHolder;
-    private TransactionalDataSource currentTransactionalDataSource; // main/shard database
+    private volatile TransactionalDataSource currentTransactionalDataSource; // main/shard database
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     private Jdbi jdbi;
     private JdbiHandleFactory jdbiHandleFactory;

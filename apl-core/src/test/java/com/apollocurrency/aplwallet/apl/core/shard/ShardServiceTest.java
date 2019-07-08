@@ -70,9 +70,8 @@ public class ShardServiceTest {
         CompletableFuture<MigrateState> c = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
         assertEquals(MigrateState.FAILED, c.get());
-        verify(shardMigrationExecutor, times(1)).executeAllOperations();
-        verify(trimEvent).fire(true);
-        verify(trimEvent).fire(false);
+        verify(shardMigrationExecutor).executeAllOperations();
+        verify(trimEvent, times(2)).fire(anyBoolean());
     }
 
     @Test
