@@ -32,7 +32,7 @@ public interface  DexTradeDao {
     void saveDexTradeEntry(@BindBean DexTradeEntry dexTradeEntry);
     
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM dex_trade as tradeinfo WHERE tradeinfo.finish_time >= :start AND tradeinfo.finish_time < finish OFFSET :offset LIMIT :limit")
+    @SqlQuery("SELECT * FROM dex_trade as tradeinfo WHERE tradeinfo.finish_time >= :start AND tradeinfo.finish_time < :finish OFFSET :offset LIMIT :limit")
     @RegisterRowMapper(DexTradeEntryMapper.class)
     List<DexTradeEntry> getDexEntriesForInterval(@Bind("start") Integer start, @Bind("finish") Integer finish, 
             @Bind("offset") Integer offset, @Bind("limit") Integer limit);

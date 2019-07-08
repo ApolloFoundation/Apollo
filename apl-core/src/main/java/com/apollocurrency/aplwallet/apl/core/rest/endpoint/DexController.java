@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
+import com.apollocurrency.aplwallet.api.response.ResponseDone;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -74,6 +75,9 @@ import java.util.stream.Collectors;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Random;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -505,8 +509,8 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getTradeInfoForPeriod(  
-                                @Parameter(description = "period start time", required = true) @FormParam("start") Integer start,
-                                @Parameter(description = "period finish time", required = true) @FormParam("start") Integer finish,
+                                @Parameter(description = "period start time", required = true) @QueryParam("start") Integer start,
+                                @Parameter(description = "period finish time", required = true) @QueryParam("finish") Integer finish,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getTradeInfoForPeriod:  start: {}, finish: {} ", start, finish );
@@ -522,6 +526,56 @@ public class DexController {
             .collect(Collectors.toList())
         ).build();
     }
+    
+    
+    @Path("/flood")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "test flooding",
+            description = "initiates flooding table with the test data",
+            tags = {"dex"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ResponseDone.class)))
+            }
+    ) 
+    public ResponseDone startTestFlood(  ) {       
+        ResponseDone response = new ResponseDone();        
+        log.debug("starting test flooding");
+
+        Integer currentTime = epochTime.getEpochTime();
+        
+        Integer discr = 10000; 
+        Integer iters = 5;
+        Integer height = 45123; 
+        Random random = new Random();
+
+        DexTradeEntry dexTradeEntry = new DexTradeEntry();
+          
+        dexTradeEntry.setSenderOfferID(random.nextLong());        
+        dexTradeEntry.setReceiverOfferID(random.nextLong());
+        dexTradeEntry.setSenderOfferType((byte)0);
+        
+        dexTradeEntry.setSenderOfferCurrency((byte)0);
+        
+        dexTradeEntry.setSenderOfferAmount(random.nextLong());
+        dexTradeEntry.setPairCurrency((byte)1);
+        dexTradeEntry.setPairRate(BigDecimal.valueOf(random.nextLong()));
+        
+        for ( Integer i = currentTime; i<= currentTime + (iters * discr); i+= discr ) {
+            Long randomTransactionID = random.nextLong();
+            dexTradeEntry.setTransactionID(randomTransactionID);
+            dexTradeEntry.setFinishTime(i);
+            dexTradeEntry.setHeight(height);
+            height++;
+            service.saveDexTradeEntry(dexTradeEntry);
+        } 
+                
+        response.setDone(Boolean.TRUE);        
+        return response;        
+    }
+    
     
 
     @GET
