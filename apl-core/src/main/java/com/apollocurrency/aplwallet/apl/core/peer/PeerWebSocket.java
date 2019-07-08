@@ -242,7 +242,7 @@ public class PeerWebSocket {
      * @return                      Response message
      * @throws  IOException         I/O error occurred
      */
-    public String doPost(String request) throws IOException {
+    public synchronized String doPost(String request) throws IOException {
         long requestId;
         //
         // Send the POST request
