@@ -84,7 +84,7 @@ public final class PeerImpl implements Peer {
     
     private final String host;
     @Getter
-    private final PeerWebSocket webSocket;
+    private PeerWebSocket webSocket;
     @Getter
     private volatile PeerWebSocket inboundSocket;
     private volatile boolean useWebSocket;
@@ -142,7 +142,7 @@ public final class PeerImpl implements Peer {
         pi.setAnnouncedAddress(pa.getAddrWithPort());
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
-        this.webSocket = new PeerWebSocket(this);
+        this.webSocket = null;
         this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
@@ -171,10 +171,14 @@ public final class PeerImpl implements Peer {
 
     private void setState(PeerState state) {
         if (state != PeerState.CONNECTED) {
-            webSocket.close();
+            if(webSocket!=null){
+              webSocket.close();
+              webSocket=null;
+            }
             if (inboundSocket != null && inboundSocket.isOpen()) {
                 LOG.trace("inboundSocket will be closed too");
                 inboundSocket.close();
+                inboundSocket=null;
             }
         }
         if (this.state == state) {
@@ -468,7 +472,6 @@ public final class PeerImpl implements Peer {
     @Override
     public void remove() {
         setState(PeerState.NON_CONNECTED);
-        webSocket.close();
         Peers.removePeer(this);
         Peers.notifyListeners(this, Peers.Event.REMOVE);
     }
@@ -523,7 +526,7 @@ public final class PeerImpl implements Peer {
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) {
         if(state!=PeerState.CONNECTED){
-            LOG.trace("send() called before handshake(). Handshering");
+            LOG.trace("send() called before handshake(). Handshacking");
             handshake(chainId);
         }
         if(state!=PeerState.CONNECTED){
@@ -626,7 +629,10 @@ public final class PeerImpl implements Peer {
                     webSocketOK = response !=null;
                     LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK); 
                 }
-                if (!webSocketOK){ //no inbound connection or send failed 
+                if (!webSocketOK){ //no inbound connection or send failed
+                    if(webSocket==null){
+                        webSocket=new PeerWebSocket(this);
+                    }
                     if(!webSocket.isOpen()) {
                     //
                     // Create a new WebSocket session if we don't have one
