@@ -226,9 +226,7 @@ public class ShardDownloader {
     }
 
     private boolean isAcceptable(FileDownloadDecision d) {
-        boolean res = (d == FileDownloadDecision.AbsOK
-                || d == FileDownloadDecision.OK
-                || d == FileDownloadDecision.Risky);
+        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK );
         return res;
     }
 
