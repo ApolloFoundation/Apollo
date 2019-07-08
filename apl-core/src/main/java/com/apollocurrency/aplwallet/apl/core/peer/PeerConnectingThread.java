@@ -111,6 +111,7 @@ class PeerConnectingThread implements Runnable {
                     if (peer != null && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
                         Peers.peersExecutorService.submit(() -> {
                             Peers.addPeer(peer);
+                            Peers.connectPeer(peer);
                         });
                     }
                 }

@@ -159,6 +159,7 @@ public final class GetInfo extends PeerRequestHandler {
                 log.error("ERROR, DUMP myPeerInfoResponse", e);
             }
         }
+        Peers.addPeer(peer);
         return myPeerInfoResponse;
 
     }
