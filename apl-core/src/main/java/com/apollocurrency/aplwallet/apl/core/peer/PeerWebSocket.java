@@ -168,7 +168,7 @@ public class PeerWebSocket {
                 ClientUpgradeRequest req = new ClientUpgradeRequest();
                 Future<Session> conn = peerClient.connect(this, uri, req);
                 conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-                useWebSocket = true;                
+                useWebSocket = true;
             }
         } catch (ExecutionException exc) {
             if (exc.getCause() instanceof UpgradeException) {
@@ -215,7 +215,7 @@ public class PeerWebSocket {
         }else{
             LOG.trace("Client peer: {}", clientPeer.getHostWithPort());
         }
-                    
+
     }
 
     /**
@@ -415,7 +415,7 @@ public class PeerWebSocket {
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
             if(clientPeer!=null){
-                LOG.trace("Client {} socket is closed for peer: {} statusCode: {}", 
+                LOG.trace("Client {} socket is closed for peer: {} statusCode: {}",
                         direction, clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
             }
         } finally {
