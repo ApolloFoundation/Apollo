@@ -402,9 +402,10 @@ public class PeerWebSocket {
     public void onClose(int statusCode, String reason) {
         lock.lock();
         try {
+            String direction = peerServlet != null ? "Inbound" : "Outbound";
             if (session != null) {
                 LOG.trace(String.format("%s WebSocket connection with %s closed",
-                            peerServlet != null ? "Inbound" : "Outbound",
+                            direction,
                             session.getRemoteAddress().getHostString()));
                 session.close();
                 session = null;
@@ -414,8 +415,8 @@ public class PeerWebSocket {
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
             if(clientPeer!=null){
-                LOG.debug("Client socket is closed for peer: {} statusCode: {}", 
-                        clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
+                LOG.debug("Client {} socket is closed for peer: {} statusCode: {}", 
+                        direction, clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
             }
         } finally {
             lock.unlock();
