@@ -536,7 +536,7 @@ public final class PeerImpl implements Peer {
             return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
         }
     }
-    
+
     //we throw here because it is last resort method and we should decide deactivate peer or not
     private JSONObject sendHttp(final JSONStreamAware request) throws MalformedURLException, IOException, ParseException{
          JSONObject response = null;
@@ -572,7 +572,7 @@ public final class PeerImpl implements Peer {
          
          return response;
     }
-    
+
     private synchronized JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
         JSONObject response = null;
         try {
@@ -588,7 +588,7 @@ public final class PeerImpl implements Peer {
                 return response;
             }
             String wsRequest = wsWriter.toString();
-            
+
             String wsResponse = ws.doPost(wsRequest);
             LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
             if (wsResponse != null) {
@@ -624,10 +624,10 @@ public final class PeerImpl implements Peer {
         try {
             boolean webSocketOK = false;
             if(useWebSocket){
-                if(isInboundWebSocket()){                
+                if(isInboundWebSocket()){
                     response = sendToWebSocket(request, inboundSocket);
                     webSocketOK = response !=null;
-                    LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK); 
+                    LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK);
                 }
                 if (!webSocketOK){ //no inbound connection or send failed
                     if(webSocket==null){
@@ -653,7 +653,7 @@ public final class PeerImpl implements Peer {
                     if(webSocketOK){ //send using client socket
                         response = sendToWebSocket(request, webSocket);
                         webSocketOK = response!=null;
-                        LOG.trace("Peer: {} Using outbound web socket. Success: {}",getHostWithPort(),webSocketOK); 
+                        LOG.trace("Peer: {} Using outbound web socket. Success: {}",getHostWithPort(),webSocketOK);
                     }
                 }
             }
@@ -663,14 +663,14 @@ public final class PeerImpl implements Peer {
             if (!webSocketOK) {
                 // Send the request using HTTP as fallback
                 response = sendHttp(request);
-                LOG.trace("Peer: {} Using HTTP. Success: {}",getHostWithPort(),response!=null);                
+                LOG.trace("Peer: {} Using HTTP. Success: {}",getHostWithPort(),response!=null);
             }
             //
             // Check for an error response
             //
             if (response != null && response.get("error") != null) {
                 LOG.debug("Peer: {} RESPONSE = {}", getHostWithPort(), response);
-                if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){ 
+                if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){
                     LOG.debug("Sequence error received, reconnecting to " + host);
                     deactivate();
                 } else {
@@ -686,15 +686,15 @@ public final class PeerImpl implements Peer {
         } catch (AplException.AplIOException e) {
             blacklist(e);
         } catch (RuntimeException|ParseException|IOException e) {
-            if (!(e instanceof UnknownHostException 
-                    || e instanceof SocketTimeoutException 
-                    || e instanceof SocketException 
+            if (!(e instanceof UnknownHostException
+                    || e instanceof SocketTimeoutException
+                    || e instanceof SocketException
                     || Errors.END_OF_FILE.equals(e.getMessage()))) {
-                
+
                 LOG.debug(String.format("Error sending request to peer %s: %s",
                                        host, e.getMessage()!=null ? e.getMessage() : e.toString()));
             }
-            LOG.trace("Exception while sending request: {} to {}",e,getHostWithPort());
+            LOG.trace("Exception while sending request: {} to '{}'", e.getMessage(), getHostWithPort());
             deactivate();
         }
         return response;

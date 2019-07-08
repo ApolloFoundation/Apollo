@@ -313,7 +313,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException| ParseException |IOException e) {
-            LOG.debug("Error processing POST request: {}",e);
+            LOG.debug("Error processing POST request, host = '{}', error = {}", peer.getHostWithPort(), e.toString());
             if(! (e instanceof  ClosedChannelException) ){
               peer.blacklist(e);
             }
@@ -340,7 +340,7 @@ public final class PeerServlet extends WebSocketServlet {
 //                int port=req.getRemotePort();
 //we ignore remote port to be able to connect back in case of inbound socket close
                 Peer peer = Peers.findOrCreatePeer(host);
-                if (peer != null) {                    
+                if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(PeerServlet.this, peer);
                     ((PeerImpl) peer).setInboundWebSocket(pws);
                     res = pws;
