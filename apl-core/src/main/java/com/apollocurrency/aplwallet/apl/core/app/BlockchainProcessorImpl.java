@@ -380,13 +380,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.debug("snapshotBlock imported = {}", snapshotBlock);
             blockchain.setLastBlock(snapshotBlock);
             initialBlock = snapshotBlock.getId();
+            lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
         } finally {
             globalSync.updateUnlock();
         }
     }
 
     @Override
-    public void updateInitialBlockId() {
+    public void updateInitialBlock() {
         initialBlock = blockchain.getShardInitialBlock().getId();
     }
 

@@ -7,10 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ShardToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +22,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/shards")
-@OpenAPIDefinition(tags = {@Tag(name = "/shards")}, info = @Info(description = "Provide data about shards"))
 @Singleton
 public class ShardController {
 
@@ -56,7 +52,5 @@ public class ShardController {
     public Response resetToBackup(@PathParam("id") long shardId) {
         return Response.ok(shardService.reset(shardId)).build();
     }
-
-
 
 }

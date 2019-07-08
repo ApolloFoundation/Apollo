@@ -120,11 +120,9 @@ public class ShardService {
                         return false;
                     }
                 });
-
                 zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString());
                 databaseManager.getDataSource();
-                blockchain.setLastBlock(blockchain.findLastBlock());
-                blockchainProcessor.updateInitialBlockId();
+                blockchainProcessor.updateInitialSnapshotBlock();
                 recoverSharding();
                 return true;
             }
@@ -149,6 +147,7 @@ public class ShardService {
                 aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
                 blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
                 Shard lastShard = shardDao.getLastShard();
+                shardMigrationExecutor.cleanCommands();
                 shardMigrationExecutor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
                 shardMigrationExecutor.executeAllOperations();
                 aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
@@ -201,7 +200,7 @@ public class ShardService {
 
                     this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT));
                     this.shardingProcess.handle((result, ex) -> {
-                                blockchainProcessor.updateInitialBlockId();
+                                blockchainProcessor.updateInitialBlock();
                                 updateTrimConfig(true);
                                 isSharding = false;
                                 return result;
