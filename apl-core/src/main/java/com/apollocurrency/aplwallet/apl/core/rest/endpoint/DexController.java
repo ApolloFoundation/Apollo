@@ -72,6 +72,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -496,6 +497,32 @@ public class DexController {
         }
     }
 
+    @GET
+    @Path("/tradeinfo")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get trade data", description = "obtaining trading information for the given period")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getTradeInfoForPeriod(  
+                                @Parameter(description = "period start time", required = true) @FormParam("start") Integer start,
+                                @Parameter(description = "period finish time", required = true) @FormParam("start") Integer finish,
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("getTradeInfoForPeriod:  start: {}, finish: {} ", start, finish );
+        int firstIndex = ParameterParser.getFirstIndex(req);
+        int lastIndex = ParameterParser.getLastIndex(req);
+        int offset = firstIndex > 0 ? firstIndex : 0;
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+        
+        List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, offset, limit);
+        
+        return Response.ok(tradeEntries.stream()
+            .map(o -> o.toDto())
+            .collect(Collectors.toList())
+        ).build();
+    }
+    
 
     @GET
     @Path("/ethInfo")
