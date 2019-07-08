@@ -47,10 +47,14 @@ public final class GetInfo extends PeerRequestHandler {
     private final PropertiesHolder propertiesHolder;
     
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
+    private static final JSONStreamAware INVALID_APPLICATION;
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.INVALID_ANNOUNCED_ADDRESS);
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
+        response = new JSONObject();
+        response.put("error", Errors.UNSUPPORTED_PROTOCOL);
+        INVALID_APPLICATION = JSON.prepare(response);        
     }
     
     @Inject
@@ -109,9 +113,10 @@ public final class GetInfo extends PeerRequestHandler {
         }
 
         if(!peerImpl.setApplication(pi.getApplication().trim())){
-            log.debug("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHost(), pi.getApplication());
+            log.trace("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHost(), pi.getApplication());
 //            log.debug("Peer = {} Received Invalid App in PI = \n{}", peerImpl, pi);
             peerImpl.remove();
+            return INVALID_APPLICATION;
         }
 
         Version version = null;
@@ -154,6 +159,7 @@ public final class GetInfo extends PeerRequestHandler {
                 log.error("ERROR, DUMP myPeerInfoResponse", e);
             }
         }
+        Peers.addPeer(peer);
         return myPeerInfoResponse;
 
     }

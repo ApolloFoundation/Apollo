@@ -236,7 +236,6 @@ public final class PeerServlet extends WebSocketServlet {
         if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
         }
         //
@@ -274,7 +273,6 @@ public final class PeerServlet extends WebSocketServlet {
             jsonObject.put("cause", peer.getBlacklistingCause());
             return jsonObject;
         }
-        Peers.addPeer(peer);
         //
         // Process the request
         //
@@ -290,9 +288,6 @@ public final class PeerServlet extends WebSocketServlet {
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 
-//            if (peer.getState() == PeerState.DISCONNECTED) {
-//                peer.setState(PeerState.CONNECTED);
-//            }
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
@@ -318,7 +313,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException| ParseException |IOException e) {
-            LOG.debug("Error processing POST request: " + e.toString());
+            LOG.debug("Error processing POST request: {}",e);
             if(! (e instanceof  ClosedChannelException) ){
               peer.blacklist(e);
             }
@@ -341,13 +336,11 @@ public final class PeerServlet extends WebSocketServlet {
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
             Object res = null;
             if (Peers.useWebSockets) {
-                String hostWithPort = req.getRequestURI().getAuthority();
-                if (StringUtils.isBlank(hostWithPort)) {
-                    hostWithPort = req.getRemoteAddress();
-                }
-                PeerAddress pa = new PeerAddress(hostWithPort);
-                Peer peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
-                if (peer != null) {
+                String host = req.getRemoteAddress();
+//                int port=req.getRemotePort();
+//we ignore remote port to be able to connect back in case of inbound socket close
+                Peer peer = Peers.findOrCreatePeer(host);
+                if (peer != null) {                    
                     PeerWebSocket pws = new PeerWebSocket(PeerServlet.this, peer);
                     ((PeerImpl) peer).setInboundWebSocket(pws);
                     res = pws;
