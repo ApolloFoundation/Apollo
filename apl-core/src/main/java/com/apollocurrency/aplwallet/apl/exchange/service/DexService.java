@@ -85,6 +85,11 @@ public class DexService {
             Integer offset, Integer limit) {
         return dexTradeDao.getDexEntriesForInterval(start, finish, offset, limit);        
     }
+    
+    @Transactional
+    public void saveDexTradeEntry( DexTradeEntry dexTradeEntry) {
+        dexTradeDao.saveDexTradeEntry(dexTradeEntry);
+    }
 
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
