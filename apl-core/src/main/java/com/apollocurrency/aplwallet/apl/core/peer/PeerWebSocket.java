@@ -210,6 +210,11 @@ public class PeerWebSocket {
         LOG.debug(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
+        if(clientPeer==null){
+            LOG.error("Client peer is not set!");
+        }else{
+            LOG.debug("Client peer: {}", clientPeer.getHostWithPort());
+        }
                     
     }
 
