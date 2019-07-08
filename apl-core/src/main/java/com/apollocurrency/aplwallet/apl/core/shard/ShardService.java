@@ -29,6 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
@@ -88,22 +90,27 @@ public class ShardService {
 
     }
 
+    public boolean isSharding() {
+        return isSharding;
+    }
+
     public boolean reset(long shardId) {
-        if (isSharding) {
-            if (shardingProcess != null) {
-                log.info("Stopping sharding process...");
-                shardingProcess.cancel(true);
-            } else {
-                log.info("Unable to stop sharding process. Try again later");
-                return false;
-            }
-        }
+
         Path dbDir = dirProvider.getDbDir();
         Path backupZip = dbDir.resolve(String.format(ShardConstants.DB_BACKUP_FORMAT, new ShardNameHelper().getShardNameByShardId(shardId, blockchainConfig.getChain().getChainId())));
         boolean backupExists = Files.exists(backupZip);
         if (backupExists) {
             globalSync.writeLock();
             try {
+                if (isSharding) {
+                    if (shardingProcess != null) {
+                        log.info("Stopping sharding process...");
+                        shardingProcess.cancel(true);
+                    } else {
+                        log.info("Unable to stop sharding process. Try again later");
+                        return false;
+                    }
+                }
                 databaseManager.shutdown();
                 FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                     Path fileName = p.getFileName();
@@ -122,7 +129,7 @@ public class ShardService {
                 databaseManager.getDataSource();
                 blockchain.setLastBlock(blockchain.findLastBlock());
                 blockchainProcessor.updateInitialBlockId();
-                recoverSharding();
+                new Thread(this::recoverSharding, "sharding thread").start();  // start new thread to
                 return true;
             }
             finally {
@@ -170,9 +177,6 @@ public class ShardService {
             catch (Exception t) {
                 log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
             }
-            finally {
-                isSharding = false;
-            }
             if (resultState != MigrateState.FAILED) {
                 log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);
             } else {
@@ -198,12 +202,9 @@ public class ShardService {
                     Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
                     shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
-                    this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT))
-                            .thenApply((result) -> {
+                    this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT));
+                    this.shardingProcess.handle((result, ex) -> {
                                 blockchainProcessor.updateInitialBlockId();
-                                return result;
-                            })
-                            .handle((result, ex) -> {
                                 updateTrimConfig(true);
                                 isSharding = false;
                                 return result;

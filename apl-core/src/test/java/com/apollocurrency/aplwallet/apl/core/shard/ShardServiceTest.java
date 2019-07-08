@@ -5,15 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -25,15 +18,20 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,6 +40,8 @@ import javax.enterprise.util.AnnotationLiteral;
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceTest {
     public static final int DEFAULT_TRIM_HEIGHT = 100_000;
+    @RegisterExtension
+    TemporaryFolderExtension folder = new TemporaryFolderExtension();
 
     ShardService shardService;
     @Mock ShardDao shardDao;
@@ -71,8 +71,8 @@ public class ShardServiceTest {
 
         assertEquals(MigrateState.FAILED, c.get());
         verify(shardMigrationExecutor, times(1)).executeAllOperations();
-        verify(trimEvent, times(1)).fire(true);
-        verify(trimEvent, times(1)).fire(false);
+        verify(trimEvent).fire(true);
+        verify(trimEvent).fire(false);
     }
 
     @Test
@@ -118,14 +118,6 @@ public class ShardServiceTest {
 
     @Test
     void testSkipShardingWhenLastShardHaveSameHeight() throws InterruptedException, ExecutionException {
-        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
-
-        CompletableFuture<MigrateState> shardFuture1 = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
-
-        assertNotNull(shardFuture1);
-
-        shardFuture1.get();
-
         doReturn(new Shard(100, DEFAULT_TRIM_HEIGHT)).when(shardDao).getLastShard();
 
         CompletableFuture<MigrateState> shardFuture2 = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
@@ -134,7 +126,74 @@ public class ShardServiceTest {
         assertNull(shardFuture2);
         assertNull(shardFuture3);
 
-        verify(shardMigrationExecutor, times(1)).executeAllOperations();
+        verifyZeroInteractions(shardMigrationExecutor);
+    }
+
+    private void mockBackupExists() throws IOException {
+        Chain chain = mock(Chain.class);
+        UUID chainId = UUID.randomUUID();
+        doReturn(chainId).when(chain).getChainId();
+        doReturn(folder.getRoot().toPath()).when(dirProvider).getDbDir();
+        doReturn(chain).when(blockchainConfig).getChain();
+        folder.newFile("BACKUP-BEFORE-apl-blockchain-shard-1-chain-" + chainId + ".zip");
+    }
+
+    @Test
+    void testSkipResetToShardWhenShardingProcessWasStartedWithoutCompleteableFuture() throws IOException {
+        mockBackupExists();
+        shardService.setSharding(true);
+        boolean reset = shardService.reset(1L);
+        assertFalse(reset);
+        verifyZeroInteractions(shardMigrationExecutor);
+    }
+
+    @Test
+    void testSkipResetWhenShardBackupNotExists() {
+        Chain chain = mock(Chain.class);
+        doReturn(UUID.randomUUID()).when(chain).getChainId();
+        doReturn(folder.getRoot().toPath()).when(dirProvider).getDbDir();
+        doReturn(chain).when(blockchainConfig).getChain();
+
+        boolean reset = shardService.reset(1);
+
+        assertFalse(reset);
+        verifyZeroInteractions(shardMigrationExecutor);
+    }
+
+    @Test
+    void testReset() throws IOException {
+        mockBackupExists();
+
+        boolean reset = shardService.reset(1);
+
+        assertTrue(reset);
+        verify(databaseManager).getDataSource();
+        verify(databaseManager).shutdown();
+        verify(zip).extract(anyString(), anyString());
+    }
+
+    @Test
+    void testResetWithCancellingShardingProcess() throws IOException, InterruptedException {
+        mockBackupExists();
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        AtomicBoolean shardingStarted = new AtomicBoolean(false);
+        doAnswer((d) -> {
+            shardingStarted.set(true);
+            while (true) {
+                Thread.sleep(10);
+            }
+        }).when(shardMigrationExecutor).executeAllOperations();
+        CompletableFuture<MigrateState> shardProcess = shardService.tryCreateShardAsync(4000, 6000);
+        assertNotNull(shardProcess);
+
+        while (!shardingStarted.get()) {
+            Thread.sleep(10);
+        }
+        boolean reset = shardService.reset(1L);
+        assertTrue(reset);
+        assertTrue(shardProcess.isDone());
+        assertFalse(shardService.isSharding());
+
     }
 
 }
