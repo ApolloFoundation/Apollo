@@ -22,7 +22,7 @@ class PeerConnectingThread implements Runnable {
     
     private static final Logger LOG = LoggerFactory.getLogger(PeerConnectingThread.class);
     private EpochTime timeService;
-    
+     
     public PeerConnectingThread(EpochTime timeService) {
         this.timeService=timeService;
     }
