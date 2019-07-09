@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -39,6 +40,7 @@ public abstract class AbstractAPIRequestHandler {
     private Set<APITag> apiTags;
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
+    private BlockchainConfig blockchainConfig;
     private TransactionProcessor transactionProcessor;
     protected static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private DatabaseManager databaseManager;
@@ -113,6 +115,11 @@ public abstract class AbstractAPIRequestHandler {
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;
+    }
+
+    protected BlockchainConfig lookupBlockchainConfig(){
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        return blockchainConfig;
     }
 
     protected BlockchainProcessor lookupBlockchainProcessor() {

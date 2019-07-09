@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import lombok.Setter;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -31,23 +30,22 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountAssetServiceImpl implements AccountAssetService {
 
-    @Inject @Setter
     private Blockchain blockchain;
-
-    @Inject @Setter
     private AccountAssetTable accountAssetTable;
-
-    @Inject @Setter
     private AccountService accountService;
-
-    @Inject @Setter
     private Event<Account> accountEvent;
-
-    @Inject @Setter
     private Event<AccountAsset> accountAssetEvent;
-
-    @Inject @Setter
     private AccountLedgerService accountLedgerService;
+
+    @Inject
+    public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, AccountLedgerService accountLedgerService) {
+        this.blockchain = blockchain;
+        this.accountAssetTable = accountAssetTable;
+        this.accountService = accountService;
+        this.accountEvent = accountEvent;
+        this.accountAssetEvent = accountAssetEvent;
+        this.accountLedgerService = accountLedgerService;
+    }
 
     @Override
     public List<AccountAsset> getAssets(long assetId, int height) {

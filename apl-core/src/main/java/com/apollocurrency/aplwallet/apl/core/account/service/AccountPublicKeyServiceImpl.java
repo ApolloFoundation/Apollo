@@ -5,15 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -31,20 +30,21 @@ import java.util.concurrent.ConcurrentMap;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    //TODO: make cache nonstatic and injectable
+    //TODO: make cache nonstatic and injectable. There is quite nice cache library with eviction policy. https://github.com/ben-manes/caffeine
     private static ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
 
-    @Inject @Setter
     private PropertiesHolder propertiesHolder;
-
-    @Inject @Setter
     private Blockchain blockchain;
-
-    @Inject @Setter
     private PublicKeyTable publicKeyTable;
-
-    @Inject @Setter
     private GenesisPublicKeyTable genesisPublicKeyTable;
+
+    @Inject
+    public AccountPublicKeyServiceImpl(PropertiesHolder propertiesHolder, Blockchain blockchain, PublicKeyTable publicKeyTable, GenesisPublicKeyTable genesisPublicKeyTable) {
+        this.propertiesHolder = propertiesHolder;
+        this.blockchain = blockchain;
+        this.publicKeyTable = publicKeyTable;
+        this.genesisPublicKeyTable = genesisPublicKeyTable;
+    }
 
     @PostConstruct
     void init(){

@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import lombok.Setter;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -28,17 +27,18 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountLeaseServiceImpl implements AccountLeaseService {
 
-    @Inject @Setter
     private AccountLeaseTable accountLeaseTable;
-
-    @Inject @Setter
     private Blockchain blockchain;
-
-    @Inject @Setter
     private BlockchainConfig blockchainConfig;
-
-    @Inject @Setter
     private Event<AccountLease> accountLeaseEvent;
+
+    @Inject
+    public AccountLeaseServiceImpl(AccountLeaseTable accountLeaseTable, Blockchain blockchain, BlockchainConfig blockchainConfig, Event<AccountLease> accountLeaseEvent) {
+        this.accountLeaseTable = accountLeaseTable;
+        this.blockchain = blockchain;
+        this.blockchainConfig = blockchainConfig;
+        this.accountLeaseEvent = accountLeaseEvent;
+    }
 
     @Override
     public AccountLease getAccountLease(Account account) {

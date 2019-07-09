@@ -922,7 +922,7 @@ public class FundingMonitor {
          *
          * @param   asset                   Account asset
          */
-        public void noAccountAssetBalance(@Observes @AccountEvent(AccountEventType.ASSET_BALANCE) AccountAsset asset) {
+        public void onAccountAssetBalance(@Observes @AccountEvent(AccountEventType.ASSET_BALANCE) AccountAsset asset) {
             LOG.trace("Catch event {} asset={}", AccountEventType.ASSET_BALANCE, asset);
             if (stopped) {
                 return;

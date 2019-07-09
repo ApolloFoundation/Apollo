@@ -50,10 +50,10 @@ public final class GetAccount extends AbstractAPIRequestHandler {
     }
 
     private AccountBalanceService accountBalanceService = CDI.current().select(AccountBalanceService.class).get();
-    private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
-    private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
-    private AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
-    private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private AccountInfoService accountInfoService = CDI.current().select(AccountInfoService.class).get();
+    private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
+    private AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
+    private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.Setter;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -28,17 +27,18 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountPropertyServiceImpl implements AccountPropertyService {
 
-    @Inject @Setter
     private Blockchain blockchain;
-
-    @Inject @Setter
     private AccountPropertyTable accountPropertyTable;
-
-    @Inject @Setter
     private Event<Account> accountEvent;
-
-    @Inject @Setter
     private Event<AccountProperty> accountPropertyEvent;
+
+    @Inject
+    public AccountPropertyServiceImpl(Blockchain blockchain, AccountPropertyTable accountPropertyTable, Event<Account> accountEvent, Event<AccountProperty> accountPropertyEvent) {
+        this.blockchain = blockchain;
+        this.accountPropertyTable = accountPropertyTable;
+        this.accountEvent = accountEvent;
+        this.accountPropertyEvent = accountPropertyEvent;
+    }
 
     @Override
     public AccountProperty getProperty(long propertyId) {
