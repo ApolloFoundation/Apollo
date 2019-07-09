@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import lombok.Setter;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -33,20 +32,20 @@ import static com.apollocurrency.aplwallet.apl.core.account.service.AccountServi
 @Singleton
 public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
-    @Inject @Setter
     private Blockchain blockchain;
-
-    @Inject @Setter
     private AccountCurrencyTable accountCurrencyTable;
-
-    @Inject @Setter
     private AccountLedgerService accountLedgerService;
-
-    @Inject @Setter
     private Event<Account> accountEvent;
-
-    @Inject @Setter
     private Event<AccountCurrency> accountCurrencyEvent;
+
+    @Inject
+    public AccountCurrencyServiceImpl(Blockchain blockchain, AccountCurrencyTable accountCurrencyTable, AccountLedgerService accountLedgerService, Event<Account> accountEvent, Event<AccountCurrency> accountCurrencyEvent) {
+        this.blockchain = blockchain;
+        this.accountCurrencyTable = accountCurrencyTable;
+        this.accountLedgerService = accountLedgerService;
+        this.accountEvent = accountEvent;
+        this.accountCurrencyEvent = accountCurrencyEvent;
+    }
 
     @Override
     public void save(AccountCurrency currency) {

@@ -4,17 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.*;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -25,7 +29,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 
@@ -37,26 +43,24 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountServiceImpl implements AccountService {
 
-    @Inject @Setter
     private AccountTable accountTable;
-
-    @Inject @Setter
     private Blockchain blockchain;
-
-    @Inject @Setter
     private BlockchainConfig blockchainConfig;
-
-    @Inject @Setter
     private GlobalSync sync;
-
-    @Inject @Setter
     private DatabaseManager databaseManager;
-
-    @Inject @Setter
     private AccountPublicKeyService accountPublicKeyService;
-
-    @Inject @Setter
     private Event<Account> accountEvent;
+
+    @Inject
+    public AccountServiceImpl(AccountTable accountTable, Blockchain blockchain, BlockchainConfig blockchainConfig, GlobalSync sync, DatabaseManager databaseManager, AccountPublicKeyService accountPublicKeyService, Event<Account> accountEvent) {
+        this.accountTable = accountTable;
+        this.blockchain = blockchain;
+        this.blockchainConfig = blockchainConfig;
+        this.sync = sync;
+        this.databaseManager = databaseManager;
+        this.accountPublicKeyService = accountPublicKeyService;
+        this.accountEvent = accountEvent;
+    }
 
     @Override
     public int getActiveLeaseCount() {

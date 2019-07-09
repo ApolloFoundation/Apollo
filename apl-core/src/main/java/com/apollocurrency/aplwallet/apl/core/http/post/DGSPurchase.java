@@ -83,7 +83,7 @@ public final class DGSPurchase extends CreateTransaction {
         }
 
         Account buyerAccount = ParameterParser.getSenderAccount(req);
-        Account sellerAccount = accountService.getAccount(goods.getSellerId());
+        Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
         Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
                 deliveryDeadline);

@@ -77,7 +77,7 @@ public final class DGSRefund extends CreateTransaction {
             return INCORRECT_DGS_REFUND;
         }
 
-        Account buyerAccount = accountService.getAccount(purchase.getBuyerId());
+        Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
 
         Attachment attachment = new DigitalGoodsRefund(purchase.getId(), refundATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);

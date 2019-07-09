@@ -21,29 +21,14 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.*;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.*;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -55,14 +40,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WHITELIST;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
@@ -81,8 +59,6 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             "phasingHashedSecret", "phasingHashedSecretAlgorithm",
             "recipientPublicKey",
             "ecBlockId", "ecBlockHeight"};
-
-    protected static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
 
     private static String[] addCommonParameters(String[] parameters) {
         String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
@@ -196,7 +172,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
         if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
-            Account recipient = accountService.getAccount(recipientId);
+            Account recipient = lookupAccountService().getAccount(recipientId);
             if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient,
                         senderAccount.getId(),true);
