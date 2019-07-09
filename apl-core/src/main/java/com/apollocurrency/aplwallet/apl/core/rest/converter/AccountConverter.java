@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
@@ -37,6 +38,9 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
     private AccountLeaseService accountLeaseService;
 
     @Inject @Setter
+    private Account2FAHelper account2FAHelper;
+
+    @Inject @Setter
     private Blockchain blockchain;
 
     @Override
@@ -44,7 +48,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         AccountDTO dto = new AccountDTO();
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
-        dto.set2FA(Helper2FA.isEnabled2FA(account.getId()));
+        dto.set2FA(account2FAHelper.isEnabled2FA(account.getId()));
         byte[] publicKey = account.getPublicKey().getPublicKey();
         if (publicKey != null) {
             dto.setPublicKey(Convert.toHexString(publicKey));

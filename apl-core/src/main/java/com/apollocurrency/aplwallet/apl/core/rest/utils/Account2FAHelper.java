@@ -63,9 +63,6 @@ public class Account2FAHelper {
         if (StringUtils.isNotBlank(passphraseParam) && StringUtils.isNotBlank(secretPhraseParam)){
             throw new RestParameterException( ApiErrors.ONLY_ONE_OF_PARAM_LIST, "passphrase, secretPhrase");
         }
-        if (accountStr == null) {
-            throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
-        }
 
         String passphrase = null;
         if(StringUtils.isNotBlank(passphraseParam)){
@@ -80,6 +77,9 @@ public class Account2FAHelper {
         long accountId;
 
         if (passphrase != null) {
+            if (StringUtils.isBlank(accountStr)) {
+                throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
+            }
             accountId = Convert.parseAccountId(accountStr);
         } else {
             accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
@@ -146,34 +146,6 @@ public class Account2FAHelper {
         return params2FA;
     }
 
-    private byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
-        ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
-        if (fbWallet == null) {
-            throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, String.format("%s, account=%d","account id or passphrase", accountId));
-        }
-        return Convert.parseHexString(fbWallet.getAplKeySecret());
-    }
-
-    private void validate2FAStatus(Status2FA status2FA, long accountId) throws RestParameterException {
-        if (status2FA != Status2FA.OK) {
-            log.debug("2fa error: {}-{}", Convert2.rsAccount(accountId), status2FA);
-            throw new RestParameterException(ApiErrors.ACCOUNT_2FA_ERROR, String.format("%s, account=%d",status2FA.name(), accountId));
-        }
-    }
-
-    private Status2FA auth2FA(String passphrase, long accountId, int code) {
-        findAplSecretBytes(accountId, passphrase);
-
-        return service2FA.tryAuth(accountId, code);
-    }
-
-    private Status2FA auth2FA(String secretPhrase, int code) {
-        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
-        Status2FA status2FA = service2FA.tryAuth(accountId, code);
-        validate2FAStatus(status2FA, accountId);
-        return status2FA;
-    }
-
     public boolean isEnabled2FA(long accountId) {
         return service2FA.isEnabled(accountId);
     }
@@ -200,6 +172,34 @@ public class Account2FAHelper {
         WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
 
         return walletKeyInfo;
+    }
+
+    private byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
+        ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
+        if (fbWallet == null) {
+            throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, String.format("%s, account=%d","account id or passphrase", accountId));
+        }
+        return Convert.parseHexString(fbWallet.getAplKeySecret());
+    }
+
+    private void validate2FAStatus(Status2FA status2FA, long accountId) throws RestParameterException {
+        if (status2FA != Status2FA.OK) {
+            log.debug("2fa error: {}-{}", Convert2.rsAccount(accountId), status2FA);
+            throw new RestParameterException(ApiErrors.ACCOUNT_2FA_ERROR, String.format("%s, account=%d",status2FA.name(), accountId));
+        }
+    }
+
+    private Status2FA auth2FA(String passphrase, long accountId, int code) {
+        findAplSecretBytes(accountId, passphrase);
+
+        return service2FA.tryAuth(accountId, code);
+    }
+
+    private Status2FA auth2FA(String secretPhrase, int code) {
+        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+        Status2FA status2FA = service2FA.tryAuth(accountId, code);
+        validate2FAStatus(status2FA, accountId);
+        return status2FA;
     }
 
     private void validateKeyStoreStatus(long accountId, KeyStoreService.Status status, String notPerformedAction) {

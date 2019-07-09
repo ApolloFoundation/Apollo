@@ -92,7 +92,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     @Test
     void getAccount_Account_ID_without_including_additional_information() throws URISyntaxException, IOException {
-        doReturn(account).when(accountBalanceService).getAccount(Long.toUnsignedString(ACCOUNT_ID));
+        doReturn(account).when(accountBalanceService).retrieveAccountByAccountId(Long.toUnsignedString(ACCOUNT_ID));
         doReturn(accountDTO).when(accountConverter).convert(account);
         MockHttpResponse response = sendGetRequest("/accounts/account?account="+ACCOUNT_ID);
 

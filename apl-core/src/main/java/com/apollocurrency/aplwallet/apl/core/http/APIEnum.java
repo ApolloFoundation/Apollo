@@ -588,9 +588,9 @@ public enum APIEnum {
     @Obsolete GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
     EXPORT_KEY("exportKey", new ExportKey()),
     IMPORT_KEY("importKey", new ImportKey()),
-    ENABLE_2FA("enable2FA", new Enable2FA()),
-    DISABLE_2FA("disable2FA", new Disable2FA()),
-    CONFIRM_2FA("confirm2FA", new Confirm2FA()),
+    @Obsolete ENABLE_2FA("enable2FA", new Enable2FA()),
+    @Obsolete DISABLE_2FA("disable2FA", new Disable2FA()),
+    @Obsolete CONFIRM_2FA("confirm2FA", new Confirm2FA()),
     GET_GENESIS_BALANCES("getGenesisBalances", new GetGenesisBalances()),
     DELETE_KEY("deleteKey", new DeleteKey()),
     ;

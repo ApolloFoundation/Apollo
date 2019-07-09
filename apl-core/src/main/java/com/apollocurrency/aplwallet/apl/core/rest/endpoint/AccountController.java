@@ -101,7 +101,7 @@ public class AccountController {
             return response.error( ApiErrors.MISSING_PARAM, "account").build();
         }
 
-        Account account  = accountBalanceService.getAccount(accountStr);
+        Account account  = accountBalanceService.retrieveAccountByAccountId(accountStr);
 
         if (account == null) {
             return response.error( ApiErrors.UNKNOWN_VALUE, "account", accountStr).build();
@@ -161,7 +161,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/confirm2fa")
+    @Path("/confirm2FA")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -177,8 +177,8 @@ public class AccountController {
     public Response confirm2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
-            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The 2FA code.", required = true) @QueryParam("code2FA") Integer code2FA
+            @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr,
+            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -192,7 +192,7 @@ public class AccountController {
     }
 
 
-    @Path("/account/disable2fa")
+    @Path("/disable2FA")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -208,8 +208,8 @@ public class AccountController {
     public Response disable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
-            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The 2FA code.", required = true) @QueryParam("code2FA") Integer code2FA
+            @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr,
+            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -223,7 +223,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/enable2fa")
+    @Path("/enable2FA")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -239,7 +239,7 @@ public class AccountController {
     public Response enable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
-            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr
+            @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
