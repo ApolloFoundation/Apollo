@@ -89,7 +89,7 @@ public class PeerClient {
     }
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
-        log.debug("downloadChunk() fci = {}", fci);
+        log.trace("downloadChunk() fci = {}", fci);
         if(!checkConnection()){
             log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
             return null;

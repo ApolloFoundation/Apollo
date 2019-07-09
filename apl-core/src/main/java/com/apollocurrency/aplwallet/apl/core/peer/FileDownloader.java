@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.util.BadCheckSumException;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -76,6 +77,7 @@ public class FileDownloader {
     private final AplAppStatus aplAppStatus;
     private String taskId;
     private ReadWriteLock fileChunksLock =  new ReentrantReadWriteLock();
+    private AtomicLong lastPercent = new AtomicLong(0L);
             
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
@@ -162,7 +164,7 @@ public class FileDownloader {
                 if (fci.present.ordinal() < FileChunkState.DOWNLOAD_IN_PROGRESS.ordinal()) {
                     res = fci;
                     fci.present=FileChunkState.DOWNLOAD_IN_PROGRESS;
-                    log.trace("getNextEmptyChunk() fci.present < FileChunkState.DOWNLOAD_IN_PROGRESS...{} id: {}", fci.present.ordinal(),fileID);
+                    log.trace("getNextEmptyChunk(): state: {}", fci.present);
                     break;
                 }
             }
@@ -174,7 +176,7 @@ public class FileDownloader {
     
     private void signalFinished(){
              if(! finishSignalSent.get()){
-              log.debug("getNextEmptyChunk() fileID = {}", fileID);
+              log.debug("signaling finished fileID = {}", fileID);
                this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: "+fileID);
             //FIRE event when shard is PRESENT + ZIP is downloaded
                ShardPresentData shardPresentData = new ShardPresentData(fileID);
@@ -207,7 +209,8 @@ public class FileDownloader {
                      isLast=true;
                 }
             } catch (IOException ex) {
-                setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci); // may be next time we'll get ir right
+                log.debug("Failed to download or save chunk: {} \n exception: {}",fci.chunkId,ex);
+                setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci); // may be next time we'll get it right
             }
         } else {
             setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci);  //well, it exists anyway on some peer
@@ -222,7 +225,11 @@ public class FileDownloader {
         while ((fci = getNextEmptyChunk())!= null) {
             boolean isLast = downloadAndSaveChunk(fci, p, fops);
             if(fci.present==FileChunkState.SAVED){
-                aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading: "+this.fileID+"...");            
+                long percent = Math.round(getDownloadStatus().completed);
+                if(lastPercent.get()+5<percent){
+                    lastPercent.set(percent);
+                    aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading: "+this.fileID+"...");            
+                }
             }
             if(isLast){
                 break;
