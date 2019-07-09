@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
@@ -14,7 +12,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 /**
  *
- * @author nemez
+ * @author Serhiy Lymar
  */
 public class DexTradeEntryMapper implements RowMapper<DexTradeEntry> {
     
