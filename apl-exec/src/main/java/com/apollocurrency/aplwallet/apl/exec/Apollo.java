@@ -96,7 +96,10 @@ public class Apollo {
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
-        String packageName = "Setting root log level in com.apollocurrency.aplwallet.apl, received = " + logLevel;
+        String packageName = "com.apollocurrency.aplwallet";
+        if(logLevel<0){
+            return;
+        }
         if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }   

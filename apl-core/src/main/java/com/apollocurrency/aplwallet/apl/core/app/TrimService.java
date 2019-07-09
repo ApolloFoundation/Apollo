@@ -61,13 +61,16 @@ public class TrimService {
 
     public void init(int height) {
         TrimEntry trimEntry = trimDao.get();
-        int lastTrimHeight = trimEntry == null ? 0 : trimEntry.getHeight();
+        if (trimEntry == null) {
+            log.info("Trim was not saved previously (existing database on new code). Skip trim");
+            trimDao.save(new TrimEntry(null, height, true));
+            return;
+        }
+        int lastTrimHeight = trimEntry.getHeight();
         log.info("Last trim height was {}", lastTrimHeight);
-        if (trimEntry != null) {
-            if (!trimEntry.isDone()) {
-                log.info("Finish trim at height {}", lastTrimHeight);
-                trimDerivedTables(lastTrimHeight, false);
-            }
+        if (!trimEntry.isDone()) {
+            log.info("Finish trim at height {}", lastTrimHeight);
+            trimDerivedTables(lastTrimHeight, false);
         }
         for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
             log.debug("Perform trim on height {}", i);
