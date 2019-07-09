@@ -43,7 +43,7 @@ public class DexTransferMoneyTransaction extends DEX {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Invalid ordinary payment");
+            throw new AplException.NotValidException("Transaction amount is not valid.");
         }
 
         //TODO add additional validation.
