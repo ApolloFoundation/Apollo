@@ -36,7 +36,8 @@ class PeerConnectingThread implements Runnable {
         try {
             try {
                 final int now = timeService.getEpochTime();
-                if (!Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
+                if (!Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) 
+                {
                     List<Future<?>> futures = new ArrayList<>();
                     List<Peer> hallmarkedPeers = Peers.getPeers((peer) -> 
                             !peer.isBlacklisted() 
@@ -71,7 +72,11 @@ class PeerConnectingThread implements Runnable {
                                 return null;
                             }
                             peer.handshake(Peers.blockchainConfig.getChain().getChainId());
-                            if (peer.getState() == PeerState.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
+                            if (peer.getState() == PeerState.CONNECTED 
+                                && Peers.enableHallmarkProtection 
+                                && peer.getWeight() == 0 
+                                && Peers.hasTooManyOutboundConnections()) 
+                            {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
                                 peer.deactivate();
                             }
@@ -135,7 +140,7 @@ class PeerConnectingThread implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                LOG.debug("Error connecting to peer", e);
+                LOG.debug("Error connecting to some peer", e);
             }
         } catch (Throwable t) {
             LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
