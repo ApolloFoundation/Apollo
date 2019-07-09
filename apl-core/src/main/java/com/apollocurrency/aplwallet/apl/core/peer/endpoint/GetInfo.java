@@ -64,11 +64,6 @@ public final class GetInfo extends PeerRequestHandler {
     }
 
     @Override
-    protected boolean isChainIdProtected() {
-        return false;
-    }
-
-    @Override
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
