@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,8 @@ public class ExchangeContract {
     public ExchangeContract(DexContractAttachment dexContractAttachment) {
         this.orderId = dexContractAttachment.getOrderId();
         this.counterOrderId = dexContractAttachment.getCounterOrderId();
-        this.secretHash = dexContractAttachment.getSecretHash();
+        //TODO take a look what batter store in db string/bytes[32]
+        this.secretHash = Convert.toHexString(dexContractAttachment.getSecretHash());
     }
 
 }
