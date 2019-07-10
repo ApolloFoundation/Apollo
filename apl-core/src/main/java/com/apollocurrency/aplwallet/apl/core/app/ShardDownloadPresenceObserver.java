@@ -85,9 +85,14 @@ public class ShardDownloadPresenceObserver {
             log.error("Node has encountered serious error and import CSV shard data. " +
                     "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
             log.error("Please try to run with --no-shards-import command line option");
+            System.exit(-1); // temporary solution
+/*
+            // truncate partial data potentially imported into database
+            this.blockchainProcessor.fullReset();
             // fall back to importing Genesis and starting from beginning
             onNoShardPresent(shardPresentData);
             return;
+*/
         }
         log.info("SNAPSHOT block should be READY in database...");
         blockchainProcessor.updateInitialSnapshotBlock();
