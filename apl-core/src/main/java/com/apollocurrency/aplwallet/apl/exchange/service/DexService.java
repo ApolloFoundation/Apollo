@@ -231,32 +231,45 @@ public class DexService {
      *
      * @return Tx hash id/link
      */
-    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, byte [] secretHash){
-        //TODO Case APL
-        createTransactionRequest.setDeadlineValue("1440");
-        createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
-        PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
-        PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1, phasingParams, null, secretHash, (byte) 2);
-        createTransactionRequest.setPhased(true);
-        createTransactionRequest.setPhasing(phasing);
+    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, byte [] secretHash) throws AplException.ExecutiveProcessException {
+        String transactionStr = null;
 
-        createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId() != null ? offer.getTransactionId() : 0 , false));
-        Transaction transaction = null;
-        try {
-            transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+        if(offer.getPairCurrency().isApl()) {
+            createTransactionRequest.setDeadlineValue("1440");
+            createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
+            PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
+            PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1, phasingParams, null, secretHash, (byte) 2);
+            createTransactionRequest.setPhased(true);
+            createTransactionRequest.setPhasing(phasing);
 
-        } catch (AplException.ValidationException e) {
-            LOG.error(e.getMessage(), e);
-            //TODO
-        } catch (ParameterException e) {
-            LOG.error(e.getMessage(), e);
-            //TODO
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId() != null ? offer.getTransactionId() : 0, false));
+            try {
+                Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+                transactionStr = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
+            } catch (AplException.ValidationException e) {
+                LOG.error(e.getMessage(), e);
+                //TODO
+            } catch (ParameterException e) {
+                LOG.error(e.getMessage(), e);
+                //TODO
+            }
+        } else if(offer.getPairCurrency().isEthOrPax()){
+            BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
+            String token = null;
+
+            if(offer.getPairCurrency().isPax()){
+                token = ethereumWalletService.PAX_CONTRACT_ADDRESS;
+            }
+
+            transactionStr = dexSmartContractService.depositAndInitiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
+                    offer.getFromAddress(), offer.getTransactionId(),
+                    EthUtil.etherToWei(haveToPay),
+                    secretHash, offer.getToAddress(), Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1,
+                    null, token);
         }
 
 
-        //TODO Case ETH/PAX
-
-        return transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
+        return transactionStr;
     }
 
 

@@ -54,20 +54,13 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String deposit(String passphrase, Long offerId, long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
-        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-        if(keyStore==null){
-            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
-        }
-        EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+
         Long gasPrice = gas;
-
         if(gasPrice == null){
-            gasPrice = dexEthService.getEthPriceInfo().getFastSpeedPrice();
+            gasPrice = getEthGasPrice();
         }
 
-       if(gasPrice == null){
-           throw new AplException.ThirdServiceIsNotAvailable("Eth Price Info is not available.");
-       }
         if(!currency.isEthOrPax()){
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
         }
@@ -86,28 +79,39 @@ public class DexSmartContractService {
          * @return String transaction hash.
          */
     public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger orderId, Long gas, DexCurrencies currency) throws AplException.ExecutiveProcessException {
-        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-
-        if(keyStore==null){
-            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
-        }
-
-        EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
         if(!currency.isEthOrPax()){
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
         }
-        Long gasPrice = gas;
 
+        Long gasPrice = gas;
         if(gasPrice == null){
-            try {
-                gasPrice = dexEthService.getEthPriceInfo().getAverageSpeedPrice();
-            } catch (ExecutionException e) {
-                throw new AplException.ExecutiveProcessException("Third service is not available, try later.");
-            }
+            gasPrice = getEthGasPrice();
         }
 
         return withdraw(ethWalletKey.getCredentials(), orderId, gasPrice, currency.isEth() ? null : paxContractAddress);
+    }
+
+
+    public String initiate(String passphrase, long accountId, String fromAddress, Long orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gas) throws AplException.ExecutiveProcessException {
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        Long gasPrice = gas;
+        if(gasPrice == null){
+            gasPrice = getEthGasPrice();
+        }
+
+        return initiate(ethWalletKey.getCredentials(), new BigInteger(Long.toUnsignedString(orderId)), secretHash, recipient, refundTimestamp, gasPrice);
+    }
+
+    public String depositAndInitiate(String passphrase, long accountId, String fromAddress, Long orderId, BigInteger weiValue, byte[] secretHash, String recipient, Integer refundTimestamp, Long gas,  String token) throws AplException.ExecutiveProcessException {
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        Long gasPrice = gas;
+        if(gasPrice == null){
+            gasPrice = getEthGasPrice();
+        }
+
+        return depositAndInitiate(ethWalletKey.getCredentials(), new BigInteger(Long.toUnsignedString(orderId)), weiValue, secretHash, recipient, refundTimestamp,gasPrice, token);
     }
 
     /**
@@ -139,15 +143,15 @@ public class DexSmartContractService {
      * @param token
      * @return link on tx.
      */
-    private String depositAndInitiate(Credentials credentials, BigInteger orderId, BigInteger weiValue, byte[] secretHash, String recipient, BigInteger refundTimestamp, Long gasPrice,  String token){
+    private String depositAndInitiate(Credentials credentials, BigInteger orderId, BigInteger weiValue, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice,  String token){
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {
             if(token==null) {
-                transactionReceipt = dexContract.depositAndInitiate(orderId, secretHash, recipient, refundTimestamp, weiValue).sendAsync().get();
+                transactionReceipt = dexContract.depositAndInitiate(orderId, secretHash, recipient, BigInteger.valueOf(refundTimestamp), weiValue).sendAsync().get();
             } else {
-                transactionReceipt = dexContract.depositAndInitiate(orderId, weiValue, token, secretHash, recipient, refundTimestamp).sendAsync().get();
+                transactionReceipt = dexContract.depositAndInitiate(orderId, weiValue, token, secretHash, recipient, BigInteger.valueOf(refundTimestamp)).sendAsync().get();
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -173,12 +177,12 @@ public class DexSmartContractService {
      *  Initiate atomic swap.
      * @return link on tx.
      */
-    private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, BigInteger refundTimestamp, Long gasPrice){
+    private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice){
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {
-            transactionReceipt = dexContract.initiate(orderId, secretHash, recipient, refundTimestamp).sendAsync().get();
+            transactionReceipt = dexContract.initiate(orderId, secretHash, recipient, BigInteger.valueOf(refundTimestamp)).sendAsync().get();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
@@ -195,6 +199,33 @@ public class DexSmartContractService {
             LOG.error(e.getMessage(), e);
         }
         return null;
+    }
+
+    private EthWalletKey getEthWalletKey(String passphrase, Long accountId, String fromAddress) throws AplException.ExecutiveProcessException {
+        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+        if(keyStore==null){
+            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
+        }
+        EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
+        if(keyStore==null){
+            throw new AplException.ExecutiveProcessException("Wallet's address wasn't found. " + fromAddress);
+        }
+        return ethWalletKey;
+    }
+
+    private Long getEthGasPrice() throws AplException.ExecutiveProcessException {
+        Long gasPrice;
+        try {
+            gasPrice = dexEthService.getEthPriceInfo().getFastSpeedPrice();
+        } catch (ExecutionException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AplException.ExecutiveProcessException("Third service is not available, try later.");
+        }
+
+        if(gasPrice == null){
+            throw new AplException.ThirdServiceIsNotAvailable("Eth Price Info is not available.");
+        }
+        return gasPrice;
     }
 
 
