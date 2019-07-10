@@ -11,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-public abstract class DerivedEntity implements Comparable {
+public abstract class DerivedEntity implements Comparable, Cloneable {
     private DbKey dbKey;
     private static final long DEFAULT_DB_ID = 0L;
     private static final int DEFAULT_HEIGHT = -1;
@@ -75,5 +75,14 @@ public abstract class DerivedEntity implements Comparable {
             res = Long.compare(entity.getDbId(), dbId);
         }
         return res;
+    }
+
+    @Override
+    public DerivedEntity clone() throws CloneNotSupportedException {
+        DerivedEntity clone = (DerivedEntity) super.clone();
+        clone.setDbId(dbId);
+        clone.setDbKey(dbKey);
+        clone.setHeight(height);
+        return clone;
     }
 }

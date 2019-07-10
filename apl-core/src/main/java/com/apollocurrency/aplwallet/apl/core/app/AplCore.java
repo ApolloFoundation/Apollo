@@ -252,8 +252,6 @@ public final class AplCore {
                 CurrencyTransfer.init();
                 Exchange.init();
                 ExchangeRequest.init();
-                Shuffling.init();
-                ShufflingParticipant.init();
                 PrunableMessage.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");

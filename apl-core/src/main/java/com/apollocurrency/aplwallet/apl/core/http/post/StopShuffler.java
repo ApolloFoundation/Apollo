@@ -20,20 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflerService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class StopShuffler extends AbstractAPIRequestHandler {
@@ -41,7 +42,7 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
     public StopShuffler() {
         super(new APITag[] {APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
     }
-
+    ShufflerService shufflerService = CDI.current().select(ShufflerService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
@@ -56,15 +57,15 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
             if (shufflingFullHash.length == 0) {
                 return JSONResponses.missing("shufflingFullHash");
             }
-            Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
+            Shuffler shuffler = shufflerService.stopShuffler(accountId, shufflingFullHash);
             response.put("stoppedShuffler", shuffler != null);
         } else {
             apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length != 0) {
-                Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.stopShuffler(accountId, shufflingFullHash);
                 response.put("stoppedShuffler", shuffler != null);
             } else if (accountId == 0 && shufflingFullHash.length == 0) {
-                Shuffler.stopAllShufflers();
+                shufflerService.stopAllShufflers();
                 response.put("stoppedAllShufflers", true);
             } else if (accountId != 0) {
                 return JSONResponses.missing("shufflingFullHash");

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.mapper;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;

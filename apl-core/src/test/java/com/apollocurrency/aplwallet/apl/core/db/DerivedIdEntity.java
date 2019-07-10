@@ -1,0 +1,32 @@
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.db;
+
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+
+import java.util.Objects;
+
+public class DerivedIdEntity extends DerivedEntity {
+    private long id;
+
+    public DerivedIdEntity(Long dbId, Integer height, long id) {
+        super(dbId, height);
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DerivedIdEntity)) return false;
+        if (!super.equals(o)) return false;
+        DerivedIdEntity that = (DerivedIdEntity) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), id);
+    }
+}

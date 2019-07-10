@@ -21,16 +21,18 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -39,7 +41,7 @@ public final class ShufflingRegister extends CreateTransaction {
     public ShufflingRegister() {
         super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");
     }
-
+    ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
@@ -53,7 +55,7 @@ public final class ShufflingRegister extends CreateTransaction {
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {
-            Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+            Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
             if (shuffling == null) {
                 return JSONResponses.NOT_ENOUGH_FUNDS;
             }

@@ -62,6 +62,10 @@ public class ShufflingParticipantTable extends VersionedDeletableEntityDbTable<S
         }
     }
 
+    public ShufflingParticipant get(long shufflingId, long accountId) {
+        return get(KEY_FACTORY.newKey(shufflingId, accountId));
+    }
+
     @Override
     protected ShufflingParticipant load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return MAPPER.map(rs, null);

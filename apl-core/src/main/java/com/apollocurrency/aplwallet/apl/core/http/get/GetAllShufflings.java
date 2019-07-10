@@ -20,18 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -40,7 +42,7 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
     public GetAllShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "includeFinished", "includeHoldingInfo", "finishedOnly", "firstIndex", "lastIndex");
     }
-
+    ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
@@ -56,14 +58,14 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
         DbIterator<Shuffling> shufflings = null;
         try {
             if (finishedOnly) {
-                shufflings = Shuffling.getFinishedShufflings(firstIndex, lastIndex);
+                shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
             } else if (includeFinished) {
-                shufflings = Shuffling.getAll(firstIndex, lastIndex);
+                shufflings = shufflingService.getAll(firstIndex, lastIndex);
             } else {
-                shufflings = Shuffling.getActiveShufflings(firstIndex, lastIndex);
+                shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
             }
             for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
+                jsonArray.add(JSONData.shuffling(shufflingService, shuffling, includeHoldingInfo));
             }
         } finally {
             DbUtils.close(shufflings);

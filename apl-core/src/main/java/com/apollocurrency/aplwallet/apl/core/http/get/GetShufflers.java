@@ -20,24 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflerService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import java.util.Collections;
+import java.util.List;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetShufflers extends AbstractAPIRequestHandler {
@@ -46,6 +48,9 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
         super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState",
                 "passphrase");
     }
+
+    ShufflerService shufflerService = CDI.current().select(ShufflerService.class).get();
+    ShufflingParticipantService shufflingParticipantService = CDI.current().select(ShufflingParticipantService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
@@ -61,27 +66,27 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
             }
             accountId = Account.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
-                shufflers = Shuffler.getAccountShufflers(accountId);
+                shufflers = shufflerService.getAccountShufflers(accountId);
             } else {
-                Shuffler shuffler = Shuffler.getShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.getShuffler(accountId, shufflingFullHash);
                 shufflers = shuffler == null ? Collections.emptyList() : Collections.singletonList(shuffler);
             }
         } else {
             apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length == 0) {
-                shufflers = Shuffler.getAccountShufflers(accountId);
+                shufflers = shufflerService.getAccountShufflers(accountId);
             } else if (accountId == 0 && shufflingFullHash.length > 0) {
-                shufflers = Shuffler.getShufflingShufflers(shufflingFullHash);
+                shufflers = shufflerService.getShufflingShufflers(shufflingFullHash);
             } else if (accountId != 0 && shufflingFullHash.length > 0) {
-                Shuffler shuffler = Shuffler.getShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.getShuffler(accountId, shufflingFullHash);
                 shufflers = shuffler == null ? Collections.emptyList() : Collections.singletonList(shuffler);
             } else {
-                shufflers = Shuffler.getAllShufflers();
+                shufflers = shufflerService.getAllShufflers();
             }
         }
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        shufflers.forEach(shuffler -> jsonArray.add(JSONData.shuffler(shuffler, includeParticipantState)));
+        shufflers.forEach(shuffler -> jsonArray.add(JSONData.shuffler(shufflingParticipantService, shuffler, includeParticipantState)));
         response.put("shufflers", jsonArray);
         return response;
     }

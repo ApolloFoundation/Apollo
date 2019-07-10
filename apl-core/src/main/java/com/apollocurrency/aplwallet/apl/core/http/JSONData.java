@@ -20,16 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
@@ -51,9 +41,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -89,6 +76,11 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
@@ -110,6 +102,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 
 @Vetoed
 public final class JSONData {
@@ -459,7 +461,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject shuffling(Shuffling shuffling, boolean includeHoldingInfo) {
+    public static JSONObject shuffling(ShufflingService shufflingService, Shuffling shuffling, boolean includeHoldingInfo) {
         JSONObject json = new JSONObject();
         json.put("shuffling", Long.toUnsignedString(shuffling.getId()));
         putAccount(json, "issuer", shuffling.getIssuerId());
@@ -473,8 +475,8 @@ public final class JSONData {
         json.put("participantCount", shuffling.getParticipantCount());
         json.put("registrantCount", shuffling.getRegistrantCount());
         json.put("stage", shuffling.getStage().getCode());
-        json.put("shufflingStateHash", Convert.toHexString(shuffling.getStateHash()));
-        json.put("shufflingFullHash", Convert.toHexString(shuffling.getFullHash()));
+        json.put("shufflingStateHash", Convert.toHexString(shufflingService.getStateHash(shuffling)));
+        json.put("shufflingFullHash", Convert.toHexString(shufflingService.getFullHash(shuffling)));
         JSONArray recipientPublicKeys = new JSONArray();
         for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
             recipientPublicKeys.add(Convert.toHexString(recipientPublicKey));
@@ -503,7 +505,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject shuffler(Shuffler shuffler, boolean includeParticipantState) {
+    public static JSONObject shuffler(ShufflingParticipantService shufflingParticipantService, Shuffler shuffler, boolean includeParticipantState) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", shuffler.getAccountId());
         putAccount(json, "recipient", Account.getId(shuffler.getRecipientPublicKey()));
@@ -514,7 +516,7 @@ public final class JSONData {
             json.put("failureCause", shuffler.getFailureCause().getMessage());
         }
         if (includeParticipantState) {
-            ShufflingParticipant participant = ShufflingParticipant.getParticipant(Convert.fullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
+            ShufflingParticipant participant = shufflingParticipantService.getParticipant(Convert.fullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
             if (participant != null) {
                 json.put("participantState", participant.getState().getCode());
             }

@@ -20,18 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -40,14 +42,14 @@ public final class GetShufflingParticipants extends AbstractAPIRequestHandler {
     public GetShufflingParticipants() {
         super(new APITag[] {APITag.SHUFFLING}, "shuffling");
     }
-
+    ShufflingParticipantService shufflingParticipantService = CDI.current().select(ShufflingParticipantService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long shufflingId = ParameterParser.getUnsignedLong(req, "shuffling", true);
         JSONObject response = new JSONObject();
         JSONArray participantsJSONArray = new JSONArray();
         response.put("participants", participantsJSONArray);
-        try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(shufflingId)) {
+        try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shufflingId)) {
             for (ShufflingParticipant participant : participants) {
                 participantsJSONArray.add(JSONData.participant(participant));
             }

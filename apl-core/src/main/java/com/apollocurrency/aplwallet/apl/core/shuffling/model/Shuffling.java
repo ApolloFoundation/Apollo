@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.model;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;

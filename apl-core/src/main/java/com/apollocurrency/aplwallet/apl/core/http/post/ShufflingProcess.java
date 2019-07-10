@@ -23,18 +23,21 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -45,10 +48,12 @@ public final class ShufflingProcess extends CreateTransaction {
                 "shuffling", "recipientSecretPhrase", "recipientPublicKey");
     }
 
+    ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    ShufflingParticipantService shufflingParticipantService = CDI.current().select(ShufflingParticipantService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Shuffling shuffling = ParameterParser.getShuffling(req);
-        if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+        Shuffling shuffling = ParameterParser.getShuffling(shufflingService, req);
+        if (shuffling.getStage() != ShufflingService.Stage.PROCESSING) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 11);
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());
@@ -63,7 +68,7 @@ public final class ShufflingProcess extends CreateTransaction {
                     Convert2.rsAccount(senderId), Convert2.rsAccount(shuffling.getAssigneeAccountId())));
             return JSON.prepare(response);
         }
-        ShufflingParticipant participant = shuffling.getParticipant(senderId);
+        ShufflingParticipant participant = shufflingParticipantService.getParticipant(shuffling.getId(), senderId);
         if (participant == null) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 13);
@@ -79,7 +84,7 @@ public final class ShufflingProcess extends CreateTransaction {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 
-        ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shufflingService.process(shuffling, senderId, secretBytes, recipientPublicKey);
         return createTransaction(req, senderAccount, attachment);
     }
 

@@ -20,19 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.shuffling.exception.ControlledAccountException;
+import com.apollocurrency.aplwallet.apl.core.shuffling.exception.DuplicateShufflerException;
+import com.apollocurrency.aplwallet.apl.core.shuffling.exception.InvalidRecipientException;
+import com.apollocurrency.aplwallet.apl.core.shuffling.exception.ShufflerException;
+import com.apollocurrency.aplwallet.apl.core.shuffling.exception.ShufflerLimitException;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflerService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -42,7 +51,9 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
         super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey", "recipientAccount",
                 "recipientPassphrase");
     }
-
+    ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    ShufflerService shufflerService = CDI.current().select(ShufflerService.class).get();
+    ShufflingParticipantService shufflingParticipantService = CDI.current().select(ShufflingParticipantService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
@@ -52,28 +63,28 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
 
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, true);
         try {
-            Shuffler shuffler = Shuffler.addOrGetShuffler(secretBytes, recipientPublicKey, shufflingFullHash);
-            return shuffler != null ? JSONData.shuffler(shuffler, false) : JSON.emptyJSON;
-        } catch (Shuffler.ShufflerLimitException e) {
+            Shuffler shuffler = shufflerService.addOrGetShuffler(secretBytes, recipientPublicKey, shufflingFullHash);
+            return shuffler != null ? JSONData.shuffler(shufflingParticipantService, shuffler, false) : JSON.emptyJSON;
+        } catch (ShufflerLimitException e) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 7);
             response.put("errorDescription", e.getMessage());
             return JSON.prepare(response);
-        } catch (Shuffler.DuplicateShufflerException e) {
+        } catch (DuplicateShufflerException e) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);
             response.put("errorDescription", e.getMessage());
             return JSON.prepare(response);
-        } catch (Shuffler.InvalidRecipientException e) {
+        } catch (InvalidRecipientException e) {
             return JSONResponses.incorrect("recipientPublicKey", e.getMessage());
-        } catch (Shuffler.ControlledAccountException e) {
+        } catch (ControlledAccountException e) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 9);
             response.put("errorDescription", e.getMessage());
             return JSON.prepare(response);
-        } catch (Shuffler.ShufflerException e) {
+        } catch (ShufflerException e) {
             if (e.getCause() instanceof AplException.InsufficientBalanceException) {
-                Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+                Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
                 if (shuffling == null) {
                     return JSONResponses.NOT_ENOUGH_FUNDS;
                 }

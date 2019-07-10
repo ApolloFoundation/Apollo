@@ -69,7 +69,6 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
             pstmt.setByte(++i, shuffling.getRegistrantCount());
             pstmt.setInt(++i, shuffling.getHeight());
             pstmt.executeUpdate();
-            log.trace("Save shuffling {} - height - {} remaining - {} Trace - {}", shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(), shuffling.last3Stacktrace());
         }
     }
     public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {

@@ -3,9 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -15,13 +15,14 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public final class ShufflingProcessingAttachment extends AbstractShufflingAttachment implements Prunable {
-    
+    ShufflingParticipantService shufflingParticipantService = CDI.current().select(ShufflingParticipantService.class).get();
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
 
     public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
@@ -126,7 +127,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            data = ShufflingParticipant.getData(getShufflingId(), transaction.getSenderId());
+            data = shufflingParticipantService.getData(getShufflingId(), transaction.getSenderId());
         }
     }
 
@@ -137,7 +138,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ShufflingParticipant.restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
+        shufflingParticipantService.restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
     }
     
 }

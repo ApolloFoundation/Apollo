@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.model;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipantService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -23,7 +23,7 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
     private byte[] dataTransactionFullHash;
     private byte[] dataHash; // hash of the processing data from ShufflingProcessingAttachment
 
-    private ShufflingParticipant(long shufflingId, long accountId, int index, int height) {
+    public ShufflingParticipant(long shufflingId, long accountId, int index, int height) {
         super(null, height);
         this.shufflingId = shufflingId;
         this.accountId = accountId;
@@ -102,7 +102,7 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
         return dataHash;
     }
 
-    void setDataHash(byte[] dataHash) {
+    public void setDataHash(byte[] dataHash) {
         if (this.dataHash != null) {
             throw new IllegalStateException("dataHash already set");
         }

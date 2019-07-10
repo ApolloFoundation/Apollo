@@ -20,18 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -40,7 +42,7 @@ public final class GetAccountShufflings extends AbstractAPIRequestHandler {
     public GetAccountShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "includeFinished", "includeHoldingInfo", "firstIndex", "lastIndex");
     }
-
+    ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
@@ -53,10 +55,9 @@ public final class GetAccountShufflings extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = Shuffling.getAccountShufflings(accountId, includeFinished, firstIndex, lastIndex)) {
-            for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
-            }
+        List<Shuffling> shufflings = shufflingService.getAccountShufflings(accountId, includeFinished, firstIndex, lastIndex);
+        for (Shuffling shuffling : shufflings) {
+            jsonArray.add(JSONData.shuffling(shufflingService, shuffling, includeHoldingInfo));
         }
         return response;
     }

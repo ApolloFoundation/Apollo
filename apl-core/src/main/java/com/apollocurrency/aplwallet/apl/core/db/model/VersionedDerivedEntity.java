@@ -40,4 +40,11 @@ public abstract class VersionedDerivedEntity extends DerivedEntity {
     public int hashCode() {
         return Objects.hash(super.hashCode(), latest);
     }
+
+    @Override
+    public VersionedDerivedEntity clone() throws CloneNotSupportedException {
+        VersionedDerivedEntity clone = (VersionedDerivedEntity) super.clone();
+        clone.setLatest(latest);
+        return clone;
+    }
 }

@@ -6,14 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.jboss.weld.junit5.EnableWeld;
@@ -23,6 +15,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class ZipTest {
@@ -92,13 +93,17 @@ class ZipTest {
                 // that will trigger if there is 'another-archive-1.zip' or something else like that is in folder
                 assertTrue(csvFile.toString().contains(zipFileName), // only source zip file name
                         "Another file ZIP should not be present inside ZIP, but there is file = " + csvFile.toString());
+            } else {
+                // check CSV content
+                List lines = FileUtils.readLines(file);
+                Path sourceFile = csvResourcesPath.resolve(file.getName());
+                List<String> expectedLines = Files.readAllLines(sourceFile);
+                assertEquals(expectedLines, lines);
+                csvFilesNumber++; // count all files in folder
             }
-            // check CSV content
-            List lines = FileUtils.readLines(file);
-            assertTrue(lines.size() > 1, "CSV file" + csvFile + " is EMPTY !");
-            csvFilesNumber++; // count all files in folder
         }
-        assertEquals(8, csvFilesNumber); // count CSV files + original ZIP
+
+        assertEquals(7, csvFilesNumber); // count CSV files
     }
 
     @Test
