@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -38,17 +39,17 @@ import javax.inject.Singleton;
 @Singleton
 public class ShardDownloadPresenceObserver {
 
-    private DatabaseManager databaseManager;
-    private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
-    private DerivedTablesRegistry derivedTablesRegistry;
-    private CsvImporter csvImporter;
-    private Zip zipComponent;
-    private DownloadableFilesManager downloadableFilesManager;
-    private AplAppStatus aplAppStatus;
-    private GlobalSync globalSync;
-    private ShardImporter shardImporter;
-    private BlockchainConfigUpdater blockchainConfigUpdater;
+    private final DatabaseManager databaseManager;
+    private final Blockchain blockchain;
+    private final BlockchainProcessor blockchainProcessor;
+    private final DerivedTablesRegistry derivedTablesRegistry;
+    private final CsvImporter csvImporter;
+    private final Zip zipComponent;
+    private final DownloadableFilesManager downloadableFilesManager;
+    private final AplAppStatus aplAppStatus;
+    private final GlobalSync globalSync;
+    private final ShardImporter shardImporter;
+    private final BlockchainConfigUpdater blockchainConfigUpdater;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
@@ -75,8 +76,24 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
-    public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
+        String fileId = shardPresentData.getFileIdValue();
+        try {
+            shardImporter.importShard(fileId, List.of());
+        } catch (Exception e) {
+            log.error("Error on Shard # {}. Zip/CSV importing...\nerror: {}", fileId, e.getMessage());
+            log.error("Node has encountered serious error and import CSV shard data. " +
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
+            log.error("Please try to run with --no-shards-import command line option");
+            System.exit(-1); // temporary solution
+/*
+            // truncate partial data potentially imported into database
+            this.blockchainProcessor.fullReset();
+            // fall back to importing Genesis and starting from beginning
+            onNoShardPresent(shardPresentData);
+            return;
+*/
+        }
         log.info("SNAPSHOT block should be READY in database...");
         blockchainProcessor.updateInitialSnapshotBlock();
         Block lastBlock = blockchain.findLastBlock();

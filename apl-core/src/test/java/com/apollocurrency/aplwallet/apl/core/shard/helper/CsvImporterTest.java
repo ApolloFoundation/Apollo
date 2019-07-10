@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Array;
 import java.sql.Connection;
@@ -16,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -33,13 +35,10 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.config.WalletClientProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -48,10 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
-import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -67,13 +63,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -319,6 +308,48 @@ class CsvImporterTest {
             }
         });
         aplAppStatus.durableTaskFinished( taskId, false, "data import finished");
+    }
+
+    @Test
+    void importShardOnly() throws Exception {
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+        assertNotNull(csvImporter);
+
+        String tableName = "shard";
+        long result = csvImporter.importCsv(tableName, 10, true);
+        assertTrue(result > 0, "incorrect '" + tableName + "'");
+        log.debug("Imported '{}' rows for table '{}'", result, tableName);
+
+        List<String> shardCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve("shard.csv"));
+        int numberOfRows = shardCsv.size();
+//        assertEquals(numberOfRows - 1, result, "incorrect rows imported from'" + tableName + "'");
+
+        DbUtils.inTransaction(extension, (con)-> {
+            try (PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+            ) {
+                long count = -1;
+                ResultSet rs = preparedCount.executeQuery();
+                if (rs.next()) {
+                    count = rs.getLong("count");
+                }
+                assertTrue(count > 0);
+                assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
+            } catch (Exception e) {
+                log.error("Error", e);
+            }
+        });
+        DbUtils.inTransaction(extension, (con)-> {
+            try (PreparedStatement pstmt = con.prepareStatement("select GENERATOR_IDS, BLOCK_TIMEOUTS from " + tableName + " order by shard_id")) {
+                ResultSet rs = pstmt.executeQuery();
+                rs.next();
+                assertNotNull(rs.getArray(1).getArray());
+                assertNotNull(rs.getArray(2).getArray());
+            }
+            catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        });
     }
 
 
