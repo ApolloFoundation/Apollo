@@ -113,7 +113,7 @@ public class TransportInteractionWebSocket {
         ClientUpgradeRequest request = new ClientUpgradeRequest();
         client.connect(this, endpointURI, request);
         log.debug("Connecting to : {} ", endpointURI);
-        awaitClose(5, TimeUnit.SECONDS);
+        awaitClose(300, TimeUnit.MILLISECONDS);
         
         } catch (Exception ex) {
             log.error("WS connection exception: {}",  ex.getMessage().toString());            
