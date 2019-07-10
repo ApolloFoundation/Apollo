@@ -23,6 +23,15 @@ import java.util.stream.Collectors;
  */
 public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
     private Map<DbKey, List<T>> allEntities = new ConcurrentHashMap<>();
+    private KeyFactory<T> keyFactory;
+
+    protected KeyFactory<T> getKeyFactory() {
+        return keyFactory;
+    }
+
+    public InMemoryDerivedEntityRepository(KeyFactory<T> keyFactory) {
+        this.keyFactory = keyFactory;
+    }
 
     protected Map<DbKey, List<T>> getAllEntities() {
         return allEntities;
@@ -30,7 +39,7 @@ public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
 
     public void putAll(List<T> objects) {
         allEntities.putAll(objects.stream()
-                .collect(groupingBy(DerivedEntity::getDbKey,
+                .collect(groupingBy(keyFactory::newKey,
                         Collectors.collectingAndThen(Collectors.toList(), l -> l.stream()
                                 .sorted(Comparator.comparing(DerivedEntity::getHeight))
                                 .collect(Collectors.toList())))));
@@ -69,11 +78,12 @@ public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
     }
 
     public void insert(T entity) {
-        List<T> existingEntities = allEntities.get(entity.getDbKey());
+        DbKey dbKey = keyFactory.newKey(entity);
+        List<T> existingEntities = allEntities.get(dbKey);
         if (existingEntities == null) {
             List<T> entities = new ArrayList<>();
             entities.add(entity);
-            allEntities.put(entity.getDbKey(), entities);
+            allEntities.put(dbKey, entities);
         } else {
             int lastPosition = existingEntities.size() - 1; // assume that existing list of entities has min size 1
             T lastEntity = existingEntities.get(lastPosition);

@@ -11,6 +11,14 @@ import java.util.Objects;
 public class DerivedIdEntity extends DerivedEntity {
     private long id;
 
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
     public DerivedIdEntity(Long dbId, Integer height, long id) {
         super(dbId, height);
         this.id = id;

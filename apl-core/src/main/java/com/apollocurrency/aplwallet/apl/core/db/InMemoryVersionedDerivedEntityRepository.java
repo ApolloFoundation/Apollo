@@ -16,6 +16,10 @@ import java.util.stream.Collectors;
  * @param <T> versioned derived entity to store
  */
 public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerivedEntity> extends InMemoryDerivedEntityRepository<T> {
+    public InMemoryVersionedDerivedEntityRepository(KeyFactory<T> keyFactory) {
+        super(keyFactory);
+    }
+
     @Override
     public void insert(T entity) {
         entity.setLatest(true);
@@ -30,7 +34,8 @@ public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerived
 
     @Override
     public void delete(T entity) {
-        List<T> existingEntities = getAllEntities().get(entity.getDbKey());
+        DbKey dbKey = getKeyFactory().newKey(entity);
+        List<T> existingEntities = getAllEntities().get(dbKey);
         entity.setLatest(false);
         if (existingEntities != null) {
             int lastPosition = existingEntities.size() - 1; // assume that existing list of entities has min size 1

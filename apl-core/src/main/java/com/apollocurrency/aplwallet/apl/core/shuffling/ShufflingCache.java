@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.db.InMemoryVersionedDerivedEntityRepository;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 
 import java.util.Comparator;
@@ -12,6 +13,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ShufflingCache extends InMemoryVersionedDerivedEntityRepository<Shuffling> {
+
+    public ShufflingCache(KeyFactory<Shuffling> keyFactory) {
+        super(keyFactory);
+    }
 
     public List<Shuffling> getActiveShufflings() {
         return  getAllEntities().values()
