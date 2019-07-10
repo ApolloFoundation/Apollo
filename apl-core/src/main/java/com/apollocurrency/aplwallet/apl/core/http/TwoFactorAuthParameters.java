@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
@@ -8,6 +12,7 @@ public class TwoFactorAuthParameters {
     String passphrase;
     String secretPhrase;
     Status2FA status2FA;
+    Integer code2FA;
 
     public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
         if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
@@ -40,6 +45,14 @@ public class TwoFactorAuthParameters {
 
     public void setStatus2FA(Status2FA status2FA) {
         this.status2FA = status2FA;
+    }
+
+    public Integer getCode2FA() {
+        return code2FA;
+    }
+
+    public void setCode2FA(Integer code2FA) {
+        this.code2FA = code2FA;
     }
 
     public TwoFactorAuthParameters(long accountId, String passphrase, String secretPhrase) {

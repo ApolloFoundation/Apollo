@@ -14,20 +14,12 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
-import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
@@ -49,17 +41,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -115,6 +102,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Wallets balances"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
         ) throws NotFoundException {
 
@@ -144,6 +132,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Wallets balances"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response getHistory( @NotNull  @QueryParam("account") String account,  @QueryParam("pair") String pair,  @QueryParam("type") String type,@Context SecurityContext securityContext)
             throws NotFoundException {
 
@@ -159,6 +148,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response createOffer(@Parameter(description = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("offerType") Byte offerType,
                                 @Parameter(description = "From address", required = true) @FormParam("walletAddress") String walletAddress,
                                 @Parameter(description = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
@@ -300,6 +290,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response getOffers(  @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
                                 @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
                                 @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
@@ -361,6 +352,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
                                          @Context HttpServletRequest req) throws NotFoundException {
 
@@ -430,6 +422,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Transaction hash"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response dexWithdrawPost(
                                     @NotNull @Parameter(description = "amount eth for withdraw") @FormParam("amount") BigDecimal amount,
                                     @NotNull @Parameter(description = "Send from address") @FormParam("fromAddress") String fromAddress,
@@ -502,6 +495,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
+    @PermitAll
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
 
         log.debug("dexEthInfo: ");

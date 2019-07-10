@@ -23,12 +23,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.Setter;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,6 +62,7 @@ public class NetworkController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = MyPeerInfoDTO.class)))
             })
+    @PermitAll
     public Response getMyInfo(@Context HttpServletRequest request) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         MyPeerInfoDTO dto = new MyPeerInfoDTO(request.getRemoteHost(), request.getRemoteAddr());
@@ -72,11 +76,13 @@ public class NetworkController {
             summary = "Returns peer information",
             description = "Returns peer information by host address.",
             tags = {"networking"},
+            parameters = {},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = PeerDTO.class)))
     })
+    @PermitAll
     public Response getPeer(
             @Parameter(description = "The certain peer IP address.", required = true)
             @QueryParam("peer") String peerAddress ) {
@@ -111,7 +117,8 @@ public class NetworkController {
                                     schema = @Schema(implementation = PeerDTO.class)))
             }
     )
-    public Response addOrReplacePeer( @FormParam("peer") String peerAddress ) {
+    @RolesAllowed("admin")
+    public Response addOrReplacePeer( @FormParam("peer") String peerAddress, @Context SecurityContext sc) {
         ResponseBuilder response = ResponseBuilder.ok();
 
         if (peerAddress == null) {
@@ -143,6 +150,7 @@ public class NetworkController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = GetPeersResponse.class)))
     })
+    @PermitAll
     //TODO: need to be divided into two separated methods
     // cause currently, this GET returns two different responses (GetPeersResponse or GetPeersSimpleResponse)
     // that depend on the value of the includePeerInfo parameter.
@@ -198,6 +206,7 @@ public class NetworkController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema( implementation = GetPeersResponse.class)))
     })
+    @PermitAll
     //TODO: need to be divided into two separated path
     // cause currently, this GET returns two different responses (GetPeersResponse or GetPeersSimpleResponse)
     // that depend on the value of the includePeerInfo parameter.
@@ -227,6 +236,7 @@ public class NetworkController {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
+    @RolesAllowed("admin")
     public Response addPeerInBlackList( @FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.done();
 
@@ -258,6 +268,7 @@ public class NetworkController {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
+    @RolesAllowed("admin")
     public Response addPeerInProxyBlackList(@FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
 
@@ -291,6 +302,7 @@ public class NetworkController {
                                     schema = @Schema(implementation = PeerDTO.class)))
             }
     )
+    @PermitAll
     public Response setAPIProxyPeer( @FormParam("peer") String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         Peer peer;

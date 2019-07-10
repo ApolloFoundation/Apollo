@@ -22,6 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -277,12 +279,15 @@ public final class API {
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+            //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
-                                .add(RestParameterExceptionMapper.class.getName())
+                            .add(RestParameterExceptionMapper.class.getName())
+                            .add(SecurityInterceptor.class.getName())
+                            .add(Secured2FAInterceptor.class.getName())
                             .toString()
             );
 

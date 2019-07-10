@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -59,6 +61,7 @@ public class BackendControlController {
                                     schema = @Schema(implementation = NodeHWStatusResponse.class)))
             }
     )
+    @PermitAll
     public Response getBackendHWStatus() {
         NodeHWStatusResponse statusResponse = new NodeHWStatusResponse();
         statusResponse.message = "Seems that server is OK";
@@ -79,6 +82,7 @@ public class BackendControlController {
                                     schema = @Schema(implementation = NodeStatusResponse.class)))
             }
     )
+    @PermitAll
     public Response getBackendStatus(@QueryParam("status") @DefaultValue("All") String state) {
         NodeStatusResponse statusResponse = new NodeStatusResponse();
         statusResponse.nodeInfo = bcService.getHWStatus();
@@ -98,6 +102,7 @@ public class BackendControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
+    @PermitAll
     public Response getBackendThreadss(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
         boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
         if(passwordOK){

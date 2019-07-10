@@ -18,23 +18,29 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -85,6 +91,7 @@ public class AccountController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountDTO.class)))
             })
+    @PermitAll
     public Response getAccount(
             @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr,
             @Parameter(description = "include additional lessors information.") @QueryParam("includeLessors") @DefaultValue("false") Boolean includeLessors,
@@ -137,9 +144,10 @@ public class AccountController {
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = AccountDTO.class)))
+                            content = @Content(mediaType = "text/html",
+                                    schema = @Schema(implementation = WalletKeysInfoDTO.class)))
             })
+    @PermitAll
     public Response generateAccount(
             @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase,
             @Parameter(description = "require block.") @FormParam("requireBlock") String requireBlockStr,
@@ -171,21 +179,25 @@ public class AccountController {
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = AccountDTO.class)))
+                            content = @Content(mediaType = "text/html",
+                                    schema = @Schema(implementation = Account2FADTO.class)))
             })
+    @Secured2FA
+    @PermitAll
     public Response confirm2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
             @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr,
-            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA
-    ) {
-
+            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
+            @Context org.jboss.resteasy.spi.HttpRequest request
+            ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
 
-        TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
+        //TwoFactorAuthParameters  params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
+        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        account2FAHelper.validate2FAParameters(params2FA);
 
-        account2FAHelper.confirm2FA(params2FA, code2FA);
+        account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
         Account2FADTO dto = faConverter.convert(params2FA);
 
         return response.bind(dto).build();
@@ -202,9 +214,11 @@ public class AccountController {
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = Account2FADetailsDTO.class)))
+                            content = @Content(mediaType = "text/html",
+                                    schema = @Schema(implementation = Account2FADTO.class)))
             })
+    @Secured2FA
+    @PermitAll
     public Response disable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
@@ -233,9 +247,10 @@ public class AccountController {
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
+                            content = @Content(mediaType = "text/html",
                                     schema = @Schema(implementation = Account2FADetailsDTO.class)))
             })
+    @PermitAll
     public Response enable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,

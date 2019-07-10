@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jboss.resteasy.mock.MockDispatcherFactory;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +43,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
     @BeforeEach
     void setUp() {
-        dispatcher = MockDispatcherFactory.createDispatcher();
+        super.setUp();
         dispatcher.getRegistry().addSingletonResource(endpoint);
 
         endpoint.setPeerConverter(new PeerConverter());

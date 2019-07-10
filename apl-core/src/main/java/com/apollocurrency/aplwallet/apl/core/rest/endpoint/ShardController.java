@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Setter;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -43,6 +44,7 @@ public class ShardController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"shards"}, summary = "Retrieve all completed only shards", description = "Get all 'completed' shard entries from database")
+    @PermitAll
     public Response getAllShards() {
         List<ShardDTO> allCompletedShards = shardService.getAllCompletedShards().stream()
                 .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());

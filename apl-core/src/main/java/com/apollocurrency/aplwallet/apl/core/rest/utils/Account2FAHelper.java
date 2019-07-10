@@ -8,7 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
-import com.apollocurrency.aplwallet.apl.core.http.*;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
@@ -24,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 /**
  * This class is just static helper for 2FA.
  * @author al
@@ -55,7 +56,19 @@ public class Account2FAHelper {
                 propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
     }
 
-    public TwoFactorAuthParameters parse2FARequestParams(String accountStr, String passphraseParam, String secretPhraseParam){
+    public TwoFactorAuthParameters validate2FAParameters(TwoFactorAuthParameters parameters){
+        String accountStr = Long.toUnsignedString(parameters.getAccountId());
+        String passphrase = parameters.getPassphrase();
+        String secretPhrase = parameters.getSecretPhrase();
+        Integer code2FA = parameters.getCode2FA();
+        if (code2FA == null){
+            throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
+        }
+
+        return parse2FARequestParams(accountStr, passphrase, secretPhrase);
+    }
+
+    public TwoFactorAuthParameters parse2FARequestParams(String accountStr, String passphraseParam, String secretPhraseParam) throws RestParameterException{
         if (StringUtils.isBlank(passphraseParam) && StringUtils.isBlank(secretPhraseParam)){
             throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, "passphrase, secretPhrase");
         }
@@ -66,6 +79,9 @@ public class Account2FAHelper {
 
         String passphrase = null;
         if(StringUtils.isNotBlank(passphraseParam)){
+            if (StringUtils.isBlank(accountStr)) {
+                throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
+            }
             passphrase = elGamal.elGamalDecrypt(passphraseParam);
         }
 
@@ -77,9 +93,6 @@ public class Account2FAHelper {
         long accountId;
 
         if (passphrase != null) {
-            if (StringUtils.isBlank(accountStr)) {
-                throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
-            }
             accountId = Convert.parseAccountId(accountStr);
         } else {
             accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
@@ -133,6 +146,7 @@ public class Account2FAHelper {
             throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
         }
         TwoFactorAuthParameters params2FA = parse2FARequestParams(accountStr, passphraseParam, secretPhraseParam);
+        params2FA.setCode2FA(code2FA);
         if (isEnabled2FA(params2FA.getAccountId())) {
             Status2FA status2FA;
             if (params2FA.isPassphrasePresent()) {

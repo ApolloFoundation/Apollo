@@ -2,11 +2,14 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.core.Dispatcher;
+import org.jboss.resteasy.mock.MockDispatcherFactory;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
+import org.junit.jupiter.api.BeforeEach;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -31,6 +34,11 @@ public class AbstractEndpointTest {
         Convert2.init(blockchainConfig);
     }
 
+    void setUp() {
+        dispatcher = MockDispatcherFactory.createDispatcher();
+        dispatcher.getProviderFactory().register(RestParameterExceptionMapper.class);
+    }
+
     void checkMandatoryParameterMissingErrorCode(MockHttpResponse response, int expectedErrorCode) throws IOException {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -53,6 +61,10 @@ public class AbstractEndpointTest {
 
     MockHttpResponse sendPostRequest(String uri, String body) throws URISyntaxException{
         MockHttpRequest request = post(uri);
+        return sendPostRequest(request, body);
+    }
+
+    MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException{
         request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         if (StringUtils.isNoneEmpty(body)) {

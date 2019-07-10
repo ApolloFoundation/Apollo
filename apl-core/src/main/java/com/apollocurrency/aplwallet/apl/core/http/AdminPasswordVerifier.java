@@ -19,6 +19,9 @@ import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,11 +32,16 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class AdminPasswordVerifier {
     private static final Logger LOG = LoggerFactory.getLogger(AdminPasswordVerifier.class);
+    public static final String ADMIN_ROLE = "admin";
+    public static final String ADMIN_PASSWORD_PARAMETER_NAME="adminPassword";
     private final PropertiesHolder propertiesHolder;
+    //TODO need to be non-static and private (still being used in the JavaScriptBridge class)
     public static String adminPassword="";
+    @Getter
     public final boolean disableAdminPassword;
     private final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     private final  EpochTime timeService;
+    @Getter
     private final String forwardedForHeader;
     
     @Inject
@@ -46,12 +54,16 @@ public class AdminPasswordVerifier {
         disableAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
         forwardedForHeader = propertiesHolder.getStringProperty("apl.forwardedForHeader");  
     }
-    
+
+    public boolean isBlankAdminPassword(){
+        return StringUtils.isBlank(adminPassword);
+    }
+
     public void verifyPassword(HttpServletRequest req) throws ParameterException {
         if (disableAdminPassword) {
             return;
         }
-        if (adminPassword.isEmpty()) {
+        if (isBlankAdminPassword()) {
             throw new ParameterException(NO_PASSWORD_IN_CONFIG);
         }
         checkOrLockPassword(req);
@@ -61,10 +73,10 @@ public class AdminPasswordVerifier {
         if (disableAdminPassword) {
             return true;
         }
-        if (adminPassword.isEmpty()) {
+        if (isBlankAdminPassword()) {
             return false;
         }
-        if (Convert.emptyToNull(req.getParameter("adminPassword")) == null) {
+        if (Convert.emptyToNull(req.getParameter(ADMIN_PASSWORD_PARAMETER_NAME)) == null) {
             return false;
         }
         try {
@@ -75,30 +87,22 @@ public class AdminPasswordVerifier {
         }
     }
 
-@Vetoed
+    @Vetoed
     private static class PasswordCount {
         private int count;
         private int time;
     }
 
-    private void checkOrLockPassword(HttpServletRequest req) throws ParameterException {
+    public void checkOrLockPassword(String password, String remoteHost) throws ParameterException {
         int now = timeService.getEpochTime();
-        String remoteHost = null;
-        if (forwardedForHeader != null) {
-            remoteHost = req.getHeader(forwardedForHeader);
-        }
-        if (remoteHost == null) {
-            remoteHost = req.getRemoteHost();
-        }
         synchronized(incorrectPasswords) {
             PasswordCount passwordCount = incorrectPasswords.get(remoteHost);
             if (passwordCount != null && passwordCount.count >= 25 && now - passwordCount.time < 60*60) {
                 LOG.warn("Too many incorrect admin password attempts from " + remoteHost);
                 throw new ParameterException(LOCKED_ADMIN_PASSWORD);
             }
-            String adminPassword = Convert.nullToEmpty(req.getParameter("adminPassword"));
-            if (!adminPassword.equals(adminPassword)) {
-                if (adminPassword.length() > 0) {
+            if (!password.equals(adminPassword)) {
+                if (password.length() > 0) {
                     if (passwordCount == null) {
                         passwordCount = new PasswordCount();
                         incorrectPasswords.put(remoteHost, passwordCount);
@@ -121,6 +125,19 @@ public class AdminPasswordVerifier {
                 incorrectPasswords.remove(remoteHost);
             }
         }
+    }
+
+    private void checkOrLockPassword(HttpServletRequest req) throws ParameterException {
+        String remoteHost = null;
+        if (forwardedForHeader != null) {
+            remoteHost = req.getHeader(forwardedForHeader);
+        }
+        if (remoteHost == null) {
+            remoteHost = req.getRemoteHost();
+        }
+        String adminPasswd = Convert.nullToEmpty(req.getParameter(ADMIN_PASSWORD_PARAMETER_NAME));
+
+        checkOrLockPassword(adminPasswd, remoteHost);
     }
 
 }

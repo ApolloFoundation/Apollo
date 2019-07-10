@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -21,6 +20,7 @@ import lombok.Setter;
 import javax.inject.Inject;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -49,9 +49,12 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
         dto.set2FA(account2FAHelper.isEnabled2FA(account.getId()));
-        byte[] publicKey = account.getPublicKey().getPublicKey();
-        if (publicKey != null) {
-            dto.setPublicKey(Convert.toHexString(publicKey));
+        PublicKey pk = account.getPublicKey();
+        if ( pk != null) {
+            byte[] publicKey = pk.getPublicKey();
+            if (publicKey != null) {
+                dto.setPublicKey(Convert.toHexString(publicKey));
+            }
         }
         dto.setBalanceATM(account.getBalanceATM());
         dto.setUnconfirmedBalanceATM(account.getUnconfirmedBalanceATM());

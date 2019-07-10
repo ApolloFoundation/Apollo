@@ -34,6 +34,9 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -271,6 +274,7 @@ public class Apollo {
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
                 .recursiveScanPackages(DirProvider.class)
+                .recursiveScanPackages(SecurityInterceptor.class, Secured2FAInterceptor.class, Secured2FA.class)
                 .annotatedDiscoveryMode()
 // we already have it in beans.xml in core
                 .recursiveScanPackages(JdbiHandleFactory.class)

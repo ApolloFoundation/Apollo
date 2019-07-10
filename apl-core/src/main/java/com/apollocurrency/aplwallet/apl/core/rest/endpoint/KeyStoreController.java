@@ -23,6 +23,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 
+import javax.annotation.security.PermitAll;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -62,6 +63,7 @@ public class KeyStoreController {
                                     schema = @Schema(implementation = Response.class)))
             }
     )
+    @PermitAll
     public Response getAccountInfo(@FormParam("account") String account,
                                      @FormParam("passphrase") String passphraseReq) throws ParameterException {
         String passphraseStr = ParameterParser.getPassphrase(passphraseReq, true);
@@ -98,6 +100,7 @@ public class KeyStoreController {
                                     schema = @Schema(implementation = Response.class)))
             }
     )
+    @PermitAll
     public Response importKeyStore(@Context HttpServletRequest request) {
         // Check that we have a file upload request
         if(!ServletFileUpload.isMultipartContent(request)){
@@ -180,6 +183,7 @@ public class KeyStoreController {
                                     schema = @Schema(implementation = Response.class)))
             }
     )
+    @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
         try {

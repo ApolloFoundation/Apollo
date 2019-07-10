@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.ApolloX509Response;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -51,6 +53,7 @@ public class ServerInfoController {
                                     schema = @Schema(implementation = ApolloX509Response.class)))
             }
     )
+    @PermitAll
     public Response getX509Info(){
         ApolloX509Response infoResponse = new ApolloX509Response();
         infoResponse.info = siService.getX509Info();
