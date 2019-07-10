@@ -67,13 +67,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -319,6 +312,46 @@ class CsvImporterTest {
             }
         });
         aplAppStatus.durableTaskFinished( taskId, false, "data import finished");
+    }
+
+    @Test
+    void importShardOnly() throws Exception {
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+        assertNotNull(csvImporter);
+
+        String tableName = "shard";
+        long result = csvImporter.importCsv(tableName, 10, true);
+        assertTrue(result > 0, "incorrect '" + tableName + "'");
+        log.debug("Imported '{}' rows for table '{}'", result, tableName);
+
+        DbUtils.inTransaction(extension, (con)-> {
+
+
+        try (PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+        ) {
+            long count = -1;
+            ResultSet rs = preparedCount.executeQuery();
+            if (rs.next()) {
+                count = rs.getLong("count");
+            }
+            assertTrue(count > 0);
+            assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
+        } catch (Exception e) {
+            log.error("Error", e);
+        }
+        });
+        DbUtils.inTransaction(extension, (con)-> {
+            try (PreparedStatement pstmt = con.prepareStatement("select GENERATOR_IDS, BLOCK_TIMEOUTS from " + tableName + " order by shard_id")) {
+                ResultSet rs = pstmt.executeQuery();
+                rs.next();
+                assertNotNull(rs.getArray(1).getArray());
+                assertNotNull(rs.getArray(2).getArray());
+            }
+            catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        });
     }
 
 
