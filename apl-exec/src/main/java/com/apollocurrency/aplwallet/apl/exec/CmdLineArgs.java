@@ -32,7 +32,7 @@ public class CmdLineArgs {
     public String vaultKeystoreDir = "";
     @Parameter(names = {"--no-shards-import"}, description = "Start from Genesis block, do not try to import last shard", arity = 1)
     public boolean noShardImport=true;
-    @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources")
+    @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources", arity = 1)
     public boolean noShardCreate=false;
 
     @Parameter(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
