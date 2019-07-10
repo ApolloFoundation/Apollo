@@ -69,6 +69,10 @@ public class DexOffer{
     }
 
 
+    /**
+     * Use TransactionId
+     */
+    @Deprecated
     public Long getId() {
         return id;
     }

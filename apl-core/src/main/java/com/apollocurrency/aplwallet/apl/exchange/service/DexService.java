@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -175,8 +176,7 @@ public class DexService {
     public String refundEthPaxFrozenMoney(String passphrase, DexOffer offer) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
-        BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
-        String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+        String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), new BigInteger(Long.toUnsignedString(offer.getTransactionId())), null, offer.getPairCurrency());
 
         if(txHash==null){
             throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
@@ -190,7 +190,7 @@ public class DexService {
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
         BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
-        txHash = dexSmartContractService.deposit(passphrase, offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+        txHash = dexSmartContractService.deposit(passphrase, offer.getTransactionId(), offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
 
         if(txHash==null){
