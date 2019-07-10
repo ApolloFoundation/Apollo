@@ -102,7 +102,7 @@ public class ShardImporter {
         if (!unpackResult) {
             log.error("Node has encountered serious error and can't import ZIP with shard data. " +
                     "Somethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
-            System.exit(-1);
+            throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
         }
 
         Genesis.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%

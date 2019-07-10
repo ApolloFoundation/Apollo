@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -407,6 +408,7 @@ public class CsvReaderImpl extends CsvAbstractBase
             int i = 0;
             while (true) {
                 String v = readValue();
+                log.trace("readValue() = '{}'", v);
                 if (v == null) {
                     if (endOfLine) {
                         if (i == 0) {
@@ -429,6 +431,7 @@ public class CsvReaderImpl extends CsvAbstractBase
         } catch (IOException e) {
             throw new SQLException("IOException reading from " + fileName, e);
         }
+        log.trace("Prepared row = {}", Arrays.toString(row));
         return row;
     }
 
