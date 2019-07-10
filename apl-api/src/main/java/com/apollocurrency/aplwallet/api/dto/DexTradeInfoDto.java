@@ -30,7 +30,7 @@ public class DexTradeInfoDto {
     public byte senderOfferType; 
     @Schema(name="Type of currency", description="eth/pax/apl = 0/1/2")
     public byte senderOfferCurrency; 
-    @Schema(name="Amount of currency for exchagne", description="parameter in gwei units")
+    @Schema(name="Amount of currency for exchange", description="parameter in gwei units")
     public long senderOfferAmount;
     @Schema(name="Type of pair currency", description="eth/pax/apl = 0/1/2")
     public byte pairCurrency;

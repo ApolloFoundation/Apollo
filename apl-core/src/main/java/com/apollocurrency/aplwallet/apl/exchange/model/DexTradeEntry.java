@@ -6,11 +6,15 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import java.math.BigDecimal;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data class for interaction with trade table in the database
  * @author Serhiy Lymar
  */
+
+@Getter @Setter
 public class DexTradeEntry {
 
     private long dbId;
@@ -25,94 +29,6 @@ public class DexTradeEntry {
     private Integer finishTime;
     private Integer height; 
 
-    public long getDbId() {
-        return dbId;
-    }
-
-    public void setDbId(long dbId) {
-        this.dbId = dbId;
-    }
-    
-    public long getTransactionID() {
-        return transactionID;
-    }
-
-    public void setTransactionID(long transactionID) {
-        this.transactionID = transactionID;
-    }
-
-    public long getSenderOfferID() {
-        return senderOfferID;
-    }
-
-    public void setSenderOfferID(long senderOfferID) {
-        this.senderOfferID = senderOfferID;
-    }
-
-    public long getReceiverOfferID() {
-        return receiverOfferID;
-    }
-
-    public void setReceiverOfferID(long receiverOfferID) {
-        this.receiverOfferID = receiverOfferID;
-    }
-
-    public byte getSenderOfferType() {
-        return senderOfferType;
-    }
-
-    public void setSenderOfferType(byte senderOfferType) {
-        this.senderOfferType = senderOfferType;
-    }
-
-    public byte getSenderOfferCurrency() {
-        return senderOfferCurrency;
-    }
-
-    public void setSenderOfferCurrency(byte senderOfferCurrency) {
-        this.senderOfferCurrency = senderOfferCurrency;
-    }
-
-    public long getSenderOfferAmount() {
-        return senderOfferAmount;
-    }
-
-    public void setSenderOfferAmount(long senderOfferAmount) {
-        this.senderOfferAmount = senderOfferAmount;
-    }
-
-    public byte getPairCurrency() {
-        return pairCurrency;
-    }
-
-    public void setPairCurrency(byte pairCurrency) {
-        this.pairCurrency = pairCurrency;
-    }
-
-    public BigDecimal getPairRate() {
-        return pairRate;
-    }
-
-    public void setPairRate(BigDecimal pairRate) {
-        this.pairRate = pairRate;
-    }
-
-    public Integer getFinishTime() {
-        return finishTime;
-    }
-
-    public void setFinishTime(Integer finishTime) {
-        this.finishTime = finishTime;
-    }
-
-    public Integer getHeight() {
-        return height;
-    }
-
-    public void setHeight(Integer height) {
-        this.height = height;
-    }
-        
     public DexTradeInfoDto toDto(){       
         DexTradeInfoDto dexTradeInfoDto = new DexTradeInfoDto();        
         dexTradeInfoDto.dbId = this.dbId;
