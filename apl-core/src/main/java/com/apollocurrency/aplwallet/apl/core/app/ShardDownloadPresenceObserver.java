@@ -77,7 +77,14 @@ public class ShardDownloadPresenceObserver {
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+        try {
+            shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+        } catch (Exception e) {
+            log.error("Error on Zip/CSV importing...");
+            log.error("Node has encountered serious error and import CSV shard data. " +
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> STOPPING node process....", shardPresentData.getFileIdValue());
+            System.exit(-1);
+        }
         log.info("SNAPSHOT block should be READY in database...");
         blockchainProcessor.updateInitialSnapshotBlock();
         Block lastBlock = blockchain.findLastBlock();
