@@ -39,17 +39,17 @@ import javax.inject.Singleton;
 @Singleton
 public class ShardDownloadPresenceObserver {
 
-    private DatabaseManager databaseManager;
-    private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
-    private DerivedTablesRegistry derivedTablesRegistry;
-    private CsvImporter csvImporter;
-    private Zip zipComponent;
-    private DownloadableFilesManager downloadableFilesManager;
-    private AplAppStatus aplAppStatus;
-    private GlobalSync globalSync;
-    private ShardImporter shardImporter;
-    private BlockchainConfigUpdater blockchainConfigUpdater;
+    private final DatabaseManager databaseManager;
+    private final Blockchain blockchain;
+    private final BlockchainProcessor blockchainProcessor;
+    private final DerivedTablesRegistry derivedTablesRegistry;
+    private final CsvImporter csvImporter;
+    private final Zip zipComponent;
+    private final DownloadableFilesManager downloadableFilesManager;
+    private final AplAppStatus aplAppStatus;
+    private final GlobalSync globalSync;
+    private final ShardImporter shardImporter;
+    private final BlockchainConfigUpdater blockchainConfigUpdater;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
@@ -78,11 +78,17 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         try {
-            shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {            
+        }
+        String fileId = shardPresentData.getFileIdValue();
+        try {
+            shardImporter.importShard(fileId, List.of());
         } catch (Exception e) {
-            log.error("Error on Zip/CSV importing...");
+            log.error("Error on Sard # {}. Zip/CSV importing...",fileId);
             log.error("Node has encountered serious error and import CSV shard data. " +
-                    "Somethings wrong with processing fileId =\n'{}'\n >>> STOPPING node process....", shardPresentData.getFileIdValue());
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> STOPPING node process....", fileId);
+            log.error("Please try to run with --no-shards-import command line option");
             System.exit(-1);
         }
         log.info("SNAPSHOT block should be READY in database...");
