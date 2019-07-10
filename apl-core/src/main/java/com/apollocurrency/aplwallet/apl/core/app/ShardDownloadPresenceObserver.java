@@ -77,10 +77,6 @@ public class ShardDownloadPresenceObserver {
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ex) {            
-        }
         String fileId = shardPresentData.getFileIdValue();
         try {
             shardImporter.importShard(fileId, List.of());
