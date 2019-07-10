@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -75,7 +76,7 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
-    public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
+    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
         log.info("SNAPSHOT block should be READY in database...");
         blockchainProcessor.updateInitialSnapshotBlock();
