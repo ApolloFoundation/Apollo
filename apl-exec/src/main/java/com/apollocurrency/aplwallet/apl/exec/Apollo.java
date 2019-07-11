@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.config.RestSecurityConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -274,7 +275,7 @@ public class Apollo {
                 .recursiveScanPackages(FullTextConfig.class)
                 .recursiveScanPackages(PeerConverter.class)
                 .recursiveScanPackages(DirProvider.class)
-                .recursiveScanPackages(SecurityInterceptor.class, Secured2FAInterceptor.class, Secured2FA.class)
+                .recursiveScanPackages(SecurityInterceptor.class, RestSecurityConfig.class)
                 .annotatedDiscoveryMode()
 // we already have it in beans.xml in core
                 .recursiveScanPackages(JdbiHandleFactory.class)

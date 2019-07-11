@@ -29,12 +29,11 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.security.PermitAll;
@@ -48,9 +47,14 @@ import java.util.List;
 /**
  * Apollo accounts endpoint
  */
-
+@Slf4j
 @Path("/accounts")
 public class AccountController {
+
+    private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
+            RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+    private static final Response PARAMS2FA_NOT_FOUND = ResponseBuilder.apiError(
+            ApiErrors.INTERNAL_SERVER_EXCEPTION, PARAMS2FA_NOT_FOUND_ERROR_MSG).build();
 
     @Inject @Setter
     private Account2FAHelper account2FAHelper;
@@ -195,6 +199,10 @@ public class AccountController {
 
         //TwoFactorAuthParameters  params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
         TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        if (params2FA == null) {
+            log.error("{} request={}", PARAMS2FA_NOT_FOUND_ERROR_MSG, request.getUri());
+            return PARAMS2FA_NOT_FOUND;
+        }
         account2FAHelper.validate2FAParameters(params2FA);
 
         account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
@@ -223,12 +231,19 @@ public class AccountController {
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
             @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr,
-            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA
+            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
+            @Context org.jboss.resteasy.spi.HttpRequest request
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
 
-        TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
+        //TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
+        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        if (params2FA == null) {
+            log.error("{} request={}", PARAMS2FA_NOT_FOUND_ERROR_MSG, request.getUri());
+            return PARAMS2FA_NOT_FOUND;
+        }
+        account2FAHelper.validate2FAParameters(params2FA);
 
         account2FAHelper.disable2FA(params2FA, code2FA);
 

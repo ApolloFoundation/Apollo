@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.core.Headers;
-import org.jboss.resteasy.core.ResourceMethodInvoker;
 import org.jboss.resteasy.core.ServerResponse;
 import org.jboss.resteasy.core.interception.PostMatchContainerRequestContext;
 
@@ -18,8 +17,10 @@ import javax.annotation.security.DenyAll;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -41,18 +42,23 @@ public class SecurityInterceptor implements ContainerRequestFilter {
     @Context
     private UriInfo uriInfo;
 
+    @Context
+    ResourceInfo info;
+
     @Inject
     private AdminPasswordVerifier apw;
 
+    @Inject @Named("excludeProtection")
+    private RequestUriMatcher excludeProtectionUriMatcher;
+
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        ResourceMethodInvoker methodInvoker = (ResourceMethodInvoker) requestContext.getProperty("org.jboss.resteasy.core.ResourceMethodInvoker");
-        Method method = methodInvoker.getMethod();
-        apw.getForwardedForHeader();
-
-        if (true){
+        if (excludeProtectionUriMatcher.matches(uriInfo)){ //resource is not protected
             return;
         }
+
+        Method method = info.getResourceMethod();
+        /*if (true){ return; }*/ // don't remove, use for debugging
 
         //Access allowed for all
         if( method.isAnnotationPresent(PermitAll.class)) {
