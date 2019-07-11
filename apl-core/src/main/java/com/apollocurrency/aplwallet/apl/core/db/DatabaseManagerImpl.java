@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -136,7 +136,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         Set<Long> result = new HashSet<>();
         try (Connection con = getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
-            pstmt.setLong(1, ShardConstants.SHARD_PERCENTAGE_FULL);
+            pstmt.setLong(1, ShardState.FULL.getValue());
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     result.add(rs.getLong("shard_id"));

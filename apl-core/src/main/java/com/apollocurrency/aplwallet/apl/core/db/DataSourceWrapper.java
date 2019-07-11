@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -196,6 +197,7 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new OfferStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
+        jdbi.registerArgument(new ShardStateFactory());
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {

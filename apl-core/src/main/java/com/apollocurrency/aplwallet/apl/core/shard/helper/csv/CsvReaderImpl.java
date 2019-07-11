@@ -271,8 +271,8 @@ public class CsvReaderImpl extends CsvAbstractBase
                 }
                 endOfLine = true;
                 return null;
-            } else if (arrayStartToken != 0 && ch == arrayStartToken) { // check '('
-                // start SQL Array processing written as = (x, y, z)
+            } else if (arrayStartToken != 0 && ch == arrayStartToken) { // ARRAY processing stuff - first check '('
+                // start SQL ARRAY processing written as = (x, y, z)
                 // read until of 'arrayEndToken' symbol
                 inputBufferStart = inputBufferPos;
                 while (true) {
@@ -286,8 +286,12 @@ public class CsvReaderImpl extends CsvAbstractBase
                 if (!preserveWhitespace) {
                     s = s.trim();
                 }
+                ch = inputBuffer[inputBufferPos]; // lookup one char ahead (we don't want to miss EoL)
+                if (ch == '\n' || ch == '\r') {
+                    endOfLine = true; // EoL - stop line processing in outer method
+                }
+                inputBufferPos++; // skip closing ')' inside long line (no EoL present)
                 inputBufferStart = -1; // reset
-                inputBufferPos++; // skip closing ')'
                 return readNull(s);
             } else {
                 // un-delimited value
@@ -407,8 +411,8 @@ public class CsvReaderImpl extends CsvAbstractBase
         try {
             int i = 0;
             while (true) {
-                String v = readValue();
-                log.trace("readValue() = '{}'", v);
+                String v = readValue(); // main method to read single column value
+//                log.trace("readValue() = '{}'", v);
                 if (v == null) {
                     if (endOfLine) {
                         if (i == 0) {
@@ -431,7 +435,7 @@ public class CsvReaderImpl extends CsvAbstractBase
         } catch (IOException e) {
             throw new SQLException("IOException reading from " + fileName, e);
         }
-        log.trace("Prepared row = {}", Arrays.toString(row));
+//        log.trace("Prepared row = {}", Arrays.toString(row));
         return row;
     }
 
