@@ -42,6 +42,8 @@ public class NewApiRegistry {
         apis.put("enable2FA", "/rest/accounts/enable2FA"); //POST
         apis.put("disable2FA", "/rest/accounts/disable2FA"); //POST
         apis.put("confirm2FA", "/rest/accounts/confirm2FA"); //POST
+        apis.put("deleteKey", "/rest/accounts/deleteKey"); //POST
+        apis.put("exportKey", "/rest/accounts/exportKey"); //POST
 
 
         //TODO: add new implemented endpoints

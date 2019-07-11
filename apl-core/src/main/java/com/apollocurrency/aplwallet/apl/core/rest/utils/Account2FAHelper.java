@@ -188,12 +188,30 @@ public class Account2FAHelper {
         return walletKeyInfo;
     }
 
-    private byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
+    public KeyStoreService.Status deleteAccount(long accountId, String passphrase, int code) throws RestParameterException {
+        if (isEnabled2FA(accountId)) {
+            Status2FA status2FA = disable2FA(accountId, passphrase, code);
+            validate2FAStatus(status2FA, accountId);
+        }
+        KeyStoreService.Status status = KEYSTORE.deleteKeyStore(passphrase, accountId);
+        validateKeyStoreStatus(accountId, status, "deleted");
+        return status;
+    }
+
+    public KeyStoreService.Status deleteAccount(TwoFactorAuthParameters twoFactorAuthParameters) throws RestParameterException {
+        return deleteAccount(twoFactorAuthParameters.getAccountId(), twoFactorAuthParameters.getPassphrase(), twoFactorAuthParameters.getCode2FA());
+    }
+
+    public byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
         ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
         if (fbWallet == null) {
             throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, String.format("%s, account=%d","account id or passphrase", accountId));
         }
         return Convert.parseHexString(fbWallet.getAplKeySecret());
+    }
+
+    public byte[] findAplSecretBytes(TwoFactorAuthParameters twoFactorAuthParameters) throws RestParameterException {
+        return findAplSecretBytes(twoFactorAuthParameters.getAccountId(), twoFactorAuthParameters.getPassphrase());
     }
 
     private void validate2FAStatus(Status2FA status2FA, long accountId) throws RestParameterException {
@@ -224,16 +242,6 @@ public class Account2FAHelper {
     }
 
     // ------ checked to
-    public KeyStoreService.Status deleteAccount(long accountId, String passphrase, int code) throws ParameterException {
-        if (isEnabled2FA(accountId)) {
-            Status2FA status2FA = disable2FA(accountId, passphrase, code);
-            validate2FAStatus(status2FA, accountId);
-        }
-        KeyStoreService.Status status = KEYSTORE.deleteKeyStore(passphrase, accountId);
-        validateKeyStoreStatus(accountId, status, "deleted");
-        return status;
-    }
-
     @Deprecated
     public WalletKeysInfo importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
         if (passphrase == null) {

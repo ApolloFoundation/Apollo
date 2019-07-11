@@ -4,16 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.Account2FADTO;
-import com.apollocurrency.aplwallet.api.dto.Account2FADetailsDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
@@ -23,10 +22,12 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -52,9 +53,7 @@ import java.util.List;
 public class AccountController {
 
     private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
-            RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-    private static final Response PARAMS2FA_NOT_FOUND = ResponseBuilder.apiError(
-            ApiErrors.INTERNAL_SERVER_EXCEPTION, PARAMS2FA_NOT_FOUND_ERROR_MSG).build();
+                                                                             RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
 
     @Inject @Setter
     private Account2FAHelper account2FAHelper;
@@ -97,7 +96,7 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccount(
-            @Parameter(description = "The certain account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
             @Parameter(description = "include additional lessors information.") @QueryParam("includeLessors") @DefaultValue("false") Boolean includeLessors,
             @Parameter(description = "include additional assets information.") @QueryParam("includeAssets") @DefaultValue("false") Boolean includeAssets,
             @Parameter(description = "include additional currency information.") @QueryParam("includeCurrencies") @DefaultValue("false") Boolean includeCurrencies,
@@ -152,11 +151,7 @@ public class AccountController {
                                     schema = @Schema(implementation = WalletKeysInfoDTO.class)))
             })
     @PermitAll
-    public Response generateAccount(
-            @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase,
-            @Parameter(description = "require block.") @FormParam("requireBlock") String requireBlockStr,
-            @Parameter(description = "require last block.") @FormParam("requireLastBlock") String requireLastBlockStr
-    ) {
+    public Response generateAccount( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         if (StringUtils.isEmpty(passphrase)){
@@ -169,6 +164,72 @@ public class AccountController {
         }
 
         WalletKeysInfoDTO dto = walletKeysConverter.convert(walletKeysInfo);
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/exportKey")
+    @POST
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+            summary = "Delete account",
+            description = "Delete account and Remove secret bytes from keystore.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "text/html",
+                                    schema = @Schema(implementation = AccountKeyDTO.class)))
+            })
+    @PermitAll
+    public Response exportKey( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase,
+                               @Parameter(description = "The account ID.") @FormParam("account") String accountStr) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        TwoFactorAuthParameters params2FA = account2FAHelper.parse2FARequestParams(accountStr, passphrase, null);
+
+        byte [] secretBytes = account2FAHelper.findAplSecretBytes(params2FA);
+
+        AccountKeyDTO dto = new AccountKeyDTO(
+                Long.toUnsignedString(params2FA.getAccountId()),
+                Convert2.rsAccount(params2FA.getAccountId()),
+                null, Convert.toHexString(secretBytes) );
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/deleteKey")
+    @POST
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+            summary = "Delete account",
+            description = "Delete account and Remove secret bytes from keystore.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "text/html",
+                                    schema = @Schema(implementation = AccountKeyDTO.class)))
+            })
+    @PermitAll
+    @Secured2FA
+    public Response deleteKey( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase,
+                              @Parameter(description = "The account ID.") @FormParam("account") String accountStr,
+                              @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
+                              @Context org.jboss.resteasy.spi.HttpRequest request ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+
+        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        checkNotNull(params2FA, request.getUri().toString());
+        account2FAHelper.validate2FAParameters(params2FA);
+
+        KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
+
+        AccountKeyDTO dto = new AccountKeyDTO(
+                Long.toUnsignedString(params2FA.getAccountId()),
+                Convert2.rsAccount(params2FA.getAccountId()),
+                status.message, null );
 
         return response.bind(dto).build();
     }
@@ -191,7 +252,7 @@ public class AccountController {
     public Response confirm2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
-            @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr,
+            @Parameter(description = "The account ID.") @FormParam("account") String accountStr,
             @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
             @Context org.jboss.resteasy.spi.HttpRequest request
             ) {
@@ -199,10 +260,7 @@ public class AccountController {
 
         //TwoFactorAuthParameters  params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
         TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-        if (params2FA == null) {
-            log.error("{} request={}", PARAMS2FA_NOT_FOUND_ERROR_MSG, request.getUri());
-            return PARAMS2FA_NOT_FOUND;
-        }
+        checkNotNull(params2FA, request.getUri().toString());
         account2FAHelper.validate2FAParameters(params2FA);
 
         account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
@@ -230,19 +288,15 @@ public class AccountController {
     public Response disable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
-            @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr,
+            @Parameter(description = "The account ID.") @FormParam("account") String accountStr,
             @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
             @Context org.jboss.resteasy.spi.HttpRequest request
     ) {
-
         ResponseBuilder response = ResponseBuilder.startTiming();
 
         //TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
         TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-        if (params2FA == null) {
-            log.error("{} request={}", PARAMS2FA_NOT_FOUND_ERROR_MSG, request.getUri());
-            return PARAMS2FA_NOT_FOUND;
-        }
+        checkNotNull(params2FA, request.getUri().toString());
         account2FAHelper.validate2FAParameters(params2FA);
 
         account2FAHelper.disable2FA(params2FA, code2FA);
@@ -269,7 +323,7 @@ public class AccountController {
     public Response enable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
-            @Parameter(description = "The certain account ID.") @FormParam("account") String accountStr
+            @Parameter(description = "The account ID.") @FormParam("account") String accountStr
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -281,6 +335,13 @@ public class AccountController {
         faDetailsConverter.addAccount(dto, params2FA.getAccountId());
 
         return response.bind(dto).build();
+    }
+
+    private void checkNotNull(TwoFactorAuthParameters params2FA, String uri){
+        if (params2FA == null) {
+            log.error("{} request={}", PARAMS2FA_NOT_FOUND_ERROR_MSG, uri);
+            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, PARAMS2FA_NOT_FOUND_ERROR_MSG);
+        }
     }
 
 }

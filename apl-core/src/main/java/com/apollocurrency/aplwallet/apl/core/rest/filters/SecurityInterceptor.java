@@ -71,12 +71,13 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         }
 
         if(apw.isDisableAdminPassword()){
-            //Access allowed in properties file
+            //Access allowed for all
             return;
         }
 
         if(apw.isBlankAdminPassword()) {
-            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "The admin password is undefined, set the 'apl.adminPassword' property value.");
+            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION,
+                    "Administrator's password is not configured. Please set 'apl.adminPassword' property value.");
         }
 
         String remoteHost = null;
@@ -119,8 +120,7 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         }
     }
 
-    private boolean isUserAllowed(final String remoteHost, final String username, final String password, final Set<String> rolesSet)
-    {
+    private boolean isUserAllowed(final String remoteHost, final String username, final String password, final Set<String> rolesSet){
         boolean isAllowed;
         try {
             apw.checkOrLockPassword(password, remoteHost);
@@ -128,8 +128,6 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         } catch (ParameterException e) {
             return false;
         }
-
         return isAllowed;
     }
-
 }

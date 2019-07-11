@@ -12,13 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-//import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
 import javax.enterprise.inject.Vetoed;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 @Vetoed
+@Deprecated
 public class DeleteKey extends AbstractAPIRequestHandler {
    public DeleteKey() {
         super(new APITag[] {APITag.ACCOUNTS});

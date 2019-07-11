@@ -569,7 +569,7 @@ public enum APIEnum {
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", new GetNextBlockGeneratorsTemp()),
     GET_SCHEDULED_TRANSACTIONS("getScheduledTransactions", new GetScheduledTransactions()),
     SCHEDULE_CURRENCY_BUY("scheduleCurrencyBuy", new ScheduleCurrencyBuy()),
-    DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", new DeleteScheduledTransaction()),
+    @Obsolete DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", new DeleteScheduledTransaction()),
     SEND_MONEY_PRIVATE("sendMoneyPrivate", new SendMoneyPrivate()),
     GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", new GetPrivateBlockchainTransactions()),
     GET_PRIVATE_TRANSACTION("getPrivateTransaction", new GetPrivateTransaction()),
@@ -586,13 +586,13 @@ public enum APIEnum {
     GET_TOTAL_SUPPLY("getTotalSupply", new GetTotalSupply()),
     GET_ACCOUNTS("getAccounts", new GetAccounts()),
     @Obsolete GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
-    EXPORT_KEY("exportKey", new ExportKey()),
+    @Obsolete EXPORT_KEY("exportKey", new ExportKey()),
     IMPORT_KEY("importKey", new ImportKey()),
     @Obsolete ENABLE_2FA("enable2FA", new Enable2FA()),
     @Obsolete DISABLE_2FA("disable2FA", new Disable2FA()),
     @Obsolete CONFIRM_2FA("confirm2FA", new Confirm2FA()),
     GET_GENESIS_BALANCES("getGenesisBalances", new GetGenesisBalances()),
-    DELETE_KEY("deleteKey", new DeleteKey()),
+    @Obsolete DELETE_KEY("deleteKey", new DeleteKey()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 

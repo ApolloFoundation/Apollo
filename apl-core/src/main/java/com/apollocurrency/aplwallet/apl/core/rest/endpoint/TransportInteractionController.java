@@ -84,8 +84,8 @@ public class TransportInteractionController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
-    ) 
-    
+    )
+    @PermitAll
     public ResponseDone stopSecureTransport(  ) {        
         ResponseDone response = new ResponseDone();
         tiService.stopSecureTransport();
