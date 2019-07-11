@@ -140,7 +140,7 @@ class BlockchainTest {
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
                 new ShardDataSourceCreateHelper(extension.getDatabaseManager(), shardId).createUninitializedDataSource();
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
-        shardDb.init(new ShardInitTableSchemaVersion());
+        shardDb.initWithJdbi(new ShardInitTableSchemaVersion());
 
         DbPopulator dbPopulator = new DbPopulator(shardDb, "db/schema.sql", dataScriptPath);
         dbPopulator.initDb();

@@ -231,7 +231,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().build());
+        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().shardId(3L).build());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         checkDbVersion(5, 3);
