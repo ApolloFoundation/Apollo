@@ -105,6 +105,7 @@ public final class PeerImpl implements Peer {
     private volatile long hallmarkBalance = -1;
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
+    private Object servicesMonitor = new Object();
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
     
@@ -775,8 +776,10 @@ public final class PeerImpl implements Peer {
                 
                 chainId.set(UUID.fromString(newPi.getChainId()));
                 String servicesString = (String)response.get("services");
-                long origServices = services;                
-                services = (servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
+
+                long origServices = getServices();
+                setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
+
                 setApiPort(newPi.getApiPort());
                 setApiSSLPort(newPi.getApiSSLPort());
                 setDisabledAPIs(newPi.getDisabledAPIs());
@@ -810,11 +813,11 @@ public final class PeerImpl implements Peer {
                         Peers.setAnnouncedAddress(this, host);
                     }
                 }
-                  setState(PeerState.CONNECTED);
-                  if (services != origServices) {
-                        Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
-                  }
-                  LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
+                setState(PeerState.CONNECTED);
+                if (getServices() != origServices) {
+                    Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+                }
+                LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
             } else {
                 LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
                // deactivate();
@@ -949,7 +952,7 @@ public final class PeerImpl implements Peer {
 
     private void addService(Service service, boolean doNotify) {
         boolean notifyListeners;
-        synchronized (this) {
+        synchronized (servicesMonitor) {
             notifyListeners = ((services & service.getCode()) == 0);
             services |= service.getCode();
         }
@@ -960,7 +963,7 @@ public final class PeerImpl implements Peer {
 
     private void removeService(Service service, boolean doNotify) {
         boolean notifyListeners;
-        synchronized (this) {
+        synchronized (servicesMonitor) {
             notifyListeners = ((services & service.getCode()) != 0);
             services &= (~service.getCode());
         }
@@ -970,13 +973,13 @@ public final class PeerImpl implements Peer {
     }
 
     public long getServices() {
-        synchronized (this) {
+        synchronized (servicesMonitor) {
             return services;
         }
     }
 
     public void setServices(long services) {
-        synchronized (this) {
+        synchronized (servicesMonitor) {
             this.services = services;
         }
     }
@@ -984,7 +987,7 @@ public final class PeerImpl implements Peer {
     @Override
     public boolean providesService(Service service) {
         boolean isProvided;
-        synchronized (this) {
+        synchronized (servicesMonitor) {
             isProvided = ((services & service.getCode()) != 0);
         }
         return isProvided;
@@ -993,7 +996,7 @@ public final class PeerImpl implements Peer {
     @Override
     public boolean providesServices(long services) {
         boolean isProvided;
-        synchronized (this) {
+        synchronized (servicesMonitor) {
             isProvided = (services & this.services) == services;
         }
         return isProvided;
