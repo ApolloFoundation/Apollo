@@ -15,7 +15,7 @@ public class ShardStateFactory extends AbstractArgumentFactory<ShardState> {
 
 
     public ShardStateFactory() {
-        super(Types.INTEGER);
+        super(Types.BIGINT);
     }
 
     @Override
