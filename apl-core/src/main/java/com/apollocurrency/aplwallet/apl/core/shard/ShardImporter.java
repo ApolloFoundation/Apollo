@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -82,7 +83,7 @@ public class ShardImporter {
         } else if (blockchainConfig.getCurrentConfig().isShardingEnabled()) {
             Shard shard = shardDao.getLastShard();
             if (shard != null) {
-                return shard.getShardState() == 100;
+                return shard.getShardState() == ShardState.FULL;
             } else {
                 return true;
             }
@@ -133,7 +134,7 @@ public class ShardImporter {
                 throw new IllegalStateException("Unable to import shard without records in shard table");
             }
         } else {
-            lastShard.setShardState(50L);
+            lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
             lastShard.setZipHashCrc(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
             shardDao.saveShard(lastShard);
         }

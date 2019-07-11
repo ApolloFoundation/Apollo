@@ -59,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -336,7 +337,7 @@ class ShardMigrationExecutorTest {
         executeFrom(8000, 4L, DATA_REMOVED_FROM_MAIN);
         Shard lastShard = shardDao.getLastShard();
         assertNotNull(lastShard);
-        assertEquals(ShardConstants.SHARD_PERCENTAGE_FULL, lastShard.getShardState());
+        assertEquals(ShardState.FULL, lastShard.getShardState());
     }
 
     private void executeFrom(int height, long shardId, MigrateState state) {
