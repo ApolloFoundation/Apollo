@@ -9,6 +9,7 @@ import com.beust.jcommander.Parameter;
  */
 public class CmdLineArgs {
     public static int DEFAULT_DEBUG_LEVEL=2;
+    
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
     public int debug = DEFAULT_DEBUG_LEVEL;
     @Parameter(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
@@ -29,10 +30,10 @@ public class CmdLineArgs {
     public String dbDir = "";
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
-    @Parameter(names = {"--no-shards-import"}, description = "Start from Genesis block, do not try to import last shard")
-    public boolean noShardImport=false;
-    @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources")
-    public boolean noShardCreate=false;
+    @Parameter(names = {"--no-shards-import"}, description = "Start from Genesis block, do not try to import last shard", arity = 1)
+    public Boolean noShardImport=null;
+    @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources", arity = 1)
+    public Boolean noShardCreate=null;
 
     @Parameter(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
     public String updateAttachmentFile = "";
