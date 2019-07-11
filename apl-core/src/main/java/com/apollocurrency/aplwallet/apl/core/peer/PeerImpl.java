@@ -575,7 +575,7 @@ public final class PeerImpl implements Peer {
          return response;
     }
 
-    private synchronized JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
+    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
         JSONObject response = null;
         try {
             if(ws==null){
