@@ -168,10 +168,7 @@ public class PeerWebSocket {
                 ClientUpgradeRequest req = new ClientUpgradeRequest();
                 Future<Session> conn = peerClient.connect(this, uri, req);
                 conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-                if(p!=null){
-                    ((PeerImpl) (p)).setInboundWebSocket(this);                
-                }
-                useWebSocket = true;                
+                useWebSocket = true;
             }
         } catch (ExecutionException exc) {
             if (exc.getCause() instanceof UpgradeException) {
@@ -210,12 +207,15 @@ public class PeerWebSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         this.session = session;
-     //   if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-            LOG.trace(String.format("%s WebSocket connection with %s completed",
+        LOG.trace(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
-                    
-     //   }
+        if(clientPeer==null){
+            LOG.error("Client peer is not set!");
+        }else{
+            LOG.trace("Client peer: {}", clientPeer.getHostWithPort());
+        }
+
     }
 
     /**
@@ -247,7 +247,7 @@ public class PeerWebSocket {
      * @return                      Response message
      * @throws  IOException         I/O error occurred
      */
-    public String doPost(String request) throws IOException {
+    public synchronized String doPost(String request) throws IOException {
         long requestId;
         //
         // Send the POST request
@@ -334,6 +334,8 @@ public class PeerWebSocket {
                     throw new ProtocolException("POST response length exceeds max message size");
                 }
                 session.getRemote().sendBytes(buf);
+            }else{
+                LOG.debug("Session is not open for peer {}. inbound: {}",clientPeer.getHostWithPort(),peerServlet==null);
             }
         } catch (WebSocketException exc) {
             throw new SocketException(exc.getMessage());
@@ -400,9 +402,10 @@ public class PeerWebSocket {
     public void onClose(int statusCode, String reason) {
         lock.lock();
         try {
+            String direction = peerServlet != null ? "Inbound" : "Outbound";
             if (session != null) {
                 LOG.trace(String.format("%s WebSocket connection with %s closed",
-                            peerServlet != null ? "Inbound" : "Outbound",
+                            direction,
                             session.getRemoteAddress().getHostString()));
                 session.close();
                 session = null;
@@ -411,6 +414,10 @@ public class PeerWebSocket {
             Set<Map.Entry<Long, PostRequest>> requests = requestMap.entrySet();
             requests.forEach((entry) -> entry.getValue().complete(exc));
             requestMap.clear();
+            if(clientPeer!=null){
+                LOG.trace("Client {} socket is closed for peer: {} statusCode: {}",
+                        direction, clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
+            }
         } finally {
             lock.unlock();
         }

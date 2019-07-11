@@ -67,7 +67,6 @@ public class PeerClient {
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        log.trace("getFileInfo() resp = {}", req.toJSONString());
         JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
@@ -75,7 +74,6 @@ public class PeerClient {
             log.trace("getFileInfo() resp = {}", resp.toJSONString());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        log.debug("getFileInfo() FInfoResp = {}", res);
         if(res==null){
             res=new FileDownloadInfoResponse();
             res.errorCode=-3;
@@ -84,12 +82,11 @@ public class PeerClient {
         if (res.errorCode != 0 || res.error!=null) {
             log.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
-        log.trace("getFileInfo() result = {}", res);
         return res.downloadInfo;
     }
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
-        log.debug("downloadChunk() fci = {}", fci);
+        log.trace("downloadChunk() fci = {}", fci);
         if(!checkConnection()){
             log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
             return null;

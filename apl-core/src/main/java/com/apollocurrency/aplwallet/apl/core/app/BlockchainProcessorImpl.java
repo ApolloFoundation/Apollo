@@ -695,7 +695,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 */
     }
 
-    private void scheduleOneScan() {
+    public void scheduleOneScan() {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         String scanProperty = optionDAO.get("require-scan");
         if (scanProperty == null) {
@@ -1518,10 +1518,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 peerHasMore = true;
                 final Peer peer = Peers.getWeightedPeer(connectedPublicPeers);
                 if (peer == null) {
+                    log.debug("Can not find weighted peer");
                     return;
                 }
                 JSONObject response = peer.send(getCumulativeDifficultyRequest, blockchainConfig.getChain().getChainId());
                 if (response == null) {
+                    log.debug("Null response wile getCumulativeDifficultyRequest from peer {}",peer.getHostWithPort());
                     return;
                 }
                 BigInteger curCumulativeDifficulty = lookupBlockhain().getLastBlock().getCumulativeDifficulty();
@@ -1716,6 +1718,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 request.put("chainId", blockchainConfig.getChain().getChainId());
                 JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
                 if (response == null) {
+                    log.debug("null reaponse from peer {} while getNeBlockIdst",peer.getHostWithPort());
                     return Collections.emptyList();
                 }
                 JSONArray nextBlockIds = (JSONArray) response.get("nextBlockIds");

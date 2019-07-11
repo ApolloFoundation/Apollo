@@ -52,7 +52,7 @@ public class ShardMigrationExecutor {
     private ShardDao shardDao;
     private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
     private DerivedTablesRegistry derivedTablesRegistry;
-    private GeneratorIdsExtractor generatorIdsExtractor;
+    private PrevBlockInfoExtractor prevBlockInfoExtractor;
     private volatile boolean backupDb;
 
     public boolean backupDb() {
@@ -69,7 +69,7 @@ public class ShardMigrationExecutor {
                                   ShardHashCalculator shardHashCalculator,
                                   ShardDao shardDao,
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
-                                  GeneratorIdsExtractor generatorIdsExtractor,
+                                  PrevBlockInfoExtractor prevBlockInfoExtractor,
                                   DerivedTablesRegistry registry,
                                   @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
@@ -79,7 +79,7 @@ public class ShardMigrationExecutor {
         this.excludedTransactionDbIdExtractor = Objects.requireNonNull(excludedTransactionDbIdExtractor, "exluded transaction db_id extractor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(registry, "derived table registry is null");
         this.backupDb = backupDb;
-        this.generatorIdsExtractor = Objects.requireNonNull(generatorIdsExtractor);
+        this.prevBlockInfoExtractor = Objects.requireNonNull(prevBlockInfoExtractor);
     }
 
     private void addCreateSchemaCommand(long shardId) {
@@ -114,9 +114,9 @@ public class ShardMigrationExecutor {
                     throw new IllegalStateException("Cannot calculate shard hash");
                 }
                 log.debug("SHARD HASH = {}", hash.length);
-                Long[] generatorIds = Convert.toObjectArray(generatorIdsExtractor.extractGeneratorIdsBefore(height, 3));
+                PrevBlockData prevBlockData = prevBlockInfoExtractor.extractPrevBlockData(height, 3);
                 CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                        new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, generatorIds);
+                        new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, prevBlockData);
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:

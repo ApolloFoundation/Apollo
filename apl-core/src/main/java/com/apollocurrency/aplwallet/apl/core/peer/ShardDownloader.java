@@ -52,6 +52,7 @@ public class ShardDownloader {
     private final UUID myChainId;
     private final Map<Long, Set<ShardInfo>> sortedShards;
     private final Map<Long, Set<Peer>> shardsPeers;
+    private final Map<String,ShardingInfo> shardInfoByPeers;
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final DownloadableFilesManager downloadableFilesManager;
@@ -72,6 +73,7 @@ public class ShardDownloader {
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
         this.sortedShards = Collections.synchronizedMap(new HashMap<>());
         this.shardsPeers = Collections.synchronizedMap(new HashMap<>());
+        this.shardInfoByPeers = Collections.synchronizedMap(new HashMap<>());
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.fileDownloaders=fileDownloaders;
@@ -84,12 +86,12 @@ public class ShardDownloader {
         ShardingInfo si = pc.getShardingInfo();
         log.trace("shardInfo = {}", si);
         if (si != null) {
+            shardInfoByPeers.put(p.getHostWithPort(), si);
             si.source = p.getHostWithPort();
             additionalPeers.addAll(si.knownPeers);
             for (ShardInfo s : si.shards) {
                 if (myChainId.equals(UUID.fromString(s.chainId))) {
                     haveShard = true;
-                    s.peerAddress = si.source;
                     synchronized (this) {
                         Set<Peer> ps = shardsPeers.get(s.shardId);
                         if (ps == null) {
@@ -139,16 +141,20 @@ public class ShardDownloader {
             for (String pa : additionalPeersCopy) {
 
                 Peer p = Peers.findOrCreatePeer(pa, true);
-                if (processPeerShardInfo(p)) {
-                    counterWinShardInfo++;
-                }
-                if (counterWinShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
-                    log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
-                    break;
-                }
-                counterTotal++;
-                if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
-                    break;
+                if(p!=null) {
+                    if (processPeerShardInfo(p)) {
+                        counterWinShardInfo++;
+                    }
+                    if (counterWinShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                        log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
+                        break;
+                    }
+                    counterTotal++;
+                    if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
+                        break;
+                    }
+                }else{
+                    log.debug("Can not create peer: {}",pa);
                 }
             }
         }
@@ -162,18 +168,23 @@ public class ShardDownloader {
     }
 
     private void fireShardPresentEvent(Long shardId) {
-        ShardPresentData shardPresentData = new ShardPresentData(shardId.toString());
+        ShardNameHelper snh = new ShardNameHelper();
+        String fileId = snh.getFullShardId(shardId, myChainId);
+        ShardPresentData shardPresentData = new ShardPresentData(fileId);
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is ignored
     }
 
-    private byte[] getHash(Long shardId, String peerAddr) {
+    private byte[] getHash(long shardId, String peerAddr) {
         byte[] res = null;
-        Set<ShardInfo> rs = sortedShards.get(shardId);
-        for (ShardInfo s : rs) {
-            if (peerAddr.equalsIgnoreCase(s.peerAddress)) {
-                String zipCrcHash = s.hash;
-                res = Convert.parseHexString(zipCrcHash);
-                break;
+        ShardingInfo psi = shardInfoByPeers.get(peerAddr);
+        if(psi!=null){
+            for(ShardInfo si: psi.shards){
+                if(myChainId.equals(UUID.fromString(si.chainId))
+                        && si.shardId==shardId)
+                {
+                   res = Convert.parseHexString(si.zipCrcHash);
+                   break;
+                }
             }
         }
         return res;
@@ -211,7 +222,7 @@ public class ShardDownloader {
             if (fileHashActual.equalsIgnoreCase(receivedHash)) {
                 res = true;
             } else {
-                log.debug("bad shard file: {}, received hash: {}. deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
+                log.debug("bad shard file: {}, received hash: {}. Calculated hash: {}. Deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
                 zipInExportedFolder.delete();
                 res = false;
             }
@@ -220,9 +231,7 @@ public class ShardDownloader {
     }
 
     private boolean isAcceptable(FileDownloadDecision d) {
-        boolean res = (d == FileDownloadDecision.AbsOK
-                || d == FileDownloadDecision.OK
-                || d == FileDownloadDecision.Risky);
+        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK );
         return res;
     }
 

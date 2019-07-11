@@ -99,6 +99,11 @@ public class ShardImporter {
         log.debug("Try unpack file name '{}'", zipInFolder);
         boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
         log.debug("Zip is unpacked = {}", unpackResult);
+        if (!unpackResult) {
+            log.error("Node has encountered serious error and can't import ZIP with shard data. " +
+                    "Somethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
+            throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
+        }
 
         Genesis.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50.0, "Public keys were imported");
