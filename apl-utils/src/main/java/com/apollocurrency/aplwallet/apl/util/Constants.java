@@ -130,7 +130,7 @@ public final class Constants {
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
     public static final int DEFAULT_PEER_PORT = 47874;
-    public static final int PEER_RECONNECT_ATTMEPT_DELAY=120; //now 2 min, was 600 or 10 min 
+    public static final int PEER_RECONNECT_ATTMEPT_DELAY=60; //now 1 min, was 600 or 10 min 
     public static final int PEER_UPDATE_INTERVAL=1800; //now 30 min, was 3600, one hour
     
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
