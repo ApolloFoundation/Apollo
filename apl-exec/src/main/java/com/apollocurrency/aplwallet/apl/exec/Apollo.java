@@ -224,9 +224,13 @@ public class Apollo {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
-//over-write config options from command line if set       
-        props.setProperty("apl.noshardimport", ""+args.noShardImport);
-        props.setProperty("apl.noshardcreate", ""+args.noShardCreate);
+//over-write config options from command line if set
+        if(args.noShardImport!=null){
+            props.setProperty("apl.noshardimport", ""+args.noShardImport);
+        }
+        if(args.noShardCreate!=null){
+            props.setProperty("apl.noshardcreate", ""+args.noShardCreate);
+        }
 
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));

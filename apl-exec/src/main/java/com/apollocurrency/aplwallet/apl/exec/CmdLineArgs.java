@@ -31,9 +31,9 @@ public class CmdLineArgs {
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
     @Parameter(names = {"--no-shards-import"}, description = "Start from Genesis block, do not try to import last shard", arity = 1)
-    public boolean noShardImport=true;
+    public Boolean noShardImport=null;
     @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources", arity = 1)
-    public boolean noShardCreate=false;
+    public Boolean noShardCreate=null;
 
     @Parameter(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
     public String updateAttachmentFile = "";
