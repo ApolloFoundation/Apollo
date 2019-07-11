@@ -34,7 +34,6 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-@Deprecated
 public final class DeleteScheduledTransaction extends AbstractAPIRequestHandler {
 
     public DeleteScheduledTransaction() {

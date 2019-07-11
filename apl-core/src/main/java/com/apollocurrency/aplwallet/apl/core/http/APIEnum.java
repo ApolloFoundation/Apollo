@@ -569,7 +569,7 @@ public enum APIEnum {
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", new GetNextBlockGeneratorsTemp()),
     GET_SCHEDULED_TRANSACTIONS("getScheduledTransactions", new GetScheduledTransactions()),
     SCHEDULE_CURRENCY_BUY("scheduleCurrencyBuy", new ScheduleCurrencyBuy()),
-    @Obsolete DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", new DeleteScheduledTransaction()),
+    DELETE_SCHEDULED_TRANSACTION("deleteScheduledTransaction", new DeleteScheduledTransaction()),
     SEND_MONEY_PRIVATE("sendMoneyPrivate", new SendMoneyPrivate()),
     GET_PRIVATE_BLOCKCHAIN_TRANSACTIONS("getPrivateBlockchainTransactions", new GetPrivateBlockchainTransactions()),
     GET_PRIVATE_TRANSACTION("getPrivateTransaction", new GetPrivateTransaction()),
