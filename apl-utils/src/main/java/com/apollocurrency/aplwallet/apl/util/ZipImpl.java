@@ -107,12 +107,10 @@ public class ZipImpl implements Zip {
     @Override
     public byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter, boolean recursive) {
-        byte[] zipCrcHash;
         long start = System.currentTimeMillis();
         compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
         // compute CRC/hash sum on zip file
-        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
-        zipCrcHash = chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
+        byte[] zipCrcHash = calculateHash(zipFile);
 
         log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
                 zipFile, zipCrcHash.length,
@@ -120,7 +118,13 @@ public class ZipImpl implements Zip {
         return zipCrcHash;
     }
 
-    
+    @Override
+    public byte[] calculateHash(String zipFile) {
+        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
+        return chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
+    }
+
+
     /**
      * {@inheritDoc}
      */

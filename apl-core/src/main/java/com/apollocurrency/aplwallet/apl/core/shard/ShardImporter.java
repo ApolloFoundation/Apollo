@@ -127,6 +127,17 @@ public class ShardImporter {
                 return;
             }
         }
+        Shard lastShard = shardDao.getLastShard();
+        if (lastShard == null) {
+            if (!excludedTables.contains(ShardConstants.SHARD_TABLE_NAME)) {
+                throw new IllegalStateException("Unable to import shard without records in shard table");
+            }
+        } else {
+            lastShard.setShardState(50L);
+            lastShard.setZipHashCrc(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
+            shardDao.saveShard(lastShard);
+        }
+
 
         // import derived tables
         Collection<String> tableNames = derivedTablesRegistry.getDerivedTables().stream().map(Object::toString).collect(Collectors.toList());
