@@ -169,7 +169,7 @@
         "maxBalance": 30000000000
       },
       {
-        "height": 2243001,
+        "height": 2247000,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
