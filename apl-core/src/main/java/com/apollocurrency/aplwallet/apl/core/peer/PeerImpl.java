@@ -106,6 +106,7 @@ public final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private Object servicesMonitor = new Object();
+    private Object volumeMonitor = new Object();
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
     
@@ -202,7 +203,7 @@ public final class PeerImpl implements Peer {
     }
 
     void updateDownloadedVolume(long volume) {
-        synchronized (this) {
+        synchronized (volumeMonitor) {
             downloadedVolume += volume;
         }
         Peers.notifyListeners(this, Peers.Event.DOWNLOADED_VOLUME);
@@ -214,7 +215,7 @@ public final class PeerImpl implements Peer {
     }
 
     void updateUploadedVolume(long volume) {
-        synchronized (this) {
+        synchronized (volumeMonitor) {
             uploadedVolume += volume;
         }
         Peers.notifyListeners(this, Peers.Event.UPLOADED_VOLUME);
@@ -609,7 +610,7 @@ public final class PeerImpl implements Peer {
         return response;
     }
 
-    private synchronized JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
+    private JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
         if (LOG.isTraceEnabled()) {
             StringWriter out = new StringWriter();
             String reqAsString = null;
