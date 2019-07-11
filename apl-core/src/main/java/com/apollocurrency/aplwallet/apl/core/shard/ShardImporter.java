@@ -136,7 +136,12 @@ public class ShardImporter {
         } else {
             lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
             lastShard.setZipHashCrc(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
-            shardDao.saveShard(lastShard);
+            if(shardDao.getShardById(lastShard.getShardId())!=null){
+                log.debug("Somehow shard already exists in DB, shardID is {}",lastShard.getShardId());
+                shardDao.updateShard(lastShard);                
+            }else{
+                shardDao.saveShard(lastShard);
+            }
         }
 
 

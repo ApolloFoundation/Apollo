@@ -84,7 +84,7 @@ public class ShardDownloadPresenceObserver {
             log.error("Error on Shard # {}. Zip/CSV importing...\nerror: {}", fileId, e);
             log.error("Node has encountered serious error and import CSV shard data. " +
                     "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
-            log.error("Please try to run with --no-shards-import command line option");
+            log.error("Please delete database files and try to run with --no-shards-import command line option");
             System.exit(-1); // temporary solution
 /*
             // truncate partial data potentially imported into database
