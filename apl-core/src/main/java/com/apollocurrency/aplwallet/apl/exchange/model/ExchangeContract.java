@@ -17,13 +17,20 @@ public class ExchangeContract {
     /**
      * Hash from secret key. sha256(key)
      */
-    private String secretHash;
+    private byte[] secretHash;
+    private String transferTxId;
+    /**
+     * Encrypted secret key to have able to restore secret.
+     */
+    private byte[] encryptedSecret;
 
     public ExchangeContract(DexContractAttachment dexContractAttachment) {
         this.orderId = dexContractAttachment.getOrderId();
         this.counterOrderId = dexContractAttachment.getCounterOrderId();
-        //TODO take a look what batter store in db string/bytes[32]
-        this.secretHash = Convert.toHexString(dexContractAttachment.getSecretHash());
+
+        this.secretHash = dexContractAttachment.getSecretHash();
+        this.encryptedSecret = dexContractAttachment.getEncryptedSecret();
+        this.transferTxId = dexContractAttachment.getTransferTxId();
     }
 
 }

@@ -783,7 +783,8 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS generator_ids ARRAY DEFAULT NULL");
             case 297:
                 apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
-                        "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        "counter_offer_id BIGINT NOT NULL, secret_hash BINARY(32) NOT NULL, encrypted_secret BINARY(64) NOT NULL, " +
+                        " transfer_tx_id VARCHAR(120) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 298:
                 return 298;
             default:

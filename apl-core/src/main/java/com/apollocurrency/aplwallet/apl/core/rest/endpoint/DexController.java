@@ -276,23 +276,16 @@ public class DexController {
                     Crypto.getSecureRandom().nextBytes(secretX);
                     byte[] secretHash = Crypto.sha256().digest(secretX);
                     String passphrase = ParameterParser.getPassphrase(req, true);
-
                     byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
 
-                    //SELL APL
-                    if (offer.getType().isSell()) {
-                        long recipientId = Convert.parseAccountId(counterOffer.getToAddress());
+                    long recipientId = Convert.parseAccountId(counterOffer.getToAddress());
 
-                        CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
-                                .convert(req, account, recipientId, offer.getOfferAmount(), null);
-                        String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, secretHash);
+                    CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
+                            .convert(req, account, recipientId, offer.getOfferAmount(), null);
+                    String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, secretHash);
 
-                        DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX);
-                        response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
-                    } else if (offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()) {
-                        //TODO Implement it for ETH/PAX
-                    }
-
+                    DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX);
+                    response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
                 } else {
                     if (offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
                         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));

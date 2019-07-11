@@ -2,7 +2,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +30,7 @@ public class DexContractAttachment extends AbstractAttachment {
      */
     private byte[] encryptedSecret;
 
-    public DexContractAttachment(ByteBuffer buffer) {
+    public DexContractAttachment(ByteBuffer buffer) throws NotValidException {
         super(buffer);
         this.orderId = buffer.getLong();
         this.counterOrderId = buffer.getLong();
@@ -40,6 +42,8 @@ public class DexContractAttachment extends AbstractAttachment {
         byte encryptedSecretX[] = new byte[64];
         buffer.get(encryptedSecretX);
         this.encryptedSecret = encryptedSecretX;
+
+        this.setTransferTxId(Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH));
     }
 
     public DexContractAttachment(JSONObject attachmentData) {
@@ -48,12 +52,13 @@ public class DexContractAttachment extends AbstractAttachment {
         this.counterOrderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("counterOrderId")));
         this.secretHash = Convert.parseHexString(String.valueOf(attachmentData.get("secretHash")));
         this.encryptedSecret = Convert.parseHexString(String.valueOf(attachmentData.get("encryptedSecret")));
+        this.transferTxId = String.valueOf(attachmentData.get("transferTxId"));
     }
 
     @Override
     public int getMySize() {
         //secretHash fix size (hex(Sha256()) - 32 bites)
-        return 8 + 8 + 32 + 64;
+        return 8 + 8 + 32 + 64 + Convert.toBytes(transferTxId).length + 2;
     }
 
     @Override
@@ -62,6 +67,10 @@ public class DexContractAttachment extends AbstractAttachment {
         buffer.putLong(this.counterOrderId);
         buffer.put(this.secretHash);
         buffer.put(this.encryptedSecret);
+
+        byte[] transferTxId = Convert.toBytes(this.transferTxId);
+        buffer.putShort((short) transferTxId.length);
+        buffer.put(transferTxId);
     }
 
     @Override
@@ -70,6 +79,7 @@ public class DexContractAttachment extends AbstractAttachment {
         json.put("counterOrderId", this.getCounterOrderId());
         json.put("secretHash",  Convert.toHexString(this.secretHash));
         json.put("encryptedSecret",  Convert.toHexString(this.encryptedSecret));
+        json.put("transferTxId",  this.transferTxId);
     }
 
     @Override
