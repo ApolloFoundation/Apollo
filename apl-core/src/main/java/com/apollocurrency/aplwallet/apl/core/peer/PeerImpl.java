@@ -105,8 +105,8 @@ public final class PeerImpl implements Peer {
     private volatile long hallmarkBalance = -1;
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
-    private Object servicesMonitor = new Object();
-    private Object volumeMonitor = new Object();
+    private final Object servicesMonitor = new Object();
+    private final Object volumeMonitor = new Object();
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
     
@@ -171,9 +171,15 @@ public final class PeerImpl implements Peer {
         return state;
     }
 
-    private void setState(PeerState state) {
-        if (state != PeerState.CONNECTED) {
-            LOG.trace("Closing websockets on state {} for {}",state.toString(),getHostWithPort());
+    private void setState(PeerState newState) {
+        //do nothing if there's no state change
+        if (this.state == newState) {
+            return;
+        }        
+        //well, if we are connected and some routine say to disconnect
+        //we should close all
+        if (newState == PeerState.DISCONNECTED && state == PeerState.CONNECTED) {
+            LOG.trace("Closing websockets on state {} for {}",newState.toString(),getHostWithPort());
             if(webSocket!=null){
               webSocket.close();
               webSocket=null;
@@ -184,18 +190,13 @@ public final class PeerImpl implements Peer {
                 inboundSocket=null;
             }
         }
-        if (this.state == state) {
-            return;
-        }
-        if (this.state == PeerState.NON_CONNECTED) {
-            this.state = state;
+        if (newState == PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
-        } else if (state != PeerState.NON_CONNECTED) {
-            this.state = state;
+        } else if (newState == PeerState.NON_CONNECTED || newState==PeerState.DISCONNECTED) {
             Peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
-        } else {
-            this.state = state;
         }
+        //we have to change state anyway
+        this.state = newState;
     }
 
     @Override
