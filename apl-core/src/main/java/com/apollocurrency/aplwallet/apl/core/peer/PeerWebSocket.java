@@ -185,10 +185,10 @@ public class PeerWebSocket {
         } catch (Exception exc) {
             LOG.debug(String.format("WebSocket connection to %s failed", address), exc);
         } finally {
+            lock.unlock();            
             if (!useWebSocket) {
                 close();
             }
-            lock.unlock();
         }
         return useWebSocket;
     }

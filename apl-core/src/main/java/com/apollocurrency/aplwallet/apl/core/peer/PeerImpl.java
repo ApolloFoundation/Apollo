@@ -645,8 +645,8 @@ public final class PeerImpl implements Peer {
                     }
                         String wsConnectString = "ws://" + addrWithPort + "/apl";
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
-                        webSocketOK = webSocket.startClient(URI.create(wsConnectString),this);
-                        if(webSocketOK){
+                        webSocketOK = webSocket.startClient(URI.create(wsConnectString), this);
+                        if (webSocketOK) {
                             LOG.trace("Connected as client to websocket {}", wsConnectString);
                         }
                     }else{ //client socket is already open
