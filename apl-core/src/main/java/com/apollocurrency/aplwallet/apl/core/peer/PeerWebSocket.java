@@ -188,7 +188,9 @@ public class PeerWebSocket {
         } catch (Exception exc) {
             LOG.debug(String.format("WebSocket connection to %s failed", address), exc);
         } finally {
-            lock.unlock();            
+            if(lock.isLocked()){
+              lock.unlock();
+            }         
             if (!useWebSocket) {
                 close();
             }
@@ -285,7 +287,9 @@ public class PeerWebSocket {
         }catch(InterruptedException exc){
             LOG.debug("Can not aquire lock");            
         } finally {
-            lock.unlock();
+            if(lock.isLocked()){
+              lock.unlock();
+            }
         }
         //
         // Get the response
@@ -346,7 +350,9 @@ public class PeerWebSocket {
         }catch(InterruptedException exc){
             LOG.debug("Can not aquire lock");
         } finally {
-            lock.unlock();
+            if(lock.isLocked()){
+              lock.unlock();
+            }
         }
     }
 
@@ -394,7 +400,9 @@ public class PeerWebSocket {
         } catch (Exception exc) {
             LOG.debug("Exception while processing WebSocket message", exc);
         } finally {
-            lock.unlock();
+            if(lock.isLocked()){
+              lock.unlock();
+            }
         }
     }
 
@@ -438,7 +446,9 @@ public class PeerWebSocket {
         } catch (Exception exc) {
             LOG.debug("Exception while closing WebSocket", exc);
         } finally {
-            lock.unlock();
+            if(lock.isLocked()){
+              lock.unlock();
+            }
         }
     }
 

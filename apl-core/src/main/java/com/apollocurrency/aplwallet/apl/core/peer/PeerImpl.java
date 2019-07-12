@@ -635,28 +635,30 @@ public final class PeerImpl implements Peer {
                     if(webSocket==null){
                         webSocket=new PeerWebSocket(this);
                     }
-                    if(!webSocket.isOpen()) {
-                    //
-                    // Create a new WebSocket session if we don't have one
-                    // and do not have inbound, and we have announced address
-                    String addrWithPort=getAnnouncedAddress();
-                    if(StringUtils.isBlank(addrWithPort)){ // try to use addres with port, should be OK for default peers
-                        addrWithPort=getHostWithPort();
-                    }
+                    if (!webSocket.isOpen()) {
+                         // Create a new WebSocket session if we don't have one
+                        // and do not have inbound
+                        String addrWithPort = getAnnouncedAddress();
+                        if (StringUtils.isBlank(addrWithPort)) { // try to use addres with port, should be OK for default peers
+                            addrWithPort = getHostWithPort();
+                        }
                         String wsConnectString = "ws://" + addrWithPort + "/apl";
                         URI wsUri = URI.create(wsConnectString);
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
+                        if(webSocket==null){
+                            LOG.error("WTF? who closed my websocket? {}",getHostWithPort());
+                        }
                         webSocketOK = webSocket.startClient(wsUri, this);
                         if (webSocketOK) {
                             LOG.trace("Connected as client to websocket {}", wsConnectString);
                         }
-                    }else{ //client socket is already open
-                        webSocketOK=true;
+                    } else { //client socket is already open
+                        webSocketOK = true;
                     }
-                    if(webSocketOK){ //send using client socket
+                    if (webSocketOK) { //send using client socket
                         response = sendToWebSocket(request, webSocket);
-                        webSocketOK = response!=null;
-                        LOG.trace("Peer: {} Using outbound web socket. Success: {}",getHostWithPort(),webSocketOK);
+                        webSocketOK = response != null;
+                        LOG.trace("Peer: {} Using outbound web socket. Success: {}", getHostWithPort(), webSocketOK);
                     }
                 }
             }
