@@ -64,7 +64,6 @@ public class DGSObserverTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
-            JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             FullTextConfigImpl.class,
             DGSPublicFeedbackTable.class,
@@ -80,6 +79,7 @@ public class DGSObserverTest {
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
 //            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
 //            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))

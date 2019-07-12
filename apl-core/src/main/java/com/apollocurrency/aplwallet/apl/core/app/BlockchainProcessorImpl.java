@@ -380,13 +380,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.debug("snapshotBlock imported = {}", snapshotBlock);
             blockchain.setLastBlock(snapshotBlock);
             initialBlock = snapshotBlock.getId();
+            lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
         } finally {
             globalSync.updateUnlock();
         }
     }
 
     @Override
-    public void updateInitialBlockId() {
+    public void updateInitialBlock() {
         initialBlock = blockchain.getShardInitialBlock().getId();
     }
 
@@ -465,6 +466,42 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
                     ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
                     trimService.trimDerivedTables(0, false);
+                    DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
+                    Path dataExportDir = dirProvider.getDataExportDir();
+                    FileUtils.clearDirectorySilently(dataExportDir);
+                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
+
+                    dataSource.commit(false);
+                    lookupBlockhainConfigUpdater().rollback(0);
+                }
+                catch (Exception e) {
+                    log.error(e.toString(), e);
+                    dataSource.rollback(false);
+                }
+                finally {
+                    dataSource.commit();
+                }
+                continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
+            } finally {
+                setGetMoreBlocks(true);
+            }
+        } finally {
+            globalSync.writeUnlock();
+        }
+    }
+
+    private void clean() {
+        globalSync.writeLock();
+        try {
+            setGetMoreBlocks(false);
+            try {
+                TransactionalDataSource dataSource = databaseManager.getDataSource();
+                dataSource.begin();
+                try {
+                    blockchain.deleteAll();
+                    dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
+                    ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
+                    trimService.resetTrim();
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
@@ -1268,6 +1305,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (validate) {
                 log.debug("Also verifying signatures and validating transactions...");
             }
+
             String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > shardInitialHeight ? "height >= ? AND " : "")
@@ -1831,7 +1869,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we                         
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we
 //                        nextBlocks.getPeer().deactivate();
                         continue;
                     }

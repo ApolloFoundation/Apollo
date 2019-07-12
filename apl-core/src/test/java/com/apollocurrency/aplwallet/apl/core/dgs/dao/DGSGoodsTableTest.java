@@ -44,7 +44,6 @@ public class DGSGoodsTableTest extends VersionedEntityDbTableTest<DGSGoods> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             FullTextConfigImpl.class,
             DGSGoodsTable.class,
@@ -54,6 +53,7 @@ public class DGSGoodsTableTest extends VersionedEntityDbTableTest<DGSGoods> {
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .build();

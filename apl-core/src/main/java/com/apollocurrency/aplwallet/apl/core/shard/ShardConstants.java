@@ -19,6 +19,7 @@ public class ShardConstants {
     public static final String GOODS_TABLE_NAME = "goods";
     public static final String PHASING_POLL_TABLE_NAME = "phasing_poll";
     public static final Long SHARD_PERCENTAGE_FULL = 100L;
+    public static final String DB_BACKUP_FORMAT = "BACKUP-BEFORE-%s.zip";
 
     private ShardConstants() {}
 }

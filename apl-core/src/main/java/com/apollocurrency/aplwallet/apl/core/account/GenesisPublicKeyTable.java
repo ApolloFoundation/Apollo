@@ -3,18 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * @author al
@@ -56,7 +56,7 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     }
 
     protected GenesisPublicKeyTable() {
-        super("genesis_public_key", publicKeyDbKeyFactory, false, null, false);
+        super("genesis_public_key", publicKeyDbKeyFactory, true, null, false);
     }
 
     @Override

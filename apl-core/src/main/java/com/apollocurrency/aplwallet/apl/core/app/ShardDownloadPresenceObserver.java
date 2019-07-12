@@ -116,7 +116,7 @@ public class ShardDownloadPresenceObserver {
                 }
                 // set to start work block download thread (starting from Genesis block here)
                 log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
-                blockchainProcessor.updateInitialBlockId();
+                blockchainProcessor.updateInitialBlock();
                 blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
 
             } catch (Exception e) {

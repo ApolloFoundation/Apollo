@@ -52,10 +52,10 @@ public class BlockIndexDaoTest {
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             GlobalSync.class,
             GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            JdbiHandleFactory.class, BlockIndexDao.class,
+            DerivedDbTablesRegistryImpl.class, BlockIndexDao.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .build();
 

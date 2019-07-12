@@ -20,7 +20,6 @@ public class JdbiHandleFactory {
 
     private Jdbi jdbi;
 
-    @Inject
     public void setJdbi(Jdbi jdbi) {
         this.jdbi = jdbi;
     }

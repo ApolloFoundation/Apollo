@@ -161,8 +161,10 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         Map<String, PeerMonitoringResult> peerBlocks = getPeersMonitoringResults();
         NetworkStats networkStats = new NetworkStats();
         peerBlocks.forEach((peer, result)-> {
-            log.info(String.format("%-16.16s - %8d", peer, result.getHeight()));
+            List<String> shardList = result.getShards().stream().map(ShardDTO::getZipHashCrc).collect(Collectors.toList());
+            log.info(String.format("%-16.16s - %8d - %s", peer, result.getHeight(), String.join("->", shardList)));
             networkStats.getPeerHeight().put(peer, result.getHeight());
+            networkStats.getPeerShards().put(peer, shardList);
         });
         log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s %6.6s %6.6s %13.13s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2", "shard1", "shard2", "shard-status"));
         int currentMaxBlocksDiff = -1;
