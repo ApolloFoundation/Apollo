@@ -190,7 +190,7 @@ public final class PeerImpl implements Peer {
                 inboundSocket=null;
             }
         }
-        if (newState == PeerState.CONNECTED) {
+        if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
         } else if (newState == PeerState.NON_CONNECTED || newState==PeerState.DISCONNECTED) {
             Peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
