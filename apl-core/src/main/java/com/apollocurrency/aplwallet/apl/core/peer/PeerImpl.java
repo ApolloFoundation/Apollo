@@ -173,6 +173,7 @@ public final class PeerImpl implements Peer {
 
     private void setState(PeerState state) {
         if (state != PeerState.CONNECTED) {
+            LOG.debug("Closing websockets on state {} for {}",state.toString(),getHostWithPort());
             if(webSocket!=null){
               webSocket.close();
               webSocket=null;
@@ -646,7 +647,8 @@ public final class PeerImpl implements Peer {
                         URI wsUri = URI.create(wsConnectString);
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
                         if(webSocket==null){
-                            LOG.error("WTF? who closed my websocket? {}",getHostWithPort());
+                            LOG.debug("What? who closed my websocket? {}",getHostWithPort());
+                            webSocket=new PeerWebSocket(this);
                         }
                         webSocketOK = webSocket.startClient(wsUri, this);
                         if (webSocketOK) {
