@@ -272,6 +272,7 @@ public class BlockchainImpl implements Blockchain {
 
 
     @Override
+    @Transactional(readOnly = true)    
     public List<Block> getBlocksAfter(long blockId, List<Long> blockIdList) {
         // Check the block cache
         if (blockIdList.isEmpty()) {
