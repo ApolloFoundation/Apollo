@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 public class Shard {
     private Long shardId;
     private byte[] shardHash;
-    private Long shardState;
+    private ShardState shardState;
     private Integer shardHeight;
     private byte[] zipHashCrc;
     private long[] generatorIds; // tree latest generator Ids
@@ -58,7 +58,7 @@ public class Shard {
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight,
+    public Shard(Long shardId, byte[] shardHash, ShardState shardState, Integer shardHeight,
                  byte[] zipHashCrc, long[] generatorIds, int[] blockTimeouts, int[] blockTimestamps) {
         this.shardId = shardId;
         this.shardHash = shardHash;
@@ -112,11 +112,11 @@ public class Shard {
         this.shardHash = shardHash;
     }
 
-    public Long getShardState() {
+    public ShardState getShardState() {
         return shardState;
     }
 
-    public void setShardState(Long shardState) {
+    public void setShardState(ShardState shardState) {
         this.shardState = shardState;
     }
 
@@ -167,7 +167,7 @@ public class Shard {
     public static final class ShardBuilder {
         private Long shardId;
         private byte[] shardHash;
-        private Long shardState;
+        private ShardState shardState;
         private Integer shardHeight;
         private byte[] zipHashCrc;
         private long[] generatorIds;
@@ -187,7 +187,7 @@ public class Shard {
             return this;
         }
 
-        public ShardBuilder shardState(Long shardState) {
+        public ShardBuilder shardState(ShardState shardState) {
             this.shardState = shardState;
             return this;
         }

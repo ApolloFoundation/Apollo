@@ -24,8 +24,7 @@ class CsvReaderTest {
     @Test
     void readShardCsv() throws Exception {
         int readRowsByCsvReader = 0;
-//        String itemName = "shard.csv";
-        String itemName = "account_control_phasing.csv";
+        String itemName = "shard.csv";
 
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
         try (CsvReader csvReader = new CsvReaderImpl(resourceFileLoader.getResourcePath());
@@ -49,20 +48,19 @@ class CsvReaderTest {
                 }
                 readRowsByCsvReader++;
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         List<String> stringsInCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve(itemName));
         int numberOfRows = stringsInCsv.size();
-        assertEquals(numberOfRows - 1, readRowsByCsvReader, "incorrect rows imported from '" + itemName + "'");
+        assertEquals(numberOfRows - 1, readRowsByCsvReader, "incorrect lines imported from '" + itemName + "'");
     }
 
     @Test
     void readSeveralCsvFiles() throws Exception {
         List<String> csvFileList = List.of("account_control_phasing.csv", "goods.csv",
-                "phasing_poll.csv", "public_key.csv", "purchase.csv", "shuffling_data.csv");
+                "phasing_poll.csv", "public_key.csv", "purchase.csv", "shard.csv", "shuffling_data.csv");
 
         int processedTables = 0;
         for (String itemName: csvFileList) {
@@ -96,7 +94,7 @@ class CsvReaderTest {
             }
             List<String> stringsInCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve(itemName));
             int numberOfRows = stringsInCsv.size();
-            assertEquals(numberOfRows - 1, readRowsByCsvReader, "incorrect rows imported from '" + itemName + "'");
+            assertEquals(numberOfRows - 1, readRowsByCsvReader, "incorrect lines imported from '" + itemName + "'");
             processedTables++;
         }
         assertEquals(processedTables, csvFileList.size());
