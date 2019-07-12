@@ -62,13 +62,13 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     @Transactional(readOnly = true)
-    public Transaction findTransaction(long transactionId, TransactionalDataSource dataSource) {
+    public synchronized Transaction findTransaction(long transactionId, TransactionalDataSource dataSource) {
         return findTransaction(transactionId, Integer.MAX_VALUE,dataSource );
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
+    public synchronized Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection();
@@ -89,13 +89,13 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     @Transactional(readOnly = true)
-    public Transaction findTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
+    public synchronized Transaction findTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE, dataSource);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
+    public synchronized Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the cache
         // Search the database
@@ -118,13 +118,13 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasTransaction(long transactionId, TransactionalDataSource dataSource) {
+    public synchronized boolean hasTransaction(long transactionId, TransactionalDataSource dataSource) {
         return hasTransaction(transactionId, Integer.MAX_VALUE, dataSource);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public boolean hasTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
+    public synchronized boolean hasTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection();
@@ -140,13 +140,13 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
+    public synchronized boolean hasTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
         return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash), dataSource));
     }
 
     @Transactional(readOnly = true)
     @Override
-    public boolean hasTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
+    public synchronized boolean hasTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
         long transactionId = Convert.fullHashToId(fullHash);
         // Check the block cache
         // Search the database
@@ -163,7 +163,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Transactional(readOnly = true)
     @Override
-    public byte[] getFullHash(long transactionId, TransactionalDataSource dataSource) {
+    public synchronized byte[] getFullHash(long transactionId, TransactionalDataSource dataSource) {
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection();
@@ -178,14 +178,14 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
+    public synchronized Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         return MAPPER.mapWithException(rs, null);
     }
 
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource) {
+    public synchronized List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource) {
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection()) {
@@ -196,7 +196,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public List<Transaction> findBlockTransactions(Connection con, long blockId) {
+    public synchronized List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
@@ -216,7 +216,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    public synchronized List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT id, type, subtype, "
                 + "has_prunable_attachment AS prunable_attachment, "
@@ -245,7 +245,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public void saveTransactions(Connection con, List<Transaction> transactions) {
+    public synchronized void saveTransactions(Connection con, List<Transaction> transactions) {
         try {
             short index = 0;
             for (Transaction transaction : transactions) {
@@ -312,7 +312,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public int getTransactionCount() {
+    public synchronized int getTransactionCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction");
@@ -325,7 +325,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
+    public synchronized Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
         if (dataSource == null) {
             // select from main db
             dataSource = databaseManager.getDataSource();
@@ -363,7 +363,7 @@ public class TransactionDaoImpl implements TransactionDao {
 */
 
     @Override
-    public List<Transaction> getTransactions(TransactionalDataSource dataSource,
+    public synchronized List<Transaction> getTransactions(TransactionalDataSource dataSource,
             long accountId, int numberOfConfirmations, byte type, byte subtype,
             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
@@ -468,7 +468,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public int getTransactionCountByFilter(TransactionalDataSource dataSource, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
+    public synchronized int getTransactionCountByFilter(TransactionalDataSource dataSource, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
         validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
@@ -534,7 +534,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public synchronized DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -582,7 +582,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
+    public synchronized List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
         List<TransactionDbInfo> result = new ArrayList<>();
         try(Connection con = databaseManager.getDataSource().getConnection();
         PreparedStatement pstmt = con.prepareStatement("SELECT db_id, id FROM transaction WHERE height < ? ORDER BY db_id")) {
@@ -601,7 +601,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
 
     @Override
-    public int getTransactionCount(long accountId, byte type, byte subtype) {
+    public synchronized int getTransactionCount(long accountId, byte type, byte subtype) {
         StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction WHERE (type <> ? OR subtype <> ?) AND (sender_id = ? OR recipient_id = ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -634,12 +634,12 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+    public synchronized DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
         return new DbIterator<>(con, pstmt, this::loadTransaction);
     }
 
     @Override
-    public List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException {
+    public synchronized List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException {
         List<Transaction> transactions = new ArrayList<>();
         try (ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
