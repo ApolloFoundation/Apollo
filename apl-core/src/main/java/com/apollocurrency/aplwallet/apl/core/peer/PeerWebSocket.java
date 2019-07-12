@@ -20,9 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONData.peer;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerResponses;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
@@ -41,8 +38,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.SocketException;
@@ -61,7 +56,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lombok.Getter;
-import org.json.simple.JSONStreamAware;
 
 /**
  * PeerWebSocket represents an HTTP/HTTPS upgraded connection
@@ -69,7 +63,7 @@ import org.json.simple.JSONStreamAware;
 @WebSocket
 public class PeerWebSocket {
     private static final Logger LOG = getLogger(PeerWebSocket.class);
-
+    public static final int LOCK_AQ_TIMEOUT_MS=200;
     /** Compressed message flag */
     private static final int FLAG_COMPRESSED = 1;
 
@@ -159,8 +153,8 @@ public class PeerWebSocket {
         // immediately.  After an unsuccessful connection, a new connect attempt will not
         // be done until 60 seconds have passed.
         //
-        lock.lock();
         try {
+            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (session != null) {
                 useWebSocket = true;
             } else if (System.currentTimeMillis() > connectTime + 10 * 1000) {
@@ -247,15 +241,17 @@ public class PeerWebSocket {
      * @return                      Response message
      * @throws  IOException         I/O error occurred
      */
-    public synchronized String doPost(String request) throws IOException {
-        long requestId;
+    public String doPost(String request) throws IOException {
+        long requestId=-1;
         //
         // Send the POST request
         //
-        lock.lock();
         try {
+            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (session == null || !session.isOpen()) {
-                throw new IOException("WebSocket session is not open");
+                String msg = String.format("WebSocket session is not open for peer %s", clientPeer==null?"null":clientPeer.getHostWithPort());
+                LOG.debug(msg);
+                throw new IOException(msg);
             }
             requestId = nextRequestId++;
             byte[] requestBytes = request.getBytes("UTF-8");
@@ -281,7 +277,10 @@ public class PeerWebSocket {
             }
             session.getRemote().sendBytes(buf);
         } catch (WebSocketException exc) {
+            LOG.debug("Websocket exception: {}",exc);
             throw new SocketException(exc.getMessage());
+        }catch(InterruptedException exc){
+            LOG.debug("Can not aquire lock");            
         } finally {
             lock.unlock();
         }
@@ -294,6 +293,7 @@ public class PeerWebSocket {
             requestMap.put(requestId, postRequest);
             response = postRequest.get(Peers.readTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException exc) {
+            LOG.debug("Websocket InterruptedException exception: {}",exc);            
             throw new SocketTimeoutException("WebSocket POST interrupted");
         }
         return response;
@@ -309,8 +309,8 @@ public class PeerWebSocket {
      * @throws  IOException         I/O error occurred
      */
     public void sendResponse(long requestId, String response) throws IOException {
-        lock.lock();
         try {
+            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (session != null && session.isOpen()) {
                 byte[] responseBytes = response.getBytes("UTF-8");
                 int responseLength = responseBytes.length;
@@ -335,10 +335,13 @@ public class PeerWebSocket {
                 }
                 session.getRemote().sendBytes(buf);
             }else{
-                LOG.debug("Session is not open for peer {}. inbound: {}",clientPeer.getHostWithPort(),peerServlet==null);
+                LOG.trace("Session is not open for peer {}. inbound: {}",clientPeer.getHostWithPort(),peerServlet==null);
             }
         } catch (WebSocketException exc) {
+            LOG.trace("Websocket excption");
             throw new SocketException(exc.getMessage());
+        }catch(InterruptedException exc){
+            LOG.debug("Can not aquire lock");
         } finally {
             lock.unlock();
         }
@@ -353,8 +356,8 @@ public class PeerWebSocket {
      */
     @OnWebSocketMessage
     public void onMessage(byte[] inbuf, int off, int len) {
-        lock.lock();
         try {
+            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             ByteBuffer buf = ByteBuffer.wrap(inbuf, off, len);
             version = Math.min(buf.getInt(), WS_VERSION);
             Long requestId = buf.getLong();
@@ -400,8 +403,8 @@ public class PeerWebSocket {
      */
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
-        lock.lock();
         try {
+            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             String direction = peerServlet != null ? "Inbound" : "Outbound";
             if (session != null) {
                 LOG.trace(String.format("%s WebSocket connection with %s closed",
@@ -418,6 +421,8 @@ public class PeerWebSocket {
                 LOG.trace("Client {} socket is closed for peer: {} statusCode: {}",
                         direction, clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
             }
+        }catch(InterruptedException ex){                
+           LOG.debug("Can not aquire reentrant lock");
         } finally {
             lock.unlock();
         }
@@ -427,8 +432,8 @@ public class PeerWebSocket {
      * Close the WebSocket
      */
     public void close() {
-        lock.lock();
         try {
+            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (session != null && session.isOpen()) {
                 session.close();
                 session=null;
