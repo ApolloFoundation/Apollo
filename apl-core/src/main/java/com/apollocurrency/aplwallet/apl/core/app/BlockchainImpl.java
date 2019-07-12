@@ -175,6 +175,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
+    @Transactional(readOnly = true)    
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         Block block = blockDao.loadBlock(con, rs);
         if (loadTransactions) {
