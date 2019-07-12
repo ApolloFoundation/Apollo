@@ -534,7 +534,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public  DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public synchronized DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -568,7 +568,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public List<Transaction> getTransactions(int fromDbId, int toDbId) {
+    public synchronized List<Transaction> getTransactions(int fromDbId, int toDbId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM transaction where DB_ID >= ? and DB_ID < ? order by height asc, transaction_index asc")) {
@@ -582,7 +582,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
+    public synchronized List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
         List<TransactionDbInfo> result = new ArrayList<>();
         try(Connection con = databaseManager.getDataSource().getConnection();
         PreparedStatement pstmt = con.prepareStatement("SELECT db_id, id FROM transaction WHERE height < ? ORDER BY db_id")) {
