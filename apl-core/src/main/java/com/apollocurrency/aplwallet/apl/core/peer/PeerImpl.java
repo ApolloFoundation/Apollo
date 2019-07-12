@@ -173,13 +173,13 @@ public final class PeerImpl implements Peer {
 
     private void setState(PeerState state) {
         if (state != PeerState.CONNECTED) {
-            LOG.debug("Closing websockets on state {} for {}",state.toString(),getHostWithPort());
+            LOG.trace("Closing websockets on state {} for {}",state.toString(),getHostWithPort());
             if(webSocket!=null){
               webSocket.close();
               webSocket=null;
             }
             if (inboundSocket != null && inboundSocket.isOpen()) {
-                LOG.trace("inboundSocket will be closed too");
+                LOG.trace("inboundSocket will be closed too for {}",getHostWithPort());
                 inboundSocket.close();
                 inboundSocket=null;
             }
