@@ -84,9 +84,9 @@ public final class PeerImpl implements Peer {
     
     private final String host;
     @Getter
-    private PeerWebSocket webSocket;
+    private BADPeerWebSocket webSocket;
     @Getter
-    private volatile PeerWebSocket inboundSocket;
+    private volatile BADPeerWebSocket inboundSocket;
     private volatile boolean useWebSocket;
     private volatile int port;
     private volatile Hallmark hallmark;
@@ -502,7 +502,7 @@ public final class PeerImpl implements Peer {
         lastInboundRequest = now;
     }
 
-    void setInboundWebSocket(PeerWebSocket inboundSocket) {
+    void setInboundWebSocket(BADPeerWebSocket inboundSocket) {
         this.inboundSocket = inboundSocket;
     }
 
@@ -577,7 +577,7 @@ public final class PeerImpl implements Peer {
          return response;
     }
 
-    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
+    private JSONObject sendToWebSocket(final JSONStreamAware request, BADPeerWebSocket ws){
         JSONObject response = null;
         try {
             if(ws==null){
@@ -635,7 +635,7 @@ public final class PeerImpl implements Peer {
                 }
                 if (!webSocketOK){ //no inbound connection or send failed
                     if(webSocket==null){
-                        webSocket=new PeerWebSocket(this);
+                        webSocket=new BADPeerWebSocket(this);
                     }
                     if (!webSocket.isOpen()) {
                          // Create a new WebSocket session if we don't have one
@@ -649,7 +649,7 @@ public final class PeerImpl implements Peer {
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
                         if(webSocket==null){
                             LOG.debug("What? who closed my websocket? {}",getHostWithPort());
-                            webSocket=new PeerWebSocket(this);
+                            webSocket=new BADPeerWebSocket(this);
                         }
                         webSocketOK = webSocket.startClient(wsUri, this);
                         if (webSocketOK) {

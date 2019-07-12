@@ -146,6 +146,10 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-api</artifactId>
+        </dependency>        
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-client</artifactId>
             <classifier>hybrid</classifier>
         </dependency>

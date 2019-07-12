@@ -225,7 +225,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   requestId           Request identifier
      * @param   request             Request message
      */
-    void doPost(PeerWebSocket webSocket, long requestId, String request) {
+    void doPost(BADPeerWebSocket webSocket, long requestId, String request) {
         lookupComponents();
         JSONStreamAware jsonResponse;
         //
@@ -341,7 +341,7 @@ public final class PeerServlet extends WebSocketServlet {
 //we ignore remote port to be able to connect back in case of inbound socket close
                 Peer peer = Peers.findOrCreatePeer(host);
                 if (peer != null) {
-                    PeerWebSocket pws = new PeerWebSocket(PeerServlet.this, peer);
+                    BADPeerWebSocket pws = new BADPeerWebSocket(PeerServlet.this, peer);
                     ((PeerImpl) peer).setInboundWebSocket(pws);
                     res = pws;
                 }

@@ -36,12 +36,12 @@ class PostRequest {
     private volatile String response;
     /** Socket exception */
     private volatile IOException exception;
-    private final PeerWebSocket outer;
+    private final BADPeerWebSocket outer;
 
     /**
      * Create a post request
      */
-    public PostRequest(final PeerWebSocket outer) {
+    public PostRequest(final BADPeerWebSocket outer) {
         this.outer = outer;
     }
 

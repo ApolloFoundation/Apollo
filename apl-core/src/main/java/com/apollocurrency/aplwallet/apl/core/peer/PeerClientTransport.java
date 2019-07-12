@@ -16,7 +16,7 @@ import org.json.simple.JSONStreamAware;
  */
 public class PeerClientTransport implements Closeable {
     private final WeakReference<PeerImpl> peerWR;
-    private PeerWebSocket ws;
+    private BADPeerWebSocket ws;
     private HttpURLConnection httpConnection;
     private boolean isSecure;
     
