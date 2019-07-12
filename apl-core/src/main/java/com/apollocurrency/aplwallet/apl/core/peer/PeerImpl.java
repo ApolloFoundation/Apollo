@@ -695,7 +695,7 @@ public final class PeerImpl implements Peer {
 
                 LOG.debug("Error sending request to peer {}: {}", host, e);
             }
-            LOG.trace("Exception while sending request: {} to '{}'", e.getMessage(), getHostWithPort());
+            LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
             deactivate();
         }
         return response;
