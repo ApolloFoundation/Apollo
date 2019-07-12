@@ -693,8 +693,7 @@ public final class PeerImpl implements Peer {
                     || e instanceof SocketException
                     || Errors.END_OF_FILE.equals(e.getMessage()))) {
 
-                LOG.debug(String.format("Error sending request to peer %s: %s",
-                                       host, e.getMessage()!=null ? e.getMessage() : e.toString()));
+                LOG.debug("Error sending request to peer {}: {}", host, e);
             }
             LOG.trace("Exception while sending request: {} to '{}'", e.getMessage(), getHostWithPort());
             deactivate();
