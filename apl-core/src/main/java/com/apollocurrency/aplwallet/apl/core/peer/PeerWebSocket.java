@@ -140,6 +140,9 @@ public class PeerWebSocket {
      * @throws  IOException         I/O error occurred
      */
     public boolean startClient(URI uri, Peer p) throws IOException {
+        if(uri==null){
+            return false;
+        }
         if (peerClient == null) {
             return false;
         }
@@ -403,8 +406,6 @@ public class PeerWebSocket {
      */
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
-        try {
-            lock.tryLock(LOCK_AQ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             String direction = peerServlet != null ? "Inbound" : "Outbound";
             if (session != null) {
                 LOG.trace(String.format("%s WebSocket connection with %s closed",
@@ -421,11 +422,7 @@ public class PeerWebSocket {
                 LOG.trace("Client {} socket is closed for peer: {} statusCode: {}",
                         direction, clientPeer != null ? clientPeer.getHostWithPort() : "null", statusCode);
             }
-        }catch(InterruptedException ex){                
-           LOG.debug("Can not aquire reentrant lock");
-        } finally {
-            lock.unlock();
-        }
+        
     }
 
     /**
