@@ -20,7 +20,7 @@ public class DbManipulator {
     public void init() throws SQLException {
 
         AplDbVersion dbVersion = new AplDbVersion();
-        dataSourceWrapper.init(dbVersion);
+        dataSourceWrapper.initWithJdbi(dbVersion);
         populator.initDb();
     }
     public void shutdown() throws Exception {

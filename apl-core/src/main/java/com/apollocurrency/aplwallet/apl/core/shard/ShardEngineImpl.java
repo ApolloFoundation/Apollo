@@ -18,7 +18,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
@@ -34,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
@@ -187,7 +187,7 @@ public class ShardEngineImpl implements ShardEngine {
                     savePrevBlockData(commandParamInfo.getPrevBlockData(), commandParamInfo.getShardId());
 
                     // main goal is store merkle tree hash
-                    updateShardRecord(commandParamInfo, databaseManager.getDataSource(), state, 1L);
+                    updateShardRecord(commandParamInfo, databaseManager.getDataSource(), state, ShardState.IN_PROGRESS);
                 }
                 durableTaskUpdateByState(state, 13.0, "Shard is completed");
             } else {
@@ -552,7 +552,7 @@ public class ShardEngineImpl implements ShardEngine {
                     .isZipCrcStored(true)
                     .shardId(paramInfo.getShardId())
                     .build();
-            updateShardRecord(paramInfo, sourceDataSource, state, 1L); //update shard record by ZIP crc value
+            updateShardRecord(paramInfo, sourceDataSource, state, ShardState.IN_PROGRESS); //update shard record by ZIP crc value
 
             // update recovery
             state = ZIP_ARCHIVE_FINISHED;
@@ -639,7 +639,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         state = COMPLETED;
         // complete sharding
-        updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL);
+        updateShardRecord(paramInfo, sourceDataSource, state, ShardState.FULL);
         log.debug("Shard record '{}' is created with Hash in {} ms", paramInfo.getShardId(),
                 System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
@@ -663,7 +663,7 @@ public class ShardEngineImpl implements ShardEngine {
     private boolean updateShardRecord(CommandParamInfo paramInfo,
                                       TransactionalDataSource sourceDataSource,
                                       MigrateState recoveryStateUpdateInto,
-                                      Long stateValue) {
+                                      ShardState shardState) {
         ShardRecovery recovery;
         String sqlUpdate = null;
         // we want update SHARD either 'merkle tree hash' or 'zip CRC'
@@ -690,7 +690,7 @@ public class ShardEngineImpl implements ShardEngine {
             if (paramInfo.getShardHash() != null) {
                 preparedInsertStatement.setBytes(i++, paramInfo.getShardHash()); // merkle or zip crc}
             }
-            preparedInsertStatement.setLong(i++, stateValue); // 100% full shard is present on current node
+            preparedInsertStatement.setLong(i++, shardState.getValue()); // 100% full shard is present on current node
             preparedInsertStatement.setLong(i, paramInfo.getShardId());
             result = preparedInsertStatement.executeUpdate();
             log.debug("Shard record is updated result = '{}'", result);

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -82,7 +83,7 @@ public class ShardImporter {
         } else if (blockchainConfig.getCurrentConfig().isShardingEnabled()) {
             Shard shard = shardDao.getLastShard();
             if (shard != null) {
-                return shard.getShardState() == 100;
+                return shard.getShardState() == ShardState.FULL;
             } else {
                 return true;
             }
@@ -127,6 +128,22 @@ public class ShardImporter {
                 return;
             }
         }
+        Shard lastShard = shardDao.getLastShard();
+        if (lastShard == null) {
+            if (!excludedTables.contains(ShardConstants.SHARD_TABLE_NAME)) {
+                throw new IllegalStateException("Unable to import shard without records in shard table");
+            }
+        } else {
+            lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
+            lastShard.setZipHashCrc(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
+            if(shardDao.getShardById(lastShard.getShardId())!=null){
+                log.debug("Somehow shard already exists in DB, shardID is {}",lastShard.getShardId());
+                shardDao.updateShard(lastShard);                
+            }else{
+                shardDao.saveShard(lastShard);
+            }
+        }
+
 
         // import derived tables
         Collection<String> tableNames = derivedTablesRegistry.getDerivedTables().stream().map(Object::toString).collect(Collectors.toList());

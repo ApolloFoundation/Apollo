@@ -17,7 +17,7 @@ public class ShardToDtoConverter implements Converter<Shard, ShardDTO> {
         ShardDTO dto = new ShardDTO();
         dto.shardId = shard.getShardId();
         dto.shardHash = Convert.toHexString(shard.getShardHash());
-        dto.shardState = shard.getShardState();
+        dto.shardState = shard.getShardState().getValue();
         dto.shardHeight = shard.getShardHeight();
         dto.zipHashCrc = Convert.toHexString(shard.getZipHashCrc());
         dto.generatorIds = Arrays.toString(shard.getGeneratorIds());
