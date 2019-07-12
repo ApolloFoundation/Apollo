@@ -23,8 +23,8 @@ import java.util.UUID;
  */
 public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
-    public static final int MAX_CACHE_SIZE = 16384; // 16mb
-    public static final int MAX_CONNECTIONS = 30;
+    public static final int MAX_CACHE_SIZE = 16 * 1024; // 16mb
+    public static final int MAX_CONNECTIONS = 60;
     public static final int MAX_MEMORY_ROWS = 10_000;
 
     private final DatabaseManager databaseManager;

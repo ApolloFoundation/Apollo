@@ -43,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -281,23 +282,31 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result = new ArrayList<>();
         TransactionalDataSource dataSource;
+//        long time = System.currentTimeMillis();
         Integer fromBlockHeight = getBlockHeight(blockId);
         if (fromBlockHeight != null) {
             int prevSize;
             do {
                 dataSource = getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
+//                log.info("Datasource - {}", dataSource.getUrl());
                 prevSize = result.size();
-                blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, dataSource, prevSize);
-                for (int i = prevSize; i < result.size(); i++) {
-                    Block block = result.get(i);
-                    List<Transaction> blockTransactions = transactionDao.findBlockTransactions(block.getId(), dataSource);
-                    block.setTransactions(blockTransactions);
+                try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connectiщn
+                    blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, con, prevSize);
+                    for (int i = prevSize; i < result.size(); i++) {
+                        Block block = result.get(i);
+                        List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
+                        block.setTransactions(blockTransactions);
+                    }
+                    if (result.size() - 1 >= 0) {
+                        fromBlockHeight = getBlockHeight(blockIdList.get(result.size() - 1));
+                    }
                 }
-                if (result.size() - 1 >= 0) {
-                    fromBlockHeight = getBlockHeight(blockIdList.get(result.size() - 1));
+                catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
                 }
             } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
         }
+//        log.info("GetAfterBlock time {}", System.currentTimeMillis() - time);
         return result;
     }
 
