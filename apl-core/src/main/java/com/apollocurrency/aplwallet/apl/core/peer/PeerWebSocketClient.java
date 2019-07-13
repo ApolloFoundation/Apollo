@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 /**
@@ -24,7 +23,8 @@ public class PeerWebSocketClient extends PeerWebSocket{
     private WebSocketClient client;
 
     public PeerWebSocketClient(PeerImpl peer) {
-        super(peer);    
+        super(peer); 
+        client = new WebSocketClient();
     }
 
 
@@ -38,8 +38,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
         boolean websocketOK = false;
         try {
-            ClientUpgradeRequest req = new ClientUpgradeRequest();
-            Future<Session> conn = client.connect(this, uri, req);
+            Future<Session> conn = client.connect(this, uri);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
         } catch (InterruptedException ex) {
