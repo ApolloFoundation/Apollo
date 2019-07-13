@@ -13,7 +13,7 @@ public enum ApiErrors implements ErrorInfo {
 
     MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified."),
     MISSING_PARAM(3, 2003, "The mandatory parameter '%s' is not specified."),
-    INCORRECT_VALUE(4, 2004, "Incorrect {0} value, '{1}' is not defined"),
+    INCORRECT_VALUE(4, 2004, "Incorrect {0} value, [{1}] is not defined or wrong"),
     UNKNOWN_VALUE(5, 2005, "Unknown {0} : {1}"),
     PEER_NOT_CONNECTED(5, 2006, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2007, "Peer is not providing open API."),

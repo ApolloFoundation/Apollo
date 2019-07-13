@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest;
 
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.jboss.resteasy.core.interception.PostMatchContainerRequestContext;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -30,6 +32,36 @@ public class RestParameters {
         return parsedParams;
     }
 
+    public static int parseHeight(String heightValue, long maxHeight) throws RestParameterException {
+        if (heightValue != null) {
+            try {
+                int height = Integer.parseInt(heightValue);
+                if (height < 0 || height > maxHeight) {
+                    throw new NumberFormatException();
+                }
+                return height;
+            } catch (NumberFormatException e) {
+                throw new RestParameterException(ApiErrors.INCORRECT_VALUE, "height", heightValue);
+            }
+        }
+        return -1;
+    }
+
+    public static long parseAccountId(String account) throws RestParameterException {
+        long accountId;
+        if (account == null) {
+            throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
+        }
+        try{
+            accountId = Convert.parseAccountId(account);
+            if (accountId == 0){
+                throw new NumberFormatException();
+            }
+        }catch (Exception e){
+            throw new RestParameterException(ApiErrors.UNKNOWN_VALUE, "account", account);
+        }
+        return accountId;
+    }
 
 
 }

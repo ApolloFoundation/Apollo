@@ -30,6 +30,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 public final class GetAccountAssetCount extends AbstractAPIRequestHandler {
 
     public GetAccountAssetCount() {

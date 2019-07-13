@@ -85,6 +85,15 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     }
 
     @Test
+    void getPeersList_whenGetWithWrongState_thenGetError_2004() throws URISyntaxException, IOException {
+        when(service.getPeersByStateAndService(false, null, 0)).thenReturn(List.of(peer));
+
+        MockHttpResponse response = sendGetRequest("/networking/peer/all?state=BAD_STATE_OF_PEER&includePeerInfo=true");
+
+        checkMandatoryParameterMissingErrorCode(response, 2004);
+    }
+
+    @Test
     void getPeersList_whenSetActive_thenGetEmptyList() throws URISyntaxException, IOException {
         when(service.getPeersByStateAndService(true, null, 0)).thenReturn(Collections.EMPTY_LIST);
 

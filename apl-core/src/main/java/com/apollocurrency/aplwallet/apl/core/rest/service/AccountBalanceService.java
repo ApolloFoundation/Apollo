@@ -69,17 +69,4 @@ public class AccountBalanceService {
         return apolloWallet;
     }
 
-    public Account retrieveAccountByAccountId(String account) {
-        long accountId;
-        try{
-            accountId = Convert.parseAccountId(account);
-        }catch (Exception e){
-            return null;
-        }
-        if (accountId == 0){
-            return null;
-        }
-        return accountService.getAccount(accountId);
-    }
-
 }

@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Vetoed
+@Deprecated
 public final class GetAccountAssets extends AbstractAPIRequestHandler {
 
     public GetAccountAssets() {

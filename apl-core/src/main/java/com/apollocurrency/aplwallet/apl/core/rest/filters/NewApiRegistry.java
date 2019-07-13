@@ -44,6 +44,8 @@ public class NewApiRegistry {
         apis.put("confirm2FA", "/rest/accounts/confirm2FA"); //POST
         apis.put("deleteKey", "/rest/accounts/deleteKey"); //POST
         apis.put("exportKey", "/rest/accounts/exportKey"); //POST
+        apis.put("getAccountAssetCount", "/rest/accounts/account/assetCount"); //GET
+        apis.put("getAccountAssets", "/rest/accounts/account/assets"); //GET
 
 
         //TODO: add new implemented endpoints

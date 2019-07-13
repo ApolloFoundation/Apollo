@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
@@ -11,13 +12,10 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -27,14 +25,16 @@ import org.junit.jupiter.api.Test;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 
 import static org.jboss.resteasy.mock.MockHttpRequest.post;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AccountControllerTest extends AbstractEndpointTest{
+
+    public static final int CURRENT_HEIGHT = 650000;
 
     private static final String PASSPHRASE = "123456";
     public static final String PUBLIC_KEY_HEX = "e03f00485cabc82491d05297acd9d140f62d61d86f16ba4bcf2a922482a4617d";
@@ -44,8 +44,12 @@ class AccountControllerTest extends AbstractEndpointTest{
     public static final String SECRET = "SuperSecret";
     public static final int CODE_2FA = 123456;
 
+    public static final long ASSET_ID = 8180990979457659735L;
+
+
     public Account account;
     public AccountDTO accountDTO;
+    public AccountAsset accountAsset;
 
     private AccountController endpoint = new AccountController();
 
@@ -53,7 +57,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     private AccountService accountService = mock(AccountService.class);
     private AccountAssetService accountAssetService = mock(AccountAssetService.class);
     private AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
-    private AccountBalanceService accountBalanceService = mock(AccountBalanceService.class);
+    private AccountAssetConverter accountAssetConverter = mock(AccountAssetConverter.class);
 
     private Account2FAHelper account2FAHelper = mock(Account2FAHelper.class);
 
@@ -71,7 +75,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         endpoint.setAccountService(accountService);
         endpoint.setAccountAssetService(accountAssetService);
         endpoint.setAccountCurrencyService(accountCurrencyService);
-        endpoint.setAccountBalanceService(accountBalanceService);
+        endpoint.setAccountAssetConverter(accountAssetConverter);
         endpoint.setAccount2FAHelper(account2FAHelper);
 
         account = new Account(ACCOUNT_ID, 0);
@@ -84,6 +88,11 @@ class AccountControllerTest extends AbstractEndpointTest{
                 account.getBalanceATM(),
                 account.getForgedBalanceATM(),
                 account.getUnconfirmedBalanceATM());
+
+        accountAsset = new AccountAsset(
+                ACCOUNT_ID, ASSET_ID,
+                1000, 1100,
+                CURRENT_HEIGHT);
 
     }
 
@@ -109,8 +118,8 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccount_Account_ID_without_including_additional_information() throws URISyntaxException, IOException {
-        doReturn(account).when(accountBalanceService).retrieveAccountByAccountId(Long.toUnsignedString(ACCOUNT_ID));
+    void getAccount_byAccountID_withoutIncludingAdditionalInformation() throws URISyntaxException, IOException {
+        doReturn(account).when(accountService).getAccount(ACCOUNT_ID);
         doReturn(accountDTO).when(accountConverter).convert(account);
         MockHttpResponse response = sendGetRequest("/accounts/account?account="+ACCOUNT_ID);
 
@@ -335,6 +344,93 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         doReturn(secretBytes).when(account2FAHelper).findAplSecretBytes(twoFactorAuthParameters);
         check2FA_withPathPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+    }
+
+    @Test
+    void getAccountAssetCount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendGetRequest("/accounts/account/assetCount");
+
+        checkMandatoryParameterMissingErrorCode(response, 2003);
+    }
+
+    @Test
+    void getAccountAssetCount_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        MockHttpResponse response = sendGetRequest("/accounts/account/assetCount?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
+
+        checkMandatoryParameterMissingErrorCode(response, 2004);
+    }
+
+    @Test
+    void getAccountAssetCount() throws URISyntaxException, IOException {
+        int count = 38;
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        doReturn(count).when(accountAssetService).getAccountAssetCount(ACCOUNT_ID, CURRENT_HEIGHT);
+        MockHttpResponse response = sendGetRequest("/accounts/account/assetCount?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+
+        String content = response.getContentAsString();
+        print(content);
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+
+        assertEquals(count, result.get("numberOfAssets"));
+    }
+
+    @Test
+    void getAccountAssets_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendGetRequest("/accounts/account/assets");
+
+        checkMandatoryParameterMissingErrorCode(response, 2003);
+    }
+
+    @Test
+    void getAccountAssets_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        MockHttpResponse response = sendGetRequest("/accounts/account/assets?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
+
+        checkMandatoryParameterMissingErrorCode(response, 2004);
+    }
+
+    @Test
+    void getAccountAssets_getList() throws URISyntaxException, IOException {
+        endpoint.setAccountAssetConverter(new AccountAssetConverter());
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        doReturn(List.of(accountAsset)).when(accountAssetService).getAssetAccounts(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+
+        MockHttpResponse response = sendGetRequest("/accounts/account/assets?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+
+        String content = response.getContentAsString();
+        print(content);
+
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+
+        JsonNode root = mapper.readTree(content);
+        assertTrue(root.get("accountAssets").isArray());
+        assertEquals(Long.toUnsignedString(ASSET_ID), root.withArray("accountAssets").get(0).get("asset").asText());
+    }
+
+    @Test
+    void getAccountAssets_getOne() throws URISyntaxException, IOException {
+        endpoint.setAccountAssetConverter(new AccountAssetConverter());
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        doReturn(accountAsset).when(accountAssetService).getAsset(ACCOUNT_ID, ASSET_ID, CURRENT_HEIGHT);
+
+        MockHttpResponse response = sendGetRequest(
+                "/accounts/account/assets?account="+ACCOUNT_ID+"&asset="+ASSET_ID+"&height="+CURRENT_HEIGHT);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+
+        String content = response.getContentAsString();
+        print(content);
+
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+        assertEquals(Long.toUnsignedString(ASSET_ID), result.get("asset"));
     }
 
     private void check2FA_withoutRequestAttribute_thenGetError_1000(String uri) throws URISyntaxException, IOException {

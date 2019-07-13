@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.*;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
@@ -16,15 +18,12 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -68,7 +67,7 @@ public class AccountController {
     private AccountCurrencyService accountCurrencyService;
 
     @Inject @Setter
-    private AccountBalanceService accountBalanceService;
+    private AccountAssetConverter accountAssetConverter;
 
     @Inject @Setter
     private AccountConverter converter;
@@ -107,11 +106,8 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
 
-        if (accountStr == null) {
-            return response.error( ApiErrors.MISSING_PARAM, "account").build();
-        }
-
-        Account account  = accountBalanceService.retrieveAccountByAccountId(accountStr);
+        long accountId = RestParameters.parseAccountId(accountStr);
+        Account account  = accountService.getAccount(accountId);
 
         if (account == null) {
             return response.error( ApiErrors.UNKNOWN_VALUE, "account", accountStr).build();
@@ -167,6 +163,79 @@ public class AccountController {
 
         return response.bind(dto).build();
     }
+
+    @Path("/account/assetCount")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the assets count.",
+            description = "Returns the number of assets by account id and height.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountAssetsCountResponse.class)))
+            })
+    @PermitAll
+    public Response getAccountAssetsCount(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The blockchain height.") @QueryParam("height") String heightStr) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+
+        AccountAssetsCountResponse dto = new AccountAssetsCountResponse();
+        dto.setNumberOfAssets(accountAssetService.getAccountAssetCount(accountId, height));
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/account/assets")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the account assets.",
+            description = "Returns the account assets by account id and height.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountAssetDTO.class)))
+            })
+    @PermitAll
+    //TODO: need to be adjusted to return one common response.
+    // cause this GET returns two different responses (Acjjxtym countAssetDTO or AccountAssetResponse)
+    // that depend on the value of the asset parameter.
+    public Response getAccountAssets(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The asset ID.") @QueryParam("asset") Long assetId,
+            @Parameter(description = "The blockchain height.") @QueryParam("height") String heightStr,
+            @Parameter(description = "Include asset information.") @QueryParam("includeAssetInfo") @DefaultValue("false") Boolean includeAssetInfo
+            ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        if (assetId == null || assetId == 0) {
+            List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(accountId, height, 0, -1);
+            List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
+            if(includeAssetInfo){
+                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
+            }
+
+            return response.bind(new AccountAssetsResponse(accountAssetDTOList)).build();
+        }else{
+            AccountAsset accountAsset = accountAssetService.getAsset(accountId, assetId, height);
+            AccountAssetDTO dto = accountAssetConverter.convert(accountAsset);
+            if(includeAssetInfo){
+                accountAssetConverter.addAsset(dto, Asset.getAsset(assetId));
+            }
+
+            return response.bind(dto).build();
+        }
+    }
+
 
     @Path("/exportKey")
     @POST

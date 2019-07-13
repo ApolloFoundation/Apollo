@@ -21,10 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.*;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
@@ -120,6 +117,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
+            .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))
             .build();
 
 
