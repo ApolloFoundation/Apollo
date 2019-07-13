@@ -72,16 +72,21 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketText(String message) {
         super.onWebSocketText(message);
+        log.debug("String received: {}",message);
     }
 
     @Override
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
+        log.debug("Websocket error: {}",cause);
     }
 
     @Override
     public void onWebSocketConnect(Session sess) {
         super.onWebSocketConnect(sess);
+        log.debug("WebSocket connectded: {}:{}",
+                sess.getRemoteAddress().getHostString(),
+                sess.getRemoteAddress().getPort());
     }
 
     @Override
@@ -105,8 +110,8 @@ public class PeerWebSocket extends WebSocketAdapter {
                 try (GZIPInputStream gzipStream = new GZIPInputStream(inStream, 1024)) {
                     msgBytes = new byte[length];
                     int off = 0;
-                    while (offset < msgBytes.length) {
-                        int count = gzipStream.read(msgBytes, off, msgBytes.length - offset);
+                    while (off < msgBytes.length) {
+                        int count = gzipStream.read(msgBytes, off, msgBytes.length - off);
                         if (count < 0) {
                             throw new EOFException("End-of-data reading compressed data");
                         }
@@ -135,15 +140,24 @@ public class PeerWebSocket extends WebSocketAdapter {
         try {
             rqId = send(request, null);
         } catch (IOException ex) {
+            Peer p = peerReference.get();
+            String addr = "UNKNOWN";
+            if (p != null) {
+                addr = p.getHostWithPort();
+            }
+            log.debug("Interrupted whule sending to websocket of {}", addr);
             sendOK = false;
         }
         if (sendOK) {
             try {
                 res = getResponse(rqId);
-            } catch (InterruptedException ex) {
-                //log
-            } catch (IOException ex) {
-                //log
+            } catch (InterruptedException|IOException ex) {
+                Peer p = peerReference.get();
+                String addr = "UNKNOWN";
+                if(p!=null){
+                    addr=p.getHostWithPort();
+                }
+                log.debug("Interrupted whule sending to websocket of {}",addr);
             }
         }
         return res;
@@ -151,18 +165,19 @@ public class PeerWebSocket extends WebSocketAdapter {
 
     /**
      * Sends websocket message
-     *
+     * Must be synchronized because it is used from multiple threads
      * @param message message string
      * @param rqId if it is not null, it means it is request otherwise it is
      * response
      * @return requestId
      * @throws IOException
      */
-    public Long send(String message, Long rqId) throws IOException {
+    public  synchronized Long send(String message, Long rqId) throws IOException {
         cleanUp();
         Long requestId;
         if (rqId == null) {
             requestId = nextRequestId();
+            requestMap.put(requestId, new WebSocketResonseWaiter());
         } else {
             requestId = rqId;
         }

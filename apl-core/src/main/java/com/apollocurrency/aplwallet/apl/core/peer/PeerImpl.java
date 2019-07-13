@@ -1075,8 +1075,6 @@ public final class PeerImpl implements Peer {
         return PeerTrustLevel.NOT_TRUSTED;    
     }
 
-
-
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
