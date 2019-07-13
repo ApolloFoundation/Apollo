@@ -91,7 +91,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             which = "Outbound";
         }
         
-        log.debug("WebSocket connectded: {}:{}",
+        log.debug("{} WebSocket connectded: {}:{}", which,
                 sess.getRemoteAddress().getHostString(),
                 sess.getRemoteAddress().getPort());
     }
