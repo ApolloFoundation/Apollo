@@ -214,10 +214,6 @@ public final class PeerServlet extends WebSocketServlet {
         }
     }
 
-
-    protected boolean chainIdProtected() {
-        return true;
-    }
     /**
      * Process WebSocket POST request
      *
@@ -225,14 +221,14 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   requestId           Request identifier
      * @param   request             Request message
      */
-    void doPost(BADPeerWebSocket webSocket, long requestId, String request) {
+    void doPost(PeerWebSocket webSocket, long requestId, String request) {
         lookupComponents();
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
         //
 
-        PeerImpl peer = (PeerImpl)webSocket.getClientPeer();
+        PeerImpl peer = (PeerImpl)webSocket.getPeer();
         if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
@@ -246,7 +242,7 @@ public final class PeerServlet extends WebSocketServlet {
             StringWriter writer = new StringWriter(1000);
             JSON.writeJSONString(jsonResponse, writer);
             String response = writer.toString();
-            webSocket.sendResponse(requestId, response);
+            webSocket.send(response,requestId);
             if (peer != null) {
                 peer.updateUploadedVolume(response.length());
             }
@@ -302,7 +298,7 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
-            peer.setLastInboundRequest(timeService.getEpochTime());
+            peer.setLastInboundRequestTime(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
                     return PeerResponses.DOWNLOADING;
@@ -341,7 +337,7 @@ public final class PeerServlet extends WebSocketServlet {
 //we ignore remote port to be able to connect back in case of inbound socket close
                 Peer peer = Peers.findOrCreatePeer(host);
                 if (peer != null) {
-                    BADPeerWebSocket pws = new BADPeerWebSocket(PeerServlet.this, peer);
+                    PeerWebSocket pws = new PeerWebSocket(peer, PeerServlet.this);
                     ((PeerImpl) peer).setInboundWebSocket(pws);
                     res = pws;
                 }

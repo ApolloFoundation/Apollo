@@ -16,7 +16,6 @@ import org.json.simple.JSONStreamAware;
  */
 public class PeerClientTransport implements Closeable {
     private final WeakReference<PeerImpl> peerWR;
-    private BADPeerWebSocket ws;
     private HttpURLConnection httpConnection;
     private boolean isSecure;
     
@@ -48,10 +47,10 @@ public class PeerClientTransport implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if(ws!=null){
-            ws.close();
-            ws=null;
-        }
+//        if(ws!=null){
+//            ws.close();
+//            ws=null;
+//        }
         if(httpConnection!=null){
             httpConnection.disconnect();
             httpConnection=null;

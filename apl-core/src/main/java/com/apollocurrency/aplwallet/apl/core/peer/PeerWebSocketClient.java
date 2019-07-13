@@ -19,16 +19,18 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
  * @author al
  */
 @Slf4j
-public class PeerWebSocketClient {
+public class PeerWebSocketClient extends PeerWebSocket{
 
     private WebSocketClient client;
-    private final PeerWebSocket endpoint;
-    private final PeerImpl peer;
 
     public PeerWebSocketClient(PeerImpl peer) {
-        this.peer = peer;
-        endpoint = new PeerWebSocket(peer);
+        super(peer);    
     }
+
+
+//    public PeerWebSocketClient(PeerImpl peer) {
+
+//    }
 
     public boolean startClient(URI uri) {
         if (uri == null) {
@@ -36,36 +38,20 @@ public class PeerWebSocketClient {
         }
         boolean websocketOK = false;
         try {
-            String address = String.format("%s:%d", uri.getHost(), uri.getPort());
             ClientUpgradeRequest req = new ClientUpgradeRequest();
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
         } catch (InterruptedException ex) {
-            //Logger
+            log.debug("Interruped while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (ExecutionException ex) {
-            //Logger
+            log.debug("Execution failed while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (TimeoutException ex) {
-            //Logger
+            log.debug("Timeout exceeded while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (IOException ex) {
-            //Logger
+            log.debug("I/O error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         }
 
         return websocketOK;
     }
-
-    public String sendAndWaitResponse(String request) throws IOException {
-        Long rqId = endpoint.send(request);
-        String res = getResponse(rqId);
-        return res;
-    }
-
-    public Long send(String request) throws IOException {
-        return endpoint.send(request);
-    }
-
-    public String getResponse(Long requestId) {
-        return endpoint.getResponse(requestId);
-    }
-
 }

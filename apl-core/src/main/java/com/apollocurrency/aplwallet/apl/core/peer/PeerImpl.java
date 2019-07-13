@@ -84,9 +84,9 @@ public final class PeerImpl implements Peer {
     
     private final String host;
     @Getter
-    private BADPeerWebSocket webSocket;
+    private PeerWebSocketClient clientWebSocket;
     @Getter
-    private volatile BADPeerWebSocket inboundSocket;
+    private volatile PeerWebSocket inboundSocket;
     private volatile boolean useWebSocket;
     private volatile int port;
     private volatile Hallmark hallmark;
@@ -144,7 +144,7 @@ public final class PeerImpl implements Peer {
         pi.setAnnouncedAddress(pa.getAddrWithPort());
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
-        this.webSocket = null;
+        this.clientWebSocket = null;
         this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
@@ -180,11 +180,11 @@ public final class PeerImpl implements Peer {
         //we should close all
         if (newState == PeerState.DISCONNECTED && state == PeerState.CONNECTED) {
             LOG.trace("Closing websockets on state {} for {}",newState.toString(),getHostWithPort());
-            if(webSocket!=null){
-              webSocket.close();
-              webSocket=null;
+            if(clientWebSocket!=null){
+              clientWebSocket.close();
+              clientWebSocket=null;
             }
-            if (inboundSocket != null && inboundSocket.isOpen()) {
+            if (inboundSocket != null) {
                 LOG.trace("inboundSocket will be closed too for {}",getHostWithPort());
                 inboundSocket.close();
                 inboundSocket=null;
@@ -498,23 +498,23 @@ public final class PeerImpl implements Peer {
         return lastInboundRequest;
     }
 
-    void setLastInboundRequest(int now) {
+    void setLastInboundRequestTime(int now) {
         lastInboundRequest = now;
     }
 
-    void setInboundWebSocket(BADPeerWebSocket inboundSocket) {
+    void setInboundWebSocket(PeerWebSocket inboundSocket) {
         this.inboundSocket = inboundSocket;
     }
 
     @Override
     public boolean isInboundWebSocket() {
-        boolean res = inboundSocket!=null && inboundSocket.isOpen();
+        boolean res = inboundSocket!=null;
         return res;
     }
 
     @Override
     public boolean isOutboundWebSocket() {
-        return webSocket != null && webSocket.isOpen();
+        return clientWebSocket != null;
     }
 
     @Override
@@ -577,7 +577,7 @@ public final class PeerImpl implements Peer {
          return response;
     }
 
-    private JSONObject sendToWebSocket(final JSONStreamAware request, BADPeerWebSocket ws){
+    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
         JSONObject response = null;
         try {
             if(ws==null){
@@ -593,7 +593,7 @@ public final class PeerImpl implements Peer {
             }
             String wsRequest = wsWriter.toString();
 
-            String wsResponse = ws.doPost(wsRequest);
+            String wsResponse = ws.sendAndWaitResponse(wsRequest);
             LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
             if (wsResponse != null) {
                 updateUploadedVolume(wsRequest.length());
@@ -634,10 +634,10 @@ public final class PeerImpl implements Peer {
                     LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK);
                 }
                 if (!webSocketOK){ //no inbound connection or send failed
-                    if(webSocket==null){
-                        webSocket=new BADPeerWebSocket(this);
+                    if(clientWebSocket==null){
+                        clientWebSocket=new PeerWebSocketClient(this);
                     }
-                    if (!webSocket.isOpen()) {
+                    if (!clientWebSocket.isOpen()) {
                          // Create a new WebSocket session if we don't have one
                         // and do not have inbound
                         String addrWithPort = getAnnouncedAddress();
@@ -647,11 +647,11 @@ public final class PeerImpl implements Peer {
                         String wsConnectString = "ws://" + addrWithPort + "/apl";
                         URI wsUri = URI.create(wsConnectString);
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
-                        if(webSocket==null){
+                        if(clientWebSocket==null){
                             LOG.debug("What? who closed my websocket? {}",getHostWithPort());
-                            webSocket=new BADPeerWebSocket(this);
+                            clientWebSocket=new PeerWebSocketClient(this);
                         }
-                        webSocketOK = webSocket.startClient(wsUri, this);
+                        webSocketOK = clientWebSocket.startClient(wsUri);
                         if (webSocketOK) {
                             LOG.trace("Connected as client to websocket {}", wsConnectString);
                         }
@@ -659,7 +659,7 @@ public final class PeerImpl implements Peer {
                         webSocketOK = true;
                     }
                     if (webSocketOK) { //send using client socket
-                        response = sendToWebSocket(request, webSocket);
+                        response = sendToWebSocket(request, clientWebSocket);
                         webSocketOK = response != null;
                         LOG.trace("Peer: {} Using outbound web socket. Success: {}", getHostWithPort(), webSocketOK);
                     }
