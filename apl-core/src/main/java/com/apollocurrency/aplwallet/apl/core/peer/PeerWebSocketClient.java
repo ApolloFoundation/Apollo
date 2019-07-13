@@ -49,15 +49,15 @@ public class PeerWebSocketClient extends PeerWebSocket{
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
         } catch (InterruptedException ex) {
-            log.debug("Interruped while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Interruped while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (ExecutionException ex) {
-            log.debug("Execution failed while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Execution failed while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (TimeoutException ex) {
-            log.debug("Timeout exceeded while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (IOException ex) {
-            log.debug("I/O error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("I/O error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         } catch (Exception ex) {
-            log.debug("Generic error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Generic error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
         }
 
         return websocketOK;

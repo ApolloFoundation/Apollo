@@ -84,6 +84,13 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketConnect(Session sess) {
         super.onWebSocketConnect(sess);
+        String which;
+        if(peerServlet!=null){
+            which = "Inbound";
+        }else{
+            which = "Outbound";
+        }
+        
         log.debug("WebSocket connectded: {}:{}",
                 sess.getRemoteAddress().getHostString(),
                 sess.getRemoteAddress().getPort());
