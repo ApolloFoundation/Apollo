@@ -167,7 +167,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             try {
                 res = getResponse(rqId);
             } catch (InterruptedException|IOException ex) {
-                log.debug("Exception while sending to websocket of {}\n{}",which(),ex);
+                log.debug("Exception while waiting response (id:{}) from websocket of {}\n{}",rqId,which(),ex);
             }
         }
         return res;
