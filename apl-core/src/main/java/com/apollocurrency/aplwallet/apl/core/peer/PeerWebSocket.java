@@ -73,11 +73,10 @@ public class PeerWebSocket extends WebSocketAdapter {
     
     public PeerWebSocket(Peer peer, PeerServlet peerServlet) {
         peerReference = new SoftReference<>(peer);
+        rnd = new Random(System.currentTimeMillis());        
         if (peerServlet != null) {
             this.peerServlet = peerServlet;
-            ((PeerImpl)peer).setInboundWebSocket(this);
         }
-        rnd = new Random(System.currentTimeMillis());        
     }
     
     public Peer getPeer(){
