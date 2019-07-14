@@ -56,6 +56,13 @@ public class PeerWebSocket extends WebSocketAdapter {
     public PeerWebSocket(Peer peer) {
         this(peer, null);
     }
+    public PeerWebSocket(Peer peer, PeerServlet peerServlet) {
+        peerReference = new SoftReference<>(peer);
+        rnd = new Random(System.currentTimeMillis());        
+        if (peerServlet != null) {
+            this.peerServlet = peerServlet;
+        }
+    }
     
     String which(){
         String which;
@@ -69,14 +76,6 @@ public class PeerWebSocket extends WebSocketAdapter {
             which+=" at "+p.getHostWithPort();
         }
         return which;
-    }
-    
-    public PeerWebSocket(Peer peer, PeerServlet peerServlet) {
-        peerReference = new SoftReference<>(peer);
-        rnd = new Random(System.currentTimeMillis());        
-        if (peerServlet != null) {
-            this.peerServlet = peerServlet;
-        }
     }
     
     public Peer getPeer(){
@@ -238,14 +237,12 @@ public class PeerWebSocket extends WebSocketAdapter {
 
     private synchronized void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
-        for (Long wsw : requestMap.keySet()) {
-            if (requestMap.get(wsw).isOld()) {
-                toDelete.add(wsw);
-            }
-        }
-        for (Long key : toDelete) {
+        requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
+            toDelete.add(wsw);
+        });
+        toDelete.forEach((key) -> {
             requestMap.remove(key);
-        }
+        });
     }
 
 }
