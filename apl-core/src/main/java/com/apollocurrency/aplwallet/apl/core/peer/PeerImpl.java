@@ -535,7 +535,7 @@ public final class PeerImpl implements Peer {
             LOG.error("Peer: {}  handshake failed with state = {}.", getAnnouncedAddress(), state);
             return null;
         }else{        
-            return send(request, chainId, Peers.MAX_RESPONSE_SIZE);
+            return send(request);
         }
     }
 
@@ -610,7 +610,7 @@ public final class PeerImpl implements Peer {
         return response;
     }
 
-    private JSONObject send(final JSONStreamAware request, UUID targetChainId, int maxResponseSize) {
+    private JSONObject send(final JSONStreamAware request) {
         if (LOG.isTraceEnabled()) {
             StringWriter out = new StringWriter();
             String reqAsString = null;
@@ -731,7 +731,7 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            JSONObject response = send(Peers.getMyPeerInfoRequest(), targetChainId, Peers.MAX_RESPONSE_SIZE);
+            JSONObject response = send(Peers.getMyPeerInfoRequest());
             LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
             PeerInfo newPi;
             if (response != null) {
@@ -823,6 +823,7 @@ public final class PeerImpl implements Peer {
                // deactivate();
             }
         } catch (RuntimeException e) {
+            LOG.debug("RuntimeException. Blacklisting {}",getHostWithPort(),e);
             blacklist(e);
         }
     }

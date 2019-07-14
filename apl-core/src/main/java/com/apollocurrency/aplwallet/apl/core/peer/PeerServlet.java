@@ -199,9 +199,12 @@ public final class PeerServlet extends WebSocketServlet {
             if (peer != null) {
                 peer.updateUploadedVolume(writer.getCount());
             }
-        } catch (RuntimeException | IOException e) {
+        } catch (RuntimeException e) {
             processException(peer, e);
+            LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);            
             throw e;
+        }catch ( IOException e){
+            LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e); 
         }
     }
 
@@ -209,57 +212,61 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer != null) {
 
 //jetty misused this, ignore            
-            if(!(e instanceof ClosedChannelException )){
+            if (!(e instanceof ClosedChannelException)) {
                 LOG.debug("Error sending response to peer " + peer.getHost(), e);
                 peer.blacklist(e);
-            }else{
+            } else {
                 LOG.trace("Error sending response to peer " + peer.getHost(), e);
             }
         }
     }
-    
-    void doPost(PeerWebSocket webSocket, long requestId, String request) {
-          threadPool.execute(() -> {
-              doPostTask(webSocket, requestId, request);
-          });
+
+    void doPost(PeerWebSocket webSocket, Long requestId, String request) {
+        threadPool.execute(() -> {
+            doPostTask(webSocket, requestId, request);
+        });
     }
 
     /**
      * Process WebSocket POST request
      *
-     * @param   webSocket           WebSocket for the connection
-     * @param   requestId           Request identifier
-     * @param   request             Request message
+     * @param webSocket WebSocket for the connection
+     * @param requestId Request identifier
+     * @param request Request message
      */
-    private void doPostTask(PeerWebSocket webSocket, long requestId, String request) {
+    private synchronized void doPostTask(PeerWebSocket webSocket, Long requestId, String request) {
 
-        
         lookupComponents();
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
         //
 
-        PeerImpl peer = (PeerImpl)webSocket.getPeer();
-        if(peer==null){
+        PeerImpl peer = (PeerImpl) webSocket.getPeer();
+        if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            jsonResponse = process(peer, new StringReader(request));
-        }
-        //
-        // Return the response
-        //
-
-        try {
-            StringWriter writer = new StringWriter(1000);
-            JSON.writeJSONString(jsonResponse, writer);
-            String response = writer.toString();
-            webSocket.send(response,requestId);
-            if (peer != null) {
-                peer.updateUploadedVolume(response.length());
+            if (requestId == null) {
+                LOG.error("null requestId from {}", peer.getHostWithPort());
             }
-        } catch (RuntimeException | IOException e) {
-            processException(peer, e);
+            jsonResponse = process(peer, new StringReader(request));
+            //
+            // Return the response
+            //
+
+            try {
+                StringWriter writer = new StringWriter(1000);
+                JSON.writeJSONString(jsonResponse, writer);
+                String response = writer.toString();
+                webSocket.send(response, requestId);
+                peer.updateUploadedVolume(response.length());
+            } catch (RuntimeException e) {
+                LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);
+                processException(peer, e);
+            } catch (IOException e) {
+                LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);
+                peer.deactivate("IO exception sending response to: "+webSocket.which());
+            }
         }
     }
 

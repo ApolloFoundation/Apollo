@@ -57,7 +57,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         this(peer, null);
     }
     
-    private String which(){
+    String which(){
         String which;
         if(peerServlet!=null){
             which = "Inbound";
@@ -148,6 +148,11 @@ public class PeerWebSocket extends WebSocketAdapter {
             } else { //most likely ge've got request from remote and should process it
                 if (peerServlet != null) {
                     peerServlet.doPost(this, rqId, message);
+                    if(rqId==0){
+                        log.debug( "{} rqId=0",which()) ;                               
+                    }
+                }else{
+                    log.debug("{} requestMap miss with rqId {}",which(),rqId);
                 }
             }
         } catch (IOException ex) {
