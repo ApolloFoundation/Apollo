@@ -151,7 +151,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                 if (peerServlet != null) {
                     peerServlet.doPost(this, rqId, message);
                 }else{
-                    log.debug("{} requestMap miss with rqId {}",which(),rqId);
+                    log.debug("{} requestMap miss with rqId {}\n Message:\n",which(),rqId, message);
                 }
             }
         } catch (IOException ex) {
@@ -173,7 +173,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             try {
                 res = getResponse(rqId);
             } catch (IOException ex) {
-                log.debug("Waiting response(id:{}) error: from remote {}",rqId,which(),ex);
+                log.debug("Waiting response(id:{}) error: from remote {}\nRequest:\n",rqId,which(),ex,request);
             }
         }
         return res;
