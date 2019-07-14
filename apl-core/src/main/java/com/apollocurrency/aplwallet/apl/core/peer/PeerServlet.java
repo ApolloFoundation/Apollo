@@ -220,7 +220,7 @@ public final class PeerServlet extends WebSocketServlet {
     
     void doPost(PeerWebSocket webSocket, long requestId, String request) {
           threadPool.execute(() -> {
-              doPost(webSocket, requestId, request);
+              doPostTask(webSocket, requestId, request);
           });
     }
 
@@ -231,7 +231,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   requestId           Request identifier
      * @param   request             Request message
      */
-    void doPostTask(PeerWebSocket webSocket, long requestId, String request) {
+    private void doPostTask(PeerWebSocket webSocket, long requestId, String request) {
         lookupComponents();
         JSONStreamAware jsonResponse;
         //
