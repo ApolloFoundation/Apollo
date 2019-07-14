@@ -232,6 +232,8 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   request             Request message
      */
     private void doPostTask(PeerWebSocket webSocket, long requestId, String request) {
+
+        
         lookupComponents();
         JSONStreamAware jsonResponse;
         //

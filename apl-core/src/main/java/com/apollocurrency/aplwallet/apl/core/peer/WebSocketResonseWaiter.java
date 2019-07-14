@@ -37,7 +37,7 @@ public class WebSocketResonseWaiter {
     public String get(long timeoutMs) throws SocketTimeoutException {
         try {
             if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
-                throw new SocketTimeoutException("WebSocket read timeout exceeded");
+                throw new SocketTimeoutException("WebSocket response wait timeout exceeded");
             }
         } catch (InterruptedException ex) {
            log.trace("Interruptrd exception while waiting for response");

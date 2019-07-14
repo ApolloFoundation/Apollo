@@ -169,7 +169,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             try {
                 res = getResponse(rqId);
             } catch (IOException ex) {
-                log.debug("Exception while waiting response (id:{}) from websocket of {}",rqId,which(),ex);
+                log.debug("Waiting response(id:{}) error: from remote {}",rqId,which(),ex);
             }
         }
         return res;

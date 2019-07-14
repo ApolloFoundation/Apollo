@@ -648,10 +648,6 @@ public final class PeerImpl implements Peer {
                         String wsConnectString = "ws://" + addrWithPort + "/apl";
                         URI wsUri = URI.create(wsConnectString);
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
-                        if(clientWebSocket==null){
-                            LOG.debug("What? who closed my websocket? {}",getHostWithPort());
-                            clientWebSocket=new PeerWebSocketClient(this);
-                        }
                         webSocketOK = clientWebSocket.startClient(wsUri);
                         if (webSocketOK) {
                             LOG.trace("Connected as client to websocket {}", wsConnectString);
@@ -703,7 +699,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Error sending request to peer {}: {}", host, e);
             }
             LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
-            deactivate("Exception while sending request");
+            deactivate("Exception while sending request: "+e.getMessage());
         }
         return response;
     }
@@ -1022,6 +1018,7 @@ public final class PeerImpl implements Peer {
                 && blockchainState == BlockchainState.UP_TO_DATE;
     }
 
+    @Override
     public StringBuilder getPeerApiUri() {
         StringBuilder uri = new StringBuilder();
         if (providesService(Peer.Service.API_SSL)) {
