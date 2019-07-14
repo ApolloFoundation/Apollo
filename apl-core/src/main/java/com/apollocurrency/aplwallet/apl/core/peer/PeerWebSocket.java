@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -43,6 +45,11 @@ public class PeerWebSocket extends WebSocketAdapter {
      * Compressed message flag
      */
     private static final int FLAG_COMPRESSED = 1;
+      /** Thread pool for server request processing */
+    
+    private static final ExecutorService threadPool = new QueuedThreadPool(
+                Runtime.getRuntime().availableProcessors(),
+                Runtime.getRuntime().availableProcessors() * 2, "PeersWebsocketThreadPool");  
     /**
      * map requests to responses
      */
@@ -104,6 +111,7 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
+        threadPool.shutdown();
     }
 
     @Override
@@ -137,7 +145,8 @@ public class PeerWebSocket extends WebSocketAdapter {
                 wsrw.setResponse(message);
             } else { //most likely ge've got request from remote and should process it
                 if (peerServlet != null) {
-                    peerServlet.doPost(this, rqId, message);
+                    threadPool.execute(() -> peerServlet.doPost(this, rqId, message));
+                    // peerServlet.doPost(this, rqId, message);
                 }
             }
         } catch (IOException ex) {
