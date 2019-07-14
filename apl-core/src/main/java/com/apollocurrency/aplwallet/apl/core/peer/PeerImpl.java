@@ -464,12 +464,13 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public void deactivate() {
+    public void deactivate(String reason) {
         if (state == PeerState.CONNECTED) {
             setState(PeerState.DISCONNECTED);
         } else {
             setState(PeerState.NON_CONNECTED);
         }
+        LOG.debug("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
         Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
     }
 
@@ -604,8 +605,8 @@ public final class PeerImpl implements Peer {
                 updateDownloadedVolume(wsResponse.length());
             }
         } catch (IOException ex) {
-            LOG.trace("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
-            deactivate();
+            LOG.debug("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
+            deactivate("Exception sending to websocket");
         } catch (ParseException ex) {
             LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
         }
@@ -680,7 +681,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Peer: {} RESPONSE = {}", getHostWithPort(), response);
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){
                     LOG.debug("Sequence error received, reconnecting to " + host);
-                    deactivate();
+                    deactivate("Sequence error, need to handshake");
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
                             response.toJSONString() + ", request was: " + JSON.toString(request));
@@ -702,7 +703,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Error sending request to peer {}: {}", host, e);
             }
             LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
-            deactivate();
+            deactivate("Exception while sending request");
         }
         return response;
     }
@@ -809,7 +810,7 @@ public final class PeerImpl implements Peer {
                                 Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                                 if (getPort() != oldPort) {
                                     // force checking connectivity to new announced port
-                                    deactivate();
+                                    deactivate("Announced address chnage");
                                     return;
                                 }
                             }

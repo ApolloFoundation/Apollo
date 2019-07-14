@@ -78,7 +78,7 @@ class PeerConnectingThread implements Runnable {
                                 && Peers.hasTooManyOutboundConnections()) 
                             {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
-                                peer.deactivate();
+                                peer.deactivate("Too many outbound connections");
                             }
                             return null;
                         })));

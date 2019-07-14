@@ -107,6 +107,11 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
+        log.debug("Peer: {} WebSocket close: {}",which(),statusCode);
+        Peer p = peerReference.get();
+        if(p!=null){
+            p.deactivate("WebSocket close");
+        }
     }
 
     @Override

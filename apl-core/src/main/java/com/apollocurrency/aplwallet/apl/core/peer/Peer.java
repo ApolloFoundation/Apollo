@@ -96,7 +96,7 @@ public interface Peer extends Comparable<Peer> {
 
     void unBlacklist();
 
-    void deactivate();
+    void deactivate(String reason);
 
     void remove();
 

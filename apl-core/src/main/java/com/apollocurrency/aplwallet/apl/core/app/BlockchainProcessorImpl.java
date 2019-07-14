@@ -1861,7 +1861,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
-                slowestPeer.deactivate();
+                slowestPeer.deactivate("This peer is slowest");
             }
             //
             // Add the new blocks to the blockchain.  We will stop if we encounter

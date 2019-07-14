@@ -85,7 +85,7 @@ public final class GetInfo extends PeerRequestHandler {
                             log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             Peers.setAnnouncedAddress(peerImpl, null);
                         }
-                        peer.deactivate();
+                        peer.deactivate("Invalid announced address: "+announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
@@ -94,7 +94,7 @@ public final class GetInfo extends PeerRequestHandler {
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
                         if (peerImpl.getPort() != oldPort) {
                             // force checking connectivity to new announced port
-                            peerImpl.deactivate();
+                            peerImpl.deactivate("New announced address: "+announcedAddress);
                         }
                     }
                 } else {
