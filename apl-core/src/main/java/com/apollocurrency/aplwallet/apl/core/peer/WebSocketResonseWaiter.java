@@ -32,8 +32,8 @@ public class WebSocketResonseWaiter {
      * @throws  InterruptedException    Wait interrupted
      * @throws  IOException             I/O error occurred
      */
-    public String get(long timeouMs) throws InterruptedException, IOException {
-        if (!latch.await(timeout, TimeUnit.MILLISECONDS)) {
+    public String get(long timeoutMs) throws InterruptedException, IOException {
+        if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
             throw new SocketTimeoutException("WebSocket read timeout exceeded");
         }
         return response;
