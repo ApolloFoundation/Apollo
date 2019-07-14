@@ -17,6 +17,8 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lombok.extern.slf4j.Slf4j;
@@ -166,7 +168,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         if (sendOK) {
             try {
                 res = getResponse(rqId);
-            } catch (InterruptedException|IOException ex) {
+            } catch (IOException ex) {
                 log.debug("Exception while waiting response (id:{}) from websocket of {}\n{}",rqId,which(),ex);
             }
         }
@@ -222,11 +224,15 @@ public class PeerWebSocket extends WebSocketAdapter {
         return requestId;
     }
 
-    public String getResponse(Long rqId) throws InterruptedException, IOException {
+    public String getResponse(Long rqId) throws IOException {
         String res = null;
         WebSocketResonseWaiter wsrw = requestMap.get(rqId);
         if (wsrw != null) {
-            res = wsrw.get(Peers.readTimeout, TimeUnit.MILLISECONDS);
+            try {
+                res = wsrw.get(Peers.readTimeout);
+            } catch (InterruptedException ex) {
+                log.trace("Interruped whaile waiting for responce from {}",which());
+            }
             requestMap.remove(rqId);
         }
         return res;

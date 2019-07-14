@@ -20,26 +20,21 @@ public class WebSocketResonseWaiter {
     private final CountDownLatch latch = new CountDownLatch(1);
     /** Response message */
     private volatile String response;
-    private volatile IOException exception;
-    private long createTime = System.currentTimeMillis();
+    private final long createTime = System.currentTimeMillis();
     
     /**
      * Wait for the response
      *
      * The caller must hold the lock for the request condition
      *
-     * @param   timeout                 Wait timeout
-     * @param   unit                    Time unit
+     * @param   timeoutMs                 Wait timeout
      * @return                          Response message
      * @throws  InterruptedException    Wait interrupted
      * @throws  IOException             I/O error occurred
      */
-    public String get(long timeout, TimeUnit unit) throws InterruptedException, IOException {
-        if (!latch.await(timeout, unit)) {
+    public String get(long timeouMs) throws InterruptedException, IOException {
+        if (!latch.await(timeout, TimeUnit.MILLISECONDS)) {
             throw new SocketTimeoutException("WebSocket read timeout exceeded");
-        }
-        if (exception != null) {
-            throw exception;
         }
         return response;
     }
@@ -47,12 +42,7 @@ public class WebSocketResonseWaiter {
         this.response = response;
         latch.countDown();
     }
-    
-    public void setException(IOException exception) {
-        this.exception = exception;
-        latch.countDown();
-    }
-    
+
     public boolean isOld(){
         long now = System.currentTimeMillis();
         boolean res = (now-createTime) > WSW_TTL_MS;
