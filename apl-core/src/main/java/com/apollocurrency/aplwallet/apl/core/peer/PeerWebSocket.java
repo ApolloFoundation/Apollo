@@ -52,7 +52,21 @@ public class PeerWebSocket extends WebSocketAdapter {
     public PeerWebSocket(Peer peer) {
         this(peer, null);
     }
-
+    
+    private String which(){
+        String which;
+        if(peerServlet!=null){
+            which = "Inbound";
+        }else{
+            which = "Outbound";
+        }
+        Peer p = peerReference.get();
+        if(p!=null){
+            which+=" at "+p.getHostWithPort();
+        }
+        return which;
+    }
+    
     public PeerWebSocket(Peer peer, PeerServlet peerServlet) {
         peerReference = new SoftReference<>(peer);
         if (peerServlet != null) {
@@ -72,28 +86,19 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketText(String message) {
         super.onWebSocketText(message);
-        log.debug("String received: {}",message);
+        log.debug("Peer: {} String received: \n{}",which(),message);
     }
 
     @Override
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
-        log.debug("Websocket error: {}",cause);
+        log.debug("Peer: {} WebSocket error: {}",which(),cause);
     }
 
     @Override
     public void onWebSocketConnect(Session sess) {
-        super.onWebSocketConnect(sess);
-        String which;
-        if(peerServlet!=null){
-            which = "Inbound";
-        }else{
-            which = "Outbound";
-        }
-        
-        log.trace("{} WebSocket connectded: {}:{}", which,
-                sess.getRemoteAddress().getHostString(),
-                sess.getRemoteAddress().getPort());
+        super.onWebSocketConnect(sess);       
+        log.trace("{} WebSocket connectded:", which());
     }
 
     @Override
@@ -136,7 +141,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                 }
             }
         } catch (IOException ex) {
-            log.debug("IO Exception on message receiving: {}", ex);
+            log.debug("Peer: {}IO Exception on message receiving: {}", which(), ex);
         }
     }
 
@@ -147,24 +152,14 @@ public class PeerWebSocket extends WebSocketAdapter {
         try {
             rqId = send(request, null);
         } catch (IOException ex) {
-            Peer p = peerReference.get();
-            String addr = "UNKNOWN";
-            if (p != null) {
-                addr = p.getHostWithPort();
-            }
-            log.debug("Interrupted whule sending to websocket of {}", addr);
+            log.debug("Exception while sending to websocket of {}\n{}", which(),ex);
             sendOK = false;
         }
         if (sendOK) {
             try {
                 res = getResponse(rqId);
             } catch (InterruptedException|IOException ex) {
-                Peer p = peerReference.get();
-                String addr = "UNKNOWN";
-                if(p!=null){
-                    addr=p.getHostWithPort();
-                }
-                log.debug("Interrupted whule sending to websocket of {}",addr);
+                log.debug("Exception while sending to websocket of {}\n{}",which(),ex);
             }
         }
         return res;
@@ -190,8 +185,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         }
         Session session = getSession();
         if (session == null || !session.isOpen()) {
-            Peer peer = peerReference.get();
-            String msg = String.format("WebSocket session is not open for peer %s", peer == null ? "null" : peer.getHostWithPort());
+            String msg = String.format("WebSocket session is not open for peer %s", which());
             log.debug(msg);
             throw new IOException(msg);
         }
@@ -225,6 +219,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         WebSocketResonseWaiter wsrw = requestMap.get(rqId);
         if (wsrw != null) {
             res = wsrw.get(Peers.readTimeout, TimeUnit.MILLISECONDS);
+            requestMap.remove(rqId);
         }
         return res;
     }

@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WebSocketResonseWaiter {
     /** time to live of entrly. Entry should de deleted if it is older */
-    public static long WSW_TTL_MS=20000; //20 seconds
+    public static long WSW_TTL_MS=60000; //1 minute
       /** Request latch */
     private final CountDownLatch latch = new CountDownLatch(1);
     /** Response message */

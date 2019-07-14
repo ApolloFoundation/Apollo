@@ -491,7 +491,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInbound() {
-        return lastInboundRequest != 0;
+        return inboundSocket!=null && inboundSocket.isOpen();
     }
 
     public int getLastInboundRequest() {
@@ -508,13 +508,13 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInboundWebSocket() {
-        boolean res = inboundSocket!=null;
+        boolean res = inboundSocket!=null && inboundSocket.isOpen();
         return res;
     }
 
     @Override
     public boolean isOutboundWebSocket() {
-        return clientWebSocket != null;
+        return clientWebSocket != null && clientWebSocket.isOpen();
     }
 
     @Override
