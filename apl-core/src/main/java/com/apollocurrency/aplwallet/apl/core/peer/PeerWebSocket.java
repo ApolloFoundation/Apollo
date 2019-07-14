@@ -193,12 +193,6 @@ public class PeerWebSocket extends WebSocketAdapter {
         } else {
             requestId = rqId;
         }
-        Session session = getSession();
-        if (session == null || !session.isOpen()) {
-            String msg = String.format("WebSocket session is not open for peer %s", which());
-            log.debug(msg);
-            throw new IOException(msg);
-        }
         byte[] requestBytes = message.getBytes("UTF-8");
         int requestLength = requestBytes.length;
         int flags = 0;
@@ -220,7 +214,12 @@ public class PeerWebSocket extends WebSocketAdapter {
         if (buf.limit() > Peers.MAX_MESSAGE_SIZE) {
             throw new ProtocolException("POST request length exceeds max message size");
         }
-        session.getRemote().sendBytes(buf);
+        Session s =  getSession();
+        if(s!=null){
+           s.getRemote().sendBytes(buf);
+        }else{
+          throw new IOException("Websocket session is null for "+which())  ;
+        }
         return requestId;
     }
 
@@ -246,15 +245,4 @@ public class PeerWebSocket extends WebSocketAdapter {
         }
     }
 
-    public boolean isOpen() {
-        Session session = getSession();
-        return (session != null && session.isOpen());
-    }
-
-    public void close() {
-        Session session = getSession();
-        if (session != null && session.isOpen()) {
-            session.close();
-        }
-    }
 }

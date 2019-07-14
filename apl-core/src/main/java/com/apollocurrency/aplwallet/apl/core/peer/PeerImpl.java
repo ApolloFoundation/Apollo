@@ -181,12 +181,10 @@ public final class PeerImpl implements Peer {
         if (newState == PeerState.DISCONNECTED && state == PeerState.CONNECTED) {
             LOG.trace("Closing websockets on state {} for {}",newState.toString(),getHostWithPort());
             if(clientWebSocket!=null){
-              clientWebSocket.close();
               clientWebSocket=null;
             }
             if (inboundSocket != null) {
                 LOG.trace("inboundSocket will be closed too for {}",getHostWithPort());
-                inboundSocket.close();
                 inboundSocket=null;
             }
         }
@@ -492,7 +490,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInbound() {
-        return inboundSocket!=null && inboundSocket.isOpen();
+        return inboundSocket!=null;
     }
 
     public int getLastInboundRequest() {
@@ -509,13 +507,12 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInboundWebSocket() {
-        boolean res = inboundSocket!=null && inboundSocket.isOpen();
-        return res;
+        return inboundSocket!=null;
     }
 
     @Override
     public boolean isOutboundWebSocket() {
-        return clientWebSocket != null && clientWebSocket.isOpen();
+        return clientWebSocket != null;
     }
 
     @Override
@@ -605,7 +602,7 @@ public final class PeerImpl implements Peer {
                 updateDownloadedVolume(wsResponse.length());
             }
         } catch (IOException ex) {
-            LOG.debug("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
+            LOG.trace("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
             deactivate("Exception sending to websocket");
         } catch (ParseException ex) {
             LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
@@ -638,7 +635,7 @@ public final class PeerImpl implements Peer {
                     if(clientWebSocket==null){
                         clientWebSocket=new PeerWebSocketClient(this);
                     }
-                    if (!clientWebSocket.isOpen()) {
+                    if (!clientWebSocket.isConnected()) {
                          // Create a new WebSocket session if we don't have one
                         // and do not have inbound
                         String addrWithPort = getAnnouncedAddress();
