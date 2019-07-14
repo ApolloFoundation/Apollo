@@ -142,7 +142,7 @@ public class EntityProducer {
             }
 
             @Override
-            public void deactivate() {
+            public void deactivate(String reason) {
 
             }
 
