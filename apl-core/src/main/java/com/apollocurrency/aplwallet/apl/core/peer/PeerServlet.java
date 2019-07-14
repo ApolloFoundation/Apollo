@@ -246,10 +246,12 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            if (requestId == null) {
+            if (requestId == null || requestId == 0) {
                 LOG.error("null requestId from {}", peer.getHostWithPort());
+                jsonResponse = PeerResponses.UNSUPPORTED_PROTOCOL;
+            }else{
+                jsonResponse = process(peer, new StringReader(request));
             }
-            jsonResponse = process(peer, new StringReader(request));
             //
             // Return the response
             //

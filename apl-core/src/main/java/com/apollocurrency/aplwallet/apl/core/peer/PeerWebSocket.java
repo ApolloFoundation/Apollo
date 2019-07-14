@@ -85,7 +85,11 @@ public class PeerWebSocket extends WebSocketAdapter {
     }
     //we use random numbers to minimize possible request/response mismatches
     private Long nextRequestId() {
-        return rnd.nextLong();
+        Long res = rnd.nextLong();
+        if(res==0L){ // make sure we do not use 0 value
+            res++;
+        }
+        return res;
     }
 
     @Override
@@ -148,9 +152,6 @@ public class PeerWebSocket extends WebSocketAdapter {
             } else { //most likely ge've got request from remote and should process it
                 if (peerServlet != null) {
                     peerServlet.doPost(this, rqId, message);
-                    if(rqId==0){
-                        log.debug( "{} rqId=0",which()) ;                               
-                    }
                 }else{
                     log.debug("{} requestMap miss with rqId {}",which(),rqId);
                 }
@@ -165,7 +166,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         boolean sendOK = true;
         String res = null;
         try {
-            rqId = send(request, null);
+            rqId = sendRequest(request);
         } catch (IOException ex) {
             log.debug("Exception while sending to websocket of {}", which(),ex);
             sendOK = false;
@@ -179,25 +180,23 @@ public class PeerWebSocket extends WebSocketAdapter {
         }
         return res;
     }
-
+    
+    public Long sendRequest(String message) throws IOException{
+            Long requestId = nextRequestId();
+            requestMap.put(requestId, new WebSocketResonseWaiter()); 
+            return send(message,requestId);
+    }
     /**
      * Sends websocket message
      * Must be synchronized because it is used from multiple threads
      * @param message message string
-     * @param rqId if it is not null, it means it is request otherwise it is
+     * @param requestId if it is not null, it means it is request otherwise it is
      * response
      * @return requestId
      * @throws IOException
      */
-    public  synchronized Long send(String message, Long rqId) throws IOException {
+    public  synchronized Long send(String message, Long requestId) throws IOException {
         cleanUp();
-        Long requestId;
-        if (rqId == null) {
-            requestId = nextRequestId();
-            requestMap.put(requestId, new WebSocketResonseWaiter());
-        } else {
-            requestId = rqId;
-        }
         byte[] requestBytes = message.getBytes("UTF-8");
         int requestLength = requestBytes.length;
         int flags = 0;
