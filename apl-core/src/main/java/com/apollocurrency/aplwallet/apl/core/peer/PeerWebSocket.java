@@ -97,7 +97,7 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
-        log.debug("Peer: {} WebSocket error: {}",which(),cause);
+        log.trace("Peer: {} WebSocket error: {}",which(),cause);
     }
 
     @Override
@@ -162,14 +162,14 @@ public class PeerWebSocket extends WebSocketAdapter {
         try {
             rqId = send(request, null);
         } catch (IOException ex) {
-            log.debug("Exception while sending to websocket of {}\n{}", which(),ex);
+            log.debug("Exception while sending to websocket of {}", which(),ex);
             sendOK = false;
         }
         if (sendOK) {
             try {
                 res = getResponse(rqId);
             } catch (IOException ex) {
-                log.debug("Exception while waiting response (id:{}) from websocket of {}\n{}",rqId,which(),ex);
+                log.debug("Exception while waiting response (id:{}) from websocket of {}",rqId,which(),ex);
             }
         }
         return res;
@@ -228,12 +228,8 @@ public class PeerWebSocket extends WebSocketAdapter {
         String res = null;
         WebSocketResonseWaiter wsrw = requestMap.get(rqId);
         if (wsrw != null) {
-            try {
-                res = wsrw.get(Peers.readTimeout);
-            } catch (InterruptedException ex) {
-                log.trace("Interruped whaile waiting for responce from {}",which());
-            }
-            requestMap.remove(rqId);
+             res = wsrw.get(Peers.readTimeout);
+             requestMap.remove(rqId);
         }
         return res;
     }
