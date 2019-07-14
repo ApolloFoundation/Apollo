@@ -45,11 +45,6 @@ public class PeerWebSocket extends WebSocketAdapter {
      * Compressed message flag
      */
     private static final int FLAG_COMPRESSED = 1;
-      /** Thread pool for server request processing */
-    
-    private static final ExecutorService threadPool = new QueuedThreadPool(
-                Runtime.getRuntime().availableProcessors(),
-                Runtime.getRuntime().availableProcessors() * 2, "PeersWebsocketThreadPool");  
     /**
      * map requests to responses
      */
@@ -80,8 +75,9 @@ public class PeerWebSocket extends WebSocketAdapter {
             this.peerServlet = peerServlet;
             ((PeerImpl)peer).setInboundWebSocket(this);
         }
-        rnd = new Random(System.currentTimeMillis());
+        rnd = new Random(System.currentTimeMillis());        
     }
+    
     public Peer getPeer(){
         return peerReference.get();
     }
@@ -111,7 +107,6 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
-        threadPool.shutdown();
     }
 
     @Override
@@ -145,8 +140,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                 wsrw.setResponse(message);
             } else { //most likely ge've got request from remote and should process it
                 if (peerServlet != null) {
-                    threadPool.execute(() -> peerServlet.doPost(this, rqId, message));
-                    // peerServlet.doPost(this, rqId, message);
+                    peerServlet.doPost(this, rqId, message);
                 }
             }
         } catch (IOException ex) {

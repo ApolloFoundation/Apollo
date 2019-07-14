@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.InetSocketAddress;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -54,10 +53,11 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.channels.ClosedChannelException;
-import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -86,11 +86,15 @@ public final class PeerServlet extends WebSocketServlet {
     private BlockchainConfig blockchainConfig;
     @Inject
     private DownloadableFilesManager downloadableFilesManager;
-
+    private ExecutorService threadPool;
+    
     @Override
     public void init() throws ServletException {
         super.init(); 
         lookupComponents();
+        threadPool = new QueuedThreadPool(
+                Runtime.getRuntime().availableProcessors(),
+                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocketThreadPool");        
     }
 
     protected void lookupComponents() {
@@ -213,6 +217,12 @@ public final class PeerServlet extends WebSocketServlet {
             }
         }
     }
+    
+    void doPost(PeerWebSocket webSocket, long requestId, String request) {
+          threadPool.execute(() -> {
+              doPost(webSocket, requestId, request);
+          });
+    }
 
     /**
      * Process WebSocket POST request
@@ -221,7 +231,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   requestId           Request identifier
      * @param   request             Request message
      */
-    void doPost(PeerWebSocket webSocket, long requestId, String request) {
+    void doPostTask(PeerWebSocket webSocket, long requestId, String request) {
         lookupComponents();
         JSONStreamAware jsonResponse;
         //
@@ -344,5 +354,10 @@ public final class PeerServlet extends WebSocketServlet {
             }
             return res;
         }
+    }
+    
+    @PreDestroy
+    public void shutdown(){
+        threadPool.shutdown();
     }
 }
