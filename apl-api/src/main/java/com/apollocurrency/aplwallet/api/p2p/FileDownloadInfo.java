@@ -20,7 +20,6 @@ import lombok.ToString;
  * @author alukin@gmail.com
  */
 @Getter @Setter
-@ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -30,4 +29,14 @@ public class FileDownloadInfo {
     @JsonIgnore
     /** record creation date, needed by cache */
     public Instant created;
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("FileDownloadInfo{");
+        sb.append("fileInfo=").append(fileInfo);
+        sb.append(", chunks=[").append(chunks != null ? chunks.size() : -1).append("]");
+        sb.append(", created=").append(created);
+        sb.append('}');
+        return sb.toString();
+    }
 }
