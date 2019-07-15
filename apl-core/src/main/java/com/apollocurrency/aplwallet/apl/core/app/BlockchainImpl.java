@@ -369,11 +369,13 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional
     public void deleteAll() {
-        blockDao.deleteAll();
+        log.debug("started deleteAll()...");
+        blockDao.deleteAll(); // delete both : blocks + transactions
         shardRecoveryDao.hardDeleteAllShardRecovery();
         shardDao.hardDeleteAllShards();
         transactionIndexDao.hardDeleteAllTransactionIndex();
         blockIndexDao.hardDeleteAllBlockIndex();
+        log.debug("finished deleteAll()");
     }
 
     @Override
