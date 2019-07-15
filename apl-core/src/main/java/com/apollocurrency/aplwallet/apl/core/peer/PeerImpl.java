@@ -349,12 +349,9 @@ public final class PeerImpl implements Peer {
         return blockchainState;
     }
 
-    public void setBlockchainState(Object blockchainStateObj) {
-        if (blockchainStateObj instanceof Integer) {
-            int blockchainStateInt = (int)blockchainStateObj;
-            if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
-                this.blockchainState = BlockchainState.values()[blockchainStateInt];
-            }
+    public void setBlockchainState(Integer blockchainStateInt) {
+        if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
+            this.blockchainState = BlockchainState.values()[blockchainStateInt];
         }
     }
 
@@ -512,12 +509,12 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInboundWebSocket() {
-        return inboundSocket!=null;
+        return inboundSocket!=null && inboundSocket.isConnected();
     }
 
     @Override
     public boolean isOutboundWebSocket() {
-        return clientWebSocket != null;
+        return clientWebSocket != null && clientWebSocket.isConnected();
     }
 
     @Override
@@ -621,7 +618,7 @@ public final class PeerImpl implements Peer {
         try {
             boolean webSocketOK = false;
             if(useWebSocket){
-                if(inboundSocket!=null && inboundSocket.isConnected()){
+                if(isInboundWebSocket()){
                     response = sendToWebSocket(request, inboundSocket);
                     webSocketOK = response !=null;
                     LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK);
@@ -727,7 +724,7 @@ public final class PeerImpl implements Peer {
         lastConnectAttempt = timeService.getEpochTime();
         try {
             JSONObject response = send(Peers.getMyPeerInfoRequest());
-            LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
+            LOG.debug("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
             PeerInfo newPi;
             if (response != null) {
                 // parse in new_pi
