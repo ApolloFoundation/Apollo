@@ -119,13 +119,15 @@ public final class PeerImpl implements Peer {
     private PeerInfo pi = new PeerInfo();
     //Jackson JSON
     private final  ObjectMapper mapper = new ObjectMapper();
+    private PeerServlet peerServlet;
     
     PeerImpl(String host, 
             String announcedAddress,
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
             EpochTime timeService,
-            PropertiesHolder propertiesHolder
+            PropertiesHolder propertiesHolder,
+            PeerServlet peerServlet
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -152,6 +154,7 @@ public final class PeerImpl implements Peer {
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
         this.timeService=timeService;
+        this.peerServlet = peerServlet;
         isLightClient=propertiesHolder.isLightClient();
     }
     
@@ -633,7 +636,7 @@ public final class PeerImpl implements Peer {
                 }
                 if (!webSocketOK){ //no inbound connection or send failed
                     if(clientWebSocket==null){
-                        clientWebSocket=new PeerWebSocketClient(this);
+                        clientWebSocket=new PeerWebSocketClient(this,peerServlet);
                     }
                     if (!clientWebSocket.isConnected()) {
                          // Create a new WebSocket session if we don't have one

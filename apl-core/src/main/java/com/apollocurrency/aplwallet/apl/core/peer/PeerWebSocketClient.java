@@ -26,8 +26,8 @@ public class PeerWebSocketClient extends PeerWebSocket{
     private final WebSocketClient client;
     private boolean connected = false;
     
-    public PeerWebSocketClient(PeerImpl peer) {
-        super(peer); 
+    public PeerWebSocketClient(PeerImpl peer,PeerServlet peerServlet) {
+        super(peer,peerServlet); 
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);

@@ -297,11 +297,12 @@ public final class PeerServlet extends WebSocketServlet {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
             peer.updateDownloadedVolume(cr.getCount());
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
-                LOG.debug("Unsupported protocol " + request.get("protocol"));
+                LOG.debug("Unsupported protocol {}\nRequest:\n{}" + request.get("protocol"),request.toJSONString());
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = getHandler((String)request.get("requestType"));
             if (peerRequestHandler == null) {
+                LOG.debug("Unsupported request type " + request.get((String)request.get("requestType")));
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 

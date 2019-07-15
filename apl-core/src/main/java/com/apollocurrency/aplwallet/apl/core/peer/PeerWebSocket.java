@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
@@ -15,10 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lombok.extern.slf4j.Slf4j;
@@ -53,9 +49,6 @@ public class PeerWebSocket extends WebSocketAdapter {
     private final ConcurrentHashMap<Long, WebSocketResonseWaiter> requestMap = new ConcurrentHashMap<>();
     private PeerServlet peerServlet;
 
-    public PeerWebSocket(Peer peer) {
-        this(peer, null);
-    }
     public PeerWebSocket(Peer peer, PeerServlet peerServlet) {
         peerReference = new SoftReference<>(peer);
         rnd = new Random(System.currentTimeMillis());        
@@ -148,32 +141,30 @@ public class PeerWebSocket extends WebSocketAdapter {
             if (wsrw != null) { //this is response
                 wsrw.setResponse(message);
             } else { //most likely ge've got request from remote and should process it
-                if (peerServlet != null) {
-                    peerServlet.doPost(this, rqId, message);
-                }else{
-                    log.debug("{} requestMap miss with rqId {}\n Message:\n",which(),rqId, message);
-                }
+                peerServlet.doPost(this, rqId, message);
             }
         } catch (IOException ex) {
-            log.debug("Peer: {}IO Exception on message receiving: {}", which(), ex);
+            log.debug("Peer: {} IO Exception on message receiving: {}", which(), ex);
         }
     }
 
     public String sendAndWaitResponse(String request) {
-        Long rqId = 0L;
-        boolean sendOK = true;
         String res = null;
+        Long rqId;
+        boolean sendOK = true;
         try {
             rqId = sendRequest(request);
         } catch (IOException ex) {
             log.debug("Exception while sending to websocket of {}", which(),ex);
             sendOK = false;
+            rqId=0L;
         }
         if (sendOK) {
             try {
                 res = getResponse(rqId);
             } catch (IOException ex) {
-                log.debug("Waiting response(id:{}) error: from remote {}\nRequest:\n",rqId,which(),ex,request);
+                log.debug("Waiting response(id:{}) error: from remote {}",rqId, which(), ex);
+                requestMap.remove(rqId);
             }
         }
         return res;
@@ -195,6 +186,10 @@ public class PeerWebSocket extends WebSocketAdapter {
      */
     public  synchronized Long send(String message, Long requestId) throws IOException {
         cleanUp();
+        if(StringUtils.isBlank(message.trim())){
+            log.warn("Empty request from us to {}",which());
+            return requestId;
+        }        
         byte[] requestBytes = message.getBytes("UTF-8");
         int requestLength = requestBytes.length;
         int flags = 0;
