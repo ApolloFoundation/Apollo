@@ -26,7 +26,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
     private final WebSocketClient client;
     private boolean connected = false;
     
-    public PeerWebSocketClient(PeerImpl peer,PeerServlet peerServlet) {
+    public PeerWebSocketClient(Peer peer,PeerServlet peerServlet) {
         super(peer,peerServlet); 
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
