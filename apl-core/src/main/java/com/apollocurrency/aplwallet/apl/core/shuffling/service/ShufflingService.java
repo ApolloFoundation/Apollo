@@ -61,11 +61,11 @@ public interface ShufflingService {
 
     int getActiveCount();
 
-    DbIterator<Shuffling> getAll(int from, int to);
+    List<Shuffling> getAll(int from, int to);
 
-    DbIterator<Shuffling> getActiveShufflings(int from, int to);
+    List<Shuffling> getActiveShufflings(int from, int to);
 
-    DbIterator<Shuffling> getFinishedShufflings(int from, int to);
+    List<Shuffling> getFinishedShufflings(int from, int to);
 
     Shuffling getShuffling(long shufflingId);
 

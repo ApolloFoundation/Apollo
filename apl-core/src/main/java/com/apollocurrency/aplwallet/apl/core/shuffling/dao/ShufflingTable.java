@@ -7,8 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.mapper.ShufflingMapper;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
@@ -19,32 +21,25 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
 public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
-    private static final LongKeyFactory<Shuffling> KEY_FACTORY = new LongKeyFactory<>("id") {
-
-        @Override
-        public DbKey newKey(Shuffling shuffling) {
-            if (shuffling.getDbKey() == null) {
-                shuffling.setDbKey(new LongKey(shuffling.getId()));
-            }
-            return shuffling.getDbKey();
-        }
-
-    };
     private static final String TABLE_NAME = "shuffling";
-    private static final ShufflingMapper MAPPER = new ShufflingMapper(KEY_FACTORY);
-
-    public ShufflingTable() {
-        super(TABLE_NAME, KEY_FACTORY, false);
+    private ShufflingMapper mapper;
+    private ShufflingKeyFactory keyFactory;
+    @Inject
+    public ShufflingTable(ShufflingKeyFactory keyFactory, ShufflingMapper mapper) {
+        super(TABLE_NAME, keyFactory, false);
+        this.mapper = mapper;
+        this.keyFactory = keyFactory;
     }
 
     @Override
     public Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return MAPPER.map(rs, null);
+        return mapper.map(rs, null);
     }
 
 
@@ -88,5 +83,9 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
+    }
+
+    public Shuffling get(long id) {
+        return get(keyFactory.newKey(id));
     }
 }

@@ -1,0 +1,12 @@
+delete from shuffling;
+
+INSERT into shuffling
+(db_id,         id,         holding_id, holding_type, issuer_id, amount,      participant_count,   blocks_remaining, registrant_count,  stage, assignee_account_id, height, recipient_public_keys) VALUES
+(100,           10000,      0,          0,             1500,    2500,         5,                   120,                 2,               0,      null,              1000,    null                   ),
+(110,           10000,      0,          0,             1500,    2500,         5,                   119,                 2,               0,      null,              1002,    null                   ),
+(120,           10000,      0,          0,             1500,    2500,         5,                   118,                 3,               0,      null,              1005,    null                   ),
+(130,           20000,      500,        1,             2500,    100000,       10,                  120,                 2,               0,      null,              999 ,    null                   ),
+(140,           20000,      500,        1,             2500,    100000,       10,                  118,                 5,               0,      null,              1003,    null                   ),
+(150,           30000,      1000,       3,             3500,    2000,         3,                   1440,                1,               0,      null,              1001,    null                   ),
+(160,           40000,      0,          0,             3500,    2500,         3,                   1,                   3,               5,      null,              999 ,    (X'51546eb53e8439f156acd2a7b7301cadec13d0ff85f46ff0cc97005ae16776b7', X'4d04aabfa6588d866f8eaa3ebc30ae5012b49cd1bd7667c716068f16a79303ec', X'977f3b11ad0373a63688dd416f991d2447bddaf3660403077282bb8bad9c01ab')),
+(170,           40000,      0,          0,             3500,    2500,         3,                   null,                3,               5,      null,              1000,    (X'51546eb53e8439f156acd2a7b7301cadec13d0ff85f46ff0cc97005ae16776b7', X'4d04aabfa6588d866f8eaa3ebc30ae5012b49cd1bd7667c716068f16a79303ec', X'977f3b11ad0373a63688dd416f991d2447bddaf3660403077282bb8bad9c01ab'));

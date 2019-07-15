@@ -51,7 +51,6 @@ public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
 
     public void rollback(int height) {
         allEntities.values().forEach(l-> l.removeIf(s->s.getHeight() > height));
-        allEntities.values().forEach(l-> l.removeIf(s->s.getHeight() > height));
         List<DbKey> dbKeysToDelete = allEntities.entrySet().stream().filter(e -> e.getValue().size() == 0).map(Map.Entry::getKey).collect(Collectors.toList());
         dbKeysToDelete.forEach(dbKey -> allEntities.remove(dbKey));
     }

@@ -58,15 +58,26 @@ public class Shuffling extends VersionedDerivedEntity {
         this.recipientPublicKeys = recipientPublicKeys;
     }
 
-    public Shuffling deepCopy() {
-        byte[][] recipientPublicKeysCopy = new byte[recipientPublicKeys.length][recipientPublicKeys[0].length];
-        for (int i = 0; i < recipientPublicKeys.length; i++) {
-            System.arraycopy(recipientPublicKeys[i], 0, recipientPublicKeysCopy[i], 0, recipientPublicKeys[i].length);
+    @Override
+    public Shuffling clone() throws CloneNotSupportedException {
+        Shuffling clone = (Shuffling) super.clone();
+        if (recipientPublicKeys != null) {
+            byte[][] recipientPublicKeysCopy = new byte[recipientPublicKeys.length][recipientPublicKeys[0].length];
+            for (int i = 0; i < recipientPublicKeys.length; i++) {
+                System.arraycopy(recipientPublicKeys[i], 0, recipientPublicKeysCopy[i], 0, recipientPublicKeys[i].length);
+            }
+            clone.setRecipientPublicKeys(recipientPublicKeys);
         }
-        Shuffling copy = new Shuffling(null, id, holdingId, holdingType, issuerId, amount, participantCount, blocksRemaining, registrantCount, stage, assigneeAccountId, recipientPublicKeysCopy, getHeight());
-        copy.setLatest(isLatest());
-        copy.setDbKey(getDbKey());
-        return copy;
+        return clone;
+    }
+
+    public Shuffling deepCopy() {
+        try {
+            return clone();
+        }
+        catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone is not supported for shuffling");
+        }
     }
 
     public long getId() {

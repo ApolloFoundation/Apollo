@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -32,6 +30,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
@@ -42,7 +41,9 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
     public GetAllShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "includeFinished", "includeHoldingInfo", "finishedOnly", "firstIndex", "lastIndex");
     }
+
     ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
@@ -55,20 +56,16 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        DbIterator<Shuffling> shufflings = null;
-        try {
-            if (finishedOnly) {
-                shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
-            } else if (includeFinished) {
-                shufflings = shufflingService.getAll(firstIndex, lastIndex);
-            } else {
-                shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
-            }
-            for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shufflingService, shuffling, includeHoldingInfo));
-            }
-        } finally {
-            DbUtils.close(shufflings);
+        List<Shuffling> shufflings;
+        if (finishedOnly) {
+            shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
+        } else if (includeFinished) {
+            shufflings = shufflingService.getAll(firstIndex, lastIndex);
+        } else {
+            shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
+        }
+        for (Shuffling shuffling : shufflings) {
+            jsonArray.add(JSONData.shuffling(shufflingService, shuffling, includeHoldingInfo));
         }
         return response;
     }

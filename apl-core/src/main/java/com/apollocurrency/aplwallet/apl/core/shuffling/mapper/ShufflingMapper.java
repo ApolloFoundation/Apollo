@@ -15,10 +15,14 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class ShufflingMapper extends VersionedDerivedEntityMapper<Shuffling> {
 
 
+    @Inject
     public ShufflingMapper(KeyFactory<Shuffling> keyFactory) {
         super(keyFactory);
     }
