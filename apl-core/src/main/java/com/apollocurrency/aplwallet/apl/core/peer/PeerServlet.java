@@ -252,10 +252,7 @@ public final class PeerServlet extends WebSocketServlet {
             }else{
                 jsonResponse = process(peer, new StringReader(request));
             }
-            //
             // Return the response
-            //
-
             try {
                 StringWriter writer = new StringWriter(1000);
                 JSON.writeJSONString(jsonResponse, writer);
@@ -268,6 +265,9 @@ public final class PeerServlet extends WebSocketServlet {
             } catch (IOException e) {
                 LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);
                 peer.deactivate("IO exception sending response to: "+webSocket.which());
+            }
+            if(jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL){
+                peer.deactivate("Unsupported protocol");
             }
         }
     }
@@ -297,7 +297,7 @@ public final class PeerServlet extends WebSocketServlet {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
             peer.updateDownloadedVolume(cr.getCount());
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
-                LOG.debug("Unsupported protocol {}\nRequest:\n{}" + request.get("protocol"),request.toJSONString());
+                LOG.debug("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"), peer.getHostWithPort(),request.toJSONString());
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = getHandler((String)request.get("requestType"));

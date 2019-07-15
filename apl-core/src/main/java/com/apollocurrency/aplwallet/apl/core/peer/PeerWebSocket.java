@@ -239,5 +239,10 @@ public class PeerWebSocket extends WebSocketAdapter {
             requestMap.remove(key);
         });
     }
-
+    public void close(){
+        Session s = getSession();
+        if(s!=null){
+            s.close();
+        }
+    }
 }

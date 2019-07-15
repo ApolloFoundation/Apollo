@@ -184,10 +184,12 @@ public final class PeerImpl implements Peer {
         if (newState == PeerState.DISCONNECTED && state == PeerState.CONNECTED) {
             LOG.trace("Closing websockets on state {} for {}",newState.toString(),getHostWithPort());
             if(clientWebSocket!=null){
-              clientWebSocket=null;
+                clientWebSocket.close();
+                clientWebSocket=null;
             }
             if (inboundSocket != null) {
                 LOG.trace("inboundSocket will be closed too for {}",getHostWithPort());
+                inboundSocket.close();
                 inboundSocket=null;
             }
         }
@@ -614,22 +616,12 @@ public final class PeerImpl implements Peer {
     }
 
     private JSONObject send(final JSONStreamAware request) {
-        if (LOG.isTraceEnabled()) {
-            StringWriter out = new StringWriter();
-            String reqAsString = null;
-            try {
-                request.writeJSONString(out);
-                reqAsString = out.toString();
-            } catch (IOException e) {
-                LOG.warn("IOException while writing Peer request", e);
-            }
-            LOG.trace("SEND() Request = '{}'\n, host='{}'", reqAsString, host);
-        }
+
         JSONObject response = null;
         try {
             boolean webSocketOK = false;
             if(useWebSocket){
-                if(isInboundWebSocket()){
+                if(inboundSocket!=null && inboundSocket.isConnected()){
                     response = sendToWebSocket(request, inboundSocket);
                     webSocketOK = response !=null;
                     LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK);
@@ -1077,4 +1069,5 @@ public final class PeerImpl implements Peer {
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
+    
 }
