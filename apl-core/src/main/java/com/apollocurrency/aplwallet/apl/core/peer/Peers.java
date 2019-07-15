@@ -87,7 +87,6 @@ public final class Peers {
     static final int LOGGING_MASK_EXCEPTIONS = 1;
     static final int LOGGING_MASK_NON200_RESPONSES = 2;
     static final int LOGGING_MASK_200_RESPONSES = 4;
-    static volatile int communicationLoggingMask;
 
     static List<String> wellKnownPeers;
     static Set<String> knownBlacklistedPeers;
@@ -96,9 +95,10 @@ public final class Peers {
     static int readTimeout;
     static int blacklistingPeriod;
     public static boolean getMorePeers;
-    public static int MAX_REQUEST_SIZE;
-    public static int MAX_RESPONSE_SIZE;
-    public static int MAX_MESSAGE_SIZE;
+    //TODO:  hardcode in Constants and use from there
+    public static int MAX_REQUEST_SIZE= 10 * 1024 * 1024;
+    public static int MAX_RESPONSE_SIZE= 40 * 1024 * 1024;
+    public static int MAX_MESSAGE_SIZE= 40 * 1024 * 1024;
 
     public static final int MIN_COMPRESS_SIZE = 256;
     static boolean useWebSockets;
@@ -162,9 +162,10 @@ public final class Peers {
     } // never
 
     public static void init() {
-        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
-        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
-        MAX_MESSAGE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 15 * 1024 * 1024);
+
+//        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
+//        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
+//        MAX_MESSAGE_SIZE =  propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 40 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails", true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS", true);
@@ -220,7 +221,6 @@ public final class Peers {
         webSocketIdleTimeout = propertiesHolder.getIntProperty("apl.webSocketIdleTimeout");
         isGzipEnabled = propertiesHolder.getBooleanProperty("apl.enablePeerServerGZIPFilter");
         blacklistingPeriod = propertiesHolder.getIntProperty("apl.blacklistingPeriod") / 1000;
-        communicationLoggingMask = propertiesHolder.getIntProperty("apl.communicationLoggingMask");
         sendToPeersLimit = propertiesHolder.getIntProperty("apl.sendToPeersLimit");
         usePeersDb = propertiesHolder.getBooleanProperty("apl.usePeersDb") && !propertiesHolder.isOffline();
         savePeers = usePeersDb && propertiesHolder.getBooleanProperty("apl.savePeers");
@@ -457,20 +457,15 @@ public final class Peers {
             }
 
             InetAddress inetAddress = InetAddress.getByName(pAnnouncedAddress.getHost());
-            return findOrCreatePeer(inetAddress, announcedAddress, create);
+            return findOrCreatePeer(inetAddress.getHostAddress(), announcedAddress, create);
         } catch (UnknownHostException e) {
             //LOG.debug("Invalid peer address: " + announcedAddress + ", " + e.toString());
             return null;
         }
     }
 
-    public static PeerImpl findOrCreatePeer(String host) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(host);
-            return findOrCreatePeer(inetAddress, null, true);
-        } catch (UnknownHostException e) {
-            return null;
-        }
+    public static PeerImpl findOrCreatePeer(String hostWithPort) {
+        return findOrCreatePeer(hostWithPort, null, true);
     }
 
     public static boolean isMyAddress(PeerAddress pa) {
@@ -495,9 +490,10 @@ public final class Peers {
         return false;
     }
 
-    public static PeerImpl findOrCreatePeer(final InetAddress inetAddress, final String announcedAddress, final boolean create) {
-
-        String host = inetAddress.getHostAddress();
+    public static PeerImpl findOrCreatePeer(String addressWithPort, final String announcedAddress, final boolean create) {
+        
+        PeerAddress pa = new PeerAddress(addressWithPort);
+        String host = pa.getHost();
         if (cjdnsOnly && !host.substring(0, 2).equals("fc")) {
             return null;
         }
@@ -505,8 +501,6 @@ public final class Peers {
         if (host.split(":").length > 2) {
             host = "[" + host + "]";
         }
-
-        PeerAddress pa = new PeerAddress(host);
 
         if (isMyAddress(pa)) {
             return null;
@@ -541,7 +535,8 @@ public final class Peers {
 //                selfAnnouncedAddresses.remove(newPa.getAddrWithPort());
                 try {
                     peer.setAnnouncedAddress(newAnnouncedAddress);
-                    oldPeer = peers.remove(oldPeer);
+                    removePeer(oldPeer);
+                    oldPeer = peers.remove(oldPeer.getHostWithPort());
                     if (oldPeer != null) {
                        notifyListeners(oldPeer, Event.REMOVE);
                     }
@@ -566,6 +561,7 @@ public final class Peers {
                 peers.replace(peer.getHostWithPort(), (PeerImpl) peer);
             }
             listeners.notify(peer, Event.NEW_PEER);
+            connectPeer(peer);
             return true;
         }
         return false;
@@ -579,7 +575,10 @@ public final class Peers {
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        peer.handshake(blockchainConfig.getChain().getChainId());
+        PeerAddress pa=new PeerAddress(peer.getPort(),peer.getHost());
+        if(!isMyAddress(pa)){
+           peer.handshake(blockchainConfig.getChain().getChainId());
+        }
     }
 
     public static void sendToSomePeers(Block block) {
@@ -700,44 +699,7 @@ public final class Peers {
         return getPeers(peer -> !peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null
                 && (!enableHallmarkProtection || peer.getWeight() > 0), limit).size() >= limit;
     }
-
-    /**
-     * Set the communication logging mask
-     *
-     * @param events Communication event list or null to reset communications
-     * logging
-     * @return TRUE if the communication logging mask was updated
-     */
-    public static boolean setCommunicationLoggingMask(String[] events) {
-        boolean updated = true;
-        int mask = 0;
-        if (events != null) {
-            for (String event : events) {
-                switch (event) {
-                    case "EXCEPTION":
-                        mask |= LOGGING_MASK_EXCEPTIONS;
-                        break;
-                    case "HTTP-ERROR":
-                        mask |= LOGGING_MASK_NON200_RESPONSES;
-                        break;
-                    case "HTTP-OK":
-                        mask |= LOGGING_MASK_200_RESPONSES;
-                        break;
-                    default:
-                        updated = false;
-                }
-                if (!updated) {
-                    break;
-                }
-            }
-        }
-        if (updated) {
-            communicationLoggingMask = mask;
-        }
-        return updated;
-    }
-
-    /**
+  /**
      * Return local peer services
      *
      * @return List of local peer services

@@ -4,17 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import java.util.UUID;
-import org.slf4j.Logger;
 
 /**
  * Helper class for creating shard data source.
@@ -23,6 +23,9 @@ import org.slf4j.Logger;
  */
 public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
+    public static final int MAX_CACHE_SIZE = 16384; // 16mb
+    public static final int MAX_CONNECTIONS = 30;
+    public static final int MAX_MEMORY_ROWS = 10_000;
 
     private final DatabaseManager databaseManager;
     private Long shardId;
@@ -67,6 +70,9 @@ public class ShardDataSourceCreateHelper {
         try {
             shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
                     .dbFileName(shardName) // change file name
+                    .maxCacheSize(MAX_CACHE_SIZE)
+                    .maxConnections(MAX_CONNECTIONS)
+                    .maxMemoryRows(MAX_MEMORY_ROWS)
                     .dbUrl(null)  // nullify dbUrl intentionally!;
                     .dbIdentity(shardId); // put shard related info
         } catch (CloneNotSupportedException e) {

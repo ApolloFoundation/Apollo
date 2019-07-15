@@ -38,8 +38,8 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     } 
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
     private static final AccountAssetTable accountAssetTable = new AccountAssetTable();
-    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    
+
+
     public static DbKey newKey(long idA, long idB){
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }
@@ -81,7 +81,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     @Override
     public void checkAvailable(int height) {
-        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
+        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < CDI.current().select(BlockchainProcessor.class).get().getMinRollbackHeight()) {
             throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
         }
         if (height > Account.blockchain.getHeight()) {

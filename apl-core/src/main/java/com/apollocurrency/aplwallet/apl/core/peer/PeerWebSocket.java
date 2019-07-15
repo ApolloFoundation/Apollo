@@ -20,6 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONData.peer;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerResponses;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
@@ -38,6 +41,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.SocketException;
@@ -55,6 +60,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import lombok.Getter;
+import org.json.simple.JSONStreamAware;
 
 /**
  * PeerWebSocket represents an HTTP/HTTPS upgraded connection
@@ -83,7 +90,9 @@ public class PeerWebSocket {
             peerClient = null;
         }
     }
-
+    @Getter
+    private Peer clientPeer = null;
+    
     /** Negotiated WebSocket message version */
     private int version = WS_VERSION;
 
@@ -113,7 +122,8 @@ public class PeerWebSocket {
     /**
      * Create a client socket
      */
-    public PeerWebSocket() {
+    public PeerWebSocket(Peer p) {
+        clientPeer = p;
         peerServlet = null;
     }
 
@@ -122,21 +132,24 @@ public class PeerWebSocket {
      *
      * @param   peerServlet         Servlet for request processing
      */
-    public PeerWebSocket(PeerServlet peerServlet) {
+    public PeerWebSocket(PeerServlet peerServlet, Peer peer) {
         this.peerServlet = peerServlet;
+        this.clientPeer=peer;
     }
 
     /**
      * Start a client session
      *
      * @param   uri                 Server URI
+     * @param p                     Peer reference to siganl onClose
      * @return                      TRUE if the WebSocket connection was completed
      * @throws  IOException         I/O error occurred
      */
-    public boolean startClient(URI uri) throws IOException {
+    public boolean startClient(URI uri, Peer p) throws IOException {
         if (peerClient == null) {
             return false;
         }
+        clientPeer = p;
         String address = String.format("%s:%d", uri.getHost(), uri.getPort());
         boolean useWebSocket = false;
         //
@@ -155,7 +168,10 @@ public class PeerWebSocket {
                 ClientUpgradeRequest req = new ClientUpgradeRequest();
                 Future<Session> conn = peerClient.connect(this, uri, req);
                 conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-                useWebSocket = true;
+                if(p!=null){
+                    ((PeerImpl) (p)).setInboundWebSocket(this);                
+                }
+                useWebSocket = true;                
             }
         } catch (ExecutionException exc) {
             if (exc.getCause() instanceof UpgradeException) {
@@ -194,11 +210,12 @@ public class PeerWebSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         this.session = session;
-        if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-            LOG.debug(String.format("%s WebSocket connection with %s completed",
+     //   if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
+            LOG.trace(String.format("%s WebSocket connection with %s completed",
                     peerServlet != null ? "Inbound" : "Outbound",
                     session.getRemoteAddress().getHostString()));
-        }
+                    
+     //   }
     }
 
     /**
@@ -223,8 +240,8 @@ public class PeerWebSocket {
 
     /**
      * Process a POST request by sending the request message and then
-     * waiting for a response.  This method is used by the connection
-     * originator.
+     * waiting for a response.This method is used by the connection
+ originator.
      *
      * @param   request             Request message
      * @return                      Response message
@@ -358,7 +375,7 @@ public class PeerWebSocket {
                 }
             }
             String message = new String(msgBytes, "UTF-8");
-            if (peerServlet != null) {
+            if (peerServlet != null) {                
                 threadPool.execute(() -> peerServlet.doPost(this, requestId, message));
             } else {
                 PostRequest postRequest = requestMap.remove(requestId);
@@ -384,11 +401,10 @@ public class PeerWebSocket {
         lock.lock();
         try {
             if (session != null) {
-                if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_200_RESPONSES) != 0) {
-                    LOG.debug(String.format("%s WebSocket connection with %s closed",
+                LOG.trace(String.format("%s WebSocket connection with %s closed",
                             peerServlet != null ? "Inbound" : "Outbound",
                             session.getRemoteAddress().getHostString()));
-                }
+                session.close();
                 session = null;
             }
             SocketException exc = new SocketException("WebSocket connection closed");
@@ -408,6 +424,7 @@ public class PeerWebSocket {
         try {
             if (session != null && session.isOpen()) {
                 session.close();
+                session=null;
             }
         } catch (Exception exc) {
             LOG.debug("Exception while closing WebSocket", exc);

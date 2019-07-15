@@ -53,6 +53,10 @@ class PeerConnectingThread implements Runnable {
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
                         connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
+                            PeerAddress pa = new PeerAddress(peer.getPort(),peer.getHost());
+                            if(Peers.isMyAddress(pa)){
+                                return null;
+                            }
                             peer.handshake(Peers.blockchainConfig.getChain().getChainId());
                             if (peer.getState() == PeerState.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
@@ -67,11 +71,14 @@ class PeerConnectingThread implements Runnable {
                 }
                 Peers.peers.values().forEach((peer) -> {
                     if (peer.getState() == PeerState.CONNECTED && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
+                    PeerAddress pa = new PeerAddress(peer.getPort(),peer.getHost());
+                    if(Peers.isMyAddress(pa)){                        
                         Peers.peersExecutorService.submit(() -> peer.handshake(Peers.blockchainConfig.getChain().getChainId()));
                     }
                     if (peer.getLastInboundRequest() != 0 && now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
                         peer.setLastInboundRequest(0);
                         Peers.notifyListeners(peer, Peers.Event.REMOVE_INBOUND);
+                    }
                     }
                 });
                 if (Peers.hasTooManyKnownPeers() && Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {

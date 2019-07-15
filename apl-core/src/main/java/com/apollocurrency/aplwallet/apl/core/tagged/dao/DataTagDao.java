@@ -55,12 +55,12 @@ public class DataTagDao extends EntityDbTable<DataTag> {
         for (String tagValue : taggedData.getParsedTags()) {
             DataTag dataTag = get(tagDbKeyFactory.newKey(tagValue));
             if (dataTag == null) {
-                logger.debug("Add new tag value {}", tagValue);
+                logger.trace("Add new tag value {}", tagValue);
                 dataTag = new DataTag(tagValue);
             }
             dataTag.setHeight(taggedData.getHeight());
             dataTag.setCount(dataTag.getCount() + 1);
-            logger.debug("New quantity for tag value {} - {}", tagValue, dataTag.getCount());
+            logger.trace("New quantity for tag value {} - {}", tagValue, dataTag.getCount());
             insert(dataTag);
         }
     }
@@ -99,11 +99,11 @@ public class DataTagDao extends EntityDbTable<DataTag> {
                 pstmt.setInt(1, entry.getValue());
                 pstmt.setString(2, entry.getKey());
                 pstmt.executeUpdate();
-                logger.debug("Reduced mapTag count for " + entry.getKey() + " by " + entry.getValue());
+                logger.trace("Reduced mapTag count for " + entry.getKey() + " by " + entry.getValue());
             }
             int deleted = pstmtDelete.executeUpdate();
             if (deleted > 0) {
-                logger.debug("Deleted " + deleted + " tags");
+                logger.debug("Deleted {} tags", deleted);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

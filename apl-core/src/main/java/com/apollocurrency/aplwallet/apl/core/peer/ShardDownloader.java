@@ -158,12 +158,12 @@ public class ShardDownloader {
 
     private void fireNoShardEvent() {
         ShardPresentData shardPresentData = new ShardPresentData();
-        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fireAsync(shardPresentData); // data is ignored      
+        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
     private void fireShardPresentEvent(Long shardId) {
         ShardPresentData shardPresentData = new ShardPresentData(shardId.toString());
-        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is ignored      
+        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is ignored
     }
 
     private byte[] getHash(Long shardId, String peerAddr) {

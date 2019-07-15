@@ -59,6 +59,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.inject.Inject;
@@ -132,7 +133,7 @@ public class ShardEngineImpl implements ShardEngine {
                 state = FAILED;
                 durableTaskUpdateByState(state, null, null);
             }
-            log.debug("BACKUP by SQL={} was successful", sql);
+            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
             state = MigrateState.MAIN_DB_BACKUPED;
             durableTaskUpdateByState(state, 3.0, "Backed up");
             loadAndRefreshRecovery(sourceDataSource);
@@ -399,7 +400,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
-            trimDerivedTables(paramInfo.getSnapshotBlockHeight());
+            trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 Files.list(csvExporter.getDataExportPath())
                         .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
@@ -418,6 +419,8 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        case ShardConstants.ACCOUNT_TABLE_NAME:
+                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id");
                         default:
                             return exportDerivedTable(tableName, paramInfo);
                     }
@@ -459,14 +462,22 @@ public class ShardEngineImpl implements ShardEngine {
         return recovery;
     }
 
-    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(tableName);
         if (derivedTable != null) {
-            return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            if (excludedColumns == null && sort == null) {
+                return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            } else {
+                return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+            }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + tableName + " in derived table registry");
         }
+    }
+
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+        return exportDerivedTable(tableName, paramInfo, null, null);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
@@ -628,7 +639,8 @@ public class ShardEngineImpl implements ShardEngine {
         state = COMPLETED;
         // complete sharding
         updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL);
-        log.debug("Shard record is created with Hash in {} ms", System.currentTimeMillis() - startAllTables);
+        log.debug("Shard record '{}' is created with Hash in {} ms", paramInfo.getShardId(),
+                System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
         return state;
     }
