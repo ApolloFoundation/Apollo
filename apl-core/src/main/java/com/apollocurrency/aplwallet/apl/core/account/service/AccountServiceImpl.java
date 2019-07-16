@@ -43,6 +43,8 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountServiceImpl implements AccountService {
 
+    public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
+
     private AccountTable accountTable;
     private Blockchain blockchain;
     private BlockchainConfig blockchainConfig;
@@ -167,14 +169,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getEffectiveBalanceAPL(Account account, int height, boolean lock) {
-        if (height <= 1440) {
-            Account genesisAccount = getAccount(account.getId(), 0);
+        int shardHeight = blockchain.getShardInitialBlock().getHeight();
+        if (shardHeight <= height - EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            Account genesisAccount = getAccount(account.getId(), shardHeight);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (account.getPublicKey() == null) {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
         }
-        if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= 1440) {
+        if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {

@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -33,7 +32,6 @@ import org.json.simple.JSONStreamAware;
 /**
  * Get the transactions
  */
-@Vetoed
 public class GetTransactions extends PeerRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
 

@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -14,6 +16,7 @@ import java.util.Objects;
  *
  * @author yuriy.larin
  */
+@Builder
 public class ShardRecovery {
     private Long shardRecoveryId; // auto incremented id
     /**
@@ -40,6 +43,13 @@ public class ShardRecovery {
      * automatically updated date-time in UTC zone
      */
     private Instant updated = Instant.now();
+
+    /**
+     * Height of the blockchain at the beginning of sharding
+     */
+    @Getter
+    private int height;
+
 
     public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
         Objects.requireNonNull(state);

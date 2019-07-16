@@ -134,7 +134,7 @@ public abstract class Data extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
-            lookupTaggedDataService().add((TransactionImpl) transaction, attachment);
+            lookupTaggedDataService().add(transaction, attachment);
         }
 
         @Override

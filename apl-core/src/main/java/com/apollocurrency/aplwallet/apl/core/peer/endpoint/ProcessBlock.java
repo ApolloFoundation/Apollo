@@ -29,12 +29,10 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-@Vetoed
 public final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
 
@@ -44,6 +42,9 @@ public final class ProcessBlock extends PeerRequestHandler {
     public JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
         String previousBlockId = (String)request.get("previousBlock");
         Block lastBlock = lookupBlockchain().getLastBlock();
+        if (lastBlock == null) {
+            return JSON.emptyJSON; // probably node is not loaded with any block
+        }
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
         Object timeoutJsonValue = request.get("timeout");
         int peerBlockTimeout =  timeoutJsonValue == null ? 0 : ((Long)timeoutJsonValue).intValue();

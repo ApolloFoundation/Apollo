@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -18,13 +20,17 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 @Singleton
 public class ShardObserver {
@@ -38,7 +44,7 @@ public class ShardObserver {
     private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
     private final PropertiesHolder propertiesHolder;
-    public final static long LOWER_SHARDING_MEMORY_LIMIT=3072*1024*1024; //3GB
+    public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
     
     @Inject
     public ShardObserver(BlockchainProcessor blockchainProcessor, BlockchainConfig blockchainConfig,
@@ -55,14 +61,27 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
     }
 
-    public void onTrimDone(@Observes Integer height) {
-        tryCreateShardAsync(height);
+
+    public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
 
-    public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight) {
+    public void onTrimDone(@Observes @Sync TrimData trimData) {
+        try {
+            CompletableFuture<Boolean> future = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+            if (future != null) {
+                future.get();
+            }
+        }
+        catch (InterruptedException | ExecutionException e) {
+            log.error(e.toString(), e);
+        }
+    }
+
+    public CompletableFuture<Boolean> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<Boolean> completableFuture = null;
-        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
-        if(!doSharding){
+        boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+        if(!doSharding) {
             log.warn("Sharding is prohibited by commad line or properties");
             return completableFuture;
         }
@@ -83,12 +102,12 @@ public class ShardObserver {
                             isSharding = true;
                             updateTrimConfig(false);
                             // quick create records for new Shard and Recovery process for later use
-                            shardRecoveryDao.saveShardRecovery(new ShardRecovery(MigrateState.INIT));
+                            shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
                             long nextShardId = shardDao.getNextShardId();
                             Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
                             shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
-                            completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId))
+                            completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, blockchainHeight))
                                     .thenApply((result) -> {
                                         blockchainProcessor.updateInitialBlockId();
                                         return result;
@@ -115,19 +134,37 @@ public class ShardObserver {
     private void updateTrimConfig(boolean enableTrim) {
          trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(enableTrim);
     }
+
+
     private boolean isEnoughMemory(){
-        long memoryTotal = Runtime.getRuntime().totalMemory();
-        return (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+        long memoryTotal = 0;
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        try {
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
+            memoryTotal = (Long)attribute;
+        } catch (Exception ex) {
+        }
+        boolean res = false;
+        if(memoryTotal==0){
+            log.warn("Can not calculate physical RAM size, continuing sharding though it is risky");
+            res = true;
+        }else{
+            res = (memoryTotal >= LOWER_SHARDING_MEMORY_LIMIT);
+        }
+        if(!res){
+            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
+            log.debug("Required memory: {}, Available: {} ", LOWER_SHARDING_MEMORY_LIMIT, memoryTotal);
+        }
+        return res;
     }
     
-    public boolean performSharding(int minRollbackHeight, long shardId) {
-        boolean doSharding = propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
+    public boolean performSharding(int minRollbackHeight, long shardId, int blockchainHeight) {
+        boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){
             log.warn("Sharding is prohibited by commad line or properties");
             return false;
         } 
         if(!isEnoughMemory()){
-            log.warn("Not enough system memory for Shard creation. Sharding will work in client mode only");
             return false;            
         }
         boolean result = false;

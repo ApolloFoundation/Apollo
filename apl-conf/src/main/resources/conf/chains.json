@@ -169,7 +169,7 @@
         "maxBalance": 30000000000
       },
       {
-        "height": 2249999,
+        "height": 2231999,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
@@ -195,7 +195,9 @@
       "51.15.69.39",
       "51.15.59.37",
       "51.15.114.68",
-      "51.15.140.80"
+      "51.15.140.80",
+      "51.15.100.44",
+      "51.15.233.93"
     ],
     "name": "Apollo public testnet",
     "description": "Apollo main test chain, running on last stable release",
@@ -238,6 +240,10 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500000
         }
       },
       {
@@ -246,7 +252,29 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500000
+        }
+      },
+      {
+        "height": 624999,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
+        }
       }
     ]
   },

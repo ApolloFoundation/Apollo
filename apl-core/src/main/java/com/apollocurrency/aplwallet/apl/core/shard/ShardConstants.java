@@ -13,6 +13,7 @@ public class ShardConstants {
     public static final String BLOCK_TABLE_NAME = "block";
     public static final String TRANSACTION_TABLE_NAME = "transaction";
     public static final String SHARD_TABLE_NAME = "shard";
+    public static final String ACCOUNT_TABLE_NAME = "account";
     public static final String BLOCK_INDEX_TABLE_NAME = "block_index";
     public static final String TRANSACTION_INDEX_TABLE_NAME = "transaction_shard_index";
     public static final String GOODS_TABLE_NAME = "goods";

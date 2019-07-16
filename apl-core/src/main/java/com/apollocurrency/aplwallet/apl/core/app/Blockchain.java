@@ -56,6 +56,8 @@ public interface Blockchain {
 
     DbIterator<Block> getBlocks(int from, int to);
 
+    Block findFirstBlock();
+
 //    DbIterator<Block> getBlocks(long accountId, int timestamp);
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
