@@ -79,7 +79,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
             PropertiesHolder.class, BlockchainImpl.class,
             DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class,// DirProvider.class, //ServiceModeDirProvider.class,
-            TrimService.class, AccountTable.class,
+            AccountTable.class,
             JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -117,6 +117,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
             .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))
             .addBeans(MockBean.of(mock(AccountBlockConverter.class),AccountBlockConverter.class))
+            .addBeans(MockBean.of(mock(TrimService.class),TrimService.class))
             .build();
 
 
