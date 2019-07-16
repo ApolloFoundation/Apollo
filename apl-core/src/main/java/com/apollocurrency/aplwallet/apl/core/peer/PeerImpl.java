@@ -886,5 +886,9 @@ public final class PeerImpl implements Peer {
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
+    /** process error fron transport passewd level */
+    void processError(String message) {
+        LOG.debug("Error from transport level:\n{}\n",message);
+    }
     
 }

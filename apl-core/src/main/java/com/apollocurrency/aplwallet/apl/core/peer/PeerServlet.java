@@ -246,12 +246,7 @@ public final class PeerServlet extends WebSocketServlet {
             if (peer.isBlacklisted()) { 
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{          
-              if (requestId == null || requestId == 0) {
-                 LOG.debug("null requestId from {}\nRequest:{}", peer.getHostWithPort(),request); 
-                 jsonResponse = PeerResponses.UNSUPPORTED_PROTOCOL;
-               } else {
-                    jsonResponse = process(peer, new StringReader(request));
-               }
+                 jsonResponse = process(peer, new StringReader(request));
             }
         }
 

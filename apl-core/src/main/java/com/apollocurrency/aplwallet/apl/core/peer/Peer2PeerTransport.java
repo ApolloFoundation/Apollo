@@ -118,8 +118,17 @@ public class Peer2PeerTransport {
         ResonseWaiter wsrw = requestMap.get(rqId);
         if (wsrw != null) { //this is response
             wsrw.setResponse(message);
-        } else { //most likely ge've got request from remote and should process it
-            peerServlet.doPost(this, rqId, message);
+        } else {
+            if(rqId==null){
+                log.debug("Protocol error, requestId=null from {}, message:\n{}\n",which(),message);
+            }else{
+               if(rqId==0){ //error messages most likely
+                  log.debug("Got message from {} with 0 requestId: {}", which(), message);
+               }else{
+                   //most likely ge've got request from remote and should process it
+                  peerServlet.doPost(this, rqId, message);
+               }
+            }
         }
     }
 
@@ -332,5 +341,11 @@ public class Peer2PeerTransport {
         boolean res = outboundWebSocket != null && outboundWebSocket.isConnected();
         return res;
     }
-
+    
+    private void processError(String message){
+        PeerImpl p = (PeerImpl)peerReference.get();
+        if(p!=null){
+            p.processError(message);
+        }
+    }
 }
