@@ -46,10 +46,9 @@ import org.slf4j.Logger;
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
-
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    private static AccountService accountService;
+    private BlockchainConfig blockchainConfig;
+    private Blockchain blockchain;
+    private AccountService accountService;
 
     private final int version;
     private final int timestamp;
@@ -93,7 +92,8 @@ public final class BlockImpl implements Block {
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
               List<Transaction> transactions) {
-        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey, generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, blockchainConfig.getCurrentConfig().getInitialBaseTarget(), 0L, -1, 0, timeout, transactions);
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey, generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, 0L, 0L, -1, 0, timeout, transactions);
+        this.baseTarget = lookupBlockchainConfig().getCurrentConfig().getInitialBaseTarget();
     }
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
@@ -140,6 +140,16 @@ public final class BlockImpl implements Block {
         if (blockTransactions != null) {
             this.blockTransactions = Collections.unmodifiableList(blockTransactions);
         }
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        return blockchain;
+    }
+
+    private BlockchainConfig lookupBlockchainConfig(){
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        return blockchainConfig;
     }
 
     private AccountService lookupAccountService(){
@@ -215,7 +225,7 @@ public final class BlockImpl implements Block {
     @Override
     public List<Transaction> getTransactions() {
         if (this.blockTransactions == null) {
-            List<Transaction> transactions = Collections.unmodifiableList(blockchain.getBlockTransactions(getId()));
+            List<Transaction> transactions = Collections.unmodifiableList(lookupBlockchain().getBlockTransactions(getId()));
             for (Transaction transaction : transactions) {
                 transaction.setBlock(this);
             }
@@ -412,13 +422,13 @@ public final class BlockImpl implements Block {
 
         try {
 
-            Block previousBlock = blockchain.getBlock(getPreviousBlockId());
+            Block previousBlock = lookupBlockchain().getBlock(getPreviousBlockId());
             if (previousBlock == null) {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
 
             Account account = lookupAccountService().getAccount(getGeneratorId());
-            long effectiveBalance = account == null ? 0 : lookupAccountService().getEffectiveBalanceAPL(account, blockchain.getHeight(), true);
+            long effectiveBalance = account == null ? 0 : lookupAccountService().getEffectiveBalanceAPL(account, lookupBlockchain().getHeight(), true);
             if (effectiveBalance <= 0) {
                 LOG.warn("Account: {} Effective ballance: {},  verification failed",account,effectiveBalance);
                 return false;
@@ -481,7 +491,7 @@ public final class BlockImpl implements Block {
         int blockchainHeight = previousBlock.getHeight();
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
             int blocktimeAverage = getBlockTimeAverage(previousBlock);
-            HeightConfig config = blockchainConfig.getCurrentConfig();
+            HeightConfig config = lookupBlockchainConfig().getCurrentConfig();
             int blockTime = config.getBlockTime();
             if (blocktimeAverage > blockTime) {
                 int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
@@ -507,9 +517,9 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        Block lastBlockForTimeAverage = blockchain.getBlockAtHeight(blockchainHeight - 2);
+        Block lastBlockForTimeAverage = lookupBlockchain().getBlockAtHeight(blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            Block intermediateBlockForTimeAverage = blockchain.getBlockAtHeight(blockchainHeight - 1);
+            Block intermediateBlockForTimeAverage = lookupBlockchain().getBlockAtHeight(blockchainHeight - 1);
             int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
             int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateBlockForTimeAverage.getTimestamp();
             int secondAvgBlockTime = intermediateBlockForTimeAverage.getTimestamp()
