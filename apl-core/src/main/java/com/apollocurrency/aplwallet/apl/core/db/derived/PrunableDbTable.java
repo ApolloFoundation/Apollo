@@ -50,7 +50,7 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
 
     @Override
     public final void trim(int height) {
-        prune();
+//        prune();
         super.trim(height);
     }
 

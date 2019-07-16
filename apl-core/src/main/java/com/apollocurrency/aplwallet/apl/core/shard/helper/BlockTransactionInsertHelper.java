@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
 
@@ -85,8 +86,10 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
         } finally {
-            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
-                this.preparedInsertStatement.close();
+            if (this.preparedInsertStatement != null /*&& !this.preparedInsertStatement.isClosed()*/) {
+                log.trace("preparedInsertStatement will be CLOSED!");
+                DbUtils.close(this.preparedInsertStatement);
+//                this.preparedInsertStatement.close();
             }
         }
         return startSelect;

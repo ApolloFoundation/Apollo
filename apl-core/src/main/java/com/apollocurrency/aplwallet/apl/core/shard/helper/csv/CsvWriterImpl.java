@@ -248,9 +248,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         case Types.NVARCHAR:
                         case Types.VARBINARY:
                         case Types.BINARY:
-                            o = rs.getString(i + 1);
+                            o = rs.getBytes(i + 1);
                             if (o != null) {
-                                o = Base64.getEncoder().encodeToString(((String)o).getBytes(StandardCharsets.UTF_8));
+                                o = Base64.getEncoder().encodeToString(((byte[])o));
                             } else {
                                 o = nullString;
                             }

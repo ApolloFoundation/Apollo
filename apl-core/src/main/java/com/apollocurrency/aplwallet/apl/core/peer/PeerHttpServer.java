@@ -137,7 +137,7 @@ public class PeerHttpServer {
                     }
                 }
             //if address is set in config file, we ignore UPnP    
-            if (enablePeerUPnP && upnp.isAvailable() && myExtAddress!=null) {
+            if (enablePeerUPnP && upnp.isAvailable() && myExtAddress==null) {
                 for (Integer pn : internalPorts) {
                     int port = upnp.addPort(pn, "Peer2Peer");
                     if (port > 0) {
@@ -148,14 +148,15 @@ public class PeerHttpServer {
             }else{
                 externalPorts.addAll(internalPorts);
             }
-            // if we do not have addres set in config and do not have UPnP
+            // if we still do not have addres set in config and do not have UPnP
             //  myExtAddress is still null, do we have public IP?
-            String addr = getMyPublicIPAdresses();
-            if(addr!=null){
-                myExtAddress=new PeerAddress(externalPorts.get(0),addr);
+            if (myExtAddress == null) {
+                String addr = getMyPublicIPAdresses();
+                if (addr != null) {
+                    myExtAddress = new PeerAddress(externalPorts.get(0), addr);
+                }
+                peerServer.setStopAtShutdown(true);
             }
-            peerServer.setStopAtShutdown(true);
-
 
         } else {
             peerServer = null;

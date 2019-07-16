@@ -3,14 +3,21 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -29,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,13 +60,21 @@ public class DexService {
     private DexContractTable dexContractTable;
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
+
     private DexTradeDao dexTradeDao;
 
+    private DexOfferTransactionCreator dexOfferTransactionCreator;
+    private EpochTime timeService;
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
-                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable, 
-                      DexTradeDao dexTradeDao ) {
+// <<<<<<< HEAD
+//                       DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable, 
+//                       DexTradeDao dexTradeDao ) {
+// =======
+                      DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable,
+                      DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime timeService, DexTradeDao dexTradeDao) {
+// >>>>>>> develop
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
@@ -66,7 +82,12 @@ public class DexService {
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
         this.dexContractTable = dexContractTable;
+
         this.dexTradeDao = dexTradeDao;
+
+        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.timeService = timeService;
+
     }
 
 
@@ -228,6 +249,38 @@ public class DexService {
         }
 
         return false;
+    }
+
+    /**
+     *
+     * @return Tx hash id/link
+     */
+    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, byte [] secretHash){
+        //TODO Case APL
+        createTransactionRequest.setDeadlineValue("1440");
+        createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
+        PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
+        PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1, phasingParams, null, secretHash, (byte) 2);
+        createTransactionRequest.setPhased(true);
+        createTransactionRequest.setPhasing(phasing);
+
+        createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId() != null ? offer.getTransactionId() : 0 , false));
+        Transaction transaction = null;
+        try {
+            transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+
+        } catch (AplException.ValidationException e) {
+            LOG.error(e.getMessage(), e);
+            //TODO
+        } catch (ParameterException e) {
+            LOG.error(e.getMessage(), e);
+            //TODO
+        }
+
+
+        //TODO Case ETH/PAX
+
+        return transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
     }
 
 

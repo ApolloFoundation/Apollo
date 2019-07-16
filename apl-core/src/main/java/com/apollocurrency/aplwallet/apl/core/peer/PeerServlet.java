@@ -54,7 +54,12 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.nio.channels.ClosedChannelException;
+import java.util.UUID;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -69,19 +74,32 @@ import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static BlockchainProcessor blockchainProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    @Inject
+    private PropertiesHolder propertiesHolder;
+    @Inject
+    private BlockchainProcessor blockchainProcessor;
+    @Inject
+    private volatile EpochTime timeService;   
+    @Inject
     private ShardDao shardDao;
+    @Inject
     private BlockchainConfig blockchainConfig;
+    @Inject
     private DownloadableFilesManager downloadableFilesManager;
 
-    protected BlockchainProcessor lookupComponents() {
+    @Override
+    public void init() throws ServletException {
+        super.init(); 
+        lookupComponents();
+    }
+
+    protected void lookupComponents() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        return blockchainProcessor;
+        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
+        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     }  
     
     public PeerRequestHandler getHandler(String rtype) {
@@ -89,46 +107,46 @@ public final class PeerServlet extends WebSocketServlet {
         PeerRequestHandler res = null;
         switch (rtype) {
             case "addPeers":
-                res = new AddPeers();
+                res = CDI.current().select(AddPeers.class).get();
                 break;
             case "getCumulativeDifficulty":
-                res = new GetCumulativeDifficulty();
+                res = CDI.current().select(GetCumulativeDifficulty.class).get();
                 break;
             case "getInfo":
-                res = new GetInfo();
+                res = CDI.current().select(GetInfo.class).get();
                 break;
             case "getMilestoneBlockIds":
-                res = new GetMilestoneBlockIds();
+                res = CDI.current().select(GetMilestoneBlockIds.class).get();
                 break;
             case "getNextBlockIds":
-                res = new GetNextBlockIds();
+                res = CDI.current().select(GetNextBlockIds.class).get();
                 break;
             case "getNextBlocks":
-                res = new GetNextBlocks();
+                res = CDI.current().select(GetNextBlocks.class).get();
                 break;
             case "getPeers":
-                res = new GetPeers();
+                res = CDI.current().select(GetPeers.class).get();
                 break;
             case "getTransactions":
-                res = new GetTransactions();
+                res = CDI.current().select(GetTransactions.class).get();
                 break;
             case "getUnconfirmedTransactions":
-                res = new GetUnconfirmedTransactions();
+                res = CDI.current().select(GetUnconfirmedTransactions.class).get();
                 break;
             case "processBlock":
-                res = new ProcessBlock();
+                res = CDI.current().select(ProcessBlock.class).get();
                 break;
             case "processTransactions":
-                res = new ProcessTransactions();
+                res = CDI.current().select(ProcessTransactions.class).get();
                 break;
             case "getFileDownloadInfo":
-                res = new GetFileDownloadInfo(downloadableFilesManager);
+                res = CDI.current().select(GetFileDownloadInfo.class).get();
                 break;
             case "getFileChunk":
-                res = new GetFileChunk(downloadableFilesManager);
+                res = CDI.current().select(GetFileChunk.class).get();
                 break; 
             case "getShardingInfo":
-                res = new GetShardingInfo(shardDao, blockchainConfig);
+                res = CDI.current().select(GetShardingInfo.class).get();
                 break;                
         }
         return res;
@@ -155,10 +173,13 @@ public final class PeerServlet extends WebSocketServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JSONStreamAware jsonResponse;
+        lookupComponents();
         //
         // Process the peer request
         //
-        PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
+        PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
+        PeerImpl peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+        //PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
@@ -182,15 +203,14 @@ public final class PeerServlet extends WebSocketServlet {
 
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
-            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                if (e instanceof RuntimeException) {
-                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
-                } else {
-                    LOG.debug(String.format("Error sending response to peer %s: %s",
-                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-                }
+
+//jetty misused this, ignore            
+            if(!(e instanceof ClosedChannelException )){
+                LOG.debug("Error sending response to peer " + peer.getHost(), e);
+                peer.blacklist(e);
+            }else{
+                LOG.trace("Error sending response to peer " + peer.getHost(), e);
             }
-            peer.blacklist(e);
         }
     }
 
@@ -206,24 +226,18 @@ public final class PeerServlet extends WebSocketServlet {
      * @param   request             Request message
      */
     void doPost(PeerWebSocket webSocket, long requestId, String request) {
+        lookupComponents();
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
         //
-        InetSocketAddress socketAddress = webSocket.getRemoteAddress();
-        if (socketAddress == null) {
-            return;
-        }
-        String remoteAddress = socketAddress.getHostString();
-        PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
-        if (peer == null) {
+
+        PeerImpl peer = (PeerImpl)webSocket.getClientPeer();
+        if(peer==null){
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             peer.setInboundWebSocket(webSocket);
             jsonResponse = process(peer, new StringReader(request));
-            if (chainIdProtected()) {
-
-            }
         }
         //
         // Return the response
@@ -250,6 +264,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @return                      JSON response
      */
     private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
+        lookupComponents();
         //
         // Check for blacklisted peer
         //
@@ -294,7 +309,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
-                if (lookupComponents().isDownloading()) {
+                if (blockchainProcessor.isDownloading()) {
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
@@ -304,7 +319,9 @@ public final class PeerServlet extends WebSocketServlet {
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException| ParseException |IOException e) {
             LOG.debug("Error processing POST request: " + e.toString());
-            peer.blacklist(e);
+            if(! (e instanceof  ClosedChannelException) ){
+              peer.blacklist(e);
+            }
             return PeerResponses.error(e);
         }
     }
@@ -322,7 +339,21 @@ public final class PeerServlet extends WebSocketServlet {
          */
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-            return Peers.useWebSockets ? new PeerWebSocket(PeerServlet.this) : null;
+            Object res = null;
+            if (Peers.useWebSockets) {
+                String hostWithPort = req.getRequestURI().getAuthority();
+                if (StringUtils.isBlank(hostWithPort)) {
+                    hostWithPort = req.getRemoteAddress();
+                }
+                PeerAddress pa = new PeerAddress(hostWithPort);
+                Peer peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+                if (peer != null) {
+                    PeerWebSocket pws = new PeerWebSocket(PeerServlet.this, peer);
+                    ((PeerImpl) peer).setInboundWebSocket(pws);
+                    res = pws;
+                }
+            }
+            return res;
         }
     }
 }

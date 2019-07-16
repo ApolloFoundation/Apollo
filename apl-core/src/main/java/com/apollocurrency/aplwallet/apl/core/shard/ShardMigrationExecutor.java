@@ -43,6 +43,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ShardMigrationExecutor {
     private static final Logger log = getLogger(ShardMigrationExecutor.class);
+    public static final String ACCOUNT_LEDGER = "account_ledger";
     private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
@@ -127,6 +128,7 @@ public class ShardMigrationExecutor {
             case CSV_EXPORT_STARTED:
                 excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
                 List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
+                tablesToExport.remove(ACCOUNT_LEDGER);
                 tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
                 CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo);
 

@@ -95,4 +95,10 @@ public interface ShardManagement {
      */
     List<TransactionalDataSource> getFullDatasources();
 
+    /**
+     * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource
+     * @return number of closed datasources
+     */
+    int closeAllShardDataSources();
+
 }

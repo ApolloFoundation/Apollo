@@ -278,8 +278,14 @@ public final class AplCore {
 
                 ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
                         () -> {
-                          LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
-                          aplAppStatus.clearFinished(10*60L); //10 min
+                            Runtime runtime = Runtime.getRuntime();
+                            LOG.debug("Used connections - '{}', Memory Info. Total: {} Kb, Free: {} Kb, Max: {} Kb",
+                                  databaseManager.getDataSource().getJmxBean().getActiveConnections(),
+                                  runtime.totalMemory() / 1024,
+                                  runtime.freeMemory() / 1024,
+                                  runtime.maxMemory() / 1024
+                          );
+                          aplAppStatus.clearFinished(1*60L); //10 min
                         },
                    20,
                    TimeUnit.SECONDS);

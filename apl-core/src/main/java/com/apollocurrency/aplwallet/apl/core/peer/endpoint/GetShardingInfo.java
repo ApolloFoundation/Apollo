@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
@@ -27,9 +28,10 @@ import org.json.simple.JSONStreamAware;
 @Slf4j
 public class GetShardingInfo extends PeerRequestHandler{
 
-    private ShardDao shardDao;
-    private BlockchainConfig blockchainConfig;
-
+    private final ShardDao shardDao;
+    private final BlockchainConfig blockchainConfig;
+    
+    @Inject
     public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig) {
         this.shardDao = shardDao;
         this.blockchainConfig = blockchainConfig;

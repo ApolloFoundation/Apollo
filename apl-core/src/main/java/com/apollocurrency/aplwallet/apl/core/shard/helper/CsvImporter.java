@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * Component's interface for importing table data into Db from CSV file.
@@ -42,8 +43,9 @@ public interface CsvImporter {
      * @param batchLimit rows in batch to process
      * @param cleanTarget true if we want to cleanup target table
      * @param stateIncrease progress increase value
+     * @param defaultParams - default parameters and values to set for each imported row
      * @return imported quantity
      */
-    long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease) throws Exception;
+    long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease, Map<String, Object> defaultParams) throws Exception;
 
 }

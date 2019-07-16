@@ -57,6 +57,12 @@ public class DexContractTransaction extends DEX {
         if(offer.getAccountId() != transaction.getSenderId()){
             throw new AplException.NotValidException("Can create request contract only from your account.");
         }
+
+        if(attachment.getEncryptedSecret() ==null || attachment.getEncryptedSecret().length != 64){
+            throw new AplException.NotValidException("Encrypted secret is null or length is not right.");
+        }
+
+
     }
 
     @Override

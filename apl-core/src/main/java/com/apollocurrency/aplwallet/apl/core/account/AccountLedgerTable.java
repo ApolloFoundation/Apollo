@@ -52,9 +52,9 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
     /**
          * Trim the account ledger table
+         *  @param   height                  Trim height
          *
-         * @param   height                  Trim height
-         */
+     */
         @Override
         public void trim(int height) {
             if (trimKeep <= 0)

@@ -22,11 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-@Vetoed
 public final class GetCumulativeDifficulty extends PeerRequestHandler {
 
     public GetCumulativeDifficulty() {}
@@ -45,7 +43,7 @@ public final class GetCumulativeDifficulty extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }
