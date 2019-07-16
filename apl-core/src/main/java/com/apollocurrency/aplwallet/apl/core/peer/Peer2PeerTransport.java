@@ -112,11 +112,12 @@ public class Peer2PeerTransport {
                 processError(message);
             } else {
                 ResonseWaiter wsrw = requestMap.get(rqId);
-                if (wsrw != null) { //this is response
+                if (wsrw != null) { //this is response we are waiting for
                     wsrw.setResponse(message);
+                }else{
+                  //most likely ge've got request from remote and should process it
+                  peerServlet.doPost(this, rqId, message);
                 }
-                //most likely ge've got request from remote and should process it
-                peerServlet.doPost(this, rqId, message);
             }
 
         }
