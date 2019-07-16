@@ -5,17 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
-import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
+import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
@@ -37,12 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Apollo accounts endpoint
@@ -53,6 +53,9 @@ public class AccountController {
 
     private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
                                                                              RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+
+    @Inject @Setter
+    private Blockchain blockchain;
 
     @Inject @Setter
     private Account2FAHelper account2FAHelper;
@@ -71,6 +74,9 @@ public class AccountController {
 
     @Inject @Setter
     private AccountConverter converter;
+
+    @Inject @Setter
+    private AccountBlockConverter accountBlockConverter;
 
     @Inject @Setter
     private WalletKeysConverter walletKeysConverter;
@@ -236,6 +242,106 @@ public class AccountController {
         }
     }
 
+    @Path("/account/blockCount")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the blocks count.",
+            description = "Returns the number of blocks by account id.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountBlocksCountResponse.class)))
+            })
+    @PermitAll
+    public Response getAccountBlocksCount(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+
+        AccountBlocksCountResponse dto = new AccountBlocksCountResponse();
+        dto.setNumberOfBlocks(blockchain.getBlockCount(accountId));
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/account/blockIds")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the blocks count.",
+            description = "Returns the number of blocks by account id.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountBlocksCountResponse.class)))
+            })
+    @RolesAllowed("admin")
+    public Response getAccountBlockIds(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The timestamp." ) @QueryParam("timestamp") Integer timestampParam,
+            @Parameter(description = "The first index." ) @QueryParam("firstIndex") Integer firstIndexParam,
+            @Parameter(description = "The last index." ) @QueryParam("lastIndex") Integer lastIndexParam,
+            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
+            ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        Integer timestamp = RestParameters.parseInt(timestampParam, 0, Integer.MAX_VALUE, "timestamp");
+        Integer firstIndex = RestParameters.parseInt(firstIndexParam, 0, Integer.MAX_VALUE, "firstIndex");
+        Integer lastIndex = RestParameters.parseInt(lastIndexParam, 0, Integer.MAX_VALUE, "lastIndex");
+        /*
+        int firstIdx = Math.min(firstIndex, Integer.MAX_VALUE - API.maxRecords + 1);
+        lastIndex = Math.min(lastIndex, firstIdx + API.maxRecords - 1);
+         */
+
+        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
+        List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
+
+        AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
+        dto.setBlockIds(blockIds);
+
+        return response.bind(dto).build();
+    }
+
+    @Path("/account/blocks")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the blocks count.",
+            description = "Returns the number of blocks by account id.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountBlocksCountResponse.class)))
+            })
+    @RolesAllowed("admin")
+    public Response getAccountBlocks(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The timestamp." ) @QueryParam("timestamp") Integer timestampParam,
+            @Parameter(description = "The first index." ) @QueryParam("firstIndex") Integer firstIndexParam,
+            @Parameter(description = "The last index." ) @QueryParam("lastIndex") Integer lastIndexParam,
+            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword,
+            @Parameter(description = "Include transactions info" ) @QueryParam("includeTransaction") @DefaultValue("false") Boolean includeTransaction
+    ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        Integer timestamp = RestParameters.parseInt(timestampParam, 0, Integer.MAX_VALUE, "timestamp");
+        Integer firstIndex = RestParameters.parseInt(firstIndexParam, 0, Integer.MAX_VALUE, "firstIndex");
+        Integer lastIndex = RestParameters.parseInt(lastIndexParam, 0, Integer.MAX_VALUE, "lastIndex");
+
+        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
+
+        AccountBlocksResponse dto = new AccountBlocksResponse();
+        dto.setBlocks(accountBlockConverter.convert(blocks));
+
+        return response.bind(dto).build();
+    }
 
     @Path("/exportKey")
     @POST

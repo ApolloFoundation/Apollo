@@ -34,6 +34,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
+@Deprecated
 public final class GetAccountBlockIds extends AbstractAPIRequestHandler {
 
     public GetAccountBlockIds() {

@@ -18,6 +18,6 @@ public class SSEDataHolder{
     private List<AccountAssetDTO> assets;
     private AccountDTO account;
     private List<AccountCurrencyDTO> currencies;
-    private Block block;
+    private BlockDTO blockDTO;
 
 }

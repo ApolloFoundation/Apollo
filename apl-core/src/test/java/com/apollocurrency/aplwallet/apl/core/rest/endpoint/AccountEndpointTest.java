@@ -65,8 +65,6 @@ class AccountEndpointTest extends AbstractEndpointTest{
 
     private static final String PASSPHRASE="123456";
 
-    //private AccountService accountService = mock(AccountService.class);
-
     @RegisterExtension
     private DbExtension extension = new DbExtension();
 
@@ -118,6 +116,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))
+            .addBeans(MockBean.of(mock(AccountBlockConverter.class),AccountBlockConverter.class))
             .build();
 
 
@@ -129,8 +128,6 @@ class AccountEndpointTest extends AbstractEndpointTest{
         dispatcher = MockDispatcherFactory.createDispatcher();
         dispatcher.getRegistry().addSingletonResource(endpoint);
 
-        //endpoint.setConverter(new AccountConverter());
-        //endpoint.setAccountService(accountService);
     }
 
     @AfterEach

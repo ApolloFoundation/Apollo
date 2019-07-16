@@ -32,19 +32,34 @@ public class RestParameters {
         return parsedParams;
     }
 
-    public static int parseHeight(String heightValue, long maxHeight) throws RestParameterException {
-        if (heightValue != null) {
+    public static Integer parseHeight(String heightValue, int maxHeight) throws RestParameterException {
+        if (heightValue == null){
+            return -1;
+        }
+        Integer height = parseInt(heightValue, 0, maxHeight, "height");
+        return height;
+    }
+
+    public static Integer parseInt(String intStrValue, int min, int max, String paramName) throws RestParameterException {
+        if (intStrValue != null) {
             try {
-                int height = Integer.parseInt(heightValue);
-                if (height < 0 || height > maxHeight) {
-                    throw new NumberFormatException();
-                }
-                return height;
+                int intValue = Integer.parseInt(intStrValue);
+                return parseInt(intValue, min, max, paramName);
             } catch (NumberFormatException e) {
-                throw new RestParameterException(ApiErrors.INCORRECT_VALUE, "height", heightValue);
+                throw new RestParameterException(ApiErrors.INCORRECT_VALUE, paramName, intStrValue);
             }
         }
-        return -1;
+        return min;
+    }
+
+    public static Integer parseInt(Integer intValue, int min, int max, String paramName) throws RestParameterException {
+        if (intValue != null) {
+            if (intValue < min || intValue > max) {
+                throw new RestParameterException(ApiErrors.INCORRECT_VALUE, paramName, intValue);
+            }
+            return intValue;
+        }
+        return min;
     }
 
     public static long parseAccountId(String account) throws RestParameterException {
@@ -62,6 +77,5 @@ public class RestParameters {
         }
         return accountId;
     }
-
 
 }

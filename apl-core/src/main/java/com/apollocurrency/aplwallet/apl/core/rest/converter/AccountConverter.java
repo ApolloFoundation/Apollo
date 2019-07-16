@@ -20,7 +20,7 @@ import lombok.Setter;
 import javax.inject.Inject;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -203,6 +203,16 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
                 o.setNextLeasingHeightTo(model.getNextLeasingHeightTo());
             }
         }
+    }
+
+    public static long anonymizeAccount(){
+        Random random = new Random();
+        return random.nextLong();
+    }
+
+    public static long anonymizeBalance(){
+        Random random = new Random();
+        return 100_000_000L * (random.nextInt(10_000_000) + 1);
     }
 
 }

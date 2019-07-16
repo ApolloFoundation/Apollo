@@ -43,7 +43,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-public final class BlockImpl implements Block {
+public class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
     private BlockchainConfig blockchainConfig;

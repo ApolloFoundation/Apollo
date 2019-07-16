@@ -11,10 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.*;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -163,6 +160,15 @@ public class AccountServiceImpl implements AccountService {
         } else {
             accountTable.insert(account);
         }
+    }
+
+    @Override
+    public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to){
+        List<Block> result = new ArrayList<>();
+        try(DbIterator<Block> iterator = blockchain.getBlocks(accountId, timestamp, from, to)) {
+            iterator.forEachRemaining(result::add);
+        }
+        return result;
     }
 
     @Override

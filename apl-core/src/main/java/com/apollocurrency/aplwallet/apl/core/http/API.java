@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
@@ -274,6 +275,7 @@ public final class API {
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ClientErrorExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
                             .add(RestParameterExceptionMapper.class.getName())
                             .add(SecurityInterceptor.class.getName())

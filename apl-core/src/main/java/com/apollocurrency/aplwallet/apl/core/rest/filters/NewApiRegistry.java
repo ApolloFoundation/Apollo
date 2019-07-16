@@ -46,6 +46,9 @@ public class NewApiRegistry {
         apis.put("exportKey", "/rest/accounts/exportKey"); //POST
         apis.put("getAccountAssetCount", "/rest/accounts/account/assetCount"); //GET
         apis.put("getAccountAssets", "/rest/accounts/account/assets"); //GET
+        apis.put("getAccountBlockCount", "/rest/accounts/account/blockCount"); //GET
+        apis.put("getAccountBlockIds", "/rest/accounts/account/blockIds"); //GET
+        apis.put("getAccountBlocks", "/rest/accounts/account/blocks"); //GET
 
 
         //TODO: add new implemented endpoints

@@ -1,7 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -25,8 +27,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 public class AbstractEndpointTest {
+    public static final int CURRENT_HEIGHT = 650000;
+
     static ObjectMapper mapper = new ObjectMapper();
     Dispatcher dispatcher;
+
+    Blockchain blockchain = mock(Blockchain.class);
 
     static{
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -36,7 +42,11 @@ public class AbstractEndpointTest {
 
     void setUp() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        dispatcher.getProviderFactory().register(RestParameterExceptionMapper.class);
+        dispatcher.getProviderFactory()
+                .register(RestParameterExceptionMapper.class)
+                .register(ClientErrorExceptionMapper.class);
+
+        doReturn(CURRENT_HEIGHT).when(blockchain).getHeight();
     }
 
     void checkMandatoryParameterMissingErrorCode(MockHttpResponse response, int expectedErrorCode) throws IOException {
