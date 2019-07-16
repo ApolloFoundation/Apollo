@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public final class LinkKey implements DbKey {
+public final class LinkKey implements DbKey<LinkKey> {
     
     private final long idA;
     private final long idB;
@@ -53,5 +53,14 @@ public final class LinkKey implements DbKey {
         sb.append(", idB=").append(idB);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int compareTo(LinkKey o) {
+        int res = Long.compare(idA, o.idA);
+        if (res == 0) {
+            res = Long.compare(idB, o.idB);
+        }
+        return res;
     }
 }

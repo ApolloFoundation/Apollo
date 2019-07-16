@@ -23,9 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public interface DbKey {
+public interface DbKey<T> extends Comparable<T> {
 
     int setPK(PreparedStatement pstmt) throws SQLException;
     int setPK(PreparedStatement pstmt, int index) throws SQLException;
-
 }

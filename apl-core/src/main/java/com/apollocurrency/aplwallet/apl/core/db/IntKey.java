@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public final class IntKey implements DbKey {
+public final class IntKey implements DbKey<IntKey> {
     
     private final Integer id;
 
@@ -49,5 +49,10 @@ public final class IntKey implements DbKey {
         sb.append("id=").append(id);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int compareTo(IntKey o) {
+        return Integer.compare(id, o.id);
     }
 }

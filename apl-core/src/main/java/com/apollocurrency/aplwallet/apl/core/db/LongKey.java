@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public final class LongKey implements DbKey {
+public final class LongKey implements DbKey<LongKey> {
     
     private final long id;
 
@@ -49,5 +49,10 @@ public final class LongKey implements DbKey {
         sb.append("id=").append(id);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int compareTo(LongKey o) {
+        return Long.compare(this.id, o.id);
     }
 }

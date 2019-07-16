@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.LockUtils;
@@ -194,13 +195,14 @@ public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerived
     }
 
     public List<T> getAll(Comparator<T> comparator, int from, int to) {
-        return inReadLock(() -> allEntities.values()
-                .stream()
-                .filter(l -> l.get(l.size() - 1).isLatest())
-                .map(l -> l.get(l.size() - 1))
-                .sorted(comparator)
-                .skip(from)
-                .limit(to - from)
+        return inReadLock(() ->
+                CollectionUtil.limitStream(
+                        allEntities.values()
+                                .stream()
+                                .filter(l -> l.get(l.size() - 1).isLatest())
+                                .map(l -> l.get(l.size() - 1))
+                                .sorted(comparator)
+                        , from, to)
                 .collect(Collectors.toList()));
     }
 }

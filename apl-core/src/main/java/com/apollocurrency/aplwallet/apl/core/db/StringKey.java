@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-public final class StringKey implements DbKey {
+public final class StringKey implements DbKey<StringKey> {
     
     private final String id;
 
@@ -49,5 +49,10 @@ public final class StringKey implements DbKey {
         sb.append("id='").append(id).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int compareTo(StringKey o) {
+        return id.compareTo(o.id);
     }
 }

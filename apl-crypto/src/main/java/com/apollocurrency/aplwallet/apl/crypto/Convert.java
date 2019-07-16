@@ -239,6 +239,14 @@ public final class Convert {
         return list.stream().mapToLong(x->x).toArray();
     }
 
+    public static String toString(byte[][] bytes) {
+        List<String> hexStrings = new ArrayList<>();
+        for (byte[] array : bytes) {
+            hexStrings.add(toHexString(array));
+        }
+        return "(" + String.join(",", hexStrings) + ")";
+    }
+
     public static List<Long> toList(long[] array) {
         List<Long> result = new ArrayList<>(array.length);
         for (long elem : array) {

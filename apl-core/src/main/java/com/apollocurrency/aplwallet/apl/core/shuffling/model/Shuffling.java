@@ -62,8 +62,9 @@ public class Shuffling extends VersionedDerivedEntity {
     public Shuffling clone() throws CloneNotSupportedException {
         Shuffling clone = (Shuffling) super.clone();
         if (recipientPublicKeys != null) {
-            byte[][] recipientPublicKeysCopy = new byte[recipientPublicKeys.length][recipientPublicKeys[0].length];
+            byte[][] recipientPublicKeysCopy = new byte[recipientPublicKeys.length][];
             for (int i = 0; i < recipientPublicKeys.length; i++) {
+                recipientPublicKeysCopy[i] = new byte[recipientPublicKeys[i].length];
                 System.arraycopy(recipientPublicKeys[i], 0, recipientPublicKeysCopy[i], 0, recipientPublicKeys[i].length);
             }
             clone.setRecipientPublicKeys(recipientPublicKeys);
@@ -160,8 +161,26 @@ public class Shuffling extends VersionedDerivedEntity {
                 assigneeAccountId == shuffling.assigneeAccountId &&
                 holdingType == shuffling.holdingType &&
                 stage == shuffling.stage &&
-                Arrays.equals(recipientPublicKeys, shuffling.recipientPublicKeys);
+                Arrays.deepEquals(recipientPublicKeys, shuffling.recipientPublicKeys);
     }
+
+    @Override
+    public String toString() {
+        return "Shuffling{" +
+                "id=" + id +
+                ", holdingId=" + holdingId +
+                ", holdingType=" + holdingType +
+                ", issuerId=" + issuerId +
+                ", amount=" + amount +
+                ", participantCount=" + participantCount +
+                ", blocksRemaining=" + blocksRemaining +
+                ", registrantCount=" + registrantCount +
+                ", stage=" + stage +
+                ", assigneeAccountId=" + assigneeAccountId +
+                ", recipientPublicKeys=" + Convert.toString(recipientPublicKeys) +
+                '}';
+    }
+
 
     @Override
     public int hashCode() {

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 
 public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), dataScriptPath(), null);
 
     DerivedDbTable<T> derivedDbTable;
     Class<T> clazz;
@@ -195,6 +196,8 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
                 .get();
     }
 
-
+    protected String dataScriptPath() {
+        return "db/data.sql";
+    }
     protected abstract List<T> getAll();
 }

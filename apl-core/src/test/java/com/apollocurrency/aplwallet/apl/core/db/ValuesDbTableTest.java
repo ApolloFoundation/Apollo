@@ -25,6 +25,11 @@ import java.util.Map;
 public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
     private DbKey INCORRECT_DB_KEY = new DbKey() {
         @Override
+        public int compareTo(Object o) {
+            return 0;
+        }
+
+        @Override
         public int setPK(PreparedStatement pstmt) throws SQLException {
             return setPK(pstmt, 1);
         }

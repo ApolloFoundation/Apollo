@@ -83,6 +83,7 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
             assertEquals(t, table.get(table.getDbKeyFactory().newKey(t)));
             List<T> all = CollectionUtil.toList(table.getAll(0, Integer.MAX_VALUE));
             allLatest.set(0, t);
+            t.setDbKey(null);
             List<T> expected = allLatest.stream().sorted(getDefaultComparator()).collect(Collectors.toList());
             assertEquals(expected, all);
             assertListInCache(allLatest);

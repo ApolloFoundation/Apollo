@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.LockUtils;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
@@ -107,12 +108,13 @@ public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
 
 
     public List<T> getAll(int from, int to) {
-        return inReadLock(()-> allEntities.values()
-                .stream()
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).reversed().thenComparing(Comparator.comparing(DerivedEntity::getDbId).reversed()))
-                .skip(from)
-                .limit(to - from)
-                .collect(Collectors.toList()));
+        return inReadLock(() ->
+                CollectionUtil.limitStream(
+                        allEntities.values()
+                                .stream()
+                                .sorted(Comparator.comparing(DerivedEntity::getHeight).reversed().thenComparing(Comparator.comparing(DerivedEntity::getDbId).reversed()))
+                        , from, to)
+                        .collect(Collectors.toList()));
     }
 
 }

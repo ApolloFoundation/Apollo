@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
@@ -27,6 +28,8 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
                 return 1;
             } else if (o2.getBlocksRemaining() == 0) {
                 return -1;
+            } else {
+                return diff;
             }
         }
         // height desc
@@ -68,23 +71,26 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public List<Shuffling> getActiveShufflings(int from, int to) {
-        return inReadLock(()-> latestStream()
-                .filter(s -> s.getBlocksRemaining() > 0) // skip finished
-                .sorted(Comparator.comparing(Shuffling::getBlocksRemaining)  // order by blocks_remaining asc and then by height desc
-                        .thenComparing(Comparator.comparing(Shuffling::getHeight).reversed()))
-                .skip(from)
-                .limit(to - from)
-                .map(Shuffling::deepCopy) // copy shuffling to ensure that returned instance changes will not affect stored shufflings
-                .collect(Collectors.toList()));
+        return inReadLock(() ->
+                CollectionUtil.limitStream(
+                        latestStream()
+                                .filter(s -> s.getBlocksRemaining() > 0) // skip finished
+                                .sorted(Comparator.comparing(Shuffling::getBlocksRemaining)  // order by blocks_remaining asc and then by height desc
+                                        .thenComparing(Comparator.comparing(Shuffling::getHeight).reversed())
+                                .thenComparing(Shuffling::getDbId))
+                        , from, to)
+                        .map(Shuffling::deepCopy) // copy shuffling to ensure that returned instance changes will not affect stored shufflings
+                        .collect(Collectors.toList()));
     }
 
     @Override
     public List<Shuffling> getFinishedShufflings(int from, int to) {
-        return inReadLock(()-> latestStream()
-                .filter(s -> s.getBlocksRemaining() <= 0) // include only finished
-                .sorted(Comparator.comparing(Shuffling::getHeight).reversed().thenComparing(Shuffling::getDbId))
-                .skip(from)
-                .limit(to - from)
+        return inReadLock(()->
+                CollectionUtil.limitStream(
+                        latestStream()
+                                .filter(s -> s.getBlocksRemaining() <= 0) // include only finished
+                                .sorted(Comparator.comparing(Shuffling::getHeight).reversed().thenComparing(Shuffling::getDbId))
+                        , from, to)
                 .collect(Collectors.toList()));
     }
 
@@ -117,10 +123,9 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
                 shufflingStream = shufflingStream.filter(s -> s.getStage() == stage);
             }
 
-            return shufflingStream
-                    .sorted(FINISHED_LAST_BLOCKS_REMAINING_ASC_HEIGHT_DESC_COMPARATOR)
-                    .skip(from)
-                    .limit(to - from)
+            return CollectionUtil.limitStream(
+                    shufflingStream.sorted(FINISHED_LAST_BLOCKS_REMAINING_ASC_HEIGHT_DESC_COMPARATOR)
+                    , from, to)
                     .collect(Collectors.toList());
         });
     }
@@ -128,11 +133,11 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     @Override
     public List<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return inReadLock(()->
-            latestStream()
-                    .filter(s -> s.getAssigneeAccountId() == assigneeAccountId && s.getStage() == Stage.PROCESSING)
-                    .sorted(FINISHED_LAST_BLOCKS_REMAINING_ASC_HEIGHT_DESC_COMPARATOR)
-                    .skip(from)
-                    .limit(to - from)
+            CollectionUtil.limitStream(
+                    latestStream()
+                            .filter(s -> s.getAssigneeAccountId() == assigneeAccountId && s.getStage() == Stage.PROCESSING)
+                            .sorted(FINISHED_LAST_BLOCKS_REMAINING_ASC_HEIGHT_DESC_COMPARATOR)
+                    , from, to)
                     .collect(Collectors.toList())
         );
     }

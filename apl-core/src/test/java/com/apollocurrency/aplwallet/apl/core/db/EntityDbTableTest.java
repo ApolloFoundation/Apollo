@@ -831,7 +831,11 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     public Comparator<T> getDefaultComparator() {
-        return DB_ID_HEIGHT_COMPARATOR;
+        return table.isMultiversion() ? (o1, o2) -> {
+            DbKey dbKey1 = table.getDbKeyFactory().newKey(o1);
+            DbKey dbKey2 = table.getDbKeyFactory().newKey(o2);
+            return dbKey1.compareTo(dbKey2);
+        } : DB_ID_HEIGHT_COMPARATOR;
     }
 
     public abstract Blockchain getBlockchain();
