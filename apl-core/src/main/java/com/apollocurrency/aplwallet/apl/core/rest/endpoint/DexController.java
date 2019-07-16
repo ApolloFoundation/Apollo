@@ -7,16 +7,20 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.*;
@@ -68,8 +72,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
 
-    private static String ETH_GAS_INFO_KEY = "eth_gas_info";
-
+    private AccountService accountService;
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
@@ -81,13 +84,14 @@ public class DexController {
 
     @Inject
     public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService) {
+                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService, AccountService accountService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
+        this.accountService = Objects.requireNonNull( accountService, "accountService is null");
     }
 
     //For DI
@@ -182,6 +186,7 @@ public class DexController {
         }
 
         Integer currentTime = epochTime.getEpochTime();
+        JSONStreamAware response = null;
         try {
             Account account = ParameterParser.getSenderAccount(req);
             DexOffer offer = new DexOffer();
@@ -253,17 +258,42 @@ public class DexController {
             // Looks like this is the correct position for event handling
             // for matcher.
 
-            dexMatcherService.onCreateOffer(offer);
+            DexOffer counterOffer = dexMatcherService.findCounterOffer(offer);
 
             try {
-                if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
-                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-                    freezeTx = service.freezeEthPax(passphrase, offer);
-                }
+                //TODO move it in to service.
+                if (counterOffer != null) {
+                    byte[] secretX = new byte[32];
+                    Crypto.getSecureRandom().nextBytes(secretX);
+                    byte[] secretHash = Crypto.sha256().digest(secretX);
+                    String passphrase = ParameterParser.getPassphrase(req, true);
 
-                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
-                if(freezeTx != null){
-                    ((JSONObject)response).put("frozenTx", freezeTx);
+                    byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
+
+                    //SELL APL
+                    if (offer.getType().isSell()) {
+                        long recipientId = Convert.parseAccountId(counterOffer.getToAddress());
+
+                        CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
+                                .convert(req, account, recipientId, offer.getOfferAmount(), null, accountService);
+                        String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, secretHash);
+
+                        DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX);
+                        response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
+                    } else if (offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()) {
+                        //TODO Implement it for ETH/PAX
+                    }
+
+                } else {
+                    if (offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
+                        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+                        freezeTx = service.freezeEthPax(passphrase, offer);
+                    }
+
+                    response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
+                    if (freezeTx != null) {
+                        ((JSONObject) response).put("frozenTx", freezeTx);
+                    }
                 }
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
@@ -280,7 +310,7 @@ public class DexController {
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         }
 
-        return Response.ok().build();
+        return Response.ok(JSON.toString(response)).build();
     }
 
     @GET

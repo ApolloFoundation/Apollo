@@ -194,6 +194,16 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return dataSources;
     }
 
+    @Override
+    public int closeAllShardDataSources() {
+        int closedDatasources = 0;
+        for (TransactionalDataSource dataSource : connectedShardDataSourceMap.values()) {
+            dataSource.shutdown();
+            closedDatasources++;
+        }
+        return closedDatasources;
+    }
+
 
     /**
      * {@inheritDoc}

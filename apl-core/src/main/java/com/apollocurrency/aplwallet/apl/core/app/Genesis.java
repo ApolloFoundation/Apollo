@@ -22,19 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
@@ -56,6 +43,19 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Genesis {
     private static final Logger LOG = getLogger(Genesis.class);
@@ -132,7 +132,7 @@ public final class Genesis {
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadGenesisAccountsJSON());
     }
 
-    static void apply(boolean loadOnlyPublicKeys) {
+    public static void apply(boolean loadOnlyPublicKeys) {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }

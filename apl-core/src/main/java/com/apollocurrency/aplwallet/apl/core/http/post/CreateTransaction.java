@@ -24,14 +24,22 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.http.*;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.*;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -40,12 +48,16 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     protected EpochTime timeService = CDI.current().select(EpochTime.class).get();
     private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
@@ -94,209 +106,136 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
     }
 
-    public PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
-        Blockchain blockchain = lookupBlockchain();
 
-        int phasingTimeLockDuration = -1;
-        int phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
-                -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
+    public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
+        CreateTransactionRequest createTransactionRequest = HttpRequestToCreateTransactionRequestConverter
+                .convert(req, senderAccount, recipientId, amountATM, attachment, lookupAccountService());
 
-        if(req.getParameter("phasingFinishTime") != null){
-            phasingTimeLockDuration = ParameterParser.getInt(req, "phasingFinishTime",
-                    -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
+
+        Transaction transaction;
+        JSONObject response = new JSONObject();
+        try {
+            transaction = createTransaction(createTransactionRequest);
+        } catch (AplException.ValidationException e) {
+            return e.getJsonResponce();
         }
 
-        if(phasingFinishHeight != -1 && phasingTimeLockDuration != -1){
-            throw new ParameterException(
-                    JSONResponses.incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
+        JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
+        response.put("transactionJSON", transactionJSON);
+        try {
+            response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
+        } catch (AplException.NotYetEncryptedException ignore) {}
+        if (createTransactionRequest.getKeySeed() != null) {
+            response.put("transaction", transaction.getStringId());
+            response.put("fullHash", transactionJSON.get("fullHash"));
+            response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+            response.put("signatureHash", transactionJSON.get("signatureHash"));
         }
-
-        int phasingFinishTime = -1;
-        if(phasingTimeLockDuration == -1) {
-            phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
-                    blockchain.getHeight() + 1,
-                    blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
-                    true);
+        if (createTransactionRequest.isBroadcast()) {
+            response.put("broadcasted", true);
         } else {
-            phasingFinishTime = timeService.getEpochTime() + phasingTimeLockDuration;
+            response.put("broadcasted", false);
         }
 
-        PhasingParams phasingParams = parsePhasingParams(req, "phasing");
-        
-        byte[][] linkedFullHashes = null;
-        String[] linkedFullHashesValues = req.getParameterValues("phasingLinkedFullHash");
-        if (linkedFullHashesValues != null && linkedFullHashesValues.length > 0) {
-            linkedFullHashes = new byte[linkedFullHashesValues.length][];
-            for (int i = 0; i < linkedFullHashes.length; i++) {
-                linkedFullHashes[i] = Convert.parseHexString(linkedFullHashesValues[i]);
-                if (Convert.emptyToNull(linkedFullHashes[i]) == null || linkedFullHashes[i].length != 32) {
-                    throw new ParameterException(INCORRECT_LINKED_FULL_HASH);
-                }
-            }
-        }
-
-        byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
-        byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
-
-        return new PhasingAppendixV2(phasingFinishHeight, phasingFinishTime, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+        return response;
     }
 
-    public PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
-        byte votingModel = ParameterParser.getByte(req, parameterPrefix + "VotingModel", (byte)-1, (byte)5, true);
-        long quorum = ParameterParser.getLong(req, parameterPrefix + "Quorum", 0, Long.MAX_VALUE, false);
-        long minBalance = ParameterParser.getLong(req, parameterPrefix + "MinBalance", 0, Long.MAX_VALUE, false);
-        byte minBalanceModel = ParameterParser.getByte(req, parameterPrefix + "MinBalanceModel", (byte)0, (byte)3, false);
-        long holdingId = ParameterParser.getUnsignedLong(req, parameterPrefix + "Holding", false);
-        long[] whitelist = null;
-        String[] whitelistValues = req.getParameterValues(parameterPrefix + "Whitelisted");
-        if (whitelistValues != null && whitelistValues.length > 0) {
-            whitelist = new long[whitelistValues.length];
-            for (int i = 0; i < whitelistValues.length; i++) {
-                whitelist[i] = Convert.parseAccountId(whitelistValues[i]);
-                if (whitelist[i] == 0) {
-                    throw new ParameterException(INCORRECT_WHITELIST);
-                }
-            }
-        }
-        return new PhasingParams(votingModel, holdingId, quorum, minBalance, minBalanceModel, whitelist);
-    }
-
-    public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId,
-                                             long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
-        String deadlineValue = req.getParameter("deadline");
-        String referencedTransactionFullHash = Convert.emptyToNull(req.getParameter("referencedTransactionFullHash"));
-        String secretPhrase = ParameterParser.getSecretPhrase(req, false);
-        String publicKeyValue = Convert.emptyToNull(req.getParameter("publicKey"));
-        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
-        boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast")) && (secretPhrase != null || passphrase != null);
+    public Transaction createTransaction(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
-        if (attachment.getTransactionType().canHaveRecipient() && recipientId != 0) {
-            Account recipient = lookupAccountService().getAccount(recipientId);
-            if ("true".equalsIgnoreCase(req.getParameter("encryptedMessageIsPrunable"))) {
-                prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient,
-                        senderAccount.getId(),true);
+
+        if (txRequest.getAttachment().getTransactionType().canHaveRecipient() && txRequest.getRecipientId() != 0) {
+            if (txRequest.isEncryptedMessageIsPrunable()) {
+                prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) txRequest.getAppendix();
             } else {
-                encryptedMessage = (EncryptedMessageAppendix) ParameterParser.getEncryptedMessage(req, recipient, senderAccount.getId(), false);
+                encryptedMessage = (EncryptedMessageAppendix) txRequest.getAppendix();
             }
         }
-        EncryptToSelfMessageAppendix encryptToSelfMessage = ParameterParser.getEncryptToSelfMessage(req, senderAccount.getId());
-        MessageAppendix message = null;
-        PrunablePlainMessageAppendix prunablePlainMessage = null;
-        if ("true".equalsIgnoreCase(req.getParameter("messageIsPrunable"))) {
-            prunablePlainMessage = (PrunablePlainMessageAppendix) ParameterParser.getPlainMessage(req, true);
-        } else {
-            message = (MessageAppendix) ParameterParser.getPlainMessage(req, false);
-        }
+
+        MessageAppendix message = txRequest.isMessageIsPrunable() ? null : (MessageAppendix) txRequest.getMessage();
+        PrunablePlainMessageAppendix prunablePlainMessage = txRequest.isMessageIsPrunable() ? (PrunablePlainMessageAppendix) txRequest.getMessage() : null;
+
         PublicKeyAnnouncementAppendix publicKeyAnnouncement = null;
-        String recipientPublicKey = Convert.emptyToNull(req.getParameter("recipientPublicKey"));
-        if (recipientPublicKey != null) {
-            publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(recipientPublicKey));
+        if (txRequest.getRecipientPublicKey() != null) {
+            publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(txRequest.getRecipientPublicKey()));
         }
 
-        PhasingAppendix phasing = null;
-        boolean phased = "true".equalsIgnoreCase(req.getParameter("phased"));
-        if (phased) {
-            phasing = parsePhasing(req);
-        }
-
-        if (secretPhrase == null && publicKeyValue == null && passphrase == null) {
-            return MISSING_SECRET_PHRASE;
-        } else if (deadlineValue == null) {
-            return MISSING_DEADLINE;
+        if (txRequest.getKeySeed() == null && txRequest.getPublicKeyValue() == null) {
+            throw new AplException.NotValidException(MISSING_SECRET_PHRASE);
+        } else if (txRequest.getDeadlineValue() == null) {
+            throw new AplException.NotValidException(MISSING_DEADLINE);
         }
 
         short deadline;
         try {
-            deadline = Short.parseShort(deadlineValue);
+            deadline = Short.parseShort(txRequest.getDeadlineValue());
             if (deadline < 1) {
-                return INCORRECT_DEADLINE;
+                throw new AplException.NotValidException(INCORRECT_DEADLINE);
             }
         } catch (NumberFormatException e) {
-            return INCORRECT_DEADLINE;
+            throw new AplException.NotValidException(INCORRECT_DEADLINE);
         }
 
-        long feeATM = ParameterParser.getFeeATM(req);
-        int ecBlockHeight = ParameterParser.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false);
-        long ecBlockId = Convert.parseUnsignedLong(req.getParameter("ecBlockId"));
         Blockchain blockchain = lookupBlockchain();
-        if (ecBlockId != 0 && ecBlockId != blockchain.getBlockIdAtHeight(ecBlockHeight)) {
-            return INCORRECT_EC_BLOCK;
+        if (txRequest.getEcBlockId() != 0 && txRequest.getEcBlockId() != blockchain.getBlockIdAtHeight(txRequest.getEcBlockHeight())) {
+            throw new AplException.NotValidException(INCORRECT_EC_BLOCK);
         }
-        if (ecBlockId == 0 && ecBlockHeight > 0) {
-            ecBlockId = blockchain.getBlockIdAtHeight(ecBlockHeight);
+        if (txRequest.getEcBlockId() == 0 && txRequest.getEcBlockHeight() > 0) {
+            txRequest.setEcBlockId(blockchain.getBlockIdAtHeight(txRequest.getEcBlockHeight()));
         }
-
-        JSONObject response = new JSONObject();
 
         // shouldn't try to get publicKey from senderAccount as it may have not been set yet
-        byte[] publicKey = ParameterParser.getPublicKey(req, senderAccount.getId());
         int timestamp = timeService.getEpochTime();
+        Transaction transaction;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(publicKey, amountATM, feeATM,
-                    deadline, attachment, timestamp).referencedTransactionFullHash(referencedTransactionFullHash);
-            if (attachment.getTransactionType().canHaveRecipient()) {
-                builder.recipientId(recipientId);
+            Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
+                    deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+            if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
+                builder.recipientId(txRequest.getRecipientId());
             }
             builder.appendix(encryptedMessage);
             builder.appendix(message);
             builder.appendix(publicKeyAnnouncement);
-            builder.appendix(encryptToSelfMessage);
-            builder.appendix(phasing);
+            builder.appendix(txRequest.getEncryptToSelfMessage());
+            builder.appendix(txRequest.getPhasing());
             builder.appendix(prunablePlainMessage);
             builder.appendix(prunableEncryptedMessage);
-            if (ecBlockId != 0) {
-                builder.ecBlockId(ecBlockId);
-                builder.ecBlockHeight(ecBlockHeight);
+            if (txRequest.getEcBlockId() != 0) {
+                builder.ecBlockId(txRequest.getEcBlockId());
+                builder.ecBlockHeight(txRequest.getEcBlockHeight());
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, senderAccount.getId(), false);
-            Transaction transaction = builder.build(keySeed);
-            if (feeATM <= 0 || (propertiesHolder.correctInvalidFees() && keySeed == null)) {
+            transaction = builder.build(txRequest.getKeySeed());
+            if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
-                feeATM = Math.max(minFee, feeATM);
-                transaction.setFeeATM(feeATM);
-            }
-            try {
-                if (Math.addExact(amountATM, transaction.getFeeATM()) > senderAccount.getUnconfirmedBalanceATM()) {
-                    return NOT_ENOUGH_FUNDS;
-                }
-            } catch (ArithmeticException e) {
-                return NOT_ENOUGH_FUNDS;
+                txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
+                transaction.setFeeATM(txRequest.getFeeATM());
             }
 
-            JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
-            response.put("transactionJSON", transactionJSON);
             try {
-                response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
-            } catch (AplException.NotYetEncryptedException ignore) {}
-            if (keySeed != null) {
-                response.put("transaction", transaction.getStringId());
-                response.put("fullHash", transactionJSON.get("fullHash"));
-                response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
-                response.put("signatureHash", transactionJSON.get("signatureHash"));
+                if (Math.addExact(txRequest.getAmountATM(), transaction.getFeeATM()) > txRequest.getSenderAccount().getUnconfirmedBalanceATM()) {
+                    throw new AplException.NotValidException(NOT_ENOUGH_FUNDS);
+                }
+            } catch (ArithmeticException e) {
+                throw new AplException.NotValidException(NOT_ENOUGH_FUNDS);
             }
-            if (broadcast) {
+
+            if (txRequest.isBroadcast()) {
                 lookupTransactionProcessor().broadcast(transaction);
-                response.put("broadcasted", true);
             } else {
                 validator.validate(transaction);
-                response.put("broadcasted", false);
             }
         } catch (AplException.NotYetEnabledException e) {
-            return FEATURE_NOT_AVAILABLE;
+            throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
         } catch (AplException.InsufficientBalanceException e) {
             throw e;
         } catch (AplException.ValidationException e) {
-            if (broadcast) {
-                response.clear();
-            }
-            response.put("broadcasted", false);
-            JSONData.putException(response, e);
+            throw e;
         }
-        return response;
 
+        return transaction;
     }
+
     @Override
     protected final boolean requirePost() {
         return true;

@@ -24,13 +24,13 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.34.2");
+    public static final Version VERSION = new Version("1.35.5");
 
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
-
+    public static final int DEFAULT_TRIM_FREQUENCY = 1000;
 
     public static final long ONE_APL = 100000000;
 
@@ -138,6 +138,11 @@ public final class Constants {
     public static final Integer MAX_ADDRESS_LENGTH = 110;
 
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+    //DEX
+
+    //24 h
+    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
 
     private Constants() {} // never
 

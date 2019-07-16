@@ -8,13 +8,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -41,7 +42,7 @@ public class ShardObserverIntegrationTest {
     {
         Properties properties = new Properties();
         properties.put("apl.trimDerivedTables", "true");
-        properties.put("apl.noshardcreate", "true");
+        properties.put("apl.noshardcreate", "false");
         holder.init(properties);
     }
 
@@ -55,18 +56,26 @@ public class ShardObserverIntegrationTest {
             .addBeans(MockBean.of(holder, PropertiesHolder.class))
             .build();
     @Inject
-    Event<Integer> trimEvent;
+    Event<TrimData> trimEvent;
     @Inject
     ShardObserver shardObserver;
 
     @Test
-    void testDoShardByEvent() {
+    void testDoShardByAsyncEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
-        trimEvent.fire(100);
+        trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(100, 100));
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
+    }
 
+    @Test
+    void testDoShardBySyncEvent() {
+        Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
+        trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(100, 100));
+
+        Mockito.verify(heightConfig, times(1)).isShardingEnabled();
     }
 
     private AnnotationLiteral literal(BlockEventType blockEvent) {

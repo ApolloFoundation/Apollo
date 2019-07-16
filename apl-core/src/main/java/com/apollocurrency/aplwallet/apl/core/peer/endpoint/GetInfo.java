@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -33,27 +32,30 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import javax.inject.Inject;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Vetoed
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private  ObjectMapper mapper = new ObjectMapper();
- 
+    private final PropertiesHolder propertiesHolder;
+    
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.INVALID_ANNOUNCED_ADDRESS);
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
     }
-
-    public GetInfo() {
+    
+    @Inject
+    public GetInfo(PropertiesHolder propertiesHolder) {
+       this.propertiesHolder=propertiesHolder;
        mapper.registerModule(new JsonOrgModule()); 
     }
 
