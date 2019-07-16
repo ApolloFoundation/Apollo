@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -60,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
+import java.util.logging.Level;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -886,9 +888,18 @@ public final class PeerImpl implements Peer {
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
-    /** process error fron transport passewd level */
+    
+    /** process error from transport level */
     void processError(String message) {
-        LOG.debug("Error from transport level:\n{}\n",message);
+        LOG.debug("Error from transport level of {}:\n{}\n",getHostWithPort(), message);
+        try {
+            BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
+            if(!StringUtils.isBlank(resp.error)){
+                LOG.debug("Parsed error: {}",resp.error);
+            }
+        } catch (IOException ex) {
+           LOG.debug("This is not P2P response",ex);
+        }
     }
     
 }
