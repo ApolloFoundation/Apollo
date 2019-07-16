@@ -107,6 +107,9 @@ public final class PeerServlet extends WebSocketServlet {
     }  
     
     public PeerRequestHandler getHandler(String rtype) {
+        if(rtype==null){
+            return null;
+        }
         lookupComponents();
         PeerRequestHandler res = null;
         switch (rtype) {
