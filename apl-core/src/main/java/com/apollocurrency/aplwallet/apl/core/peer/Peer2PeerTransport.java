@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -18,25 +17,15 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.ref.SoftReference;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
 
 /**
  *
@@ -115,20 +104,21 @@ public class Peer2PeerTransport {
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
-        ResonseWaiter wsrw = requestMap.get(rqId);
-        if (wsrw != null) { //this is response
-            wsrw.setResponse(message);
+        if (rqId == null) {
+            log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
-            if(rqId==null){
-                log.debug("Protocol error, requestId=null from {}, message:\n{}\n",which(),message);
-            }else{
-               if(rqId==0){ //error messages most likely
-                  log.debug("Got message from {} with 0 requestId: {}", which(), message);
-               }else{
-                   //most likely ge've got request from remote and should process it
-                  peerServlet.doPost(this, rqId, message);
-               }
+            if (rqId == 0) { //error messages most likely
+                log.debug("Got message from {} with 0 requestId: {}", which(), message);
+                processError(message);
+            } else {
+                ResonseWaiter wsrw = requestMap.get(rqId);
+                if (wsrw != null) { //this is response
+                    wsrw.setResponse(message);
+                }
+                //most likely ge've got request from remote and should process it
+                peerServlet.doPost(this, rqId, message);
             }
+
         }
     }
 
