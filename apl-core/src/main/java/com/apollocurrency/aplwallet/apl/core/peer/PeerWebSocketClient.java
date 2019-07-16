@@ -24,8 +24,8 @@ public class PeerWebSocketClient extends PeerWebSocket{
     private final WebSocketClient client;
     private boolean connected = false;
     
-    public PeerWebSocketClient(Peer peer,PeerServlet peerServlet) {
-        super(peer,peerServlet); 
+    public PeerWebSocketClient(Peer2PeerTransport peer) {
+        super(peer); 
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
@@ -49,15 +49,15 @@ public class PeerWebSocketClient extends PeerWebSocket{
             websocketOK = session.isOpen();
             connected = websocketOK;
         } catch (InterruptedException ex) {
-            log.trace("Interruped while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
         } catch (ExecutionException ex) {
-            log.trace("Execution failed while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Execution failed while connecting as client to: {} \n Exception: {}",which());
         } catch (TimeoutException ex) {
-            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}",which());
         } catch (IOException ex) {
-            log.trace("I/O error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("I/O error while connecting as client to: {} \n Exception: {}",which());
         } catch (Exception ex) {
-            log.trace("Generic error while connecting as client to: {} \n Exception: {}",getPeer().getHostWithPort());
+            log.trace("Generic error while connecting as client to: {} \n Exception: {}",which());
         }
 
         return websocketOK;

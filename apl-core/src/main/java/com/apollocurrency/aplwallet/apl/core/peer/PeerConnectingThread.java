@@ -96,10 +96,6 @@ class PeerConnectingThread implements Runnable {
                         if (Peers.isMyAddress(pa)) {
                             Peers.peersExecutorService.submit(() -> peer.handshake(Peers.blockchainConfig.getChain().getChainId()));
                         }
-                        if (peer.getLastInboundRequest() != 0 && now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
-                            peer.setLastInboundRequestTime(0);
-                            Peers.notifyListeners(peer, Peers.Event.REMOVE_INBOUND);
-                        }
                     }
                 });
                 if (Peers.hasTooManyKnownPeers() && Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {

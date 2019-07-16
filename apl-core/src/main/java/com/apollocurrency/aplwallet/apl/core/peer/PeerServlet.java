@@ -183,7 +183,7 @@ public final class PeerServlet extends WebSocketServlet {
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
         PeerImpl peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
-        //PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
+        
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
@@ -196,15 +196,12 @@ public final class PeerServlet extends WebSocketServlet {
         resp.setContentType("text/plain; charset=UTF-8");
         try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
             JSON.writeJSONString(jsonResponse, writer);
-            if (peer != null) {
-                peer.updateUploadedVolume(writer.getCount());
-            }
         } catch (RuntimeException e) {
             processException(peer, e);
-            LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);            
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);            
             throw e;
         }catch ( IOException e){
-            LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e); 
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e); 
         }
     }
 
@@ -221,20 +218,20 @@ public final class PeerServlet extends WebSocketServlet {
         }
     }
 
-    void doPost(PeerWebSocket webSocket, Long requestId, String request) {
+    void doPost(Peer2PeerTransport transport, Long requestId, String request) {
         threadPool.execute(() -> {
-            doPostTask(webSocket, requestId, request);
+            doPostTask(transport, requestId, request);
         });
     }
 
     /**
      * Process WebSocket POST request
      *
-     * @param webSocket WebSocket for the connection
+     * @param transport WebSocket for the connection
      * @param requestId Request identifier
      * @param request Request message
      */
-    private synchronized void doPostTask(PeerWebSocket webSocket, Long requestId, String request) {
+    private synchronized void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
 
         lookupComponents();
         JSONStreamAware jsonResponse;
@@ -242,7 +239,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
 
-        PeerImpl peer = (PeerImpl) webSocket.getPeer();
+        PeerImpl peer = (PeerImpl) transport.getPeer();
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
@@ -252,24 +249,29 @@ public final class PeerServlet extends WebSocketServlet {
             }else{
                 jsonResponse = process(peer, new StringReader(request));
             }
+        }
+            
             // Return the response
             try {
                 StringWriter writer = new StringWriter(1000);
                 JSON.writeJSONString(jsonResponse, writer);
                 String response = writer.toString();
-                webSocket.send(response, requestId);
-                peer.updateUploadedVolume(response.length());
+                transport.send(response, requestId);
             } catch (RuntimeException e) {
-                LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);
+                LOG.debug("Exception while responing to {}", transport.which(), e);
                 processException(peer, e);
             } catch (IOException e) {
-                LOG.debug("Exception while responding to {}", peer.getHostWithPort(), e);
-                peer.deactivate("IO exception sending response to: "+webSocket.which());
+                LOG.debug("Exception while responding to {}",transport.which(), e);
+                if(peer!=null){
+                    peer.deactivate("IO exception sending response to: "+transport.which());
+                }
             }
             if(jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL){
-                peer.deactivate("Unsupported protocol");
+                if(peer!=null){
+                  String msg="Unsupported protocol";  
+                  peer.blacklist(msg);
+                }
             }
-        }
     }
 
     /**
@@ -295,7 +297,6 @@ public final class PeerServlet extends WebSocketServlet {
         //
         try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
-            peer.updateDownloadedVolume(cr.getCount());
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
                 LOG.debug("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"), peer.getHostWithPort(),request.toJSONString());
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
@@ -320,7 +321,6 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
-            peer.setLastInboundRequestTime(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
                     return PeerResponses.DOWNLOADING;
@@ -357,10 +357,9 @@ public final class PeerServlet extends WebSocketServlet {
                 String host = req.getRemoteAddress();
 //                int port=req.getRemotePort();
 //we ignore remote port to be able to connect back in case of inbound socket close
-                Peer peer = Peers.findOrCreatePeer(host);
+                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(host);
                 if (peer != null) {
-                    PeerWebSocket pws = new PeerWebSocket(peer, PeerServlet.this);
-                    ((PeerImpl) peer).setInboundWebSocket(pws);
+                    PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     res = pws;
                 }
             }

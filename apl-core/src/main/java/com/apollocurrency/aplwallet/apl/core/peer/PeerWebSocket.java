@@ -29,8 +29,8 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 public class PeerWebSocket extends WebSocketAdapter {
     
     /** we use reference here to avoid memory leaks */
-    private final SoftReference<Peer> peerReference;
-    private Random rnd;
+    private final SoftReference<Peer2PeerTransport> peerReference;
+
     /**
      * Our WebSocket message version
      */
@@ -43,46 +43,20 @@ public class PeerWebSocket extends WebSocketAdapter {
      * Compressed message flag
      */
     private static final int FLAG_COMPRESSED = 1;
-    /**
-     * map requests to responses
-     */
-    private final ConcurrentHashMap<Long, WebSocketResonseWaiter> requestMap = new ConcurrentHashMap<>();
-    private PeerServlet peerServlet;
 
-    public PeerWebSocket(Peer peer, PeerServlet peerServlet) {
+    public PeerWebSocket(Peer2PeerTransport peer) {
         peerReference = new SoftReference<>(peer);
-        rnd = new Random(System.currentTimeMillis());        
-        if (peerServlet != null) {
-            this.peerServlet = peerServlet;
-        }
     }
     
     String which(){
-        String which;
-        if(peerServlet!=null){
-            which = "Inbound";
-        }else{
-            which = "Outbound";
-        }
-        Peer p = peerReference.get();
+        String which="";
+        Peer2PeerTransport p = peerReference.get();
         if(p!=null){
             which+=" at "+p.getHostWithPort();
         }
         return which;
     }
     
-    public Peer getPeer(){
-        return peerReference.get();
-    }
-    //we use random numbers to minimize possible request/response mismatches
-    private Long nextRequestId() {
-        Long res = rnd.nextLong();
-        if(res==0L){ // make sure we do not use 0 value
-            res++;
-        }
-        return res;
-    }
-
     @Override
     public void onWebSocketText(String message) {
         super.onWebSocketText(message);
@@ -105,9 +79,9 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
         log.debug("Peer: {} WebSocket close: {}",which(),statusCode);
-        Peer p = peerReference.get();
+        Peer2PeerTransport p = peerReference.get();
         if(p!=null){
-            p.deactivate("WebSocket close");
+            p.onWebSocketClose(this);
         }
     }
 
@@ -137,44 +111,16 @@ public class PeerWebSocket extends WebSocketAdapter {
                 }
             }
             String message = new String(msgBytes, "UTF-8");
-            WebSocketResonseWaiter wsrw = requestMap.get(rqId);
-            if (wsrw != null) { //this is response
-                wsrw.setResponse(message);
-            } else { //most likely ge've got request from remote and should process it
-                peerServlet.doPost(this, rqId, message);
-            }
+            Peer2PeerTransport p = peerReference.get();
+            if(p!=null){
+                p.onIncomingMessage(message,this,rqId);
+            }    
+
         } catch (IOException ex) {
             log.debug("Peer: {} IO Exception on message receiving: {}", which(), ex);
         }
     }
 
-    public String sendAndWaitResponse(String request) {
-        String res = null;
-        Long rqId;
-        boolean sendOK = true;
-        try {
-            rqId = sendRequest(request);
-        } catch (IOException ex) {
-            log.debug("Exception while sending to websocket of {}", which(),ex);
-            sendOK = false;
-            rqId=0L;
-        }
-        if (sendOK) {
-            try {
-                res = getResponse(rqId);
-            } catch (IOException ex) {
-                log.debug("Waiting response(id:{}) error: from remote {}",rqId, which(), ex);
-                requestMap.remove(rqId);
-            }
-        }
-        return res;
-    }
-    
-    public Long sendRequest(String message) throws IOException{
-            Long requestId = nextRequestId();
-            requestMap.put(requestId, new WebSocketResonseWaiter()); 
-            return send(message,requestId);
-    }
     /**
      * Sends websocket message
      * Must be synchronized because it is used from multiple threads
@@ -184,11 +130,10 @@ public class PeerWebSocket extends WebSocketAdapter {
      * @return requestId
      * @throws IOException
      */
-    public  synchronized Long send(String message, Long requestId) throws IOException {
-        cleanUp();
+    public  synchronized boolean send(String message, Long requestId) throws IOException {
         if(StringUtils.isBlank(message.trim())){
             log.warn("Empty request from us to {}",which());
-            return requestId;
+            return false;
         }        
         byte[] requestBytes = message.getBytes("UTF-8");
         int requestLength = requestBytes.length;
@@ -217,32 +162,14 @@ public class PeerWebSocket extends WebSocketAdapter {
         }else{
           throw new IOException("Websocket session is null for "+which())  ;
         }
-        return requestId;
+        return true;
     }
 
-    public String getResponse(Long rqId) throws IOException {
-        String res = null;
-        WebSocketResonseWaiter wsrw = requestMap.get(rqId);
-        if (wsrw != null) {
-             res = wsrw.get(Peers.readTimeout);
-             requestMap.remove(rqId);
-        }
-        return res;
-    }
-
-    private synchronized void cleanUp() {
-        List<Long> toDelete = new ArrayList<>();
-        requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
-            toDelete.add(wsw);
-        });
-        toDelete.forEach((key) -> {
-            requestMap.remove(key);
-        });
-    }
     public void close(){
         Session s = getSession();
         if(s!=null){
             s.close();
         }
     }
+
 }

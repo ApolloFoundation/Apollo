@@ -3,12 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -17,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author al
  */
 @Slf4j
-public class WebSocketResonseWaiter {
+public class ResonseWaiter {
     /** time to live of entry. Entry should de deleted if it is older */
     public static long WSW_TTL_MS=60000; //1 minute
       /** Request latch */

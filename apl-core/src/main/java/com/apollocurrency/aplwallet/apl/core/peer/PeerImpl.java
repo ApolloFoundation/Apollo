@@ -22,23 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.StringWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -49,7 +40,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.GZIPInputStream;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -63,8 +53,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -83,11 +71,6 @@ public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
     
     private final String host;
-    @Getter
-    private PeerWebSocketClient clientWebSocket;
-    @Getter
-    private volatile PeerWebSocket inboundSocket;
-    private volatile boolean useWebSocket;
     private volatile int port;
     private volatile Hallmark hallmark;
     private volatile EnumSet<APIEnum> disabledAPIs;
@@ -97,8 +80,7 @@ public final class PeerImpl implements Peer {
     private volatile int blacklistingTime;
     private volatile String blacklistingCause;
     private volatile PeerState state;
-    private volatile long downloadedVolume;
-    private volatile long uploadedVolume;
+
     private volatile int lastUpdated;
     private volatile int lastConnectAttempt;
     private volatile int lastInboundRequest;
@@ -106,7 +88,7 @@ public final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private final Object servicesMonitor = new Object();
-    private final Object volumeMonitor = new Object();
+
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
     
@@ -116,10 +98,12 @@ public final class PeerImpl implements Peer {
     private volatile EpochTime timeService;
     private final PropertiesHolder propertiesHolder;
     
-    private PeerInfo pi = new PeerInfo();
+    private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
     private final  ObjectMapper mapper = new ObjectMapper();
-    private PeerServlet peerServlet;
+    
+    @Getter
+    private final Peer2PeerTransport p2pTransport;
     
     PeerImpl(String host, 
             String announcedAddress,
@@ -146,16 +130,14 @@ public final class PeerImpl implements Peer {
         pi.setAnnouncedAddress(pa.getAddrWithPort());
         this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
-        this.clientWebSocket = null;
-        this.useWebSocket = Peers.useWebSockets && !Peers.useProxy;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
         this.blockchainState = BlockchainState.UP_TO_DATE;
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
         this.timeService=timeService;
-        this.peerServlet = peerServlet;
         isLightClient=propertiesHolder.isLightClient();
+        this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
     }
     
     @Override
@@ -182,16 +164,7 @@ public final class PeerImpl implements Peer {
         //well, if we are connected and some routine say to disconnect
         //we should close all
         if (newState == PeerState.DISCONNECTED && state == PeerState.CONNECTED) {
-            LOG.trace("Closing websockets on state {} for {}",newState.toString(),getHostWithPort());
-            if(clientWebSocket!=null){
-                clientWebSocket.close();
-                clientWebSocket=null;
-            }
-            if (inboundSocket != null) {
-                LOG.trace("inboundSocket will be closed too for {}",getHostWithPort());
-                inboundSocket.close();
-                inboundSocket=null;
-            }
+            p2pTransport.disconnect();
         }
         if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
@@ -204,26 +177,13 @@ public final class PeerImpl implements Peer {
 
     @Override
     public long getDownloadedVolume() {
-        return downloadedVolume;
+        return p2pTransport.getDownloadedVolume();
     }
 
-    void updateDownloadedVolume(long volume) {
-        synchronized (volumeMonitor) {
-            downloadedVolume += volume;
-        }
-        Peers.notifyListeners(this, Peers.Event.DOWNLOADED_VOLUME);
-    }
 
     @Override
     public long getUploadedVolume() {
-        return uploadedVolume;
-    }
-
-    void updateUploadedVolume(long volume) {
-        synchronized (volumeMonitor) {
-            uploadedVolume += volume;
-        }
-        Peers.notifyListeners(this, Peers.Event.UPLOADED_VOLUME);
+        return p2pTransport.getUploadedVolume();
     }
 
     @Override
@@ -427,7 +387,7 @@ public final class PeerImpl implements Peer {
     public void blacklist(String cause) {
         blacklistingTime = timeService.getEpochTime();
         blacklistingCause = cause;
-        setState(PeerState.NON_CONNECTED);
+        deactivate(cause);
         lastInboundRequest = 0;
         Peers.notifyListeners(this, Peers.Event.BLACKLIST);
     }
@@ -482,29 +442,12 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInbound() {
-        return inboundSocket!=null;
-    }
-
-    public int getLastInboundRequest() {
-        return lastInboundRequest;
-    }
-
-    void setLastInboundRequestTime(int now) {
-        lastInboundRequest = now;
-    }
-
-    void setInboundWebSocket(PeerWebSocket inboundSocket) {
-        this.inboundSocket = inboundSocket;
+        return p2pTransport.isInbound();
     }
 
     @Override
-    public boolean isInboundWebSocket() {
-        return inboundSocket!=null && inboundSocket.isConnected();
-    }
-
-    @Override
-    public boolean isOutboundWebSocket() {
-        return clientWebSocket != null && clientWebSocket.isConnected();
+    public boolean isOutbound() {
+        return p2pTransport.isOutbound();
     }
 
     @Override
@@ -530,122 +473,26 @@ public final class PeerImpl implements Peer {
             return send(request);
         }
     }
-
-    //we throw here because it is last resort method and we should decide deactivate peer or not
-    private JSONObject sendHttp(final JSONStreamAware request) throws MalformedURLException, IOException, ParseException{
-         JSONObject response = null;
-                HttpURLConnection connection = null;
-
-                String urlString = "http://" + getHostWithPort() + "/apl";
-                URL url = new URL(urlString);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
-                connection.setConnectTimeout(Peers.connectTimeout);
-                connection.setReadTimeout(Peers.readTimeout);
-                connection.setRequestProperty("Accept-Encoding", "gzip");
-                connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
-                try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"))) {
-                    CountingOutputWriter cow = new CountingOutputWriter(writer);
-                    request.writeJSONString(cow);
-                    updateUploadedVolume(cow.getCount());
-                }
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                            InputStream responseStream = connection.getInputStream();
-                            if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
-                                responseStream = new GZIPInputStream(responseStream);
-                            try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
-                                CountingInputReader cir = new CountingInputReader(reader, Peers.MAX_RESPONSE_SIZE);
-                                response = (JSONObject)JSONValue.parseWithException(cir);
-                                updateDownloadedVolume(cir.getCount());
-                            }
-                } else {
-                    LOG.debug("Peer " + host + " responded with HTTP " + connection.getResponseCode());
-                    connection.disconnect();
-                }
-         
-         return response;
-    }
-
-    private JSONObject sendToWebSocket(final JSONStreamAware request, PeerWebSocket ws){
-        JSONObject response = null;
-        try {
-            if(ws==null){
-                LOG.debug("null websocket");
-                return response;
-            }
-            StringWriter wsWriter = new StringWriter(Peers.MAX_REQUEST_SIZE);
-            try {
-                request.writeJSONString(wsWriter);
-            } catch (IOException ex) {
-                LOG.debug("Can not deserialize request");
-                return response;
-            }
-            String wsRequest = wsWriter.toString();
-
-            String wsResponse = ws.sendAndWaitResponse(wsRequest);
-            LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
-            if (wsResponse != null) {
-                updateUploadedVolume(wsRequest.length());
-                response = (JSONObject) JSONValue.parseWithException(wsResponse);
-                updateDownloadedVolume(wsResponse.length());
-            }
-        } catch (ParseException ex) {
-            LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
-        }
-        return response;
-    }
-
+    
     private JSONObject send(final JSONStreamAware request) {
 
-        JSONObject response = null;
+        JSONObject response =null;
+        StringWriter wsWriter = new StringWriter(Peers.MAX_REQUEST_SIZE);
         try {
-            boolean inoundWebSocketOK = false;
-            boolean clientWebSocketOK = false;
-            if(useWebSocket){
-                if(isInboundWebSocket()){
-                    response = sendToWebSocket(request, inboundSocket);
-                    inoundWebSocketOK = response !=null;
-                    if(!inoundWebSocketOK){
-                       LOG.trace("Peer: {} Using inbound web socket. failed. Closing",getHostWithPort()); 
-                       inboundSocket.close();
-                       inboundSocket=null;
-                    }else{
-                       LOG.trace("Peer: {} Using inbound web socket. Success",getHostWithPort());                     
-                    }
-                }
-                if (!inoundWebSocketOK){ //no inbound connection or send failed
-                    if(clientWebSocket==null){
-                        clientWebSocket=new PeerWebSocketClient(this,peerServlet);
-                    }
-                    if (!clientWebSocket.isConnected()) {
-                         // Create a new WebSocket session if we don't have one
-                        // and do not have inbound
-                        String addrWithPort = getAnnouncedAddress();
-                        if (StringUtils.isBlank(addrWithPort)) { // try to use addres with port, should be OK for default peers
-                            addrWithPort = getHostWithPort();
-                        }
-                        String wsConnectString = "ws://" + addrWithPort + "/apl";
-                        URI wsUri = URI.create(wsConnectString);
-                        LOG.trace("Connecting to websocket'{}'...", wsConnectString);
-                        clientWebSocketOK = clientWebSocket.startClient(wsUri);
-                        if (clientWebSocketOK) {
-                            LOG.trace("Connected as client to websocket {}", wsConnectString);
-                        }
-                    } else { //client socket is already open
-                        clientWebSocketOK = true;
-                    }
-                    if (clientWebSocketOK) { //send using client socket
-                        response = sendToWebSocket(request, clientWebSocket);
-                        clientWebSocketOK = response != null;
-                        LOG.trace("Peer: {} Using outbound web socket. Success: {}", getHostWithPort(), clientWebSocketOK);
-                    }
-                }
+            request.writeJSONString(wsWriter);
+        } catch (IOException ex) {
+            LOG.debug("Can not deserialize request");
+            return response;
+        }
+
+        try {
+            String rq = wsWriter.toString();
+            String resp = p2pTransport.sendAndWaitResponse(rq);
+            if(resp==null){
+                LOG.debug("Null response from: ",getHostWithPort());
+                return response;
             }
-            if (!(clientWebSocketOK|inoundWebSocketOK)) { // Send the request using HTTP as fallback
-                response = sendHttp(request);
-                LOG.trace("Peer: {} Using HTTP. Success: {}",getHostWithPort(),response!=null);
-            }
+            response = (JSONObject) JSONValue.parseWithException(resp);
             //
             // Check for an error response
             //
@@ -659,16 +506,7 @@ public final class PeerImpl implements Peer {
                             response.toJSONString() + ", request was: " + JSON.toString(request));
                 }
             }
-        } catch (AplException.AplIOException e) {
-            blacklist(e);
-        } catch (RuntimeException|ParseException|IOException e) {
-            if (!(e instanceof UnknownHostException
-                    || e instanceof SocketTimeoutException
-                    || e instanceof SocketException
-                    || Errors.END_OF_FILE.equals(e.getMessage()))) {
-
-                LOG.debug("Error sending request to peer {}: {}", host, e);
-            }
+        } catch (RuntimeException|ParseException e) {
             LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
             deactivate("Exception while sending request: "+e.getMessage());
         }
@@ -850,28 +688,28 @@ public final class PeerImpl implements Peer {
 
         try {
 
-            Hallmark hallmark = Hallmark.parseHallmark(hallmarkString);
-            if (!hallmark.isValid()) {
+            Hallmark hallmarkNew = Hallmark.parseHallmark(hallmarkString);
+            if (!hallmarkNew.isValid()) {
                 LOG.debug("Invalid hallmark " + hallmarkString + " for " + host);
                 unsetHallmark();
                 return false;
             }
-            if (!hallmark.getHost().equals(host)) {
+            if (!hallmarkNew.getHost().equals(host)) {
                 InetAddress hostAddress = InetAddress.getByName(host);
                 boolean validHost = false;
-                for (InetAddress nextHallmark : InetAddress.getAllByName(hallmark.getHost())) {
+                for (InetAddress nextHallmark : InetAddress.getAllByName(hallmarkNew.getHost())) {
                     if (hostAddress.equals(nextHallmark)) {
                         validHost = true;
                         break;
                     }
                 }
                 if (!validHost) {
-                    LOG.debug("Hallmark host " + hallmark.getHost() + " doesn't match " + host);
+                    LOG.debug("Hallmark host " + hallmarkNew.getHost() + " doesn't match " + host);
                     unsetHallmark();
                     return false;
                 }
             }
-            setHallmark(hallmark);
+            setHallmark(hallmarkNew);
             long accountId = Account.getId(hallmark.getPublicKey());
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;

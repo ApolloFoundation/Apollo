@@ -177,16 +177,6 @@ public class EntityProducer {
             }
 
             @Override
-            public boolean isInboundWebSocket() {
-                return false;
-            }
-
-            @Override
-            public boolean isOutboundWebSocket() {
-                return false;
-            }
-
-            @Override
             public boolean isOpenAPI() {
                 return true;
             }
@@ -234,6 +224,11 @@ public class EntityProducer {
             @Override
             public PeerTrustLevel getTrustLevel() {
                 return PeerTrustLevel.NOT_TRUSTED;
+            }
+
+            @Override
+            public boolean isOutbound() {
+                return false;
             }
 
         };

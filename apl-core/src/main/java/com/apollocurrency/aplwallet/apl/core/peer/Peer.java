@@ -110,9 +110,7 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isInbound();
 
-    boolean isInboundWebSocket();
-
-    boolean isOutboundWebSocket();
+    boolean isOutbound();
 
     boolean isOpenAPI();
 
