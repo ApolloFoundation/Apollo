@@ -244,34 +244,38 @@ public final class PeerServlet extends WebSocketServlet {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             if (requestId == null || requestId == 0) {
-                LOG.error("null requestId from {}", peer.getHostWithPort());
+                LOG.debug("null requestId from {}\nRequest:{}", peer.getHostWithPort(),request); 
                 jsonResponse = PeerResponses.UNSUPPORTED_PROTOCOL;
-            }else{
-                jsonResponse = process(peer, new StringReader(request));
+            } else {
+                if (peer.isBlacklisted()) { 
+                    jsonResponse = PeerResponses.BLACKLISTED;
+                }else{
+                    jsonResponse = process(peer, new StringReader(request));
+                }
             }
         }
-            
-            // Return the response
-            try {
-                StringWriter writer = new StringWriter(1000);
-                JSON.writeJSONString(jsonResponse, writer);
-                String response = writer.toString();
-                transport.send(response, requestId);
-            } catch (RuntimeException e) {
-                LOG.debug("Exception while responing to {}", transport.which(), e);
-                processException(peer, e);
-            } catch (IOException e) {
-                LOG.debug("Exception while responding to {}",transport.which(), e);
-                if(peer!=null){
-                    peer.deactivate("IO exception sending response to: "+transport.which());
-                }
+
+        // Return the response
+        try {
+            StringWriter writer = new StringWriter(1000);
+            JSON.writeJSONString(jsonResponse, writer);
+            String response = writer.toString();
+            transport.send(response, requestId);
+        } catch (RuntimeException e) {
+            LOG.debug("Exception while responing to {}", transport.which(), e);
+            processException(peer, e);
+        } catch (IOException e) {
+            LOG.debug("Exception while responding to {}", transport.which(), e);
+            if (peer != null) {
+                peer.deactivate("IO exception sending response to: " + transport.which());
             }
-            if(jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL){
-                if(peer!=null){
-                  String msg="Unsupported protocol";  
-                  peer.blacklist(msg);
-                }
+        }
+        if (jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL) {
+            if (peer != null) {
+                String msg = "Unsupported protocol";
+                peer.blacklist(msg);
             }
+        }
     }
 
     /**

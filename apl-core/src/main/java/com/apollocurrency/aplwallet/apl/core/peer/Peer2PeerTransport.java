@@ -175,7 +175,13 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-
+        if(ws==inboundWebSocket){
+            inboundWebSocket = null;
+        }else if(ws==outboundWebSocket){
+            outboundWebSocket=null;
+        }else{
+            log.warn("Unknown websocket closed");
+        }
     }
 
     private synchronized void cleanUp() {

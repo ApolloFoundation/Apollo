@@ -67,7 +67,13 @@ public class PeerResponses {
         response.put("error", Errors.DOWNLOADING);
         DOWNLOADING = JSON.prepare(response);
     }
-
+    
+    public static final JSONStreamAware BLACKLISTED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("error", Errors.BLACKLISTED);
+         BLACKLISTED = JSON.prepare(response);
+    }
     public static final JSONStreamAware LIGHT_CLIENT;
     static {
         JSONObject response = new JSONObject();
