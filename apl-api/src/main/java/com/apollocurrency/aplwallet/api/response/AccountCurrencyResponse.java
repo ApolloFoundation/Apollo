@@ -5,7 +5,7 @@
  */
 package com.apollocurrency.aplwallet.api.response;
 
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,12 +14,14 @@ import lombok.Setter;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
-public class AccountAssetsResponse extends ResponseBase{
-    private List<AccountAssetDTO> accountAssets;
+public class AccountCurrencyResponse extends ResponseBase {
 
-    public AccountAssetsResponse(List<AccountAssetDTO> accountAssets) {
-        this.accountAssets = accountAssets;
+    private List<AccountCurrencyDTO> accountCurrencies;
+
+    public AccountCurrencyResponse(List<AccountCurrencyDTO> accountCurrencies) {
+        this.accountCurrencies = accountCurrencies;
     }
 }

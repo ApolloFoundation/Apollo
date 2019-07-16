@@ -21,7 +21,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.Setter;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -42,13 +41,15 @@ import java.util.stream.Collectors;
 @Path("/networking")
 public class NetworkController {
 
-    @Inject @Setter
     private Converter<Peer, PeerDTO> peerConverter;
 
-    @Inject @Setter
     private NetworkService service;
 
-
+    @Inject
+    public NetworkController(Converter<Peer, PeerDTO> peerConverter, NetworkService service) {
+        this.peerConverter = peerConverter;
+        this.service = service;
+    }
 
     @Path("/peer/mypeerinfo")
     @GET

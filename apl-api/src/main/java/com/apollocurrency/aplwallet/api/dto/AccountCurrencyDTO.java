@@ -20,15 +20,13 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AccountCurrencyDTO {
+public class AccountCurrencyDTO extends BaseDTO {
     private String account;
     private String accountRS;
 
     private String currency;
-    @JsonSerialize(using = ToStringSerializer.class)
-    private Long units;
-    @JsonSerialize(using = ToStringSerializer.class)
-    private Long unconfirmedUnits;
+    private String units;
+    private String unconfirmedUnits;
 
     private String name;
     private String code;

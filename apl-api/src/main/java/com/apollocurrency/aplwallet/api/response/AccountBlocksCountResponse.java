@@ -1,3 +1,8 @@
+/*
+ *
+ *  Copyright © 2018-2019 Apollo Foundation
+ *
+ */
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;

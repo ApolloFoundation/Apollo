@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
@@ -45,18 +46,20 @@ class AccountControllerTest extends AbstractEndpointTest{
     public static final int CODE_2FA = 123456;
 
     public static final long ASSET_ID = 8180990979457659735L;
-
+    public static final long CURRENCY_ID = 784842454721729391L;
 
     public Account account;
     public AccountDTO accountDTO;
     public AccountAsset accountAsset;
+    public AccountCurrency accountCurrency;
 
-    private AccountController endpoint = new AccountController();
+    private AccountController endpoint;
 
     private AccountConverter accountConverter = mock(AccountConverter.class);
     private AccountService accountService = mock(AccountService.class);
     private AccountAssetService accountAssetService = mock(AccountAssetService.class);
     private AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
+    private AccountCurrencyConverter accountCurrencyConverter = mock(AccountCurrencyConverter.class);
     private AccountAssetConverter accountAssetConverter = mock(AccountAssetConverter.class);
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
     private AccountBlockConverter accountBlockConverter = new AccountBlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
@@ -71,18 +74,22 @@ class AccountControllerTest extends AbstractEndpointTest{
     void setUp() {
         super.setUp();
 
+        endpoint = new AccountController(
+                blockchain,
+                account2FAHelper,
+                accountService,
+                accountAssetService,
+                accountCurrencyService,
+                accountAssetConverter,
+                accountCurrencyConverter,
+                accountConverter,
+                accountBlockConverter,
+                new WalletKeysConverter(),
+                new Account2FADetailsConverter(),
+                new Account2FAConverter()
+                );
+
         dispatcher.getRegistry().addSingletonResource(endpoint);
-        endpoint.setBlockchain(blockchain);
-        endpoint.setConverter(accountConverter);
-        endpoint.setWalletKeysConverter(new WalletKeysConverter());
-        endpoint.setFaConverter(new Account2FAConverter());
-        endpoint.setFaDetailsConverter(new Account2FADetailsConverter());
-        endpoint.setAccountBlockConverter(accountBlockConverter);
-        endpoint.setAccountService(accountService);
-        endpoint.setAccountAssetService(accountAssetService);
-        endpoint.setAccountCurrencyService(accountCurrencyService);
-        endpoint.setAccountAssetConverter(accountAssetConverter);
-        endpoint.setAccount2FAHelper(account2FAHelper);
 
         account = new Account(ACCOUNT_ID, 0);
         account.setPublicKey(new PublicKey(ACCOUNT_ID, Convert.parseHexString(PUBLIC_KEY_HEX), 0));
@@ -100,10 +107,15 @@ class AccountControllerTest extends AbstractEndpointTest{
                 1000, 1100,
                 CURRENT_HEIGHT);
 
+        accountCurrency = new AccountCurrency(
+                ACCOUNT_ID,
+                CURRENCY_ID,
+                1000, 1100,
+                CURRENT_HEIGHT);
+
         doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
 
         setupBlocks();
-
     }
 
     private void setupBlocks(){
@@ -467,6 +479,98 @@ class AccountControllerTest extends AbstractEndpointTest{
         Map result = mapper.readValue(content, Map.class);
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
         assertEquals(Long.toUnsignedString(ASSET_ID), result.get("asset"));
+    }
+
+    @Test
+    void getAccountCurrencyCount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencyCount");
+
+        checkMandatoryParameterMissingErrorCode(response, 2003);
+    }
+
+    @Test
+    void getAccountCurrencyCount_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencyCount?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
+
+        checkMandatoryParameterMissingErrorCode(response, 2004);
+    }
+
+    @Test
+    void getAccountCurrencyCount() throws URISyntaxException, IOException {
+        int count = 58;
+
+        doReturn(count).when(accountCurrencyService).getAccountCurrencyCount(ACCOUNT_ID, CURRENT_HEIGHT);
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencyCount?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+
+        String content = response.getContentAsString();
+        print(content);
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+
+        assertEquals(count, result.get("numberOfCurrencies"));
+    }
+
+    @Test
+    void getAccountCurrencies_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencies");
+
+        checkMandatoryParameterMissingErrorCode(response, 2003);
+    }
+
+    @Test
+    void getAccountCurrencies_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencies?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
+
+        checkMandatoryParameterMissingErrorCode(response, 2004);
+    }
+
+    @Test
+    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_InternalError_1000() throws URISyntaxException, IOException {
+        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencies?account="+ACCOUNT_ID+"&currency=AS123&height="+(CURRENT_HEIGHT+10));
+
+        checkMandatoryParameterMissingErrorCode(response, 1000);
+    }
+
+    @Test
+    void getAccountCurrencies_getList() throws URISyntaxException, IOException {
+        endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
+        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrencies(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+
+        MockHttpResponse response = sendGetRequest("/accounts/account/currencies?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+
+        String content = response.getContentAsString();
+        print(content);
+
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+
+        JsonNode root = mapper.readTree(content);
+        assertTrue(root.get("accountCurrencies").isArray());
+        assertEquals(Long.toUnsignedString(CURRENCY_ID), root.withArray("accountCurrencies").get(0).get("currency").asText());
+    }
+
+    @Test
+    void getAccountCurrencies_getOne_byCurrencyId() throws URISyntaxException, IOException {
+        endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
+        doReturn(accountCurrency).when(accountCurrencyService).getAccountCurrency(ACCOUNT_ID, CURRENCY_ID, CURRENT_HEIGHT);
+
+        MockHttpResponse response = sendGetRequest(
+                "/accounts/account/currencies?account="+ACCOUNT_ID+"&currency="+CURRENCY_ID+"&height="+CURRENT_HEIGHT);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+
+        String content = response.getContentAsString();
+        print(content);
+
+        Map result = mapper.readValue(content, Map.class);
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+        assertEquals(Long.toUnsignedString(CURRENCY_ID), result.get("currency"));
     }
 
     @Test

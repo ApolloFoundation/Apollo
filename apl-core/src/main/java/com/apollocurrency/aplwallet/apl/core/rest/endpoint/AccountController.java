@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
@@ -54,38 +55,52 @@ public class AccountController {
     private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
                                                                              RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
 
-    @Inject @Setter
     private Blockchain blockchain;
 
-    @Inject @Setter
     private Account2FAHelper account2FAHelper;
 
-    @Inject @Setter
     private AccountService accountService;
 
-    @Inject @Setter
     private AccountAssetService accountAssetService;
 
-    @Inject @Setter
     private AccountCurrencyService accountCurrencyService;
 
-    @Inject @Setter
+    @Setter
     private AccountAssetConverter accountAssetConverter;
 
-    @Inject @Setter
+    @Setter
+    private AccountCurrencyConverter accountCurrencyConverter;
+
+    @Setter
     private AccountConverter converter;
 
-    @Inject @Setter
+    @Setter
     private AccountBlockConverter accountBlockConverter;
 
-    @Inject @Setter
+    @Setter
     private WalletKeysConverter walletKeysConverter;
 
-    @Inject @Setter
+    @Setter
     private Account2FADetailsConverter faDetailsConverter;
 
-    @Inject @Setter
+    @Setter
     private Account2FAConverter faConverter;
+
+    @Inject
+    public AccountController(Blockchain blockchain, Account2FAHelper account2FAHelper, AccountService accountService, AccountAssetService accountAssetService, AccountCurrencyService accountCurrencyService, AccountAssetConverter accountAssetConverter, AccountCurrencyConverter accountCurrencyConverter, AccountConverter converter, AccountBlockConverter accountBlockConverter, WalletKeysConverter walletKeysConverter, Account2FADetailsConverter faDetailsConverter, Account2FAConverter faConverter) {
+        this.blockchain = blockchain;
+        this.account2FAHelper = account2FAHelper;
+        this.accountService = accountService;
+        this.accountAssetService = accountAssetService;
+        this.accountCurrencyService = accountCurrencyService;
+        this.accountAssetConverter = accountAssetConverter;
+        this.accountCurrencyConverter = accountCurrencyConverter;
+        this.converter = converter;
+        this.accountBlockConverter = accountBlockConverter;
+        this.walletKeysConverter = walletKeysConverter;
+        this.faDetailsConverter = faDetailsConverter;
+        this.faConverter = faConverter;
+    }
 
     @Path("/account")
     @GET
@@ -271,8 +286,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the blocks count.",
-            description = "Returns the number of blocks by account id.",
+            summary = "Returns the blocks ID list.",
+            description = "Returns the list of blocks ID by account id.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -311,8 +326,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the blocks count.",
-            description = "Returns the number of blocks by account id.",
+            summary = "Returns the blocks list.",
+            description = "Returns the list of blocks by account id.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -341,6 +356,77 @@ public class AccountController {
         dto.setBlocks(accountBlockConverter.convert(blocks));
 
         return response.bind(dto).build();
+    }
+
+    @Path("/account/currencyCount")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the currencies count.",
+            description = "Returns the number of currencies by account id and height.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountCurrencyCountResponse.class)))
+            })
+    @PermitAll
+    public Response getAccountCurrencyCount(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The blockchain height." ) @QueryParam("height") String heightStr
+            ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        Integer count = accountCurrencyService.getAccountCurrencyCount(accountId, height);
+
+        return response.bind(new AccountCurrencyCountResponse(count)).build();
+    }
+
+    @Path("/account/currencies")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the currency list.",
+            description = "Returns the list of currencies by account id and height.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountCurrencyResponse.class)))
+            })
+    @RolesAllowed("admin")
+    public Response getAccountCurrencies(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The currency ID." ) @QueryParam("currency") Long currencyId,
+            @Parameter(description = "The blockchain height." ) @QueryParam("height") String heightStr,
+            @Parameter(description = "Include currency info" ) @QueryParam("includeCurrencyInfo") @DefaultValue("false") Boolean includeCurrencyInfo
+    ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        if (currencyId == null || currencyId == 0) {
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(accountId, height, 0, -1);
+            List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
+            if(includeCurrencyInfo){
+                accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
+                        .addCurrency(dto,
+                                Currency.getCurrency(
+                                        Long.parseLong(dto.getCurrency()))));
+            }
+
+            return response.bind(new AccountCurrencyResponse(accountCurrencyDTOList)).build();
+        }else{
+            AccountCurrency accountCurrency = accountCurrencyService.getAccountCurrency(accountId, currencyId, height);
+            AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
+            if(includeCurrencyInfo){
+                accountCurrencyConverter.addCurrency(dto,Currency.getCurrency(currencyId));
+            }
+
+            return response.bind(dto).build();
+        }
     }
 
     @Path("/exportKey")

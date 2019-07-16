@@ -118,6 +118,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
             .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))
             .addBeans(MockBean.of(mock(AccountBlockConverter.class),AccountBlockConverter.class))
             .addBeans(MockBean.of(mock(TrimService.class),TrimService.class))
+            .addBeans(MockBean.of(mock(AccountCurrencyConverter.class), AccountCurrencyConverter.class))
             .build();
 
 
@@ -128,7 +129,6 @@ class AccountEndpointTest extends AbstractEndpointTest{
     void setUp() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         dispatcher.getRegistry().addSingletonResource(endpoint);
-
     }
 
     @AfterEach

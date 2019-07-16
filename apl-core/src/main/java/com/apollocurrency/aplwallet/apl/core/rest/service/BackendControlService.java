@@ -8,31 +8,37 @@ import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
 import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.Setter;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import lombok.Setter;
 
 /**
  *
  * @author alukin@gmail.com
  */
-@ApplicationScoped
+@Singleton
 public class BackendControlService {
     
-    @Inject @Setter
-    AplAppStatus appStatus;
+    @Setter
+    private AplAppStatus appStatus;
     
-    @Inject @Setter    
-    PropertiesHolder ph;
-    
+    @Setter
+    private PropertiesHolder ph;
+
+    @Inject
+    public BackendControlService(AplAppStatus appStatus, PropertiesHolder ph) {
+        this.appStatus = appStatus;
+        this.ph = ph;
+    }
+
     public NodeHWStatusInfo getHWStatus(){
         NodeHWStatusInfo res = new NodeHWStatusInfo();
         OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
@@ -76,11 +82,5 @@ public class BackendControlService {
        }
        return res;
     }
-    
-   //TODO: use AdminPasswordVerifier component 
-    public boolean isAdminPasswordOK(String password){
-        String pw = ph.getStringProperty("apl.adminPassword");
-        boolean res = (!StringUtils.isBlank(pw)&& password!=null && pw.compareTo(password)==0);
-        return res;
-    }
+
 }

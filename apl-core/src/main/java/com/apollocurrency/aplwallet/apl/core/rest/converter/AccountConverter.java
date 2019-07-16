@@ -43,6 +43,9 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
     @Inject @Setter
     private Blockchain blockchain;
 
+    @Inject @Setter
+    private AccountCurrencyConverter accountCurrencyConverter;
+
     @Override
     public AccountDTO apply(Account account) {
         AccountDTO dto = new AccountDTO();
@@ -159,23 +162,8 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         if (o != null && model != null) {
             List<AccountCurrencyDTO> currencies = model.stream()
                     .map(accountCurrency -> {
-                        AccountCurrencyDTO dto = new AccountCurrencyDTO();
-                        dto.setAccount(Long.toUnsignedString(accountCurrency.getAccountId()));
-                        dto.setAccountRS(Convert2.rsAccount(accountCurrency.getAccountId()));
-                        dto.setCurrency(Long.toUnsignedString(accountCurrency.getCurrencyId()));
-                        dto.setUnits(accountCurrency.getUnits());
-                        dto.setUnconfirmedUnits(accountCurrency.getUnconfirmedUnits());
-
-                        Currency currency = Currency.getCurrency(accountCurrency.getCurrencyId());
-                        if (currency != null) {
-                            dto.setName(currency.getName());
-                            dto.setCode(currency.getCode());
-                            dto.setType(currency.getType());
-                            dto.setDecimals(currency.getDecimals());
-                            dto.setIssuanceHeight(currency.getIssuanceHeight());
-                            dto.setIssuerAccount(Long.toUnsignedString(currency.getAccountId()));
-                            dto.setIssuerAccountRS(Convert2.rsAccount(currency.getAccountId()));
-                        }
+                        AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
+                        accountCurrencyConverter.addCurrency(dto, Currency.getCurrency(accountCurrency.getCurrencyId()));
                         return dto;
                     }).collect(Collectors.toList());
 

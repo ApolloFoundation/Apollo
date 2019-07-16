@@ -38,16 +38,13 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
     private static Peer peer = EntityProducer.createPeer(PEER_ADDRESS, ANNOUNCED_ADDRESS, true, 0);
 
-    private NetworkController endpoint = new NetworkController();
     private NetworkService service = mock(NetworkService.class);
 
     @BeforeEach
     void setUp() {
         super.setUp();
+        NetworkController endpoint = new NetworkController(new PeerConverter(), service);
         dispatcher.getRegistry().addSingletonResource(endpoint);
-
-        endpoint.setPeerConverter(new PeerConverter());
-        endpoint.setService(service);
     }
 
     @AfterEach

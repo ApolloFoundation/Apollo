@@ -11,8 +11,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
-public class AccountAssetsCountResponse extends ResponseBase{
-    Integer numberOfAssets;
+public class AccountCurrencyCountResponse extends ResponseBase {
+
+    private Integer numberOfCurrencies;
+
+    public AccountCurrencyCountResponse(Integer numberOfCurrencies) {
+        this.numberOfCurrencies = numberOfCurrencies;
+    }
 }

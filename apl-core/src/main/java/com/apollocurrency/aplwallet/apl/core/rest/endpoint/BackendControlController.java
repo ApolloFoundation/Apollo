@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -30,19 +32,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author alukin@gmail.com
  */
+@Singleton
 @Path("/control")
 public class BackendControlController {
     private static final Logger log = LoggerFactory.getLogger(BackendControlController.class);
 
     private BackendControlService bcService;
-    /**
-     * Empty constructor re quired by REstEasy
-     */
-
-
-    public BackendControlController() {
-       log.debug("Empty BackendControlEndpoint created"); 
-    }
 
     @Inject
     public BackendControlController(BackendControlService bcService) {
@@ -102,14 +97,9 @@ public class BackendControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
-    @PermitAll
+    @RolesAllowed("admin")
     public Response getBackendThreadss(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
-        boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
-        if(passwordOK){
-            RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
-            return Response.status(Response.Status.OK).entity(threadsResponse).build();
-        }else{
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
+        RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
+        return Response.status(Response.Status.OK).entity(threadsResponse).build();
     }
 }

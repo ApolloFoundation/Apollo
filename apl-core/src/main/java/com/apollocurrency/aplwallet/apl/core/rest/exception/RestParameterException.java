@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
 import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;

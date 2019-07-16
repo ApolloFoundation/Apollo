@@ -20,7 +20,7 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AccountAssetUnconfirmedBalanceDTO {
+public class AccountAssetUnconfirmedBalanceDTO extends BaseDTO {
     private String asset;
 
     @JsonSerialize(using = ToStringSerializer.class)

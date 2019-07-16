@@ -34,6 +34,7 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+@Deprecated
 public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 
 //    private static class GetAccountCurrenciesHolder {
