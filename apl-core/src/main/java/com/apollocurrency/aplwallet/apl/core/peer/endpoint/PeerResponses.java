@@ -67,13 +67,7 @@ public class PeerResponses {
         response.put("error", Errors.DOWNLOADING);
         DOWNLOADING = JSON.prepare(response);
     }
-    
-    public static final JSONStreamAware BLACKLISTED;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("error", Errors.BLACKLISTED);
-         BLACKLISTED = JSON.prepare(response);
-    }
+
     public static final JSONStreamAware LIGHT_CLIENT;
     static {
         JSONObject response = new JSONObject();
@@ -85,6 +79,13 @@ public class PeerResponses {
         JSONObject response = new JSONObject();
         response.put("error", Peers.hideErrorDetails ? e.getClass().getName() : e.toString());
         return response;
+    }
+
+    public static JSONStreamAware getBlackisted(String blacklistingCause) {
+        JSONObject response = new JSONObject();
+        response.put("error", Errors.BLACKLISTED);
+        response.put("cause", blacklistingCause);
+        return JSON.prepare(response);
     }
 
    

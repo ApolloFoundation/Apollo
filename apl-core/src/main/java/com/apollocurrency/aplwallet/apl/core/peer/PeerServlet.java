@@ -243,15 +243,15 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            if (requestId == null || requestId == 0) {
-                LOG.debug("null requestId from {}\nRequest:{}", peer.getHostWithPort(),request); 
-                jsonResponse = PeerResponses.UNSUPPORTED_PROTOCOL;
-            } else {
-                if (peer.isBlacklisted()) { 
-                    jsonResponse = PeerResponses.BLACKLISTED;
-                }else{
+            if (peer.isBlacklisted()) { 
+               jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
+            }else{          
+              if (requestId == null || requestId == 0) {
+                 LOG.debug("null requestId from {}\nRequest:{}", peer.getHostWithPort(),request); 
+                 jsonResponse = PeerResponses.UNSUPPORTED_PROTOCOL;
+               } else {
                     jsonResponse = process(peer, new StringReader(request));
-                }
+               }
             }
         }
 
@@ -273,7 +273,7 @@ public final class PeerServlet extends WebSocketServlet {
         if (jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL) {
             if (peer != null) {
                 String msg = "Unsupported protocol";
-                peer.blacklist(msg);
+                peer.deactivate(msg);
             }
         }
     }
@@ -291,10 +291,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Check for blacklisted peer
         //
         if (peer.isBlacklisted()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("error", Errors.BLACKLISTED);
-            jsonObject.put("cause", peer.getBlacklistingCause());
-            return jsonObject;
+            return PeerResponses.getBlackisted(peer.getBlacklistingCause());
         }
         //
         // Process the request
