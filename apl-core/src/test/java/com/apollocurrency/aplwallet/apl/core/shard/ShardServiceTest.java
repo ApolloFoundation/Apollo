@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class ShardServiceTest {
@@ -36,8 +39,19 @@ public class ShardServiceTest {
     @Test
     void testGetAllShards() {
         List<Shard> allShards = shardService.getAllShards();
-
         assertEquals(ShardTestData.SHARDS, allShards);
+    }
+
+    @Test
+    void testGetAllCompletedOrArchivedShards() {
+        List<Shard> allShards = shardService.getAllCompletedOrArchivedShards();
+        assertEquals(Arrays.asList(SHARD_2, SHARD_1), allShards);
+    }
+
+    @Test
+    void testGetAllCompletedShards() {
+        List<Shard> allShards = shardService.getAllCompletedShards();
+        assertEquals(Arrays.asList(SHARD_1), allShards);
     }
 
 }

@@ -69,7 +69,7 @@ public class ShardImporter {
         if (height == 0) {
             Genesis.apply(false);
         } else {
-            Shard completedShard = shardDao.getLastCompletedShard();
+            Shard completedShard = shardDao.getLastCompletedOrArchivedShard();
             Long shardId = completedShard.getShardId();
             ShardNameHelper nameHelper = new ShardNameHelper();
             String fileId = nameHelper.getFullShardId(shardId, blockchainConfig.getChain().getChainId());

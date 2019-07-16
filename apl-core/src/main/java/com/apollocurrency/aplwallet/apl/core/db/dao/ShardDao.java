@@ -65,13 +65,11 @@ public interface ShardDao {
     int hardDeleteAllShards();
 
     @Transactional(readOnly = true)
-//    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = :height)")
     @SqlQuery("SELECT * FROM shard WHERE shard_height =:height")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getShardAtHeight(@Bind("height") long height);
 
     @Transactional(readOnly = true)
-//    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = (SELECT MAX(block_height) FROM block_index) )")
     @SqlQuery("SELECT * FROM shard WHERE shard_height = (SELECT MAX(shard_height) FROM shard)")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getLastShard();
@@ -82,8 +80,18 @@ public interface ShardDao {
     Shard getLastCompletedShard();
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 OR shard_state = 50 ORDER BY shard_height DESC LIMIT 1")
+    @RegisterRowMapper(ShardRowMapper.class)
+    Shard getLastCompletedOrArchivedShard();
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 ORDER BY shard_height DESC")
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getAllCompletedShards();
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 OR shard_state = 50 ORDER BY shard_height DESC")
+    @RegisterRowMapper(ShardRowMapper.class)
+    List<Shard> getAllCompletedOrArchivedShards();
 
 }
